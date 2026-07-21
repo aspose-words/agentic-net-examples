@@ -1,63 +1,50 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
-using Newtonsoft.Json;
 
-public class ExtractionExample
+public class Program
 {
+    // Entry point of the console application.
     [STAThread]
     public static void Main()
     {
-        // Create a sample document with some content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First paragraph - plain text.");
-        builder.Font.Bold = true;
-        builder.Writeln("Second paragraph - bold text.");
-        builder.Font.Bold = false;
-        builder.Font.Italic = true;
-        builder.Writeln("Third paragraph - italic text.");
-        doc.Save("sample.docx");
+        // 1. Create a sample document with a bookmark that defines the content to copy.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Paragraph before the copy range.");
+        builder.StartBookmark("CopyRange");
+        builder.Writeln("This text will be copied to the clipboard.");
+        builder.EndBookmark("CopyRange");
+        builder.Writeln("Paragraph after the copy range.");
 
-        // Load the document and extract the second paragraph's text.
-        Document loaded = new Document("sample.docx");
-        if (loaded.FirstSection?.Body?.Paragraphs?.Count < 2)
-        {
-            throw new InvalidOperationException("The document does not contain the expected second paragraph.");
-        }
+        const string samplePath = "sample.docx";
+        sampleDoc.Save(samplePath);
 
-        Paragraph secondParagraph = loaded.FirstSection.Body.Paragraphs[1];
-        if (secondParagraph == null)
-        {
-            throw new InvalidOperationException("The expected paragraph was not found.");
-        }
+        // 2. Load the document we just created.
+        Document loadedDoc = new Document(samplePath);
 
-        string extractedText = secondParagraph.GetText().Trim();
+        // 3. Locate the bookmark that bounds the content we want to extract.
+        Bookmark copyBookmark = loadedDoc.Range.Bookmarks["CopyRange"];
+        if (copyBookmark == null)
+            throw new InvalidOperationException("Bookmark 'CopyRange' was not found in the document.");
 
-        // Write the extracted text to a file for verification.
-        string textFilePath = "extracted.txt";
-        File.WriteAllText(textFilePath, extractedText);
-        if (!File.Exists(textFilePath))
-        {
-            throw new InvalidOperationException("Failed to create the extracted text file.");
-        }
+        // 4. Extract the text inside the bookmark.
+        string extractedText = copyBookmark.Text;
+        if (string.IsNullOrEmpty(extractedText))
+            throw new InvalidOperationException("No text was extracted from the bookmark.");
 
-        // Also create a JSON report containing the extracted content.
-        var report = new
-        {
-            ExtractedParagraphIndex = 2,
-            Content = extractedText,
-            Timestamp = DateTime.UtcNow
-        };
-        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
-        string jsonFilePath = "extraction_report.json";
-        File.WriteAllText(jsonFilePath, json);
-        if (!File.Exists(jsonFilePath))
-        {
-            throw new InvalidOperationException("Failed to create the JSON report file.");
-        }
+        // 5. Write the extracted text to a file (simulating the clipboard operation).
+        const string outputPath = "clipboard.txt";
+        File.WriteAllText(outputPath, extractedText);
 
-        // Program completed successfully.
+        // 6. Verify that the output file was created and contains the expected text.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Failed to write the extracted text to the output file.");
+
+        string fileContent = File.ReadAllText(outputPath);
+        if (fileContent != extractedText)
+            throw new InvalidOperationException("Verification failed: file content does not match extracted text.");
+
+        // Program completes without requiring user interaction.
     }
 }

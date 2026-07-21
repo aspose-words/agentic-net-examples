@@ -14,117 +14,114 @@ public class Program
         Document source = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(source);
 
-        // First heading – start marker.
+        // First heading
         srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        srcBuilder.Writeln("Start");
+        srcBuilder.Writeln("Start Heading");
 
-        // Content between the headings (paragraphs and a table).
+        // Content between the headings
         srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         srcBuilder.Writeln("Paragraph 1 between headings.");
         srcBuilder.Writeln("Paragraph 2 between headings.");
 
-        srcBuilder.StartTable();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell A1");
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell B1");
-        srcBuilder.EndRow();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell A2");
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell B2");
-        srcBuilder.EndTable();
-
-        // Second heading – end marker.
+        // Second heading
         srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        srcBuilder.Writeln("End");
+        srcBuilder.Writeln("End Heading");
 
-        // Save the source document.
+        // Additional content after the second heading (should not be extracted)
+        srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        srcBuilder.Writeln("Paragraph after end heading.");
+
         source.Save("source.docx");
 
         // -----------------------------------------------------------------
-        // 2. Load the source document and extract block-level nodes between the headings.
+        // 2. Load the source document and extract nodes between the two headings.
         // -----------------------------------------------------------------
-        Document srcLoaded = new Document("source.docx");
-        Body srcBody = srcLoaded.FirstSection.Body;
-
-        // Locate the start and end heading paragraphs.
+        Document srcDoc = new Document("source.docx");
         Paragraph startHeading = null;
         Paragraph endHeading = null;
-        foreach (Paragraph para in srcBody.Paragraphs)
+
+        // Locate the two heading paragraphs.
+        foreach (Paragraph para in srcDoc.FirstSection.Body.Paragraphs)
         {
-            string text = para.GetText().Trim();
-            if (text == "Start")
-                startHeading = para;
-            else if (text == "End")
-                endHeading = para;
+            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
+            {
+                if (startHeading == null)
+                    startHeading = para;
+                else
+                {
+                    endHeading = para;
+                    break;
+                }
+            }
         }
 
         if (startHeading == null || endHeading == null)
-            throw new InvalidOperationException("Start or End heading not found.");
+            throw new InvalidOperationException("Both start and end headings must exist.");
 
-        // Determine the indexes of the headings within the body’s block-level collection.
-        int startIdx = srcBody.Paragraphs.IndexOf(startHeading);
-        int endIdx = srcBody.Paragraphs.IndexOf(endHeading);
-        if (startIdx < 0 || endIdx < 0 || startIdx >= endIdx)
-            throw new InvalidOperationException("Invalid heading positions.");
-
-        // Collect block-level nodes (Paragraphs and Tables) that lie between the two headings.
+        // Collect all nodes that lie between the two headings (exclusive).
         List<Node> extractedNodes = new List<Node>();
-
-        // Paragraphs between the headings.
-        for (int i = startIdx + 1; i < endIdx; i++)
+        Node curNode = startHeading.NextSibling;
+        while (curNode != null && curNode != endHeading)
         {
-            Paragraph para = srcBody.Paragraphs[i];
-            extractedNodes.Add(para);
+            Node next = curNode.NextSibling; // Preserve next reference before any modifications.
+            extractedNodes.Add(curNode);
+            curNode = next;
         }
 
-        // Tables that are positioned between the headings.
-        foreach (Table table in srcBody.Tables)
-        {
-            // A table’s position can be determined by its index in the body’s child node collection.
-            int tableIdx = srcBody.IndexOf(table);
-            if (tableIdx > srcBody.IndexOf(startHeading) && tableIdx < srcBody.IndexOf(endHeading))
-                extractedNodes.Add(table);
-        }
+        if (extractedNodes.Count == 0)
+            throw new InvalidOperationException("No content found between the specified headings.");
 
         // -----------------------------------------------------------------
-        // 3. Create a template document where the extracted content will be inserted.
+        // 3. Create a template document that contains a placeholder paragraph.
         // -----------------------------------------------------------------
         Document template = new Document();
         DocumentBuilder tmplBuilder = new DocumentBuilder(template);
-        tmplBuilder.Writeln("=== Template Header ===");
-        tmplBuilder.Writeln("Content will be inserted below:");
-        // Save the template.
+        tmplBuilder.Writeln("Template Header");
+        tmplBuilder.Writeln("[Insert Extracted Content Here]");
+        tmplBuilder.Writeln("Template Footer");
         template.Save("template.docx");
 
         // -----------------------------------------------------------------
-        // 4. Load the template and import the extracted nodes.
+        // 4. Load the template and replace the placeholder with extracted content.
         // -----------------------------------------------------------------
-        Document tmplLoaded = new Document("template.docx");
-        Body tmplBody = tmplLoaded.FirstSection.Body;
+        Document tmplDoc = new Document("template.docx");
+        Body tmplBody = tmplDoc.FirstSection.Body;
 
-        // Use NodeImporter to import nodes from source to template.
-        NodeImporter importer = new NodeImporter(srcLoaded, tmplLoaded, ImportFormatMode.KeepSourceFormatting);
+        // Find the placeholder paragraph.
+        Paragraph placeholder = null;
+        foreach (Paragraph para in tmplBody.Paragraphs)
+        {
+            if (para.GetText().Contains("[Insert Extracted Content Here]"))
+            {
+                placeholder = para;
+                break;
+            }
+        }
 
+        if (placeholder == null)
+            throw new InvalidOperationException("Placeholder paragraph not found in the template.");
+
+        // Remove the placeholder paragraph.
+        placeholder.Remove();
+
+        // Import and insert each extracted node into the template body.
+        NodeImporter importer = new NodeImporter(srcDoc, tmplDoc, ImportFormatMode.KeepSourceFormatting);
         foreach (Node node in extractedNodes)
         {
-            // Import the node (deep clone) into the destination document.
-            Node imported = importer.ImportNode(node, true);
-            // Append only block-level nodes (Paragraph or Table) to the body.
-            if (imported.NodeType == NodeType.Paragraph || imported.NodeType == NodeType.Table)
-                tmplBody.AppendChild(imported);
+            Node importedNode = importer.ImportNode(node, true);
+            tmplBody.AppendChild(importedNode);
         }
 
         // -----------------------------------------------------------------
         // 5. Save the resulting document.
         // -----------------------------------------------------------------
-        tmplLoaded.Save("result.docx");
+        tmplDoc.Save("result.docx");
 
-        // Validate that the result file was created.
+        // Verify that the output file was created.
         if (!File.Exists("result.docx"))
             throw new InvalidOperationException("Result document was not created.");
 
+        // Optional: output a simple confirmation to the console.
         Console.WriteLine("Extraction and insertion completed successfully.");
     }
 }

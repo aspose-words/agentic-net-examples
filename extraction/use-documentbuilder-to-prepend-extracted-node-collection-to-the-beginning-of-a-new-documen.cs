@@ -7,7 +7,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a source document with sample content.
+        // Create a source document with sample paragraphs.
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
         srcBuilder.Writeln("First paragraph.");
@@ -15,47 +15,38 @@ public class Program
         srcBuilder.Writeln("Third paragraph.");
         sourceDoc.Save("source.docx");
 
-        // Load the source document.
+        // Load the source document (demonstrates loading workflow).
         Document loadedSource = new Document("source.docx");
 
         // Extract all paragraph nodes from the source document.
-        NodeCollection sourceParagraphs = loadedSource.GetChildNodes(NodeType.Paragraph, true);
+        NodeCollection sourceParagraphs = loadedSource.FirstSection.Body.GetChildNodes(NodeType.Paragraph, true);
+        if (sourceParagraphs.Count == 0)
+            throw new InvalidOperationException("No paragraphs were extracted from the source document.");
 
-        // Prepare a new destination document.
+        // Create a new destination document.
         Document destDoc = new Document();
-        // Remove the default empty section/paragraph.
-        destDoc.RemoveAllChildren();
 
-        // Create a new section and body for the destination document.
-        Section destSection = new Section(destDoc);
-        destDoc.AppendChild(destSection);
-        Body destBody = new Body(destDoc);
-        destSection.AppendChild(destBody);
-
-        // Importer to handle style and list translation.
+        // Prepare an importer to copy nodes while preserving source formatting.
         NodeImporter importer = new NodeImporter(loadedSource, destDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Prepend the extracted paragraphs to the beginning of the destination body.
-        // Iterate in reverse order to preserve the original sequence when using PrependChild.
+        // Get the body of the destination document where paragraphs will be prepended.
+        Body destBody = destDoc.FirstSection.Body;
+
+        // Prepend the extracted paragraphs to the beginning of the destination document.
+        // Iterate in reverse order and prepend each imported paragraph.
         for (int i = sourceParagraphs.Count - 1; i >= 0; i--)
         {
-            Node srcNode = sourceParagraphs[i];
-            // Skip the final empty paragraph that Aspose.Words adds automatically.
-            if (srcNode is Paragraph para && para.IsEndOfSection && !para.HasChildNodes)
-                continue;
-
-            Node importedNode = importer.ImportNode(srcNode, true);
+            Node importedNode = importer.ImportNode(sourceParagraphs[i], true);
             destBody.PrependChild(importedNode);
         }
 
         // Save the resulting document.
         destDoc.Save("result.docx");
 
-        // Validate that the output file was created.
+        // Verify that the output file was created.
         if (!File.Exists("result.docx"))
             throw new InvalidOperationException("The result document was not created.");
 
-        // Optional: indicate success (no interactive output required).
         Console.WriteLine("Extraction and prepend operation completed successfully.");
     }
 }

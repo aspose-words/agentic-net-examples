@@ -1,117 +1,103 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-public class Program
+public class ParallelExtractionExample
 {
     public static void Main()
     {
-        // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        // Prepare directories for input and output.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "ExtractionDemo");
+        string inputDir = Path.Combine(baseDir, "Input");
+        string outputDir = Path.Combine(baseDir, "Output");
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create sample documents
-        CreateSampleDocuments(inputDir);
-
-        // Get list of input files
-        string[] inputFiles = Directory.GetFiles(inputDir, "*.docx");
-
-        // List to hold report entries
-        List<ExtractionReport> reports = new List<ExtractionReport>();
-
-        // Parallel extraction
-        Parallel.ForEach(inputFiles, inputFile =>
+        // Create a few sample documents.
+        int docCount = 5;
+        for (int i = 0; i < docCount; i++)
         {
-            // Load source document
-            Document sourceDoc = new Document(inputFile);
+            string filePath = Path.Combine(inputDir, $"Doc{i + 1}.docx");
+            CreateSampleDocument(filePath, i + 1);
+        }
 
-            // Validate that the document has at least one paragraph
-            Paragraph firstParagraph = sourceDoc.FirstSection?.Body?.Paragraphs?[0];
-            if (firstParagraph == null)
-                throw new InvalidOperationException($"Document '{inputFile}' does not contain a paragraph to extract.");
+        // Get all document files to process.
+        string[] files = Directory.GetFiles(inputDir, "*.docx");
 
-            // Create a new document to hold the extracted range
-            Document extractedDoc = new Document();
-            extractedDoc.RemoveAllChildren();
+        // Thread‑safe collection for extraction results.
+        var extractionResults = new List<ExtractionResult>();
+        var lockObj = new object();
 
-            // Build minimal document structure
-            Section section = new Section(extractedDoc);
-            extractedDoc.AppendChild(section);
-            Body body = new Body(extractedDoc);
-            section.AppendChild(body);
+        // Process each document in parallel.
+        Parallel.ForEach(files, file =>
+        {
+            // Load the document.
+            Document doc = new Document(file);
 
-            // Import the paragraph from the source document into the new document
-            Node importedParagraph = extractedDoc.ImportNode(firstParagraph, true);
-            body.AppendChild(importedParagraph);
+            // Extract the first paragraph's text.
+            Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+            string extractedText = firstParagraph.GetText().Trim();
 
-            // Determine output file names
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(inputFile);
-            string extractedDocPath = Path.Combine(outputDir, fileNameWithoutExt + "_Extracted.docx");
-            string extractedTextPath = Path.Combine(outputDir, fileNameWithoutExt + "_Extracted.txt");
+            // Save the extracted text to a .txt file.
+            string txtFileName = Path.GetFileNameWithoutExtension(file) + "_Extracted.txt";
+            string txtPath = Path.Combine(outputDir, txtFileName);
+            File.WriteAllText(txtPath, extractedText);
 
-            // Save the extracted document
-            extractedDoc.Save(extractedDocPath);
-
-            // Save the extracted text to a plain text file
-            File.WriteAllText(extractedTextPath, firstParagraph.GetText());
-
-            // Add entry to the report
-            lock (reports)
+            // Record the extraction details.
+            var result = new ExtractionResult
             {
-                reports.Add(new ExtractionReport
-                {
-                    SourceDocument = inputFile,
-                    ExtractedDocument = extractedDocPath,
-                    ExtractedTextFile = extractedTextPath,
-                    ExtractedTextLength = firstParagraph.GetText().Length
-                });
+                SourceFile = Path.GetFileName(file),
+                ExtractedFile = txtFileName,
+                ExtractedText = extractedText
+            };
+
+            lock (lockObj)
+            {
+                extractionResults.Add(result);
             }
         });
 
-        // Validate that all expected output files were created
-        foreach (ExtractionReport report in reports)
+        // Verify that each expected output file exists.
+        foreach (string file in files)
         {
-            if (!File.Exists(report.ExtractedDocument))
-                throw new InvalidOperationException($"Expected extracted document was not created: {report.ExtractedDocument}");
-            if (!File.Exists(report.ExtractedTextFile))
-                throw new InvalidOperationException($"Expected extracted text file was not created: {report.ExtractedTextFile}");
+            string expectedTxt = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(file) + "_Extracted.txt");
+            if (!File.Exists(expectedTxt))
+                throw new InvalidOperationException($"Extraction output not found: {expectedTxt}");
         }
 
-        // Serialize report to JSON
-        string reportJsonPath = Path.Combine(outputDir, "ExtractionReport.json");
-        string json = JsonConvert.SerializeObject(reports, Formatting.Indented);
-        File.WriteAllText(reportJsonPath, json);
+        // Create a JSON summary report.
+        string jsonReportPath = Path.Combine(outputDir, "ExtractionReport.json");
+        string json = JsonConvert.SerializeObject(extractionResults, Formatting.Indented);
+        File.WriteAllText(jsonReportPath, json);
 
-        // Final validation
-        if (!File.Exists(reportJsonPath))
-            throw new InvalidOperationException("Extraction report JSON file was not created.");
+        if (!File.Exists(jsonReportPath))
+            throw new InvalidOperationException("JSON report was not created.");
+
+        // Indicate successful completion.
+        Console.WriteLine("Parallel extraction completed successfully.");
     }
 
-    private static void CreateSampleDocuments(string folderPath)
+    // Helper to create a simple document with identifiable content.
+    private static void CreateSampleDocument(string filePath, int index)
     {
-        for (int i = 1; i <= 5; i++)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Document {i} Title");
-            builder.Writeln($"This is the body content of document {i}. It contains sample text for extraction.");
-            string filePath = Path.Combine(folderPath, $"Doc{i}.docx");
-            doc.Save(filePath);
-        }
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln($"Document {index} - Introduction.");
+        builder.Writeln($"Document {index} - Body paragraph one.");
+        builder.Writeln($"Document {index} - Body paragraph two.");
+        builder.Writeln($"Document {index} - Conclusion.");
+        doc.Save(filePath);
     }
 
-    private class ExtractionReport
+    // Simple DTO for the JSON report.
+    private class ExtractionResult
     {
-        public string SourceDocument { get; set; } = string.Empty;
-        public string ExtractedDocument { get; set; } = string.Empty;
-        public string ExtractedTextFile { get; set; } = string.Empty;
-        public int ExtractedTextLength { get; set; }
+        public string SourceFile { get; set; }
+        public string ExtractedFile { get; set; }
+        public string ExtractedText { get; set; }
     }
 }

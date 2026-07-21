@@ -1,121 +1,102 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
-using Aspose.Words.Fields;
-using Newtonsoft.Json;
 
-public class ExtractionExample
+public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample source document containing a table, an image,
-        //    and a field, wrapped between two bookmarks.
-        // -----------------------------------------------------------------
-        var sourceDoc = new Document();
-        var builder = new DocumentBuilder(sourceDoc);
+        // Create a sample source document containing paragraphs, a table, an image, and a field.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Document introduction paragraph.");
+        // Paragraph before the range.
+        builder.Writeln("Paragraph before the extraction range.");
 
-        // Start bookmark.
-        builder.StartBookmark("Start");
-        builder.EndBookmark("Start");
+        // Start marker paragraph (inclusive).
+        builder.Writeln("Start of extraction range.");
 
-        // Insert a simple 1x2 table.
-        builder.StartTable();
+        // Insert a simple 2x2 table.
+        Table table = builder.StartTable();
         builder.InsertCell();
         builder.Write("Cell 1");
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
         builder.EndTable();
 
-        // Insert a tiny PNG image.
+        // Insert an inline image inside its own paragraph.
+        builder.Writeln(); // Ensure a new paragraph for the image.
         byte[] pngBytes = Convert.FromBase64String(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=");
-        using (var imageStream = new MemoryStream(pngBytes))
+        using (MemoryStream imgStream = new MemoryStream(pngBytes))
         {
-            builder.InsertImage(imageStream);
+            builder.InsertImage(imgStream);
         }
 
-        // Insert a MERGEFIELD.
-        builder.InsertField("MERGEFIELD SampleField \\* MERGEFORMAT");
+        // Insert a field (MERGEFIELD) inside its own paragraph.
+        builder.Writeln(); // New paragraph for the field.
+        builder.InsertField(" MERGEFIELD SampleField ");
 
-        // End bookmark.
-        builder.StartBookmark("End");
-        builder.EndBookmark("End");
+        // End marker paragraph (inclusive).
+        builder.Writeln("End of extraction range.");
 
+        // Paragraph after the range.
+        builder.Writeln("Paragraph after the extraction range.");
+
+        // Save the source document (optional, for verification).
         const string sourcePath = "source.docx";
         sourceDoc.Save(sourcePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and locate the start/end bookmarks.
-        // -----------------------------------------------------------------
-        var loadedDoc = new Document(sourcePath);
-        var startBookmark = loadedDoc.Range.Bookmarks["Start"];
-        var endBookmark = loadedDoc.Range.Bookmarks["End"];
-        if (startBookmark == null || endBookmark == null)
-            throw new InvalidOperationException("Required bookmarks were not found.");
+        // Locate the start and end paragraphs that bound the extraction range.
+        Paragraph startParagraph = sourceDoc.FirstSection.Body.Paragraphs[1]; // "Start of extraction range."
+        Paragraph endParagraph = sourceDoc.FirstSection.Body.Paragraphs[5];   // "End of extraction range."
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the destination document (empty).
-        // -----------------------------------------------------------------
-        var resultDoc = new Document();
-        resultDoc.RemoveAllChildren();
-        var resultSection = new Section(resultDoc);
-        resultDoc.AppendChild(resultSection);
-        var resultBody = new Body(resultDoc);
-        resultSection.AppendChild(resultBody);
+        if (startParagraph == null || endParagraph == null)
+            throw new InvalidOperationException("Failed to locate the start or end paragraph for extraction.");
 
-        // -----------------------------------------------------------------
-        // 4. Extract nodes that lie between the two bookmarks (exclusive).
-        //    Preserve the original hierarchy by importing each node.
-        // -----------------------------------------------------------------
-        var importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-        Node currentNode = startBookmark.BookmarkStart.NextSibling;
-        while (currentNode != null && currentNode != endBookmark.BookmarkEnd)
+        // Prepare the destination document.
+        Document destDoc = new Document();
+        destDoc.RemoveAllChildren(); // Clear the default empty section/paragraph.
+        Section destSection = new Section(destDoc);
+        destDoc.AppendChild(destSection);
+        Body destBody = new Body(destDoc);
+        destSection.AppendChild(destBody);
+
+        // Import nodes from the source document between the start and end paragraphs (inclusive).
+        NodeImporter importer = new NodeImporter(sourceDoc, destDoc, ImportFormatMode.KeepSourceFormatting);
+        Node currentNode = startParagraph;
+        while (true)
         {
-            // Import the node into the destination document.
+            // Import the current node (deep clone) and append it to the destination body.
             Node importedNode = importer.ImportNode(currentNode, true);
-            resultBody.AppendChild(importedNode);
+            destBody.AppendChild(importedNode);
+
+            // Break when the end paragraph has been processed.
+            if (currentNode == endParagraph)
+                break;
+
+            // Move to the next sibling node in the source document.
             currentNode = currentNode.NextSibling;
+            if (currentNode == null)
+                throw new InvalidOperationException("Reached the end of the document before finding the end marker.");
         }
 
-        // -----------------------------------------------------------------
-        // 5. Save the extracted content.
-        // -----------------------------------------------------------------
-        const string extractedPath = "extracted.docx";
-        resultDoc.Save(extractedPath);
-        if (!File.Exists(extractedPath))
-            throw new InvalidOperationException("Extraction output file was not created.");
+        // Save the extracted range to a new document.
+        const string resultPath = "extracted_range.docx";
+        destDoc.Save(resultPath);
 
-        // -----------------------------------------------------------------
-        // 6. Build a simple JSON report about the extracted content.
-        // -----------------------------------------------------------------
-        var report = new
-        {
-            ParagraphCount = resultDoc.FirstSection.Body.Paragraphs.Count,
-            TableCount = resultDoc.GetChildNodes(NodeType.Table, true).Count,
-            ImageCount = resultDoc.GetChildNodes(NodeType.Shape, true)
-                                 .OfType<Shape>()
-                                 .Count(s => s.HasImage),
-            FieldCount = resultDoc.Range.Fields.Count
-        };
+        // Validate that the output file was created.
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("The extracted document was not created.");
 
-        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
-        const string reportPath = "extraction-report.json";
-        File.WriteAllText(reportPath, jsonReport);
-        if (!File.Exists(reportPath))
-            throw new InvalidOperationException("Extraction report file was not created.");
-
-        // -----------------------------------------------------------------
-        // 7. Indicate successful completion.
-        // -----------------------------------------------------------------
+        // Optional: output a simple confirmation (no interactive input required).
         Console.WriteLine("Extraction completed successfully.");
-        Console.WriteLine($"Extracted document: {extractedPath}");
-        Console.WriteLine($"Report file: {reportPath}");
     }
 }

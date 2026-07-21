@@ -7,10 +7,10 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders
+        // Prepare folders.
         string baseDir = Directory.GetCurrentDirectory();
         string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "ExtractedPdfs");
+        string outputDir = Path.Combine(baseDir, "OutputPdfs");
 
         if (Directory.Exists(inputDir))
             Directory.Delete(inputDir, true);
@@ -20,61 +20,49 @@ public class Program
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create sample documents with bookmarks
-        const int sampleCount = 3;
-        for (int i = 1; i <= sampleCount; i++)
+        // Create sample documents.
+        for (int i = 1; i <= 3; i++)
         {
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             builder.Writeln($"Document {i} - Intro paragraph.");
-            builder.StartBookmark("Start");
-            builder.Writeln($"Document {i} - Content paragraph 1.");
-            builder.Writeln($"Document {i} - Content paragraph 2.");
-            builder.EndBookmark("Start");
-            builder.StartBookmark("End");
-            builder.Writeln($"Document {i} - Outro paragraph.");
-            builder.EndBookmark("End");
+            builder.StartBookmark("Extract");
+            builder.Writeln($"This is the extracted content of document {i}.");
+            builder.Writeln("It may contain multiple paragraphs.");
+            builder.EndBookmark("Extract");
+            builder.Writeln($"Document {i} - Closing paragraph.");
 
             string filePath = Path.Combine(inputDir, $"Sample{i}.docx");
             doc.Save(filePath);
         }
 
-        // Process each document: extract content between the two bookmarks and save as PDF
-        string[] files = Directory.GetFiles(inputDir, "*.docx");
-        foreach (string file in files)
+        // Process each document: extract bookmark content and save as PDF.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            // Load source document
-            Document sourceDoc = new Document(file);
+            Document sourceDoc = new Document(filePath);
 
-            // Locate bookmarks
-            Bookmark startBookmark = sourceDoc.Range.Bookmarks["Start"];
-            Bookmark endBookmark = sourceDoc.Range.Bookmarks["End"];
-            if (startBookmark == null || endBookmark == null)
-                throw new InvalidOperationException($"Bookmarks not found in {Path.GetFileName(file)}.");
+            // Locate the bookmark named "Extract".
+            Bookmark bookmark = sourceDoc.Range.Bookmarks["Extract"];
+            if (bookmark == null)
+                throw new InvalidOperationException($"Bookmark 'Extract' not found in {Path.GetFileName(filePath)}.");
 
-            // Extract the text that lies between the bookmarks.
-            // The Bookmark.Text property returns the concatenated text of all nodes inside the bookmark.
-            string extractedText = startBookmark.Text?.Trim();
-            if (string.IsNullOrEmpty(extractedText))
-                extractedText = "[No content between bookmarks]";
+            // Get the text between the bookmark markers.
+            string extractedText = bookmark.Text;
 
             // Create a new document to hold the extracted content.
-            Document extractedDoc = new Document();
-            DocumentBuilder ebuilder = new DocumentBuilder(extractedDoc);
-            ebuilder.Writeln(extractedText);
+            Document resultDoc = new Document();
+            DocumentBuilder resultBuilder = new DocumentBuilder(resultDoc);
+            resultBuilder.Writeln(extractedText);
 
-            // Save the extracted document as PDF
-            string outputFileName = Path.GetFileNameWithoutExtension(file) + "_Extracted.pdf";
-            string outputPath = Path.Combine(outputDir, outputFileName);
-            extractedDoc.Save(outputPath, SaveFormat.Pdf);
+            // Save the result as PDF.
+            string pdfFileName = Path.GetFileNameWithoutExtension(filePath) + "_Extracted.pdf";
+            string pdfPath = Path.Combine(outputDir, pdfFileName);
+            resultDoc.Save(pdfPath, SaveFormat.Pdf);
 
-            // Validate that the PDF was created
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create PDF for {Path.GetFileName(file)}.");
+            // Validate that the PDF was created.
+            if (!File.Exists(pdfPath))
+                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
         }
-
-        // All done
-        Console.WriteLine("Batch extraction completed successfully.");
     }
 }

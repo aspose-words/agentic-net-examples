@@ -1,106 +1,106 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Tables;
 
-public class ExtractionExample
+public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCM file with a MacroButton field, some content, and an end marker paragraph.
-        string sourcePath = "source.docm";
+        // -----------------------------------------------------------------
+        // 1. Create a sample macro‑enabled document (DOCM) and save it.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Insert a MacroButton field.
-        builder.InsertField(@"MACROBUTTON ""MyMacro"" ""ClickMe""", "ClickMe");
-        builder.Writeln(); // End the paragraph containing the field.
+        // Insert a MACROBUTTON field (acts as a macro‑enabled field).
+        builder.InsertField("MACROBUTTON NoMacro \"ClickMe\"");
 
-        // Add content that should be extracted.
-        builder.Writeln("First extracted paragraph.");
-        builder.Writeln("Second extracted paragraph.");
+        // Add some content that will be extracted.
+        builder.Writeln("First line after macro field.");
+        builder.Writeln("Second line after macro field.");
 
-        // End marker paragraph.
-        builder.Writeln("EndMarkerParagraph");
+        // Paragraph that marks the end of the extraction range.
+        builder.Writeln("Target paragraph.");
 
-        // Save as DOCM.
+        const string sourcePath = "sample.docm";
         sourceDoc.Save(sourcePath, SaveFormat.Docm);
 
-        // Load the DOCM file.
+        // -----------------------------------------------------------------
+        // 2. Load the DOCM file.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(sourcePath);
 
-        // Locate the MacroButton field start.
-        FieldStart macroFieldStart = null;
-        foreach (Node node in loadedDoc.GetChildNodes(NodeType.FieldStart, true))
+        // Locate the macro button field.
+        Field macroField = null;
+        foreach (Field f in loadedDoc.Range.Fields)
         {
-            FieldStart fs = node as FieldStart;
-            if (fs != null && fs.FieldType == FieldType.FieldMacroButton)
+            if (f.GetFieldCode().Contains("MACROBUTTON"))
             {
-                macroFieldStart = fs;
+                macroField = f;
                 break;
             }
         }
 
-        if (macroFieldStart == null)
-            throw new InvalidOperationException("MacroButton field not found.");
+        if (macroField == null)
+            throw new InvalidOperationException("Macro button field not found.");
 
-        // Locate the paragraph that contains the end marker.
-        Paragraph endParagraph = null;
-        foreach (Paragraph para in loadedDoc.GetChildNodes(NodeType.Paragraph, true))
+        // Find the paragraph that contains the field.
+        Paragraph fieldParagraph = macroField.Start.GetAncestor(NodeType.Paragraph) as Paragraph;
+        if (fieldParagraph == null)
+            throw new InvalidOperationException("Field paragraph not found.");
+
+        // Find the target paragraph (the one that contains the text "Target paragraph.").
+        Paragraph targetParagraph = null;
+        foreach (Paragraph p in loadedDoc.GetChildNodes(NodeType.Paragraph, true))
         {
-            if (para.GetText().Contains("EndMarkerParagraph"))
+            if (p.GetText().Contains("Target paragraph."))
             {
-                endParagraph = para;
+                targetParagraph = p;
                 break;
             }
         }
 
-        if (endParagraph == null)
-            throw new InvalidOperationException("End marker paragraph not found.");
+        if (targetParagraph == null)
+            throw new InvalidOperationException("Target paragraph not found.");
 
-        // Determine the paragraph that contains the macro field.
-        Paragraph startParagraph = macroFieldStart.GetAncestor(NodeType.Paragraph) as Paragraph;
-        if (startParagraph == null)
-            throw new InvalidOperationException("Start paragraph containing the macro field not found.");
-
-        // Collect paragraphs between startParagraph (exclusive) and endParagraph (exclusive).
-        List<Paragraph> extractedParagraphs = new List<Paragraph>();
-        Node current = startParagraph.NextSibling;
-        while (current != null && current != endParagraph)
-        {
-            if (current.NodeType == NodeType.Paragraph)
-                extractedParagraphs.Add((Paragraph)current);
-            current = current.NextSibling;
-        }
-
-        if (extractedParagraphs.Count == 0)
-            throw new InvalidOperationException("No content found between the macro field and the end paragraph.");
-
-        // Create a new document and copy the extracted paragraphs.
+        // -----------------------------------------------------------------
+        // 3. Build a new document that will contain the extracted range.
+        // -----------------------------------------------------------------
         Document resultDoc = new Document();
         resultDoc.RemoveAllChildren();
 
-        Section section = new Section(resultDoc);
-        resultDoc.AppendChild(section);
-        Body body = new Body(resultDoc);
-        section.AppendChild(body);
+        Section resultSection = new Section(resultDoc);
+        resultDoc.AppendChild(resultSection);
 
-        // Use NodeImporter to import nodes from the source document into the result document.
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-        foreach (Paragraph para in extractedParagraphs)
+        Body resultBody = new Body(resultDoc);
+        resultSection.AppendChild(resultBody);
+
+        // -----------------------------------------------------------------
+        // 4. Copy paragraphs from the source document to the result document.
+        //    Use ImportNode to transfer nodes between documents safely.
+        // -----------------------------------------------------------------
+        Paragraph current = fieldParagraph.NextSibling as Paragraph;
+        while (current != null)
         {
-            Node importedNode = importer.ImportNode(para, true);
-            body.AppendChild(importedNode);
+            // Import the paragraph (deep clone) into the destination document.
+            Node imported = resultDoc.ImportNode(current, true);
+            resultBody.AppendChild(imported);
+
+            // Stop after adding the target paragraph.
+            if (current == targetParagraph)
+                break;
+
+            current = current.NextSibling as Paragraph;
         }
 
-        // Save the extracted content as DOCX.
-        string outputPath = "extracted.docx";
-        resultDoc.Save(outputPath, SaveFormat.Docx);
+        // -----------------------------------------------------------------
+        // 5. Save the extracted content as DOCX and verify the file.
+        // -----------------------------------------------------------------
+        const string resultPath = "extracted.docx";
+        resultDoc.Save(resultPath, SaveFormat.Docx);
 
-        // Validate output.
-        if (!File.Exists(outputPath))
+        if (!File.Exists(resultPath))
             throw new InvalidOperationException("The extracted DOCX file was not created.");
     }
 }
