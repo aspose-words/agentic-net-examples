@@ -3,15 +3,25 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class ExportPdfPagesToPng
 {
     public static void Main()
     {
-        // Create a sample PDF with at least 7 pages.
+        // Define file names.
         const string pdfPath = "sample.pdf";
-        Document pdfDocument = new Document();
-        DocumentBuilder builder = new DocumentBuilder(pdfDocument);
+        const string outputDir = "output";
 
+        // Ensure the output directory exists.
+        if (!Directory.Exists(outputDir))
+            Directory.CreateDirectory(outputDir);
+
+        // -----------------------------------------------------------------
+        // 1. Create a sample multi‑page document and save it as PDF.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // Add seven pages with simple text.
         for (int i = 1; i <= 7; i++)
         {
             builder.Writeln($"This is page {i}.");
@@ -19,32 +29,42 @@ public class Program
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        pdfDocument.Save(pdfPath, SaveFormat.Pdf);
+        // Save the document as PDF.
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the sample PDF.");
+            throw new InvalidOperationException("Failed to create the source PDF file.");
 
-        // Load the PDF we just created.
-        Document loadedPdf = new Document(pdfPath);
+        // -----------------------------------------------------------------
+        // 2. Load the PDF and export selected pages as PNG images.
+        // -----------------------------------------------------------------
+        Document pdfDoc = new Document(pdfPath);
 
-        // Pages to export (1‑based page numbers: 1, 4, 7).
-        int[] pageIndicesZeroBased = { 0, 3, 6 };
-        const float customResolution = 300f; // DPI
+        // Pages to export: 1, 4, 7 (zero‑based indices 0, 3, 6).
+        int[] pageIndices = { 0, 3, 6 };
+        const float dpi = 300f; // Custom resolution.
 
-        foreach (int pageIndex in pageIndicesZeroBased)
+        foreach (int pageIndex in pageIndices)
         {
-            // Configure image save options for PNG with custom resolution.
+            // Configure image save options.
             ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
             {
-                PageSet = new PageSet(pageIndex),
-                Resolution = customResolution
+                Resolution = dpi,               // Set both horizontal and vertical DPI.
+                PageSet = new PageSet(pageIndex) // Render only the specified page.
             };
 
-            string outputFileName = $"Page_{pageIndex + 1}.png";
-            loadedPdf.Save(outputFileName, options);
+            // Build the output file name.
+            string outFile = Path.Combine(outputDir, $"Page{pageIndex + 1}.png");
 
-            // Verify that the image was created.
-            if (!File.Exists(outputFileName))
+            // Save the selected page as a PNG image.
+            pdfDoc.Save(outFile, options);
+
+            // Validate that the image was created.
+            if (!File.Exists(outFile))
                 throw new InvalidOperationException($"Image for page {pageIndex + 1} was not created.");
         }
+
+        // All done – the program exits automatically.
     }
 }

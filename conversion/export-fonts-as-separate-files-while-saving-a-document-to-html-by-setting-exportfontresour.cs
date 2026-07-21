@@ -4,79 +4,67 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class ExportFontsExample
 {
     public static void Main()
     {
-        // Prepare folders.
-        string baseDir = Directory.GetCurrentDirectory();
-        string artifactsDir = Path.Combine(baseDir, "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare output folder.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "ExportedFonts");
+        Directory.CreateDirectory(outputFolder);
 
-        // 1. Create a sample DOCX document.
-        string inputDocx = Path.Combine(artifactsDir, "Sample.docx");
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample text with default font.");
+        // Path for the resulting HTML file.
+        string htmlPath = Path.Combine(outputFolder, "document.html");
+
+        // Create a simple document with some text.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = "Arial";
-        builder.Writeln("This line uses Arial.");
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("This line uses Times New Roman.");
-        sourceDoc.Save(inputDocx, SaveFormat.Docx);
+        builder.Writeln("Sample text using Arial font.");
 
-        // 2. Load the document we just created.
-        Document doc = new Document(inputDocx);
-
-        // 3. Configure HTML save options to export fonts as separate files.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        // Configure HTML save options to export fonts as separate files.
+        HtmlSaveOptions options = new HtmlSaveOptions
         {
             ExportFontResources = true,
-            FontSavingCallback = new HandleFontSaving(artifactsDir)
+            FontSavingCallback = new HandleFontSaving(outputFolder)
         };
 
-        // 4. Save the document as HTML. Fonts will be written to the same folder.
-        string htmlPath = Path.Combine(artifactsDir, "Sample.html");
-        doc.Save(htmlPath, saveOptions);
+        // Save the document to HTML.
+        doc.Save(htmlPath, options);
 
-        // 5. Validate output.
+        // Validate that the HTML file was created.
         if (!File.Exists(htmlPath))
             throw new InvalidOperationException("HTML file was not created.");
 
-        string[] fontFiles = Directory.GetFiles(artifactsDir, "*.ttf");
-        if (fontFiles.Length == 0)
+        // Validate that at least one font file was exported.
+        string[] exportedFonts = Directory.GetFiles(outputFolder, "*.ttf");
+        if (exportedFonts.Length == 0)
             throw new InvalidOperationException("No font files were exported.");
 
-        // 6. List the generated files.
-        Console.WriteLine("HTML file created: " + htmlPath);
-        Console.WriteLine("Exported font files:");
-        foreach (string fontFile in fontFiles)
-            Console.WriteLine("  " + Path.GetFileName(fontFile));
-    }
-}
-
-// Callback that tells Aspose.Words how to save each exported font.
-public class HandleFontSaving : IFontSavingCallback
-{
-    private readonly string _outputFolder;
-
-    public HandleFontSaving(string outputFolder)
-    {
-        _outputFolder = outputFolder;
+        // List exported font files.
+        foreach (string fontFile in exportedFonts)
+            Console.WriteLine($"Exported font: {fontFile}");
     }
 
-    void IFontSavingCallback.FontSaving(FontSavingArgs args)
+    // Callback that controls how each font resource is saved.
+    private class HandleFontSaving : IFontSavingCallback
     {
-        // Use only the file name part of the original font file.
-        string fontFileName = args.OriginalFileName.Split(Path.DirectorySeparatorChar).Last();
+        private readonly string _outputFolder;
 
-        // Set the file name Aspose.Words will use.
-        args.FontFileName = fontFileName;
+        public HandleFontSaving(string outputFolder)
+        {
+            _outputFolder = outputFolder;
+        }
 
-        // Provide a stream that writes the font into our output folder.
-        string fontPath = Path.Combine(_outputFolder, fontFileName);
-        args.FontStream = new FileStream(fontPath, FileMode.Create);
+        void IFontSavingCallback.FontSaving(FontSavingArgs args)
+        {
+            // Use the original font file name for the exported file.
+            string fileName = args.OriginalFileName.Split(Path.DirectorySeparatorChar).Last();
+            args.FontFileName = fileName;
 
-        // Ensure Aspose.Words closes the stream after writing.
-        args.KeepFontStreamOpen = false;
+            // Save the font to a file in the output folder.
+            string fullPath = Path.Combine(_outputFolder, fileName);
+            args.FontStream = new FileStream(fullPath, FileMode.Create);
+            args.KeepFontStreamOpen = false;
+        }
     }
 }

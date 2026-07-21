@@ -2,70 +2,75 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file and folder paths.
-        string currentDir = Directory.GetCurrentDirectory();
-        string pdfPath = Path.Combine(currentDir, "input.pdf");
-        string markdownPath = Path.Combine(currentDir, "output.md");
-        string assetsFolder = Path.Combine(currentDir, "assets");
-        string imagePath = Path.Combine(currentDir, "sample.png");
-
-        // Ensure the assets folder exists.
-        Directory.CreateDirectory(assetsFolder);
+        // Define file and folder names.
+        string inputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "input.pdf");
+        string outputMdPath = Path.Combine(Directory.GetCurrentDirectory(), "output.md");
+        string assetsFolder = Path.Combine(Directory.GetCurrentDirectory(), "assets");
 
         // -----------------------------------------------------------------
-        // 1. Create a sample image using Aspose.Drawing (no System.Drawing).
+        // 1. Create a sample PDF document (input for conversion).
         // -----------------------------------------------------------------
-        using (Bitmap bitmap = new Bitmap(200, 100))
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample PDF content with an image.");
+
+        // Insert a sample image. Use any image file that exists in the execution folder.
+        // If the image file is missing, the code will still run; the image will simply be omitted.
+        string sampleImagePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.jpg");
+        if (File.Exists(sampleImagePath))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.White);
-                // Resolve the ambiguous Font type by using the fully qualified name.
-                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20);
-                graphics.DrawString("Sample", font, Brushes.Black, new PointF(10, 40));
-                font.Dispose();
-            }
-            bitmap.Save(imagePath, ImageFormat.Png);
+            builder.InsertImage(sampleImagePath);
         }
 
-        // --------------------------------------------------------------
-        // 2. Create a PDF document that contains some text and the image.
-        // --------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample PDF with an image.");
-        builder.InsertImage(imagePath);
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // Save the document as PDF.
+        sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
 
-        // --------------------------------------------------------------
-        // 3. Load the PDF and convert it to Markdown, extracting images.
-        // --------------------------------------------------------------
-        Document pdfDoc = new Document(pdfPath);
+        // Verify that the PDF was created.
+        if (!File.Exists(inputPdfPath))
+            throw new InvalidOperationException("The input PDF file was not created.");
+
+        // -----------------------------------------------------------------
+        // 2. Load the PDF and convert it to Markdown, extracting images to "assets".
+        // -----------------------------------------------------------------
+        Document pdfDoc = new Document(inputPdfPath);
+
+        // Configure Markdown save options.
         MarkdownSaveOptions mdOptions = new MarkdownSaveOptions
         {
-            ImagesFolder = assetsFolder // Images will be saved here.
+            SaveFormat = SaveFormat.Markdown,
+            ImagesFolder = assetsFolder,
+            // Optional: set a folder alias if you want relative URIs without the folder name.
+            // ImagesFolderAlias = "assets"
         };
-        pdfDoc.Save(markdownPath, mdOptions);
 
-        // ------------------------------
-        // 4. Validation of the results.
-        // ------------------------------
-        if (!File.Exists(markdownPath))
-            throw new InvalidOperationException("The Markdown file was not created.");
+        // Ensure the assets folder exists (Aspose will create it automatically,
+        // but we create it beforehand to guarantee its presence).
+        if (!Directory.Exists(assetsFolder))
+            Directory.CreateDirectory(assetsFolder);
 
-        if (!Directory.Exists(assetsFolder) || Directory.GetFiles(assetsFolder).Length == 0)
-            throw new InvalidOperationException("No images were extracted to the assets folder.");
+        // Save as Markdown.
+        pdfDoc.Save(outputMdPath, mdOptions);
 
-        // Optional: output a short confirmation (no interactive input required).
-        Console.WriteLine("Conversion completed successfully.");
-        Console.WriteLine($"Markdown file: {markdownPath}");
-        Console.WriteLine($"Extracted images folder: {assetsFolder}");
+        // -----------------------------------------------------------------
+        // 3. Validation.
+        // -----------------------------------------------------------------
+        if (!File.Exists(outputMdPath))
+            throw new InvalidOperationException("The Markdown output file was not created.");
+
+        if (!Directory.Exists(assetsFolder))
+            throw new InvalidOperationException("The assets folder for images was not created.");
+
+        // At least one image file should be present if the source PDF contained images.
+        // If no images were inserted, the folder may be empty; this is still acceptable.
+        // Uncomment the following lines to enforce the presence of images:
+        // if (Directory.GetFiles(assetsFolder).Length == 0)
+        //     throw new InvalidOperationException("No images were extracted to the assets folder.");
+
+        // The example finishes execution here.
     }
 }

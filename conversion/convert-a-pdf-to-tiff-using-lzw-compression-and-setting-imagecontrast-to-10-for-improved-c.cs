@@ -7,33 +7,49 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF document.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample PDF content for conversion to TIFF.");
-        const string pdfPath = "input.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Define file paths for the intermediate PDF and final TIFF.
+        const string pdfPath = "sample.pdf";
+        const string tiffPath = "output.tiff";
 
-        // Load the PDF document.
+        // -----------------------------------------------------------------
+        // 1. Create a simple Word document and save it as PDF.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample PDF content for conversion to TIFF.");
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        // -----------------------------------------------------------------
+        // 2. Load the generated PDF document.
+        // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
 
-        // Configure TIFF save options: LZW compression and increased contrast.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // -----------------------------------------------------------------
+        // 3. Configure image save options:
+        //    - Render to TIFF format.
+        //    - Use LZW compression.
+        //    - Increase image contrast (maximum allowed value is 1.0).
+        // -----------------------------------------------------------------
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Lzw,
-            // ImageContrast must be in the range 0..1. 1.0 gives maximum contrast.
-            ImageContrast = 1.0f
+            ImageContrast = 1.0f // Maximum contrast within the valid range (0‑1).
         };
 
-        // Save the PDF as a TIFF image.
-        const string tiffPath = "output.tiff";
-        pdfDoc.Save(tiffPath, tiffOptions);
+        // -----------------------------------------------------------------
+        // 4. Save the PDF as a TIFF image using the configured options.
+        // -----------------------------------------------------------------
+        pdfDoc.Save(tiffPath, options);
 
-        // Verify that the TIFF file was created.
-        if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("The TIFF output file was not created.");
+        // -----------------------------------------------------------------
+        // 5. Validate that the TIFF file was created and contains data.
+        // -----------------------------------------------------------------
+        if (!File.Exists(tiffPath) || new FileInfo(tiffPath).Length == 0)
+        {
+            throw new InvalidOperationException(
+                "TIFF conversion failed: output file was not created or is empty.");
+        }
 
-        // Optional cleanup of the intermediate PDF.
-        // File.Delete(pdfPath);
+        // Example completed successfully.
     }
 }

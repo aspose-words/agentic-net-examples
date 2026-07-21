@@ -7,28 +7,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX file.
-        const string inputPath = "sample.docx";
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words!");
-        doc.Save(inputPath, SaveFormat.Docx);
+        // Create a sample DOCX document.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Sample content for HTML conversion.");
+        string docxPath = "sample.docx";
+        source.Save(docxPath, SaveFormat.Docx);
 
-        // Load the DOCX file.
-        Document loadedDoc = new Document(inputPath);
+        // Load the DOCX document.
+        Document doc = new Document(docxPath);
 
-        // Configure HTML save options to disable external JavaScript.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            RemoveJavaScriptFromLinks = true
-        };
+        // Configure HTML save options to disable JavaScript in links.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
+        htmlOptions.RemoveJavaScriptFromLinks = true;
 
         // Save the document as HTML.
-        const string outputPath = "output.html";
-        loadedDoc.Save(outputPath, htmlOptions);
+        string htmlPath = "output.html";
+        doc.Save(htmlPath, htmlOptions);
 
         // Verify that the HTML file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The HTML output file was not created.");
+        if (!File.Exists(htmlPath))
+            throw new InvalidOperationException("HTML output file was not created.");
     }
 }

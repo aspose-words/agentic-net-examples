@@ -1,37 +1,45 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a sample DOC document in memory.
+        // Create a sample DOC document in memory.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample DOC content for conversion.");
+        builder.Writeln("Sample DOC content.");
 
-        // 2. Save the DOC document to a MemoryStream (no file is written).
+        // Save the DOC document to a memory stream (no file is written).
         using (MemoryStream docStream = new MemoryStream())
         {
             sourceDoc.Save(docStream, SaveFormat.Doc);
             byte[] docBytes = docStream.ToArray();
 
-            // 3. Load a new Document from the byte array.
+            // Load a new Document from the byte array.
             using (MemoryStream loadStream = new MemoryStream(docBytes))
             {
                 Document loadedDoc = new Document(loadStream);
 
-                // 4. Convert the loaded document to PDF and save to a file.
-                const string pdfPath = "output.pdf";
-                loadedDoc.Save(pdfPath, SaveFormat.Pdf);
+                // Convert the loaded DOC to PDF and write the result to another memory stream.
+                using (MemoryStream pdfStream = new MemoryStream())
+                {
+                    loadedDoc.Save(pdfStream, SaveFormat.Pdf);
 
-                // 5. Validate that the PDF file was created.
-                if (!File.Exists(pdfPath))
-                    throw new InvalidOperationException("The PDF conversion failed; output file was not created.");
+                    // Verify that the PDF stream contains data.
+                    if (pdfStream.Length == 0)
+                        throw new InvalidOperationException("PDF conversion failed: the output stream is empty.");
 
-                // Optional: indicate success.
-                Console.WriteLine($"PDF successfully created at '{Path.GetFullPath(pdfPath)}'.");
+                    // Optionally write the PDF to a file for inspection (final output, not intermediate).
+                    string outputPath = "output.pdf";
+                    File.WriteAllBytes(outputPath, pdfStream.ToArray());
+
+                    // Validate that the PDF file was created.
+                    if (!File.Exists(outputPath))
+                        throw new InvalidOperationException("Expected output PDF was not created.");
+                }
             }
         }
     }

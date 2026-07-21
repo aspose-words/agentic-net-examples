@@ -6,18 +6,18 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX file.
+        // Create a sample DOCX document.
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
         builder.Writeln("Sample DOCX content.");
-        string inputPath = "input.docx";
+        const string inputPath = "input.docx";
         source.Save(inputPath, SaveFormat.Docx);
 
-        // Load the DOCX file.
+        // Load the DOCX document from disk.
         Document doc = new Document(inputPath);
 
-        // Save as PDF preserving layout.
-        string outputPath = "output.pdf";
+        // Convert and save the document as PDF.
+        const string outputPath = "output.pdf";
         doc.Save(outputPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.

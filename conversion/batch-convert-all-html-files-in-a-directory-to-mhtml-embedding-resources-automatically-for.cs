@@ -1,48 +1,63 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define input and output directories.
-        string inputDir = "InputHtml";
-        string outputDir = "OutputMhtml";
+        // Define folders for input HTML files and output MHTML files.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputMhtml");
 
-        // Ensure the directories exist.
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Ensure clean environment.
+        if (Directory.Exists(inputFolder))
+            Directory.Delete(inputFolder, true);
+        if (Directory.Exists(outputFolder))
+            Directory.Delete(outputFolder, true);
 
-        // Seed the input folder with sample HTML files.
-        CreateSampleHtml(Path.Combine(inputDir, "sample1.html"),
-            "<html><body><h1>Sample 1</h1><p>Hello World!</p></body></html>");
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        CreateSampleHtml(Path.Combine(inputDir, "sample2.html"),
-            "<html><body><h1>Sample 2</h1><img src=\"https://via.placeholder.com/150\" alt=\"Placeholder\"/></body></html>");
+        // Create sample HTML files.
+        CreateSampleHtml(Path.Combine(inputFolder, "Sample1.html"), "<html><body><h1>Sample 1</h1><p>Hello World!</p></body></html>");
+        CreateSampleHtml(Path.Combine(inputFolder, "Sample2.html"), "<html><body><h2>Sample 2</h2><img src=\"https://via.placeholder.com/150\" alt=\"Placeholder\"/></body></html>");
 
-        // Convert each HTML file in the input folder to MHTML.
-        foreach (string htmlFilePath in Directory.GetFiles(inputDir, "*.html"))
+        // Process each HTML file in the input folder.
+        string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
+        foreach (string htmlPath in htmlFiles)
         {
             // Load the HTML document.
-            Document doc = new Document(htmlFilePath);
+            Document doc = new Document(htmlPath);
 
-            // Build the output MHTML file path.
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(htmlFilePath);
-            string mhtmlFilePath = Path.Combine(outputDir, fileNameWithoutExt + ".mht");
+            // Prepare save options for MHTML with embedded resources.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+            {
+                ExportFontResources = true,          // Embed font resources.
+                ExportImagesAsBase64 = false,        // Keep images as separate MIME parts (default behavior).
+                ExportCidUrlsForMhtmlResources = false // Use file name references (default).
+            };
 
-            // Save as MHTML; resources (images, fonts, CSS) are embedded automatically.
-            doc.Save(mhtmlFilePath, SaveFormat.Mhtml);
+            // Determine output file path.
+            string outputFileName = Path.GetFileNameWithoutExtension(htmlPath) + ".mht";
+            string outputPath = Path.Combine(outputFolder, outputFileName);
 
-            // Verify that the output file was created.
-            if (!File.Exists(mhtmlFilePath))
-                throw new InvalidOperationException($"Failed to create MHTML file: {mhtmlFilePath}");
+            // Save the document as MHTML.
+            doc.Save(outputPath, saveOptions);
+
+            // Validate that the output file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"MHTML file was not created: {outputPath}");
         }
+
+        // Optional: indicate completion (no interactive input required).
+        Console.WriteLine("Batch conversion completed successfully.");
     }
 
-    // Helper method to write HTML content to a file.
     private static void CreateSampleHtml(string filePath, string htmlContent)
     {
+        // Write deterministic HTML content to a file.
         File.WriteAllText(filePath, htmlContent);
     }
 }

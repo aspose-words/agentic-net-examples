@@ -7,42 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF file.
-        const string pdfPath = "sample.pdf";
+        // Create a sample multi‑page document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Page 1 content.");
+        builder.Writeln("Page 1.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 content.");
+        builder.Writeln("Page 2.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 content.");
+        builder.Writeln("Page 3.");
+
+        // Save the document as PDF (the input file for the conversion).
+        const string pdfPath = "sample.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the sample PDF file.");
+            throw new InvalidOperationException("The PDF file was not created.");
 
         // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Export each page as a separate PNG image.
-        for (int i = 0; i < pdfDoc.PageCount; i++)
+        // Export each page of the PDF as a separate PNG image.
+        for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            string pngPath = $"page_{i + 1}.png";
-
             ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
             {
-                PageSet = new PageSet(i) // Zero‑based page index.
+                PageSet = new PageSet(pageIndex)
             };
 
+            string pngPath = $"page_{pageIndex + 1}.png";
             pdfDoc.Save(pngPath, options);
 
-            // Verify the PNG was created.
             if (!File.Exists(pngPath))
-                throw new InvalidOperationException($"Failed to create PNG for page {i + 1}.");
+                throw new InvalidOperationException($"The PNG file for page {pageIndex + 1} was not created.");
         }
-
-        // All pages have been exported successfully.
-        Console.WriteLine("PDF pages have been exported to PNG images.");
     }
 }

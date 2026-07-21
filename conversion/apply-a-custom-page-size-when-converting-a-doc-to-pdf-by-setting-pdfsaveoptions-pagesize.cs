@@ -2,38 +2,40 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Required for Aspose.Drawing types if needed
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample DOC file.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOC content.");
-        source.Save("input.doc", SaveFormat.Doc);
+        // Define file names
+        const string inputPath = "sample.doc";
+        const string outputPath = "custom_page_size.pdf";
 
-        // Load the DOC file.
-        Document doc = new Document("input.doc");
+        // Create a simple DOC file
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample document with a custom PDF page size.");
+        sourceDoc.Save(inputPath, SaveFormat.Doc);
 
-        // Define a custom page size (5 inches x 7 inches) in points.
-        float pageWidth = (float)ConvertUtil.InchToPoint(5);
-        float pageHeight = (float)ConvertUtil.InchToPoint(7);
+        // Load the DOC file
+        Document doc = new Document(inputPath);
 
-        // Apply the custom size to each section of the document.
-        foreach (Section section in doc.Sections)
-        {
-            section.PageSetup.PaperSize = PaperSize.Custom;
-            section.PageSetup.PageWidth = pageWidth;
-            section.PageSetup.PageHeight = pageHeight;
-        }
+        // Set a custom page size (A4: 595 x 842 points) for the first section
+        Section firstSection = doc.FirstSection;
+        firstSection.PageSetup.PaperSize = PaperSize.Custom;
+        firstSection.PageSetup.PageWidth = 595f;   // Width in points
+        firstSection.PageSetup.PageHeight = 842f;  // Height in points
 
-        // Convert the DOC to PDF using the custom page size.
-        doc.Save("output.pdf", SaveFormat.Pdf);
+        // Configure PDF save options (no need to set PageSize here)
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
-        // Verify that the PDF was created.
-        if (!File.Exists("output.pdf"))
+        // Save as PDF using the custom page size
+        doc.Save(outputPath, pdfOptions);
+
+        // Verify that the PDF was created
+        if (!File.Exists(outputPath))
             throw new InvalidOperationException("The PDF file was not created.");
+
+        Console.WriteLine($"PDF successfully created at '{Path.GetFullPath(outputPath)}' with custom page size.");
     }
 }

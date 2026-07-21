@@ -8,19 +8,19 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF file.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is the first page.");
+        // Create a sample PDF document.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("First page of the PDF.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is the second page.");
-        const string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        builder.Writeln("Second page of the PDF.");
 
-        // Load the PDF with options that ignore errors during loading.
+        const string pdfPath = "sample.pdf";
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Load the PDF while ignoring errors (recover mode).
         PdfLoadOptions loadOptions = new PdfLoadOptions
         {
-            // Attempt to recover from any errors encountered while loading.
             RecoveryMode = DocumentRecoveryMode.TryRecover
         };
         Document pdfDoc = new Document(pdfPath, loadOptions);
@@ -31,10 +31,9 @@ public class Program
 
         // Verify that the DOCX file was created.
         if (!File.Exists(docxPath))
-            throw new InvalidOperationException("The DOCX file was not created.");
+            throw new InvalidOperationException("The DOCX output file was not created.");
 
-        // Clean up temporary PDF file (optional).
-        if (File.Exists(pdfPath))
-            File.Delete(pdfPath);
+        // Clean up temporary files (optional).
+        File.Delete(pdfPath);
     }
 }

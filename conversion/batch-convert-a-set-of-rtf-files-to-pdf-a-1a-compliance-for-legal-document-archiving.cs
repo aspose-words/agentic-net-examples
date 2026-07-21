@@ -7,43 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input RTF files and output PDF/A‑1a files.
-        string inputFolder = "InputRtf";
-        string outputFolder = "OutputPdf";
+        // Directories for input RTF files and output PDF/A‑1a files.
+        string inputDir = "InputRtf";
+        string outputDir = "OutputPdf";
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure the directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Create sample RTF documents (the task requires local sample input).
-        // -----------------------------------------------------------------
+        // Create a few sample RTF documents.
         for (int i = 1; i <= 3; i++)
         {
-            // Create a blank document.
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            string rtfPath = Path.Combine(inputDir, $"Sample{i}.rtf");
 
-            // Add deterministic content.
-            builder.Writeln($"Sample RTF document #{i}");
-            builder.Writeln("Legal text for archiving purposes.");
-            builder.Writeln($"Generated on {DateTime.UtcNow:u}");
+            // Create a blank document and add sample text.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is sample document {i} for legal archiving.");
 
-            // Save as RTF in the input folder.
-            string rtfPath = Path.Combine(inputFolder, $"Sample{i}.rtf");
-            sampleDoc.Save(rtfPath, SaveFormat.Rtf);
+            // Save the document as RTF.
+            doc.Save(rtfPath, SaveFormat.Rtf);
         }
 
-        // ---------------------------------------------------------------
-        // Batch convert each RTF file to PDF/A‑1a compliant PDF document.
-        // ---------------------------------------------------------------
-        string[] rtfFiles = Directory.GetFiles(inputFolder, "*.rtf");
-        int convertedCount = 0;
+        // Get all RTF files from the input directory.
+        string[] rtfFiles = Directory.GetFiles(inputDir, "*.rtf");
 
         foreach (string rtfFile in rtfFiles)
         {
             // Load the RTF document.
-            Document doc = new Document(rtfFile);
+            Document rtfDoc = new Document(rtfFile);
 
             // Configure PDF save options for PDF/A‑1a compliance.
             PdfSaveOptions pdfOptions = new PdfSaveOptions
@@ -51,21 +43,19 @@ public class Program
                 Compliance = PdfCompliance.PdfA1a
             };
 
-            // Determine output PDF file path (same name, .pdf extension).
+            // Determine the output PDF file path.
             string pdfFileName = Path.GetFileNameWithoutExtension(rtfFile) + ".pdf";
-            string pdfPath = Path.Combine(outputFolder, pdfFileName);
+            string pdfPath = Path.Combine(outputDir, pdfFileName);
 
             // Save the document as PDF/A‑1a.
-            doc.Save(pdfPath, pdfOptions);
+            rtfDoc.Save(pdfPath, pdfOptions);
 
             // Verify that the PDF file was created.
             if (!File.Exists(pdfPath))
                 throw new InvalidOperationException($"Failed to create PDF file: {pdfPath}");
-
-            convertedCount++;
         }
 
-        // Simple confirmation (no interactive input required).
-        Console.WriteLine($"Batch conversion completed. {convertedCount} file(s) converted to PDF/A‑1a.");
+        // Indicate successful completion.
+        Console.WriteLine("Batch conversion completed successfully.");
     }
 }

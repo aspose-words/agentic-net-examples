@@ -1,50 +1,45 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX document locally.
+        // Step 1: Create a sample DOCX document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample DOCX content generated for cloud‑storage stream conversion.");
+        builder.Writeln("Sample DOCX content generated for conversion.");
+        const string inputPath = "input.docx";
+        sourceDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Save the sample document as a DOCX file (bootstrap for the input).
-        const string inputFileName = "input.docx";
-        sourceDoc.Save(inputFileName, SaveFormat.Docx);
-
-        // Step 2: Simulate a cloud storage stream by loading the DOCX file into a MemoryStream.
-        using (FileStream fileStream = new FileStream(inputFileName, FileMode.Open, FileAccess.Read))
-        using (MemoryStream cloudStream = new MemoryStream())
+        // Step 2: Load the DOCX from a stream (simulating a cloud storage download).
+        using (FileStream inputStream = File.OpenRead(inputPath))
         {
-            fileStream.CopyTo(cloudStream);
-            cloudStream.Position = 0; // Reset before reading.
+            Document loadedDoc = new Document(inputStream);
 
-            // Step 3: Load the document from the simulated cloud stream.
-            Document docFromCloud = new Document(cloudStream);
-
-            // Step 4: Convert the loaded document to PDF using another MemoryStream.
-            using (MemoryStream pdfStream = new MemoryStream())
+            // Step 3: Convert the document to PDF and write it to a memory stream
+            // (simulating an HTTP response stream for client download).
+            using (MemoryStream responseStream = new MemoryStream())
             {
-                docFromCloud.Save(pdfStream, SaveFormat.Pdf);
+                loadedDoc.Save(responseStream, SaveFormat.Pdf);
 
-                // Verify that PDF data was written.
-                if (pdfStream.Length == 0)
-                    throw new InvalidOperationException("PDF conversion produced an empty stream.");
+                // Validate that PDF data was written.
+                if (responseStream.Length == 0)
+                    throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
 
-                // Optional: write the PDF to a file for verification.
-                const string outputFileName = "output.pdf";
-                pdfStream.Position = 0; // Reset before copying to file.
-                using (FileStream outFile = new FileStream(outputFileName, FileMode.Create, FileAccess.Write))
+                // Optional: Save the PDF to a file for verification.
+                const string outputPath = "output.pdf";
+                // Reset the stream position before saving to file.
+                responseStream.Position = 0;
+                using (FileStream fileStream = File.Create(outputPath))
                 {
-                    pdfStream.CopyTo(outFile);
+                    responseStream.CopyTo(fileStream);
                 }
 
-                // Verify that the output file exists.
-                if (!File.Exists(outputFileName))
-                    throw new InvalidOperationException("Expected output PDF file was not created.");
+                if (!File.Exists(outputPath))
+                    throw new InvalidOperationException("Expected output PDF was not created.");
             }
         }
     }

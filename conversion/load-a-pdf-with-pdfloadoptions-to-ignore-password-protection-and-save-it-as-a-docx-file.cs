@@ -7,25 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF file.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample PDF content.");
+        // Define file names for the intermediate PDF and the final DOCX.
         const string pdfPath = "sample.pdf";
-        source.Save(pdfPath, SaveFormat.Pdf);
+        const string docxPath = "converted.docx";
 
-        // Load the PDF using PdfLoadOptions (no password supplied, so any password protection is ignored).
-        PdfLoadOptions loadOptions = new PdfLoadOptions();
+        // -----------------------------------------------------------------
+        // Step 1: Create a simple Word document and save it as a PDF file.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample PDF created by Aspose.Words.");
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("Failed to create the sample PDF file.");
+
+        // ---------------------------------------------------------------
+        // Step 2: Load the PDF using PdfLoadOptions (no password supplied).
+        // ---------------------------------------------------------------
+        PdfLoadOptions loadOptions = new PdfLoadOptions(); // No password set; password protection is ignored.
         Document pdfDoc = new Document(pdfPath, loadOptions);
 
-        // Save the loaded document as DOCX.
-        const string docxPath = "output.docx";
+        // ---------------------------------------------------------------
+        // Step 3: Save the loaded document as DOCX.
+        // ---------------------------------------------------------------
         pdfDoc.Save(docxPath, SaveFormat.Docx);
 
-        // Verify that the DOCX file was created.
+        // Validate that the DOCX file was created.
         if (!File.Exists(docxPath))
-        {
-            throw new InvalidOperationException("The DOCX file was not created.");
-        }
+            throw new InvalidOperationException("The DOCX conversion output was not created.");
+
+        // Optional: Inform the user that the conversion succeeded.
+        Console.WriteLine($"PDF '{pdfPath}' was successfully converted to DOCX '{docxPath}'.");
     }
 }

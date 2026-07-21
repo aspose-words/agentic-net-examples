@@ -7,37 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Paths for the temporary DOCX input and the final XLSX output.
+        string inputPath = "input.docx";
+        string outputPath = "output.xlsx";
 
-        // Paths for the intermediate DOCX and final XLSX files
-        string inputDocxPath = Path.Combine(artifactsDir, "input.docx");
-        string outputXlsxPath = Path.Combine(artifactsDir, "output.xlsx");
-
-        // Create a simple DOCX document
+        // Create a simple DOCX document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Sample content for XLSX conversion.");
-        doc.Save(inputDocxPath, SaveFormat.Docx);
 
-        // Load the DOCX document
-        Document loadedDoc = new Document(inputDocxPath);
+        // Save the DOCX to disk (bootstrap the input file).
+        doc.Save(inputPath, SaveFormat.Docx);
 
-        // Set up XLSX save options with fast compression
-        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
-        {
-            CompressionLevel = CompressionLevel.Fast,
-            SaveFormat = SaveFormat.Xlsx
-        };
+        // Load the DOCX document from the file system.
+        Document loadedDoc = new Document(inputPath);
 
-        // Save the document as XLSX using the configured options
-        loadedDoc.Save(outputXlsxPath, xlsxOptions);
+        // Set up XlsxSaveOptions with fast compression.
+        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions();
+        xlsxOptions.CompressionLevel = CompressionLevel.Fast;
+        xlsxOptions.SaveFormat = SaveFormat.Xlsx;
 
-        // Verify that the XLSX file was created
-        if (!File.Exists(outputXlsxPath))
-        {
+        // Save the document as XLSX using the specified options.
+        loadedDoc.Save(outputPath, xlsxOptions);
+
+        // Verify that the XLSX file was created.
+        if (!File.Exists(outputPath))
             throw new InvalidOperationException("Expected XLSX output was not created.");
-        }
     }
 }

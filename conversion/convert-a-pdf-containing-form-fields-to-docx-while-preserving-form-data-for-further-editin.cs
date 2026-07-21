@@ -7,39 +7,41 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        const string pdfPath = "sample_form.pdf";
-        const string docxPath = "converted.docx";
+        // Define file names.
+        const string docxPath = "sample.docx";
+        const string pdfPath = "sample.pdf";
+        const string outputDocxPath = "output.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create a Word document with a form field (combo box) and save it as PDF.
+        // 1. Create a Word document with a combo box form field.
         // -----------------------------------------------------------------
-        Document wordDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(wordDoc);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Please select a fruit: ");
+        builder.InsertComboBox("MyComboBox", new[] { "Apple", "Banana", "Cherry" }, 0);
+        sourceDoc.Save(docxPath, SaveFormat.Docx);
 
-        builder.Writeln("Please select a fruit:");
-        // Insert a combo box form field with three options.
-        builder.InsertComboBox("FruitCombo", new[] { "Apple", "Banana", "Cherry" }, 0);
-
-        // Save as PDF while preserving the form fields as interactive PDF fields.
+        // -----------------------------------------------------------------
+        // 2. Convert the Word document to PDF while preserving form fields.
+        // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             PreserveFormFields = true
         };
-        wordDoc.Save(pdfPath, pdfOptions);
+        sourceDoc.Save(pdfPath, pdfOptions);
 
         // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+            throw new InvalidOperationException("Expected PDF file was not created.");
 
         // -----------------------------------------------------------------
-        // 2. Load the PDF and convert it to DOCX.
+        // 3. Load the PDF and convert it back to DOCX.
         // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
-        pdfDoc.Save(docxPath, SaveFormat.Docx);
+        pdfDoc.Save(outputDocxPath, SaveFormat.Docx);
 
-        // Verify that the DOCX was created.
-        if (!File.Exists(docxPath))
-            throw new InvalidOperationException("DOCX file was not created.");
+        // Verify that the output DOCX was created.
+        if (!File.Exists(outputDocxPath))
+            throw new InvalidOperationException("Expected output DOCX file was not created.");
     }
 }

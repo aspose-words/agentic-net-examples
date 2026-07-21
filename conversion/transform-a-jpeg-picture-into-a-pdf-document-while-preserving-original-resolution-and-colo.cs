@@ -13,64 +13,81 @@ public class Program
         const string jpegPath = "sample.jpg";
         const string pdfPath = "output.pdf";
 
-        // ------------------------------------------------------------
+        // -----------------------------------------------------------------
         // 1. Create a sample JPEG image using Aspose.Drawing.
-        // ------------------------------------------------------------
-        using (Bitmap bitmap = new Bitmap(800, 600))
-        {
-            // Fill the bitmap with a solid color.
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.CornflowerBlue);
-                // Draw a simple ellipse to have some content.
-                using (Pen pen = new Pen(Color.White, 5))
-                {
-                    graphics.DrawEllipse(pen, 100, 100, 600, 400);
-                }
-            }
+        // -----------------------------------------------------------------
+        // Create a 300x300 bitmap.
+        Bitmap bitmap = new Bitmap(300, 300);
+        // Obtain a graphics object to draw on the bitmap.
+        Graphics graphics = Graphics.FromImage(bitmap);
+        // Fill the background with a solid color.
+        graphics.Clear(Color.CornflowerBlue);
+        // Draw a simple ellipse.
+        graphics.FillEllipse(Brushes.Gold, 50, 50, 200, 200);
+        // Save the bitmap as a JPEG with maximum quality (100).
+        ImageCodecInfo jpegCodec = GetJpegCodec();
+        EncoderParameters encoderParams = new EncoderParameters(1);
+        encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 100L);
+        bitmap.Save(jpegPath, jpegCodec, encoderParams);
+        // Clean up drawing resources.
+        graphics.Dispose();
+        bitmap.Dispose();
 
-            // Save the bitmap as a JPEG with maximum quality (100).
-            // This ensures the source image has full resolution and color depth.
-            bitmap.Save(jpegPath, ImageFormat.Jpeg);
-        }
-
-        // Verify that the JPEG file was created.
-        if (!File.Exists(jpegPath) || new FileInfo(jpegPath).Length == 0)
-            throw new InvalidOperationException("Failed to create the source JPEG image.");
-
-        // ------------------------------------------------------------
-        // 2. Load the JPEG into a Word document.
-        // ------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // 2. Load the JPEG into a Word document and insert it.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
 
-        // ------------------------------------------------------------
-        // 3. Configure PDF save options to preserve the original image.
-        // ------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // 3. Configure PDF save options to preserve original image data.
+        // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             // Keep colors unchanged.
             ColorMode = ColorMode.Normal,
-            // Preserve JPEG quality (no recompression).
-            ImageCompression = PdfImageCompression.Jpeg,
+            // Preserve JPEG quality.
             JpegQuality = 100,
-            // Disable downsampling of images.
+            // Do not downsample images.
             DownsampleOptions = { DownsampleImages = false }
         };
+        // Use automatic image compression (keeps original JPEG bytes when possible).
+        pdfOptions.ImageCompression = PdfImageCompression.Auto;
 
-        // ------------------------------------------------------------
+        // -----------------------------------------------------------------
         // 4. Save the document as PDF.
-        // ------------------------------------------------------------
+        // -----------------------------------------------------------------
         doc.Save(pdfPath, pdfOptions);
 
-        // ------------------------------------------------------------
+        // -----------------------------------------------------------------
         // 5. Validate that the PDF was created.
-        // ------------------------------------------------------------
+        // -----------------------------------------------------------------
         if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
-            throw new InvalidOperationException("PDF conversion failed; output file was not created.");
+        {
+            throw new InvalidOperationException("PDF conversion failed: output file was not created.");
+        }
 
-        // Cleanup: optional removal of temporary files.
-        // File.Delete(jpegPath);
+        // Optional: clean up the temporary JPEG file.
+        try
+        {
+            File.Delete(jpegPath);
+        }
+        catch
+        {
+            // Ignored – not critical for the example.
+        }
+    }
+
+    // Helper method to retrieve the JPEG codec for saving images.
+    private static ImageCodecInfo GetJpegCodec()
+    {
+        ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+        foreach (ImageCodecInfo codec in codecs)
+        {
+            if (codec.FormatID == ImageFormat.Jpeg.Guid)
+                return codec;
+        }
+        throw new InvalidOperationException("JPEG codec not found.");
     }
 }

@@ -1,35 +1,41 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
-using Aspose.Words.Replacing;   // Required for FindReplaceOptions
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX with placeholders.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Report for {{Name}}");
-        builder.Writeln("Date: {{Date}}");
+        // Define file paths.
+        const string inputPath = "input.docx";
+        const string outputPath = "output.pdf";
 
-        const string docxPath = "template.docx";
-        template.Save(docxPath, SaveFormat.Docx);
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample DOCX with placeholder tokens.
+        // -----------------------------------------------------------------
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Report for {Name}");
+        builder.Writeln("Date: {Date}");
+        sampleDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Load the DOCX.
-        Document doc = new Document(docxPath);
+        // -----------------------------------------------------------------
+        // Step 2: Load the DOCX, replace placeholders with actual values.
+        // -----------------------------------------------------------------
+        Document doc = new Document(inputPath);
+        doc.Range.Replace("{Name}", "John Doe", new FindReplaceOptions());
+        doc.Range.Replace("{Date}", DateTime.Today.ToString("yyyy-MM-dd"), new FindReplaceOptions());
 
-        // Replace placeholders with actual values.
-        doc.Range.Replace("{{Name}}", "John Doe", new FindReplaceOptions());
-        doc.Range.Replace("{{Date}}", DateTime.Today.ToString("yyyy-MM-dd"), new FindReplaceOptions());
+        // -----------------------------------------------------------------
+        // Step 3: Export the modified document to PDF.
+        // -----------------------------------------------------------------
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Export to PDF.
-        const string pdfPath = "report.pdf";
-        doc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
+        // -----------------------------------------------------------------
+        // Validation: Ensure the PDF was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(outputPath))
             throw new InvalidOperationException("Expected output PDF was not created.");
     }
 }

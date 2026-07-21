@@ -4,68 +4,71 @@ using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Define paths for temporary files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare folders
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        string imagePath = Path.Combine(artifactsDir, "sample.png");
-        string pdfPath = Path.Combine(artifactsDir, "sample.pdf");
-        string htmlPath = Path.Combine(artifactsDir, "sample.html");
-
-        // -----------------------------------------------------------------
-        // Create a simple PNG image using Aspose.Drawing (no System.Drawing).
-        // -----------------------------------------------------------------
-        using (Bitmap bitmap = new Bitmap(100, 100))
+        // Create a sample image using Aspose.Drawing
+        byte[] imageBytes;
+        using (var bitmap = new Bitmap(100, 100))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (var graphics = Graphics.FromImage(bitmap))
             {
-                // Fill the bitmap with a solid color.
-                graphics.Clear(Color.Blue);
+                graphics.Clear(Color.White);
+                using (var pen = new Pen(Color.Blue, 3))
+                {
+                    graphics.DrawEllipse(pen, new Rectangle(10, 10, 80, 80));
+                }
             }
 
-            // Save the bitmap to a file.
-            bitmap.Save(imagePath, ImageFormat.Png);
+            using (var ms = new MemoryStream())
+            {
+                bitmap.Save(ms, ImageFormat.Png);
+                imageBytes = ms.ToArray();
+            }
         }
 
-        // --------------------------------------------------------------
-        // Create a Word document, insert the image, and save it as PDF.
-        // --------------------------------------------------------------
+        // Create a Word document and insert the image
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample PDF with an embedded image:");
-        builder.InsertImage(imagePath);
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        builder.Writeln("Sample document with an embedded image:");
+        using (var imgStream = new MemoryStream(imageBytes))
+        {
+            builder.InsertImage(imgStream);
+        }
 
-        // --------------------------------------------------------------
-        // Load the PDF and save it as HTML with images embedded as Base64.
-        // --------------------------------------------------------------
+        // Save the document as PDF
+        string pdfPath = Path.Combine(outputDir, "sample.pdf");
+        doc.Save(pdfPath, SaveFormat.Pdf);
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("PDF file was not created.");
+
+        // Load the PDF document
         Document pdfDoc = new Document(pdfPath);
+
+        // Save PDF as HTML with images embedded as Base64
+        string htmlPath = Path.Combine(outputDir, "sample.html");
         HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
         {
-            ExportEmbeddedImages = true, // Enable Base64 embedding.
+            ExportEmbeddedImages = true,
             PrettyFormat = true
         };
         pdfDoc.Save(htmlPath, htmlOptions);
-
-        // ------------------------------
-        // Validate that the HTML contains Base64 image data.
-        // ------------------------------
         if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("The HTML output file was not created.");
+            throw new InvalidOperationException("HTML file was not created.");
 
+        // Verify that the HTML contains Base64 image data
         string htmlContent = File.ReadAllText(htmlPath);
         if (!htmlContent.Contains("data:image"))
-            throw new InvalidOperationException("Images were not embedded as Base64 data URIs.");
+            throw new InvalidOperationException("Images were not embedded as Base64 in the HTML.");
 
-        // Optional: clean up temporary files (comment out if inspection is needed).
-        // File.Delete(imagePath);
-        // File.Delete(pdfPath);
-        // File.Delete(htmlPath);
-        // Directory.Delete(artifactsDir, true);
+        // Example completed successfully
+        Console.WriteLine("PDF converted to HTML with embedded Base64 images.");
     }
 }

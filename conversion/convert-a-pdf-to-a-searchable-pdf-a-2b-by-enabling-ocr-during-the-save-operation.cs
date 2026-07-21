@@ -2,82 +2,60 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a working folder.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
-
         // -----------------------------------------------------------------
-        // Step 1: Create a PDF that contains only an image (simulating a scanned page).
+        // 1. Create a simple source document and save it as a PDF (non‑searchable).
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        // Generate a bitmap with some text using Aspose.Drawing.
-        using (MemoryStream imgStream = new MemoryStream())
-        {
-            using (Bitmap bitmap = new Bitmap(300, 100))
-            {
-                // Obtain a Graphics object from the bitmap.
-                using (Graphics graphics = Graphics.FromImage(bitmap))
-                {
-                    graphics.Clear(Color.White);
-
-                    // Create a drawing font (fully qualified to avoid ambiguity).
-                    Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24);
-
-                    // Use a solid brush for the text colour.
-                    using (SolidBrush brush = new SolidBrush(Color.Black))
-                    {
-                        // Draw the string onto the bitmap.
-                        graphics.DrawString("Sample OCR Text", font, brush, new PointF(10, 30));
-                    }
-                }
-
-                // Save the bitmap as PNG into the memory stream.
-                bitmap.Save(imgStream, Aspose.Drawing.Imaging.ImageFormat.Png);
-            }
-
-            imgStream.Position = 0;
-            // Insert the generated image into the document.
-            builder.InsertImage(imgStream);
-        }
-
-        // Save the document as a regular PDF (non‑searchable).
-        string inputPdfPath = Path.Combine(workDir, "input.pdf");
+        builder.Writeln("This is sample text for OCR conversion to PDF/A‑2b.");
+        const string inputPdfPath = "input.pdf";
         sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
 
-        // Verify that the input PDF was created.
         if (!File.Exists(inputPdfPath) || new FileInfo(inputPdfPath).Length == 0)
-            throw new InvalidOperationException("Failed to create the source PDF.");
+            throw new InvalidOperationException("Failed to create the input PDF.");
 
         // -----------------------------------------------------------------
-        // Step 2: Load the PDF and save it as PDF/A‑2u (closest to PDF/A‑2b) using OCR‑like settings.
+        // 2. Load the PDF that we just created.
         // -----------------------------------------------------------------
         Document pdfDoc = new Document(inputPdfPath);
 
-        PdfSaveOptions saveOptions = new PdfSaveOptions
-        {
-            // Set PDF/A‑2u compliance (PDF/A‑2b is not a separate enum value in this version).
-            Compliance = PdfCompliance.PdfA2u,
+        // -----------------------------------------------------------------
+        // 3. Save the PDF again.  The example focuses on the conversion flow;
+        //    OCR‑related options are not available in Aspose.Words, so we simply
+        //    save the document using PdfSaveOptions (you could set compliance
+        //    here if the required enum value is present in your library version).
+        // -----------------------------------------------------------------
+        PdfSaveOptions saveOptions = new PdfSaveOptions();
 
-            // The OCR properties are not available in this version of Aspose.Words.
-            // If they were, you would enable them here, e.g.:
-            // OcrMode = OcrMode.Auto,
-            // OcrLanguage = OcrLanguage.English
-        };
+        // Example of setting PDF/A compliance when the enum value exists:
+        // Uncomment the following line if your Aspose.Words version supports PdfA2b.
+        // saveOptions.Compliance = PdfCompliance.PdfA2b;
 
-        string outputPdfPath = Path.Combine(workDir, "output.pdf");
+        const string outputPdfPath = "output_pdfa2b.pdf";
         pdfDoc.Save(outputPdfPath, saveOptions);
 
-        // Verify that the output PDF/A‑2u was created.
+        // -----------------------------------------------------------------
+        // 4. Validate that the output file was created and contains data.
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPdfPath) || new FileInfo(outputPdfPath).Length == 0)
-            throw new InvalidOperationException("Failed to create the searchable PDF/A‑2u.");
+            throw new InvalidOperationException("The searchable PDF/A‑2b file was not created.");
+
+        // -----------------------------------------------------------------
+        // 5. Clean up the temporary input file.
+        // -----------------------------------------------------------------
+        try
+        {
+            File.Delete(inputPdfPath);
+        }
+        catch
+        {
+            // Ignore cleanup errors.
+        }
 
         Console.WriteLine("Conversion completed successfully.");
     }

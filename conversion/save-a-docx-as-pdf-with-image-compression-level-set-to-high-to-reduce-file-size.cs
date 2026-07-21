@@ -8,19 +8,21 @@ public class Program
     public static void Main()
     {
         // Create a sample DOCX document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample content for PDF conversion with high image compression.");
-        source.Save("input.docx", SaveFormat.Docx);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample DOCX document created for conversion to PDF.");
+        sourceDoc.Save("input.docx", SaveFormat.Docx);
 
         // Load the DOCX document.
         Document doc = new Document("input.docx");
 
-        // Configure PDF save options for high image compression.
+        // Configure PDF save options to apply high image compression.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            ImageCompression = PdfImageCompression.Jpeg, // Use JPEG compression for images.
-            JpegQuality = 10 // Low quality = high compression.
+            // Use JPEG compression for all images.
+            ImageCompression = PdfImageCompression.Jpeg,
+            // Set JPEG quality to a low value (e.g., 10) for strong compression.
+            JpegQuality = 10
         };
 
         // Save the document as PDF with the specified options.
@@ -28,6 +30,11 @@ public class Program
 
         // Verify that the PDF file was created.
         if (!File.Exists("output.pdf"))
-            throw new InvalidOperationException("The PDF file was not created.");
+        {
+            throw new InvalidOperationException("The expected PDF output file was not created.");
+        }
+
+        // Optionally, report success.
+        Console.WriteLine("DOCX successfully converted to PDF with high image compression.");
     }
 }

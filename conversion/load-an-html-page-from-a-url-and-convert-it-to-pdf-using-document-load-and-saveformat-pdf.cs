@@ -7,10 +7,10 @@ public class Program
 {
     public static void Main()
     {
-        // URL of the HTML page to convert.
+        // URL of the HTML page to be converted.
         const string url = "https://www.example.com";
 
-        // Download the HTML content.
+        // Download the HTML content into a byte array.
         using (HttpClient httpClient = new HttpClient())
         {
             HttpResponseMessage response = httpClient.GetAsync(url).Result;

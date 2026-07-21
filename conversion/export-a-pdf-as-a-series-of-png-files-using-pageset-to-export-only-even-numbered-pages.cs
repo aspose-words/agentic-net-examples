@@ -11,6 +11,7 @@ public class ExportPdfPagesToPng
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
+        // Add five pages with simple text.
         for (int i = 1; i <= 5; i++)
         {
             builder.Writeln($"This is page {i}.");
@@ -18,39 +19,48 @@ public class ExportPdfPagesToPng
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save the document as a DOC file (bootstrap step).
-        const string docPath = "input.doc";
-        sourceDoc.Save(docPath, SaveFormat.Doc);
-
-        // Load the DOC file and convert it to PDF.
-        Document pdfDoc = new Document(docPath);
+        // Save the document as PDF – this will be the input for the conversion.
         const string pdfPath = "sample.pdf";
-        pdfDoc.Save(pdfPath, SaveFormat.Pdf);
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+            throw new InvalidOperationException("Failed to create the source PDF.");
 
-        // Load the PDF for image export.
-        Document loadedPdf = new Document(pdfPath);
+        // Load the PDF document.
+        Document pdfDoc = new Document(pdfPath);
 
-        // Prepare image save options for PNG format.
-        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
+        // Prepare output directory for PNG files.
+        const string outputFolder = "OutputImages";
+        Directory.CreateDirectory(outputFolder);
 
-        // Export only even‑numbered pages (pages 2,4,…) as separate PNG files.
-        for (int pageIndex = 0; pageIndex < loadedPdf.PageCount; pageIndex++)
+        // Export only even‑numbered pages (page numbers 2,4,…) as separate PNG images.
+        // In zero‑based indexing, even pages have odd indices.
+        for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            // Even‑numbered pages have odd zero‑based indices.
-            if (pageIndex % 2 == 1)
+            if (pageIndex % 2 == 1) // odd index => even page number
             {
-                pngOptions.PageSet = new PageSet(pageIndex);
-                string pngPath = $"page_{pageIndex + 1}.png";
-                loadedPdf.Save(pngPath, pngOptions);
+                ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+                {
+                    // Use a PageSet that contains only the current page.
+                    PageSet = new PageSet(pageIndex)
+                };
 
-                // Validate that the PNG file was created.
-                if (!File.Exists(pngPath))
-                    throw new InvalidOperationException($"PNG file '{pngPath}' was not created.");
+                string pngPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
+                pdfDoc.Save(pngPath, pngOptions);
+
+                // Validate that the PNG file was written.
+                if (!File.Exists(pngPath) || new FileInfo(pngPath).Length == 0)
+                    throw new InvalidOperationException($"PNG for page {pageIndex + 1} was not created.");
             }
         }
+
+        // Final validation: at least one PNG should exist.
+        string[] generatedFiles = Directory.GetFiles(outputFolder, "*.png");
+        if (generatedFiles.Length == 0)
+            throw new InvalidOperationException("No PNG files were generated.");
+
+        // Example completed successfully.
+        Console.WriteLine($"Exported {generatedFiles.Length} even‑page PNG file(s) to '{outputFolder}'.");
     }
 }
