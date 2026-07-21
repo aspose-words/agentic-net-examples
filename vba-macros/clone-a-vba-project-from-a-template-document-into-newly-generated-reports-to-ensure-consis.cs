@@ -7,68 +7,63 @@ public class Program
 {
     public static void Main()
     {
-        // Define paths for the template and the generated report.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string templatePath = Path.Combine(outputDir, "Template.docm");
-        string reportPath = Path.Combine(outputDir, "Report.docm");
+        // Define file paths for the template and the generated report.
+        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string templatePath = Path.Combine(artifactsDir, "Template.docm");
+        string reportPath = Path.Combine(artifactsDir, "Report.docm");
 
-        // -------------------------------------------------
-        // Step 1: Create a macro-enabled template document.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 1. Create a template document that contains a VBA project.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
 
-        // Create a new VBA project and add a simple macro module.
+        // Create a new VBA project and assign a name.
         VbaProject templateProject = new VbaProject
         {
             Name = "TemplateProject"
         };
-
-        VbaModule macroModule = new VbaModule
-        {
-            Name = "StandardModule",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from template\"\nEnd Sub"
-        };
-
-        templateProject.Modules.Add(macroModule);
         templateDoc.VbaProject = templateProject;
 
-        // Save the template as a macro-enabled document.
+        // Create a procedural module with a simple macro.
+        VbaModule macroModule = new VbaModule
+        {
+            Name = "SampleModule",
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = @"
+Sub HelloWorld()
+    MsgBox ""Hello from the template macro!""
+End Sub"
+        };
+        // Add the module to the VBA project.
+        templateDoc.VbaProject.Modules.Add(macroModule);
+
+        // Save the template as a macro‑enabled document.
         templateDoc.Save(templatePath, SaveFormat.Docm);
 
-        // -------------------------------------------------
-        // Step 2: Load the template and clone its VBA project.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 2. Load the template (optional – we already have it in memory).
+        // -----------------------------------------------------------------
         Document loadedTemplate = new Document(templatePath);
-        VbaProject clonedProject = loadedTemplate.VbaProject.Clone();
 
-        // -------------------------------------------------
-        // Step 3: Create a new report and attach the cloned VBA project.
-        // -------------------------------------------------
+        // Ensure the template actually contains macros before cloning.
+        if (!loadedTemplate.HasMacros || loadedTemplate.VbaProject == null)
+        {
+            throw new InvalidOperationException("The template does not contain a VBA project.");
+        }
+
+        // -----------------------------------------------------------------
+        // 3. Create a new report document and clone the VBA project from the template.
+        // -----------------------------------------------------------------
         Document reportDoc = new Document();
 
-        // (Optional) Add some content to the report.
-        DocumentBuilder builder = new DocumentBuilder(reportDoc);
-        builder.Writeln("This is a generated report that reuses macros from the template.");
+        // Clone the VBA project from the template.
+        VbaProject clonedProject = loadedTemplate.VbaProject.Clone();
 
-        // Assign the cloned VBA project to the new document.
+        // Assign the cloned project to the report document.
         reportDoc.VbaProject = clonedProject;
 
-        // Save the report as a macro-enabled document.
+        // Save the report as a macro‑enabled document.
         reportDoc.Save(reportPath, SaveFormat.Docm);
-
-        // -------------------------------------------------
-        // Step 4: Simple validation – ensure the macro exists.
-        // -------------------------------------------------
-        Document validationDoc = new Document(reportPath);
-        bool hasMacros = validationDoc.HasMacros;
-        int moduleCount = validationDoc.VbaProject?.Modules?.Count ?? 0;
-        string moduleName = moduleCount > 0 ? validationDoc.VbaProject.Modules[0].Name : "N/A";
-
-        Console.WriteLine($"Report generated at: {reportPath}");
-        Console.WriteLine($"Has macros: {hasMacros}");
-        Console.WriteLine($"Module count: {moduleCount}");
-        Console.WriteLine($"First module name: {moduleName}");
     }
 }

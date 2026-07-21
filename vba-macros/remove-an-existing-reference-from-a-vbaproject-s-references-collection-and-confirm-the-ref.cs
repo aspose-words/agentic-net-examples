@@ -2,54 +2,58 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class RemoveVbaReferenceExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Path for the temporary macro-enabled document.
+        const string filePath = "Sample.docm";
+
+        // 1. Create a new blank document.
         Document doc = new Document();
 
-        // Create a new VBA project and assign it to the document.
+        // 2. Create a new VBA project and assign it to the document.
         VbaProject vbaProject = new VbaProject();
         vbaProject.Name = "SampleProject";
         doc.VbaProject = vbaProject;
 
-        // Add a simple procedural module so the document is truly macro‑enabled.
-        VbaModule module = new VbaModule
-        {
-            Name = "SampleModule",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub"
-        };
+        // 3. Add a simple VBA module so the project is not empty.
+        VbaModule module = new VbaModule();
+        module.Name = "Module1";
+        module.Type = VbaModuleType.ProceduralModule;
+        module.SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub";
         doc.VbaProject.Modules.Add(module);
 
-        // Access the references collection.
-        VbaReferenceCollection references = doc.VbaProject.References;
+        // 4. Save the document in macro-enabled format.
+        doc.Save(filePath);
 
-        // Record the initial count of references.
+        // 5. Reload the document to work with the persisted VBA project.
+        Document loadedDoc = new Document(filePath);
+
+        // 6. Access the references collection.
+        VbaReferenceCollection references = loadedDoc.VbaProject.References;
+
+        // 7. Record the initial reference count.
         int initialCount = references.Count;
         Console.WriteLine($"Initial reference count: {initialCount}");
 
-        // If there is at least one reference, remove the last one and confirm the count decreases.
+        // 8. If there is at least one reference, remove the first one.
         if (initialCount > 0)
         {
-            // Remove the reference at the last index.
-            references.RemoveAt(initialCount - 1);
+            references.RemoveAt(0);
+            int newCount = references.Count;
+            Console.WriteLine($"Reference count after removal: {newCount}");
 
-            int afterRemovalCount = references.Count;
-            Console.WriteLine($"Reference count after removal: {afterRemovalCount}");
-
-            // Simple validation that the count decreased by one.
-            Console.WriteLine(afterRemovalCount == initialCount - 1
-                ? "Reference removal confirmed."
-                : "Reference count did not decrease as expected.");
+            // 9. Verify that the count has decreased.
+            bool decreased = newCount == initialCount - 1;
+            Console.WriteLine($"Reference count decreased: {decreased}");
         }
         else
         {
-            Console.WriteLine("No references were present to remove.");
+            Console.WriteLine("No references found to remove.");
         }
 
-        // Save the document in a macro‑enabled format.
-        doc.Save("RemoveVbaReferenceResult.docm");
+        // 10. Save the modified document (optional).
+        loadedDoc.Save("Sample_Modified.docm");
     }
 }

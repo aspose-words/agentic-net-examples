@@ -5,79 +5,86 @@ using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-namespace AsposeWordsVbaImport
+public class Program
 {
     // Represents a macro definition read from JSON.
-    public class MacroDefinition
+    private class MacroDefinition
     {
         public string Name { get; set; }
-        public string Type { get; set; }          // Expected values: "ProceduralModule", "DocumentModule", "ClassModule", "DesignerModule"
         public string SourceCode { get; set; }
     }
 
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Prepare a sample JSON file with macro definitions.
+        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "macros.json");
+        var sampleMacros = new List<MacroDefinition>
         {
-            // Paths for the JSON input and the resulting macro‑enabled document.
-            string jsonPath = Path.Combine(Environment.CurrentDirectory, "macros.json");
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "ImportedMacros.docm");
-
-            // Ensure a sample JSON file exists.
-            if (!File.Exists(jsonPath))
+            new MacroDefinition
             {
-                var sampleMacros = new List<MacroDefinition>
-                {
-                    new MacroDefinition
-                    {
-                        Name = "Module1",
-                        Type = "ProceduralModule",
-                        SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub"
-                    },
-                    new MacroDefinition
-                    {
-                        Name = "Module2",
-                        Type = "ProceduralModule",
-                        SourceCode = "Sub AddNumbers()\n    Dim a As Integer, b As Integer\n    a = 5\n    b = 7\n    MsgBox \"Sum = \" & (a + b)\nEnd Sub"
-                    }
-                };
-                string json = JsonSerializer.Serialize(sampleMacros, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(jsonPath, json);
-            }
-
-            // Read macro definitions from the JSON file.
-            string jsonContent = File.ReadAllText(jsonPath);
-            List<MacroDefinition> macros = JsonSerializer.Deserialize<List<MacroDefinition>>(jsonContent);
-
-            // Create a blank Word document.
-            Document doc = new Document();
-
-            // Create a new VBA project and assign it to the document.
-            VbaProject project = new VbaProject();
-            project.Name = "ImportedMacrosProject";
-            doc.VbaProject = project;
-
-            // Add a VbaModule for each macro definition.
-            foreach (MacroDefinition macro in macros)
+                Name = "HelloWorldModule",
+                SourceCode = @"
+Sub HelloWorld()
+    MsgBox ""Hello, World!""
+End Sub"
+            },
+            new MacroDefinition
             {
-                VbaModule module = new VbaModule();
-                module.Name = macro.Name ?? "UnnamedModule";
-
-                // Parse the module type string to the corresponding enum value.
-                if (Enum.TryParse<VbaModuleType>(macro.Type, out VbaModuleType moduleType))
-                    module.Type = moduleType;
-                else
-                    module.Type = VbaModuleType.ProceduralModule; // Default fallback.
-
-                // Guard against null source code.
-                module.SourceCode = macro.SourceCode ?? string.Empty;
-
-                // Add the module to the VBA project.
-                doc.VbaProject.Modules.Add(module);
+                Name = "AddNumbersModule",
+                SourceCode = @"
+Function AddNumbers(a As Integer, b As Integer) As Integer
+    AddNumbers = a + b
+End Function"
             }
+        };
+        string jsonContent = JsonSerializer.Serialize(sampleMacros, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(jsonPath, jsonContent);
 
-            // Save the document as a macro‑enabled .docm file.
-            doc.Save(outputPath);
+        // Load macro definitions from the JSON file.
+        string readJson = File.ReadAllText(jsonPath);
+        List<MacroDefinition> macros = JsonSerializer.Deserialize<List<MacroDefinition>>(readJson);
+
+        // Create a new blank Word document.
+        Document doc = new Document();
+
+        // Ensure the document has a VBA project.
+        VbaProject vbaProject = new VbaProject
+        {
+            Name = "ImportedMacrosProject"
+        };
+        doc.VbaProject = vbaProject;
+
+        // Add a VBA module for each macro definition.
+        foreach (var macro in macros)
+        {
+            // Guard against null source code.
+            string source = macro.SourceCode ?? string.Empty;
+
+            VbaModule module = new VbaModule
+            {
+                Name = macro.Name,
+                Type = VbaModuleType.ProceduralModule,
+                SourceCode = source
+            };
+
+            doc.VbaProject.Modules.Add(module);
+        }
+
+        // Save the document as a macro‑enabled file.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ImportedMacros.docm");
+        doc.Save(outputPath);
+
+        // Load the saved document to verify that macros were added.
+        Document loadedDoc = new Document(outputPath);
+        Console.WriteLine($"Document has macros: {loadedDoc.HasMacros}");
+        Console.WriteLine($"Number of VBA modules: {loadedDoc.VbaProject.Modules.Count}");
+
+        foreach (VbaModule mod in loadedDoc.VbaProject.Modules)
+        {
+            Console.WriteLine($"Module: {mod.Name}");
+            Console.WriteLine("Source code:");
+            Console.WriteLine(mod.SourceCode);
+            Console.WriteLine(new string('-', 40));
         }
     }
 }

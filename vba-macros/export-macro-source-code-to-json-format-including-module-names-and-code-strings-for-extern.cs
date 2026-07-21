@@ -9,79 +9,49 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the temporary macro-enabled document.
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "SampleMacro.docm");
-
         // Create a new blank document.
         Document doc = new Document();
 
-        // Ensure the document has a VBA project.
-        if (doc.VbaProject == null)
-        {
-            VbaProject project = new VbaProject();
-            project.Name = "SampleProject";
-            doc.VbaProject = project;
-        }
+        // Create a new VBA project and assign it to the document.
+        VbaProject project = new VbaProject();
+        project.Name = "SampleProject";
+        doc.VbaProject = project;
 
-        // Add a procedural module with sample VBA code.
+        // Create the first VBA module.
         VbaModule module1 = new VbaModule();
-        module1.Name = "ModuleOne";
+        module1.Name = "Module1";
         module1.Type = VbaModuleType.ProceduralModule;
-        module1.SourceCode = @"
-Sub HelloWorld()
-    MsgBox ""Hello, World!""
-End Sub
-";
+        module1.SourceCode = "Sub Hello()\n    MsgBox \"Hello\"\nEnd Sub";
+
+        // Add the module to the VBA project.
         doc.VbaProject.Modules.Add(module1);
 
-        // Add a class module with sample VBA code.
+        // Create a second VBA module.
         VbaModule module2 = new VbaModule();
-        module2.Name = "ClassOne";
-        module2.Type = VbaModuleType.ClassModule;
-        module2.SourceCode = @"
-Public Sub Greet()
-    MsgBox ""Greetings from ClassOne!""
-End Sub
-";
+        module2.Name = "Module2";
+        module2.Type = VbaModuleType.ProceduralModule;
+        module2.SourceCode = "Function Add(a As Integer, b As Integer) As Integer\n    Add = a + b\nEnd Function";
+
+        // Add the second module.
         doc.VbaProject.Modules.Add(module2);
 
-        // Save the document in a macro-enabled format.
-        doc.Save(docPath);
+        // Save the document as a macro‑enabled file.
+        string filePath = "MacroDocument.docm";
+        doc.Save(filePath);
 
-        // Load the document (optional, demonstrates loading from file).
-        Document loadedDoc = new Document(docPath);
+        // Export macro source code to JSON.
+        var macroList = new List<object>();
 
-        // Prepare a list to hold module information.
-        List<MacroInfo> macros = new List<MacroInfo>();
-
-        // Iterate over all VBA modules.
-        foreach (VbaModule mod in loadedDoc.VbaProject.Modules)
+        if (doc.VbaProject != null)
         {
-            // Guard against null source code.
-            string code = mod.SourceCode ?? string.Empty;
-
-            macros.Add(new MacroInfo
+            foreach (VbaModule module in doc.VbaProject.Modules)
             {
-                Name = mod.Name,
-                SourceCode = code
-            });
+                string source = module.SourceCode ?? string.Empty;
+                macroList.Add(new { Name = module.Name, SourceCode = source });
+            }
         }
 
-        // Serialize the list to JSON.
-        string json = JsonSerializer.Serialize(macros, new JsonSerializerOptions { WriteIndented = true });
-
-        // Output JSON to console.
+        string json = JsonSerializer.Serialize(macroList, new JsonSerializerOptions { WriteIndented = true });
         Console.WriteLine(json);
-
-        // Optionally, write JSON to a file.
-        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "macros.json");
-        File.WriteAllText(jsonPath, json);
-    }
-
-    // Simple DTO for JSON serialization.
-    private class MacroInfo
-    {
-        public string Name { get; set; }
-        public string SourceCode { get; set; }
     }
 }

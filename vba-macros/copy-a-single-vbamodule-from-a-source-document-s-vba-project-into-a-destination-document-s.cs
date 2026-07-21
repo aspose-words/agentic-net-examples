@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -8,67 +9,63 @@ namespace VbaModuleCopyExample
     {
         public static void Main()
         {
-            // Paths for the temporary source and destination documents.
-            const string sourcePath = "Source.docm";
-            const string destinationPath = "Destination.docm";
+            // Define file names for the source and destination documents.
+            string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docm");
+            string destPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docm");
 
-            // -------------------------------------------------
-            // Create a source document with a VBA project and a single module.
-            // -------------------------------------------------
+            // ---------- Create the source document with a VBA project and a single module ----------
             Document sourceDoc = new Document();
 
-            // Create and assign a new VBA project.
+            // Create a new VBA project and assign it to the source document.
             VbaProject sourceProject = new VbaProject
             {
                 Name = "SourceProject"
             };
             sourceDoc.VbaProject = sourceProject;
 
-            // Create a VBA module, set its properties, and add it to the project.
+            // Create a VBA module, set its properties, and add it to the source project.
             VbaModule sourceModule = new VbaModule
             {
-                Name = "MyModule",
+                Name = "SampleModule",
                 Type = VbaModuleType.ProceduralModule,
-                SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from source\"\nEnd Sub"
+                SourceCode = @"
+Sub HelloWorld()
+    MsgBox ""Hello from the source module!""
+End Sub"
             };
-            sourceProject.Modules.Add(sourceModule);
+            sourceDoc.VbaProject.Modules.Add(sourceModule);
 
-            // Save the source document in a macro‑enabled format.
-            sourceDoc.Save(sourcePath);
+            // Save the source document in macro-enabled format.
+            sourceDoc.Save(sourcePath, SaveFormat.Docm);
 
-            // -------------------------------------------------
-            // Load the source document (simulating an existing file).
-            // -------------------------------------------------
-            Document src = new Document(sourcePath);
+            // ---------- Create the destination document ----------
+            Document destDoc = new Document();
 
-            // -------------------------------------------------
-            // Create a destination document and its VBA project.
-            // -------------------------------------------------
-            Document dest = new Document();
-
-            VbaProject destProject = new VbaProject
+            // Ensure the destination document has a VBA project.
+            if (destDoc.VbaProject == null)
             {
-                Name = "DestinationProject"
-            };
-            dest.VbaProject = destProject;
-
-            // -------------------------------------------------
-            // Copy the specified module from the source to the destination.
-            // -------------------------------------------------
-            VbaModule moduleToCopy = src.VbaProject?.Modules["MyModule"];
-            if (moduleToCopy != null)
-            {
-                // Clone creates a deep copy of the module.
-                VbaModule copiedModule = moduleToCopy.Clone();
-
-                // Add the cloned module to the destination project's collection.
-                destProject.Modules.Add(copiedModule);
+                VbaProject destProject = new VbaProject
+                {
+                    Name = "DestinationProject"
+                };
+                destDoc.VbaProject = destProject;
             }
 
-            // -------------------------------------------------
-            // Save the destination document with the copied module.
-            // -------------------------------------------------
-            dest.Save(destinationPath);
+            // ---------- Copy the module from source to destination ----------
+            // Load the source document (optional if still in memory) to obtain the module.
+            Document loadedSource = new Document(sourcePath);
+            VbaModule moduleToCopy = loadedSource.VbaProject.Modules["SampleModule"];
+
+            // Guard against null module.
+            if (moduleToCopy != null)
+            {
+                // Clone the module and add it to the destination project's modules collection.
+                VbaModule copiedModule = moduleToCopy.Clone();
+                destDoc.VbaProject.Modules.Add(copiedModule);
+            }
+
+            // Save the destination document in macro-enabled format.
+            destDoc.Save(destPath, SaveFormat.Docm);
         }
     }
 }

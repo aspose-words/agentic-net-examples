@@ -7,61 +7,69 @@ public class Program
 {
     public static void Main()
     {
-        // Define a folder to store the temporary files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Path for the temporary macro-enabled document.
+        string filePath = "Sample.docm";
 
-        // Path for the macro‑enabled document.
-        string macroDocPath = Path.Combine(outputDir, "Sample.docm");
-
-        // -----------------------------------------------------------------
-        // Create a new blank document and add a VBA project with one module.
-        // -----------------------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Create a new VBA project and assign a name.
+        // Create a new VBA project and assign it to the document.
         VbaProject project = new VbaProject();
-        project.Name = "Aspose.SampleProject";
+        project.Name = "SampleProject";
         doc.VbaProject = project;
 
-        // Create a procedural VBA module with simple macro code.
-        VbaModule module = new VbaModule();
-        module.Name = "HelloModule";
-        module.Type = VbaModuleType.ProceduralModule;
-        module.SourceCode = "Sub Hello()\n    MsgBox \"Hello from VBA!\"\nEnd Sub";
+        // Create the first VBA module.
+        VbaModule module1 = new VbaModule();
+        module1.Name = "Module1";
+        module1.Type = VbaModuleType.ProceduralModule;
+        module1.SourceCode = "Sub Hello()\n    MsgBox \"Hello World\"\nEnd Sub";
 
         // Add the module to the VBA project.
-        doc.VbaProject.Modules.Add(module);
+        doc.VbaProject.Modules.Add(module1);
 
-        // Save the document in a macro‑enabled format.
-        doc.Save(macroDocPath);
+        // Create a second VBA module.
+        VbaModule module2 = new VbaModule();
+        module2.Name = "Module2";
+        module2.Type = VbaModuleType.ProceduralModule;
+        module2.SourceCode = "Function AddNumbers(a As Integer, b As Integer) As Integer\n    AddNumbers = a + b\nEnd Function";
 
-        // ---------------------------------------------------------------
-        // Load the saved document and enumerate all VBA modules it contains.
-        // ---------------------------------------------------------------
-        Document loadedDoc = new Document(macroDocPath);
+        // Add the second module.
+        doc.VbaProject.Modules.Add(module2);
 
-        // Ensure the document actually has a VBA project.
-        if (loadedDoc.HasMacros && loadedDoc.VbaProject != null)
+        // Save the document in macro-enabled format.
+        doc.Save(filePath);
+
+        // Load the saved document.
+        Document loadedDoc = new Document(filePath);
+
+        // Access the VBA project.
+        VbaProject loadedProject = loadedDoc.VbaProject;
+
+        // If the document contains a VBA project, enumerate its modules.
+        if (loadedProject != null)
         {
-            VbaModuleCollection modules = loadedDoc.VbaProject.Modules;
-            Console.WriteLine($"VBA Project Name: {loadedDoc.VbaProject.Name}");
-            Console.WriteLine($"Number of modules: {modules.Count}");
+            Console.WriteLine($"VBA Project Name: {loadedProject.Name}");
+            Console.WriteLine($"Modules Count: {loadedProject.Modules.Count}");
 
-            // Iterate through each module and output its name and source code.
-            foreach (VbaModule mod in modules)
+            foreach (VbaModule vbaModule in loadedProject.Modules)
             {
                 // Guard against null source code.
-                string source = mod.SourceCode ?? string.Empty;
-                Console.WriteLine($"Module Name: {mod.Name}");
-                Console.WriteLine("Source Code:");
+                string source = vbaModule.SourceCode ?? string.Empty;
+
+                Console.WriteLine($"--- Module: {vbaModule.Name} ---");
                 Console.WriteLine(source);
-                Console.WriteLine(new string('-', 40));
+                Console.WriteLine();
             }
         }
         else
         {
-            Console.WriteLine("The loaded document does not contain any VBA macros.");
+            Console.WriteLine("The document does not contain a VBA project.");
+        }
+
+        // Clean up the temporary file.
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
         }
     }
 }

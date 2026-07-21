@@ -1,100 +1,84 @@
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
 public class Program
 {
-    // List of deprecated function names and their replacements.
-    private static readonly (string OldName, string NewName)[] DeprecatedFunctions = new[]
-    {
-        ("OldFunc", "NewFunc"),
-        ("LegacyCalc", "ModernCalc")
-    };
-
     public static void Main()
     {
-        // Create a new blank document.
+        // Path for the initial and updated documents.
+        const string initialPath = "Sample.docm";
+        const string updatedPath = "Sample_Updated.docm";
+
+        // 1. Create a new blank document.
         Document doc = new Document();
 
-        // Ensure the document has a VBA project.
+        // 2. Ensure the document has a VBA project.
         VbaProject vbaProject = new VbaProject { Name = "SampleProject" };
         doc.VbaProject = vbaProject;
 
-        // Add a procedural module with sample VBA code containing deprecated functions.
-        VbaModule module1 = new VbaModule
+        // 3. Add a procedural module containing deprecated function calls.
+        VbaModule module = new VbaModule
         {
             Name = "Module1",
             Type = VbaModuleType.ProceduralModule,
             SourceCode = @"
-Sub Test()
-    Dim result As Long
-    result = OldFunc(5)
-    MsgBox result
+Sub TestMacro()
+    Call OldFunction()
+    Call LEGACYFUNC()
+    MsgBox ""Done""
 End Sub
 
-Function OldFunc(x As Long) As Long
-    OldFunc = x * 2
+Function OldFunction() As String
+    OldFunction = ""Old""
+End Function
+
+Function LegacyFunc() As String
+    LegacyFunc = ""Legacy""
 End Function"
         };
-        doc.VbaProject.Modules.Add(module1);
+        doc.VbaProject.Modules.Add(module);
 
-        // Add another module to demonstrate multiple modules handling.
-        VbaModule module2 = new VbaModule
+        // 4. Save the document in macro‑enabled format.
+        doc.Save(initialPath);
+
+        // 5. Load the saved document to simulate a real‑world scenario.
+        Document loadedDoc = new Document(initialPath);
+
+        // 6. Define deprecated function names and their replacements.
+        var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            Name = "Helper",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"
-Public Sub Compute()
-    Dim val As Double
-    val = LegacyCalc(3.14)
-    Debug.Print val
-End Sub
-
-Function LegacyCalc(y As Double) As Double
-    LegacyCalc = y ^ 2
-End Function"
+            { "OldFunction", "NewFunction" },
+            { "LegacyFunc", "NewFunction" }
         };
-        doc.VbaProject.Modules.Add(module2);
 
-        // Save the original macro‑enabled document.
-        const string originalPath = "Original.docm";
-        doc.Save(originalPath);
-
-        // Load the document back (simulating a separate operation).
-        Document loadedDoc = new Document(originalPath);
-
-        // Verify that the document indeed contains macros.
-        if (!loadedDoc.HasMacros || loadedDoc.VbaProject == null)
+        // 7. Iterate over all VBA modules and perform case‑insensitive replacements.
+        if (loadedDoc.HasMacros && loadedDoc.VbaProject != null)
         {
-            Console.WriteLine("No VBA project found.");
-            return;
-        }
-
-        // Iterate over all VBA modules and replace deprecated function names (case‑insensitive).
-        foreach (VbaModule vbaModule in loadedDoc.VbaProject.Modules)
-        {
-            // Guard against null source code.
-            string source = vbaModule.SourceCode ?? string.Empty;
-
-            // Perform replacements for each deprecated function.
-            foreach (var (oldName, newName) in DeprecatedFunctions)
+            foreach (VbaModule mod in loadedDoc.VbaProject.Modules)
             {
-                // Use Regex with IgnoreCase to replace whole word occurrences.
-                string pattern = $@"\b{Regex.Escape(oldName)}\b";
-                source = Regex.Replace(source, pattern, newName, RegexOptions.IgnoreCase);
-            }
+                // Guard against null source code.
+                string source = mod.SourceCode ?? string.Empty;
 
-            // Update the module's source code.
-            vbaModule.SourceCode = source;
+                foreach (var kvp in replacements)
+                {
+                    // Build a regex pattern that matches the whole word, case‑insensitively.
+                    string pattern = $@"\b{Regex.Escape(kvp.Key)}\b";
+                    source = Regex.Replace(source, pattern, kvp.Value, RegexOptions.IgnoreCase);
+                }
+
+                // Update the module's source code.
+                mod.SourceCode = source;
+            }
         }
 
-        // Save the updated document.
-        const string updatedPath = "Updated.docm";
+        // 8. Save the updated document.
         loadedDoc.Save(updatedPath);
 
-        // Simple verification output.
-        Console.WriteLine($"Original document saved as: {originalPath}");
-        Console.WriteLine($"Updated document saved as: {updatedPath}");
+        // 9. Simple verification output (optional).
+        Console.WriteLine($"Document created: {initialPath}");
+        Console.WriteLine($"Document updated: {updatedPath}");
     }
 }
