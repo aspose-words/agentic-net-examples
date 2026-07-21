@@ -2,57 +2,63 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;               // Needed for the Shape class
-using Aspose.Words.Drawing.Charts;        // Chart related types
+using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define a working folder for the batch operation.
+        // Define a working directory inside the current folder.
         string workDir = Path.Combine(Directory.GetCurrentDirectory(), "ChartsBatch");
         Directory.CreateDirectory(workDir);
 
-        // Create a few sample Word documents if the folder is empty.
-        // Each document will contain a simple paragraph.
-        for (int i = 1; i <= 3; i++)
+        // Create a few sample DOCX files if the folder is empty.
+        // This ensures the example is self‑contained.
+        if (Directory.GetFiles(workDir, "*.docx").Length == 0)
         {
-            string samplePath = Path.Combine(workDir, $"input-{i}.docx");
-            if (!File.Exists(samplePath))
+            for (int i = 1; i <= 3; i++)
             {
-                Document sampleDoc = new Document();
-                DocumentBuilder sampleBuilder = new DocumentBuilder(sampleDoc);
-                sampleBuilder.Writeln($"Sample document {i}");
-                sampleDoc.Save(samplePath);
+                Document sample = new Document();
+                sample.Save(Path.Combine(workDir, $"input-{i}.docx"));
             }
         }
 
-        // Process every DOCX file in the folder.
+        // Predefined chart data.
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        double[] values = { 15.0, 30.5, 22.0, 40.0 };
+        string seriesName = "Quarterly Sales";
+
+        // Process each DOCX file in the folder.
         foreach (string filePath in Directory.GetFiles(workDir, "*.docx"))
         {
-            // Load the existing document.
+            // Load the document.
             Document doc = new Document(filePath);
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Move the cursor to the very start of the document (first page).
+            // Move the cursor to the start of the document (first page).
             builder.MoveToDocumentStart();
 
-            // Insert a bar chart and obtain its Chart object.
+            // Insert a Bar chart.
             Shape chartShape = builder.InsertChart(ChartType.Bar, 432, 252);
-            Chart chart = chartShape.Chart;
 
-            // Configure the chart title.
-            chart.Title.Text = "Quarterly Sales";
-            chart.Title.Show = true;
+            // Ensure the shape actually contains a chart.
+            if (chartShape.HasChart)
+            {
+                Chart chart = chartShape.Chart;
 
-            // Remove the demo data that comes with a new chart.
-            chart.Series.Clear();
+                // Remove the demo data that Aspose.Words inserts by default.
+                chart.Series.Clear();
 
-            // Define categories and corresponding values for the bar chart.
-            string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-            double[] values = { 1500, 2000, 1800, 2200 };
+                // Add our predefined series.
+                chart.Series.Add(seriesName, categories, values);
 
-            // Add a single series with the predefined data.
-            chart.Series.Add("Sales", categories, values);
+                // Optional: set a title for the chart.
+                chart.Title.Text = "Quarterly Sales Overview";
+                chart.Title.Show = true;
+                chart.Title.Font.Size = 14;
+                chart.Title.Font.Color = Color.DarkBlue;
+            }
 
             // Save the modified document back to the same file.
             doc.Save(filePath);

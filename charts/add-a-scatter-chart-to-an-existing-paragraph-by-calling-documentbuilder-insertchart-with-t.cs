@@ -1,9 +1,9 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;               // Needed for the Shape class
-using Aspose.Words.Drawing.Charts;        // Chart related types
+using Aspose.Words.Drawing.Charts;       // Chart related classes
 
-namespace ScatterChartExample
+namespace AsposeWordsChartsExample
 {
     public class Program
     {
@@ -13,29 +13,22 @@ namespace ScatterChartExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert an initial paragraph with some text.
-            builder.Writeln("This paragraph will contain a scatter chart below.");
+            // Write a paragraph that will precede the chart.
+            builder.Writeln("Scatter chart inserted below this paragraph:");
 
-            // Move the builder to the first paragraph (index 0, node index 0).
-            // This ensures the chart is inserted right after the paragraph.
-            builder.MoveToParagraph(0, 0);
-
-            // Insert a scatter chart using the overload that specifies chart type, width, and height.
-            // Width and height are specified in points (1 point = 1/72 inch).
+            // Insert a scatter chart at the current builder position using the overload that specifies type, width and height.
             Shape chartShape = builder.InsertChart(ChartType.Scatter, 500, 300);
             Chart chart = chartShape.Chart;
 
-            // Optional: clear the demo data that comes with the chart.
+            // Remove the default demo data and add a custom series.
             chart.Series.Clear();
+            chart.Series.Add("Series 1",
+                new[] { 1.0, 2.5, 4.0, 5.5 },   // X‑values
+                new[] { 3.0, 4.5, 2.0, 6.0 }    // Y‑values
+            );
 
-            // Add a series with X and Y values for the scatter plot.
-            chart.Series.Add(
-                "Sample Series",
-                new double[] { 1.0, 2.5, 3.8, 5.0, 6.2 },
-                new double[] { 2.0, 3.5, 1.8, 4.0, 5.5 });
-
-            // Save the document to the working directory.
-            doc.Save("ScatterChart.docx");
+            // Save the document to the local file system.
+            doc.Save("ScatterChartExample.docx");
         }
     }
 }

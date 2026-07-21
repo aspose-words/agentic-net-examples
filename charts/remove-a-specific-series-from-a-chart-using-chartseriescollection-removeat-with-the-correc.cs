@@ -1,7 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;               // Needed for the Shape class
-using Aspose.Words.Drawing.Charts;        // Chart related classes
+using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
 
 public class Program
 {
@@ -11,18 +12,24 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart. The default chart contains three demo series.
+        // Insert a column chart. The chart comes with three demo series by default.
         Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
         Chart chart = chartShape.Chart;
 
-        // Verify that the chart has at least three series before attempting removal.
-        if (chart.Series.Count < 3)
-            throw new InvalidOperationException("The chart does not contain enough series to remove.");
+        // Determine the index of the series to remove.
+        // For this example we will remove the second series (zero‑based index 1) if it exists.
+        int indexToRemove = 1;
+        if (indexToRemove >= 0 && indexToRemove < chart.Series.Count)
+        {
+            chart.Series.RemoveAt(indexToRemove);
+        }
+        else
+        {
+            throw new InvalidOperationException($"Series index {indexToRemove} is out of range.");
+        }
 
-        // Remove the third series (zero‑based index 2).
-        chart.Series.RemoveAt(2);
-
-        // Save the modified document.
-        doc.Save("RemoveSeries.docx");
+        // Save the document to the working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RemoveSeries.docx");
+        doc.Save(outputPath);
     }
 }

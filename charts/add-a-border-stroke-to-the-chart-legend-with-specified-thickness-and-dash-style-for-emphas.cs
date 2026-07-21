@@ -1,32 +1,34 @@
-using System.Drawing;
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart.
+        // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Clear default demo data and add custom series.
+        // Optional: clear the demo data and add custom series.
         chart.Series.Clear();
         string[] categories = { "Category 1", "Category 2", "Category 3" };
         chart.Series.Add("Series 1", categories, new double[] { 10, 20, 30 });
+        chart.Series.Add("Series 2", categories, new double[] { 15, 25, 35 });
 
-        // Apply a border stroke to the chart legend.
+        // Configure the legend border: set thickness and dash style.
         ChartLegend legend = chart.Legend;
         legend.Format.Stroke.Weight = 2.0;               // Thickness of the border.
-        legend.Format.Stroke.DashStyle = DashStyle.Dash; // Dash style for emphasis.
-        legend.Format.Stroke.Color = Color.DarkRed;      // Optional: set border color.
+        legend.Format.Stroke.DashStyle = DashStyle.Dash; // Dash style.
+        legend.Format.Stroke.Color = Color.DarkBlue;     // Border color (optional).
 
-        // Save the document.
-        doc.Save("ChartWithLegendBorder.docx");
+        // Save the document to the working directory.
+        doc.Save("ChartLegendBorder.docx");
     }
 }

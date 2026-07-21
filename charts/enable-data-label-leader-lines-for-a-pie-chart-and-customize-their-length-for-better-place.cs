@@ -1,43 +1,50 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
-public class Program
+public class LeaderLinesPieChart
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a pie chart.
-        Shape chartShape = builder.InsertChart(ChartType.Pie, 500, 300);
-        Chart chart = chartShape.Chart;
+        Chart chart = builder.InsertChart(ChartType.Pie, 500, 300).Chart;
 
-        // Remove the default demo series.
+        // Remove the demo data series.
         chart.Series.Clear();
 
-        // Add custom data.
-        string[] categories = { "Apples", "Bananas", "Cherries" };
-        double[] values = { 30, 45, 25 };
-        ChartSeries series = chart.Series.Add("Fruits", categories, values);
+        // Add a custom series with categories and values.
+        ChartSeries series = chart.Series.Add(
+            "Sample Series",
+            new[] { "Apples", "Bananas", "Cherries" },
+            new[] { 30.0, 45.0, 25.0 });
 
         // Enable data labels for the series.
         series.HasDataLabels = true;
         ChartDataLabelCollection dataLabels = series.DataLabels;
-        dataLabels.ShowLeaderLines = true;   // Show leader lines.
-        dataLabels.ShowValue = true;         // Show the numeric value.
-        dataLabels.ShowPercentage = true;    // Show the percentage.
-        dataLabels.Separator = "; ";         // Separator between value and percentage.
 
-        // Increase the distance between the data labels and the pie slices.
-        // This is achieved by setting the series' Explosion property, which moves
-        // each slice (and its leader line) outward from the centre.
-        series.Explosion = 20; // Adjust this value as needed for longer leader lines.
+        // Show leader lines, values and percentages.
+        dataLabels.ShowLeaderLines = true;
+        dataLabels.ShowValue = true;
+        dataLabels.ShowPercentage = true;
+
+        // Customize the position of each data label to increase leader line length.
+        // Use absolute positioning for precise control.
+        for (int i = 0; i < series.YValues.Count; i++)
+        {
+            ChartDataLabel label = dataLabels[i];
+            // Move each label outward by a fixed offset.
+            // The offset values are arbitrary and can be tuned as needed.
+            label.Left += 20 * i;
+            label.Top += 20 * i;
+            label.LeftMode = ChartDataLabelLocationMode.Absolute;
+            label.TopMode = ChartDataLabelLocationMode.Absolute;
+        }
 
         // Save the document.
-        doc.Save("DataLabelsLeaderLinesPieChart.docx");
+        doc.Save("LeaderLinesPieChart.docx");
     }
 }

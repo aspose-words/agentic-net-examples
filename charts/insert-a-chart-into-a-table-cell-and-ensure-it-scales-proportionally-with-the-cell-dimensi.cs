@@ -1,49 +1,45 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Tables;
 
 public class ChartInTableExample
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a table.
         builder.StartTable();
 
-        // First cell – label.
+        // First cell – just some placeholder text.
         builder.InsertCell();
-        builder.Write("Chart:");
-
-        // Define desired dimensions for the chart cell (in points).
-        const double cellWidth = 300;   // ~4.17 inches
-        const double cellHeight = 200;  // ~2.78 inches
-
-        // Apply the dimensions to the upcoming cell and its row.
-        builder.CellFormat.Width = cellWidth;
-        builder.RowFormat.Height = cellHeight;
-        builder.RowFormat.HeightRule = HeightRule.Exactly;
+        builder.Write("Data cell");
 
         // Second cell – will contain the chart.
         builder.InsertCell();
 
-        // Insert a column chart that fits the cell size.
-        Shape chartShape = builder.InsertChart(ChartType.Column, cellWidth, cellHeight);
-        // Note: AspectRatioLocked caused a NullReference in some environments,
-        // so it is omitted. The chart will already respect the specified size.
+        // Define explicit cell dimensions.
+        // Width of the cell (points). 1 point = 1/72 inch.
+        builder.CellFormat.Width = 300; // approx 4.17 cm
+        // Height of the row (and thus the cell) – set to exact value.
+        builder.RowFormat.HeightRule = HeightRule.Exactly;
+        builder.RowFormat.Height = 200; // approx 2.78 cm
 
-        // Populate the chart with sample data.
+        // Insert a chart that matches the cell size.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 300, 200);
         Chart chart = chartShape.Chart;
-        chart.Series.Clear();
-        chart.Series.Add("Sales",
-            new[] { "Q1", "Q2", "Q3", "Q4" },
-            new[] { 150.0, 200.0, 180.0, 220.0 });
 
-        // Finish the row and the table.
+        // Optional: replace the demo data with custom series.
+        chart.Series.Clear();
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        chart.Series.Add("Sales", categories, new double[] { 150, 200, 180, 220 });
+
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 

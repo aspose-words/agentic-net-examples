@@ -1,27 +1,26 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart and obtain its shape.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        // Insert a column chart.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Clear the demo series and add a custom one.
+        // Clear default demo data and add custom series.
         chart.Series.Clear();
-        chart.Series.Add(
-            "Sample Series",
-            new[] { "Category 1", "Category 2", "Category 3" },
-            new double[] { 10, 20, 30 });
+        chart.Series.Add("Sample Series",
+            new[] { "A", "B", "C", "D" },
+            new double[] { 10, 20, 30, 40 });
 
         // Access the primary X axis.
         ChartAxis xAxis = chart.AxisX;
@@ -29,11 +28,11 @@ public class Program
         // Make major gridlines visible.
         xAxis.HasMajorGridlines = true;
 
-        // Set gridline color and thickness.
+        // Customize gridline appearance: set line color and thickness.
         xAxis.Format.Stroke.Color = Color.Blue;
-        xAxis.Format.Stroke.Weight = 1.5; // thickness in points
+        xAxis.Format.Stroke.Weight = 2.0; // Thickness in points.
 
         // Save the document.
-        doc.Save("ChartGridlines.docx");
+        doc.Save("ChartWithCustomGridlines.docx");
     }
 }

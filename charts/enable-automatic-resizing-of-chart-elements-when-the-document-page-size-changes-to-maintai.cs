@@ -1,8 +1,8 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -12,48 +12,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart with an initial size.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        // Insert a chart with automatic scaling (width and height set to 0 request 100% scale).
+        Shape chartShape = builder.InsertChart(ChartType.Column, 0, 0);
+        if (!chartShape.HasChart)
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+
         Chart chart = chartShape.Chart;
 
-        // Add a simple series to the chart.
+        // Remove the demo data that Aspose.Words adds by default.
         chart.Series.Clear();
-        chart.Series.Add("Sales", new[] { "Q1", "Q2", "Q3", "Q4" }, new[] { 150.0, 200.0, 180.0, 220.0 });
 
-        // Set a title for clarity.
+        // Add a simple data series.
+        chart.Series.Add(
+            "Sales",
+            new[] { "Q1", "Q2", "Q3", "Q4" },
+            new[] { 150.0, 200.0, 250.0, 300.0 });
+
+        // Add a visible title.
         chart.Title.Text = "Quarterly Sales";
         chart.Title.Show = true;
 
-        // Save the document before changing the page size (optional, for comparison).
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string initialPath = Path.Combine(outputDir, "Chart_Initial.docx");
-        doc.Save(initialPath);
+        // Save the initial document.
+        doc.Save("chart-auto-scale.docx");
 
-        // Change the page size of the current section (e.g., to A5).
-        builder.PageSetup.PaperSize = PaperSize.A5;
+        // Change the page size of the first section (e.g., to A4) and adjust margins.
+        builder.PageSetup.PaperSize = PaperSize.A4;
+        builder.PageSetup.TopMargin = ConvertUtil.InchToPoint(1);
+        builder.PageSetup.BottomMargin = ConvertUtil.InchToPoint(1);
+        builder.PageSetup.LeftMargin = ConvertUtil.InchToPoint(1);
+        builder.PageSetup.RightMargin = ConvertUtil.InchToPoint(1);
 
-        // Recalculate the usable page width and height (excluding margins).
-        double usableWidth = builder.PageSetup.PageWidth - builder.PageSetup.LeftMargin - builder.PageSetup.RightMargin;
-        double usableHeight = builder.PageSetup.PageHeight - builder.PageSetup.TopMargin - builder.PageSetup.BottomMargin;
-
-        // Resize the chart to fit within the new page dimensions while preserving a margin.
-        // Here we leave a 20‑point margin around the chart.
-        const double chartMargin = 20.0;
-        chartShape.Width = Math.Max(0, usableWidth - 2 * chartMargin);
-        chartShape.Height = Math.Max(0, usableHeight - 2 * chartMargin);
-
-        // Optionally reposition the chart to be centered on the page.
-        chartShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        chartShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        chartShape.Left = (builder.PageSetup.PageWidth - chartShape.Width) / 2;
-        chartShape.Top = (builder.PageSetup.PageHeight - chartShape.Height) / 2;
-
-        // Update layout to ensure the changes are reflected.
+        // Rebuild the layout so the chart rescales to fit the new page dimensions.
         doc.UpdatePageLayout();
 
-        // Save the final document with the resized chart.
-        string finalPath = Path.Combine(outputDir, "Chart_Resized.docx");
-        doc.Save(finalPath);
+        // Save the document after the page size change.
+        doc.Save("chart-auto-scale-updated.docx");
     }
 }

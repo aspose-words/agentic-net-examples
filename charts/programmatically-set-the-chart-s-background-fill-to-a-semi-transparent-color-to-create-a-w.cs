@@ -16,16 +16,11 @@ public class Program
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Optional: clear the demo series and add custom data.
-        chart.Series.Clear();
-        string[] categories = { "A", "B", "C" };
-        chart.Series.Add("Series 1", categories, new double[] { 10, 20, 30 });
-
-        // Set the chart background to a semi‑transparent light gray color.
+        // Apply a semi‑transparent fill to the chart background to achieve a watermark effect.
         chart.Format.Fill.Solid(Color.LightGray);
         chart.Format.Fill.Transparency = 0.5; // 50 % transparency
 
         // Save the document.
-        doc.Save("ChartWatermark.docx");
+        doc.Save("ChartBackgroundWatermark.docx");
     }
 }

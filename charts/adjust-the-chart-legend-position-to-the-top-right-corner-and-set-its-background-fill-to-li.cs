@@ -1,8 +1,8 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Drawing;               // Needed for Shape
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
 public class Program
 {
@@ -20,10 +20,13 @@ public class Program
         ChartLegend legend = chart.Legend;
         legend.Position = LegendPosition.TopRight;
 
-        // Set the legend background fill to light gray.
+        // Set the legend's background fill to light gray.
         legend.Format.Fill.Solid(Color.LightGray);
 
-        // Save the document.
-        doc.Save("ChartLegendTopRight.docx");
+        // Allow other chart elements to overlap the legend if needed.
+        legend.Overlay = true;
+
+        // Save the resulting document.
+        doc.Save("ChartLegendPosition.docx");
     }
 }
