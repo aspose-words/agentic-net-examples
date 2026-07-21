@@ -1,63 +1,95 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Newtonsoft.Json;
 
-public class Program
+public class ContentControlPlaceholderReplacement
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample DOCX file that contains plain‑text content
+        // controls acting as placeholders.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Add a heading.
-        builder.Writeln("Customer Information:");
-
-        // Insert a plain‑text content control for the customer's name.
-        StructuredDocumentTag nameTag = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // First placeholder – Title: "FirstName"
+        StructuredDocumentTag firstNameTag = new StructuredDocumentTag(
+            templateDoc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "CustomerName",
-            Tag = "customer-name"
+            Title = "FirstName",
+            Tag = "first-name"
         };
-        nameTag.RemoveAllChildren();
-        nameTag.AppendChild(new Run(doc, "Enter name"));
-        builder.InsertNode(nameTag);
-        builder.Writeln(); // Move to the next line.
+        firstNameTag.RemoveAllChildren();
+        firstNameTag.AppendChild(new Run(templateDoc, "<<FirstName>>"));
+        builder.InsertNode(firstNameTag);
+        builder.Writeln(); // move to next line
 
-        // Insert a plain‑text content control for the customer's address.
-        StructuredDocumentTag addressTag = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Second placeholder – Title: "LastName"
+        StructuredDocumentTag lastNameTag = new StructuredDocumentTag(
+            templateDoc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "Address",
-            Tag = "address"
+            Title = "LastName",
+            Tag = "last-name"
         };
-        addressTag.RemoveAllChildren();
-        addressTag.AppendChild(new Run(doc, "Enter address"));
-        builder.InsertNode(addressTag);
-        builder.Writeln();
+        lastNameTag.RemoveAllChildren();
+        lastNameTag.AppendChild(new Run(templateDoc, "<<LastName>>"));
+        builder.InsertNode(lastNameTag);
+        builder.Writeln(); // move to next line
 
-        // Dictionary that simulates user input values.
-        Dictionary<string, string> userInputs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        // Third placeholder – Title: "Email"
+        StructuredDocumentTag emailTag = new StructuredDocumentTag(
+            templateDoc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            { "CustomerName", "John Doe" },
-            { "Address", "123 Main St, Anytown" }
+            Title = "Email",
+            Tag = "email"
+        };
+        emailTag.RemoveAllChildren();
+        emailTag.AppendChild(new Run(templateDoc, "<<Email>>"));
+        builder.InsertNode(emailTag);
+        builder.Writeln(); // finish paragraph
+
+        // Save the template document to disk.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Step 2: Prepare a dictionary that maps placeholder titles to real values.
+        // -----------------------------------------------------------------
+        var userInputs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "FirstName", "John" },
+            { "LastName",  "Doe" },
+            { "Email",     "john.doe@example.com" }
         };
 
-        // Find all content controls in the document and replace their placeholder text
-        // with the corresponding values from the dictionary.
-        foreach (StructuredDocumentTag sdt in doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                                                .OfType<StructuredDocumentTag>())
+        // (Optional) Serialize the dictionary to a JSON file for demonstration.
+        File.WriteAllText("UserInputs.json", JsonConvert.SerializeObject(userInputs, Formatting.Indented));
+
+        // -----------------------------------------------------------------
+        // Step 3: Load the template document and replace each placeholder.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Enumerate all StructuredDocumentTag nodes in the document.
+        NodeCollection sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
+        foreach (StructuredDocumentTag sdt in sdtNodes)
         {
-            // Use the Title property as the lookup key.
-            if (userInputs.TryGetValue(sdt.Title, out string replacement))
+            // Use the Title property as the lookup key; fall back to Tag if Title is missing.
+            string key = sdt.Title ?? sdt.Tag;
+            if (key != null && userInputs.TryGetValue(key, out string replacement))
             {
+                // Clear existing children (placeholder text) and insert the new value.
                 sdt.RemoveAllChildren();
                 sdt.AppendChild(new Run(doc, replacement));
             }
         }
 
         // Save the resulting document.
-        doc.Save("output.docx");
+        const string outputPath = "Result.docx";
+        doc.Save(outputPath);
     }
 }

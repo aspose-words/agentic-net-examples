@@ -10,53 +10,53 @@
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
       "Aspose.Words",
       "Aspose.Words.Markup",
       "System.IO",
-      "Aspose.Words.Drawing",
       "System.Collections.Generic",
       "System.Linq",
       "Newtonsoft.Json",
       "System.Globalization",
       "Aspose.Words.Saving",
-      "Aspose.Words.Fields",
       "Aspose.Words.Tables",
-      "Newtonsoft.Json.Linq",
-      "System.Xml",
+      "System.Xml.Linq",
       "System.Drawing",
+      "Aspose.Words.Fields",
       "Aspose.Words.BuildingBlocks",
       "Aspose.Words.Themes",
       "System.Net.Http",
-      "System.Text",
-      "System.Xml.Xsl"
+      "System.Threading.Tasks",
+      "Aspose.Words.Drawing",
+      "System.Xml",
+      "System.Xml.Xsl",
+      "System.Text"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "Run",
-      "Directory",
       "File",
+      "Directory",
       "Path",
       "Paragraph",
-      "Shape",
-      "ShapeType",
-      "ImageData",
-      "Node",
-      "JsonConvert",
       "MemoryStream",
       "PdfSaveOptions",
-      "Range",
+      "SaveFormat",
+      "NodeType",
       "Table",
       "Row",
       "Cell",
-      "NodeType",
       "Style",
       "Font",
-      "SaveFormat",
+      "Range",
+      "Shape",
+      "ImageData",
+      "Node",
+      "StyleIdentifier",
       "HtmlSaveOptions"
     ]
   },
@@ -67,10 +67,6 @@
       "input-bootstrap": 3,
       "native-sdt-api": 22,
       "xml-json-export": 10
-    },
-    "winner_counts": {
-      "llm": 5,
-      "mcp": 30
     }
   },
   "rules_summary": {
@@ -183,8 +179,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 7,
@@ -194,8 +190,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 8,
@@ -238,8 +234,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 12,
@@ -260,8 +256,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 14,
@@ -277,7 +273,7 @@
     {
       "id": 15,
       "file_name": "validate-that-required-content-controls-contain-non-empty-text-before-saving-the-document.cs",
-      "task": "Validate that required content controls contain non-empty text before saving the document.",
+      "task": "Validate that required content controls contain non‑empty text before saving the document.",
       "workflow": "native-sdt-api",
       "outputs": [
         "docx"
@@ -288,7 +284,7 @@
     {
       "id": 16,
       "file_name": "lock-a-content-control-to-prevent-user-editing-and-enforce-read-only-behavior-in-the-final.cs",
-      "task": "Lock a content control to prevent user editing and enforce read-only behavior in the final document.",
+      "task": "Lock a content control to prevent user editing and enforce read‑only behavior in the final document.",
       "workflow": "native-sdt-api",
       "outputs": [
         "docx"
@@ -304,8 +300,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 18,
@@ -348,8 +344,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 22,
@@ -370,8 +366,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 24,
@@ -454,7 +450,7 @@
     {
       "id": 31,
       "file_name": "convert-a-document-with-content-controls-to-html-while-maintaining-control-attributes-as-d.cs",
-      "task": "Convert a document with content controls to HTML while maintaining control attributes as data-attributes.",
+      "task": "Convert a document with content controls to HTML while maintaining control attributes as data‑attributes.",
       "workflow": "native-sdt-api",
       "outputs": [
         "html"
@@ -470,8 +466,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 33,

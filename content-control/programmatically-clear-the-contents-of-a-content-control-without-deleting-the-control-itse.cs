@@ -10,30 +10,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an inline plain‑text content control.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        sdt.Title = "SampleControl";
-        sdt.Tag = "sample-tag";
+        // Write a line before the content control for clarity.
+        builder.Writeln("Document with a plain‑text content control:");
 
-        // Add some initial text inside the control.
+        // Create an inline plain‑text StructuredDocumentTag (content control).
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "SampleControl",
+            Tag = "sample"
+        };
+
+        // Add initial text inside the content control.
         sdt.AppendChild(new Run(doc, "Initial content"));
-        // Append the control to the first paragraph.
-        builder.CurrentParagraph.AppendChild(sdt);
 
-        // Save the document before clearing (optional, just for demonstration).
+        // Append the content control to the first paragraph of the document.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(sdt);
+
+        // Save the document before clearing the control's contents.
         doc.Save("BeforeClear.docx");
 
-        // Locate the content control by its title.
-        StructuredDocumentTag found = (StructuredDocumentTag)doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .FirstOrDefault(node => ((StructuredDocumentTag)node).Title == "SampleControl");
+        // Clear the contents of the content control while keeping the control itself.
+        sdt.Clear();
 
-        if (found != null)
-        {
-            // Clear the contents of the control while keeping the control itself.
-            found.Clear();
-        }
-
-        // Save the document after clearing.
+        // Save the document after clearing the control's contents.
         doc.Save("AfterClear.docx");
     }
 }

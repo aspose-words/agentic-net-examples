@@ -3,66 +3,87 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
+using Newtonsoft.Json;
 
-namespace ContentControlPdfAExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Define file paths in the current working directory.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.docx");
+        string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "sample-pdfa.pdf");
+
+        // -----------------------------------------------------------------
+        // 1. Create a Word document that contains several content controls.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Plain‑text content control (inline).
+        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            // Define file names in the working directory.
-            const string docxPath = "sample.docx";
-            const string pdfPath = "sample-pdfa.pdf";
+            Title = "CustomerName",
+            Tag = "customer-name"
+        };
+        plainTextSdt.RemoveAllChildren();
+        plainTextSdt.AppendChild(new Run(doc, "Contoso"));
 
-            // -----------------------------------------------------------------
-            // 1. Create a Word document with a plain‑text content control.
-            // -----------------------------------------------------------------
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Move to a new paragraph and insert the inline SDT.
+        builder.Writeln();
+        builder.InsertNode(plainTextSdt);
+        builder.Writeln(); // New line after the inline SDT.
 
-            // Add a paragraph before the content control.
-            builder.Writeln("This document contains a content control that will be kept in the PDF/A output.");
+        // Rich‑text (block‑level) content control.
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "Comments",
+            Tag = "comments"
+        };
+        Paragraph richParagraph = new Paragraph(doc);
+        richParagraph.AppendChild(new Run(doc, "Enter your comments here..."));
+        richTextSdt.AppendChild(richParagraph);
 
-            // Create an inline plain‑text StructuredDocumentTag (content control).
-            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-            {
-                Title = "CustomerName",
-                Tag = "customer-name"
-            };
-            // Set placeholder text (optional) and initial content.
-            sdt.RemoveAllChildren();
-            sdt.AppendChild(new Run(doc, "John Doe"));
+        // Append the block‑level SDT directly to the document body.
+        doc.FirstSection.Body.AppendChild(richTextSdt);
+        builder.Writeln(); // New line after the block‑level SDT.
 
-            // Insert the content control into the current paragraph.
-            builder.InsertNode(sdt);
-            builder.Writeln(); // Move to a new line after the control.
+        // Checkbox content control (inline).
+        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+        {
+            Title = "AgreeTerms",
+            Tag = "agree-terms",
+            Checked = false
+        };
+        builder.Writeln();
+        builder.InsertNode(checkBoxSdt);
+        builder.Write(" I agree to the terms and conditions.");
+        builder.Writeln();
 
-            // Save the seed DOCX file.
-            doc.Save(docxPath);
+        // Save the seed document.
+        doc.Save(inputPath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the DOCX file and convert it to PDF/A.
-            // -----------------------------------------------------------------
-            Document loadedDoc = new Document(docxPath);
+        // -----------------------------------------------------------------
+        // 2. Load the document and convert it to PDF/A‑1a while preserving
+        //    the content controls as interactive form fields.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(inputPath);
 
-            // Configure PDF save options for PDF/A‑1a compliance.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions
-            {
-                Compliance = PdfCompliance.PdfA1a,
-                // Preserve form fields so that the content control appears as an interactive field in the PDF.
-                PreserveFormFields = true,
-                // Use the content control's Tag as the form field name (helps keep the mapping clear).
-                UseSdtTagAsFormFieldName = true,
-                // Export document structure is required for PDF/A‑1a; the property is ignored but set for clarity.
-                ExportDocumentStructure = true
-            };
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            // PDF/A‑1a compliance (includes PDF/A‑1b + document structure).
+            Compliance = PdfCompliance.PdfA1a,
 
-            // Save the document as PDF/A.
-            loadedDoc.Save(pdfPath, pdfOptions);
+            // Preserve Word content controls as PDF form fields.
+            PreserveFormFields = true,
 
-            // Inform the user (no interactive prompts, just console output).
-            Console.WriteLine($"DOCX file saved to: {Path.GetFullPath(docxPath)}");
-            Console.WriteLine($"PDF/A file saved to: {Path.GetFullPath(pdfPath)}");
-        }
+            // Use the Tag property of the SDT as the name of the PDF form field.
+            UseSdtTagAsFormFieldName = true,
+
+            // Export document structure (required for PDF/A‑1a, but ignored automatically).
+            ExportDocumentStructure = true
+        };
+
+        // Save the PDF/A document.
+        loadedDoc.Save(outputPdfPath, pdfOptions);
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Markup;
@@ -10,90 +9,86 @@ public class Program
 {
     public static void Main()
     {
-        // 1. Create a new blank document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // 2. Add a custom XML part that will serve as the data source for the content controls.
+        // Define a simple custom XML part that will be used for mapping.
         string xmlPartId = Guid.NewGuid().ToString("B");
         string xmlContent = @"<root>
-                                <Customer>
-                                    <Name>John Doe</Name>
-                                    <Age>30</Age>
-                                </Customer>
-                              </root>";
+    <person>
+        <firstName>John</firstName>
+        <lastName>Doe</lastName>
+    </person>
+    <person>
+        <firstName>Jane</firstName>
+        <lastName>Smith</lastName>
+    </person>
+</root>";
         CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
 
-        // 3. Insert a plain‑text content control mapped to the <Name> element.
-        StructuredDocumentTag nameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Insert a plain‑text content control mapped to the first person's first name.
+        StructuredDocumentTag firstNameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "CustomerName",
-            Tag = "customer-name"
+            Title = "FirstName",
+            Tag = "first-name-1"
         };
-        nameSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/Customer[1]/Name[1]", string.Empty);
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
-        para.AppendChild(nameSdt);
+        firstNameSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/person[1]/firstName[1]", string.Empty);
+        doc.FirstSection.Body.FirstParagraph.AppendChild(firstNameSdt);
 
-        // 4. Insert another plain‑text content control mapped to the <Age> element.
-        StructuredDocumentTag ageSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Insert a plain‑text content control mapped to the first person's last name.
+        StructuredDocumentTag lastNameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "CustomerAge",
-            Tag = "customer-age"
+            Title = "LastName",
+            Tag = "last-name-1"
         };
-        ageSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/Customer[1]/Age[1]", string.Empty);
-        para.AppendChild(new Run(doc, " "));
-        para.AppendChild(ageSdt);
+        lastNameSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/person[1]/lastName[1]", string.Empty);
+        doc.FirstSection.Body.FirstParagraph.AppendChild(lastNameSdt);
 
-        // 5. Save the document so that the mappings are persisted.
-        string docPath = "MappedContentControls.docx";
-        doc.Save(docPath);
+        // Save the document (optional, just to have a physical file).
+        doc.Save("MappedContentControls.docx");
 
-        // 6. Collect XML mapping information from all content controls.
-        var sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                          .OfType<StructuredDocumentTag>()
-                          .Where(s => s.XmlMapping.IsMapped)
-                          .ToList();
-
-        // Extract distinct element names from the XPath expressions.
-        HashSet<string> elementNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var sdt in sdtNodes)
+        // Collect mapping information from all content controls in the document.
+        List<MappingInfo> mappings = new List<MappingInfo>();
+        NodeCollection sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
+        foreach (Node node in sdtNodes)
         {
-            // Example XPath: /root[1]/Customer[1]/Name[1]
-            string[] parts = sdt.XmlMapping.XPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string part in parts)
+            if (node is StructuredDocumentTag sdt && sdt.XmlMapping.IsMapped)
             {
-                // Remove any index suffix like [1].
-                string name = part.Split('[')[0];
-                if (!string.IsNullOrEmpty(name))
-                    elementNames.Add(name);
+                mappings.Add(new MappingInfo
+                {
+                    Title = sdt.Title,
+                    Tag = sdt.Tag,
+                    XPath = sdt.XmlMapping.XPath,
+                    PrefixMappings = sdt.XmlMapping.PrefixMappings
+                });
             }
         }
 
-        // 7. Build a simple XSD schema that contains the collected element names.
-        StringBuilder xsdBuilder = new StringBuilder();
-        xsdBuilder.AppendLine(@"<?xml version=""1.0"" encoding=""utf-8""?>");
-        xsdBuilder.AppendLine(@"<xs:schema xmlns:xs=""http://www.w3.org/2001/XMLSchema"">");
-        xsdBuilder.AppendLine(@"  <xs:element name=""root"">");
-        xsdBuilder.AppendLine(@"    <xs:complexType>");
-        xsdBuilder.AppendLine(@"      <xs:sequence>");
+        // Serialize the mapping information to a simple XSD‑like file.
+        // For demonstration we write the original XML part data as the schema source.
+        string xsdPath = "ContentControlsMapping.xsd";
+        File.WriteAllText(xsdPath, xmlPart.Data != null ? Encoding.UTF8.GetString(xmlPart.Data) : string.Empty);
 
-        // Add child elements (excluding the root itself).
-        foreach (string name in elementNames.Where(n => !n.Equals("root", StringComparison.OrdinalIgnoreCase)))
+        // Additionally, write a comment block with the collected mapping details.
+        StringBuilder commentBuilder = new StringBuilder();
+        commentBuilder.AppendLine("<!--");
+        commentBuilder.AppendLine("Mapping information for content controls in the document:");
+        foreach (MappingInfo info in mappings)
         {
-            xsdBuilder.AppendLine($@"        <xs:element name=""{name}"" type=""xs:string"" minOccurs=""0""/>");
+            commentBuilder.AppendLine($"Title: {info.Title}, Tag: {info.Tag}, XPath: {info.XPath}, PrefixMappings: {info.PrefixMappings}");
         }
+        commentBuilder.AppendLine("-->");
+        File.AppendAllText(xsdPath, commentBuilder.ToString());
 
-        // Close the XSD tags.
-        xsdBuilder.AppendLine(@"      </xs:sequence>");
-        xsdBuilder.AppendLine(@"    </xs:complexType>");
-        xsdBuilder.AppendLine(@"  </xs:element>");
-        xsdBuilder.AppendLine(@"</xs:schema>");
+        // The program finishes without waiting for user input.
+    }
 
-        // 8. Save the generated XSD to a file.
-        string xsdPath = "ContentControlsSchema.xsd";
-        File.WriteAllText(xsdPath, xsdBuilder.ToString());
-
-        // Optional: inform the user (console output is harmless in a console app).
-        Console.WriteLine($"Document saved to: {docPath}");
-        Console.WriteLine($"XSD schema saved to: {xsdPath}");
+    // Helper class to hold mapping details.
+    private class MappingInfo
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Tag { get; set; } = string.Empty;
+        public string XPath { get; set; } = string.Empty;
+        public string PrefixMappings { get; set; } = string.Empty;
     }
 }

@@ -3,6 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
+using Newtonsoft.Json;
 
 public class Program
 {
@@ -10,45 +11,59 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Get the first paragraph of the document.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
-
-        // ----- Plain text content control -----
-        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        plainTextSdt.Title = "CustomerName";
-        plainTextSdt.Tag = "customer-name";
+        // ---------- Plain‑text content control ----------
+        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "CustomerName",
+            Tag = "customer-name"
+        };
         plainTextSdt.RemoveAllChildren();
-        plainTextSdt.AppendChild(new Run(doc, "Contoso"));
-        paragraph.AppendChild(plainTextSdt);
+        plainTextSdt.AppendChild(new Run(doc, "John Doe"));
+        // Insert the SDT into the current paragraph.
+        builder.InsertNode(plainTextSdt);
+        builder.Writeln(); // Move to a new paragraph.
 
-        // Add a space between controls.
-        paragraph.AppendChild(new Run(doc, " "));
+        // ---------- Checkbox content control ----------
+        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+        {
+            Title = "Agree",
+            Tag = "agree",
+            Checked = false
+        };
+        builder.InsertNode(checkBoxSdt);
+        builder.Writeln();
 
-        // ----- Checkbox content control -----
-        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline);
-        checkBoxSdt.Title = "Agree";
-        checkBoxSdt.Tag = "agree";
-        checkBoxSdt.Checked = true;
-        paragraph.AppendChild(checkBoxSdt);
+        // ---------- Drop‑down list content control ----------
+        StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
+        {
+            Title = "Country",
+            Tag = "country"
+        };
+        dropDownSdt.ListItems.Add(new SdtListItem("USA", "US"));
+        dropDownSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
+        dropDownSdt.ListItems.Add(new SdtListItem("Mexico", "MX"));
+        builder.InsertNode(dropDownSdt);
+        builder.Writeln();
 
-        // Save the source DOCX file.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-        doc.Save(inputPath);
+        // Save the DOCX to a local file.
+        const string docxPath = "sample.docx";
+        doc.Save(docxPath);
 
-        // Load the document that contains the content controls.
-        Document loadedDoc = new Document(inputPath);
+        // Load the saved document (demonstrates a realistic workflow where the source file already exists).
+        Document loadedDoc = new Document(docxPath);
 
         // Configure HTML save options.
-        // The ExportContentControlsAsDataAttributes property is not available in this version of Aspose.Words,
-        // so we simply use the default behavior which includes content control information in the HTML.
+        // The property ExportContentControlsAsDataAttributes is not available in the current Aspose.Words version,
+        // so we rely on the default behavior which already includes content‑control metadata as data‑attributes.
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
 
         // Save the document as HTML.
-        string htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "output.html");
+        const string htmlPath = "sample.html";
         loadedDoc.Save(htmlPath, htmlOptions);
 
-        // Indicate that the conversion has finished.
-        Console.WriteLine("Conversion completed. HTML saved to: " + htmlPath);
+        // Confirmation output.
+        Console.WriteLine($"Document converted to HTML: {Path.GetFullPath(htmlPath)}");
     }
 }

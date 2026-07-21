@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
 
-public class ContentControlValidator
+public class Program
 {
     public static void Main()
     {
@@ -13,59 +14,77 @@ public class ContentControlValidator
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading.
-        builder.Writeln("Sample Form");
+        // Add an introductory paragraph.
+        builder.Writeln("Please fill in the following form:");
 
-        // Insert a required plain‑text content control for "CustomerName".
-        StructuredDocumentTag nameControl = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Insert a plain‑text content control for "Name" (required) and pre‑fill it.
+        StructuredDocumentTag nameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "CustomerName",
+            Title = "Name",
             Tag = "required"
         };
-        // Initially empty.
-        nameControl.RemoveAllChildren();
-        nameControl.AppendChild(new Run(doc, string.Empty));
-        builder.InsertNode(nameControl);
-        builder.Writeln(); // Move to next line.
+        nameSdt.RemoveAllChildren();
+        nameSdt.AppendChild(new Run(doc, "John Doe"));
+        builder.InsertNode(nameSdt);
 
-        // Insert an optional plain‑text content control for "Comments".
-        StructuredDocumentTag commentsControl = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Add a space between controls.
+        builder.Write(" ");
+
+        // Insert a plain‑text content control for "Email" (required) – left empty.
+        StructuredDocumentTag emailSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "Comments",
-            Tag = "optional"
+            Title = "Email",
+            Tag = "required"
         };
-        commentsControl.RemoveAllChildren();
-        commentsControl.AppendChild(new Run(doc, string.Empty));
-        builder.InsertNode(commentsControl);
-        builder.Writeln();
+        emailSdt.RemoveAllChildren(); // No initial text.
+        builder.InsertNode(emailSdt);
 
-        // Simulate user input: fill the required control, leave optional empty.
-        nameControl.RemoveAllChildren();
-        nameControl.AppendChild(new Run(doc, "Acme Corp"));
+        // Validation: ensure every required content control contains non‑empty text.
+        var validationResults = new List<ValidationResult>();
+        bool anyInvalid = false;
 
-        // Validate required content controls before saving.
-        var requiredControls = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                                   .OfType<StructuredDocumentTag>()
-                                   .Where(sdt => sdt.Tag == "required")
-                                   .ToList();
+        // Enumerate all StructuredDocumentTag nodes in the document.
+        var allSdt = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+                        .Cast<StructuredDocumentTag>();
 
-        var validationErrors = requiredControls
-            .Where(sdt => string.IsNullOrWhiteSpace(sdt.GetText()))
-            .Select(sdt => new { sdt.Title, sdt.Tag })
-            .ToList();
-
-        if (validationErrors.Any())
+        foreach (StructuredDocumentTag sdt in allSdt)
         {
-            // Serialize validation errors to JSON for debugging (optional).
-            string json = JsonConvert.SerializeObject(validationErrors, Formatting.Indented);
-            Console.WriteLine("Validation failed. Empty required content controls:");
-            Console.WriteLine(json);
-            throw new InvalidOperationException("One or more required content controls are empty.");
+            // Consider a control required if its Tag is set to "required".
+            if (string.Equals(sdt.Tag, "required", StringComparison.OrdinalIgnoreCase))
+            {
+                string text = sdt.GetText().Trim();
+                bool isValid = !string.IsNullOrEmpty(text);
+                if (!isValid) anyInvalid = true;
+
+                validationResults.Add(new ValidationResult
+                {
+                    Title = sdt.Title,
+                    IsValid = isValid,
+                    Message = isValid ? "OK" : "Content is empty."
+                });
+            }
         }
 
-        // All required controls contain text; save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ValidatedDocument.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved successfully to: {outputPath}");
+        // Serialize validation results to a JSON file.
+        string json = JsonConvert.SerializeObject(validationResults, Formatting.Indented);
+        File.WriteAllText("validation.json", json);
+
+        // If any required control is empty, report and abort saving without throwing an unhandled exception.
+        if (anyInvalid)
+        {
+            Console.WriteLine("One or more required content controls are empty. See validation.json for details.");
+            return; // Exit gracefully.
+        }
+
+        // All required controls are valid – save the document.
+        doc.Save("validated.docx");
+        Console.WriteLine("Document saved successfully as validated.docx");
+    }
+
+    private class ValidationResult
+    {
+        public string Title { get; set; } = string.Empty;
+        public bool IsValid { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

@@ -3,22 +3,17 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading.
-        builder.Writeln("Document with an OLE object inside a content control:");
+        // Add an introductory paragraph.
+        builder.Writeln("Document with an OLE object embedded inside a content control:");
 
         // Create a block‑level rich‑text content control.
         StructuredDocumentTag oleContainer = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
@@ -26,36 +21,34 @@ public class Program
             Title = "OleContainer",
             Tag = "OleCC"
         };
-        // Append the content control to the body.
-        doc.FirstSection.Body.AppendChild(oleContainer);
 
-        // Add a paragraph inside the content control – the builder will insert content here.
+        // Add a paragraph that will hold the OLE object.
         Paragraph innerParagraph = new Paragraph(doc);
         oleContainer.AppendChild(innerParagraph);
+
+        // Insert the content control into the document body.
+        doc.FirstSection.Body.AppendChild(oleContainer);
+
+        // Position the builder inside the paragraph of the content control.
         builder.MoveTo(innerParagraph);
 
-        // Prepare some sample data to embed as an OLE package.
-        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("This is sample OLE package content.");
-        using (MemoryStream dataStream = new MemoryStream(sampleData))
+        // Prepare simple data to embed as an OLE package.
+        byte[] oleData = System.Text.Encoding.UTF8.GetBytes("Hello OLE content");
+        using (MemoryStream oleStream = new MemoryStream(oleData))
         {
-            // Insert the OLE object (as a package) directly into the content control.
-            Shape oleShape = builder.InsertOleObject(dataStream, "Package", false, null);
-
-            // Optionally set display properties for the embedded package.
-            oleShape.OleFormat.OlePackage.FileName = "sample.txt";
-            oleShape.OleFormat.OlePackage.DisplayName = "Sample Text File";
+            // Insert the OLE object (as a package) directly into the paragraph.
+            // asIcon = false so the object is displayed as its content.
+            builder.InsertOleObject(oleStream, "Package", false, null);
         }
 
-        // Save the document as DOCX.
-        string docxPath = Path.Combine(outputDir, "OleInContentControl.docx");
-        doc.Save(docxPath);
+        // Save the document as DOCX for reference.
+        doc.Save("OleInContentControl.docx");
 
-        // Convert the document to PDF, ensuring OLE control images are rendered.
+        // Save the document as PDF, ensuring OLE control images are rendered.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             UpdateOleControlImages = true
         };
-        string pdfPath = Path.Combine(outputDir, "OleInContentControl.pdf");
-        doc.Save(pdfPath, pdfOptions);
+        doc.Save("OleInContentControl.pdf", pdfOptions);
     }
 }

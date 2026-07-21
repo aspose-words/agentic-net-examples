@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-namespace ContentControlExample
+namespace ContentControlDemo
 {
     public class Program
     {
@@ -11,44 +11,46 @@ namespace ContentControlExample
             // Create a new blank document.
             Document doc = new Document();
 
-            // Create an inline plain‑text content control.
-            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+            // Use DocumentBuilder to add content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Set the friendly name (Title) and the non‑visible identifier (Tag).
-            sdt.Title = "CustomerName";
-            sdt.Tag = "customer-name";
+            // Insert a paragraph that will host the content control.
+            builder.Writeln("Customer information:");
 
-            // Add placeholder text inside the control.
+            // Create an inline plain‑text content control (StructuredDocumentTag).
+            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+            {
+                Title = "CustomerName",   // Friendly name for identification.
+                Tag = "customer-name"     // Machine‑readable identifier.
+            };
+
+            // Set placeholder text inside the content control.
             sdt.RemoveAllChildren();
             sdt.AppendChild(new Run(doc, "Enter name here"));
 
-            // Insert the content control into the first paragraph of the document.
-            Paragraph para = doc.FirstSection.Body.FirstParagraph;
+            // Append the content control to the last paragraph of the document body.
+            Paragraph para = doc.FirstSection.Body.LastParagraph;
             para.AppendChild(sdt);
 
-            // Save the document with the configured content control.
-            doc.Save("ContentControlTitleTag.docx");
+            // Save the document.
+            const string outputPath = "ContentControlTitleTag.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to {outputPath}");
 
-            // ---------- Later identification ----------
-            // Locate the control by its Title.
-            IStructuredDocumentTag? foundByTitle = doc.Range.StructuredDocumentTags.GetByTitle("CustomerName");
-            if (foundByTitle != null && foundByTitle is StructuredDocumentTag titleSdt)
+            // Retrieve the content control by Title.
+            // GetByTitle returns IStructuredDocumentTag, so cast to StructuredDocumentTag.
+            StructuredDocumentTag? foundByTitle = doc.Range.StructuredDocumentTags.GetByTitle("CustomerName") as StructuredDocumentTag;
+            if (foundByTitle != null)
             {
-                // Replace the placeholder text with actual content.
-                titleSdt.RemoveAllChildren();
-                titleSdt.AppendChild(new Run(doc, "Contoso Ltd."));
+                Console.WriteLine($"Found SDT by Title: Title='{foundByTitle.Title}', Tag='{foundByTitle.Tag}'");
             }
 
-            // Locate the control by its Tag.
-            IStructuredDocumentTag? foundByTag = doc.Range.StructuredDocumentTags.GetByTag("customer-name");
-            if (foundByTag != null && foundByTag is StructuredDocumentTag tagSdt)
+            // Retrieve the content control by Tag.
+            StructuredDocumentTag? foundByTag = doc.Range.StructuredDocumentTags.GetByTag("customer-name") as StructuredDocumentTag;
+            if (foundByTag != null)
             {
-                // Change the appearance to show tags around the control.
-                tagSdt.Appearance = SdtAppearance.Tags;
+                Console.WriteLine($"Found SDT by Tag: Title='{foundByTag.Title}', Tag='{foundByTag.Tag}'");
             }
-
-            // Save the modified document.
-            doc.Save("ContentControlTitleTag_Modified.docx");
         }
     }
 }

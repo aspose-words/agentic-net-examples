@@ -1,8 +1,6 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Markup;
 
 public class Program
@@ -12,41 +10,45 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create an inline rich‑text content control (SDT).
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Inline)
+        // Use DocumentBuilder to insert a paragraph that contains a hyperlink.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertParagraph(); // Ensure we are in a new paragraph.
+        builder.InsertHyperlink("Aspose", "https://www.aspose.com", false);
+        builder.Writeln(); // End the paragraph with a line break.
+
+        // Retrieve the paragraph that now contains the hyperlink.
+        Paragraph linkParagraph = builder.CurrentParagraph;
+
+        // Create a block‑level rich‑text content control.
+        StructuredDocumentTag sdt = new StructuredDocumentTag(
+            doc,
+            SdtType.RichText,
+            MarkupLevel.Block)
         {
-            Title = "HyperlinkControl",
-            Tag = "hyperlink"
+            Title = "LinkControl",
+            Tag = "link-control"
         };
 
-        // Insert the content control into the first paragraph of the document.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        firstParagraph.AppendChild(sdt);
+        // Move the hyperlink paragraph into the content control.
+        sdt.AppendChild(linkParagraph);
 
-        // Insert a hyperlink directly inside the inline content control.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(sdt);
-        builder.InsertHyperlink("Aspose", "https://www.aspose.com", false);
+        // Insert the content control into the document body.
+        doc.FirstSection.Body.AppendChild(sdt);
 
-        // Save the document as DOCX.
-        const string docxPath = "HyperlinkControl.docx";
+        // Save the DOCX file.
+        const string docxPath = "hyperlink_sdt.docx";
         doc.Save(docxPath);
 
-        // Load the saved document.
-        Document loadedDoc = new Document(docxPath);
+        // Convert the document to HTML.
+        const string htmlPath = "hyperlink_sdt.html";
+        doc.Save(htmlPath, SaveFormat.Html);
 
-        // Locate the first hyperlink field in the document.
-        FieldHyperlink? hyperlinkField = loadedDoc.Range.Fields
-            .OfType<FieldHyperlink>()
-            .FirstOrDefault();
+        // Verify that the hyperlink URL is present in the HTML output.
+        string htmlContent = File.ReadAllText(htmlPath);
+        bool containsUrl = htmlContent.Contains("https://www.aspose.com");
 
-        // Verify that the hyperlink target URL matches the expected value.
-        const string expectedUrl = "https://www.aspose.com";
-        bool isUrlCorrect = hyperlinkField != null && hyperlinkField.Address == expectedUrl;
-
-        // Output the verification result.
-        Console.WriteLine(isUrlCorrect
-            ? $"Hyperlink target verified: {hyperlinkField!.Address}"
-            : "Hyperlink target verification failed.");
+        Console.WriteLine(containsUrl
+            ? "Verification succeeded: hyperlink URL found in HTML."
+            : "Verification failed: hyperlink URL not found in HTML.");
     }
 }
