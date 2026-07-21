@@ -1,59 +1,65 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Layout;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a cancellation token that will be triggered after a short delay.
-        using var cts = new CancellationTokenSource();
-        cts.CancelAfter(100); // Cancel after 100 milliseconds.
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "CancelledLayout.docx");
 
         // Create a sample document with enough content to make layout processing noticeable.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Start of the document.");
-
-        // Add many paragraphs to increase layout time.
-        for (int i = 0; i < 2000; i++)
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        for (int i = 0; i < 200; i++)
         {
-            builder.Writeln($"Paragraph {i + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+            builder.Writeln($"Paragraph {i + 1}: The quick brown fox jumps over the lazy dog.");
         }
 
-        // Attach a layout callback that monitors the cancellation token.
-        doc.LayoutOptions.Callback = new LayoutCancellationCallback(cts.Token);
+        // Set up a cancellation token that will be triggered after a short delay.
+        using var cts = new CancellationTokenSource();
+        Task.Run(() =>
+        {
+            Thread.Sleep(100); // Simulate external request to cancel.
+            cts.Cancel();
+        });
 
-        // Attempt to build the layout; abort if cancellation is requested.
+        // Attach a layout callback that monitors the token.
+        doc.LayoutOptions.Callback = new CancelableLayoutCallback(cts.Token);
+
         try
         {
+            // Start layout building. The callback will abort if cancellation is requested.
             doc.UpdatePageLayout();
         }
-        catch (OperationCanceledException ex)
+        catch (OperationCanceledException)
         {
-            Console.WriteLine($"Layout building was cancelled: {ex.Message}");
+            // Layout was cancelled; we can continue with whatever partial layout exists.
+            Console.WriteLine("Layout operation was cancelled.");
         }
 
-        // Save the document (partial layout may be present).
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LayoutCancelled.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
+        // Save the document (partial layout is still a valid document).
+        doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved.");
+            throw new InvalidOperationException("Failed to save the document.");
 
         Console.WriteLine($"Document saved to: {outputPath}");
     }
 
-    // Callback that aborts layout building when the cancellation token is set.
-    private class LayoutCancellationCallback : IPageLayoutCallback
+    // Callback that aborts layout when the cancellation token is set.
+    private class CancelableLayoutCallback : IPageLayoutCallback
     {
         private readonly CancellationToken _token;
 
-        public LayoutCancellationCallback(CancellationToken token)
+        public CancelableLayoutCallback(CancellationToken token)
         {
             _token = token;
         }
@@ -61,7 +67,7 @@ public class Program
         public void Notify(PageLayoutCallbackArgs args)
         {
             if (_token.IsCancellationRequested)
-                throw new OperationCanceledException("Cancellation requested during layout building.");
+                throw new OperationCanceledException("Layout cancelled via token.");
         }
     }
 }

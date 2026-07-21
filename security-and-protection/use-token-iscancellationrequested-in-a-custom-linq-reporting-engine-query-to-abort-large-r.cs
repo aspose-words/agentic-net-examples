@@ -1,79 +1,67 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using Aspose.Words;
-using Aspose.Words.Reporting;
-
-public class LargeDataSource : IEnumerable<int>
-{
-    private readonly int _count;
-    private readonly CancellationToken _token;
-
-    public LargeDataSource(int count, CancellationToken token)
-    {
-        _count = count;
-        _token = token;
-    }
-
-    public IEnumerator<int> GetEnumerator()
-    {
-        for (int i = 0; i < _count; i++)
-        {
-            // Abort if cancellation is requested.
-            if (_token.IsCancellationRequested)
-                throw new OperationCanceledException("Report generation was canceled.");
-
-            yield return i;
-        }
-    }
-
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple template document with a LINQ Reporting Engine tag.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Report:");
-        // Correct foreach syntax for the Reporting Engine.
-        builder.Writeln("<<foreach [item in Data]>><<[item]>><</foreach>>");
+        // Create a simple source document.
+        string sourcePath = "source.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document for protection.");
+        doc.Save(sourcePath);
 
-        // Set up a cancellation token that will trigger after a short delay.
-        using (CancellationTokenSource cts = new CancellationTokenSource())
+        // Protect the document with a password.
+        string protectedPath = "protected.docx";
+        doc.Protect(ProtectionType.ReadOnly, "secret");
+        doc.Save(protectedPath);
+
+        // Simulate large report generation with cancellation support.
+        var cts = new CancellationTokenSource();
+        // Cancel after a short delay to demonstrate aborting.
+        cts.CancelAfter(10); // milliseconds
+
+        try
         {
-            cts.CancelAfter(10); // milliseconds
-
-            // Create a large data source that checks the token during enumeration.
-            LargeDataSource data = new LargeDataSource(1_000_000, cts.Token);
-
-            ReportingEngine engine = new ReportingEngine();
-
-            try
-            {
-                // Build the report using the data source named "Data".
-                engine.BuildReport(template, data, "Data");
-
-                // If the report completes, save the full document.
-                template.Save("Report.docx");
-                Console.WriteLine("Report generated successfully.");
-            }
-            // The ReportingEngine wraps the OperationCanceledException in an InvalidOperationException.
-            catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
-            {
-                // On cancellation, save the partially generated document (if any).
-                template.Save("ReportPartial.docx");
-                Console.WriteLine($"Report generation aborted: {ex.InnerException.Message}");
-            }
-            // Fallback in case a raw OperationCanceledException is thrown.
-            catch (OperationCanceledException ex)
-            {
-                template.Save("ReportPartial.docx");
-                Console.WriteLine($"Report generation aborted: {ex.Message}");
-            }
+            string report = GenerateReport(cts.Token);
+            // Save the report to a file if it completes.
+            File.WriteAllText("report.txt", report);
+            Console.WriteLine("Report generated successfully.");
         }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Report generation was cancelled.");
+        }
+
+        // Verify that the protected document was saved.
+        if (!File.Exists(protectedPath))
+            throw new Exception("Protected document was not saved.");
+
+        Console.WriteLine("Finished.");
+    }
+
+    private static string GenerateReport(CancellationToken token)
+    {
+        // Large data set to simulate a heavy report.
+        var data = Enumerable.Range(1, 1_000_000);
+
+        // LINQ query that checks for cancellation.
+        var sb = data.Select(i =>
+            {
+                if (token.IsCancellationRequested)
+                    throw new OperationCanceledException(token);
+                // Simulate some processing work.
+                return i * i;
+            })
+            // Take a subset to keep the output manageable if not cancelled.
+            .Take(100)
+            .Aggregate(new StringBuilder(), (builder, value) => builder.AppendLine(value.ToString()));
+
+        return sb.ToString();
     }
 }

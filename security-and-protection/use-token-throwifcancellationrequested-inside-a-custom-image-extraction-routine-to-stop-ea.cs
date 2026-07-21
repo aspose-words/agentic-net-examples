@@ -3,89 +3,96 @@ using System.IO;
 using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 public class Program
 {
-    // Base64‑encoded 1×1 PNG images (red and green). They are tiny but sufficient for the demo.
-    private const string RedPngBase64 =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP8z8BQDwAF/AL+XKcAAAAASUVORK5CYII=";
-    private const string GreenPngBase64 =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8DAwAEAAf8C/6V5WQAAAABJRU5ErkJggg==";
-
     public static void Main()
     {
         // Prepare folders.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
-        string docPath = Path.Combine(artifactsDir, "Sample.docx");
         string imagesDir = Path.Combine(artifactsDir, "ExtractedImages");
         Directory.CreateDirectory(imagesDir);
 
         // Create a sample document with two images.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document with sample images.");
 
-        // First image (red square).
-        using (MemoryStream redStream = new MemoryStream(Convert.FromBase64String(RedPngBase64)))
+        // Small red dot PNG (1x1 pixel) encoded in base64.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        using (MemoryStream imgStream = new MemoryStream(pngBytes))
         {
-            builder.InsertImage(redStream);
+            builder.InsertImage(imgStream);
         }
 
-        // Second image (green square).
-        using (MemoryStream greenStream = new MemoryStream(Convert.FromBase64String(GreenPngBase64)))
+        // Insert the same image again to have more than one.
+        using (MemoryStream imgStream = new MemoryStream(pngBytes))
         {
-            builder.InsertImage(greenStream);
+            builder.InsertImage(imgStream);
         }
 
         // Save the document.
+        string docPath = Path.Combine(artifactsDir, "Sample.docx");
         doc.Save(docPath);
 
-        // Load the document back.
+        // Load the document for extraction.
         Document loadedDoc = new Document(docPath);
 
-        // Set up cancellation: the token can be cancelled from outside if needed.
-        using (CancellationTokenSource cts = new CancellationTokenSource())
+        // Set up a cancellation token source that will be triggered after the first image.
+        CancellationTokenSource cts = new CancellationTokenSource();
+
+        try
         {
-            try
-            {
-                ExtractImages(loadedDoc, imagesDir, cts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine("Image extraction was cancelled as requested.");
-            }
+            ExtractImages(loadedDoc, imagesDir, cts);
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Image extraction was cancelled.");
         }
 
-        // Verify how many images were saved.
-        int savedCount = Directory.GetFiles(imagesDir, "*.png").Length;
-        Console.WriteLine($"Number of images saved: {savedCount}");
+        // Verify that at least one image was saved.
+        string[] extractedFiles = Directory.GetFiles(imagesDir);
+        if (extractedFiles.Length == 0)
+        {
+            throw new InvalidOperationException("No images were extracted.");
+        }
+
+        Console.WriteLine($"Extraction completed. {extractedFiles.Length} image(s) saved to '{imagesDir}'.");
     }
 
-    // Extracts all images from the document, saving them to the target folder.
-    // Throws if the supplied cancellation token is signaled.
-    private static void ExtractImages(Document doc, string outputFolder, CancellationToken token)
+    /// <summary>
+    /// Extracts all images from the given document and saves them to the specified folder.
+    /// The method checks the cancellation token on each iteration and aborts if cancellation is requested.
+    /// </summary>
+    private static void ExtractImages(Document doc, string outputFolder, CancellationTokenSource cts)
     {
         int imageIndex = 0;
+        CancellationToken token = cts.Token;
+
+        // Iterate over all shapes in the document.
         foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            // Respect cancellation requests.
+            // Throw if cancellation was requested.
             token.ThrowIfCancellationRequested();
 
             if (shape.HasImage)
             {
-                string fileName = Path.Combine(outputFolder, $"Image_{imageIndex}.png");
-                shape.ImageData.Save(fileName);
-                Console.WriteLine($"Saved image {imageIndex} to {fileName}");
+                // Determine the proper file extension for the image.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string imagePath = Path.Combine(outputFolder, $"Image_{imageIndex}{extension}");
+
+                // Save the image to a file.
+                shape.ImageData.Save(imagePath);
+                Console.WriteLine($"Saved image {imageIndex} to '{imagePath}'.");
+
                 imageIndex++;
 
-                // Demonstration: stop after the first image.
-                // In a real scenario the caller would cancel the token source.
+                // Cancel after the first image to demonstrate early termination.
                 if (imageIndex == 1)
                 {
-                    // No actual cancellation here; the method will simply continue.
-                    // The token check at the start of the next iteration would stop the process
-                    // if the caller had called cts.Cancel().
+                    cts.Cancel(); // Request cancellation for the next iteration.
                 }
             }
         }

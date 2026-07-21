@@ -3,71 +3,69 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
+using Aspose.Words.Saving;
 using Aspose.Words.Loading;
 
 public class Program
 {
-    // Reusable helper that performs document creation, protection, saving, loading and unprotection.
-    // The method respects the provided CancellationToken and throws if cancellation is requested.
-    public static async Task SafeProcessDocumentAsync(CancellationToken cancellationToken)
+    // Reusable helper that processes a document safely, respecting cancellation.
+    public static async Task SafeProcessDocumentAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken)
     {
-        // Define file paths in the temporary folder.
-        string tempFolder = Path.GetTempPath();
-        string protectedPath = Path.Combine(tempFolder, "ProtectedDocument.docx");
-        string unprotectedPath = Path.Combine(tempFolder, "UnprotectedDocument.docx");
-        const string password = "Secret";
-
-        // Step 1: Create a new blank document and add some text.
+        // Throw if cancellation was requested before we start.
         cancellationToken.ThrowIfCancellationRequested();
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world! This is a protected document.");
 
-        // Step 2: Apply read‑only protection with a password.
+        // Load the document. No password is needed for this sample.
+        Document doc = new Document(sourcePath, new LoadOptions());
+
+        // Check cancellation again after a potentially time‑consuming operation.
         cancellationToken.ThrowIfCancellationRequested();
-        doc.Protect(ProtectionType.ReadOnly, password);
 
-        // Step 3: Save the protected document to disk.
+        // Apply write protection with a password and recommend read‑only opening.
+        doc.WriteProtection.SetPassword("SecretPwd");
+        doc.WriteProtection.ReadOnlyRecommended = true;
+
+        // Prepare save options that encrypt the document with the same password.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+        {
+            Password = "SecretPwd"
+        };
+
+        // Save the protected document.
+        doc.Save(destinationPath, saveOptions);
+
+        // Verify that the file was created.
+        if (!File.Exists(destinationPath))
+            throw new InvalidOperationException("The output document was not saved.");
+
+        // Final cancellation check before completing.
         cancellationToken.ThrowIfCancellationRequested();
-        doc.Save(protectedPath);
 
-        // Validate that the file was created.
-        if (!File.Exists(protectedPath))
-            throw new InvalidOperationException("Protected document was not saved correctly.");
-
-        // Step 4: Load the protected document using the correct password.
-        cancellationToken.ThrowIfCancellationRequested();
-        LoadOptions loadOptions = new LoadOptions(password);
-        Document loadedDoc = new Document(protectedPath, loadOptions);
-
-        // Verify that the protection type is as expected.
-        if (loadedDoc.ProtectionType != ProtectionType.ReadOnly)
-            throw new InvalidOperationException("Loaded document does not have the expected protection.");
-
-        // Step 5: Remove protection.
-        cancellationToken.ThrowIfCancellationRequested();
-        bool unprotected = loadedDoc.Unprotect(password);
-        if (!unprotected || loadedDoc.ProtectionType != ProtectionType.NoProtection)
-            throw new InvalidOperationException("Failed to unprotect the document.");
-
-        // Step 6: Save the unprotected version.
-        cancellationToken.ThrowIfCancellationRequested();
-        loadedDoc.Save(unprotectedPath);
-
-        // Final validation.
-        if (!File.Exists(unprotectedPath))
-            throw new InvalidOperationException("Unprotected document was not saved correctly.");
+        await Task.CompletedTask; // Placeholder for async compatibility.
     }
 
-    public static void Main()
+    public static async Task Main()
     {
-        // Create a CancellationTokenSource with a generous timeout (e.g., 30 seconds).
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        // Prepare a temporary folder for the demo files.
+        string demoFolder = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        Directory.CreateDirectory(demoFolder);
+
+        string sourceFile = Path.Combine(demoFolder, "Source.docx");
+        string outputFile = Path.Combine(demoFolder, "Protected.docx");
+
+        // Create a simple source document.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Hello Aspose.Words! This document will be protected.");
+        sourceDoc.Save(sourceFile);
+
+        // Set up a cancellation token (no cancellation in this example).
+        using CancellationTokenSource cts = new CancellationTokenSource();
+
         try
         {
-            // Run the helper synchronously for this console app.
-            SafeProcessDocumentAsync(cts.Token).GetAwaiter().GetResult();
-            Console.WriteLine("Document processing completed successfully.");
+            await SafeProcessDocumentAsync(sourceFile, outputFile, cts.Token);
+            // Indicate success (no interactive input required).
+            Console.WriteLine("Document processed and saved to: " + outputFile);
         }
         catch (OperationCanceledException)
         {
@@ -75,7 +73,7 @@ public class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occurred: {ex.Message}");
+            Console.WriteLine("An error occurred: " + ex.Message);
         }
     }
 }

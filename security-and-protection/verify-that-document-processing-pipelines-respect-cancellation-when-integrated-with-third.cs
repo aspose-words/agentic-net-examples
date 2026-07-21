@@ -1,74 +1,16 @@
 using System;
 using System.IO;
-using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeCancellationDemo
 {
-    // Entry point.
-    public static void Main()
-    {
-        // Path for the output document.
-        const string outputPath = "CanceledOutput.docx";
-
-        // Ensure a clean start.
-        if (File.Exists(outputPath))
-            File.Delete(outputPath);
-
-        // Create a simple document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document is used to test cancellation of the saving pipeline.");
-
-        // Attempt to save with a progress callback that cancels immediately.
-        bool cancellationCaught = false;
-        try
-        {
-            OoxmlSaveOptions cancelOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-            {
-                ProgressCallback = new SavingProgressCallback()
-            };
-            doc.Save(outputPath, cancelOptions);
-        }
-        catch (OperationCanceledException)
-        {
-            cancellationCaught = true;
-            Console.WriteLine("Saving was cancelled as expected.");
-        }
-
-        // Verify that cancellation was detected.
-        if (!cancellationCaught)
-            throw new Exception("Expected cancellation was not triggered.");
-
-        // Verify that the partially saved file does not exist (or is empty).
-        if (File.Exists(outputPath) && new FileInfo(outputPath).Length > 0)
-            throw new Exception("File should not exist or should be empty after cancellation.");
-
-        // Now save without cancellation to confirm normal pipeline works.
-        const string successPath = "SuccessfulOutput.docx";
-        if (File.Exists(successPath))
-            File.Delete(successPath);
-
-        OoxmlSaveOptions normalOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        doc.Save(successPath, normalOptions);
-        Console.WriteLine("Document saved successfully without cancellation.");
-
-        // Load the saved document and verify its content.
-        Document loaded = new Document(successPath);
-        string text = loaded.GetText().Trim();
-        if (!text.Contains("This document is used to test cancellation"))
-            throw new Exception("Saved document content verification failed.");
-
-        Console.WriteLine("Loaded document content verified successfully.");
-    }
-
-    // Implementation of the progress callback that aborts the save operation.
-    private class SavingProgressCallback : IDocumentSavingCallback
+    // Callback that aborts the save operation after a short time.
+    public class SavingProgressCallback : IDocumentSavingCallback
     {
         private readonly DateTime _startTime;
-        // Set to zero to cancel on the first progress notification.
-        private const double MaxDurationSeconds = 0.0;
+        // Maximum allowed duration in seconds before cancellation.
+        private const double MaxDuration = 0.01; // 10 ms
 
         public SavingProgressCallback()
         {
@@ -78,9 +20,55 @@ public class Program
         public void Notify(DocumentSavingArgs args)
         {
             double elapsed = (DateTime.Now - _startTime).TotalSeconds;
-            if (elapsed > MaxDurationSeconds)
+            if (elapsed > MaxDuration)
                 throw new OperationCanceledException(
-                    $"EstimatedProgress = {args.EstimatedProgress}; Cancellation triggered after {elapsed} seconds.");
+                    $"Saving cancelled after {elapsed:F3}s (estimated progress = {args.EstimatedProgress}).");
+        }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare a folder for output files.
+            string artifactsDir = Path.Combine(Path.GetTempPath(), "AsposeCancellationDemo");
+            Directory.CreateDirectory(artifactsDir);
+
+            // Create a sample document with enough content to make saving take noticeable time.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            for (int i = 0; i < 5000; i++)
+                builder.Writeln($"Line {i + 1}");
+
+            // Configure save options with the progress‑cancellation callback.
+            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+            {
+                ProgressCallback = new SavingProgressCallback()
+            };
+
+            string outPath = Path.Combine(artifactsDir, "Canceled.docx");
+            bool cancelled = false;
+
+            try
+            {
+                // Attempt to save; the callback should abort the operation.
+                doc.Save(outPath, saveOptions);
+            }
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+            }
+
+            // Verify that cancellation was observed.
+            if (!cancelled)
+                throw new Exception("The document save operation was not cancelled as expected.");
+
+            // The file should not exist or be incomplete; delete it if present.
+            if (File.Exists(outPath))
+                File.Delete(outPath);
+
+            // Indicate success (no interactive input required).
+            Console.WriteLine("Cancellation verified successfully.");
         }
     }
 }

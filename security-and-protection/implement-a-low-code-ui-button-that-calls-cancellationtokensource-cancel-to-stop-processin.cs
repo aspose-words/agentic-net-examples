@@ -4,46 +4,35 @@ using System.Threading.Tasks;
 
 public class Program
 {
-    // Simulated long‑running operation that respects cancellation.
-    private static async Task ProcessAsync(CancellationToken token)
+    public static void Main()
     {
-        int i = 0;
+        // Create a cancellation token source.
+        var cts = new CancellationTokenSource();
+        CancellationToken token = cts.Token;
+
+        // Simulate a low‑code UI button that triggers cancellation after a short delay.
+        Task.Run(async () =>
+        {
+            await Task.Delay(500); // wait before "clicking" the button
+            Console.WriteLine("Button clicked: cancelling operation.");
+            cts.Cancel(); // stop the processing immediately
+        });
+
+        // Example long‑running processing loop that observes the token.
         try
         {
-            while (true)
+            for (int i = 0; i < 10; i++)
             {
-                token.ThrowIfCancellationRequested();
-                Console.WriteLine($"Processing step {i++}");
-                // Simulate work.
-                await Task.Delay(200, token);
+                token.ThrowIfCancellationRequested(); // abort if cancelled
+                Console.WriteLine($"Processing step {i + 1}");
+                Thread.Sleep(300); // simulate work
             }
+
+            Console.WriteLine("Processing completed successfully.");
         }
         catch (OperationCanceledException)
         {
             Console.WriteLine("Processing was cancelled.");
         }
-    }
-
-    // Simulated low‑code UI button click handler.
-    private static void OnCancelButtonClick(CancellationTokenSource cts)
-    {
-        // Immediately request cancellation.
-        cts.Cancel();
-        Console.WriteLine("Cancel button clicked.");
-    }
-
-    public static async Task Main(string[] args)
-    {
-        using var cts = new CancellationTokenSource();
-
-        // Start the processing task.
-        Task processingTask = ProcessAsync(cts.Token);
-
-        // Simulate a short delay before the user clicks the cancel button.
-        await Task.Delay(500);
-        OnCancelButtonClick(cts);
-
-        // Wait for the processing task to finish cleanly.
-        await processingTask;
     }
 }
