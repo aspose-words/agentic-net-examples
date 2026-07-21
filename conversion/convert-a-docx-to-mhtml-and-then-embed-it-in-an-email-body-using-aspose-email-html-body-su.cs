@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net.Mail;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,55 +8,75 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX document.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("Hello Aspose.Words! This document will be converted to MHTML and embedded in an email.");
+        // Define file names.
         const string docxPath = "sample.docx";
-        sampleDoc.Save(docxPath, SaveFormat.Docx);
+        const string mhtmlPath = "sample.mht";
+        const string emlPath = "email.eml";
 
-        // Step 2: Load the DOCX document.
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOCX document.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, this is a sample document for MHTML conversion.");
+        // Save the DOCX so it can be loaded again (bootstrap rule).
+        doc.Save(docxPath, SaveFormat.Docx);
+
+        // -----------------------------------------------------------------
+        // 2. Load the DOCX and convert it to MHTML.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docxPath);
-
-        // Step 3: Convert the document to MHTML and store it in a memory stream.
-        using (MemoryStream mhtmlStream = new MemoryStream())
+        HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
-            HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
-            {
-                // Use CID URLs for resources to improve compatibility.
-                ExportCidUrlsForMhtmlResources = true
-            };
-            loadedDoc.Save(mhtmlStream, mhtmlOptions);
+            // Use CID URLs for resources to make them embeddable in email bodies.
+            ExportCidUrlsForMhtmlResources = true,
+            // Optional: make the output more readable.
+            PrettyFormat = true
+        };
+        loadedDoc.Save(mhtmlPath, mhtmlOptions);
 
-            if (mhtmlStream.Length == 0)
-                throw new InvalidOperationException("MHTML conversion produced an empty stream.");
+        // Verify that the MHTML file was created.
+        if (!File.Exists(mhtmlPath))
+            throw new InvalidOperationException("MHTML conversion failed; file not created.");
 
-            // Reset the stream position before reading.
-            mhtmlStream.Position = 0;
+        // -----------------------------------------------------------------
+        // 3. Read the MHTML content.
+        // -----------------------------------------------------------------
+        string mhtmlContent = File.ReadAllText(mhtmlPath);
 
-            // Step 4: Read the MHTML content as a string.
-            string mhtmlContent;
-            using (StreamReader reader = new StreamReader(mhtmlStream))
-            {
-                mhtmlContent = reader.ReadToEnd();
-            }
+        // -----------------------------------------------------------------
+        // 4. Create an email message and embed the MHTML as the HTML body.
+        // -----------------------------------------------------------------
+        MailMessage email = new MailMessage
+        {
+            From = new MailAddress("sender@example.com"),
+            Subject = "Document converted to MHTML",
+            Body = mhtmlContent,
+            IsBodyHtml = true
+        };
+        email.To.Add("recipient@example.com");
 
-            // Step 5: Create a simple MIME email with the MHTML as the HTML body.
-            // Since Aspose.Email is not available, we construct the .eml file manually.
-            string emlPath = "output.eml";
-            string emailHeaders =
-                "From: sender@example.com\r\n" +
-                "To: recipient@example.com\r\n" +
-                "Subject: Document embedded as MHTML\r\n" +
-                "MIME-Version: 1.0\r\n" +
-                "Content-Type: text/html; charset=utf-8\r\n" +
-                "\r\n";
-
-            File.WriteAllText(emlPath, emailHeaders + mhtmlContent);
-
-            // Step 6: Validate that the email file was created.
-            if (!File.Exists(emlPath))
-                throw new InvalidOperationException("The email file was not created as expected.");
+        // Save the email to an .eml file.
+        // Since Aspose.Email is not available, write the raw MHTML content as the email body.
+        // This creates a simple .eml file containing the necessary headers and body.
+        using (StreamWriter writer = new StreamWriter(emlPath, false))
+        {
+            writer.WriteLine("From: {0}", email.From);
+            writer.WriteLine("To: {0}", string.Join(", ", email.To));
+            writer.WriteLine("Subject: {0}", email.Subject);
+            writer.WriteLine("MIME-Version: 1.0");
+            writer.WriteLine("Content-Type: multipart/related; boundary=\"----=_Part_0_123456.789\"");
+            writer.WriteLine();
+            writer.WriteLine("------=_Part_0_123456.789");
+            writer.WriteLine("Content-Type: text/html; charset=\"utf-8\"");
+            writer.WriteLine("Content-Transfer-Encoding: 8bit");
+            writer.WriteLine();
+            writer.WriteLine(mhtmlContent);
+            writer.WriteLine("------=_Part_0_123456.789--");
         }
+
+        // Verify that the email file was created.
+        if (!File.Exists(emlPath))
+            throw new InvalidOperationException("Email file was not created.");
     }
 }

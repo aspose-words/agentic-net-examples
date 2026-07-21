@@ -9,65 +9,52 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define file paths.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
+        string imagePath = Path.Combine(workDir, "sample.png");
+        string docxPath = Path.Combine(workDir, "input.docx");
+        string mhtmlPath = Path.Combine(workDir, "output.mht");
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX document with some text and an image.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document that will be converted to MHTML.");
-        builder.Writeln("The image below is generated programmatically using Aspose.Drawing.");
-
-        // Create a simple bitmap (100x100) filled with blue color.
+        // Create a simple PNG image using Aspose.Drawing.
         using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
                 graphics.Clear(Color.Blue);
             }
-
-            // Save the bitmap to a memory stream in PNG format.
-            using (MemoryStream imageStream = new MemoryStream())
-            {
-                bitmap.Save(imageStream, ImageFormat.Png);
-                imageStream.Position = 0; // Reset for reading.
-
-                // Insert the image into the document.
-                builder.InsertImage(imageStream);
-            }
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // Save the document as DOCX (required by the task workflow).
-        string docxPath = Path.Combine(artifactsDir, "Sample.docx");
+        // Create a DOCX document that contains text and the image.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample DOCX content with an embedded image:");
+        builder.InsertImage(imagePath);
         sourceDoc.Save(docxPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX document.
-        // -----------------------------------------------------------------
+        // Load the DOCX document.
         Document doc = new Document(docxPath);
 
-        // -----------------------------------------------------------------
-        // 3. Convert to MHTML with embedded images and fonts.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        // Configure save options for MHTML with embedded fonts and images.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
             ExportFontResources = true,               // Embed fonts.
-            ExportImagesAsBase64 = false,             // Images will be embedded as MIME parts in MHTML.
-            ExportCidUrlsForMhtmlResources = false    // Use default file‑name references.
+            ExportImagesAsBase64 = false,             // Keep images as separate MIME parts (default for MHTML).
+            ExportCidUrlsForMhtmlResources = false    // Use file name references (default).
         };
 
-        string mhtmlPath = Path.Combine(artifactsDir, "Sample.mht");
-        doc.Save(mhtmlPath, mhtmlOptions);
+        // Save the document as MHTML.
+        doc.Save(mhtmlPath, saveOptions);
 
-        // -----------------------------------------------------------------
-        // 4. Validate that the output file was created.
-        // -----------------------------------------------------------------
+        // Validate that the output file was created and is not empty.
         if (!File.Exists(mhtmlPath) || new FileInfo(mhtmlPath).Length == 0)
-            throw new InvalidOperationException("MHTML conversion failed: output file is missing or empty.");
+            throw new InvalidOperationException("MHTML conversion failed: output file was not created or is empty.");
 
-        // The example finishes without waiting for user input.
+        // Optional cleanup (comment out if you want to inspect the files).
+        // File.Delete(imagePath);
+        // File.Delete(docxPath);
+        // File.Delete(mhtmlPath);
+        // Directory.Delete(workDir);
     }
 }

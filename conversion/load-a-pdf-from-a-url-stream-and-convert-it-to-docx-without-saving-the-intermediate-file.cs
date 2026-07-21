@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net.Http;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,36 +7,29 @@ public class Program
 {
     public static void Main()
     {
-        // URL of a sample PDF file.
-        const string pdfUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+        // Create a sample Word document in memory.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Sample content for PDF conversion.");
 
-        // Path for the resulting DOCX file.
-        const string outputPath = "output.docx";
-
-        // Download the PDF into a memory stream.
-        using (HttpClient httpClient = new HttpClient())
+        // Save the document as PDF into a memory stream.
+        using (MemoryStream pdfStream = new MemoryStream())
         {
-            HttpResponseMessage response = httpClient.GetAsync(pdfUrl).Result;
-            response.EnsureSuccessStatusCode();
-            byte[] pdfBytes = response.Content.ReadAsByteArrayAsync().Result;
+            source.Save(pdfStream, SaveFormat.Pdf);
+            pdfStream.Position = 0; // Reset for reading.
 
-            using (MemoryStream pdfStream = new MemoryStream(pdfBytes))
-            {
-                // Ensure the stream is positioned at the beginning before loading.
-                pdfStream.Position = 0;
+            // Load the PDF from the memory stream.
+            Document pdfDoc = new Document(pdfStream);
 
-                // Load the PDF document directly from the stream.
-                Document pdfDocument = new Document(pdfStream);
+            // Convert the PDF to DOCX and save to disk.
+            const string outputPath = "output.docx";
+            pdfDoc.Save(outputPath, SaveFormat.Docx);
 
-                // Convert and save the document as DOCX without creating an intermediate file.
-                pdfDocument.Save(outputPath, SaveFormat.Docx);
-            }
+            // Verify that the DOCX file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The DOCX output file was not created.");
         }
 
-        // Verify that the DOCX file was created and contains data.
-        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
-        {
-            throw new InvalidOperationException("Conversion failed: DOCX file was not created or is empty.");
-        }
+        Console.WriteLine("Conversion completed successfully.");
     }
 }

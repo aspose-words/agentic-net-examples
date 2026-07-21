@@ -7,30 +7,26 @@ public class Program
 {
     public static void Main()
     {
-        const string inputPath = "input.docx";
-        const string outputPath = "output.pdf";
-
-        // Create a sample DOCX containing a date placeholder.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // Create a sample DOCX with a placeholder for the date.
+        Document sample = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sample);
         builder.Writeln("Report generated on {{Date}}.");
-        sampleDoc.Save(inputPath, SaveFormat.Docx);
+        const string inputPath = "input.docx";
+        sample.Save(inputPath, SaveFormat.Docx);
 
         // Load the DOCX file.
         Document doc = new Document(inputPath);
 
         // Replace all occurrences of the placeholder with the current date.
-        string placeholder = "{{Date}}";
-        string currentDate = DateTime.Now.ToString("d");
-        doc.Range.Replace(placeholder, currentDate, new FindReplaceOptions());
+        string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
+        doc.Range.Replace("{{Date}}", currentDate, new FindReplaceOptions(FindReplaceDirection.Forward));
 
         // Export the updated document to PDF.
+        const string outputPath = "output.pdf";
         doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
+        // Verify that the PDF was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("The PDF output file was not created.");
-        }
+            throw new InvalidOperationException("The PDF file was not created.");
     }
 }

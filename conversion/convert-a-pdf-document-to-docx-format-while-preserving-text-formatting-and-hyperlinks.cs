@@ -1,50 +1,49 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-public class PdfToDocxConverter
+public class Program
 {
     public static void Main()
     {
-        // Define file names for the sample PDF and the resulting DOCX.
+        // Define file names.
         const string pdfPath = "sample.pdf";
-        const string docxPath = "converted.docx";
+        const string docxPath = "output.docx";
 
         // -----------------------------------------------------------------
-        // Step 1: Create a sample PDF document with formatted text and a hyperlink.
+        // Step 1: Create a sample PDF with formatted text and a hyperlink.
         // -----------------------------------------------------------------
-        Document pdfSource = new Document();
-        DocumentBuilder builder = new DocumentBuilder(pdfSource);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Add a heading with bold formatting.
-        builder.Font.Size = 16;
-        builder.Font.Bold = true;
-        builder.Writeln("Sample PDF Document");
-
-        // Add a paragraph with a hyperlink.
+        // Apply some text formatting.
+        builder.Font.Name = "Arial";
         builder.Font.Size = 12;
-        builder.Font.Bold = false;
-        builder.InsertHyperlink("Visit Aspose", "https://www.aspose.com", false);
-        builder.Writeln(); // Move to the next line.
+        builder.Writeln("This is a sample paragraph with custom formatting.");
+
+        // Insert a visible hyperlink.
+        builder.InsertHyperlink("Visit Aspose", "https://www.aspose.com", true);
+        builder.Writeln(); // Add a line break after the hyperlink.
 
         // Save the document as PDF.
-        pdfSource.Save(pdfPath, SaveFormat.Pdf);
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException($"The PDF file '{pdfPath}' was not created.");
+        // ---------------------------------------------------------------
+        // Step 2: Load the generated PDF and convert it to DOCX format.
+        // ---------------------------------------------------------------
+        Document pdfDoc = new Document(pdfPath);
+        pdfDoc.Save(docxPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the PDF and convert it to DOCX, preserving formatting and hyperlinks.
-        // -----------------------------------------------------------------
-        Document pdfDocument = new Document(pdfPath);
-        pdfDocument.Save(docxPath, SaveFormat.Docx);
-
-        // Verify that the DOCX was created.
+        // ---------------------------------------------------------------
+        // Step 3: Validate that the DOCX file was created successfully.
+        // ---------------------------------------------------------------
         if (!File.Exists(docxPath))
-            throw new InvalidOperationException($"The DOCX file '{docxPath}' was not created.");
+        {
+            throw new InvalidOperationException($"The expected output file '{docxPath}' was not created.");
+        }
 
         // Optional: Inform the user that conversion succeeded.
-        Console.WriteLine($"Conversion completed successfully. DOCX saved to '{docxPath}'.");
+        Console.WriteLine($"PDF file '{pdfPath}' was successfully converted to DOCX file '{docxPath}'.");
     }
 }

@@ -9,69 +9,52 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        const string inputPath = "sample.docx";
-        const string outputPath = "compressed_pdfa2u.pdf";
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This PDF is saved as PDF/A‑2u with image compression and optimized output.");
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample Word document with some text and an image.
-        // -----------------------------------------------------------------
-        Document createdDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(createdDoc);
-        builder.Writeln("This is a sample document for PDF/A‑2u conversion with image compression.");
-
-        // Create a simple red square image using Aspose.Drawing (no System.Drawing usage)
-        using (MemoryStream imageStream = new MemoryStream())
+        // Create a simple bitmap using Aspose.Drawing (no System.Drawing usage).
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            using (Bitmap bitmap = new Bitmap(200, 200))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                using (Graphics graphics = Graphics.FromImage(bitmap))
-                {
-                    graphics.Clear(Color.Red);
-                }
+                graphics.Clear(Color.CornflowerBlue);
+                graphics.DrawEllipse(new Pen(Color.White, 5), 20, 20, 160, 160);
+            }
 
-                // Save the bitmap as PNG into the memory stream
+            // Save the bitmap to a memory stream.
+            using (MemoryStream imageStream = new MemoryStream())
+            {
                 bitmap.Save(imageStream, ImageFormat.Png);
                 imageStream.Position = 0;
 
-                // Insert the image into the document from the byte array
-                builder.InsertImage(imageStream.ToArray());
+                // Insert the image into the document.
+                builder.InsertImage(imageStream);
             }
         }
 
-        // Save the created document as DOCX (bootstrap file)
-        createdDoc.Save(inputPath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // 2. Load the previously saved DOCX file.
-        // -----------------------------------------------------------------
-        Document docToConvert = new Document(inputPath);
-
-        // -----------------------------------------------------------------
-        // 3. Configure PDF save options:
-        //    - PDF/A‑2u compliance
-        //    - JPEG image compression
-        //    - JPEG quality (adjustable)
-        //    - Optimize output to remove unused objects
-        // -----------------------------------------------------------------
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // Configure PDF save options for PDF/A‑2u compliance, image compression, and output optimization.
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA2u,
-            ImageCompression = PdfImageCompression.Jpeg,
-            JpegQuality = 70,               // Moderate compression
-            OptimizeOutput = true           // Remove unused objects
+            Compliance = PdfCompliance.PdfA2u,                 // PDF/A‑2u compliance.
+            ImageCompression = PdfImageCompression.Jpeg,      // Compress images using JPEG.
+            JpegQuality = 70,                                 // JPEG quality (0‑100, lower = higher compression).
+            OptimizeOutput = true                             // Remove unused objects and optimize the PDF.
         };
 
-        // Save the document as a compressed PDF/A‑2u file
-        docToConvert.Save(outputPath, pdfOptions);
+        // Define the output file path.
+        string outputPath = "CompressedPdfA2u.pdf";
 
-        // -----------------------------------------------------------------
-        // 4. Validation – ensure the output file was created.
-        // -----------------------------------------------------------------
+        // Save the document as a compressed PDF/A‑2u file.
+        doc.Save(outputPath, saveOptions);
+
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"The PDF file '{outputPath}' was not created.");
+            throw new InvalidOperationException("The PDF/A‑2u file was not created.");
 
-        // Optional: report success (no interactive prompts required)
-        Console.WriteLine($"PDF/A‑2u file saved successfully: {outputPath}");
+        // Optionally, you could check the file size to ensure compression took effect.
+        long fileSize = new FileInfo(outputPath).Length;
+        Console.WriteLine($"PDF/A‑2u file created successfully. Size: {fileSize} bytes.");
     }
 }

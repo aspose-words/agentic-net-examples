@@ -2,54 +2,51 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Required package, not used directly
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX file that will act as the SharePoint document.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample DOCX content generated for conversion.");
+        // Step 1: Create a sample DOCX file locally.
+        Document sourceDocument = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDocument);
+        builder.Writeln("Sample DOC content generated for conversion.");
         const string inputPath = "input.docx";
-        sourceDoc.Save(inputPath, SaveFormat.Docx);
+        sourceDocument.Save(inputPath, SaveFormat.Docx);
 
-        // Verify that the input file was created.
-        if (!File.Exists(inputPath))
-            throw new InvalidOperationException("The input DOCX file was not created.");
-
-        // Step 2: Simulate obtaining the DOCX from a SharePoint stream.
-        // Read the file into a byte array and wrap it with a MemoryStream.
-        byte[] docxBytes = File.ReadAllBytes(inputPath);
-        using (MemoryStream sharePointStream = new MemoryStream(docxBytes))
+        // Step 2: Simulate obtaining a SharePoint stream by loading the file into a MemoryStream.
+        using (FileStream fileStream = File.OpenRead(inputPath))
+        using (MemoryStream sharepointStream = new MemoryStream())
         {
-            // Ensure the stream is positioned at the beginning before loading.
-            sharePointStream.Position = 0;
+            fileStream.CopyTo(sharepointStream);
+            sharepointStream.Position = 0; // Reset for reading.
 
-            // Load the document from the simulated SharePoint stream.
-            Document docFromStream = new Document(sharePointStream);
+            // Step 3: Load the document from the simulated SharePoint stream.
+            Document doc = new Document(sharepointStream);
 
-            // Step 3: Convert the loaded document to PDF and write it to a response stream.
+            // Step 4: Convert the document to PDF and write it to a simulated response stream.
             using (MemoryStream responseStream = new MemoryStream())
             {
-                docFromStream.Save(responseStream, SaveFormat.Pdf);
+                doc.Save(responseStream, SaveFormat.Pdf);
+                responseStream.Position = 0; // Reset for any further processing.
 
-                // Validate that PDF data was written to the stream.
+                // Step 5: Validate that PDF data was written.
                 if (responseStream.Length == 0)
-                    throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
-
-                // Optional: Save the PDF to a file for verification.
-                const string outputPath = "output.pdf";
-                responseStream.Position = 0; // Reset before reading.
-                using (FileStream file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
                 {
-                    responseStream.CopyTo(file);
+                    throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
                 }
 
-                // Verify that the PDF file exists.
+                // Optional: Save the PDF to a file for verification purposes.
+                const string outputPath = "output.pdf";
+                using (FileStream outFile = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+                {
+                    responseStream.CopyTo(outFile);
+                }
+
                 if (!File.Exists(outputPath))
-                    throw new InvalidOperationException("The output PDF file was not created.");
+                {
+                    throw new InvalidOperationException("Expected output PDF was not created.");
+                }
             }
         }
     }

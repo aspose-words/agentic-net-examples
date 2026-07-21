@@ -1,58 +1,57 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+using Aspose.Drawing;               // Aspose.Drawing types for bitmap, graphics, colors, fonts, etc.
+using Aspose.Drawing.Imaging;      // For ImageFormat
 
 public class Program
 {
     public static void Main()
     {
-        // Folder for temporary image files.
-        string workDir = Directory.GetCurrentDirectory();
+        // Define folders and file names.
+        string baseDir = Directory.GetCurrentDirectory();
+        string imagesDir = Path.Combine(baseDir, "Images");
+        string outputPdf = Path.Combine(baseDir, "CombinedImages.pdf");
 
-        // Create sample PNG images using Aspose.Drawing.
-        string[] imageFiles = new string[3];
-        for (int i = 0; i < imageFiles.Length; i++)
+        // Ensure the images folder exists.
+        if (!Directory.Exists(imagesDir))
+            Directory.CreateDirectory(imagesDir);
+
+        // Create sample PNG images.
+        const int imageCount = 3;
+        for (int i = 1; i <= imageCount; i++)
         {
-            string filePath = Path.Combine(workDir, $"sample{i + 1}.png");
-            CreateSamplePng(filePath, $"Image {i + 1}");
-            imageFiles[i] = filePath;
+            string imagePath = Path.Combine(imagesDir, $"Image{i}.png");
+            CreateSamplePng(imagePath, i);
         }
 
-        // Build a Word document where each image occupies a separate page.
+        // Create a new blank Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        for (int i = 0; i < imageFiles.Length; i++)
+        // Insert each PNG onto a separate page.
+        for (int i = 1; i <= imageCount; i++)
         {
-            builder.InsertImage(imageFiles[i]);
-
-            // Insert a page break after each image except the last one.
-            if (i < imageFiles.Length - 1)
+            string imagePath = Path.Combine(imagesDir, $"Image{i}.png");
+            builder.InsertImage(imagePath);
+            if (i < imageCount)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save the document as a single PDF file.
-        string pdfPath = Path.Combine(workDir, "ImagesCombined.pdf");
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // Save the document as PDF.
+        doc.Save(outputPdf, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
+        if (!File.Exists(outputPdf))
             throw new InvalidOperationException("The PDF file was not created.");
 
-        // Clean up temporary PNG files.
-        foreach (string file in imageFiles)
-        {
-            if (File.Exists(file))
-                File.Delete(file);
-        }
+        // Optional: clean up generated files (comment out if you want to keep them).
+        //Directory.Delete(imagesDir, true);
     }
 
-    // Generates a simple PNG image with centered text using Aspose.Drawing.
-    private static void CreateSamplePng(string filePath, string text)
+    // Generates a simple PNG image with a solid background and a label.
+    private static void CreateSamplePng(string filePath, int index)
     {
         const int width = 400;
         const int height = 300;
@@ -61,21 +60,21 @@ public class Program
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background.
-                graphics.Clear(Color.LightGray);
-
-                // Define font and brush.
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-                using (SolidBrush brush = new SolidBrush(Color.Black))
+                // Fill background with a distinct color per image.
+                Aspose.Drawing.Color bgColor = index switch
                 {
-                    // Measure text size.
-                    SizeF textSize = graphics.MeasureString(text, font);
-                    // Calculate position to center the text.
-                    float x = (width - textSize.Width) / 2;
-                    float y = (height - textSize.Height) / 2;
+                    1 => Aspose.Drawing.Color.LightCoral,
+                    2 => Aspose.Drawing.Color.LightGreen,
+                    _ => Aspose.Drawing.Color.LightBlue
+                };
+                graphics.Clear(bgColor);
 
-                    // Draw the text.
-                    graphics.DrawString(text, font, brush, new PointF(x, y));
+                // Draw the image label.
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.Black))
+                {
+                    string text = $"Sample Image {index}";
+                    graphics.DrawString(text, font, brush, new PointF(20, height / 2 - 12));
                 }
             }
 

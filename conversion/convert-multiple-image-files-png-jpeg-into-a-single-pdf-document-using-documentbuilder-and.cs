@@ -1,67 +1,70 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+using Aspose.Drawing;                 // Aspose.Drawing types for bitmap, graphics, colors, etc.
+using Aspose.Drawing.Imaging;        // ImageFormat, PixelFormat
 
-public class ImageToPdfConverter
+public class Program
 {
     public static void Main()
     {
-        // Define file names for the sample images and the output PDF.
+        // Paths for temporary images and final PDF.
         const string pngPath = "sample_image.png";
-        const string jpgPath = "sample_image.jpg";
+        const string jpegPath = "sample_image.jpg";
         const string outputPdf = "combined_images.pdf";
 
-        // Create a PNG image if it does not already exist.
-        if (!File.Exists(pngPath))
+        // Create a PNG image.
+        using (Bitmap pngBitmap = new Bitmap(200, 200, PixelFormat.Format24bppRgb))
         {
-            using (Bitmap bitmap = new Bitmap(200, 200))
+            using (Graphics graphics = Graphics.FromImage(pngBitmap))
             {
-                using (Graphics graphics = Graphics.FromImage(bitmap))
+                graphics.Clear(Color.LightBlue);
+                using (SolidBrush brush = new SolidBrush(Color.DarkBlue))
                 {
-                    graphics.Clear(Color.Red);
+                    // Use fully qualified Aspose.Drawing.Font to avoid ambiguity with Aspose.Words.Font.
+                    using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                    {
+                        graphics.DrawString("PNG", font, brush, new PointF(50, 80));
+                    }
                 }
-                bitmap.Save(pngPath, ImageFormat.Png);
             }
+            pngBitmap.Save(pngPath, ImageFormat.Png);
         }
 
-        // Create a JPEG image if it does not already exist.
-        if (!File.Exists(jpgPath))
+        // Create a JPEG image.
+        using (Bitmap jpegBitmap = new Bitmap(200, 200, PixelFormat.Format24bppRgb))
         {
-            using (Bitmap bitmap = new Bitmap(200, 200))
+            using (Graphics graphics = Graphics.FromImage(jpegBitmap))
             {
-                using (Graphics graphics = Graphics.FromImage(bitmap))
+                graphics.Clear(Color.LightCoral);
+                using (SolidBrush brush = new SolidBrush(Color.White))
                 {
-                    graphics.Clear(Color.Blue);
+                    using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                    {
+                        graphics.DrawString("JPG", font, brush, new PointF(50, 80));
+                    }
                 }
-                bitmap.Save(jpgPath, ImageFormat.Jpeg);
             }
+            jpegBitmap.Save(jpegPath, ImageFormat.Jpeg);
         }
 
-        // Create a new blank Word document.
+        // Build a Word document and insert the images.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the PNG image.
         builder.InsertImage(pngPath);
-        builder.Writeln(); // Add a line break between images.
+        builder.InsertParagraph(); // Add spacing between images.
+        builder.InsertImage(jpegPath);
 
-        // Insert the JPEG image.
-        builder.InsertImage(jpgPath);
-        builder.Writeln();
-
-        // Save the document as a PDF file.
+        // Save the document as a PDF.
         doc.Save(outputPdf, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
         if (!File.Exists(outputPdf))
             throw new InvalidOperationException("The PDF file was not created.");
 
-        // Optionally, clean up the sample images.
-        // File.Delete(pngPath);
-        // File.Delete(jpgPath);
+        // Clean up temporary image files.
+        File.Delete(pngPath);
+        File.Delete(jpegPath);
     }
 }

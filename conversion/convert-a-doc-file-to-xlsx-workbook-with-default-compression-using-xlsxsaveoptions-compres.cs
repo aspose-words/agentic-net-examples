@@ -7,29 +7,44 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOC file.
+        // Define file names for the input DOC and the output XLSX.
         const string inputPath = "sample.doc";
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("This is a sample DOC file.");
-        source.Save(inputPath, SaveFormat.Doc);
+        const string outputPath = "converted.xlsx";
 
-        // Load the DOC file.
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOC file.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample DOC content for conversion to XLSX.");
+        sourceDoc.Save(inputPath, SaveFormat.Doc);
+
+        // -----------------------------------------------------------------
+        // 2. Load the DOC file that was just created.
+        // -----------------------------------------------------------------
         Document doc = new Document(inputPath);
 
-        // Set up XlsxSaveOptions with the default compression level.
+        // -----------------------------------------------------------------
+        // 3. Prepare XlsxSaveOptions with the default compression level.
+        // -----------------------------------------------------------------
         XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
         {
-            CompressionLevel = CompressionLevel.Normal,
-            SaveFormat = SaveFormat.Xlsx
+            CompressionLevel = CompressionLevel.Normal, // default compression
+            SaveFormat = SaveFormat.Xlsx               // must be set for XlsxSaveOptions
         };
 
-        // Convert and save as XLSX.
-        const string outputPath = "output.xlsx";
+        // -----------------------------------------------------------------
+        // 4. Save the document as an XLSX workbook using the options.
+        // -----------------------------------------------------------------
         doc.Save(outputPath, xlsxOptions);
 
-        // Verify that the XLSX file was created.
+        // -----------------------------------------------------------------
+        // 5. Validate that the XLSX file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Expected output XLSX was not created.");
+            throw new InvalidOperationException($"The expected output file '{outputPath}' was not created.");
+
+        // Optional: inform that the conversion succeeded.
+        Console.WriteLine($"Conversion completed successfully. Output file: {Path.GetFullPath(outputPath)}");
     }
 }

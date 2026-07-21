@@ -1,69 +1,58 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string outputFolder = Path.Combine(baseDir, "OutputPdfs");
+        // Define folders for input DOCX files and output PDF files.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdfs");
 
+        // Ensure the folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample DOCX files
-        CreateSampleDocx(Path.Combine(inputFolder, "Doc1.docx"), "First sample document content.");
-        CreateSampleDocx(Path.Combine(inputFolder, "Doc2.docx"), "Second sample document content.");
-
-        // Process each DOCX: add header and convert to PDF
-        string[] docxFiles = Directory.GetFiles(inputFolder, "*.docx");
-        foreach (string docxPath in docxFiles)
+        // Create a few sample DOCX files.
+        for (int i = 1; i <= 3; i++)
         {
-            // Load the DOCX
-            Document doc = new Document(docxPath);
+            // Create a blank document and add some sample text.
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln($"Sample content for document {i}.");
 
-            // Ensure a primary header exists and add company-wide header text
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            builder.Writeln("Company Confidential – Header");
+            // Save the document as DOCX using the provided pattern.
+            string docxPath = Path.Combine(inputFolder, $"Doc{i}.docx");
+            sampleDoc.Save(docxPath, SaveFormat.Docx);
+        }
 
-            // Determine output PDF path
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(docxPath);
-            string pdfPath = Path.Combine(outputFolder, fileNameWithoutExt + ".pdf");
+        // Process each DOCX file: add a company‑wide header and convert to PDF.
+        string[] docxFiles = Directory.GetFiles(inputFolder, "*.docx");
+        foreach (string docxFile in docxFiles)
+        {
+            // Load the existing DOCX file.
+            Document doc = new Document(docxFile);
 
-            // Save as PDF
+            // Insert a primary header with the company text.
+            DocumentBuilder headerBuilder = new DocumentBuilder(doc);
+            headerBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            headerBuilder.Writeln("Company Confidential");
+
+            // Determine the output PDF path.
+            string pdfFileName = Path.GetFileNameWithoutExtension(docxFile) + ".pdf";
+            string pdfPath = Path.Combine(outputFolder, pdfFileName);
+
+            // Save the document as PDF using the provided pattern.
             doc.Save(pdfPath, SaveFormat.Pdf);
 
-            // Validate output
+            // Verify that the PDF was created.
             if (!File.Exists(pdfPath))
-            {
-                throw new InvalidOperationException($"PDF was not created for '{docxPath}'.");
-            }
-
-            FileInfo pdfInfo = new FileInfo(pdfPath);
-            if (pdfInfo.Length == 0)
-            {
-                throw new InvalidOperationException($"PDF file '{pdfPath}' is empty.");
-            }
+                throw new InvalidOperationException($"PDF conversion failed for '{docxFile}'.");
         }
 
-        // Optional: indicate completion (no interactive wait)
+        // Optional: indicate completion.
         Console.WriteLine("Batch processing completed successfully.");
-    }
-
-    private static void CreateSampleDocx(string path, string bodyText)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(bodyText);
-        doc.Save(path, SaveFormat.Docx);
-
-        if (!File.Exists(path))
-        {
-            throw new InvalidOperationException($"Failed to create sample DOCX at '{path}'.");
-        }
     }
 }

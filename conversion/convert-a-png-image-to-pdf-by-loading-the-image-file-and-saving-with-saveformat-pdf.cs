@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -9,36 +9,20 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string pngPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
-        string pdfPath = Path.Combine(Directory.GetCurrentDirectory(), "output.pdf");
+        // Define file names.
+        const string pngPath = "sample.png";
+        const string pdfPath = "output.pdf";
 
-        // -----------------------------------------------------------------
-        // Create a simple PNG image using Aspose.Drawing (no System.Drawing usage).
-        // -----------------------------------------------------------------
+        // Create a simple PNG image using Aspose.Drawing.
         using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            // Obtain a Graphics object for drawing on the bitmap.
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background with light blue.
-                graphics.Clear(Color.LightBlue);
-
-                // Draw a red ellipse.
-                using (Pen pen = new Pen(Color.Red, 5))
-                {
-                    graphics.DrawEllipse(pen, 20, 20, 160, 160);
-                }
-
-                // Draw some text.
-                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20);
-                using (SolidBrush brush = new SolidBrush(Color.DarkBlue))
-                {
-                    graphics.DrawString("Sample", font, brush, new PointF(40, 80));
-                }
+                // Fill the image with a solid color.
+                graphics.Clear(Color.CornflowerBlue);
             }
 
-            // Save the bitmap as PNG.
+            // Save the bitmap as a PNG file.
             bitmap.Save(pngPath, ImageFormat.Png);
         }
 
@@ -46,21 +30,19 @@ public class Program
         if (!File.Exists(pngPath))
             throw new InvalidOperationException("Failed to create the PNG image.");
 
-        // -----------------------------------------------------------------
-        // Load the PNG into a Word document and save as PDF.
-        // -----------------------------------------------------------------
+        // Create a new Word document and insert the PNG image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(pngPath);
 
-        // Save the document as PDF.
+        // Save the document as a PDF.
         doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF conversion failed; output file not found.");
+            throw new InvalidOperationException("The PDF conversion was not successful.");
 
-        // Cleanup: optional removal of the temporary PNG file.
-        // File.Delete(pngPath);
+        // Clean up the temporary PNG file (optional).
+        File.Delete(pngPath);
     }
 }

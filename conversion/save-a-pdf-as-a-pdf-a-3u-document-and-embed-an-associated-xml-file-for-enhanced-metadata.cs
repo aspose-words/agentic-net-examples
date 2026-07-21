@@ -7,34 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple XML file that will be embedded as an attachment.
-        const string xmlFileName = "metadata.xml";
-        File.WriteAllText(xmlFileName, "<metadata><author>John Doe</author></metadata>");
+        // Paths for the temporary XML metadata file and the resulting PDF/A‑3u file.
+        const string xmlPath = "metadata.xml";
+        const string pdfPath = "outputPdfA3u.pdf";
 
-        // Create a new blank Word document.
+        // -----------------------------------------------------------------
+        // 1. Create a simple XML file that will be embedded in the PDF.
+        // -----------------------------------------------------------------
+        File.WriteAllText(xmlPath,
+            "<metadata>" +
+            "<author>John Doe</author>" +
+            "<description>Sample PDF/A-3u with embedded XML attachment</description>" +
+            "</metadata>");
+
+        // -----------------------------------------------------------------
+        // 2. Build a basic Word document.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document with embedded XML metadata.");
+        builder.Writeln("This PDF is saved as PDF/A-3u and contains an embedded XML file.");
 
-        // Embed the XML file as an OLE object (Package) so it can be saved as an attachment.
-        builder.InsertOleObject(xmlFileName, "Package", false, false, null);
+        // -----------------------------------------------------------------
+        // 3. Embed the XML file as an OLE object.
+        //    The \"Package\" progID creates a generic file attachment.
+        // -----------------------------------------------------------------
+        builder.InsertOleObject(xmlPath, "Package", false, true, null);
 
-        // Configure PDF save options for PDF/A‑3u compliance and enable attachment embedding.
+        // -----------------------------------------------------------------
+        // 4. Configure PDF save options for PDF/A‑3u compliance.
+        //    Use the Annotations mode to embed the attachment (supported in this SDK version).
+        // -----------------------------------------------------------------
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA3u,
-            AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations
+            AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations,
+            ExportDocumentStructure = true
         };
 
-        // Save the document as a PDF/A‑3u file.
-        const string pdfFileName = "output.pdf";
-        doc.Save(pdfFileName, saveOptions);
+        // -----------------------------------------------------------------
+        // 5. Save the document as a PDF/A‑3u file.
+        // -----------------------------------------------------------------
+        doc.Save(pdfPath, saveOptions);
 
-        // Verify that the PDF file was created.
-        if (!File.Exists(pdfFileName))
-            throw new InvalidOperationException("The PDF/A‑3u file was not created.");
+        // -----------------------------------------------------------------
+        // 6. Verify that the PDF/A‑3u file was created and is not empty.
+        // -----------------------------------------------------------------
+        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
+            throw new InvalidOperationException("The PDF/A-3u file was not created successfully.");
 
-        // Clean up temporary files (optional).
-        File.Delete(xmlFileName);
+        // Optional cleanup of the temporary XML file.
+        // File.Delete(xmlPath);
     }
 }

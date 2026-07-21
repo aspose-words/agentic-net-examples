@@ -7,67 +7,66 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input PDFs and output HTML files.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputHtml");
+        // Base directory for the demonstration.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchConversion");
+        string inputDir = Path.Combine(baseDir, "Input");
+        string outputDir = Path.Combine(baseDir, "Output");
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure clean folders.
+        if (Directory.Exists(baseDir))
+            Directory.Delete(baseDir, true);
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create sample PDF files.
-        const int sampleCount = 3;
-        for (int i = 1; i <= sampleCount; i++)
+        // -----------------------------------------------------------------
+        // Step 1: Create a few sample PDF files that will be the source.
+        // -----------------------------------------------------------------
+        for (int i = 1; i <= 3; i++)
         {
-            string pdfPath = Path.Combine(inputFolder, $"Sample{i}.pdf");
+            string pdfPath = Path.Combine(inputDir, $"Sample{i}.pdf");
 
-            // Create a blank document and add some content.
+            // Create a simple Word document and save it as PDF.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is sample PDF number {i}.");
-            builder.Writeln("The quick brown fox jumps over the lazy dog.");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln("Second page of the document.");
-
-            // Save the document as PDF.
+            builder.Writeln($"This is the content of sample PDF #{i}.");
             doc.Save(pdfPath, SaveFormat.Pdf);
 
             // Verify that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
+                throw new InvalidOperationException($"Failed to create source PDF: {pdfPath}");
         }
 
-        // Batch convert each PDF to HTML while preserving layout and fonts.
-        string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
+        // -----------------------------------------------------------------
+        // Step 2: Batch convert each PDF in the input folder to HTML.
+        // -----------------------------------------------------------------
+        string[] pdfFiles = Directory.GetFiles(inputDir, "*.pdf");
         foreach (string pdfFile in pdfFiles)
         {
             // Load the PDF document.
             Document pdfDoc = new Document(pdfFile);
 
-            // Prepare HtmlSaveOptions to export fonts and preserve layout.
+            // Configure HTML save options to preserve layout and fonts.
             HtmlSaveOptions htmlOptions = new HtmlSaveOptions
             {
-                ExportFontResources = true,
-                // Store exported fonts in a dedicated folder per document.
-                FontsFolder = Path.Combine(outputFolder, "fonts_" + Path.GetFileNameWithoutExtension(pdfFile))
+                ExportFontResources = true, // Export fonts used in the document.
+                // Store exported fonts in a subfolder next to the HTML file.
+                FontsFolder = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(pdfFile) + "_fonts")
             };
 
-            // Ensure the fonts folder exists.
-            Directory.CreateDirectory(htmlOptions.FontsFolder);
-
             // Determine the output HTML file path.
-            string htmlFileName = Path.GetFileNameWithoutExtension(pdfFile) + ".html";
-            string htmlPath = Path.Combine(outputFolder, htmlFileName);
+            string htmlPath = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(pdfFile) + ".html");
 
-            // Save the document as HTML using the specified options.
+            // Save the document as HTML using the configured options.
             pdfDoc.Save(htmlPath, htmlOptions);
 
-            // Validate that the HTML file was created.
+            // Verify that the HTML file was created.
             if (!File.Exists(htmlPath))
-                throw new InvalidOperationException($"Failed to create HTML: {htmlPath}");
+                throw new InvalidOperationException($"HTML conversion failed for: {pdfFile}");
         }
 
-        // Indicate successful completion.
-        Console.WriteLine("Batch PDF to HTML conversion completed successfully.");
+        // -----------------------------------------------------------------
+        // Completion message (optional, not required for the task).
+        // -----------------------------------------------------------------
+        Console.WriteLine("Batch PDF‑to‑HTML conversion completed successfully.");
     }
 }

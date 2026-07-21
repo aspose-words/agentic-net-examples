@@ -2,55 +2,54 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names
-        const string htmlFile = "sample.html";
-        const string jsFile = "script.js";
-        const string pdfFile = "output.pdf";
+        // Define file names.
+        string htmlFile = "input.html";
+        string jsFile = "script.js";
+        string pdfFile = "output.pdf";
 
-        // Create a simple external JavaScript file
-        File.WriteAllText(jsFile, @"
-function showMessage() {
-    // This script will not affect the static PDF rendering
-    console.log('Hello from external script!');
-}
-");
+        // Create a simple external JavaScript file.
+        File.WriteAllText(jsFile, "function hello() { alert('Hello from external script!'); }");
 
-        // Create an HTML file that references the external JavaScript
-        string htmlContent = $@"
-<!DOCTYPE html>
+        // Create an HTML file that references the external JavaScript.
+        string htmlContent = @"<!DOCTYPE html>
 <html>
 <head>
-    <title>Sample HTML with External JS</title>
-    <script src=""{jsFile}""></script>
+    <title>Sample HTML</title>
+    <script src=""script.js""></script>
 </head>
 <body>
-    <h1>Static Content</h1>
-    <p>This paragraph will appear in the PDF. The script is ignored during conversion.</p>
+    <h1>Hello World</h1>
+    <p>This document is converted to PDF while ignoring scripts.</p>
 </body>
 </html>";
         File.WriteAllText(htmlFile, htmlContent);
 
-        // Load the HTML document, ignoring <noscript> elements (scripts are ignored by default)
+        // Load the HTML document. Scripts are not executed by Aspose.Words.
         HtmlLoadOptions loadOptions = new HtmlLoadOptions
         {
+            // BaseUri helps resolve relative paths (e.g., the script file).
+            BaseUri = Directory.GetCurrentDirectory(),
+            // Optional: ignore <noscript> elements if present.
             IgnoreNoscriptElements = true
         };
+
         Document doc = new Document(htmlFile, loadOptions);
 
-        // Convert to PDF
+        // Convert the loaded document to PDF.
         doc.Save(pdfFile, SaveFormat.Pdf);
 
-        // Validate that the PDF was created
-        if (!File.Exists(pdfFile) || new FileInfo(pdfFile).Length == 0)
-            throw new InvalidOperationException("PDF conversion failed: output file was not created or is empty.");
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfFile))
+            throw new InvalidOperationException("The PDF file was not created.");
 
-        // Clean up temporary files (optional)
-        // File.Delete(htmlFile);
-        // File.Delete(jsFile);
+        // Clean up temporary files (optional).
+        File.Delete(htmlFile);
+        File.Delete(jsFile);
     }
 }

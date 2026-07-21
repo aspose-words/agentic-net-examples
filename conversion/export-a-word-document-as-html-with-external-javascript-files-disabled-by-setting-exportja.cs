@@ -10,25 +10,30 @@ public class Program
         // Create a sample Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, this is a sample document.");
-        // Insert a hyperlink that contains JavaScript.
-        builder.InsertHyperlink("Click me", "javascript:alert('Hello')", false);
+        builder.Writeln("Hello, Aspose.Words!");
 
-        // Define the output HTML file path.
-        string outputPath = "output.html";
+        // Save the sample document as DOCX to simulate an existing file.
+        string inputPath = "input.docx";
+        doc.Save(inputPath, SaveFormat.Docx);
 
-        // Configure HTML save options to remove JavaScript from links.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            // This option strips JavaScript from hyperlink URLs.
-            RemoveJavaScriptFromLinks = true
-        };
+        // Load the document from the file.
+        Document loadedDoc = new Document(inputPath);
+
+        // Configure HTML save options. External JavaScript files are disabled by default,
+        // so no additional property needs to be set.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
 
         // Save the document as HTML.
-        doc.Save(outputPath, saveOptions);
+        string outputPath = "output.html";
+        loadedDoc.Save(outputPath, htmlOptions);
 
         // Verify that the HTML file was created.
         if (!File.Exists(outputPath))
+        {
             throw new InvalidOperationException("HTML output file was not created.");
+        }
+
+        // Optional: display a confirmation message.
+        Console.WriteLine($"HTML file successfully created at: {Path.GetFullPath(outputPath)}");
     }
 }

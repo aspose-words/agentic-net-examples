@@ -1,28 +1,27 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
         // Define folders and file names.
-        string baseDir = Directory.GetCurrentDirectory();
-        string imagesDir = Path.Combine(baseDir, "InputImages");
-        string outputPdfPath = Path.Combine(baseDir, "ImagesCombined.pdf");
+        string imagesFolder = "InputImages";
+        string outputPdf = "CombinedImages.pdf";
 
         // Ensure the images folder exists.
-        if (!Directory.Exists(imagesDir))
-            Directory.CreateDirectory(imagesDir);
+        Directory.CreateDirectory(imagesFolder);
 
-        // Create sample PNG images.
-        const int imageCount = 3;
-        for (int i = 1; i <= imageCount; i++)
+        // Create sample PNG images using Aspose.Drawing.
+        for (int i = 1; i <= 3; i++)
         {
-            string imagePath = Path.Combine(imagesDir, $"Image{i}.png");
+            string imagePath = Path.Combine(imagesFolder, $"Image{i}.png");
             CreateSamplePng(imagePath, i);
         }
 
@@ -30,64 +29,58 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert each PNG onto a separate page.
-        for (int i = 1; i <= imageCount; i++)
+        // Insert each PNG image on a separate page.
+        string[] pngFiles = Directory.GetFiles(imagesFolder, "*.png");
+        for (int i = 0; i < pngFiles.Length; i++)
         {
-            string imagePath = Path.Combine(imagesDir, $"Image{i}.png");
-            builder.InsertImage(imagePath);
+            builder.InsertImage(pngFiles[i]);
 
             // Add a page break after each image except the last one.
-            if (i < imageCount)
-                builder.InsertBreak(BreakType.PageBreak);
+            if (i < pngFiles.Length - 1)
+                builder.InsertBreak(Aspose.Words.BreakType.PageBreak);
         }
 
         // Save the document as a PDF.
-        doc.Save(outputPdfPath, SaveFormat.Pdf);
+        doc.Save(outputPdf, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
-        if (!File.Exists(outputPdfPath))
-            throw new InvalidOperationException("The output PDF file was not created.");
+        if (!File.Exists(outputPdf))
+            throw new InvalidOperationException("The PDF file was not created.");
 
-        // Clean up temporary images (optional).
-        // Directory.Delete(imagesDir, true);
+        // Optional cleanup.
+        // Directory.Delete(imagesFolder, true);
     }
 
-    // Generates a simple PNG image with a solid background and a number drawn on it.
+    // Creates a simple PNG image with a solid background and a number drawn on it.
     private static void CreateSamplePng(string filePath, int number)
     {
-        const int width = 200;
-        const int height = 200;
+        // Define image size.
+        int width = 200;
+        int height = 200;
 
-        // Create a bitmap using Aspose.Drawing.
-        using (Bitmap bitmap = new Bitmap(width, height))
+        // Create a bitmap and obtain a graphics object.
+        using (Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            // Fill the bitmap with a color that varies by number.
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                // Choose a background color.
-                Color backgroundColor = number % 3 == 1 ? Color.LightBlue :
-                                        number % 3 == 2 ? Color.LightGreen :
-                                        Color.LightCoral;
-                graphics.Clear(backgroundColor);
+            // Fill background with a distinct color.
+            graphics.Clear(Color.FromArgb(255, 100 + number * 30, 150, 200));
 
-                // Draw the number in the center using a simple font.
-                // Note: Aspose.Drawing.Font is used to avoid ambiguity with Aspose.Words.Font.
-                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 48);
-                try
-                {
-                    // Measure the string to center it.
-                    SizeF textSize = graphics.MeasureString(number.ToString(), font);
-                    float x = (width - textSize.Width) / 2;
-                    float y = (height - textSize.Height) / 2;
-                    graphics.DrawString(number.ToString(), font, Brushes.Black, x, y);
-                }
-                finally
-                {
-                    font.Dispose();
-                }
+            // Prepare a drawing font.
+            Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 48, FontStyle.Bold);
+            try
+            {
+                // Draw the image number centered.
+                string text = $"Img {number}";
+                SizeF textSize = graphics.MeasureString(text, font);
+                PointF location = new PointF((width - textSize.Width) / 2, (height - textSize.Height) / 2);
+                graphics.DrawString(text, font, Brushes.White, location);
+            }
+            finally
+            {
+                font.Dispose();
             }
 
-            // Save the bitmap as a PNG file.
+            // Save the bitmap as PNG.
             bitmap.Save(filePath, ImageFormat.Png);
         }
     }

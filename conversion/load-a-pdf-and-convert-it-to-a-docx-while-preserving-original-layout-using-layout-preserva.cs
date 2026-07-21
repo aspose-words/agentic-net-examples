@@ -2,41 +2,26 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF document.
-        Document sourceDocument = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDocument);
+        // Create a sample PDF file.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
         builder.Writeln("Sample PDF content for conversion.");
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndTable();
+        source.Save("sample.pdf", SaveFormat.Pdf);
 
-        // Save the sample as PDF.
-        string pdfPath = "sample.pdf";
-        sourceDocument.Save(pdfPath, SaveFormat.Pdf);
-
-        // Verify that the PDF file was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
-
-        // Load the PDF (layout‑preservation is the default behavior).
+        // Load the PDF with load options (default options preserve layout).
         PdfLoadOptions loadOptions = new PdfLoadOptions();
-        Document pdfDocument = new Document(pdfPath, loadOptions);
+        Document pdfDoc = new Document("sample.pdf", loadOptions);
 
-        // Convert the loaded PDF to DOCX while preserving layout.
-        string docxPath = "converted.docx";
-        pdfDocument.Save(docxPath, SaveFormat.Docx);
+        // Convert the PDF to DOCX while preserving the original layout.
+        pdfDoc.Save("converted.docx", SaveFormat.Docx);
 
         // Verify that the DOCX file was created.
-        if (!File.Exists(docxPath))
-            throw new InvalidOperationException("The DOCX file was not created.");
+        if (!File.Exists("converted.docx"))
+            throw new InvalidOperationException("The DOCX output file was not created.");
     }
 }

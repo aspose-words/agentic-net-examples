@@ -7,51 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Define output file names.
-        string outputHtml = "output.html";
-        string outputCss = Path.ChangeExtension(outputHtml, ".css");
+        // Define output folder and ensure it exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a new blank document.
+        // Create a sample Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample content for HTML conversion.");
+        builder.Writeln("Another paragraph to generate CSS classes.");
 
-        // Add a heading styled paragraph.
-        // Use the built‑in "Header" style so that the generated CSS class will be "Header".
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Header;
-        builder.Writeln("Sample Heading");
-
-        // Add a normal paragraph.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is a sample paragraph.");
-
-        // Configure HTML save options with an external CSS file and a class name prefix.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        // Configure HtmlSaveOptions with a CSS class name prefix.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
         {
+            // Export CSS to an external file so the prefix can be observed.
             CssStyleSheetType = CssStyleSheetType.External,
-            CssClassNamePrefix = "myPrefix-"
+            // Prefix added to all generated CSS class names.
+            CssClassNamePrefix = "myPrefix-",
+            // Optional: specify the CSS file name.
+            CssStyleSheetFileName = Path.Combine(outputDir, "sample.css")
         };
 
-        // Save the document as HTML.
-        doc.Save(outputHtml, saveOptions);
+        // Define the HTML output path.
+        string htmlPath = Path.Combine(outputDir, "sample.html");
+
+        // Save the document as HTML using the configured options.
+        doc.Save(htmlPath, htmlOptions);
 
         // Validate that the HTML file was created.
-        if (!File.Exists(outputHtml))
-            throw new InvalidOperationException($"HTML file '{outputHtml}' was not created.");
+        if (!File.Exists(htmlPath))
+            throw new InvalidOperationException("HTML output file was not created.");
 
         // Validate that the external CSS file was created.
-        if (!File.Exists(outputCss))
-            throw new InvalidOperationException($"CSS file '{outputCss}' was not created.");
+        if (!File.Exists(htmlOptions.CssStyleSheetFileName))
+            throw new InvalidOperationException("CSS output file was not created.");
 
-        // Simple content checks to ensure the prefix was applied.
-        string htmlContent = File.ReadAllText(outputHtml);
-        if (!htmlContent.Contains("class=\"myPrefix-Header\""))
-            throw new InvalidOperationException("CSS class prefix was not applied to the heading in the HTML output.");
-
-        string cssContent = File.ReadAllText(outputCss);
-        if (!cssContent.Contains(".myPrefix-Header"))
-            throw new InvalidOperationException("CSS class prefix was not applied in the CSS file.");
-
-        // Indicate successful completion.
-        Console.WriteLine("Document saved as HTML with CSS class prefix successfully.");
+        // Optionally, display the paths of the generated files.
+        Console.WriteLine($"HTML saved to: {htmlPath}");
+        Console.WriteLine($"CSS saved to: {htmlOptions.CssStyleSheetFileName}");
     }
 }

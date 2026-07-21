@@ -7,48 +7,49 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample document with multiple pages.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Prepare directories
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputImages");
+        if (Directory.Exists(outputDir))
+            Directory.Delete(outputDir, true);
+        Directory.CreateDirectory(outputDir);
 
-        builder.Writeln("Page 1 – Sample content for archival.");
+        // Step 1: Create a sample PDF document
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Sample PDF page 1.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 – Additional content.");
+        builder.Writeln("Sample PDF page 2.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 – Final page.");
+        builder.Writeln("Sample PDF page 3.");
 
-        // Step 2: Save the document as PDF (the source for conversion).
-        const string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        string pdfPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.pdf");
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // Verify PDF creation
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+            throw new InvalidOperationException("Failed to create the sample PDF.");
 
-        // Step 3: Load the PDF document.
+        // Step 2: Load the PDF and render each page to a PNG image
         Document pdfDoc = new Document(pdfPath);
 
-        // Step 4: Render each page to a separate PNG image using lossless compression.
+        // Configure image save options for PNG (lossless)
+        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
+        // PNG is lossless by default; no additional compression settings required.
+
         for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            // Configure image save options for PNG.
-            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
-            // Render only the current page.
+            // Render only the current page
             pngOptions.PageSet = new PageSet(pageIndex);
-            // Ensure no color reduction (PNG is lossless by default).
-            pngOptions.ImageColorMode = ImageColorMode.None;
-            // Optional: set a high resolution for archival quality.
-            pngOptions.Resolution = 300;
 
-            string pngFileName = $"page_{pageIndex + 1}.png";
-            pdfDoc.Save(pngFileName, pngOptions);
+            string imagePath = Path.Combine(outputDir, $"Page_{pageIndex + 1}.png");
+            pdfDoc.Save(imagePath, pngOptions);
 
-            // Validate that the PNG file was written.
-            if (!File.Exists(pngFileName))
-                throw new InvalidOperationException($"Failed to create PNG for page {pageIndex + 1}.");
+            // Validate that the image was created
+            if (!File.Exists(imagePath))
+                throw new InvalidOperationException($"Failed to create image for page {pageIndex + 1}.");
         }
 
-        // All pages have been saved as PNG images.
-        Console.WriteLine("PDF successfully converted to PNG image sequence.");
+        // Optional: Clean up the temporary PDF file
+        File.Delete(pdfPath);
     }
 }

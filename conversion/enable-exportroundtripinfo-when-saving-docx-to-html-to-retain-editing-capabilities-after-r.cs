@@ -1,51 +1,60 @@
 using System;
 using System.IO;
-using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class ExportRoundTripInfoExample
+public class Program
 {
     public static void Main()
     {
-        // 1. Create a sample DOCX document.
-        Document originalDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(originalDoc);
-        builder.Writeln("Hello world with round‑trip info.");
-        const string docxPath = "sample.docx";
-        originalDoc.Save(docxPath, SaveFormat.Docx);
+        // Paths for temporary files.
+        const string inputPath = "sample.docx";
+        const string outputPath = "sample.html";
 
-        if (!File.Exists(docxPath))
-            throw new InvalidOperationException($"Failed to create '{docxPath}'.");
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOCX document with some content.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample paragraph.");
+        // Add a header to demonstrate round‑trip information.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Sample Header");
+        // Save the document as DOCX (bootstrap input file).
+        sourceDoc.Save(inputPath, SaveFormat.Docx);
 
-        // 2. Load the DOCX and save to HTML, enabling ExportRoundTripInfo.
-        Document docForHtml = new Document(docxPath);
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
+        // -----------------------------------------------------------------
+        // 2. Load the DOCX document.
+        // -----------------------------------------------------------------
+        Document doc = new Document(inputPath);
 
-        // The ExportRoundTripInfo property may not exist in older versions, so set it via reflection if present.
-        PropertyInfo? exportProp = typeof(HtmlSaveOptions).GetProperty(
-            "ExportRoundTripInfo",
-            BindingFlags.Public | BindingFlags.Instance);
-
-        if (exportProp != null && exportProp.CanWrite)
+        // -----------------------------------------------------------------
+        // 3. Configure HtmlSaveOptions to export round‑trip information.
+        // -----------------------------------------------------------------
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
         {
-            exportProp.SetValue(htmlOptions, true);
-        }
+            ExportRoundtripInformation = true
+        };
 
-        const string htmlPath = "output.html";
-        docForHtml.Save(htmlPath, htmlOptions);
+        // -----------------------------------------------------------------
+        // 4. Save the document as HTML using the configured options.
+        // -----------------------------------------------------------------
+        doc.Save(outputPath, htmlOptions);
 
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException($"Failed to create '{htmlPath}'.");
+        // -----------------------------------------------------------------
+        // 5. Validate that the HTML file was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The HTML output file was not created.");
 
-        // 3. Load the HTML back and save to a new DOCX to verify round‑trip.
-        Document roundTripDoc = new Document(htmlPath);
-        const string roundTripDocxPath = "roundtrip.docx";
-        roundTripDoc.Save(roundTripDocxPath, SaveFormat.Docx);
+        // Optional: Load the HTML back to verify round‑trip data (e.g., header exists).
+        Document roundTripDoc = new Document(outputPath);
+        string headerText = roundTripDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary].GetText().Trim();
+        if (!headerText.Equals("Sample Header", StringComparison.Ordinal))
+            throw new InvalidOperationException("Round‑trip information was not preserved.");
 
-        if (!File.Exists(roundTripDocxPath))
-            throw new InvalidOperationException($"Failed to create '{roundTripDocxPath}'.");
-
-        Console.WriteLine("Conversion completed successfully.");
+        // Clean up temporary files (optional).
+        File.Delete(inputPath);
+        File.Delete(outputPath);
     }
 }

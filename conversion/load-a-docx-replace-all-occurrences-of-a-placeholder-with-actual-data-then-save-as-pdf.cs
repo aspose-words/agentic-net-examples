@@ -6,26 +6,24 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX with a placeholder.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Step 1: Create a sample DOCX file with a placeholder.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
         builder.Writeln("This is a sample document containing a placeholder: _PLACEHOLDER_.");
+        source.Save("input.docx", SaveFormat.Docx);
 
-        const string inputPath = "input.docx";
-        sourceDoc.Save(inputPath, SaveFormat.Docx);
+        // Step 2: Load the DOCX file.
+        Document doc = new Document("input.docx");
 
-        // Step 2: Load the DOCX, replace the placeholder, and save as PDF.
-        Document doc = new Document(inputPath);
+        // Step 3: Replace the placeholder with actual data.
         int replacements = doc.Range.Replace("_PLACEHOLDER_", "Actual Data");
+        Console.WriteLine($"Number of replacements made: {replacements}");
 
-        const string outputPath = "output.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Step 4: Save the modified document as PDF.
+        doc.Save("output.pdf", SaveFormat.Pdf);
 
-        // Step 3: Verify that the PDF was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The expected PDF output file was not created.");
-
-        // Optional: output the number of replacements performed.
-        Console.WriteLine($"Replacements made: {replacements}");
+        // Step 5: Verify that the PDF was created.
+        if (!File.Exists("output.pdf"))
+            throw new InvalidOperationException("Expected output PDF was not created.");
     }
 }

@@ -2,79 +2,45 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing;          // Aspose.Drawing.Common namespace
-using Aspose.Drawing.Imaging; // For ImageFormat
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names for the sample EPUB input and the MHTML output.
-        const string epubPath = "sample.epub";
-        const string mhtmlPath = "sample.mht";
-
-        // -----------------------------------------------------------------
-        // Step 1: Create a simple Word document and save it as EPUB.
-        // This serves as the source EPUB file for the conversion.
-        // -----------------------------------------------------------------
+        // Create a sample document that will be saved as EPUB.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document created for EPUB to MHTML conversion.");
-        builder.InsertImage(ImageFromPlaceholder()); // Insert a placeholder image.
+        builder.Writeln("This is a sample EPUB document created for conversion to MHTML.");
+        // Save the document as EPUB (the input for the conversion).
+        const string epubPath = "sample.epub";
         sourceDoc.Save(epubPath, SaveFormat.Epub);
 
-        // Verify that the EPUB file was created.
-        if (!File.Exists(epubPath))
-            throw new InvalidOperationException($"Failed to create the EPUB file at '{epubPath}'.");
+        // Load the previously saved EPUB file.
+        Document epubDocument = new Document(epubPath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the EPUB file.
-        // -----------------------------------------------------------------
-        Document epubDoc = new Document(epubPath);
-
-        // -----------------------------------------------------------------
-        // Step 3: Configure HtmlSaveOptions for MHTML output.
-        // Export all resources (fonts, images) so the result can be viewed offline.
-        // -----------------------------------------------------------------
+        // Configure save options for MHTML with all resources embedded.
         HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
             ExportFontResources = true,               // Embed fonts.
-            ExportImagesAsBase64 = true,              // Embed images as Base64.
-            ExportCidUrlsForMhtmlResources = true    // Use CID URLs for resources.
+            ExportImagesAsBase64 = true,               // Embed images as Base64.
+            ExportCidUrlsForMhtmlResources = true,    // Use CID URLs for resources.
+            ExportDocumentProperties = true            // Include document properties.
         };
 
-        // -----------------------------------------------------------------
-        // Step 4: Save the document as MHTML using the configured options.
-        // -----------------------------------------------------------------
-        epubDoc.Save(mhtmlPath, mhtmlOptions);
+        // Save the EPUB document as MHTML.
+        const string mhtmlPath = "output.mht";
+        epubDocument.Save(mhtmlPath, mhtmlOptions);
 
-        // Verify that the MHTML file was created and contains data.
-        if (!File.Exists(mhtmlPath) || new FileInfo(mhtmlPath).Length == 0)
-            throw new InvalidOperationException($"MHTML conversion failed; file '{mhtmlPath}' was not created correctly.");
+        // Validate that the MHTML file was created and contains data.
+        if (!File.Exists(mhtmlPath))
+            throw new InvalidOperationException("The MHTML output file was not created.");
 
-        // Optional: Inform the user that the conversion succeeded.
-        Console.WriteLine($"EPUB file '{epubPath}' was successfully converted to MHTML file '{mhtmlPath}'.");
-    }
+        FileInfo info = new FileInfo(mhtmlPath);
+        if (info.Length == 0)
+            throw new InvalidOperationException("The MHTML output file is empty.");
 
-    // Helper method to provide a simple in‑memory image for the sample document.
-    // Uses Aspose.Drawing.Common to avoid System.Drawing.
-    private static byte[] ImageFromPlaceholder()
-    {
-        // Create a 100x100 pixel PNG image with a solid color.
-        using (var bitmap = new Bitmap(100, 100))
-        {
-            // Obtain a Graphics object that can draw onto the bitmap.
-            using (var graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.LightBlue);
-            }
-
-            // Save the bitmap to a memory stream in PNG format.
-            using (var ms = new MemoryStream())
-            {
-                bitmap.Save(ms, ImageFormat.Png);
-                return ms.ToArray();
-            }
-        }
+        // Optionally, clean up the temporary EPUB file.
+        if (File.Exists(epubPath))
+            File.Delete(epubPath);
     }
 }
