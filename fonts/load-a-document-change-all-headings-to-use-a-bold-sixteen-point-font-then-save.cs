@@ -1,75 +1,67 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Replacing;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        string inputPath = "SampleInput.docx";
-        string outputPath = "SampleOutput.docx";
+        // Define input and output file paths.
+        string inputPath = "input.docx";
+        string outputPath = "output.docx";
 
-        // -----------------------------------------------------------------
-        // Create a sample document with headings if it does not already exist.
-        // -----------------------------------------------------------------
+        // If the input file does not exist, create a sample document with headings.
         if (!File.Exists(inputPath))
         {
-            Document createDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(createDoc);
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-            // Add a few headings of different levels.
+            // Create headings 1‑3.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Heading Level 1");
+            builder.Writeln("Sample Heading 1");
 
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-            builder.Writeln("Heading Level 2");
+            builder.Writeln("Sample Heading 2");
 
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-            builder.Writeln("Heading Level 3");
+            builder.Writeln("Sample Heading 3");
 
-            // Add a normal paragraph to show that it will not be changed.
+            // Normal paragraph.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
             builder.Writeln("Regular paragraph text.");
 
-            // Save the sample document.
-            createDoc.Save(inputPath);
+            // Save the sample document to the expected input location.
+            sampleDoc.Save(inputPath);
         }
 
-        // --------------------------------------------------------------
-        // Load the existing document, modify all headings, and save it.
-        // --------------------------------------------------------------
+        // Load the existing document.
         Document doc = new Document(inputPath);
 
-        // Iterate over all paragraph nodes in the document.
+        // Iterate through all paragraphs and apply bold 16‑point font to headings.
         foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            // Check if the paragraph style is any heading style.
             StyleIdentifier styleId = paragraph.ParagraphFormat.StyleIdentifier;
-            bool isHeading = styleId == StyleIdentifier.Heading1 ||
-                             styleId == StyleIdentifier.Heading2 ||
-                             styleId == StyleIdentifier.Heading3 ||
-                             styleId == StyleIdentifier.Heading4 ||
-                             styleId == StyleIdentifier.Heading5 ||
-                             styleId == StyleIdentifier.Heading6 ||
-                             styleId == StyleIdentifier.Heading7 ||
-                             styleId == StyleIdentifier.Heading8 ||
-                             styleId == StyleIdentifier.Heading9;
-
-            if (isHeading)
+            if (styleId >= StyleIdentifier.Heading1 && styleId <= StyleIdentifier.Heading9)
             {
-                // Apply bold and 16‑point size to every run within the heading.
                 foreach (Run run in paragraph.Runs)
                 {
                     Aspose.Words.Font font = run.Font;
                     font.Bold = true;
                     font.Size = 16;
+
+                    // Validate the formatting.
+                    if (!font.Bold || font.Size != 16)
+                        throw new InvalidOperationException("Failed to set heading font properties.");
                 }
             }
         }
 
         // Save the modified document.
         doc.Save(outputPath);
+
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

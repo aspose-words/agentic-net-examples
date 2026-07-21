@@ -1,7 +1,8 @@
 using System;
 using System.Globalization;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 
 public class Program
 {
@@ -9,44 +10,42 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Define the LCID for Japanese language.
         int japaneseLcid = new CultureInfo("ja-JP", false).LCID;
 
-        // Set the builder's font language to Japanese.
+        // Set font properties for Japanese text.
+        builder.Font.Name = "Arial";
         builder.Font.LocaleId = japaneseLcid;
 
-        // Write some Japanese text.
-        builder.Writeln("こんにちは世界"); // "Hello World" in Japanese
-
-        // Apply an East Asian emphasis mark only if the current language is Japanese.
+        // Apply an emphasis mark only when the language is Japanese.
         if (builder.Font.LocaleId == japaneseLcid)
         {
             builder.Font.EmphasisMark = Aspose.Words.EmphasisMark.OverSolidCircle;
         }
 
-        // Write Japanese text that will have the emphasis mark.
-        builder.Writeln("強調されたテキスト"); // "Emphasized text"
+        // Write Japanese text with the emphasis mark.
+        builder.Writeln("日本語のテキストに強調マークが適用されています。");
 
-        // Reset formatting to avoid affecting subsequent text.
+        // Clear formatting to reset locale and emphasis.
         builder.Font.ClearFormatting();
 
-        // Write English text without emphasis.
-        builder.Writeln("Hello world!");
+        // Set font properties for English text (non-Japanese).
+        builder.Font.Name = "Arial";
+        builder.Font.LocaleId = new CultureInfo("en-US", false).LCID;
 
-        // Save the document to a file.
-        string outputPath = "EastAsianEmphasis.docx";
-        doc.Save(outputPath, SaveFormat.Docx);
+        // No emphasis mark will be applied because the language is not Japanese.
+        builder.Writeln("This English text does not have an emphasis mark.");
 
-        // Simple validation to ensure the file was created.
-        if (System.IO.File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "EastAsianEmphasis.docx");
+        doc.Save(outputPath);
     }
 }

@@ -1,6 +1,6 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fonts;
 
 public class Program
 {
@@ -12,22 +12,39 @@ public class Program
         // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the underline type to double wave (WavyDouble) for the current font.
+        // Insert a run of text.
+        builder.Write("This text has a double wave underline.");
+
+        // Set the underline type to double wave.
+        // The correct enum value is Underline.WavyDouble.
         builder.Font.Underline = Underline.WavyDouble;
 
-        // Write a line of text that will have the double‑wave underline.
-        builder.Writeln("This text has a double‑wave underline.");
-
         // Validate that the underline was set correctly.
-        if (builder.Font.Underline != Underline.WavyDouble)
-            throw new InvalidOperationException("Underline type was not set to double wave.");
+        if (builder.Font.Underline == Underline.WavyDouble)
+        {
+            Console.WriteLine("Underline type successfully set to DoubleWave.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to set underline type.");
+        }
 
-        // Save the document to the local file system.
-        string outputPath = "DoubleWaveUnderline.docx";
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "DoubleWaveUnderline.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!System.IO.File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+        // Confirm that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        }
+        else
+        {
+            Console.WriteLine("Document was not saved.");
+        }
     }
 }

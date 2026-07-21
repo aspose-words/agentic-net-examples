@@ -7,7 +7,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create output directory.
+        // Create a folder for output files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
@@ -18,24 +18,30 @@ public class Program
         builder.Font.Name = "Arial";
         builder.Writeln("This line uses Arial.");
 
-        builder.Font.Name = "Courier New";
-        builder.Writeln("This line uses Courier New.");
+        builder.Font.Name = "Times New Roman";
+        builder.Writeln("This line uses Times New Roman.");
 
-        // Configure PDF save options to embed all fonts fully.
+        // Configure PDF save options to embed all fonts.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            EmbedFullFonts = true,                     // Embed the complete font files (no subsetting).
-            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll // Ensure all fonts are embedded.
+            // Embed every font used in the document.
+            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll,
+            // Optional: embed the full font files (no subsetting) for maximum fidelity.
+            EmbedFullFonts = true
         };
 
-        // Save the document as PDF with embedded fonts.
-        string outputPath = Path.Combine(artifactsDir, "EmbeddedFonts.pdf");
-        doc.Save(outputPath, pdfOptions);
+        // Save the document as PDF with the specified options.
+        string pdfPath = Path.Combine(artifactsDir, "EmbeddedFonts.pdf");
+        doc.Save(pdfPath, pdfOptions);
 
         // Simple verification that the file was created.
-        if (File.Exists(outputPath))
+        if (File.Exists(pdfPath))
         {
-            Console.WriteLine($"PDF saved with embedded fonts at: {outputPath}");
+            Console.WriteLine($"PDF saved successfully to: {pdfPath}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save PDF.");
         }
     }
 }

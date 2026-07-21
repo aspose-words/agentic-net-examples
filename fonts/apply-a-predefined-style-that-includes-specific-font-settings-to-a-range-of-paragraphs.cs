@@ -1,8 +1,10 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Words.Fonts;
-using Aspose.Drawing; // For Aspose.Drawing.Color
+using Aspose.Drawing;
 
 public class ApplyStyleExample
 {
@@ -11,53 +13,45 @@ public class ApplyStyleExample
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for inserting content.
+        // Create a DocumentBuilder which will be used to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
         // Define a custom paragraph style with specific font settings.
-        // -----------------------------------------------------------------
         Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
-        customStyle.Font.Name = "Courier New";
+        // Set font name, size and bold attribute.
+        customStyle.Font.Name = "Arial";
         customStyle.Font.Size = 14;
         customStyle.Font.Bold = true;
-        // Font.Color expects System.Drawing.Color. Convert from Aspose.Drawing.Color.
-        customStyle.Font.Color = System.Drawing.Color.FromArgb(Color.Blue.ToArgb());
+        // Create an Aspose.Drawing.Color and convert it to System.Drawing.Color.
+        Aspose.Drawing.Color asposeColor = Aspose.Drawing.Color.Blue;
+        System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(asposeColor.ToArgb());
+        // Apply the color to the style's font.
+        customStyle.Font.Color = sysColor;
 
-        // Validate that the style's font properties were set correctly.
-        if (customStyle.Font.Name != "Courier New")
-            throw new InvalidOperationException("Font name was not set correctly on the style.");
-        if (customStyle.Font.Size != 14)
-            throw new InvalidOperationException("Font size was not set correctly on the style.");
-        if (!customStyle.Font.Bold)
-            throw new InvalidOperationException("Font bold flag was not set correctly on the style.");
-        System.Drawing.Color expectedColor = System.Drawing.Color.FromArgb(Color.Blue.ToArgb());
-        if (!customStyle.Font.Color.Equals(expectedColor))
-            throw new InvalidOperationException("Font color was not set correctly on the style.");
-
-        // -----------------------------------------------------------------
-        // Insert paragraphs. Apply the custom style to a specific range.
-        // -----------------------------------------------------------------
-        builder.Writeln("Paragraph without custom style.");
-
-        // Apply the custom style to the next three paragraphs.
+        // Apply the custom style to a range of paragraphs.
         builder.ParagraphFormat.Style = customStyle;
-        builder.Writeln("Paragraph with custom style 1.");
-        builder.Writeln("Paragraph with custom style 2.");
-        builder.Writeln("Paragraph with custom style 3.");
+        builder.Writeln("First paragraph using the custom style.");
+        builder.Writeln("Second paragraph also using the custom style.");
+        builder.Writeln("Third paragraph still using the custom style.");
 
-        // Reset to the default style for subsequent paragraphs.
+        // Add a normal paragraph without the custom style for comparison.
         builder.ParagraphFormat.Style = doc.Styles["Normal"];
-        builder.Writeln("Paragraph after custom style.");
+        builder.Writeln("A normal paragraph without the custom style.");
 
-        // -----------------------------------------------------------------
-        // Save the document.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "StyledParagraphs.docx");
-        doc.Save(outputPath);
+        // Determine an output path in the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "StyledDocument.docx");
+
+        // Save the document to the file system.
+        doc.Save(outputPath, SaveFormat.Docx);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

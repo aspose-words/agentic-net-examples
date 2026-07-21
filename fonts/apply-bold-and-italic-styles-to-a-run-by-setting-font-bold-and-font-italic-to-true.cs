@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Diagnostics;
 using Aspose.Words;
 
 public class Program
@@ -9,33 +10,28 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Get the first paragraph (created by default) to hold the run.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
-
-        // Create a run with sample text.
+        // Create a run with some text.
         Run run = new Run(doc, "Bold and Italic text");
 
-        // Apply bold and italic formatting to the run's font.
-        run.Font.Bold = true;
-        run.Font.Italic = true;
+        // Access the run's font and set Bold and Italic to true.
+        Aspose.Words.Font font = run.Font;
+        font.Bold = true;
+        font.Italic = true;
 
-        // Append the run to the paragraph.
-        paragraph.AppendChild(run);
+        // Validate that the properties were set correctly.
+        Debug.Assert(font.Bold, "Font.Bold should be true.");
+        Debug.Assert(font.Italic, "Font.Italic should be true.");
 
-        // Define the output file path.
-        string outputPath = "BoldItalicRun.docx";
+        // Append the run to the first paragraph of the document.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
 
-        // Save the document to disk.
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BoldItalicRun.docx");
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to {Path.GetFullPath(outputPath)}");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+        Debug.Assert(File.Exists(outputPath), "Output file was not created.");
     }
 }
