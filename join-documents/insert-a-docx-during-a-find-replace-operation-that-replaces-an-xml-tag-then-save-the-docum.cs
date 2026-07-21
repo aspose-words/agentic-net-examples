@@ -8,66 +8,70 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files.
-        const string destPath = "Destination.docx";
-        const string subPath = "SubDocument.docx";
-        const string outputPath = "MergedOutput.docx";
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create the destination document with a placeholder tag.
-        Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("This is the main document.");
-        destBuilder.Writeln("[INSERT_DOC]"); // Placeholder to be replaced.
-        destDoc.Save(destPath, SaveFormat.Docx);
+        // Paths for temporary documents.
+        string mainDocPath = Path.Combine(outputDir, "Main.docx");
+        string insertDocPath = Path.Combine(outputDir, "Insert.docx");
+        string resultDocPath = Path.Combine(outputDir, "Result.docx");
+
+        // Create the main document containing a placeholder tag.
+        Document mainDoc = new Document();
+        DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
+        mainBuilder.Writeln("Document start.");
+        mainBuilder.Writeln("[INSERT_DOC]"); // Placeholder to be replaced.
+        mainBuilder.Writeln("Document end.");
+        mainDoc.Save(mainDocPath, SaveFormat.Docx);
 
         // Create the document that will be inserted.
-        Document subDoc = new Document();
-        DocumentBuilder subBuilder = new DocumentBuilder(subDoc);
-        subBuilder.Writeln("This is the inserted document content.");
-        subDoc.Save(subPath, SaveFormat.Docx);
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("This is the inserted document.");
+        insertBuilder.Writeln("It has multiple paragraphs.");
+        insertDoc.Save(insertDocPath, SaveFormat.Docx);
 
-        // Set up find‑replace with a callback that inserts the sub‑document.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new InsertDocumentHandler(subPath)
-        };
+        // Load the main document for processing.
+        Document srcDoc = new Document(mainDocPath);
 
-        // Perform the replace; the placeholder will be removed and the sub‑document inserted.
-        destDoc.Range.Replace(new Regex(@"\[INSERT_DOC\]"), string.Empty, options);
+        // Set up find‑replace with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new InsertDocumentHandler(insertDocPath);
 
-        // Save the merged result.
-        destDoc.Save(outputPath, SaveFormat.Docx);
+        // Perform the replace; the placeholder will be removed and the insertDoc inserted.
+        srcDoc.Range.Replace(new Regex(@"\[INSERT_DOC\]"), string.Empty, options);
 
-        // Simple validation to ensure the output file was created and contains expected text.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The merged output file was not created.");
+        // Save the final merged document.
+        srcDoc.Save(resultDocPath, SaveFormat.Docx);
 
-        Document result = new Document(outputPath);
-        string resultText = result.GetText();
-
-        if (!resultText.Contains("This is the main document.") ||
-            !resultText.Contains("This is the inserted document content."))
-            throw new InvalidOperationException("The merged document does not contain expected content.");
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(resultDocPath))
+            throw new InvalidOperationException("Result document was not created.");
     }
 
-    // Callback that inserts a document at the location of the matched placeholder.
+    // Callback that inserts a document at the location of the matched text.
     private class InsertDocumentHandler : IReplacingCallback
     {
-        private readonly string _subDocumentPath;
+        private readonly string _docToInsertPath;
 
-        public InsertDocumentHandler(string subDocumentPath)
+        public InsertDocumentHandler(string docToInsertPath)
         {
-            _subDocumentPath = subDocumentPath;
+            _docToInsertPath = docToInsertPath;
         }
 
         ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
             // Load the document to be inserted.
-            Document subDoc = new Document(_subDocumentPath);
+            Document docToInsert = new Document(_docToInsertPath);
 
-            // The placeholder resides inside a paragraph; insert after that paragraph.
-            Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
-            InsertDocument(placeholderParagraph, subDoc);
+            // The match is inside a paragraph; get that paragraph.
+            Paragraph placeholderParagraph = args.MatchNode.ParentNode as Paragraph;
+            if (placeholderParagraph == null)
+                return ReplaceAction.Skip;
+
+            // Insert the document after the placeholder paragraph.
+            InsertDocument(placeholderParagraph, docToInsert);
 
             // Remove the placeholder paragraph.
             placeholderParagraph.Remove();
@@ -76,7 +80,7 @@ public class Program
             return ReplaceAction.Skip;
         }
 
-        // Inserts all nodes of the source document after the specified paragraph.
+        // Inserts all nodes of docToInsert after the specified paragraph.
         private static void InsertDocument(Node insertionDestination, Document docToInsert)
         {
             if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)

@@ -2,95 +2,109 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Markup;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
-        string destinationPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docx");
-        string mergedPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.docx");
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a source document with two tables.
-        // -----------------------------------------------------------------
+        // File paths for the sample documents.
+        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        string destinationPath = Path.Combine(outputDir, "Destination.docx");
+        string mergedPath = Path.Combine(outputDir, "Merged.docx");
+
+        // -------------------------------------------------
+        // Create a source document containing two tables.
+        // -------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
 
-        srcBuilder.Writeln("Source Document - Table 1");
-        // First table
+        // First table.
         srcBuilder.StartTable();
         srcBuilder.InsertCell();
-        srcBuilder.Write("R1C1");
+        srcBuilder.Write("Src Table 1 - Cell 1");
         srcBuilder.InsertCell();
-        srcBuilder.Write("R1C2");
-        srcBuilder.EndRow();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("R2C1");
-        srcBuilder.InsertCell();
-        srcBuilder.Write("R2C2");
+        srcBuilder.Write("Src Table 1 - Cell 2");
         srcBuilder.EndRow();
         srcBuilder.EndTable();
 
-        srcBuilder.Writeln(); // Add a paragraph between tables
-        srcBuilder.Writeln("Source Document - Table 2");
-        // Second table
+        // Second table.
         srcBuilder.StartTable();
         srcBuilder.InsertCell();
-        srcBuilder.Write("A");
+        srcBuilder.Write("Src Table 2 - Cell 1");
         srcBuilder.InsertCell();
-        srcBuilder.Write("B");
+        srcBuilder.Write("Src Table 2 - Cell 2");
         srcBuilder.EndRow();
         srcBuilder.EndTable();
 
-        // Save the source document.
         sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Create a destination document with some initial content.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // Create a destination document with a bookmark where tables will be inserted.
+        // -------------------------------------------------
         Document destinationDoc = new Document();
         DocumentBuilder dstBuilder = new DocumentBuilder(destinationDoc);
-        dstBuilder.Writeln("Destination Document - Start");
-        // Save the destination document (optional, just for completeness).
+
+        dstBuilder.Writeln("Destination document start.");
+
+        // Bookmark marks the insertion point.
+        dstBuilder.StartBookmark("InsertHere");
+        dstBuilder.Writeln("Insertion point.");
+        dstBuilder.EndBookmark("InsertHere");
+
+        dstBuilder.Writeln("Destination document end.");
+
         destinationDoc.Save(destinationPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 3. Import the first table from the source document into the destination.
-        // -----------------------------------------------------------------
-        // Locate the table to import (e.g., the first table).
-        Table sourceTable = sourceDoc.FirstSection.Body.Tables[0];
+        // -------------------------------------------------
+        // Load the documents for processing.
+        // -------------------------------------------------
+        Document src = new Document(sourcePath);
+        Document dst = new Document(destinationPath);
 
-        // Prepare a NodeImporter with the desired import format mode.
-        NodeImporter importer = new NodeImporter(sourceDoc, destinationDoc, ImportFormatMode.KeepSourceFormatting);
+        // -------------------------------------------------
+        // Import the first table from the source document.
+        // -------------------------------------------------
+        // The table to import (first table in the source).
+        Table tableToImport = src.FirstSection.Body.Tables[0];
 
-        // Import the table node (deep copy, including its children).
-        Node importedTableNode = importer.ImportNode(sourceTable, true);
+        // NodeImporter handles style and list translation.
+        NodeImporter importer = new NodeImporter(src, dst, ImportFormatMode.KeepSourceFormatting);
 
-        // Insert the imported table after the first paragraph of the destination.
-        Paragraph insertionPoint = destinationDoc.FirstSection.Body.FirstParagraph;
-        destinationDoc.FirstSection.Body.InsertAfter(importedTableNode, insertionPoint);
+        // Import the table node (deep clone) into the destination document.
+        Node importedTable = importer.ImportNode(tableToImport, true);
 
-        // -----------------------------------------------------------------
-        // 4. Save the merged document.
-        // -----------------------------------------------------------------
-        destinationDoc.Save(mergedPath, SaveFormat.Docx);
+        // Locate the bookmark's start paragraph – this will be the insertion destination.
+        Bookmark bookmark = dst.Range.Bookmarks["InsertHere"];
+        Node insertionPoint = bookmark.BookmarkStart.ParentNode; // Paragraph node.
 
-        // -----------------------------------------------------------------
-        // 5. Validation: ensure the merged file exists and contains the imported table.
-        // -----------------------------------------------------------------
+        // Ensure the insertion point is a valid container parent (Body).
+        CompositeNode parent = insertionPoint.ParentNode;
+
+        // Insert the imported table after the bookmark paragraph.
+        parent.InsertAfter(importedTable, insertionPoint);
+
+        // -------------------------------------------------
+        // Save the merged document.
+        // -------------------------------------------------
+        dst.Save(mergedPath, SaveFormat.Docx);
+
+        // -------------------------------------------------
+        // Validation: ensure the file exists and contains expected content.
+        // -------------------------------------------------
         if (!File.Exists(mergedPath))
             throw new InvalidOperationException("Merged document was not created.");
 
         Document mergedDoc = new Document(mergedPath);
-        int tableCount = mergedDoc.GetChildNodes(NodeType.Table, true).Count;
+        string mergedText = mergedDoc.GetText();
 
-        // The merged document should contain at least one table (the imported one).
-        if (tableCount < 1)
-            throw new InvalidOperationException("Merged document does not contain any tables.");
+        if (!mergedText.Contains("Src Table 1 - Cell 1") || !mergedText.Contains("Src Table 1 - Cell 2"))
+            throw new InvalidOperationException("The expected table content was not found in the merged document.");
 
-        // Output a simple confirmation.
-        Console.WriteLine($"Merged document created successfully with {tableCount} table(s).");
+        // The program finishes without requiring any user interaction.
     }
 }

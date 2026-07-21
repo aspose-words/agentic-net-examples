@@ -7,55 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create the destination document with two bookmarks: Header and Footer.
+        Document destination = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destination);
 
-        // Create a source DOCX that will be inserted.
-        string sourcePath = Path.Combine(artifactsDir, "Source.docx");
-        Document sourceDoc = new Document();
-        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
-        sourceBuilder.Writeln("This is the inserted content.");
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
-
-        // Create a destination document with two bookmarks: Header and Footer.
-        string templatePath = Path.Combine(artifactsDir, "Template.docx");
-        Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.Writeln("Document start.");
 
         destBuilder.StartBookmark("Header");
-        destBuilder.Writeln("Placeholder for header.");
+        destBuilder.Writeln("Header placeholder.");
         destBuilder.EndBookmark("Header");
 
-        destBuilder.Writeln(); // Add a blank line between bookmarks.
+        destBuilder.Writeln("Middle content.");
 
         destBuilder.StartBookmark("Footer");
-        destBuilder.Writeln("Placeholder for footer.");
+        destBuilder.Writeln("Footer placeholder.");
         destBuilder.EndBookmark("Footer");
 
-        destDoc.Save(templatePath, SaveFormat.Docx);
+        destBuilder.Writeln("Document end.");
 
-        // Load the source document to be inserted.
-        Document docToInsert = new Document(sourcePath);
+        // Create the source document that will be inserted at each bookmark.
+        Document source = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(source);
+        srcBuilder.Writeln("Inserted content.");
 
         // Insert the source document at the Header bookmark.
         destBuilder.MoveToBookmark("Header");
-        destBuilder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
+        destBuilder.InsertDocument(source, ImportFormatMode.KeepSourceFormatting);
 
         // Insert the source document at the Footer bookmark.
         destBuilder.MoveToBookmark("Footer");
-        destBuilder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
+        destBuilder.InsertDocument(source, ImportFormatMode.KeepSourceFormatting);
 
-        // Export the merged document to HTML.
-        string htmlPath = Path.Combine(artifactsDir, "Result.html");
+        // Define output paths.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string htmlPath = Path.Combine(outputDir, "Result.html");
+
+        // Save the merged document as HTML.
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
-        destDoc.Save(htmlPath, htmlOptions);
+        destination.Save(htmlPath, htmlOptions);
 
-        // Validate that the HTML file was created.
+        // Validate that the HTML file was created and contains the inserted text.
         if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("The HTML output file was not created.");
+            throw new InvalidOperationException("Failed to create the HTML output file.");
 
-        // Optional: indicate completion.
-        Console.WriteLine("Document merged and saved as HTML at: " + htmlPath);
+        string htmlContent = File.ReadAllText(htmlPath);
+        if (!htmlContent.Contains("Inserted content"))
+            throw new InvalidOperationException("The inserted content was not found in the HTML output.");
+
+        // Optionally, clean up (comment out if you want to keep the files).
+        // Directory.Delete(outputDir, true);
     }
 }

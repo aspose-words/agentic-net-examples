@@ -2,64 +2,73 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare an output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define file names in the current directory.
+        string baseDir = Directory.GetCurrentDirectory();
+        string existingDocPath = Path.Combine(baseDir, "Existing.docx");
+        string generatedDocPath = Path.Combine(baseDir, "Generated.docx");
+        string mergedPdfPath = Path.Combine(baseDir, "MergedEncrypted.pdf");
 
-        // Define file paths.
-        string existingDocPath = Path.Combine(outputDir, "Existing.docx");
-        string apiDocPath = Path.Combine(outputDir, "ApiGenerated.docx");
-        string mergedDocPath = Path.Combine(outputDir, "Merged.docx");
-        string finalPdfPath = Path.Combine(outputDir, "FinalEncrypted.pdf");
-
-        // -----------------------------------------------------------------
-        // 1. Create a local DOCX that represents an existing document.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 1. Create an existing DOCX file.
+        // -------------------------------------------------
         Document existingDoc = new Document();
-        DocumentBuilder existingBuilder = new DocumentBuilder(existingDoc);
-        existingBuilder.Writeln("This is the existing document.");
+        DocumentBuilder builder = new DocumentBuilder(existingDoc);
+        builder.Writeln("This is the original document.");
         existingDoc.Save(existingDocPath);
 
-        // -----------------------------------------------------------------
-        // 2. Simulate a DOCX generated from a REST API.
-        // -----------------------------------------------------------------
-        Document apiDoc = new Document();
-        DocumentBuilder apiBuilder = new DocumentBuilder(apiDoc);
-        apiBuilder.Writeln("Content generated from a REST API.");
-        apiDoc.Save(apiDocPath);
+        // -------------------------------------------------
+        // 2. Simulate a REST API that returns a DOCX.
+        //    Here we simply create another document.
+        // -------------------------------------------------
+        Document generatedDoc = new Document();
+        DocumentBuilder genBuilder = new DocumentBuilder(generatedDoc);
+        genBuilder.Writeln("Content generated from a REST API.");
+        generatedDoc.Save(generatedDocPath);
 
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         // 3. Load both documents.
-        // -----------------------------------------------------------------
-        Document srcDoc = new Document(apiDocPath);
+        // -------------------------------------------------
+        Document srcDoc = new Document(generatedDocPath);
         Document dstDoc = new Document(existingDocPath);
 
-        // -----------------------------------------------------------------
-        // 4. Append the API‑generated document to the existing one.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 4. Append the generated document to the existing one.
+        // -------------------------------------------------
         dstDoc.AppendDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
-        dstDoc.Save(mergedDocPath);
 
-        // -----------------------------------------------------------------
-        // 5. Convert the merged document to PDF and encrypt it with a password.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 5. Save the merged document as an encrypted PDF.
+        // -------------------------------------------------
+        // Define user and owner passwords.
+        const string userPassword = "UserPass123";
+        const string ownerPassword = "OwnerPass123";
+
+        // Set up PDF encryption details.
+        PdfEncryptionDetails encryption = new PdfEncryptionDetails(userPassword, ownerPassword);
+
+        // Create PDF save options with the encryption details.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            EncryptionDetails = new PdfEncryptionDetails("UserPassword123", "OwnerPassword123")
+            EncryptionDetails = encryption
         };
-        dstDoc.Save(finalPdfPath, pdfOptions);
 
-        // -----------------------------------------------------------------
-        // 6. Simple validation to ensure the PDF was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(finalPdfPath))
+        // Save the merged document to PDF with encryption.
+        dstDoc.Save(mergedPdfPath, pdfOptions);
+
+        // -------------------------------------------------
+        // 6. Simple validation that the output file exists.
+        // -------------------------------------------------
+        if (!File.Exists(mergedPdfPath))
         {
-            throw new InvalidOperationException("Failed to create the encrypted PDF.");
+            throw new FileNotFoundException("The encrypted PDF was not created.", mergedPdfPath);
         }
+
+        // The program finishes without requiring any user interaction.
     }
 }

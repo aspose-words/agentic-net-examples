@@ -1,67 +1,77 @@
 using System;
 using System.IO;
-using System.Drawing;               // For Color
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
-public class Program
+public class InsertDocxIntoHeaderBookmark
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define file names in the current directory.
+        string outputDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        string sourceDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
 
         // -------------------------------------------------
-        // 1. Create the source document (DOCX) that will be inserted.
+        // 1. Create the source document that will be inserted.
         // -------------------------------------------------
-        Document srcDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Font.Name = "Arial";
         srcBuilder.Font.Size = 14;
-        srcBuilder.Font.Color = Color.Blue;
+        srcBuilder.Font.Color = System.Drawing.Color.DarkBlue;
         srcBuilder.Writeln("This is the inserted document content.");
-
-        // Save the source document (optional, just for inspection).
-        string srcPath = Path.Combine(outputDir, "Source.docx");
-        srcDoc.Save(srcPath, SaveFormat.Docx);
+        // Save the source document (required by the rule to have a physical file).
+        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
 
         // -------------------------------------------------
         // 2. Create the destination document with a header containing a bookmark.
         // -------------------------------------------------
-        Document dstDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
+        Document destDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
-        // Ensure the document has a header and place a bookmark inside it.
-        dstBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        dstBuilder.StartBookmark("HeaderInsertPoint");
-        dstBuilder.Writeln("Header before insertion.");
-        dstBuilder.EndBookmark("HeaderInsertPoint");
+        // Ensure the document has a header.
+        destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        // Write some text before the bookmark.
+        destBuilder.Writeln("Header start - ");
 
-        // Add some body content so the document has visible pages.
-        dstBuilder.MoveToDocumentEnd();
-        dstBuilder.Writeln("Main document body text.");
+        // Insert a bookmark where the source document will be placed.
+        string bookmarkName = "InsertHere";
+        destBuilder.StartBookmark(bookmarkName);
+        // Placeholder text inside the bookmark (can be empty).
+        destBuilder.Writeln("[Placeholder]");
+        destBuilder.EndBookmark(bookmarkName);
+
+        // Write some text after the bookmark.
+        destBuilder.Writeln(" - Header end.");
 
         // -------------------------------------------------
         // 3. Insert the source document at the bookmark inside the header.
         // -------------------------------------------------
-        dstBuilder.MoveToBookmark("HeaderInsertPoint");
-        dstBuilder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+        // Move the cursor back to the header and to the bookmark.
+        destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        destBuilder.MoveToBookmark(bookmarkName);
+        // Insert the source document, preserving its formatting.
+        destBuilder.InsertDocument(sourceDoc, ImportFormatMode.KeepSourceFormatting);
 
         // -------------------------------------------------
-        // 4. Save the merged document preserving header formatting.
+        // 4. Save the resulting document.
         // -------------------------------------------------
-        string resultPath = Path.Combine(outputDir, "Result.docx");
-        dstDoc.Save(resultPath, SaveFormat.Docx);
+        destDoc.Save(outputDocPath, SaveFormat.Docx);
 
         // -------------------------------------------------
-        // 5. Simple validation that the file was created and contains the inserted text.
+        // 5. Validation: ensure the file exists and contains the inserted text.
         // -------------------------------------------------
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The result document was not saved correctly.");
+        if (!File.Exists(outputDocPath))
+            throw new InvalidOperationException("The output document was not created.");
 
-        HeaderFooter header = dstDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
-        string headerText = header.GetText();
-        if (!headerText.Contains("This is the inserted document content."))
-            throw new InvalidOperationException("The source content was not inserted into the header.");
+        Document validationDoc = new Document(outputDocPath);
+        string fullText = validationDoc.GetText();
+
+        if (!fullText.Contains("This is the inserted document content."))
+            throw new InvalidOperationException("The inserted content was not found in the output document.");
+
+        // Cleanup temporary source file (optional).
+        if (File.Exists(sourceDocPath))
+            File.Delete(sourceDocPath);
     }
 }

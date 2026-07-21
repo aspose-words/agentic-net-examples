@@ -7,51 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Define paths for the sample files and the final PDF.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        string docxPath = Path.Combine(outputDir, "SourceDocument.docx");
-        string odtPath = Path.Combine(outputDir, "SourceDocument.odt");
-        string pdfPath = Path.Combine(outputDir, "MergedDocument.pdf");
+        // Define file names in the current directory.
+        string docxPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
+        string odtPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.odt");
+        string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "Combined.pdf");
 
         // -----------------------------------------------------------------
-        // Create a DOCX source document.
+        // Create a sample DOCX document.
         // -----------------------------------------------------------------
         Document docx = new Document();
-        DocumentBuilder docxBuilder = new DocumentBuilder(docx);
-        docxBuilder.Writeln("This is content from the DOCX source document.");
+        DocumentBuilder builder = new DocumentBuilder(docx);
+        builder.Writeln("This is the content of the DOCX document.");
         docx.Save(docxPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // Create an ODT source document.
+        // Create a sample ODT document.
         // -----------------------------------------------------------------
         Document odt = new Document();
-        DocumentBuilder odtBuilder = new DocumentBuilder(odt);
-        odtBuilder.Writeln("This is content from the ODT source document.");
-        // Save as ODT using OdtSaveOptions.
-        OdtSaveOptions odtSaveOptions = new OdtSaveOptions();
-        odt.Save(odtPath, odtSaveOptions);
+        builder = new DocumentBuilder(odt);
+        builder.Writeln("This is the content of the ODT document.");
+        odt.Save(odtPath, SaveFormat.Odt);
 
         // -----------------------------------------------------------------
-        // Load the two documents.
+        // Load the source documents.
         // -----------------------------------------------------------------
-        Document mainDoc = new Document(docxPath);
-        Document odtDoc = new Document(odtPath);
+        Document srcDocx = new Document(docxPath);
+        Document srcOdt = new Document(odtPath);
 
-        // Append the ODT document to the DOCX document, preserving its formatting.
-        mainDoc.AppendDocument(odtDoc, ImportFormatMode.KeepSourceFormatting);
+        // -----------------------------------------------------------------
+        // Create the destination document and append the sources.
+        // The ODT content is appended with KeepSourceFormatting.
+        // -----------------------------------------------------------------
+        Document dst = new Document();
 
+        // Append DOCX (default formatting behavior).
+        dst.AppendDocument(srcDocx, ImportFormatMode.UseDestinationStyles);
+
+        // Append ODT while preserving its original formatting.
+        dst.AppendDocument(srcOdt, ImportFormatMode.KeepSourceFormatting);
+
+        // -----------------------------------------------------------------
         // Save the combined document as PDF.
-        mainDoc.Save(pdfPath, SaveFormat.Pdf);
+        // -----------------------------------------------------------------
+        dst.Save(outputPdfPath, SaveFormat.Pdf);
 
+        // -----------------------------------------------------------------
         // Validate that the PDF was created.
-        if (!File.Exists(pdfPath))
+        // -----------------------------------------------------------------
+        if (!File.Exists(outputPdfPath))
         {
-            throw new InvalidOperationException("The merged PDF file was not created.");
+            throw new InvalidOperationException("The combined PDF file was not created.");
         }
 
-        // Optional: indicate success (no interactive input required).
-        Console.WriteLine("Documents merged and saved to PDF successfully.");
+        // Cleanup temporary files (optional).
+        File.Delete(docxPath);
+        File.Delete(odtPath);
     }
 }
