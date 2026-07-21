@@ -4,54 +4,51 @@
     "slug": "watermark",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented watermark workflows. Prefer Document.Watermark APIs when they directly match the task. For lower-level watermark scenarios, work through header/footer shapes only when needed. Keep validation narrow and task-specific.",
+    "preferred_workflow": "Use simple documented watermark workflows. Prefer Document.Watermark APIs when they directly match the task. For lower-level or cell-scoped scenarios, use compile-safe shape or image placement only when needed. Keep validation narrow and task-specific.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Drawing",
-      "System.Drawing",
       "Aspose.Words.Tables",
+      "System.Drawing",
       "Aspose.Words.Settings",
       "Aspose.Words.Saving",
+      "System.Collections.Generic",
       "System.Text.Json"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "Directory",
+      "File",
       "Path",
       "Watermark",
-      "File",
       "ImageWatermarkOptions",
       "SaveFormat",
       "MemoryStream",
-      "TextWatermarkOptions",
       "Cell",
-      "Paragraph",
+      "TextWatermarkOptions",
+      "NodeType",
       "Shape",
       "Table",
-      "Row",
       "CellFormat",
-      "RowFormat"
+      "Paragraph",
+      "Row"
     ]
   },
   "stats": {
     "total_examples": 34,
     "publish_ready_successful_examples": 34,
     "workflow_counts": {
-      "watermark-api": 1,
-      "watermark-workflow": 33
-    },
-    "winner_counts": {
-      "existing_repo": 2,
-      "mcp": 32
+      "watermark-workflow": 33,
+      "watermark-api": 1
     }
   },
   "rules_summary": {
@@ -111,8 +108,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 3,
@@ -266,8 +263,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 17,
@@ -369,8 +366,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 26,
@@ -380,8 +377,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 27,
@@ -421,7 +418,7 @@
     {
       "id": 30,
       "file_name": "create-a-command-line-tool-that-accepts-a-directory-path-and-adds-a-specified-watermark-to.cs",
-      "task": "Create a command-line tool that accepts a directory path and adds a specified watermark to each file.",
+      "task": "Create a command‑line tool that accepts a directory path and adds a specified watermark to each file.",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"

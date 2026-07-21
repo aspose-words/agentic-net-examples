@@ -1,41 +1,42 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        // Expect at least the directory path argument.
-        if (args.Length == 0)
-            return;
-
-        string directoryPath = args[0];
-        string watermarkText = args.Length > 1 ? args[1] : "Aspose Watermark";
+        // Determine input directory and watermark text from command‑line arguments.
+        string inputDir = args.Length > 0 ? args[0] : "InputDocs";
+        string watermarkText = args.Length > 1 ? args[1] : "Sample Watermark";
 
         // Ensure the directory exists.
-        if (!Directory.Exists(directoryPath))
-            Directory.CreateDirectory(directoryPath);
+        Directory.CreateDirectory(inputDir);
 
-        // If the directory contains no Word files, create a sample document.
-        string[] wordFiles = Directory.GetFiles(directoryPath, "*.docx");
-        if (wordFiles.Length == 0)
+        // If the directory is empty, create a sample document to demonstrate the watermarking.
+        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
         {
-            string samplePath = Path.Combine(directoryPath, "Sample.docx");
             Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            var builder = new DocumentBuilder(sampleDoc);
             builder.Writeln("This is a sample document.");
+            string samplePath = Path.Combine(inputDir, "Sample.docx");
             sampleDoc.Save(samplePath);
-            wordFiles = new[] { samplePath };
         }
 
-        // Process each .docx file: add the text watermark and overwrite the file.
-        foreach (string filePath in wordFiles)
+        // Process each .docx file in the directory.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
+            // Load the document.
             Document doc = new Document(filePath);
+
+            // Apply the text watermark.
             doc.Watermark.SetText(watermarkText);
+
+            // Overwrite the original file with the watermarked version.
             doc.Save(filePath);
         }
+
+        // Optionally, indicate completion (no interactive input required).
+        Console.WriteLine("Watermarking completed.");
     }
 }

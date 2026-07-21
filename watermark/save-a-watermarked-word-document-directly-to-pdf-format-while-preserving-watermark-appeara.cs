@@ -1,28 +1,52 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class Program
+public class WatermarkToPdfExample
 {
     public static void Main()
     {
-        // Output file names
-        const string docPath = "Watermarked.docx";
-        const string pdfPath = "Watermarked.pdf";
+        // Define output paths.
+        string outputDir = "Output";
+        string pdfPath = Path.Combine(outputDir, "WatermarkedDocument.pdf");
 
-        // Create a new blank Word document
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputDir);
+
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Add a text watermark to the document
-        doc.Watermark.SetText("Confidential");
+        // Add some sample content using DocumentBuilder.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document with a text watermark.");
+        builder.Writeln("The watermark should appear on every page of the PDF.");
 
-        // Save the document as a .docx file (optional, ensures the source file exists)
-        doc.Save(docPath);
+        // Configure text watermark options.
+        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+        {
+            FontFamily = "Arial",
+            FontSize = 48,
+            Color = Color.LightGray,
+            Layout = WatermarkLayout.Diagonal,
+            IsSemitrasparent = true
+        };
 
-        // Save the same document directly to PDF format, preserving the watermark
-        doc.Save(pdfPath);
+        // Apply the text watermark to the document.
+        doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
 
-        // Simple verification that the PDF file was created
-        Console.WriteLine(File.Exists(pdfPath) ? "PDF saved successfully." : "PDF save failed.");
+        // Save the document directly to PDF format.
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Simple validation that the PDF file was created.
+        if (File.Exists(pdfPath))
+        {
+            Console.WriteLine($"PDF saved successfully to: {pdfPath}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the PDF file.");
+        }
     }
 }

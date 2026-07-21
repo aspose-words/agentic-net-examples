@@ -1,47 +1,47 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-namespace WatermarkExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Add a simple paragraph so the document has visible content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document with a custom text watermark.");
+
+        // Configure the text watermark options.
+        TextWatermarkOptions options = new TextWatermarkOptions
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            FontFamily = "Arial",
+            FontSize = 36,
+            Color = Color.Blue,
+            Layout = WatermarkLayout.Diagonal,
+            IsSemitrasparent = false
+        };
 
-            // (Optional) Add some sample text to the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("This is a sample document with a text watermark.");
+        // Apply the text watermark to the document.
+        doc.Watermark.SetText("Confidential", options);
 
-            // Configure custom font settings for the watermark.
-            TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
-            {
-                FontFamily = "Arial",
-                FontSize = 36,
-                Color = Color.Blue,
-                Layout = WatermarkLayout.Diagonal,
-                IsSemitrasparent = false
-            };
+        // Define the output file path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "WatermarkedDocument.docx");
 
-            // Add the text watermark using the configured options.
-            doc.Watermark.SetText("Confidential", watermarkOptions);
+        // Save the document.
+        doc.Save(outputPath);
 
-            // Save the document to a file in the current directory.
-            string outputPath = "WatermarkedDocument.docx";
-            doc.Save(outputPath);
-
-            // Simple verification that the file was created.
-            if (System.IO.File.Exists(outputPath))
-            {
-                Console.WriteLine($"Watermarked document saved successfully to '{outputPath}'.");
-            }
-            else
-            {
-                Console.WriteLine("Failed to save the watermarked document.");
-            }
+        // Simple verification that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
         }
     }
 }

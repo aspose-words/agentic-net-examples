@@ -6,37 +6,32 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for output files.
-        string artifactsDir = "Artifacts";
+        // Define a folder for generated files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Path for the sample document.
-        string samplePath = Path.Combine(artifactsDir, "sample.docx");
+        // Path of the sample document.
+        string docPath = Path.Combine(artifactsDir, "Sample.docx");
 
-        // 1. Create a blank document.
+        // Create a blank document and add a simple paragraph.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a test document without a watermark.");
 
-        // 2. Save the blank document (no watermark present).
-        doc.Save(samplePath);
+        // Save the document.
+        doc.Save(docPath);
 
-        // 3. Load the document to simulate a publishing workflow.
-        Document loadedDoc = new Document(samplePath);
+        // Load the document back (simulating a publishing workflow).
+        Document loadedDoc = new Document(docPath);
 
-        // 4. Validate that the document contains no watermark.
+        // Validate that the document has no watermark.
         if (loadedDoc.Watermark.Type == WatermarkType.None)
         {
-            Console.WriteLine("Validation passed: No watermark present.");
+            Console.WriteLine("Validation passed: No watermark is present.");
         }
         else
         {
             Console.WriteLine("Validation failed: Watermark detected.");
-        }
-
-        // 5. If validation passes, save the document as the final published file.
-        if (loadedDoc.Watermark.Type == WatermarkType.None)
-        {
-            string publishPath = Path.Combine(artifactsDir, "published.docx");
-            loadedDoc.Save(publishPath);
         }
     }
 }

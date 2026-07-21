@@ -1,29 +1,38 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
+        // Define the output file path in the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkedDocument.docx");
+
         // Create a new blank document.
         Document doc = new Document();
 
-        // Verify that the document currently has no watermark.
-        if (doc.Watermark.Type == WatermarkType.None)
+        // Verify that the document does not already contain a watermark.
+        // If a watermark exists (type is not None), remove it to ensure a clean state.
+        if (doc.Watermark.Type != WatermarkType.None)
         {
-            // Add a text watermark because none exists.
-            doc.Watermark.SetText("Sample Watermark");
+            doc.Watermark.Remove();
         }
 
-        // Define the output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        // Add a new text watermark because the document is confirmed to have no watermark.
+        doc.Watermark.SetText("Confidential");
 
-        // Ensure the directory exists.
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
-
-        // Save the document with the new watermark.
+        // Save the document with the newly added watermark.
         doc.Save(outputPath);
+
+        // Simple validation that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

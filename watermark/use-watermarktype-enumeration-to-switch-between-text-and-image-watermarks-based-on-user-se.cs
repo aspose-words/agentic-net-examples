@@ -7,39 +7,45 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a simple blank document and add some text.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document.");
 
-        // Simulate user selection: change this value to WatermarkType.Image to test image watermark.
-        WatermarkType selectedWatermark = WatermarkType.Text;
+        // Create a sample PNG image (1x1 pixel) for the image watermark.
+        string imagePath = Path.Combine(artifactsDir, "sample.png");
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+        File.WriteAllBytes(imagePath, pngBytes);
 
-        // Path for the output document.
-        string outputPath = "WatermarkedDocument.docx";
+        // Choose the watermark type to apply.
+        WatermarkType selectedWatermark = WatermarkType.Image; // Change to WatermarkType.Text for text watermark.
 
+        // Ensure any existing watermark is removed before applying a new one.
+        if (doc.Watermark.Type != WatermarkType.None)
+            doc.Watermark.Remove();
+
+        // Apply the chosen watermark.
         if (selectedWatermark == WatermarkType.Text)
         {
-            // Apply a text watermark.
-            doc.Watermark.SetText("Sample Text Watermark");
+            doc.Watermark.SetText("Confidential");
         }
         else if (selectedWatermark == WatermarkType.Image)
         {
-            // Prepare a deterministic 1x1 PNG image.
-            string imagePath = "sample.png";
-            byte[] pngBytes = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
-            File.WriteAllBytes(imagePath, pngBytes);
-
-            // Apply an image watermark using the created image file.
-            // Use the overload that accepts a file path and ImageWatermarkOptions.
-            ImageWatermarkOptions options = new ImageWatermarkOptions();
-            doc.Watermark.SetImage(imagePath, options);
+            // Use the overload that accepts a file path and optional options.
+            doc.Watermark.SetImage(imagePath, null);
         }
 
-        // Save the document.
+        // Save the resulting document.
+        string outputPath = Path.Combine(artifactsDir, "output.docx");
         doc.Save(outputPath);
 
-        // Simple validation output.
+        // Simple verification output.
         Console.WriteLine($"Watermark applied: {doc.Watermark.Type}");
-        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

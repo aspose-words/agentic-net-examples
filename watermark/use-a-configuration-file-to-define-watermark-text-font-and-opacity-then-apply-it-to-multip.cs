@@ -1,91 +1,96 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using System.Drawing;
 using Aspose.Words;
+using Aspose.Words.Drawing;
+using System.Drawing;
+
+public class WatermarkConfig
+{
+    public string Text { get; set; }
+    public string FontFamily { get; set; }
+    public float FontSize { get; set; }
+    public string ColorHex { get; set; }   // e.g., "#FF0000"
+    public bool IsSemitrasparent { get; set; }
+}
 
 public class Program
 {
-    // Model that matches the JSON configuration file.
-    private class WatermarkConfig
-    {
-        public string Text { get; set; } = "Sample Watermark";
-        public string FontFamily { get; set; } = "Arial";
-        public float FontSize { get; set; } = 36;
-        public string ColorHex { get; set; } = "#FF0000"; // Red
-        public bool IsSemitrasparent { get; set; } = false;
-    }
+    private const string ConfigFileName = "watermarkConfig.json";
+    private const string OutputFolder = "Output";
 
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Ensure a configuration file exists. If not, create a default one.
-        // -----------------------------------------------------------------
-        const string configFile = "watermarkConfig.json";
-        if (!File.Exists(configFile))
+        // Ensure output directory exists.
+        Directory.CreateDirectory(OutputFolder);
+
+        // Create a sample configuration file if it does not exist.
+        if (!File.Exists(ConfigFileName))
         {
-            var defaultConfig = new WatermarkConfig();
-            string json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(configFile, json);
-        }
-
-        // -----------------------------------------------------------------
-        // 2. Load the configuration.
-        // -----------------------------------------------------------------
-        WatermarkConfig config = JsonSerializer.Deserialize<WatermarkConfig>(File.ReadAllText(configFile))!;
-
-        // Convert the hex color string to a System.Drawing.Color.
-        Color watermarkColor = ColorTranslator.FromHtml(config.ColorHex);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the watermark options based on the configuration.
-        // -----------------------------------------------------------------
-        var textOptions = new TextWatermarkOptions
-        {
-            FontFamily = config.FontFamily,
-            FontSize = config.FontSize,
-            Color = watermarkColor,
-            IsSemitrasparent = config.IsSemitrasparent,
-            Layout = WatermarkLayout.Diagonal
-        };
-
-        // -----------------------------------------------------------------
-        // 4. Create an output folder for the generated documents.
-        // -----------------------------------------------------------------
-        const string outputFolder = "Output";
-        Directory.CreateDirectory(outputFolder);
-
-        // -----------------------------------------------------------------
-        // 5. Process multiple documents, applying the same watermark.
-        // -----------------------------------------------------------------
-        string[] sourceNames = { "Doc1.docx", "Doc2.docx", "Doc3.docx" };
-        foreach (string sourceName in sourceNames)
-        {
-            // Create a new blank document.
-            var doc = new Document();
-
-            // Add a simple paragraph so the document is not empty.
-            var builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is the content of {Path.GetFileNameWithoutExtension(sourceName)}.");
-
-            // Apply the text watermark using the configuration.
-            doc.Watermark.SetText(config.Text, textOptions);
-
-            // Save the watermarked document.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(sourceName) + "_Watermarked.docx");
-            doc.Save(outputPath);
-        }
-
-        // -----------------------------------------------------------------
-        // 6. Simple validation: ensure that output files were created.
-        // -----------------------------------------------------------------
-        foreach (string sourceName in sourceNames)
-        {
-            string outputPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(sourceName) + "_Watermarked.docx");
-            if (File.Exists(outputPath))
+            var defaultConfig = new WatermarkConfig
             {
-                Console.WriteLine($"Created: {outputPath}");
-            }
+                Text = "Confidential",
+                FontFamily = "Arial",
+                FontSize = 48,
+                ColorHex = "#FF0000",          // Red
+                IsSemitrasparent = false      // Opaque
+            };
+            var json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(ConfigFileName, json);
         }
+
+        // Load configuration.
+        var configJson = File.ReadAllText(ConfigFileName);
+        var config = JsonSerializer.Deserialize<WatermarkConfig>(configJson);
+
+        // Prepare a list of sample documents.
+        var sourceDocs = CreateSampleDocuments();
+
+        // Apply watermark to each document.
+        int index = 1;
+        foreach (var srcPath in sourceDocs)
+        {
+            var doc = new Document(srcPath);
+
+            var options = new TextWatermarkOptions
+            {
+                FontFamily = config.FontFamily,
+                FontSize = config.FontSize,
+                Color = ColorTranslator.FromHtml(config.ColorHex),
+                IsSemitrasparent = config.IsSemitrasparent,
+                Layout = WatermarkLayout.Diagonal
+            };
+
+            doc.Watermark.SetText(config.Text, options);
+
+            string outPath = Path.Combine(OutputFolder, $"Watermarked_{index}.docx");
+            doc.Save(outPath);
+
+            // Simple validation: ensure the file was created.
+            if (File.Exists(outPath))
+                Console.WriteLine($"Document {outPath} saved successfully.");
+            else
+                Console.WriteLine($"Failed to save document {outPath}.");
+
+            index++;
+        }
+    }
+
+    // Creates a few simple documents with placeholder text and returns their file paths.
+    private static List<string> CreateSampleDocuments()
+    {
+        var paths = new List<string>();
+        for (int i = 1; i <= 3; i++)
+        {
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln($"Sample document {i}");
+            builder.Writeln("This is a test document used to demonstrate watermark application.");
+            string path = $"Sample_{i}.docx";
+            doc.Save(path);
+            paths.Add(path);
+        }
+        return paths;
     }
 }
