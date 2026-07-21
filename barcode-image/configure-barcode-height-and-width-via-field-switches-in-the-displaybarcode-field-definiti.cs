@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -18,17 +19,18 @@ public class Program
         barcodeField.BarcodeValue = "12345ABCDE";
 
         // Set the height of the barcode symbol (in twips; 1 inch = 1440 twips).
-        // Example: 2000 twips ≈ 1.39 inches.
-        barcodeField.SymbolHeight = "2000";
+        // Example: 2 inches high => 2 * 1440 = 2880 twips.
+        barcodeField.SymbolHeight = "2880";
 
-        // Set the scaling factor (percentage) to control the width proportionally.
-        // Example: 150% makes the barcode 1.5 times wider than the default.
-        barcodeField.ScalingFactor = "150";
+        // Set the scaling factor for the barcode width (percentage).
+        // Example: 200% width.
+        barcodeField.ScalingFactor = "200";
 
-        // Update fields so that the changes are applied.
+        // Update fields so that the field code reflects the set properties.
         doc.UpdateFields();
 
         // Save the document to the current directory.
-        doc.Save("DisplayBarcodeHeightWidth.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BarcodeDisplay.docx");
+        doc.Save(outputPath);
     }
 }

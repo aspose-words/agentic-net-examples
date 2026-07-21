@@ -7,46 +7,52 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a DISPLAYBARCODE field with a valid value.
-        Aspose.Words.Fields.FieldDisplayBarcode validField = (Aspose.Words.Fields.FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        validField.BarcodeType = "QR";
-        validField.BarcodeValue = "VALID123";
+        // Simulate barcode data that might be missing.
+        string barcodeData = null; // Change to a non‑null value to see a valid barcode.
 
-        // Insert a DISPLAYBARCODE field with missing barcode data (empty string).
-        Aspose.Words.Fields.FieldDisplayBarcode missingField = (Aspose.Words.Fields.FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        missingField.BarcodeType = "QR";
-        missingField.BarcodeValue = ""; // Intentionally empty to simulate missing data.
+        // Insert a DISPLAYBARCODE field using the typed API.
+        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        // Ensure the document updates fields before saving.
-        doc.UpdateFields();
+        // Set common barcode properties.
+        barcodeField.BarcodeType = "QR";
 
-        // Error handling: replace missing barcode values with a placeholder.
-        foreach (Field field in doc.Range.Fields)
+        // Apply error handling for missing barcode data.
+        if (string.IsNullOrWhiteSpace(barcodeData))
         {
-            if (field is Aspose.Words.Fields.FieldDisplayBarcode barcodeField)
-            {
-                if (string.IsNullOrWhiteSpace(barcodeField.BarcodeValue))
-                {
-                    // Assign a default value to prevent save failures.
-                    barcodeField.BarcodeValue = "PLACEHOLDER";
-                }
-            }
+            // If data is missing, set a placeholder value and lock the field to prevent update errors.
+            barcodeField.BarcodeValue = "N/A";
+            barcodeField.IsLocked = true;
+        }
+        else
+        {
+            barcodeField.BarcodeValue = barcodeData;
         }
 
-        // Attempt to save the document, catching any unexpected exceptions.
+        // Optional visual settings.
+        barcodeField.BackgroundColor = "0xFFFFFF";
+        barcodeField.ForegroundColor = "0x000000";
+        barcodeField.ErrorCorrectionLevel = "3";
+        barcodeField.ScalingFactor = "250";
+        barcodeField.SymbolHeight = "1000";
+        barcodeField.SymbolRotation = "0";
+
+        // Update fields safely.
         try
         {
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Barcodes.docx");
-            doc.Save(outputPath);
-            Console.WriteLine($"Document saved successfully to: {outputPath}");
+            doc.UpdateFields();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving document: {ex.Message}");
+            // Log the error and continue; the document will still be saved.
+            Console.WriteLine("Field update failed: " + ex.Message);
         }
+
+        // Save the document to the output folder.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "BarcodeDocument.docx");
+        doc.Save(outputPath);
     }
 }
