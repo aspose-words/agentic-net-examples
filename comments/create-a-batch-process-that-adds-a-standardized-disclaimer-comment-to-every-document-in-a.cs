@@ -6,26 +6,25 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare input and output folders in the current working directory.
+        // Prepare input and output folders.
         string baseDir = Directory.GetCurrentDirectory();
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string outputDir = Path.Combine(baseDir, "OutputDocs");
-
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
         // Create a few sample DOCX files to demonstrate the batch process.
-        for (int i = 1; i <= 3; i++)
+        for (int i = 1; i <= 2; i++)
         {
-            string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
             Document sampleDoc = new Document();
-            DocumentBuilder sampleBuilder = new DocumentBuilder(sampleDoc);
-            sampleBuilder.Writeln($"This is the content of sample document {i}.");
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln($"Sample document {i} content.");
+            string samplePath = Path.Combine(inputDir, $"Doc{i}.docx");
             sampleDoc.Save(samplePath);
         }
 
-        // Standardized disclaimer comment text.
-        const string disclaimerText = "Standard disclaimer: This document is confidential.";
+        // Standardized disclaimer text to be added as a comment.
+        const string disclaimerText = "Disclaimer: This document is confidential.";
 
         // Process each DOCX file in the input directory.
         foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
@@ -33,29 +32,25 @@ public class Program
             // Load the document.
             Document doc = new Document(filePath);
 
-            // Insert the disclaimer comment at the end of the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.MoveToDocumentEnd();
-            builder.Writeln(); // Ensure there is a paragraph to attach the comment to.
-
-            // Create the comment node.
-            Comment disclaimerComment = new Comment(doc)
+            // Ensure there is at least one paragraph to attach the comment.
+            Paragraph? targetParagraph = doc.FirstSection?.Body?.FirstParagraph;
+            if (targetParagraph == null)
             {
-                Author = "Standard Disclaimer",
-                Initial = "SD",
-                DateTime = DateTime.Now
-            };
-            // Set the comment body text (creates necessary paragraphs and runs).
-            disclaimerComment.SetText(disclaimerText);
+                // If the document has no paragraphs, create one.
+                targetParagraph = new Paragraph(doc);
+                doc.FirstSection?.Body?.AppendChild(targetParagraph);
+            }
 
-            // Attach the comment to the current (last) paragraph.
-            builder.CurrentParagraph?.AppendChild(disclaimerComment);
+            // Create a new comment with author metadata.
+            Comment comment = new Comment(doc, "System", "SYS", DateTime.Now);
+            // Set the comment text (this also creates the necessary paragraph inside the comment).
+            comment.SetText(disclaimerText);
+            // Append the comment to the chosen paragraph.
+            targetParagraph.AppendChild(comment);
 
             // Save the modified document to the output folder, preserving the original file name.
             string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
             doc.Save(outputPath);
         }
-
-        // The batch process completes here. No user interaction is required.
     }
 }

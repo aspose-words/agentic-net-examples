@@ -11,30 +11,25 @@ public class Program
 
         // Add three paragraphs to the document.
         builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph – target for the comment.");
+        builder.Writeln("Second paragraph – this will receive a comment.");
         builder.Writeln("Third paragraph.");
 
-        // Safely locate the second paragraph (index 1).
-        Paragraph targetParagraph = null;
-        if (doc.FirstSection?.Body?.Paragraphs?.Count > 1)
+        // Locate the second paragraph (index 1) in the body.
+        Paragraph? targetParagraph = doc.FirstSection?.Body?.Paragraphs.Count > 1
+            ? doc.FirstSection.Body.Paragraphs[1]
+            : null;
+
+        if (targetParagraph != null)
         {
-            targetParagraph = doc.FirstSection.Body.Paragraphs[1];
+            // Create a new comment with author metadata.
+            Comment comment = new Comment(doc, "John Doe", "JD", DateTime.Now);
+            comment.SetText("Review the content of this paragraph.");
+
+            // Append the comment to the selected paragraph.
+            targetParagraph.AppendChild(comment);
         }
 
-        if (targetParagraph == null)
-        {
-            // Paragraph not found – exit.
-            return;
-        }
-
-        // Create a new comment with author metadata.
-        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("This is a newly added comment.");
-
-        // Append the comment to the target paragraph.
-        targetParagraph.AppendChild(comment);
-
-        // Save the document as DOCX in the working directory.
-        doc.Save("CommentedDocument.docx");
+        // Save the document with the added comment.
+        doc.Save("OutputWithComment.docx");
     }
 }

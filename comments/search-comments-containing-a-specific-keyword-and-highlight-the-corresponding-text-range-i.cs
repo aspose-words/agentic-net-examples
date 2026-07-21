@@ -3,7 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Markup;
+using Aspose.Words.Drawing;
+
+#nullable enable
 
 public class Program
 {
@@ -13,67 +15,95 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph with a comment that contains the keyword "keyword".
-        builder.Writeln("This is the first paragraph.");
-        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment1.SetText("Please review this keyword.");
-        Paragraph para1 = doc.FirstSection.Body.FirstParagraph;
-        para1.AppendChild(new CommentRangeStart(doc, comment1.Id));
-        para1.AppendChild(new Run(doc, "Text to be highlighted."));
-        para1.AppendChild(new CommentRangeEnd(doc, comment1.Id));
-        para1.AppendChild(comment1);
+        // First paragraph with the keyword "important".
+        builder.Writeln("This is a sample paragraph with an important note.");
 
-        // Second paragraph with a comment that does NOT contain the keyword.
-        builder.Writeln("This is the second paragraph.");
-        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
-        comment2.SetText("No relevant term here.");
-        Paragraph para2 = doc.FirstSection.Body.Paragraphs[2]; // Index after the two Writeln calls.
-        para2.AppendChild(new CommentRangeStart(doc, comment2.Id));
-        para2.AppendChild(new Run(doc, "Another piece of text."));
-        para2.AppendChild(new CommentRangeEnd(doc, comment2.Id));
-        para2.AppendChild(comment2);
+        // Locate the run that contains the word "important".
+        Run? importantRun = FindRunContainingText(builder.CurrentParagraph, "important");
+        if (importantRun != null)
+        {
+            // Create a comment anchored to the word "important".
+            Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
+            comment.SetText("This comment contains the keyword.");
 
-        // Keyword to search for inside comment texts.
+            // Insert the comment range start before the run.
+            builder.CurrentParagraph.InsertBefore(new CommentRangeStart(doc, comment.Id), importantRun);
+            // Insert the comment range end after the run.
+            builder.CurrentParagraph.InsertAfter(new CommentRangeEnd(doc, comment.Id), importantRun);
+            // Append the comment node after the range end.
+            builder.CurrentParagraph.AppendChild(comment);
+        }
+
+        // Second paragraph without the keyword.
+        builder.Writeln("Another paragraph with a regular comment.");
+
+        // Create a comment for the whole paragraph.
+        Comment otherComment = new Comment(doc, "Bob", "B", DateTime.Now);
+        otherComment.SetText("Just a regular comment.");
+
+        // Anchor the comment to the entire paragraph.
+        Paragraph secondPara = builder.CurrentParagraph;
+        secondPara.InsertBefore(new CommentRangeStart(doc, otherComment.Id), secondPara.FirstChild);
+        secondPara.AppendChild(new CommentRangeEnd(doc, otherComment.Id));
+        secondPara.AppendChild(otherComment);
+
+        // Define the keyword to search for in comments.
         const string keyword = "keyword";
 
         // Enumerate all comments in the document.
         var comments = doc.GetChildNodes(NodeType.Comment, true)
-                          .OfType<Comment>()
-                          .ToList();
+            .OfType<Comment>()
+            .ToList();
 
-        foreach (Comment comment in comments)
+        foreach (Comment c in comments)
         {
             // Check if the comment text contains the keyword (case‑insensitive).
-            if (comment.GetText().IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+            if (c.GetText().IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                // Find the matching CommentRangeStart node by comment Id.
-                CommentRangeStart? start = doc.GetChildNodes(NodeType.CommentRangeStart, true)
-                                             .OfType<CommentRangeStart>()
-                                             .FirstOrDefault(r => r.Id == comment.Id);
+                // Find the matching CommentRangeStart node by Id.
+                CommentRangeStart? rangeStart = doc.GetChildNodes(NodeType.CommentRangeStart, true)
+                    .OfType<CommentRangeStart>()
+                    .FirstOrDefault(crs => crs.Id == c.Id);
 
-                // Find the matching CommentRangeEnd node by comment Id.
-                CommentRangeEnd? end = doc.GetChildNodes(NodeType.CommentRangeEnd, true)
-                                         .OfType<CommentRangeEnd>()
-                                         .FirstOrDefault(r => r.Id == comment.Id);
-
-                if (start == null || end == null)
-                    continue; // Safety check.
-
-                // Iterate over all nodes between start and end (exclusive) and highlight runs.
-                Node? curNode = start.NextSibling;
-                while (curNode != null && curNode != end)
+                if (rangeStart != null)
                 {
-                    if (curNode is Run run)
+                    // Walk through the nodes between the start and the corresponding end.
+                    Node? node = rangeStart.NextSibling;
+                    while (node != null)
                     {
-                        run.Font.HighlightColor = Color.Yellow;
+                        // Stop when we reach the matching CommentRangeEnd.
+                        if (node.NodeType == NodeType.CommentRangeEnd && ((CommentRangeEnd)node).Id == c.Id)
+                            break;
+
+                        // Highlight any Run nodes inside the range.
+                        if (node.NodeType == NodeType.Run)
+                        {
+                            ((Run)node).Font.HighlightColor = Color.Yellow;
+                        }
+
+                        node = node.NextSibling;
                     }
-                    curNode = curNode.NextSibling;
                 }
             }
         }
 
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+
         // Save the modified document.
-        const string outputPath = "output.docx";
+        string outputPath = Path.Combine(outputDir, "HighlightedComments.docx");
         doc.Save(outputPath);
+    }
+
+    // Helper method to find the first Run in a paragraph that contains the specified text.
+    private static Run? FindRunContainingText(Paragraph paragraph, string text)
+    {
+        foreach (Run run in paragraph.Runs)
+        {
+            if (run.Text != null && run.Text.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
+                return run;
+        }
+        return null;
     }
 }
