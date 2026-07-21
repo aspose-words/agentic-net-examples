@@ -3,7 +3,7 @@ name: aspose-words-examples
 description: AI-friendly C# code examples for Aspose.Words for .NET
 language: csharp
 framework: net8.0
-package: Aspose.Words 26.5.0
+package: Aspose.Words 26.6.0
 ---
 
 # Aspose.Words for .NET Examples
@@ -23,11 +23,11 @@ When working in this repository:
 
 This repository contains **1795** working code examples demonstrating Aspose.Words for .NET capabilities.
 
-**Statistics** (as of 2026-06-19):
+**Statistics** (as of 2026-07-12):
 - Total Examples: 1795
 - Categories: 29
 - Overall Pass Rate: 100.0%
-- Source Run: 20260619_131835_59df5f
+- Source Run: 20260711_192617_b9179d
 
 ## Category Details
 
@@ -206,6 +206,7 @@ This repository contains **1795** working code examples demonstrating Aspose.Wor
 AGENTS.md
 README.md
 index.json
+llm.txt
 +-- barcode-image/
 +-- charts/
 +-- comments/
@@ -283,13 +284,13 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.5.0
+dotnet add package Aspose.Words --version 26.6.0
 ```
 
 Add other packages only when an example requires them, for example:
 
 ```bash
-dotnet add package Aspose.BarCode --version 26.5.0
+dotnet add package Aspose.BarCode --version 26.6.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 dotnet add package Newtonsoft.Json
 dotnet add package SkiaSharp --version 3.119.0
@@ -312,4 +313,4 @@ dotnet run --configuration Release --no-build
 
 ---
 
-*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For repository overview, see [README.md](./README.md) | Last updated: 2026-06-19*
+*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For repository overview, see [README.md](./README.md) | Last updated: 2026-07-12*
