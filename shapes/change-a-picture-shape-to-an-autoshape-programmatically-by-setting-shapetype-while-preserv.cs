@@ -7,51 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary PNG image (1x1 pixel, light blue) without using System.Drawing.
-        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
+        // Create a temporary sample image.
+        string imagePath = "sample.png";
         CreateSampleImage(imagePath);
 
-        // Create a new Word document.
+        // Create a new document and insert the image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the image; this creates a picture shape (ShapeType.Image).
         Shape pictureShape = builder.InsertImage(imagePath);
 
-        // Preserve the original dimensions.
+        // Preserve the original size.
         double originalWidth = pictureShape.Width;
         double originalHeight = pictureShape.Height;
 
-        // Create a new rectangle AutoShape with the same size.
+        // Create a rectangle AutoShape with the same size.
         Shape rectangleShape = new Shape(doc, ShapeType.Rectangle)
         {
             Width = originalWidth,
-            Height = originalHeight
+            Height = originalHeight,
+            WrapType = WrapType.Inline
         };
 
-        // Insert the new shape after the picture shape and then remove the picture shape.
-        pictureShape.ParentNode.InsertAfter(rectangleShape, pictureShape);
+        // Insert the rectangle after the picture and remove the picture.
+        var parentParagraph = pictureShape.ParentParagraph;
+        if (parentParagraph == null)
+            throw new Exception("Picture shape is not inside a paragraph.");
+
+        parentParagraph.InsertAfter(rectangleShape, pictureShape);
         pictureShape.Remove();
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify the output file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved correctly.");
+            throw new Exception("Failed to create the output document.");
 
-        // Optional cleanup of the temporary image.
-        // File.Delete(imagePath);
+        // Clean up the temporary image file.
+        if (File.Exists(imagePath))
+            File.Delete(imagePath);
     }
 
-    // Writes a minimal PNG image (1x1 pixel, light blue) to the specified path.
     private static void CreateSampleImage(string path)
     {
-        // Base64-encoded PNG (1x1 pixel, RGB 173,216,230 - LightBlue)
-        const string base64Png = 
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(path, imageBytes);
+        // Minimal 1x1 pixel PNG (transparent)
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(path, pngBytes);
     }
 }

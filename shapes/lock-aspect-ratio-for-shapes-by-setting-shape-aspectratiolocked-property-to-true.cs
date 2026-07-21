@@ -7,35 +7,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary image file to insert.
-        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
-        CreateSampleImage(imagePath);
-
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the image as a shape.
-        Shape shape = builder.InsertImage(imagePath);
+        // A tiny red PNG image (2x2 pixels) encoded in Base64.
+        // This avoids the need for System.Drawing and external image files.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAADUlEQVQImWNgYGD4DwABBAEA7pV6WQAAAABJRU5ErkJggg==";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
 
-        // Lock the shape's aspect ratio.
+        // Insert the image from the byte array as an inline shape.
+        Shape shape = builder.InsertImage(imageBytes);
+
+        // Lock the aspect ratio of the shape.
         shape.AspectRatioLocked = true;
 
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AspectRatioLocked.docx");
+
         // Save the document.
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "AspectRatioLocked.docx");
-        doc.Save(docPath);
+        doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException("The document was not saved successfully.");
-    }
-
-    // Creates a simple placeholder PNG image without using System.Drawing.
-    private static void CreateSampleImage(string path)
-    {
-        // This is a 1x1 pixel transparent PNG encoded in base64.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(path, pngBytes);
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

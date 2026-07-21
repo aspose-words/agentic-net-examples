@@ -4,55 +4,48 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace AsposeWordsShapeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Use DocumentBuilder for convenience.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create a floating text box shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-
-        // Define dimensions (points).
-        textBox.Width = 300;   // 300 points wide
-        textBox.Height = 100;  // 100 points high
-
-        // Set border (stroke) style.
-        textBox.StrokeColor = Color.DarkBlue;          // Border color
-        textBox.StrokeWeight = 2.0;                    // Border thickness
-        textBox.Stroke.DashStyle = DashStyle.Solid;    // Border dash style
-
-        // Set interior fill color.
-        textBox.FillColor = Color.LightYellow;
-
-        // Ensure the shape is floating (no inline wrapping).
-        textBox.WrapType = WrapType.None;
-
-        // Add a paragraph inside the text box and some text.
-        textBox.AppendChild(new Paragraph(doc));
-        Paragraph para = textBox.FirstParagraph;
-        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        Run run = new Run(doc);
-        run.Text = "Hello from the text box!";
-        para.AppendChild(run);
-
-        // Insert the shape into the document body.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(textBox);
-
-        // Define output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TextboxShape.docx");
-
-        // Save the document.
-        doc.Save(outputPath);
-
-        // Validate that the file was created.
-        if (!File.Exists(outputPath))
+        public static void Main()
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Define textbox dimensions (points).
+            double width = 200;   // 200 points ≈ 2.78 inches
+            double height = 100;  // 100 points ≈ 1.39 inches
+
+            // Insert a floating textbox shape.
+            Shape textBox = builder.InsertShape(ShapeType.TextBox, width, height);
+            textBox.WrapType = WrapType.None;
+            textBox.HorizontalAlignment = HorizontalAlignment.Center;
+            textBox.VerticalAlignment = VerticalAlignment.Top;
+
+            // Apply border (stroke) formatting.
+            textBox.Stroke.Color = Color.DarkBlue;      // Border color
+            textBox.StrokeWeight = 2.0;                // Border thickness (points)
+            textBox.Stroke.DashStyle = DashStyle.Dash; // Dashed line style
+
+            // Apply interior fill formatting.
+            textBox.FillColor = Color.LightYellow;
+
+            // Add a paragraph with centered text inside the textbox.
+            textBox.AppendChild(new Paragraph(doc));
+            Paragraph para = textBox.FirstParagraph;
+            para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            Run run = new Run(doc) { Text = "Hello Aspose.Words!" };
+            para.AppendChild(run);
+
+            // Save the document.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TextboxShape.docx");
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("Document was not saved correctly.");
         }
     }
 }

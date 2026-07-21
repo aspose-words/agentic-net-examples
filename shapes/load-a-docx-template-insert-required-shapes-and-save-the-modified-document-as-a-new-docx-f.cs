@@ -2,26 +2,22 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
-public class ShapeInsertionExample
+public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        // Directory for temporary files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
         // -----------------------------------------------------------------
         // 1. Create a simple DOCX template and save it.
         // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
-        templateBuilder.Writeln("This is a template document.");
+        string templatePath = Path.Combine(artifactsDir, "Template.docx");
+        Document templateDoc = new Document(); // blank document with minimal structure
         templateDoc.Save(templatePath);
-
-        // Verify that the template was created.
-        if (!File.Exists(templatePath))
-            throw new InvalidOperationException("Failed to create the template document.");
 
         // -----------------------------------------------------------------
         // 2. Load the template.
@@ -30,37 +26,47 @@ public class ShapeInsertionExample
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // -----------------------------------------------------------------
-        // 3. Insert required shapes.
+        // 3. Insert a rectangle shape (inline) and set its appearance.
         // -----------------------------------------------------------------
-        // Insert an inline rectangle shape.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        rectangle.Stroke.Color = System.Drawing.Color.Blue;
-        rectangle.Fill.Color = System.Drawing.Color.LightGray;
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 150, 80);
+        rectangle.FillColor = Color.LightBlue;
+        rectangle.Stroke.Color = Color.DarkBlue;
+        rectangle.Stroke.Weight = 2.0; // points
 
-        // Insert a floating text box shape.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        textBox.WrapType = WrapType.None;
-        textBox.Left = 150;   // Position from the left margin (points).
-        textBox.Top = 150;    // Position from the top of the page (points).
-        textBox.Stroke.Color = System.Drawing.Color.DarkGreen;
-        textBox.Fill.Color = System.Drawing.Color.LightYellow;
-
-        // Add text to the text box.
-        Paragraph tbParagraph = textBox.FirstParagraph;
-        tbParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        tbParagraph.AppendChild(new Run(doc, "Hello from a text box!"));
+        // Add a line break after the rectangle.
+        builder.Writeln();
 
         // -----------------------------------------------------------------
-        // 4. Save the modified document.
+        // 4. Insert a floating text box shape and add some text.
         // -----------------------------------------------------------------
+        // Use the overload that creates a floating shape with explicit position.
+        Shape textBox = builder.InsertShape(
+            ShapeType.TextBox,
+            RelativeHorizontalPosition.Page, 100,   // left = 100 points from page left
+            RelativeVerticalPosition.Page, 150,    // top  = 150 points from page top
+            200,                                   // width
+            100,                                   // height
+            WrapType.None);                        // no text wrapping
+
+        textBox.FillColor = Color.LightYellow;
+        textBox.Stroke.Color = Color.Orange;
+        textBox.Stroke.Weight = 1.5;
+
+        // Insert text into the text box.
+        // The shape already contains a paragraph (FirstParagraph).
+        builder.MoveTo(textBox.FirstParagraph);
+        builder.Write("Hello from a text box!");
+
+        // -----------------------------------------------------------------
+        // 5. Save the modified document.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine(artifactsDir, "Modified.docx");
         doc.Save(outputPath);
 
         // -----------------------------------------------------------------
-        // 5. Validate that the output file exists.
+        // 6. Simple validation – ensure the file was created.
         // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The output document was not saved correctly.");
-
-        // The program finishes without waiting for user input.
     }
 }

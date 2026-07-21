@@ -2,40 +2,43 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Rendering;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string docPath = Path.Combine(artifactsDir, "RotatedShape.docx");
-
-        // A 1x1 red PNG image encoded in Base64.
-        // This avoids the need for external image files.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP8z8BQDwAF/AL+XK6XAAAAAElFTkSuQmCC";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the image from the byte array.
-        Shape shape = builder.InsertImage(imageBytes);
-
+        // Insert a simple rectangle shape.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 100);
         // Rotate the shape 45 degrees clockwise.
         shape.Rotation = 45;
+
+        // Define output file paths.
+        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "RotatedShape.docx");
+        string pngPath = Path.Combine(Directory.GetCurrentDirectory(), "RotatedShape.png");
 
         // Save the document.
         doc.Save(docPath);
 
-        // Validation: ensure the file was created.
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException("The output document was not saved.");
+        // Render the shape to an image file to visually verify the rotation.
+        ShapeRenderer renderer = shape.GetShapeRenderer();
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
+        renderer.Save(pngPath, options);
 
-        // Validation: ensure the shape's rotation property is set correctly.
+        // Simple validation: ensure both files were created.
+        if (!File.Exists(docPath))
+            throw new Exception("Document file was not saved.");
+
+        if (!File.Exists(pngPath))
+            throw new Exception("Rendered shape image was not saved.");
+
+        // Additional validation: check that the rotation property is set correctly.
         if (Math.Abs(shape.Rotation - 45) > 0.001)
-            throw new InvalidOperationException($"Shape rotation is {shape.Rotation}, expected 45.");
+            throw new Exception("Shape rotation was not set to 45 degrees.");
     }
 }

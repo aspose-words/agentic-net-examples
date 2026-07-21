@@ -4,12 +4,12 @@
     "slug": "shapes",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Prefer simple documented Shape workflows using DocumentBuilder.InsertShape or Shape constructors. Keep validation narrow and task-specific. Use Aspose.Words.Drawing APIs only when directly relevant.",
+    "preferred_workflow": "Use simple documented Shape workflows using DocumentBuilder.InsertShape, InsertImage, and Shape or GroupShape APIs only when directly required. Keep validation narrow and task-specific and bootstrap all input assets locally.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
@@ -18,10 +18,9 @@
       "Aspose.Words.Drawing",
       "System.Drawing",
       "Aspose.Words.Tables",
-      "Aspose.Words.Saving",
-      "System.Collections.Generic",
-      "System.Text.RegularExpressions",
       "System.Linq",
+      "System.Text",
+      "Aspose.Words.Saving",
       "Aspose.Words.Rendering"
     ],
     "key_apis": [
@@ -33,19 +32,16 @@
       "Shape",
       "Paragraph",
       "Run",
-      "ShapeType",
-      "Table",
-      "Cell",
-      "SaveFormat",
-      "Font",
-      "NodeType",
       "MemoryStream",
+      "Table",
+      "NodeType",
       "ImageData",
+      "SaveFormat",
+      "Node",
       "ImageSaveOptions",
+      "Font",
       "PdfSaveOptions",
-      "Watermark",
-      "TextWatermarkOptions",
-      "Bookmark",
+      "Cell",
       "CellFormat"
     ]
   },
@@ -54,11 +50,6 @@
     "publish_ready_successful_examples": 35,
     "workflow_counts": {
       "shape-workflow": 35
-    },
-    "winner_counts": {
-      "existing_repo": 1,
-      "llm": 1,
-      "mcp": 33
     }
   },
   "rules_summary": {
@@ -184,8 +175,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 9,
@@ -217,8 +208,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 12,
@@ -283,8 +274,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 18,
@@ -335,7 +326,7 @@
     {
       "id": 22,
       "file_name": "batch-process-a-folder-of-docx-files-inserting-a-semi-transparent-watermark-shape-into-eac.cs",
-      "task": "Batch process a folder of DOCX files, inserting a semi-transparent watermark shape into each document.",
+      "task": "Batch process a folder of DOCX files, inserting a semi‑transparent watermark shape into each document.",
       "workflow": "shape-workflow",
       "outputs": [
         "docx",
@@ -457,7 +448,7 @@
     {
       "id": 33,
       "file_name": "retrieve-a-shape-s-z-order-index-and-bring-the-shape-to-the-front-of-the-document-layering.cs",
-      "task": "Retrieve a shape's Z-order index and bring the shape to the front of the document layering.",
+      "task": "Retrieve a shape's Z‑order index and bring the shape to the front of the document layering.",
       "workflow": "shape-workflow",
       "outputs": [
         "doc"

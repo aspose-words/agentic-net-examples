@@ -12,43 +12,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start a table and insert the first cell.
         builder.StartTable();
-
-        // Insert the first cell where the shape will be placed.
         builder.InsertCell();
 
-        // Insert a simple rectangle shape inside the current cell.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 50, 30);
+        // Insert a rectangle shape inside the current cell.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
         shape.FillColor = System.Drawing.Color.LightBlue;
         shape.StrokeColor = System.Drawing.Color.DarkBlue;
 
-        // Retrieve the cell that currently contains the shape.
-        Cell currentCell = (Cell)builder.CurrentParagraph.GetAncestor(NodeType.Cell);
-
         // Adjust the left and right margins (padding) of the cell for proper spacing.
-        // Values are in points; 10 points ≈ 0.14 inch.
-        currentCell.CellFormat.LeftPadding = 10;
-        currentCell.CellFormat.RightPadding = 10;
+        // The builder is positioned inside the cell, so we can obtain the cell from the current paragraph.
+        Cell currentCell = (Cell)builder.CurrentParagraph.ParentNode;
+        currentCell.CellFormat.LeftPadding = 10;   // points
+        currentCell.CellFormat.RightPadding = 10;  // points
 
-        // Add a second cell to complete the row (optional content).
-        builder.InsertCell();
-        builder.Writeln("Second cell");
-
-        // End the row and the table.
+        // Finish the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ShapeInTable.docx");
-
-        // Save the document.
+        // Save the document to disk.
+        string outputPath = "ShapeInTableCell.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+            throw new Exception("The output document was not saved correctly.");
 
-        // The program finishes without waiting for user input.
+        // Indicate successful completion.
+        Console.WriteLine("Document created: " + Path.GetFullPath(outputPath));
     }
 }
