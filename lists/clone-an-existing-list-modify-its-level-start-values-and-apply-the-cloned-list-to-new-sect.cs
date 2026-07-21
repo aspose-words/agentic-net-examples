@@ -3,50 +3,55 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace ListCloneExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create an original list based on a predefined template.
-        List originalList = doc.Lists.Add(ListTemplate.NumberArabicParenthesis);
-        // Customize the first level of the original list.
-        originalList.ListLevels[0].Font.Color = Color.Red;
-        originalList.ListLevels[0].Alignment = ListLevelAlignment.Right;
+            // -----------------------------------------------------------------
+            // Create the original list and add a couple of items.
+            // -----------------------------------------------------------------
+            List originalList = doc.Lists.Add(ListTemplate.NumberArabicParenthesis);
+            originalList.ListLevels[0].Font.Color = Color.Red; // Red numbers for the original list.
 
-        // Apply the original list to a few paragraphs.
-        builder.Writeln("Original list starts below:");
-        builder.ListFormat.List = originalList;
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.ListFormat.RemoveNumbers();
+            builder.Writeln("Original List:");
+            builder.ListFormat.List = originalList;
+            builder.Writeln("Item 1");
+            builder.Writeln("Item 2");
+            builder.ListFormat.RemoveNumbers();
 
-        // Clone the existing list using AddCopy (as per Aspose.Words API).
-        List clonedList = doc.Lists.AddCopy(originalList);
-        // Modify the starting number of the first level in the cloned list.
-        clonedList.ListLevels[0].StartAt = 10;
-        // Optionally change the color to differentiate the cloned list.
-        clonedList.ListLevels[0].Font.Color = Color.Blue;
+            // -----------------------------------------------------------------
+            // Clone the original list, modify its start value and color.
+            // -----------------------------------------------------------------
+            List clonedList = doc.Lists.AddCopy(originalList);
+            clonedList.ListLevels[0].StartAt = 10;          // Restart numbering at 10.
+            clonedList.ListLevels[0].Font.Color = Color.Blue; // Blue numbers for the cloned list.
 
-        // Clone the first section of the document and add it as a new section.
-        Section newSection = doc.Sections[0].Clone();
-        doc.Sections.Add(newSection);
+            // Insert a section break to start a new section.
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Move the builder cursor to the newly added section.
-        DocumentBuilder sectionBuilder = new DocumentBuilder(doc);
-        sectionBuilder.MoveToSection(doc.Sections.Count - 1);
+            // Apply the cloned list in the new section.
+            builder.Writeln("Cloned List (starts at 10):");
+            builder.ListFormat.List = clonedList;
+            builder.Writeln("Item 1");
+            builder.Writeln("Item 2");
+            builder.ListFormat.RemoveNumbers();
 
-        // Apply the cloned list to paragraphs in the new section.
-        sectionBuilder.Writeln("Cloned list in a new section starts below:");
-        sectionBuilder.ListFormat.List = clonedList;
-        sectionBuilder.Writeln("Item 1");
-        sectionBuilder.Writeln("Item 2");
-        sectionBuilder.ListFormat.RemoveNumbers();
+            // -----------------------------------------------------------------
+            // Demonstrate cloning an entire section.
+            // -----------------------------------------------------------------
+            // Clone the first section (which contains the original list) and add it to the end of the document.
+            Section firstSection = doc.Sections[0];
+            Section duplicatedSection = firstSection.Clone();
+            doc.Sections.Add(duplicatedSection);
 
-        // Save the document to disk.
-        doc.Save("ClonedListExample.docx");
+            // Save the document.
+            doc.Save("ClonedListExample.docx");
+        }
     }
 }

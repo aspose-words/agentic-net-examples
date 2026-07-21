@@ -3,55 +3,46 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace AsposeWordsListsExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a builder to insert content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create a numbered list based on the default template.
-        List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = numberedList;
-
-        // Helper to start a new chapter.
-        void StartChapter(string title)
+        public static void Main()
         {
-            // Reset the starting number of the first list level to 1.
-            numberedList.ListLevels[0].StartAt = 1;
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Write the chapter heading (not part of the list).
-            builder.ListFormat.RemoveNumbers(); // Ensure heading is not numbered as a list item.
-            builder.Writeln(title);
+            // Create a numbered list based on the default template.
+            List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-            // Re‑apply the list for the chapter items.
-            builder.ListFormat.List = numberedList;
+            // Generate three chapters, each with its own numbered list that restarts at 1.
+            for (int chapter = 1; chapter <= 3; chapter++)
+            {
+                // Insert a chapter heading.
+                builder.ParagraphFormat.ClearFormatting();
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+                builder.Writeln($"Chapter {chapter}");
+
+                // Reset the starting number of the first list level to 1 for this chapter.
+                numberedList.ListLevels[0].StartAt = 1;
+
+                // Apply the list to subsequent paragraphs.
+                builder.ListFormat.List = numberedList;
+
+                // Add five list items for the current chapter.
+                for (int item = 1; item <= 5; item++)
+                {
+                    builder.Writeln($"Item {item} in Chapter {chapter}");
+                }
+
+                // End the list for this chapter.
+                builder.ListFormat.RemoveNumbers();
+            }
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "NumberedList.docx");
+            doc.Save(outputPath);
         }
-
-        // Chapter 1
-        StartChapter("Chapter 1");
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
-
-        // Insert a section break to separate chapters.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Chapter 2
-        StartChapter("Chapter 2");
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
-        builder.Writeln("Item 4");
-
-        // Ensure any remaining list formatting is cleared.
-        builder.ListFormat.RemoveNumbers();
-
-        // Save the document.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string outputPath = Path.Combine(artifactsDir, "NumberedListRestartPerChapter.docx");
-        doc.Save(outputPath);
     }
 }

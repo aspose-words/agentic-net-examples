@@ -9,26 +9,28 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
+      "System.IO",
       "Aspose.Words",
       "Aspose.Words.Lists",
-      "System.IO",
       "System.Drawing",
-      "System.Linq",
-      "Aspose.Words.Saving",
-      "Aspose.Words.Tables"
+      "Aspose.Words.Drawing",
+      "Aspose.Words.Tables",
+      "Aspose.Words.Saving"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Path",
       "Directory",
+      "Path",
       "NodeType",
       "Paragraph",
       "Font",
+      "Run",
+      "StyleIdentifier",
       "SaveFormat"
     ]
   },
@@ -36,15 +38,12 @@
     "total_examples": 30,
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
-      "bulleted-list-workflow": 1,
-      "general-list-workflow": 4,
-      "list-formatting-workflow": 5,
-      "nested-list-workflow": 17,
       "numbered-list-workflow": 2,
+      "bulleted-list-workflow": 1,
+      "nested-list-workflow": 17,
+      "list-formatting-workflow": 5,
+      "general-list-workflow": 4,
       "numbering-control-workflow": 1
-    },
-    "winner_counts": {
-      "mcp": 30
     }
   },
   "rules_summary": {
@@ -112,7 +111,7 @@
     {
       "id": 3,
       "file_name": "set-listlevelnumber-to-three-before-adding-a-paragraph-to-create-a-third-level-list-item-i.cs",
-      "task": "Set ListLevelNumber to three before adding a paragraph to create a third-level list item in the document.",
+      "task": "Set ListLevelNumber to three before adding a paragraph to create a third‑level list item in the document.",
       "workflow": "nested-list-workflow",
       "outputs": [
         "docx"
@@ -255,7 +254,7 @@
     {
       "id": 16,
       "file_name": "create-a-nine-level-hierarchical-list-by-defining-properties-for-each-listlevel-up-to-leve.cs",
-      "task": "Create a nine-level hierarchical list by defining properties for each ListLevel up to level nine.",
+      "task": "Create a nine‑level hierarchical list by defining properties for each ListLevel up to level nine.",
       "workflow": "nested-list-workflow",
       "outputs": [
         "docx"
@@ -266,7 +265,7 @@
     {
       "id": 17,
       "file_name": "create-a-multi-level-list-with-alternating-bullet-and-number-styles-by-configuring-each-li.cs",
-      "task": "Create a multi-level list with alternating bullet and number styles by configuring each ListLevel individually.",
+      "task": "Create a multi‑level list with alternating bullet and number styles by configuring each ListLevel individually.",
       "workflow": "nested-list-workflow",
       "outputs": [
         "docx"

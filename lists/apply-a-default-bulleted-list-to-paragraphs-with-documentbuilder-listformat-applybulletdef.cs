@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Lists;
 
 public class Program
 {
@@ -10,27 +9,29 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder which will be used to add content.
+        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write an introductory paragraph.
-        builder.Writeln("Features of Aspose.Words:");
+        // Write a heading before the list.
+        builder.Writeln("Bulleted list example:");
 
-        // Start a default bulleted list and apply it to subsequent paragraphs.
+        // Start a default bulleted list.
         builder.ListFormat.ApplyBulletDefault();
 
         // Add list items.
-        builder.Writeln("High performance");
-        builder.Writeln("Robust API");
-        builder.Writeln("Extensive format support");
-        builder.Writeln("Easy to integrate");
-        builder.Writeln("Comprehensive documentation");
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        builder.Writeln("Third item");
 
-        // End the list.
+        // End the bulleted list.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BulletedList.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "DefaultBulletedList.docx");
         doc.Save(outputPath);
     }
 }

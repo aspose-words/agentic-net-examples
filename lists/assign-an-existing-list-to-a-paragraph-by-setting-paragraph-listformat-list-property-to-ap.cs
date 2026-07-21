@@ -8,27 +8,32 @@ public class Program
     {
         // Create a new empty document.
         Document doc = new Document();
+
+        // Use DocumentBuilder for convenience when adding non‑list content.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Paragraph before the list.");
 
-        // Add a few regular paragraphs.
-        builder.Writeln("Paragraph without list 1");
-        builder.Writeln("Paragraph without list 2");
-        builder.Writeln("Paragraph without list 3");
+        // Create a list based on a predefined template (bulleted list).
+        List list = doc.Lists.Add(ListTemplate.BulletDefault);
 
-        // Create a bulleted list that we will assign to a paragraph later.
-        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+        // First list item: create a paragraph, add a run, and assign the list.
+        Paragraph para1 = new Paragraph(doc);
+        para1.AppendChild(new Run(doc, "First list item"));
+        para1.ListFormat.List = list;               // Assign the existing list.
+        para1.ListFormat.ListLevelNumber = 0;       // Use the first level of the list.
+        doc.FirstSection.Body.AppendChild(para1);
 
-        // Retrieve the third paragraph (index 2) from the document.
-        Paragraph thirdParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 2, true);
+        // Second list item: same steps as above.
+        Paragraph para2 = new Paragraph(doc);
+        para2.AppendChild(new Run(doc, "Second list item"));
+        para2.ListFormat.List = list;
+        para2.ListFormat.ListLevelNumber = 0;
+        doc.FirstSection.Body.AppendChild(para2);
 
-        // Assign the existing list to the paragraph and set its level.
-        thirdParagraph.ListFormat.List = bulletList;
-        thirdParagraph.ListFormat.ListLevelNumber = 0; // first level of the list
+        // Add a normal paragraph after the list.
+        builder.Writeln("Paragraph after the list.");
 
-        // Continue adding content after the list‑styled paragraph.
-        builder.Writeln("Paragraph after list");
-
-        // Save the document to disk.
+        // Save the document.
         doc.Save("AssignListToParagraph.docx");
     }
 }

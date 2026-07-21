@@ -7,38 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a numbered list with three items.
         List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
         builder.ListFormat.List = numberedList;
-        builder.Writeln("Numbered item 1");
-        builder.Writeln("Numbered item 2");
-        builder.Writeln("Numbered item 3");
+        for (int i = 1; i <= 3; i++)
+        {
+            builder.Writeln($"Numbered item {i}");
+        }
         builder.ListFormat.RemoveNumbers();
 
-        // Add a bulleted list with three items.
+        // Add a bulleted list with two items.
         List bulletedList = doc.Lists.Add(ListTemplate.BulletDefault);
         builder.ListFormat.List = bulletedList;
-        builder.Writeln("Bulleted item A");
-        builder.Writeln("Bulleted item B");
-        builder.Writeln("Bulleted item C");
+        for (int i = 1; i <= 2; i++)
+        {
+            builder.Writeln($"Bulleted item {i}");
+        }
         builder.ListFormat.RemoveNumbers();
 
-        // Iterate through all list definitions in the document.
-        // For this example we set every list to restart numbering at each section
-        // and change the font color of the first level to blue.
+        // Iterate through all list definitions in the document and modify them uniformly.
         foreach (List list in doc.Lists)
         {
-            // Restart numbering at each section.
+            // Restart numbering at each section for every list.
             list.IsRestartAtEachSection = true;
 
-            // Modify the first level formatting uniformly.
+            // Change the appearance of the first level of each list.
             if (list.ListLevels.Count > 0)
             {
                 list.ListLevels[0].Font.Color = Color.Blue;
+                list.ListLevels[0].Font.Size = 14;
             }
         }
 
