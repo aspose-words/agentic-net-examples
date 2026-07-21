@@ -8,46 +8,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document and add a large number of fields to simulate a long‑running update.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a cancellation token that will be triggered after a short delay.
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(100); // 100 milliseconds
 
-        const int fieldCount = 5000;
-        for (int i = 0; i < fieldCount; i++)
+        // Create a blank document and add many fields to simulate a long‑running update.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        for (int i = 0; i < 5000; i++)
         {
-            builder.Writeln($"Paragraph before field {i}");
-            // Insert a simple MERGEFIELD; each field requires processing when updated.
-            builder.InsertField($"MERGEFIELD Field{i}");
-            builder.Writeln($"Paragraph after field {i}");
+            builder.Writeln("Page number:");
+            // Insert a PAGE field using the correct FieldType enum value.
+            builder.InsertField(FieldType.FieldPage, true);
         }
 
-        // Set up a cancellation token that will trigger after a short delay.
-        using (CancellationTokenSource cts = new CancellationTokenSource())
+        // Attempt to update all fields, aborting if the token is cancelled.
+        try
         {
-            // Cancel after 100 milliseconds – enough to interrupt the update loop.
-            cts.CancelAfter(100);
-
-            try
-            {
-                // Iterate over all fields and update them one by one.
-                // ThrowIfCancellationRequested is called inside the loop to abort efficiently.
-                foreach (Field field in doc.Range.Fields)
-                {
-                    cts.Token.ThrowIfCancellationRequested();
-                    field.Update();
-                }
-
-                Console.WriteLine("All fields updated successfully.");
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine("Field update operation was cancelled.");
-            }
+            UpdateFieldsWithCancellation(doc, cts.Token);
+        }
+        catch (OperationCanceledException ex)
+        {
+            Console.WriteLine($"Field update cancelled: {ex.Message}");
         }
 
-        // Save the (partially) updated document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UpdatedDocument.docx");
+        // Save the document to a temporary location.
+        string outputPath = Path.Combine(Path.GetTempPath(), "AsposeFields.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Document was not saved successfully.");
+
         Console.WriteLine($"Document saved to: {outputPath}");
+    }
+
+    // Updates each field in the document, checking the cancellation token on each iteration.
+    private static void UpdateFieldsWithCancellation(Document doc, CancellationToken token)
+    {
+        foreach (Field field in doc.Range.Fields)
+        {
+            token.ThrowIfCancellationRequested(); // Abort if cancellation was requested.
+            field.Update();
+        }
     }
 }

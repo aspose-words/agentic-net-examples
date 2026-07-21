@@ -7,48 +7,58 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare cancellation token that will be triggered after a short delay.
-        var cts = new CancellationTokenSource();
-        // Cancel after 100 milliseconds.
-        var timer = new Timer(_ => cts.Cancel(), null, 100, Timeout.Infinite);
+        // Prepare a cancellation token that will be cancelled after a few operations.
+        using var cts = new CancellationTokenSource();
+        CancellationToken token = cts.Token;
 
-        // Create a new empty document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Build the document in a separate method, passing the token.
+        Document doc = BuildDocument(token, cts);
 
-        try
-        {
-            // Simulate complex document construction with many steps.
-            for (int i = 1; i <= 20; i++)
-            {
-                // Check for cancellation before each operation.
-                if (cts.Token.IsCancellationRequested)
-                    throw new OperationCanceledException();
-
-                builder.Writeln($"Paragraph {i}");
-                // Simulate work.
-                Thread.Sleep(30);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Interruption occurred – continue with whatever has been built so far.
-            Console.WriteLine("Document construction was interrupted.");
-        }
-        finally
-        {
-            // Ensure timer resources are released.
-            timer.Dispose();
-        }
-
-        // Save the (potentially partially built) document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        // Save the document.
+        string outputPath = "output.docx";
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the output document.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
 
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Indicate success (no interactive output required, but console write is allowed).
+        Console.WriteLine("Document built and saved successfully.");
+    }
+
+    private static Document BuildDocument(CancellationToken token, CancellationTokenSource cts)
+    {
+        // Create a new empty document.
+        Document document = new Document();
+        DocumentBuilder builder = new DocumentBuilder(document);
+
+        // Simulate a complex document construction with many sections.
+        for (int i = 1; i <= 20; i++)
+        {
+            // Check for cancellation request.
+            if (token.IsCancellationRequested)
+            {
+                Console.WriteLine($"Construction interrupted after {i - 1} sections.");
+                break;
+            }
+
+            // Add a heading.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln($"Section {i}");
+
+            // Add some body text.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+
+            // Simulate a condition to cancel after 5 sections.
+            if (i == 5)
+            {
+                // Trigger cancellation.
+                cts.Cancel();
+            }
+        }
+
+        return document;
     }
 }

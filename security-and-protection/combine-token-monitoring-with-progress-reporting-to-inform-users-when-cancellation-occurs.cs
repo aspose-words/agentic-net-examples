@@ -7,54 +7,51 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    // Custom saving progress callback that monitors a CancellationToken.
+    // Custom progress callback that also monitors a cancellation token.
     private class SavingProgressCallback : IDocumentSavingCallback
     {
         private readonly CancellationToken _cancellationToken;
-        private readonly DateTime _startTime;
 
         public SavingProgressCallback(CancellationToken cancellationToken)
         {
             _cancellationToken = cancellationToken;
-            _startTime = DateTime.Now;
         }
 
         public void Notify(DocumentSavingArgs args)
         {
+            // Report progress to the console.
+            Console.WriteLine($"Saving progress: {args.EstimatedProgress:F2}%");
+
             // If cancellation was requested, abort the save operation.
             if (_cancellationToken.IsCancellationRequested)
-            {
                 throw new OperationCanceledException(
-                    $"Save operation canceled at {args.EstimatedProgress:F2}% progress.");
-            }
-
-            // Optional: simulate a long operation by checking elapsed time.
-            // This example does not delay, but the check above allows early exit.
+                    $"Save operation cancelled at {args.EstimatedProgress:F2}% progress.");
         }
     }
 
     public static void Main()
     {
-        // Prepare output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ProcessedDocument.docx");
-
-        // Create a sample document with enough content to generate progress.
+        // Prepare a large document to make the save operation take noticeable time.
         Document doc = new Document();
         var builder = new DocumentBuilder(doc);
-        for (int i = 0; i < 500; i++)
+        for (int i = 0; i < 2000; i++)
         {
-            builder.Writeln($"This is line {i + 1} of the sample document.");
+            builder.Writeln($"Paragraph {i + 1}");
         }
 
-        // Set up a cancellation token that will be triggered after a short delay.
-        using var cts = new CancellationTokenSource();
-        Task.Run(async () =>
-        {
-            await Task.Delay(100); // Cancel after 100 ms.
-            cts.Cancel();
-        });
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SavedDocument.docx");
 
-        // Configure save options with the progress callback.
+        // Ensure any previous file is removed.
+        if (File.Exists(outputPath))
+            File.Delete(outputPath);
+
+        // Set up a cancellation token that will trigger after a short delay.
+        using var cts = new CancellationTokenSource();
+        // Cancel after 200 milliseconds.
+        cts.CancelAfter(200);
+
+        // Configure save options with the custom progress callback.
         var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
             ProgressCallback = new SavingProgressCallback(cts.Token)
@@ -62,22 +59,19 @@ public class Program
 
         try
         {
-            // Attempt to save the document. The callback may throw OperationCanceledException.
+            // Perform the save operation. This will invoke the progress callback repeatedly.
             doc.Save(outputPath, saveOptions);
             Console.WriteLine("Document saved successfully.");
         }
         catch (OperationCanceledException ex)
         {
-            // Inform the user that the operation was canceled and provide progress info.
-            Console.WriteLine($"Saving was canceled. Details: {ex.Message}");
+            // Inform the user that the operation was cancelled.
+            Console.WriteLine($"Operation was cancelled: {ex.Message}");
         }
-        finally
+        catch (Exception ex)
         {
-            // Clean up the partially saved file if it exists.
-            if (File.Exists(outputPath))
-            {
-                try { File.Delete(outputPath); } catch { /* ignore cleanup errors */ }
-            }
+            // Any other unexpected errors.
+            Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
 }

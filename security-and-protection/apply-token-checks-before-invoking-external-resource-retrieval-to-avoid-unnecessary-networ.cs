@@ -1,94 +1,86 @@
 using System;
 using System.IO;
-using System.Net.Http;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
 
 public class Program
 {
+    // Expected token for authorized resource loading.
+    private const string ExpectedToken = "valid-token";
+
     public static void Main()
     {
-        // Expected token that authorizes external resource loading.
-        const string expectedToken = "valid-token";
+        // Simulated token (hard‑coded for this demo).
+        string suppliedToken = "valid-token"; // Change to any other value to test the token check.
 
         // Create a blank document.
         Document doc = new Document();
 
-        // Assign a custom resource loading callback that checks the token before downloading.
-        doc.ResourceLoadingCallback = new TokenCheckingCallback(expectedToken);
+        // Attach a custom resource loading callback that validates the token before fetching external resources.
+        doc.ResourceLoadingCallback = new SecureResourceLoader(suppliedToken, ExpectedToken);
 
-        // Insert an image using a URL. The callback will decide whether to load it.
+        // Insert an image using a placeholder URI. The callback will intercept this request.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage("https://www.example.com/sample-image.png");
+        builder.InsertImage("SecureImage");
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the output document.");
+        // Reload the document to verify whether the image was actually loaded.
+        Document loadedDoc = new Document(outputPath);
+        int imageCount = loadedDoc.GetChildNodes(NodeType.Shape, true).Count;
 
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Validation: if the token was correct, the image should be present; otherwise, it should be absent.
+        if (suppliedToken == ExpectedToken)
+        {
+            if (imageCount == 0)
+                throw new InvalidOperationException("Token was valid but the image was not loaded.");
+        }
+        else
+        {
+            if (imageCount != 0)
+                throw new InvalidOperationException("Invalid token allowed image loading.");
+        }
+
+        // Successful execution – no console output required.
+    }
+}
+
+// Custom callback that checks a token before allowing an external image to be loaded.
+public class SecureResourceLoader : IResourceLoadingCallback
+{
+    private readonly string _providedToken;
+    private readonly string _expectedToken;
+
+    // A tiny 1x1 PNG image (transparent) encoded in Base64.
+    private static readonly byte[] PlaceholderImage = Convert.FromBase64String(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YVh" +
+        "6V8AAAAASUVORK5CYII=");
+
+    public SecureResourceLoader(string providedToken, string expectedToken)
+    {
+        _providedToken = providedToken;
+        _expectedToken = expectedToken;
     }
 
-    // Callback that validates a token before allowing image download.
-    private class TokenCheckingCallback : IResourceLoadingCallback
+    public ResourceLoadingAction ResourceLoading(ResourceLoadingArgs args)
     {
-        private readonly string _validToken;
-
-        public TokenCheckingCallback(string validToken)
+        // Intercept only the specific placeholder used in this example.
+        if (args.ResourceType == ResourceType.Image && args.OriginalUri == "SecureImage")
         {
-            _validToken = validToken;
+            // Validate the token.
+            if (_providedToken != _expectedToken)
+                return ResourceLoadingAction.Skip; // Do not load the image.
+
+            // Token is valid – provide the embedded placeholder image data.
+            args.SetData(PlaceholderImage);
+            return ResourceLoadingAction.UserProvided;
         }
 
-        public ResourceLoadingAction ResourceLoading(ResourceLoadingArgs args)
-        {
-            // Only intercept image resources.
-            if (args.ResourceType == ResourceType.Image)
-            {
-                // Simulate token retrieval (in a real scenario, obtain it from a secure source).
-                string providedToken = GetProvidedToken();
-
-                // If the token is invalid, skip loading the external resource.
-                if (!string.Equals(providedToken, _validToken, StringComparison.Ordinal))
-                    return ResourceLoadingAction.Skip;
-
-                // Token is valid – attempt to download the image.
-                try
-                {
-                    using (HttpClient client = new HttpClient())
-                    {
-                        // Synchronously get the image bytes; any failure will be caught below.
-                        byte[] imageData = client.GetByteArrayAsync(args.OriginalUri).GetAwaiter().GetResult();
-                        args.SetData(imageData);
-                    }
-
-                    return ResourceLoadingAction.UserProvided;
-                }
-                catch (HttpRequestException)
-                {
-                    // If the request fails (e.g., 404), skip loading to avoid an exception.
-                    return ResourceLoadingAction.Skip;
-                }
-                catch (Exception)
-                {
-                    // For any other unexpected errors, also skip loading.
-                    return ResourceLoadingAction.Skip;
-                }
-            }
-
-            // For all other resource types, use the default loading behavior.
-            return ResourceLoadingAction.Default;
-        }
-
-        // Placeholder method to obtain a token. Replace with real logic as needed.
-        private string GetProvidedToken()
-        {
-            // For demonstration, we return the same token that authorizes loading.
-            return "valid-token";
-        }
+        // For all other resources, use the default loading behavior.
+        return ResourceLoadingAction.Default;
     }
 }

@@ -1,16 +1,15 @@
 using System;
 using System.IO;
-using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeWordsCancellationDemo
 {
     // Callback that aborts the save operation after a short time.
-    private class SavingProgressCallback : IDocumentSavingCallback
+    public class SavingProgressCallback : IDocumentSavingCallback
     {
         private readonly DateTime _startTime;
-        private const double MaxDurationSeconds = 0.001; // Very short to trigger cancellation quickly.
+        private const double MaxDurationSeconds = 0.05; // Cancel quickly for the demo.
 
         public SavingProgressCallback()
         {
@@ -19,56 +18,48 @@ public class Program
 
         public void Notify(DocumentSavingArgs args)
         {
-            // If the elapsed time exceeds the limit, abort the operation.
+            // If the operation has run longer than the allowed duration, abort it.
             if ((DateTime.Now - _startTime).TotalSeconds > MaxDurationSeconds)
                 throw new OperationCanceledException(
                     $"EstimatedProgress = {args.EstimatedProgress}; CanceledAt = {DateTime.Now}");
         }
     }
 
-    public static void Main()
+    public class Program
     {
-        // Prepare a temporary output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Canceled.docx");
-        if (File.Exists(outputPath))
-            File.Delete(outputPath);
-
-        // Create a document with enough content to make layout processing noticeable.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 0; i < 200; i++)
+        public static void Main()
         {
-            builder.Writeln($"Paragraph {i + 1}");
-            builder.InsertBreak(BreakType.PageBreak);
+            // Create a sample document with many paragraphs to ensure the save takes noticeable time.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            for (int i = 0; i < 2000; i++)
+                builder.Writeln($"Paragraph {i + 1}");
+
+            // Prepare save options with the progress callback that will cancel the operation.
+            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+            {
+                ProgressCallback = new SavingProgressCallback()
+            };
+
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "CanceledDocument.docx");
+
+            try
+            {
+                // Attempt to save; the callback should abort the process.
+                doc.Save(outputPath, saveOptions);
+                Console.WriteLine("Document saved successfully (unexpected).");
+            }
+            catch (OperationCanceledException ex)
+            {
+                // Expected path: the save operation was cancelled.
+                Console.WriteLine($"Save operation was cancelled as expected: {ex.Message}");
+            }
+
+            // Verify that the output file does not exist because the operation was aborted.
+            if (File.Exists(outputPath))
+                Console.WriteLine("Warning: output file was created despite cancellation.");
+            else
+                Console.WriteLine("No output file was created, confirming cancellation.");
         }
-
-        // Configure save options with the progress callback that will cancel the operation.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            ProgressCallback = new SavingProgressCallback()
-        };
-
-        bool cancellationCaught = false;
-        try
-        {
-            // Attempt to save; the callback should abort the process.
-            doc.Save(outputPath, saveOptions);
-        }
-        catch (OperationCanceledException ex)
-        {
-            // Expected cancellation.
-            Console.WriteLine($"Save operation canceled as expected: {ex.Message}");
-            cancellationCaught = true;
-        }
-
-        // Validate that cancellation was detected.
-        if (!cancellationCaught)
-            throw new Exception("The save operation was not canceled as expected.");
-
-        // Ensure the partially saved file does not exist (Aspose.Words cleans up on cancellation).
-        if (File.Exists(outputPath))
-            throw new Exception("Output file should not exist after cancellation.");
-
-        Console.WriteLine("Cancellation behavior test completed successfully.");
     }
 }

@@ -4,12 +4,12 @@
     "slug": "security-and-protection",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Prefer simple documented Aspose.Words security workflows. Use Document.Protect, Document.Unprotect, LoadOptions, OoxmlSaveOptions, DocSaveOptions, PdfSaveOptions, and related documented APIs only when directly relevant to the task. Keep validation narrow and task-specific.",
+    "preferred_workflow": "Use simple documented Aspose.Words security workflows. Prefer Document.Protect, Document.Unprotect, LoadOptions, and format-specific save options only when directly relevant, and keep validation narrow and task-specific.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
@@ -21,35 +21,33 @@
       "Aspose.Words.Fields",
       "Aspose.Words.Saving",
       "Aspose.Words.Layout",
-      "System.Collections",
+      "System.Linq",
+      "System.Text",
       "System.Collections.Generic",
-      "Aspose.Words.Reporting",
       "Aspose.Words.Drawing",
-      "System.Timers",
-      "Aspose.Words.Tables",
-      "System.Net.Http"
+      "System.Timers"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "LoadOptions",
       "Directory",
       "Path",
-      "Range",
-      "Paragraph",
-      "Field",
-      "SaveFormat",
-      "File",
       "Run",
-      "ReportingEngine",
-      "ProtectionType",
+      "LoadOptions",
+      "File",
+      "Range",
+      "Field",
       "FieldType",
+      "SaveFormat",
+      "Paragraph",
+      "ProtectionType",
       "NodeType",
       "MemoryStream",
       "Shape",
       "ImageData",
-      "PdfSaveOptions",
-      "HtmlSaveOptions"
+      "StyleIdentifier",
+      "Node",
+      "PdfSaveOptions"
     ]
   },
   "stats": {
@@ -57,10 +55,6 @@
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
       "security-workflow": 30
-    },
-    "winner_counts": {
-      "llm": 1,
-      "mcp": 29
     }
   },
   "rules_summary": {
@@ -126,7 +120,7 @@
     {
       "id": 3,
       "file_name": "use-token-throwifcancellationrequested-inside-a-field-update-loop-to-abort-long-running-op.cs",
-      "task": "Use token.ThrowIfCancellationRequested inside a field update loop to abort long-running operations efficiently.",
+      "task": "Use token.ThrowIfCancellationRequested inside a field update loop to abort long‑running operations efficiently.",
       "workflow": "security-workflow",
       "outputs": [
         "docx"
@@ -137,7 +131,7 @@
     {
       "id": 4,
       "file_name": "implement-a-low-code-ui-button-that-calls-cancellationtokensource-cancel-to-stop-processin.cs",
-      "task": "Implement a low-code UI button that calls CancellationTokenSource.Cancel to stop processing immediately.",
+      "task": "Implement a low‑code UI button that calls CancellationTokenSource.Cancel to stop processing immediately.",
       "workflow": "security-workflow",
       "outputs": [
         "docx"
@@ -208,8 +202,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 11,
@@ -225,7 +219,7 @@
     {
       "id": 12,
       "file_name": "configure-documentloadingargs-to-invoke-a-user-defined-method-when-cancellation-is-request.cs",
-      "task": "Configure DocumentLoadingArgs to invoke a user-defined method when cancellation is requested during loading.",
+      "task": "Configure DocumentLoadingArgs to invoke a user‑defined method when cancellation is requested during loading.",
       "workflow": "security-workflow",
       "outputs": [
         "doc"
@@ -247,7 +241,7 @@
     {
       "id": 14,
       "file_name": "validate-that-long-running-field-updates-respect-the-token-by-inserting-periodic-cancellat.cs",
-      "task": "Validate that long-running field updates respect the token by inserting periodic cancellation checks.",
+      "task": "Validate that long‑running field updates respect the token by inserting periodic cancellation checks.",
       "workflow": "security-workflow",
       "outputs": [
         "docx"
@@ -335,7 +329,7 @@
     {
       "id": 22,
       "file_name": "document-the-required-net-version-for-cancellationtoken-support-in-the-project-s-readme-fi.cs",
-      "task": "Document the required .NET version for CancellationToken support in the project's README file.",
+      "task": "Document the required .NET version for CancellationToken support in the project’s README file.",
       "workflow": "security-workflow",
       "outputs": [
         "doc"
@@ -423,7 +417,7 @@
     {
       "id": 30,
       "file_name": "verify-that-document-processing-pipelines-respect-cancellation-when-integrated-with-third.cs",
-      "task": "Verify that document processing pipelines respect cancellation when integrated with third-party reporting tools.",
+      "task": "Verify that document processing pipelines respect cancellation when integrated with third‑party reporting tools.",
       "workflow": "security-workflow",
       "outputs": [
         "doc"

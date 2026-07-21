@@ -4,57 +4,33 @@ using System.Threading.Tasks;
 
 public class Program
 {
-    // Simulated long‑running operation that respects cancellation.
-    private static async Task PerformWorkAsync(string name, CancellationToken token)
+    public static async Task Main()
     {
-        Console.WriteLine($"{name}: started.");
-        try
-        {
-            // Loop with short delays to periodically check the token.
-            for (int i = 1; i <= 10; i++)
-            {
-                token.ThrowIfCancellationRequested();
-                await Task.Delay(200, token); // 200 ms per step
-                Console.WriteLine($"{name}: progress {i * 10}%");
-            }
+        // Create two independent cancellation token sources.
+        using var cts1 = new CancellationTokenSource();
+        using var cts2 = new CancellationTokenSource();
 
-            Console.WriteLine($"{name}: completed successfully.");
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine($"{name}: cancelled.");
-            throw;
-        }
-    }
+        // Link the two tokens into a single token source.
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, cts2.Token);
+        CancellationToken linkedToken = linkedCts.Token;
 
-    public static async Task Main(string[] args)
-    {
-        // First cancellation source – could represent a user‑initiated cancel.
-        using var ctsUser = new CancellationTokenSource();
+        // Start a long‑running operation that observes the linked token.
+        Task workTask = DoWorkAsync(linkedToken);
 
-        // Second cancellation source – could represent a timeout.
-        using var ctsTimeout = new CancellationTokenSource();
-
-        // Create a linked token source that observes both tokens.
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ctsUser.Token, ctsTimeout.Token);
-
-        // Start a task that uses the linked token.
-        var workTask = PerformWorkAsync("LinkedTask", linkedCts.Token);
-
-        // Schedule cancellation of the timeout token after 1 second.
+        // Cancel the first source after a short delay.
         _ = Task.Run(async () =>
         {
-            await Task.Delay(1000);
-            Console.WriteLine("Timeout token: cancelling.");
-            ctsTimeout.Cancel();
+            await Task.Delay(500);
+            Console.WriteLine("Cancelling cts1");
+            cts1.Cancel();
         });
 
-        // Optionally, simulate a user cancel after 1.5 seconds (comment out to test only timeout).
+        // Cancel the second source after a longer delay (won't fire if the first already cancelled).
         _ = Task.Run(async () =>
         {
             await Task.Delay(1500);
-            Console.WriteLine("User token: cancelling.");
-            ctsUser.Cancel();
+            Console.WriteLine("Cancelling cts2");
+            cts2.Cancel();
         });
 
         try
@@ -63,32 +39,21 @@ public class Program
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Main: work was cancelled via linked token.");
+            Console.WriteLine("Operation was cancelled via linked token.");
         }
 
-        // Demonstrate chaining a third token.
-        using var ctsExternal = new CancellationTokenSource();
-        using var secondLinked = CancellationTokenSource.CreateLinkedTokenSource(linkedCts.Token, ctsExternal.Token);
+        Console.WriteLine("Program completed.");
+    }
 
-        var secondTask = PerformWorkAsync("SecondLinkedTask", secondLinked.Token);
-
-        // Cancel the external token after a short delay.
-        _ = Task.Run(async () =>
+    private static async Task DoWorkAsync(CancellationToken token)
+    {
+        for (int i = 0; i < 5; i++)
         {
-            await Task.Delay(500);
-            Console.WriteLine("External token: cancelling.");
-            ctsExternal.Cancel();
-        });
-
-        try
-        {
-            await secondTask;
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("Main: second work was cancelled via second linked token.");
+            token.ThrowIfCancellationRequested();
+            Console.WriteLine($"Working... step {i + 1}");
+            await Task.Delay(400, token); // Simulate work.
         }
 
-        Console.WriteLine("Program finished.");
+        Console.WriteLine("Work completed successfully.");
     }
 }

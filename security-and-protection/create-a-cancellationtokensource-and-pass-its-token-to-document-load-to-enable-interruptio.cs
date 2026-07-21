@@ -4,15 +4,62 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Loading;
+using Aspose.Words.Loading; // IDocumentLoadingCallback is in this namespace
 
 public class Program
 {
-    // Callback that checks the cancellation token and aborts loading when requested.
-    private class CancelLoadingCallback : IDocumentLoadingCallback
+    public static void Main()
+    {
+        // Prepare a temporary folder for the demo files.
+        string artifactsDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a simple document and save it.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document used to demonstrate cancellation during loading.");
+        string filePath = Path.Combine(artifactsDir, "Sample.docx");
+        doc.Save(filePath);
+
+        // Set up a CancellationTokenSource that will cancel after a short delay.
+        using var cts = new CancellationTokenSource();
+        Task.Run(async () =>
+        {
+            await Task.Delay(100); // Adjust the delay as needed.
+            cts.Cancel();
+        });
+
+        // Attempt to load the document with the cancellation token.
+        try
+        {
+            // Use LoadOptions with a ProgressCallback that checks the token.
+            LoadOptions loadOptions = new LoadOptions
+            {
+                ProgressCallback = new LoadingCancellationCallback(cts.Token)
+            };
+
+            // Load the document using the constructor that accepts LoadOptions.
+            Document loadedDoc = new Document(filePath, loadOptions);
+
+            // If loading completes before cancellation, output some information.
+            Console.WriteLine("Document loaded successfully. Text length: " + loadedDoc.GetText().Length);
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Document loading was canceled via CancellationToken.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("An unexpected error occurred: " + ex.Message);
+        }
+    }
+
+    // Callback that aborts loading when the cancellation token is set.
+    private class LoadingCancellationCallback : IDocumentLoadingCallback
     {
         private readonly CancellationToken _token;
 
-        public CancelLoadingCallback(CancellationToken token)
+        public LoadingCancellationCallback(CancellationToken token)
         {
             _token = token;
         }
@@ -20,48 +67,7 @@ public class Program
         public void Notify(DocumentLoadingArgs args)
         {
             if (_token.IsCancellationRequested)
-                throw new OperationCanceledException();
-        }
-    }
-
-    public static void Main()
-    {
-        // Prepare a folder for temporary files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create and save a simple document.
-        string samplePath = Path.Combine(artifactsDir, "Sample.docx");
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document used to demonstrate cancellation during loading.");
-        doc.Save(samplePath);
-
-        // Set up a CancellationTokenSource that will cancel shortly after loading starts.
-        using (CancellationTokenSource cts = new CancellationTokenSource())
-        {
-            // Cancel after 10 milliseconds.
-            Task.Delay(10).ContinueWith(_ => cts.Cancel());
-
-            try
-            {
-                // Configure LoadOptions with a progress callback that respects the token.
-                LoadOptions loadOptions = new LoadOptions
-                {
-                    ProgressCallback = new CancelLoadingCallback(cts.Token)
-                };
-
-                // Load the document; the callback will throw if cancellation occurs.
-                Document loadedDoc = new Document(samplePath, loadOptions);
-
-                // If loading completes, output a simple verification.
-                Console.WriteLine("Document loaded successfully. Text length: " + loadedDoc.GetText().Length);
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected when the token triggers cancellation.
-                Console.WriteLine("Document loading was canceled.");
-            }
+                throw new OperationCanceledException("Loading was canceled.");
         }
     }
 }

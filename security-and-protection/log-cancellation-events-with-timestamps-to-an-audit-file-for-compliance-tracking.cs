@@ -5,62 +5,55 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    // Path for the audit log file.
-    private const string AuditFilePath = "audit_log.txt";
-
-    // Simple implementation of IDocumentSavingCallback that logs cancellation events.
-    private class SavingProgressCallback : IDocumentSavingCallback
+    // Simple audit logger that appends messages with timestamps to a file.
+    private static void LogAudit(string message)
     {
-        private readonly DateTime _startTime;
-        private readonly TimeSpan _maxDuration;
+        string logPath = Path.Combine(Directory.GetCurrentDirectory(), "audit.log");
+        string entry = $"{DateTime.UtcNow:O} - {message}";
+        File.AppendAllLines(logPath, new[] { entry });
+    }
 
-        public SavingProgressCallback(TimeSpan maxDuration)
-        {
-            _startTime = DateTime.UtcNow;
-            _maxDuration = maxDuration;
-        }
-
+    // Callback that cancels the document saving operation.
+    private class CancelSavingCallback : IDocumentSavingCallback
+    {
         public void Notify(DocumentSavingArgs args)
         {
-            // If the saving operation exceeds the allowed duration, log and abort.
-            if (DateTime.UtcNow - _startTime > _maxDuration)
-            {
-                string logEntry = $"{DateTime.UtcNow:O} - Document save cancelled. EstimatedProgress={args.EstimatedProgress:F2}%{Environment.NewLine}";
-                File.AppendAllText(AuditFilePath, logEntry);
-                throw new OperationCanceledException("Saving operation exceeded the maximum allowed duration.");
-            }
+            // Cancel the save operation immediately.
+            throw new OperationCanceledException($"Save canceled at progress {args.EstimatedProgress}%.");
         }
     }
 
     public static void Main()
     {
-        // Ensure the audit file exists.
-        if (!File.Exists(AuditFilePath))
-            File.WriteAllText(AuditFilePath, $"Audit Log Started at {DateTime.UtcNow:O}{Environment.NewLine}");
-
         // Create a simple Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document used to demonstrate cancellation logging.");
+        builder.Writeln("Sample content for the document.");
 
-        // Configure save options with a progress callback that will cancel after 0.1 seconds.
+        // Prepare save options with the cancellation callback.
         OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
-            ProgressCallback = new SavingProgressCallback(TimeSpan.FromMilliseconds(100))
+            ProgressCallback = new CancelSavingCallback()
         };
+
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
         try
         {
-            // Attempt to save the document. The callback is expected to cancel the operation.
-            doc.Save("sample_output.docx", saveOptions);
+            // Attempt to save the document; this will be canceled by the callback.
+            doc.Save(outputPath, saveOptions);
         }
         catch (OperationCanceledException ex)
         {
-            // Log the exception details as part of the audit.
-            string logEntry = $"{DateTime.UtcNow:O} - Save operation aborted: {ex.Message}{Environment.NewLine}";
-            File.AppendAllText(AuditFilePath, logEntry);
+            // Log the cancellation event with a timestamp.
+            LogAudit($"Document save canceled: {ex.Message}");
         }
 
-        // Indicate completion (no interactive output required).
+        // Ensure the audit log file exists; if not, create an empty one.
+        string auditPath = Path.Combine(Directory.GetCurrentDirectory(), "audit.log");
+        if (!File.Exists(auditPath))
+        {
+            File.WriteAllText(auditPath, string.Empty);
+        }
     }
 }
