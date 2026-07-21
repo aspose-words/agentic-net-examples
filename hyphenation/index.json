@@ -4,25 +4,24 @@
     "slug": "hyphenation",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words hyphenation APIs directly. Create realistic local sample DOC, DOCX, TXT, stream, or folder inputs inside the example whenever the task references an existing file, stream, folder, or batch of documents. Register dictionaries or callbacks through documented Aspose.Words APIs only and validate the resulting document or exported output.",
+    "preferred_workflow": "Use native Aspose.Words hyphenation APIs directly with local deterministic sample inputs and local dictionary files where needed.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
+      "System.Globalization",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Settings",
-      "System.Globalization",
-      "Aspose.Words.Tables",
       "Aspose.Words.Saving",
-      "System.Collections.Generic",
+      "Aspose.Words.Tables",
+      "Aspose.Words.Layout",
       "System.Diagnostics",
-      "Aspose.Words.Notes",
-      "System.Linq"
+      "Aspose.Words.Notes"
     ],
     "key_apis": [
       "Document",
@@ -31,14 +30,13 @@
       "Font",
       "SaveFormat",
       "Path",
+      "NodeType",
       "Paragraph",
-      "Table",
+      "Cell",
       "StyleIdentifier",
       "ImageSaveOptions",
       "Directory",
-      "NodeType",
-      "Run",
-      "Footnote"
+      "Run"
     ]
   },
   "stats": {
@@ -48,11 +46,6 @@
       "dictionary-registration": 14,
       "document-setup-and-validation": 18,
       "rendering-and-export": 8
-    },
-    "winner_counts": {
-      "existing_repo": 2,
-      "llm": 1,
-      "mcp": 37
     }
   },
   "rules_summary": {
@@ -116,8 +109,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 3,
@@ -144,7 +137,7 @@
     {
       "id": 5,
       "file_name": "set-the-hyphenation-language-to-en-us-and-verify-word-breaking-matches-microsoft-word-beha.cs",
-      "task": "Set the hyphenation language to en-US and verify word breaking matches Microsoft Word behavior.",
+      "task": "Set the hyphenation language to en‑US and verify word breaking matches Microsoft Word behavior.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx"
@@ -166,7 +159,7 @@
     {
       "id": 7,
       "file_name": "set-hyphenation-to-respect-word-boundaries-in-arabic-script-by-loading-appropriate-right-t.cs",
-      "task": "Set hyphenation to respect word boundaries in Arabic script by loading appropriate right-to-left dictionary.",
+      "task": "Set hyphenation to respect word boundaries in Arabic script by loading appropriate right‑to‑left dictionary.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx"
@@ -177,7 +170,7 @@
     {
       "id": 8,
       "file_name": "configure-hyphenation-to-respect-compound-word-rules-of-microsoft-word-for-german-language.cs",
-      "task": "Configure hyphenation to respect compound-word rules of Microsoft Word for German language documents.",
+      "task": "Configure hyphenation to respect compound‑word rules of Microsoft Word for German language documents.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx"
@@ -204,8 +197,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 11,
@@ -342,7 +335,7 @@
     {
       "id": 23,
       "file_name": "measure-pagination-differences-after-enabling-hyphenation-on-a-multi-section-report-docume.cs",
-      "task": "Measure pagination differences after enabling hyphenation on a multi-section report document for analysis.",
+      "task": "Measure pagination differences after enabling hyphenation on a multi‑section report document for analysis.",
       "workflow": "document-setup-and-validation",
       "outputs": [
         "docx"
@@ -375,7 +368,7 @@
     {
       "id": 26,
       "file_name": "batch-process-a-collection-of-docx-files-applying-language-specific-hyphenation-and-export.cs",
-      "task": "Batch process a collection of DOCX files, applying language-specific hyphenation and exporting each to PDF.",
+      "task": "Batch process a collection of DOCX files, applying language‑specific hyphenation and exporting each to PDF.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx",
@@ -434,7 +427,7 @@
     {
       "id": 31,
       "file_name": "export-a-hyphenated-document-to-pdf-and-compare-file-size-with-a-non-hyphenated-version.cs",
-      "task": "Export a hyphenated document to PDF and compare file size with a non-hyphenated version.",
+      "task": "Export a hyphenated document to PDF and compare file size with a non‑hyphenated version.",
       "workflow": "rendering-and-export",
       "outputs": [
         "pdf"
@@ -456,7 +449,7 @@
     {
       "id": 33,
       "file_name": "load-a-docx-set-hyphenation-language-to-ru-ru-and-save-the-result-as-pdf.cs",
-      "task": "Load a DOCX, set hyphenation language to ru-RU, and save the result as PDF.",
+      "task": "Load a DOCX, set hyphenation language to ru‑RU, and save the result as PDF.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx",
@@ -484,8 +477,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 36,
@@ -528,8 +521,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 40,
@@ -539,8 +532,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     }
   ]
 }

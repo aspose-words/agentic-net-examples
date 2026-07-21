@@ -11,19 +11,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some long words to make hyphenation relevant.
-        builder.Font.Size = 24;
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-
-        // Narrow the page width so that words are forced to wrap and hyphenate.
-        doc.FirstSection.PageSetup.PageWidth = 200;
+        // Use a narrow page width to force line wrapping where hyphenation can occur.
+        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.17 inches)
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
+        // Add a paragraph with long words that can be hyphenated.
+        builder.Font.Size = 12;
+        builder.Writeln("extraordinarycharacteristically internationalization communication " +
+                        "hyperresponsibility misunderstanding incomprehensibilities " +
+                        "characteristically uncharacteristically");
+
         // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
+        // Optional: configure additional hyphenation settings.
         doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 720;
+        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
         doc.HyphenationOptions.HyphenateCaps = true;
 
         // Save the document as DOCX.

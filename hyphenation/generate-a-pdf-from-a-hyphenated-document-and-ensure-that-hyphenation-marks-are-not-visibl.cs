@@ -7,51 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the temporary hyphenation dictionary.
-        const string dictPath = "hyph_en_US.dic";
-
-        // Create a minimal hyphenation dictionary for English (US).
-        // The dictionary format is the OpenOffice hyphenation format.
-        // It contains a header line followed by word patterns.
-        File.WriteAllText(dictPath,
-            "UTF-8\n" +
-            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n");
-
-        // Register the dictionary so that Aspose.Words can hyphenate words of the "en-US" locale.
-        Hyphenation.RegisterDictionary("en-US", dictPath);
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use a narrow page width to force line wrapping and thus hyphenation.
+        // Write a paragraph containing long words that can be hyphenated.
+        builder.Writeln(
+            "extraordinarycharacteristically internationalization communication " +
+            "extraordinarycharacteristically internationalization communication " +
+            "extraordinarycharacteristically internationalization communication");
+
+        // Narrow the page width to force line wrapping and hyphenation.
         doc.FirstSection.PageSetup.PageWidth = 200; // points
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Write a paragraph that contains long words present in the dictionary.
-        builder.Font.Size = 12;
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
+        // Create a minimal hyphenation dictionary for English (US) in the current folder.
+        string dictFileName = Path.Combine(Directory.GetCurrentDirectory(), "hyph_en_US.dic");
+        string dictContent =
+            "UTF-8\n" +
+            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
+            "communication=com-mu-ni-ca-tion\n";
 
-        // Enable automatic hyphenation for the document.
+        File.WriteAllText(dictFileName, dictContent);
+
+        // Register the dictionary.
+        Hyphenation.RegisterDictionary("en-US", dictFileName);
+
+        // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Suppress the visual hyphenation marks in the output.
-        // This keeps the layout hyphenated but does not render hyphens.
-        builder.ParagraphFormat.SuppressAutoHyphens = true;
+        // Optional: set a valid hyphenation zone (default is 360). Setting to 0 throws an exception.
+        doc.HyphenationOptions.HyphenationZone = 360; // 0.25 inch from the right margin
 
-        // Save the document as PDF.
-        const string pdfPath = "hyphenated.pdf";
-        doc.Save(pdfPath);
+        // Save the document as PDF. Hyphenation marks (soft hyphens) are not inserted manually,
+        // so they will not appear as visible characters in the output PDF.
+        const string outputPdf = "hyphenated.pdf";
+        doc.Save(outputPdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF output file was not created.");
-
-        // Clean up the temporary dictionary file.
-        if (File.Exists(dictPath))
-            File.Delete(dictPath);
+        // Validate that the PDF was created.
+        if (!File.Exists(outputPdf))
+            throw new InvalidOperationException("Expected PDF output file was not created.");
     }
 }

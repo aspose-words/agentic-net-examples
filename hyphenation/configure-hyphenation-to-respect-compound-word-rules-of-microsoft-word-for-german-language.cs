@@ -4,58 +4,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
 
-public class HyphenationCompoundWordExample
+public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files.
-        const string dictionaryPath = "hyph_de_CH.dic";
-        const string outputPath = "GermanHyphenated.pdf";
+        // Path for the German hyphenation dictionary.
+        const string dictionaryPath = "hyph_de_DE.dic";
 
-        // Create a minimal German hyphenation dictionary.
-        // The first line must specify the encoding, followed by word=hyphenation patterns.
-        // The pattern uses hyphens to indicate allowed break points.
+        // Create a minimal dictionary that contains a compound‑word pattern.
+        // The first line must specify the encoding, followed by entries in the form word=pattern.
         File.WriteAllText(dictionaryPath,
             "UTF-8\n" +
-            "Donaudampfschifffahrtsgesellschaft=Do-nau-dampf-schiff-fahrts-ge-sell-schaft\n" +
-            "Bundesverfassungsgericht=Bundes-ver-fas-sungs-ge-richt\n");
+            "Donaudampfschifffahrtsgesellschaft=Do-nau-dampf-schiff-fahrts-ge-sell-schaft\n");
 
-        // Register the German dictionary.
-        Hyphenation.RegisterDictionary("de-CH", dictionaryPath);
+        // Register the dictionary for the German locale.
+        Hyphenation.RegisterDictionary("de-DE", dictionaryPath);
 
-        // Create a new blank document.
+        // Verify that the dictionary was registered.
+        if (!Hyphenation.IsDictionaryRegistered("de-DE"))
+            throw new InvalidOperationException("German hyphenation dictionary was not registered.");
+
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set a narrow page width to force line wrapping.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.2 cm)
+        // Set the locale of the text to German.
+        builder.Font.LocaleId = new CultureInfo("de-DE").LCID;
+        builder.Font.Size = 12;
+
+        // Add a paragraph containing a long German compound word.
+        builder.Writeln(
+            "Donaudampfschifffahrtsgesellschaft ist ein sehr langes deutsches Wort, das hypheniert werden soll.");
+
+        // Narrow the page width so that hyphenation can be observed.
+        doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
         // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
-        // Hyphenate as close to the margin as possible – use a small positive value.
-        doc.HyphenationOptions.HyphenationZone = 1;
 
-        // Set the language of the text to German (Switzerland) – the same code used for the dictionary.
-        builder.Font.LocaleId = new CultureInfo("de-CH").LCID;
+        // Save the document as PDF.
+        const string outputPath = "HyphenatedGerman.pdf";
+        doc.Save(outputPath);
 
-        // Write a paragraph containing long German compound words that require hyphenation.
-        builder.Writeln(
-            "Die Donaudampfschifffahrtsgesellschaft ist ein sehr langes Wort, " +
-            "das in der deutschen Sprache häufig hypheniert werden muss, " +
-            "um den Textfluss zu erhalten. " +
-            "Ein weiteres Beispiel ist das Bundesverfassungsgericht, " +
-            "das ebenfalls aus vielen Bestandteilen besteht.");
-
-        // Save the document to PDF.
-        doc.Save(outputPath, SaveFormat.Pdf);
-
-        // Verify that the output file was created.
+        // Validate that the output file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"The expected output file '{outputPath}' was not created.");
-
-        // Clean up temporary dictionary file.
-        File.Delete(dictionaryPath);
+            throw new InvalidOperationException("The PDF file was not created.");
     }
 }

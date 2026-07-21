@@ -12,37 +12,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a long word that can be hyphenated.
+        // Write a long sentence that can be hyphenated.
         builder.Font.Size = 24;
         builder.Font.LocaleId = new CultureInfo("en-US").LCID;
-        builder.Writeln("extraordinarycharacteristically");
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Narrow the page width to force line wrapping and hyphenation.
+        // Narrow the page width to force line breaks and hyphenation.
         doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
+        // Enable automatic hyphenation.
+        doc.HyphenationOptions.AutoHyphenation = true;
+
         // Create a minimal hyphenation dictionary for en‑US.
         const string dictFileName = "hyph_en_US.dic";
-        File.WriteAllText(dictFileName,
-            "UTF-8\nextraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n");
+        string dictContent =
+            "UTF-8\n" +
+            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
+            "communication=com-mu-ni-ca-tion\n";
+        File.WriteAllText(dictFileName, dictContent);
 
         // Register the dictionary.
         Hyphenation.RegisterDictionary("en-US", dictFileName);
 
-        // Enable automatic hyphenation.
-        doc.HyphenationOptions.AutoHyphenation = true;
+        // Verify that the dictionary is registered.
+        if (!Hyphenation.IsDictionaryRegistered("en-US"))
+            throw new InvalidOperationException("Hyphenation dictionary for en-US was not registered.");
 
-        // Save the document to PDF (fixed‑page format where hyphenation is applied).
-        const string outputFile = "Hyphenated.pdf";
+        // Save the document as PDF – hyphenated words will appear in the output.
+        const string outputFile = "hyphenated.pdf";
         doc.Save(outputFile, SaveFormat.Pdf);
 
-        // Verify that the output file was created.
+        // Verify that the PDF file was created.
         if (!File.Exists(outputFile))
-            throw new InvalidOperationException("The hyphenated PDF was not created.");
-
-        // Optional sanity check: ensure the dictionary is registered.
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-            throw new InvalidOperationException("The en‑US hyphenation dictionary is not registered.");
+            throw new InvalidOperationException("Expected output file was not created.");
     }
 }

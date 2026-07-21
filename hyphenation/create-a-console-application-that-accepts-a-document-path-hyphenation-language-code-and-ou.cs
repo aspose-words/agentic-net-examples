@@ -4,74 +4,90 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class HyphenationExample
+public class HyphenationPdfGenerator
 {
     public static void Main(string[] args)
     {
-        // Determine input document path and language code.
-        string docPath = args.Length > 0 ? args[0] : "sample.docx";
+        // Default values when arguments are not supplied.
+        string inputPath = args.Length > 0 ? args[0] : "sample.docx";
         string languageCode = args.Length > 1 ? args[1] : "en-US";
+        string outputPath = args.Length > 2 ? args[2] : Path.ChangeExtension(inputPath, ".pdf");
 
-        // Prepare a minimal hyphenation dictionary for the requested language.
-        string dictFileName = $"hyph_{languageCode.Replace("-", "_")}.dic";
-        if (!File.Exists(dictFileName))
+        // Ensure the input document exists; if not, create a simple sample document.
+        if (!File.Exists(inputPath))
         {
-            // The first line must specify the encoding.
-            // Subsequent lines contain word=hyphenated-pieces.
-            string dictContent =
-                "UTF-8\n" +
-                "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-                "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-                "communication=com-mu-ni-ca-tion\n" +
-                "demonstration=de-mon-stra-tion\n" +
-                "hyphenation=hy-phen-a-tion\n";
-
-            File.WriteAllText(dictFileName, dictContent);
+            CreateSampleDocument(inputPath, languageCode);
         }
 
-        // Register the dictionary with Aspose.Words.
-        Hyphenation.RegisterDictionary(languageCode, dictFileName);
-
-        Document doc;
-
-        if (File.Exists(docPath))
+        // Create a minimal hyphenation dictionary for the requested language.
+        string dictionaryPath = $"hyph_{languageCode.Replace("-", "_")}.dic";
+        if (!File.Exists(dictionaryPath))
         {
-            // Load the existing document.
-            doc = new Document(docPath);
+            CreateMinimalDictionary(dictionaryPath);
         }
-        else
+
+        // Register the dictionary so Aspose.Words can hyphenate words of this language.
+        Hyphenation.RegisterDictionary(languageCode, dictionaryPath);
+
+        // Load the document.
+        Document doc = new Document(inputPath);
+
+        // If the document has no paragraphs, add a sample paragraph to demonstrate hyphenation.
+        if (doc.FirstSection?.Body?.Paragraphs?.Count == 0)
         {
-            // Create a new document with sample text that will trigger hyphenation.
-            doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Narrow page width to force line wrapping.
-            Section section = doc.FirstSection;
-            section.PageSetup.PageWidth = 200; // points
-            section.PageSetup.LeftMargin = 20;
-            section.PageSetup.RightMargin = 20;
-
-            // Set the document language.
-            builder.Font.LocaleId = new CultureInfo(languageCode).LCID;
-
-            // Write sample text containing words from the dictionary.
-            builder.Writeln("extraordinarycharacteristically internationalization communication demonstration hyphenation");
+            builder.Writeln("extraordinarycharacteristically internationalization communication");
         }
 
-        // Ensure the document language matches the requested language.
-        if (doc.Styles["Normal"]?.Font != null)
+        // Apply the language locale to all runs in the document.
+        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
         {
-            doc.Styles["Normal"].Font.LocaleId = new CultureInfo(languageCode).LCID;
+            run.Font.LocaleId = new CultureInfo(languageCode).LCID;
         }
+
+        // Enable automatic hyphenation.
+        doc.HyphenationOptions.AutoHyphenation = true;
+
+        // Narrow the page width to force line wrapping where hyphenation can occur.
+        doc.FirstSection.PageSetup.PageWidth = 200;
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
 
         // Save the document as PDF.
-        string pdfPath = Path.ChangeExtension(docPath, ".pdf");
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        doc.Save(outputPath, SaveFormat.Pdf);
 
         // Validate that the PDF was created.
-        if (!File.Exists(pdfPath))
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The expected PDF output file was not created.");
+    }
+
+    // Creates a simple DOCX document containing text that can be hyphenated.
+    private static void CreateSampleDocument(string path, string languageCode)
+    {
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Font.Size = 12;
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
+
+        // Set the locale for the sample text.
+        foreach (Run run in sampleDoc.GetChildNodes(NodeType.Run, true))
         {
-            throw new InvalidOperationException($"PDF output was not created at '{pdfPath}'.");
+            run.Font.LocaleId = new CultureInfo(languageCode).LCID;
         }
+
+        sampleDoc.Save(path);
+    }
+
+    // Writes a minimal hyphenation dictionary file in OpenOffice format.
+    private static void CreateMinimalDictionary(string dictPath)
+    {
+        // The dictionary must start with the encoding line.
+        // Follow with a few sample words and their hyphenation patterns.
+        string content = @"UTF-8
+extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly
+internationalization=in-ter-na-tion-al-i-za-tion
+communication=com-mu-ni-ca-tion
+";
+        File.WriteAllText(dictPath, content);
     }
 }

@@ -3,83 +3,91 @@ using System.Globalization;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
+using Aspose.Words.Saving;
 
 public class HyphenationPageCountDemo
 {
     public static void Main()
     {
-        // Prepare a minimal hyphenation dictionary for English (US).
+        // Create a minimal hyphenation dictionary for English (US).
         const string dictFileName = "hyph_en_US.dic";
         const string dictContent =
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n";
-
         File.WriteAllText(dictFileName, dictContent);
 
-        // Register the dictionary for the "en-US" locale.
+        // Register the dictionary so that Aspose.Words can hyphenate English text.
         Hyphenation.RegisterDictionary("en-US", dictFileName);
 
-        // Generate a long text that will be used for both documents.
-        const string longParagraph =
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication.";
+        // Build a long paragraph that will wrap many times on a narrow page.
+        string repeatedSentence = "extraordinarycharacteristically internationalization communication";
+        string longText = string.Join(" ", System.Linq.Enumerable.Repeat(repeatedSentence, 120));
 
-        // Create a document without hyphenation.
-        var docNoHyphen = new Document();
-        var builder = new DocumentBuilder(docNoHyphen);
-        ConfigurePageSetup(docNoHyphen);
-        builder.Font.Size = 12;
-        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        // -----------------------------------------------------------------
+        // Document with automatic hyphenation enabled.
+        // -----------------------------------------------------------------
+        Document hyphenatedDoc = new Document();
+        DocumentBuilder hyBuilder = new DocumentBuilder(hyphenatedDoc);
 
-        // Write enough paragraphs to span multiple pages.
-        for (int i = 0; i < 50; i++)
-            builder.Writeln(longParagraph);
+        // Narrow page to force many line breaks.
+        hyphenatedDoc.FirstSection.PageSetup.PageWidth = 300; // points (~4.2 inches)
+        hyphenatedDoc.FirstSection.PageSetup.LeftMargin = 20;
+        hyphenatedDoc.FirstSection.PageSetup.RightMargin = 20;
 
-        const string noHyphenFile = "NoHyphenation.pdf";
-        docNoHyphen.Save(noHyphenFile, SaveFormat.Pdf);
-        if (!File.Exists(noHyphenFile))
-            throw new InvalidOperationException("Failed to create the document without hyphenation.");
+        // Set font and locale for hyphenation.
+        hyBuilder.Font.Size = 12;
+        hyBuilder.Font.LocaleId = new CultureInfo("en-US").LCID;
 
-        int pagesWithoutHyphen = docNoHyphen.PageCount;
+        // Write the long text.
+        hyBuilder.Writeln(longText);
 
-        // Create a document with automatic hyphenation enabled.
-        var docWithHyphen = new Document();
-        builder = new DocumentBuilder(docWithHyphen);
-        ConfigurePageSetup(docWithHyphen);
-        builder.Font.Size = 12;
-        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        // Enable automatic hyphenation.
+        hyphenatedDoc.HyphenationOptions.AutoHyphenation = true;
+        // Use the default hyphenation zone (no need to set it to 0, which is invalid).
+        hyphenatedDoc.HyphenationOptions.HyphenateCaps = true;
+        hyphenatedDoc.HyphenationOptions.ConsecutiveHyphenLimit = 0;
 
-        // Enable hyphenation.
-        docWithHyphen.HyphenationOptions.AutoHyphenation = true;
-        docWithHyphen.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        docWithHyphen.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
+        // Save as PDF and verify creation.
+        const string hyphenatedPdf = "Hyphenated.pdf";
+        hyphenatedDoc.Save(hyphenatedPdf, SaveFormat.Pdf);
+        if (!File.Exists(hyphenatedPdf))
+            throw new InvalidOperationException("Hyphenated PDF was not created.");
 
-        for (int i = 0; i < 50; i++)
-            builder.Writeln(longParagraph);
+        int hyphenatedPages = hyphenatedDoc.PageCount;
 
-        const string withHyphenFile = "WithHyphenation.pdf";
-        docWithHyphen.Save(withHyphenFile, SaveFormat.Pdf);
-        if (!File.Exists(withHyphenFile))
-            throw new InvalidOperationException("Failed to create the document with hyphenation.");
+        // -----------------------------------------------------------------
+        // Document with hyphenation disabled.
+        // -----------------------------------------------------------------
+        Document nonHyphenatedDoc = new Document();
+        DocumentBuilder nonBuilder = new DocumentBuilder(nonHyphenatedDoc);
 
-        int pagesWithHyphen = docWithHyphen.PageCount;
+        nonHyphenatedDoc.FirstSection.PageSetup.PageWidth = 300;
+        nonHyphenatedDoc.FirstSection.PageSetup.LeftMargin = 20;
+        nonHyphenatedDoc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Output the comparison.
-        Console.WriteLine($"Pages without hyphenation: {pagesWithoutHyphen}");
-        Console.WriteLine($"Pages with hyphenation   : {pagesWithHyphen}");
+        nonBuilder.Font.Size = 12;
+        nonBuilder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        nonBuilder.Writeln(longText);
 
-        // Clean up the temporary dictionary file.
-        File.Delete(dictFileName);
-    }
+        // Ensure hyphenation is turned off (default is false, but set explicitly).
+        nonHyphenatedDoc.HyphenationOptions.AutoHyphenation = false;
 
-    private static void ConfigurePageSetup(Document doc)
-    {
-        // Use a narrow page width to force line wrapping.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.17 inches)
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
+        const string nonHyphenatedPdf = "NonHyphenated.pdf";
+        nonHyphenatedDoc.Save(nonHyphenatedPdf, SaveFormat.Pdf);
+        if (!File.Exists(nonHyphenatedPdf))
+            throw new InvalidOperationException("Non‑hyphenated PDF was not created.");
+
+        int nonHyphenatedPages = nonHyphenatedDoc.PageCount;
+
+        // Output the comparison result.
+        Console.WriteLine($"Pages with hyphenation    : {hyphenatedPages}");
+        Console.WriteLine($"Pages without hyphenation : {nonHyphenatedPages}");
+        Console.WriteLine(hyphenatedPages < nonHyphenatedPages
+            ? "Hyphenation reduced the page count."
+            : hyphenatedPages > nonHyphenatedPages
+                ? "Hyphenation increased the page count."
+                : "Hyphenation did not change the page count.");
     }
 }
