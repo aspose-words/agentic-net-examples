@@ -1,125 +1,115 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing; // Required package, not used directly
 using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with deprecated terms in several languages.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The old term is obsolete.");                     // English
-        builder.Writeln("Le terme ancien est obsolète.");                // French
-        builder.Writeln("Der alte Begriff ist veraltet.");               // German
-        builder.Writeln("旧术语已过时。");                                 // Chinese (no replacement needed)
+        // -----------------------------------------------------------------
+        // 1. Create a sample document containing deprecated terms in several languages.
+        // -----------------------------------------------------------------
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("The colour of the sky is blue.");
+        builder.Writeln("Die Farbe des Himmels ist blau.");
+        builder.Writeln("La couleur du ciel est bleue.");
+        doc.Save("input.docx");
 
-        // Define replacement rules per language using regular expressions.
-        var rules = new List<ReplacementRule>
+        // -----------------------------------------------------------------
+        // 2. Load the document for processing.
+        // -----------------------------------------------------------------
+        var loadedDoc = new Document("input.docx");
+
+        // -----------------------------------------------------------------
+        // 3. Define regex patterns for each language (culture‑specific, case‑insensitive).
+        // -----------------------------------------------------------------
+        var replacementPatterns = new List<(Regex Pattern, string Replacement)>
         {
-            new ReplacementRule
-            {
-                Language = "English",
-                Pattern = new Regex(@"\bold\b", RegexOptions.IgnoreCase),
-                Replacement = "new"
-            },
-            new ReplacementRule
-            {
-                Language = "French",
-                Pattern = new Regex(@"ancien", RegexOptions.IgnoreCase),
-                Replacement = "nouveau"
-            },
-            new ReplacementRule
-            {
-                Language = "German",
-                Pattern = new Regex(@"alte", RegexOptions.IgnoreCase),
-                Replacement = "neue"
-            }
+            (new Regex(@"\bcolour\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant), "color"),
+            (new Regex(@"\bFarbe\b",   RegexOptions.IgnoreCase | RegexOptions.CultureInvariant), "color"),
+            (new Regex(@"\bcouleur\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant), "color")
         };
 
-        // Collect all replacement log entries.
-        var allLogEntries = new List<ReplacementLogEntry>();
-        int totalReplacements = 0;
-
-        foreach (var rule in rules)
+        // -----------------------------------------------------------------
+        // 4. Set up a callback to log each replacement.
+        // -----------------------------------------------------------------
+        var logger = new ReplacementLogger();
+        var options = new FindReplaceOptions(logger)
         {
-            var logger = new ReplacementLogger(rule.Language);
-            var options = new FindReplaceOptions
-            {
-                ReplacingCallback = logger
-            };
+            MatchCase = false // Ensure case‑insensitive matching.
+        };
 
-            int replaced = doc.Range.Replace(rule.Pattern, rule.Replacement, options);
-            totalReplacements += replaced;
-
-            allLogEntries.AddRange(logger.Entries);
+        // -----------------------------------------------------------------
+        // 5. Perform replacements and count them.
+        // -----------------------------------------------------------------
+        int totalReplacements = 0;
+        foreach (var (pattern, replacement) in replacementPatterns)
+        {
+            totalReplacements += loadedDoc.Range.Replace(pattern, replacement, options);
         }
 
-        // Validate that at least one replacement occurred.
+        // -----------------------------------------------------------------
+        // 6. Validate that at least one replacement occurred.
+        // -----------------------------------------------------------------
         if (totalReplacements == 0)
             throw new InvalidOperationException("No replacements were performed.");
 
-        // Save the modified document.
-        const string outputDocPath = "output.docx";
-        doc.Save(outputDocPath);
+        // -----------------------------------------------------------------
+        // 7. Save the modified document.
+        // -----------------------------------------------------------------
+        loadedDoc.Save("output.docx");
 
-        // Serialize the replacement log to JSON.
-        const string jsonReportPath = "replacements.json";
-        string json = JsonConvert.SerializeObject(allLogEntries, Formatting.Indented);
-        File.WriteAllText(jsonReportPath, json);
-
-        // Simple verification that output files exist.
-        if (!File.Exists(outputDocPath))
-            throw new FileNotFoundException("The output document was not created.", outputDocPath);
-        if (!File.Exists(jsonReportPath))
-            throw new FileNotFoundException("The JSON report was not created.", jsonReportPath);
-    }
-}
-
-// Represents a single replacement rule.
-public class ReplacementRule
-{
-    public string Language { get; set; } = string.Empty;
-    public Regex Pattern { get; set; } = new Regex(string.Empty);
-    public string Replacement { get; set; } = string.Empty;
-}
-
-// Holds information about a single replacement occurrence.
-public class ReplacementLogEntry
-{
-    public string Language { get; set; } = string.Empty;
-    public string Original { get; set; } = string.Empty;
-    public string Replacement { get; set; } = string.Empty;
-    public int MatchOffset { get; set; }
-    public string NodeType { get; set; } = string.Empty;
-}
-
-// Callback that records each replacement made during a find‑replace operation.
-public class ReplacementLogger : IReplacingCallback
-{
-    public string Language { get; }
-    public List<ReplacementLogEntry> Entries { get; } = new List<ReplacementLogEntry>();
-
-    public ReplacementLogger(string language)
-    {
-        Language = language ?? string.Empty;
-    }
-
-    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
-    {
-        var entry = new ReplacementLogEntry
+        // -----------------------------------------------------------------
+        // 8. Build a simple report object and serialize it to JSON.
+        // -----------------------------------------------------------------
+        var report = new
         {
-            Language = Language,
-            Original = args.Match.Value,
-            Replacement = args.Replacement,
-            MatchOffset = args.MatchOffset,
-            NodeType = args.MatchNode.NodeType.ToString()
+            TotalReplacements = totalReplacements,
+            Details = logger.Replacements
         };
-        Entries.Add(entry);
-        return ReplaceAction.Replace;
+
+        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText("report.json", jsonReport);
+    }
+
+    // -----------------------------------------------------------------
+    // Callback implementation that records each replacement.
+    // -----------------------------------------------------------------
+    private class ReplacementLogger : IReplacingCallback
+    {
+        public List<ReplacementInfo> Replacements { get; } = new List<ReplacementInfo>();
+
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        {
+            // Record original match and the replacement text.
+            Replacements.Add(new ReplacementInfo
+            {
+                OriginalText   = args.Match.Value,
+                ReplacementText = args.Replacement,
+                MatchOffset    = args.MatchOffset,
+                NodeType       = args.MatchNode.NodeType.ToString()
+            });
+
+            // Proceed with the default replacement.
+            return ReplaceAction.Replace;
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Simple DTO for JSON serialization.
+    // -----------------------------------------------------------------
+    private class ReplacementInfo
+    {
+        public string OriginalText    { get; set; } = string.Empty;
+        public string ReplacementText { get; set; } = string.Empty;
+        public int    MatchOffset     { get; set; }
+        public string NodeType        { get; set; } = string.Empty;
     }
 }

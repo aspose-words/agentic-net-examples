@@ -4,77 +4,85 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
+using Aspose.Drawing; // Required by Aspose.Words drawing dependencies
+using Newtonsoft.Json; // Included as per required packages
 
-public class ReplaceEvaluator : IReplacingCallback
+namespace AsposeWordsReplaceExample
 {
-    private readonly Dictionary<string, string> _replacements;
-
-    public ReplaceEvaluator(Dictionary<string, string> replacements)
+    // Implements a custom callback that replaces placeholders with values from a dictionary.
+    public class PlaceholderReplacer : IReplacingCallback
     {
-        _replacements = replacements ?? new Dictionary<string, string>();
-    }
+        private readonly Dictionary<string, string> _values;
 
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        // The regex captures the token name without the surrounding braces.
-        // Group 1 contains the key (e.g., Name, Company).
-        string token = args.Match.Groups[1].Value;
-
-        if (_replacements.TryGetValue(token, out string value))
+        public PlaceholderReplacer(Dictionary<string, string> values)
         {
-            args.Replacement = value;
-        }
-        else
-        {
-            // If the token is not found, keep the original placeholder.
-            args.Replacement = args.Match.Value;
+            _values = values ?? throw new ArgumentNullException(nameof(values));
         }
 
-        return ReplaceAction.Replace;
-    }
-}
-
-public class Program
-{
-    public static void Main()
-    {
-        // Paths for the sample files.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-        const string jsonPath = "data.json";
-
-        // 1. Create a sample document containing placeholder tokens.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello {{Name}}, welcome to {{Company}}.");
-        doc.Save(inputPath);
-
-        // 2. Load the document from the file system.
-        Document loaded = new Document(inputPath);
-
-        // 3. Prepare the replacement values.
-        var replacements = new Dictionary<string, string>
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            { "Name", "John Doe" },
-            { "Company", "Acme Corp" }
-        };
+            // The match will be something like "{{Name}}".
+            string placeholder = args.Match.Value;
 
-        // Optional: serialize the dictionary to JSON for reporting purposes.
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(replacements, Formatting.Indented));
+            // Extract the key without the surrounding braces.
+            string key = placeholder.Length > 4
+                ? placeholder.Substring(2, placeholder.Length - 4) // Remove leading "{{" and trailing "}}"
+                : string.Empty;
 
-        // 4. Set up the find-and-replace operation using a regex and a callback evaluator.
-        var evaluator = new ReplaceEvaluator(replacements);
-        var options = new FindReplaceOptions(evaluator);
-        var regex = new Regex(@"\{\{(\w+)\}\}");
+            // Look up the key in the dictionary; if not found, keep the original placeholder.
+            if (_values.TryGetValue(key, out string replacement))
+                args.Replacement = replacement;
+            else
+                args.Replacement = placeholder;
 
-        int replacedCount = loaded.Range.Replace(regex, string.Empty, options);
+            return ReplaceAction.Replace;
+        }
+    }
 
-        // 5. Validate that at least one replacement occurred.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+    public class Program
+    {
+        public static void Main()
+        {
+            // Step 1: Create a sample document containing placeholder tokens.
+            const string templatePath = "template.docx";
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Dear {{Name}},");
+            builder.Writeln("Welcome to {{Company}}.");
+            builder.Writeln("Your role: {{Title}}.");
+            templateDoc.Save(templatePath);
 
-        // 6. Save the modified document.
-        loaded.Save(outputPath);
+            // Step 2: Define the placeholder values.
+            var placeholderValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "Name", "John Doe" },
+                { "Company", "Acme Corporation" },
+                { "Title", "Senior Engineer" }
+            };
+
+            // Step 3: Load the document and perform the replace operation using a callback.
+            Document doc = new Document(templatePath);
+            var replaceOptions = new FindReplaceOptions
+            {
+                ReplacingCallback = new PlaceholderReplacer(placeholderValues),
+                MatchCase = false,
+                FindWholeWordsOnly = false
+            };
+
+            // Regex matches any token of the form {{Word}}.
+            var placeholderRegex = new Regex(@"\{\{(\w+)\}\}");
+            int replacedCount = doc.Range.Replace(placeholderRegex, string.Empty, replaceOptions);
+
+            // Validate that at least one replacement occurred.
+            if (replacedCount == 0)
+                throw new InvalidOperationException("No placeholders were replaced. Check the template and dictionary.");
+
+            // Step 4: Save the resulting document.
+            const string outputPath = "output.docx";
+            doc.Save(outputPath);
+
+            // Optional: Write a simple confirmation to the console.
+            Console.WriteLine($"Replaced {replacedCount} placeholder(s). Output saved to '{outputPath}'.");
+        }
     }
 }

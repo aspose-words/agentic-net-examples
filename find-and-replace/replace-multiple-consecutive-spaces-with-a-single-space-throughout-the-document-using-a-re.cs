@@ -1,38 +1,43 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
+        // Define file names in the current directory.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+
+        // -----------------------------------------------------------------
         // Create a sample document with irregular spacing.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This  is   a    test.  Multiple   spaces   are   present.");
-        builder.Writeln("Another   line    with  extra   spaces.");
-
-        // Save the source document.
-        const string inputPath = "input.docx";
+        builder.Writeln("This  is   a    sentence   with  multiple   spaces.");
+        builder.Writeln("Another    line    with   extra   spaces.");
+        builder.Writeln("End   of   document.");
         doc.Save(inputPath);
 
-        // Load the document for processing.
+        // -----------------------------------------------------------------
+        // Load the document and replace consecutive spaces with a single space.
+        // -----------------------------------------------------------------
         Document loaded = new Document(inputPath);
 
-        // Define a regular expression that matches two or more consecutive spaces.
+        // Regular expression that matches two or more space characters.
         Regex multipleSpaces = new Regex(@" {2,}");
 
-        // Perform the replacement: each match is replaced with a single space.
+        // Perform the replacement across the whole document.
         int replacementCount = loaded.Range.Replace(multipleSpaces, " ", new FindReplaceOptions());
 
-        // Ensure that at least one replacement occurred.
+        // Validate that at least one replacement occurred.
         if (replacementCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+            throw new InvalidOperationException("Expected at least one space reduction replacement.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
         loaded.Save(outputPath);
     }
 }

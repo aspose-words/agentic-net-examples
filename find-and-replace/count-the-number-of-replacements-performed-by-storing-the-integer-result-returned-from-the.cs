@@ -2,37 +2,41 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing; // Required package, not used directly
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with text that will be replaced.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The quick brown fox jumps over the lazy dog.");
-        builder.Writeln("The quick brown fox is quick.");
-        // Save the sample document to a local file.
-        const string inputPath = "sample_input.docx";
-        doc.Save(inputPath);
+        // Paths for the input and output documents
+        const string inputPath = "sample.docx";
+        const string outputPath = "sample_replaced.docx";
 
-        // Load the document from the file system.
+        // Create a sample document if it does not already exist
+        if (!File.Exists(inputPath))
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample document. Replace the word 'sample' with 'example'.");
+            builder.Writeln("Another sample line with the word sample multiple times: sample, sample.");
+            doc.Save(inputPath);
+        }
+
+        // Load the document from disk
         Document loadedDoc = new Document(inputPath);
 
-        // Perform a find-and-replace operation and capture the number of replacements.
-        const string findText = "quick";
-        const string replaceText = "swift";
-        int replacementCount = loadedDoc.Range.Replace(findText, replaceText, new FindReplaceOptions());
+        // Perform find-and-replace and capture the number of replacements
+        FindReplaceOptions options = new FindReplaceOptions();
+        int replacementCount = loadedDoc.Range.Replace("sample", "example", options);
 
-        // Validate that at least one replacement occurred.
+        // Ensure that at least one replacement was made
         if (replacementCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the modified document.
-        const string outputPath = "sample_output.docx";
+        // Save the modified document
         loadedDoc.Save(outputPath);
 
-        // Output the count to the console (optional, not required for validation).
+        // Report the number of replacements performed
         Console.WriteLine($"Number of replacements performed: {replacementCount}");
     }
 }

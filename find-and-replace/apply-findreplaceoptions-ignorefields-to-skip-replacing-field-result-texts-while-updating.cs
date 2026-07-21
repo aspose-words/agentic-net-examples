@@ -6,39 +6,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with normal text and a field.
+        // Create a new document and add some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello world!");
-        // Insert a QUOTE field whose result contains the word "Hello".
+
+        // Insert a field whose result contains the word "Hello".
+        // Field code: QUOTE, field result: "Hello again!"
         builder.InsertField("QUOTE", "Hello again!");
 
-        // Save the document so we can load it later (simulates an existing file).
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
-
-        // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
-
-        // Configure find-and-replace to ignore text inside fields.
+        // Configure find‑replace to ignore text inside fields.
         FindReplaceOptions options = new FindReplaceOptions
         {
             IgnoreFields = true
         };
 
-        // Replace the word "Hello" with "Greetings". The field result will be left unchanged.
-        int replacementCount = loadedDoc.Range.Replace("Hello", "Greetings", options);
+        // Replace "Hello" with "Greetings" outside of fields.
+        int replaced = doc.Range.Replace("Hello", "Greetings", options);
+        if (replaced == 0)
+            throw new InvalidOperationException("Expected at least one replacement.");
 
-        // Ensure that at least one replacement occurred (outside the field).
-        if (replacementCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement outside of fields.");
+        // Verify that the field result was not altered.
+        string docText = doc.GetText().Trim();
+        if (!docText.Contains("Hello again!"))
+            throw new InvalidOperationException("Field result was unexpectedly replaced.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
-
-        // Optional: output a simple confirmation.
-        Console.WriteLine($"Replacements made: {replacementCount}");
-        Console.WriteLine($"Modified document saved to '{outputPath}'.");
+        doc.Save(outputPath);
     }
 }

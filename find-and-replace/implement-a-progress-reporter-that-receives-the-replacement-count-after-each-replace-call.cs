@@ -3,48 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
-
-public class ReplacementProgressEntry
-{
-    public string Pattern { get; set; } = "";
-    public int Count { get; set; }
-}
-
-public class ProgressReporter
-{
-    private readonly string _filePath;
-    private readonly List<ReplacementProgressEntry> _entries = new();
-
-    public ProgressReporter(string filePath)
-    {
-        _filePath = filePath;
-    }
-
-    public void Report(string pattern, int count)
-    {
-        _entries.Add(new ReplacementProgressEntry { Pattern = pattern, Count = count });
-        File.WriteAllText(_filePath, JsonConvert.SerializeObject(_entries, Formatting.Indented));
-    }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample files.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-        const string progressPath = "progress.json";
+        // Prepare temporary file paths.
+        string inputPath = Path.Combine(Path.GetTempPath(), "find_replace_input.docx");
+        string outputPath = Path.Combine(Path.GetTempPath(), "find_replace_output.docx");
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document with placeholders to be replaced.
+        // 1. Create a sample document.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello PLACEHOLDER1, this is a test.");
-        builder.Writeln("Another PLACEHOLDER2 appears.");
-        builder.Writeln("PLACEHOLDER1 again.");
+        builder.Writeln("alpha beta alpha gamma beta delta alpha.");
         doc.Save(inputPath);
 
         // -----------------------------------------------------------------
@@ -53,43 +26,72 @@ public class Program
         Document loaded = new Document(inputPath);
 
         // -----------------------------------------------------------------
-        // 3. Set up the progress reporter.
+        // 3. Set up a progress reporter.
         // -----------------------------------------------------------------
-        ProgressReporter reporter = new ProgressReporter(progressPath);
+        var reporter = new ProgressReporter();
 
         // -----------------------------------------------------------------
-        // 4. Define the replacement operations.
+        // 4. First replacement: "alpha" -> "ALPHA".
         // -----------------------------------------------------------------
-        var replacements = new (string pattern, string replacement)[]
-        {
-            ("PLACEHOLDER1", "Alice"),
-            ("PLACEHOLDER2", "Bob")
-        };
-
-        int totalReplacements = 0;
+        var logger1 = new ReplacementLogger();
+        var options1 = new FindReplaceOptions { ReplacingCallback = logger1 };
+        int replaced1 = loaded.Range.Replace("alpha", "ALPHA", options1);
+        reporter.Report(replaced1); // Report after first replace.
 
         // -----------------------------------------------------------------
-        // 5. Perform each replacement and report the count.
+        // 5. Second replacement: "beta" -> "BETA".
         // -----------------------------------------------------------------
-        foreach (var (pattern, replacement) in replacements)
-        {
-            FindReplaceOptions options = new FindReplaceOptions(); // default options
-            int count = loaded.Range.Replace(pattern, replacement, options);
-            totalReplacements += count;
-
-            // Report the count for this specific pattern.
-            reporter.Report(pattern, count);
-        }
+        var logger2 = new ReplacementLogger();
+        var options2 = new FindReplaceOptions { ReplacingCallback = logger2 };
+        int replaced2 = loaded.Range.Replace("beta", "BETA", options2);
+        reporter.Report(replaced2); // Report after second replace.
 
         // -----------------------------------------------------------------
-        // 6. Validate that at least one replacement occurred.
+        // 6. Third replacement using a regex: "gamma|delta" -> "GAMMA_DELTA".
         // -----------------------------------------------------------------
-        if (totalReplacements == 0)
+        var logger3 = new ReplacementLogger();
+        var options3 = new FindReplaceOptions { ReplacingCallback = logger3 };
+        int replaced3 = loaded.Range.Replace(new System.Text.RegularExpressions.Regex(@"gamma|delta"), "GAMMA_DELTA", options3);
+        reporter.Report(replaced3); // Report after third replace.
+
+        // Validate that at least one replacement occurred overall.
+        if (replaced1 + replaced2 + replaced3 == 0)
             throw new InvalidOperationException("No replacements were performed.");
 
         // -----------------------------------------------------------------
         // 7. Save the modified document.
         // -----------------------------------------------------------------
         loaded.Save(outputPath);
+
+        // -----------------------------------------------------------------
+        // 8. Output final verification (optional, not interactive).
+        // -----------------------------------------------------------------
+        Console.WriteLine($"Processing complete. Output saved to: {outputPath}");
+    }
+}
+
+// ---------------------------------------------------------------------
+// Helper class that logs each match found during a replace operation.
+// ---------------------------------------------------------------------
+public class ReplacementLogger : IReplacingCallback
+{
+    public List<string> Matches { get; } = new List<string>();
+
+    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+    {
+        Matches.Add(args.Match.Value);
+        // Perform the default replacement.
+        return ReplaceAction.Replace;
+    }
+}
+
+// ---------------------------------------------------------------------
+// Simple progress reporter that receives the replacement count.
+// ---------------------------------------------------------------------
+public class ProgressReporter
+{
+    public void Report(int replacementCount)
+    {
+        Console.WriteLine($"Replacements made in this step: {replacementCount}");
     }
 }

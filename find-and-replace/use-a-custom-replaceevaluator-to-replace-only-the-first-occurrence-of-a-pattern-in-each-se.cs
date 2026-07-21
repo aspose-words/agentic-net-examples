@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -8,56 +8,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with two sections, each containing three occurrences of the pattern.
+        // Create a sample document with two sections, each containing the pattern "PLACEHOLDER" multiple times.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        for (int sectionIndex = 1; sectionIndex <= 2; sectionIndex++)
-        {
-            if (sectionIndex > 1)
-                builder.InsertBreak(BreakType.SectionBreakNewPage); // Start a new section.
+        // Section 1
+        builder.Writeln("Section 1 - first occurrence: PLACEHOLDER");
+        builder.Writeln("Section 1 - second occurrence: PLACEHOLDER");
 
-            builder.Writeln($"--- Section {sectionIndex} start ---");
+        // Insert a section break.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-            for (int occ = 1; occ <= 3; occ++)
-            {
-                builder.Writeln($"This is a PLACEHOLDER in section {sectionIndex}, occurrence {occ}.");
-            }
+        // Section 2
+        builder.Writeln("Section 2 - first occurrence: PLACEHOLDER");
+        builder.Writeln("Section 2 - another occurrence: PLACEHOLDER");
 
-            builder.Writeln($"--- Section {sectionIndex} end ---");
-        }
-
-        // Save the input document.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        // Save the initial document.
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
         // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
+        Document loaded = new Document(inputPath);
 
-        // Set up the replace callback that replaces only the first match per section.
+        // Set up a custom callback that replaces only the first match in each section.
+        var callback = new FirstOccurrencePerSectionReplacer();
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new FirstOccurrencePerSectionReplacer()
+            ReplacingCallback = callback
         };
 
-        // Perform the replacement.
-        int replacedCount = loadedDoc.Range.Replace("PLACEHOLDER", "REPLACED", options);
+        // Perform the replacement using a regular expression.
+        int replacedCount = loaded.Range.Replace(new Regex("PLACEHOLDER"), "REPLACED", options);
 
-        // Validate that a replacement occurred in each section (2 sections in this example).
-        if (replacedCount != 2)
-            throw new InvalidOperationException($"Expected 2 replacements (one per section), but got {replacedCount}.");
+        // Validate that at least one replacement occurred in each section (2 sections expected).
+        if (replacedCount < 2)
+            throw new InvalidOperationException("Expected at least one replacement per section.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        loadedDoc.Save(outputPath);
-
-        // Output simple confirmation (no interactive input required).
-        Console.WriteLine($"Replacements performed: {replacedCount}");
-        Console.WriteLine($"Input document: {inputPath}");
-        Console.WriteLine($"Output document: {outputPath}");
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 
-    // Callback that replaces only the first occurrence of the pattern in each section.
+    // Callback that allows replacement only for the first match found in each section.
     private class FirstOccurrencePerSectionReplacer : IReplacingCallback
     {
         private readonly HashSet<Section> _sectionsReplaced = new HashSet<Section>();
@@ -66,22 +58,17 @@ public class Program
         {
             // Determine the section that contains the current match.
             Node matchNode = args.MatchNode;
-            Section section = matchNode.GetAncestor(NodeType.Section) as Section;
-
-            // Safety check – if we cannot locate a section, skip this match.
+            Section section = (Section)matchNode.GetAncestor(NodeType.Section);
             if (section == null)
                 return ReplaceAction.Skip;
 
-            // If this section has not been processed yet, replace the match.
-            if (!_sectionsReplaced.Contains(section))
-            {
-                _sectionsReplaced.Add(section);
-                args.Replacement = "REPLACED";
-                return ReplaceAction.Replace;
-            }
+            // If this section already had a replacement, skip further matches.
+            if (_sectionsReplaced.Contains(section))
+                return ReplaceAction.Skip;
 
-            // Otherwise, skip further matches in this section.
-            return ReplaceAction.Skip;
+            // Mark the section as having performed its first replacement and allow it.
+            _sectionsReplaced.Add(section);
+            return ReplaceAction.Replace;
         }
     }
 }

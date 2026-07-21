@@ -3,34 +3,32 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing;
+using Aspose.Drawing; // Used for color name handling
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with color names.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The sky is blue, the grass is green, and the sun is yellow.");
-        builder.Writeln("My favorite colors are red, light gray and dark red.");
-        builder.Writeln("Black and white are also classic choices.");
 
-        // Save the source document (optional, just to illustrate the workflow).
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        // Write sample text containing color names.
+        builder.Writeln("The sky is blue, the grass is green, and the fire is red.");
+        builder.Writeln("A light gray cloud floats above a black night.");
+        builder.Writeln("White snow covers the ground.");
 
-        // Prepare a regex that matches the color names (case‑insensitive).
-        const string pattern = @"\b(?:light\s+gray|dark\s+red|red|green|blue|yellow|black|white|gray)\b";
+        // Define a regex that matches the color names we want to replace.
+        const string pattern = @"\b(red|green|blue|light gray|gray|black|white)\b";
         Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
 
-        // Set up find‑replace options with a custom callback.
+        // Set up find-and-replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new ColorHexConverter()
+            ReplacingCallback = new ColorNameToHexConverter()
         };
 
-        // Perform the replacement. The replacement string argument is ignored when a callback is used.
+        // Perform the replacement. The callback will supply the replacement text.
         int replacedCount = doc.Range.Replace(regex, string.Empty, options);
 
         // Validate that at least one replacement occurred.
@@ -40,38 +38,43 @@ public class Program
         // Save the modified document.
         const string outputPath = "output.docx";
         doc.Save(outputPath);
+
+        // Write the result count to the console.
+        Console.WriteLine($"Replaced {replacedCount} color name(s). Output saved to '{outputPath}'.");
     }
 
     // Callback that converts a matched color name to its hexadecimal representation.
-    private class ColorHexConverter : IReplacingCallback
+    private class ColorNameToHexConverter : IReplacingCallback
     {
-        // Mapping from normalized color name to hex string.
+        // Mapping from color name (case‑insensitive) to hexadecimal string.
         private static readonly Dictionary<string, string> ColorMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "red", "#FF0000" },
             { "green", "#008000" },
             { "blue", "#0000FF" },
-            { "yellow", "#FFFF00" },
-            { "black", "#000000" },
-            { "white", "#FFFFFF" },
-            { "gray", "#808080" },
             { "light gray", "#D3D3D3" },
-            { "dark red", "#8B0000" }
+            { "gray", "#808080" },
+            { "black", "#000000" },
+            { "white", "#FFFFFF" }
         };
 
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Normalise the matched value (trim and collapse multiple spaces).
-            string key = Regex.Replace(args.Match.Value.Trim(), @"\s+", " ").ToLowerInvariant();
+            // Get the matched color name.
+            string colorName = args.Match.Value.Trim();
 
-            if (ColorMap.TryGetValue(key, out string hex))
-            {
+            // Look up the hexadecimal value; if not found, keep the original text.
+            if (ColorMap.TryGetValue(colorName, out string hex))
                 args.Replacement = hex;
-                return ReplaceAction.Replace;
-            }
+            else
+                args.Replacement = colorName;
 
-            // If the color is not in the map, leave it unchanged.
-            return ReplaceAction.Skip;
+            // Demonstrate usage of Aspose.Drawing without assigning to System.Drawing types.
+            // For example, we could log the Aspose.Drawing color (not required for the task).
+            // Aspose.Drawing.Color asposeColor = Color.FromName(colorName);
+            // Console.WriteLine($"Aspose.Drawing color for '{colorName}': {asposeColor}");
+
+            return ReplaceAction.Replace;
         }
     }
 }

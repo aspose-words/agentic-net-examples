@@ -3,64 +3,64 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // Create a sample document with text that will be replaced.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("alpha beta alpha gamma beta alpha");
-        doc.Save("input.docx");
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
+        builder.Writeln("The quick brown fox is quick.");
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
         // Load the document for processing.
-        Document loaded = new Document("input.docx");
+        Document loaded = new Document(inputPath);
 
-        // Set up a logger that records each replacement occurrence.
+        // Set up a custom logger that records each replacement occurrence.
         var logger = new ReplaceLogger();
 
-        // Configure FindReplaceOptions to use the logger.
+        // Configure FindReplaceOptions to use the logger callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
             ReplacingCallback = logger
         };
 
-        // Perform the replacement.
-        int replacedCount = loaded.Range.Replace("alpha", "omega", options);
+        // Perform the replacement operation.
+        int replacedCount = loaded.Range.Replace("quick", "swift", options);
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement.");
 
         // Save the modified document.
-        loaded.Save("output.docx");
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
 
-        // Write the log of replacements to a text file.
-        File.WriteAllText("replace_log.txt", logger.GetLog());
+        // Output the log to the console.
+        Console.WriteLine("Replacements performed:");
+        foreach (string entry in logger.Matches)
+        {
+            Console.WriteLine(entry);
+        }
+
+        // Additionally, write the log to a JSON file.
+        const string jsonLogPath = "log.json";
+        File.WriteAllText(jsonLogPath, JsonConvert.SerializeObject(logger.Matches, Formatting.Indented));
     }
 
-    // Custom logger that implements IReplacingCallback.
+    // Custom logger implementing IReplacingCallback.
     private class ReplaceLogger : IReplacingCallback
     {
-        private readonly List<string> _matches = new List<string>();
-        private readonly StringWriter _logWriter = new StringWriter();
+        public List<string> Matches { get; } = new List<string>();
 
         ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            // Record the matched text and its location.
-            _matches.Add(args.Match.Value);
-            _logWriter.WriteLine($"Matched \"{args.Match.Value}\" at offset {args.MatchOffset} in a {args.MatchNode.NodeType} node.");
-            // Proceed with the replacement.
+            // Record the original matched text, the replacement text, and the offset within the node.
+            Matches.Add($"\"{args.Match.Value}\" -> \"{args.Replacement}\" at offset {args.MatchOffset}");
+            // Proceed with the default replacement.
             return ReplaceAction.Replace;
-        }
-
-        // Returns the accumulated log as a string.
-        public string GetLog()
-        {
-            _logWriter.WriteLine();
-            _logWriter.WriteLine("All matches:");
-            foreach (var m in _matches)
-                _logWriter.WriteLine(m);
-            return _logWriter.ToString();
         }
     }
 }

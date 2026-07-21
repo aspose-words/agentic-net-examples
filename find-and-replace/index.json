@@ -11,60 +11,60 @@
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0",
+      "Aspose.Words": "26.6.0",
       "Aspose.Drawing.Common": "25.11.0"
     },
     "required_namespaces": [
       "System",
-      "System.IO",
       "Aspose.Words",
       "Aspose.Words.Replacing",
-      "Newtonsoft.Json",
-      "System.Text.RegularExpressions",
-      "System.Text",
       "Aspose.Drawing",
+      "Newtonsoft.Json",
+      "System.IO",
+      "System.Text.RegularExpressions",
       "System.Collections.Generic",
+      "Aspose.Words.Saving",
+      "System.Text",
       "System.Linq",
+      "Newtonsoft.Json.Linq",
+      "System.Globalization",
       "Aspose.Words.Drawing",
       "Aspose.Words.Fields",
-      "System.Globalization",
-      "Aspose.Drawing.Imaging"
+      "System.Drawing",
+      "Aspose.Words.Tables"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Path",
       "Range",
       "FindReplaceOptions",
       "Directory",
-      "Paragraph",
+      "Path",
       "File",
-      "JsonConvert",
+      "NodeType",
+      "Paragraph",
       "SaveFormat",
       "MemoryStream",
-      "NodeType",
+      "Field",
+      "Node",
       "StyleIdentifier",
       "Run",
       "FieldType",
       "Style",
       "Font",
-      "Table",
-      "Node"
+      "CompositeNode",
+      "Table"
     ]
   },
   "stats": {
     "total_examples": 63,
     "publish_ready_successful_examples": 63,
     "workflow_counts": {
-      "callback-reporting": 6,
-      "formatting-aware-replace": 7,
-      "input-bootstrap": 2,
       "plain-replace": 41,
-      "regex-replace": 7
-    },
-    "winner_counts": {
-      "existing_repo": 4,
-      "mcp": 59
+      "formatting-aware-replace": 7,
+      "regex-replace": 7,
+      "callback-reporting": 6,
+      "input-bootstrap": 2
     }
   },
   "rules_summary": {
@@ -128,7 +128,7 @@
     {
       "id": 2,
       "file_name": "perform-a-case-sensitive-replace-using-findreplaceoptions-with-matchcase-enabled-on-the-lo.cs",
-      "task": "Perform a case-sensitive replace using FindReplaceOptions with MatchCase enabled on the loaded document.",
+      "task": "Perform a case‑sensitive replace using FindReplaceOptions with MatchCase enabled on the loaded document.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
@@ -150,7 +150,7 @@
     {
       "id": 4,
       "file_name": "execute-a-regular-expression-replace-that-converts-dates-from-mm-dd-yyyy-to-yyyy-mm-dd-for.cs",
-      "task": "Execute a regular expression replace that converts dates from MM-DD-YYYY to YYYY-MM-DD format.",
+      "task": "Execute a regular expression replace that converts dates from MM‑DD‑YYYY to YYYY‑MM‑DD format.",
       "workflow": "formatting-aware-replace",
       "outputs": [
         "docx"
@@ -243,13 +243,13 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 13,
       "file_name": "enable-regex-mode-by-setting-findreplaceoptions-useregularexpressions-to-true-for-pattern.cs",
-      "task": "Enable regex mode by setting FindReplaceOptions.UseRegularExpressions to true for pattern-based replacements.",
+      "task": "Enable regex mode by setting FindReplaceOptions.UseRegularExpressions to true for pattern‑based replacements.",
       "workflow": "regex-replace",
       "outputs": [
         "docx"
@@ -282,7 +282,7 @@
     {
       "id": 16,
       "file_name": "execute-a-case-insensitive-replace-that-changes-all-instances-of-color-to-colour-throughou.cs",
-      "task": "Execute a case-insensitive replace that changes all instances of 'color' to 'colour' throughout the document.",
+      "task": "Execute a case‑insensitive replace that changes all instances of ‘color’ to ‘colour’ throughout the document.",
       "workflow": "formatting-aware-replace",
       "outputs": [
         "docx"
@@ -293,7 +293,7 @@
     {
       "id": 17,
       "file_name": "apply-whole-word-matching-to-avoid-partial-replacements-inside-longer-words-such-as-catalo.cs",
-      "task": "Apply whole-word matching to avoid partial replacements inside longer words such as 'catalogue'.",
+      "task": "Apply whole‑word matching to avoid partial replacements inside longer words such as ‘catalogue’.",
       "workflow": "callback-reporting",
       "outputs": [
         "docx"
@@ -359,7 +359,7 @@
     {
       "id": 23,
       "file_name": "set-matchcase-false-and-matchwholeword-true-to-replace-whole-words-case-insensitively-acro.cs",
-      "task": "Set MatchCase false and MatchWholeWord true to replace whole words case-insensitively across the document.",
+      "task": "Set MatchCase false and MatchWholeWord true to replace whole words case‑insensitively across the document.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
@@ -408,8 +408,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
@@ -425,7 +425,7 @@
     {
       "id": 29,
       "file_name": "replace-deprecated-terms-with-new-equivalents-across-multiple-languages-using-culture-spec.cs",
-      "task": "Replace deprecated terms with new equivalents across multiple languages using culture-specific regular expressions.",
+      "task": "Replace deprecated terms with new equivalents across multiple languages using culture‑specific regular expressions.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
@@ -491,7 +491,7 @@
     {
       "id": 35,
       "file_name": "replace-the-word-foo-only-when-it-appears-at-the-start-of-a-paragraph-using-a-custom-evalu.cs",
-      "task": "Replace the word 'foo' only when it appears at the start of a paragraph using a custom evaluator.",
+      "task": "Replace the word ‘foo’ only when it appears at the start of a paragraph using a custom evaluator.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
@@ -579,7 +579,7 @@
     {
       "id": 43,
       "file_name": "convert-date-strings-from-january-1-2020-to-01-01-2020-using-a-regular-expression.cs",
-      "task": "Convert date strings from 'January 1, 2020' to '01/01/2020' using a regular expression.",
+      "task": "Convert date strings from ‘January 1, 2020’ to ‘01/01/2020’ using a regular expression.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
@@ -678,7 +678,7 @@
     {
       "id": 52,
       "file_name": "replace-the-copyright-symbol-with-the-unicode-character-using-a-regular-expression.cs",
-      "task": "Replace the copyright symbol with the Unicode  character using a regular expression.",
+      "task": "Replace the copyright symbol with the Unicode © character using a regular expression.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
@@ -716,8 +716,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 56,
@@ -804,8 +804,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     }
   ]
 }

@@ -4,65 +4,70 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing; // Required by Aspose.Words for drawing types
+using Newtonsoft.Json; // Included as a required package
 
-public class Program
+namespace FindAndReplaceNumericLocalization
 {
-    public static void Main()
-    {
-        // Set the culture to French (France) to demonstrate localized formatting.
-        CultureInfo.CurrentCulture = new CultureInfo("fr-FR");
-
-        // Create a sample document with numbers in US format (e.g., 1,234.56).
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The sales figures are as follows:");
-        builder.Writeln("January: 1,234.56");
-        builder.Writeln("February: 7,890.12");
-        builder.Writeln("March: 3,456.78");
-        // Save the original document (optional, just for reference).
-        doc.Save("Input.docx");
-
-        // Define a regular expression that matches numbers with optional thousands separators and a decimal part.
-        // Example matches: 1,234.56 , 7,890 , 123.45 , 12,345,678.90
-        Regex numberRegex = new Regex(@"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b");
-
-        // Configure find-and-replace options with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new NumberLocalizer();
-
-        // Perform the replacement. The callback will supply the localized replacement string.
-        int replacedCount = doc.Range.Replace(numberRegex, string.Empty, options);
-
-        // Validate that at least one replacement occurred.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one numeric replacement.");
-
-        // Save the modified document.
-        doc.Save("Output.docx");
-    }
-
-    // Callback that converts the matched US-formatted number to the current culture's format.
-    private class NumberLocalizer : IReplacingCallback
+    // Callback that swaps thousand and decimal separators (e.g., "1,234.56" → "1.234,56")
+    public class NumberLocalizer : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Parse the matched number using invariant culture (comma as thousands separator, dot as decimal separator).
-            if (double.TryParse(args.Match.Value,
-                                NumberStyles.AllowThousands | NumberStyles.AllowDecimalPoint,
-                                CultureInfo.InvariantCulture,
-                                out double number))
-            {
-                // Format the number using the current culture with two decimal places.
-                string localized = number.ToString("N2", CultureInfo.CurrentCulture);
-                args.Replacement = localized;
-            }
-            else
-            {
-                // If parsing fails, keep the original text.
-                args.Replacement = args.Match.Value;
-            }
+            // Original matched number (e.g., "1,234.56")
+            string original = args.Match.Value;
 
+            // Swap separators: ',' → temporary '#', '.' → ',', '#' → '.'
+            string swapped = original.Replace(",", "#")
+                                    .Replace(".", ",")
+                                    .Replace("#", ".");
+
+            args.Replacement = swapped;
             return ReplaceAction.Replace;
+        }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a sample document with numbers in US format.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("The sales figures are as follows:");
+            builder.Writeln("Revenue: 1,234.56 USD");
+            builder.Writeln("Cost: 987,654.32 USD");
+            builder.Writeln("Profit: 12,345.67 USD");
+
+            // Save the original document (optional, for inspection).
+            const string inputPath = "input.docx";
+            doc.Save(inputPath);
+
+            // Define a regex that matches numbers with optional thousand separators and a decimal part.
+            // Example matches: 1,234.56 , 987,654.32 , 12,345.67
+            Regex numberRegex = new Regex(@"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b");
+
+            // Set up find/replace options with the custom callback.
+            FindReplaceOptions options = new FindReplaceOptions
+            {
+                ReplacingCallback = new NumberLocalizer()
+            };
+
+            // Perform the replacement.
+            int replacedCount = doc.Range.Replace(numberRegex, string.Empty, options);
+
+            // Validate that at least one replacement occurred.
+            if (replacedCount == 0)
+                throw new InvalidOperationException("Expected at least one numeric replacement.");
+
+            // Save the modified document.
+            const string outputPath = "output.docx";
+            doc.Save(outputPath);
+
+            // Simple verification output (optional).
+            Console.WriteLine($"Replaced {replacedCount} numeric occurrences.");
+            Console.WriteLine($"Input document saved to: {Path.GetFullPath(inputPath)}");
+            Console.WriteLine($"Output document saved to: {Path.GetFullPath(outputPath)}");
         }
     }
 }

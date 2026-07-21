@@ -1,88 +1,60 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with placeholders surrounded by percent signs.
+        // Paths for the sample input and output documents.
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
+
+        // Create a sample document containing placeholders surrounded by percent signs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello %USERNAME%!");
-        builder.Writeln("Your home directory is %HOME%.");
-        builder.Writeln("Undefined variable: %UNDEFINED_VAR%.");
-        // Save the source document.
-        const string inputPath = "input.docx";
+        builder.Writeln("Hello %USERNAME% from %COMPUTERNAME%!");
         doc.Save(inputPath);
 
         // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
+        Document loaded = new Document(inputPath);
 
         // Define a regex that matches placeholders like %PLACEHOLDER%.
-        Regex placeholderRegex = new Regex("%[A-Za-z0-9_]+%");
+        Regex placeholderPattern = new Regex("%[A-Za-z0-9_]+%");
 
         // Set up find-and-replace options with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new EnvironmentVariableReplacer()
-        };
+        FindReplaceOptions options = new FindReplaceOptions(new EnvVarReplacer());
 
-        // Perform the replace operation. The replacement string is ignored because the callback supplies it.
-        int replacedCount = loadedDoc.Range.Replace(placeholderRegex, string.Empty, options);
+        // Perform the replacement. The callback supplies the actual replacement text.
+        int replacedCount = loaded.Range.Replace(placeholderPattern, string.Empty, options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No placeholders were replaced.");
+            throw new InvalidOperationException("No placeholders were replaced. Ensure the environment variables exist.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
-
-        // Optional: write a JSON report of the replacements performed.
-        var report = ((EnvironmentVariableReplacer)options.ReplacingCallback).GetReport();
-        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
-        File.WriteAllText("replacement_report.json", jsonReport);
+        loaded.Save(outputPath);
     }
-}
 
-// Custom callback that replaces each %PLACEHOLDER% with the corresponding environment variable value.
-public class EnvironmentVariableReplacer : IReplacingCallback
-{
-    private readonly List<ReplacementInfo> _replacements = new List<ReplacementInfo>();
-
-    public ReplaceAction Replacing(ReplacingArgs args)
+    // Custom callback that replaces each matched placeholder with the corresponding environment variable value.
+    private class EnvVarReplacer : IReplacingCallback
     {
-        // Extract the placeholder name without the surrounding percent signs.
-        string placeholder = args.Match.Value.Trim('%');
-        // Retrieve the environment variable value.
-        string envValue = Environment.GetEnvironmentVariable(placeholder) ?? string.Empty;
-
-        // Record the replacement details.
-        _replacements.Add(new ReplacementInfo
+        public ReplaceAction Replacing(ReplacingArgs args)
         {
-            Placeholder = args.Match.Value,
-            EnvironmentVariable = placeholder,
-            ReplacementValue = envValue
-        });
+            // The match includes the surrounding percent signs, e.g., "%USERNAME%".
+            string placeholder = args.Match.Value;
+            // Extract the variable name without the percent signs.
+            string variableName = placeholder.Trim('%');
 
-        // Set the replacement text.
-        args.Replacement = envValue;
-        return ReplaceAction.Replace;
+            // Retrieve the environment variable value; use an empty string if not defined.
+            string envValue = Environment.GetEnvironmentVariable(variableName) ?? string.Empty;
+
+            // Set the replacement text.
+            args.Replacement = envValue;
+
+            return ReplaceAction.Replace;
+        }
     }
-
-    // Returns a report that can be serialized to JSON.
-    public IReadOnlyList<ReplacementInfo> GetReport() => _replacements;
-}
-
-// Simple DTO for reporting each replacement.
-public class ReplacementInfo
-{
-    public string Placeholder { get; set; } = string.Empty;
-    public string EnvironmentVariable { get; set; } = string.Empty;
-    public string ReplacementValue { get; set; } = string.Empty;
 }

@@ -3,7 +3,35 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required for Aspose.Words formatting APIs
+
+public class LanguageTagReplacer : IReplacingCallback
+{
+    private readonly Dictionary<string, string> _languageMap = new()
+    {
+        { "en", "English" },
+        { "fr", "French" },
+        { "es", "Spanish" },
+        { "de", "German" },
+        { "it", "Italian" },
+        { "pt", "Portuguese" }
+    };
+
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // args.Match.Value includes the brackets, e.g., "[en]"
+        string code = args.Match.Value.Trim('[', ']');
+        if (_languageMap.TryGetValue(code, out string fullName))
+        {
+            args.Replacement = fullName;
+        }
+        else
+        {
+            // If the code is unknown, keep it unchanged.
+            args.Replacement = args.Match.Value;
+        }
+        return ReplaceAction.Replace;
+    }
+}
 
 public class Program
 {
@@ -13,57 +41,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Welcome [en] user!");
-        builder.Writeln("¡Bienvenido [es] usuario!");
-        builder.Writeln("Bienvenue [fr] utilisateur!");
-        builder.Writeln("Willkommen [de] Benutzer!");
+        builder.Writeln("Bonjour [fr] utilisateur!");
+        builder.Writeln("¡Hola [es] usuario!");
+        builder.Writeln("Hallo [de] Benutzer!");
+        builder.Writeln("Ciao [it] utente!");
+        builder.Writeln("Olá [pt] usuário!");
+        builder.Writeln("Unknown [xx] tag stays.");
 
-        // Define a regex that matches tags like [en], [es], etc.
-        Regex languageTagRegex = new Regex(@"\[([a-z]{2})\]", RegexOptions.IgnoreCase);
+        // Save the original for reference (optional).
+        doc.Save("original.docx");
 
-        // Set up find‑replace options with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new LanguageTagReplacer();
+        // Prepare regex to find tags like [en], [fr], etc.
+        Regex tagRegex = new Regex(@"\[(\w{2})\]");
 
-        // Perform the replacement. The callback supplies the actual replacement text.
-        int replacedCount = doc.Range.Replace(languageTagRegex, string.Empty, options);
+        // Set up find-replace options with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new LanguageTagReplacer()
+        };
 
-        // Ensure that at least one replacement occurred.
+        // Perform the replacement.
+        int replacedCount = doc.Range.Replace(tagRegex, string.Empty, options);
         if (replacedCount == 0)
             throw new InvalidOperationException("No language tags were replaced.");
 
         // Save the modified document.
-        doc.Save("Output.docx");
-    }
+        doc.Save("localized.docx");
 
-    // Callback that converts a language code (e.g., "en") to its full name (e.g., "English").
-    private class LanguageTagReplacer : IReplacingCallback
-    {
-        private static readonly Dictionary<string, string> LanguageMap = new()
-        {
-            { "en", "English" },
-            { "es", "Spanish" },
-            { "fr", "French" },
-            { "de", "German" },
-            { "it", "Italian" },
-            { "pt", "Portuguese" },
-            { "ru", "Russian" },
-            { "zh", "Chinese" },
-            { "ja", "Japanese" },
-            { "ko", "Korean" }
-        };
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Extract the language code from the first capture group.
-            string code = args.Match.Groups[1].Value.ToLowerInvariant();
-
-            // Look up the full language name; if not found, keep the original tag.
-            if (LanguageMap.TryGetValue(code, out string fullName))
-                args.Replacement = fullName;
-            else
-                args.Replacement = args.Match.Value; // fallback to original tag
-
-            return ReplaceAction.Replace;
-        }
+        // Output a simple verification to the console.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine("Resulting text:");
+        Console.WriteLine(doc.GetText().Trim());
     }
 }

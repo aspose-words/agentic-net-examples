@@ -8,38 +8,30 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-
-        // -----------------------------------------------------------------
-        // Create a sample document containing a custom delimiter (|).
-        // -----------------------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Apple | Banana|Cherry | Date");
-        // Save the document so it can be loaded later.
-        doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Load the document and replace the custom delimiter with a comma,
-        // preserving any surrounding whitespace.
-        // -----------------------------------------------------------------
-        Document loaded = new Document(inputPath);
+        // Add sample text containing the custom delimiter "||".
+        builder.Writeln("Alpha || Beta");
+        builder.Writeln("Gamma||Delta");
+        builder.Writeln("Epsilon   ||   Zeta");
+        builder.Writeln("NoDelimiterHere");
 
-        // Regex captures optional whitespace before and after the delimiter.
-        Regex delimiterPattern = new Regex(@"(\s*)\|(\s*)");
-        // Replacement keeps the captured whitespace groups and inserts a comma.
-        const string replacement = "$1,$2";
+        // Define a regex that captures any whitespace before and after the delimiter.
+        // The delimiter is "||". The captured groups keep the surrounding whitespace.
+        Regex delimiterRegex = new Regex(@"(?<pre>\s*)\|\|(?<post>\s*)");
 
-        // Perform the replacement using Aspose.Words' Range.Replace method.
-        int replacementCount = loaded.Range.Replace(delimiterPattern, replacement, new FindReplaceOptions());
+        // Replace the delimiter with a comma, preserving the captured whitespace.
+        FindReplaceOptions options = new FindReplaceOptions();
+        int replacedCount = doc.Range.Replace(delimiterRegex, "${pre},${post}", options);
 
-        // Validate that at least one replacement occurred.
-        if (replacementCount == 0)
+        // Ensure that at least one replacement occurred.
+        if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one delimiter replacement.");
 
-        // Save the modified document.
-        loaded.Save(outputPath);
+        // Save the modified document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        doc.Save(outputPath);
     }
 }

@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -9,64 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with email addresses.
+        // Create a sample document containing e‑mail addresses.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Contact list:");
-        builder.Writeln("Alice: alice@example.com");
-        builder.Writeln("Bob: bob.smith@subdomain.example.org");
-        builder.Writeln("Charlie: charlie123@example.co.uk");
-        builder.Writeln("No email here.");
+        builder.Writeln("Please contact john.doe@example.com or jane_smith@domain.org for assistance.");
+        builder.Writeln("Another address: admin@my-company.net.");
 
-        // Define a regular expression that matches typical email addresses.
-        Regex emailRegex = new Regex(@"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", RegexOptions.Compiled);
+        // Define a regular expression that matches e‑mail addresses.
+        const string emailPattern = @"\b[\w\.-]+@[\w\.-]+\.\w+\b";
 
-        // Set up find‑replace options with a custom callback that masks the email.
+        // Set up find‑replace options with a custom callback that masks each e‑mail.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new EmailMaskingCallback()
+            ReplacingCallback = new EmailMaskCallback()
         };
 
-        // Perform the replacement. The replacement string is ignored when a callback is used.
-        int replacedCount = doc.Range.Replace(emailRegex, string.Empty, options);
+        // Perform the replacement. The replacement string is ignored because the callback supplies the masked value.
+        int replacedCount = doc.Range.Replace(new Regex(emailPattern), string.Empty, options);
 
-        // Validate that at least one email was masked.
+        // Ensure that at least one e‑mail address was found and masked.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No email addresses were found to mask.");
+            throw new InvalidOperationException("No e‑mail addresses were found to mask.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MaskedEmails.docx");
-        doc.Save(outputPath);
+        doc.Save("output.docx");
     }
 
-    // Callback that replaces each found email with a masked version.
-    private class EmailMaskingCallback : IReplacingCallback
+    // Callback that receives each e‑mail match and replaces it with a masked version.
+    private class EmailMaskCallback : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // The original email address.
-            string originalEmail = args.Match.Value;
-
-            // Split into local part and domain.
-            int atIndex = originalEmail.IndexOf('@');
-            if (atIndex <= 0)
+            string email = args.Match.Value;
+            int atIndex = email.IndexOf('@');
+            if (atIndex > 1)
             {
-                // If the format is unexpected, leave it unchanged.
-                args.Replacement = originalEmail;
-                return ReplaceAction.Replace;
+                // Keep the first character of the local part, mask the rest, and keep the domain unchanged.
+                string localPart = email.Substring(0, atIndex);
+                string domainPart = email.Substring(atIndex + 1);
+                string maskedLocal = localPart[0] + new string('*', localPart.Length - 1);
+                args.Replacement = $"{maskedLocal}@{domainPart}";
+            }
+            else
+            {
+                // Fallback masking if the e‑mail format is unexpected.
+                args.Replacement = "*****@*****";
             }
 
-            string localPart = originalEmail.Substring(0, atIndex);
-            string domainPart = originalEmail.Substring(atIndex + 1);
-
-            // Mask the local part with asterisks, preserving its length.
-            string maskedLocal = new string('*', localPart.Length);
-
-            // Construct the masked email.
-            string maskedEmail = $"{maskedLocal}@{domainPart}";
-
-            // Set the replacement text.
-            args.Replacement = maskedEmail;
             return ReplaceAction.Replace;
         }
     }

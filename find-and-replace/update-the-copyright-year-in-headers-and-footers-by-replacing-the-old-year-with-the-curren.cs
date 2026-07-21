@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -8,60 +6,50 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-
-        // -----------------------------------------------------------------
-        // Create a sample document with a header and a footer containing an old year.
-        // -----------------------------------------------------------------
+        // Create a sample document with a header and a footer that contain the old year.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert header.
+        // Header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         builder.Writeln("(C) 2022 My Company");
 
-        // Insert footer.
+        // Footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
         builder.Writeln("(C) 2022 My Company");
 
         // Save the sample document.
+        const string inputPath = "sample.docx";
         doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Load the document and replace the old year with the current year
-        // in all headers and footers.
-        // -----------------------------------------------------------------
+        // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        int currentYear = DateTime.Now.Year;
-        string replacementText = $"(C) {currentYear}";
+        // Define the old and new year strings.
+        string oldYear = "2022";
+        string newYear = DateTime.Now.Year.ToString();
 
-        // Regex to find the pattern "(C) 4-digit-year".
-        Regex yearPattern = new Regex(@"\(C\) \d{4}");
+        // Options for the replace operation.
+        FindReplaceOptions options = new FindReplaceOptions();
 
+        // Perform the replacement in every header and footer of each section.
         int totalReplacements = 0;
-
-        // Iterate through every section and its header/footer collection.
         foreach (Section section in loaded.Sections)
         {
-            foreach (HeaderFooter headerFooter in section.HeadersFooters)
+            HeaderFooterCollection hfCollection = section.HeadersFooters;
+            foreach (HeaderFooter hf in hfCollection)
             {
-                // Perform the replacement within the header/footer range.
-                int replaced = headerFooter.Range.Replace(yearPattern, replacementText, new FindReplaceOptions());
+                int replaced = hf.Range.Replace(oldYear, newYear, options);
                 totalReplacements += replaced;
             }
         }
 
         // Validate that at least one replacement occurred.
         if (totalReplacements == 0)
-            throw new InvalidOperationException("Expected at least one replacement in headers or footers.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the modified document.
+        // Save the updated document.
+        const string outputPath = "updated.docx";
         loaded.Save(outputPath);
-
-        // Optional: indicate success.
-        Console.WriteLine($"Replaced {totalReplacements} occurrence(s). Output saved to '{outputPath}'.");
     }
 }
