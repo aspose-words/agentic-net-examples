@@ -4,50 +4,48 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Lists;
 using Aspose.Words.Themes;
-using Aspose.Words.Fonts;
 using Aspose.Drawing; // For Aspose.Drawing.Color
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Output file path
+        string outputPath = "StyledDocument.docx";
 
-        // Define a custom character style.
-        Style customStyle = doc.Styles.Add(StyleType.Character, "MyCustomStyle");
-        // Set font name.
+        // Create a new blank document
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Define a custom character style with specific font settings
+        Style customStyle = doc.Styles.Add(StyleType.Character, "MyCharStyle");
         customStyle.Font.Name = "Arial";
-        // Set font size (points).
         customStyle.Font.Size = 24;
-        // Create an Aspose.Drawing.Color and convert it to System.Drawing.Color for the Font.Color property.
+
+        // Set font color using Aspose.Drawing.Color and convert to System.Drawing.Color
         Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Blue;
         customStyle.Font.Color = System.Drawing.Color.FromArgb(aspColor.ToArgb());
 
-        // Use DocumentBuilder to add text.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Validate that the style properties were set correctly
+        if (customStyle.Font.Name != "Arial" ||
+            customStyle.Font.Size != 24 ||
+            customStyle.Font.Color.ToArgb() != System.Drawing.Color.FromArgb(aspColor.ToArgb()).ToArgb())
+        {
+            throw new InvalidOperationException("Failed to set style font properties.");
+        }
+
+        // Write some normal text
         builder.Writeln("This is normal text.");
 
-        // Apply the custom style to the following text.
-        builder.Font.StyleName = "MyCustomStyle";
-        builder.Write("This text uses the custom style.");
+        // Apply the custom style to the following text
+        builder.Font.StyleName = "MyCharStyle";
+        builder.Writeln("This text uses the custom style with Arial, 24pt, blue color.");
 
-        // Reset formatting to default for subsequent text.
-        builder.Font.ClearFormatting();
-        builder.Writeln(); // Move to next line.
-
-        // Save the document to the local file system.
-        string outputPath = "StyledText.docx";
+        // Save the document
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+        // Ensure the file was created
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not created.");
     }
 }

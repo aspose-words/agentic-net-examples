@@ -7,58 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directories.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        // Prepare output directories and file names.
+        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Output");
         Directory.CreateDirectory(artifactsDir);
+        string substitutionFile = Path.Combine(artifactsDir, "custom_substitution.xml");
+        string outputDoc = Path.Combine(artifactsDir, "CustomFontSubstitution.docx");
 
-        // Path for the custom substitution table XML.
-        string substitutionXmlPath = Path.Combine(artifactsDir, "CustomFontSubstitution.xml");
-
-        // -----------------------------------------------------------------
-        // Step 1: Create a font substitution table and save it to an XML file.
-        // -----------------------------------------------------------------
-        FontSettings tempSettings = new FontSettings();
-        TableSubstitutionRule tempTable = tempSettings.SubstitutionSettings.TableSubstitution;
-
-        // Define substitutes for a font that does not exist in the system.
-        // When "MissingFont" is requested, Aspose.Words will try "Arial" first,
-        // then "Courier New" if the first substitute is unavailable.
-        tempTable.SetSubstitutes("MissingFont", new[] { "Arial", "Courier New" });
-
-        // Save the substitution table to an XML file.
-        tempTable.Save(substitutionXmlPath);
-
-        // -----------------------------------------------------------------
-        // Step 2: Load the custom substitution table from the XML file.
-        // -----------------------------------------------------------------
-        FontSettings fontSettings = new FontSettings();
-        TableSubstitutionRule tableRule = fontSettings.SubstitutionSettings.TableSubstitution;
-        tableRule.Load(substitutionXmlPath);
-
-        // -----------------------------------------------------------------
-        // Step 3: Create a document that uses the missing font.
-        // -----------------------------------------------------------------
+        // Create a new document and add a paragraph using a font that likely does not exist.
         Document doc = new Document();
-        doc.FontSettings = fontSettings;
-
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = "MissingFont";
-        builder.Writeln("This line uses a missing font and will be substituted according to the custom table.");
+        builder.Writeln("This line uses a missing font and will be substituted.");
 
-        // -----------------------------------------------------------------
-        // Step 4: Save the document.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(artifactsDir, "CustomFontSubstitution.pdf");
-        doc.Save(outputPath);
+        // Configure FontSettings for the document.
+        FontSettings fontSettings = new FontSettings();
+        doc.FontSettings = fontSettings;
 
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Document saved successfully to: " + outputPath);
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+        // Load the default Windows substitution table and save it to an XML file.
+        TableSubstitutionRule tableRule = fontSettings.SubstitutionSettings.TableSubstitution;
+        tableRule.LoadWindowsSettings();
+        tableRule.Save(substitutionFile);
+
+        // Reload the substitution table from the XML file (demonstrates loading from configuration).
+        tableRule.Load(substitutionFile);
+
+        // Add a custom substitution: replace "MissingFont" with "Arial" or "Courier New" if needed.
+        tableRule.AddSubstitutes("MissingFont", "Arial", "Courier New");
+
+        // Save the document; Aspose.Words will apply the substitution rules during rendering.
+        doc.Save(outputDoc);
     }
 }

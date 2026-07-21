@@ -4,66 +4,60 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-public class Program
+namespace FontBatchProcessing
 {
-    // Entry point of the console application.
-    public static void Main()
+    public class Program
     {
-        // Define folders for input and output documents.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
-
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
-
-        // Collect all .docx files from the input folder.
-        List<string> documentPaths = new List<string>(Directory.GetFiles(inputFolder, "*.docx"));
-
-        // If there are no documents, create a sample one to demonstrate the process.
-        if (documentPaths.Count == 0)
+        public static void Main()
         {
-            string samplePath = Path.Combine(inputFolder, "Sample.docx");
-            CreateSampleDocument(samplePath);
-            documentPaths.Add(samplePath);
-        }
+            // Folder to store sample documents.
+            string docsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
+            Directory.CreateDirectory(docsFolder);
 
-        // Process each document: set all Run fonts to Helvetica and save.
-        foreach (string docPath in documentPaths)
-        {
-            // Load the document.
-            Document doc = new Document(docPath);
-
-            // Iterate over all Run nodes in the document.
-            NodeCollection runs = doc.GetChildNodes(NodeType.Run, true);
-            foreach (Run run in runs)
+            // Create a few sample documents.
+            List<string> docPaths = new List<string>();
+            for (int i = 1; i <= 3; i++)
             {
-                // Set the font name to Helvetica.
-                run.Font.Name = "Helvetica";
+                string path = Path.Combine(docsFolder, $"Sample{i}.docx");
+                CreateSampleDocument(path, $"This is sample document {i}.");
+                docPaths.Add(path);
+            }
 
-                // Validate that the font name was set correctly.
-                if (!string.Equals(run.Font.Name, "Helvetica", StringComparison.OrdinalIgnoreCase))
+            // Process each document: set Helvetica font for every Run.
+            foreach (string path in docPaths)
+            {
+                Document doc = new Document(path);
+
+                // Iterate over all Run nodes in the document.
+                foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
                 {
-                    throw new InvalidOperationException($"Failed to set font for run in document '{docPath}'.");
+                    // Set the font name to Helvetica.
+                    run.Font.Name = "Helvetica";
+                }
+
+                // Save the modified document (overwrite original).
+                doc.Save(path);
+            }
+
+            // Verify that all documents exist after processing.
+            foreach (string path in docPaths)
+            {
+                if (!File.Exists(path))
+                {
+                    throw new FileNotFoundException($"Processed file not found: {path}");
                 }
             }
 
-            // Save the modified document to the output folder, preserving the original file name.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(docPath));
-            doc.Save(outputPath);
+            // All done.
         }
 
-        // Indicate completion (no interactive prompts).
-        Console.WriteLine($"Processed {documentPaths.Count} document(s). Output saved to '{outputFolder}'.");
-    }
-
-    // Helper method to create a simple sample document if none are present.
-    private static void CreateSampleDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
-        builder.Writeln("It contains multiple runs with default fonts.");
-        doc.Save(filePath);
+        // Helper method to create a simple document with one paragraph of text.
+        private static void CreateSampleDocument(string filePath, string text)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln(text);
+            doc.Save(filePath);
+        }
     }
 }

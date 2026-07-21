@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using Aspose.Words;
+using Aspose.Drawing;
 
 public class Program
 {
@@ -9,39 +9,42 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Get the first paragraph (exists by default).
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        // Obtain a Font object from a temporary run to configure shared settings.
+        Run tempRun = new Run(doc, string.Empty);
+        Aspose.Words.Font sharedFont = tempRun.Font;
+        sharedFont.Size = 24; // Set font size in points.
 
-        // Obtain a Font object from DocumentBuilder for configuration.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        Aspose.Words.Font sharedFont = builder.Font;
-        sharedFont.Size = 24; // Set font size.
-
-        // Create an Aspose.Drawing.Color and convert it to System.Drawing.Color.
-        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Blue;
+        // Create a color using Aspose.Drawing, then convert to System.Drawing.Color.
+        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Red;
         System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
-        sharedFont.Color = sysColor; // Assign the color to the font.
+        sharedFont.Color = sysColor; // Apply the color to the shared font.
 
-        // Helper method to create a Run with the shared font settings.
-        Run CreateRun(string text)
-        {
-            Run run = new Run(doc, text);
-            run.Font.Size = sharedFont.Size;
-            run.Font.Color = sharedFont.Color;
-            return run;
-        }
+        // Create three runs with different text.
+        Run run1 = new Run(doc, "First run. ");
+        Run run2 = new Run(doc, "Second run. ");
+        Run run3 = new Run(doc, "Third run.");
 
-        // Add multiple runs that share the same font formatting.
-        paragraph.AppendChild(CreateRun("Hello "));
-        paragraph.AppendChild(CreateRun("world"));
-        paragraph.AppendChild(CreateRun("!"));
+        // Apply the shared font settings to each run.
+        ApplyFontSettings(run1.Font, sharedFont);
+        ApplyFontSettings(run2.Font, sharedFont);
+        ApplyFontSettings(run3.Font, sharedFont);
 
-        // Ensure the output directory exists.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "FontExample.docx");
+        // Append the runs to the first paragraph of the document.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        paragraph.AppendChild(run1);
+        paragraph.AppendChild(run2);
+        paragraph.AppendChild(run3);
 
-        // Save the document.
+        // Save the document to a file.
+        string outputPath = "FontRuns.docx";
         doc.Save(outputPath);
+    }
+
+    // Helper method to copy font properties from a source Font to a target Font.
+    private static void ApplyFontSettings(Aspose.Words.Font target, Aspose.Words.Font source)
+    {
+        target.Size = source.Size;
+        target.Color = source.Color;
+        // Additional properties can be copied here if needed.
     }
 }

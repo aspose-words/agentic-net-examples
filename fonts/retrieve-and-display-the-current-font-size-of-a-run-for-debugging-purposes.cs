@@ -9,26 +9,24 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Get the first paragraph (created by default) to hold the run.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        // Create a Run with sample text.
+        Run run = new Run(doc, "Sample text for font size debugging.");
 
-        // Create a run with some text.
-        Run run = new Run(doc, "Sample text");
+        // Set a known font size (in points) using the Run's Font property.
+        Aspose.Words.Font font = run.Font;
+        font.Size = 24;
 
-        // Set a known font size (in points) for the run.
-        run.Font.Size = 24;
+        // Append the Run to the first paragraph of the document.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
 
-        // Append the run to the paragraph.
-        paragraph.AppendChild(run);
-
-        // Save the document so we can verify that the file is created.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "RunFontSizeDemo.docx");
-        doc.Save(outputPath);
-
-        // Retrieve the current font size from the run.
+        // Retrieve the current font size from the Run.
         double currentSize = run.Font.Size;
 
-        // Output the font size for debugging purposes.
-        Console.WriteLine($"Run font size: {currentSize} points");
+        // Output the font size to the console for debugging.
+        Console.WriteLine($"Current font size of the run: {currentSize} points");
+
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontSizeDebug.docx");
+        doc.Save(outputPath);
     }
 }

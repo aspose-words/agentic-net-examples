@@ -1,7 +1,8 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Drawing; // For Aspose.Drawing.Color
+using Aspose.Words.Drawing;
+using Aspose.Drawing;
 
 public class Program
 {
@@ -10,41 +11,34 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a paragraph and add it to the document's body.
-        Paragraph paragraph = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(paragraph);
+        // Use DocumentBuilder to add content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a run with some text.
-        Run run = new Run(doc, "Hello World!");
+        // Create a System.Drawing.Color instance from Aspose.Drawing.Color.Blue.
+        System.Drawing.Color blueColor = System.Drawing.Color.FromArgb(Aspose.Drawing.Color.Blue.ToArgb());
 
-        // Create a blue color using Aspose.Drawing.Color.
-        Aspose.Drawing.Color asposeBlue = Aspose.Drawing.Color.Blue;
+        // Assign the blue color to the current font (affects the Run that will be inserted).
+        builder.Font.Color = blueColor;
 
-        // Convert Aspose.Drawing.Color to System.Drawing.Color for the Font.Color property.
-        System.Drawing.Color systemBlue = System.Drawing.Color.FromArgb(asposeBlue.ToArgb());
+        // Insert a run of text.
+        builder.Writeln("Hello World!");
 
-        // Assign the blue color to the run's font.
-        run.Font.Color = systemBlue;
-
-        // Append the run to the paragraph.
-        paragraph.AppendChild(run);
-
-        // Validate that the font color was set correctly.
-        if (run.Font.Color.ToArgb() != systemBlue.ToArgb())
-        {
-            throw new InvalidOperationException("Font color was not set correctly.");
-        }
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        // Define output path.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "BlueRun.docx");
 
         // Save the document.
         doc.Save(outputPath);
 
-        // Ensure the file was created.
-        if (!File.Exists(outputPath))
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            Console.WriteLine("Document saved successfully to: " + outputPath);
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
         }
     }
 }

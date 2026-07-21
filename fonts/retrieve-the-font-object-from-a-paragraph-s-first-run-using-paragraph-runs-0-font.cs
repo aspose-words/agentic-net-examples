@@ -9,22 +9,24 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a paragraph and add it to the document's first section body.
+        // Create a new paragraph and add it to the document's body.
         Paragraph paragraph = new Paragraph(doc);
         doc.FirstSection.Body.AppendChild(paragraph);
 
-        // Create a run with some text and set its font name.
-        Run run = new Run(doc, "Hello Aspose.Words!");
-        run.Font.Name = "Courier New";
+        // Create a run with some text and set its font properties.
+        Run run = new Run(doc, "Hello Aspose!");
+        run.Font.Name = "Arial";
+        run.Font.Size = 24;
         paragraph.AppendChild(run);
 
-        // Retrieve the Font object from the first run of the paragraph.
-        Font firstRunFont = paragraph.Runs[0].Font;
+        // Retrieve the Font object from the paragraph's first run.
+        Aspose.Words.Font firstRunFont = paragraph.Runs[0].Font;
 
-        // Output a property of the retrieved font.
-        Console.WriteLine("First run font name: " + firstRunFont.Name);
+        // Output some font information to the console.
+        Console.WriteLine($"First run font name: {firstRunFont.Name}");
+        Console.WriteLine($"First run font size: {firstRunFont.Size}");
 
-        // Save the document to the local file system.
+        // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FirstRunFont.docx");
         doc.Save(outputPath);
     }

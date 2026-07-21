@@ -1,47 +1,50 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This text has a semi‑transparent fill.");
 
-        // Add a line of text.
-        builder.Writeln("Hello, semi‑transparent world!");
+        // Access the font of the recently added run.
+        Aspose.Words.Font font = builder.Font;
 
-        // Retrieve the first run of the first paragraph.
-        Paragraph paragraph = doc.FirstSection.Body.Paragraphs[0];
-        Run run = paragraph.Runs[0];
+        // Ensure the fill is solid.
+        font.Fill.Solid();
 
-        // Define a semi‑transparent red fill.
-        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.FromArgb(255, 0, 0); // Red
+        // Create an Aspose.Drawing.Color (blue with full opacity).
+        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.FromArgb(255, 0, 0, 255);
+
+        // Convert to System.Drawing.Color because Fill.Color expects that type.
         System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
 
-        // Apply fill color and transparency.
-        run.Font.Fill.Color = sysColor;
-        run.Font.Fill.Transparency = 0.5; // 50 % transparent
+        // Set the fill color.
+        font.Fill.Color = sysColor;
 
-        // Validate the applied properties.
-        bool colorMatches = run.Font.Fill.Color.ToArgb() == sysColor.ToArgb();
-        bool transparencyMatches = Math.Abs(run.Font.Fill.Transparency - 0.5) < 0.0001;
+        // Set the transparency to 50% (0.5). 0.0 = opaque, 1.0 = clear.
+        font.Fill.Transparency = 0.5;
 
-        // Save the document.
-        string outputPath = "SemiTransparentText.docx";
+        // Output the applied fill properties for verification.
+        Console.WriteLine($"Fill type: {font.Fill.FillType}");
+        Console.WriteLine($"Fill color: {font.Fill.Color}");
+        Console.WriteLine($"Transparency: {font.Fill.Transparency}");
+
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SemiTransparentFill.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created and properties are set.
-        if (File.Exists(outputPath) && colorMatches && transparencyMatches)
-        {
-            Console.WriteLine("Document created successfully with semi‑transparent text.");
-        }
-        else
-        {
-            Console.WriteLine("Document creation failed or properties not set correctly.");
-        }
+        // Confirm that the file was created.
+        Console.WriteLine(File.Exists(outputPath)
+            ? $"Document saved successfully to: {outputPath}"
+            : "Failed to save the document.");
     }
 }

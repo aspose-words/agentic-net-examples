@@ -11,45 +11,47 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add a paragraph with a single run of text.
+        // Use DocumentBuilder to add a paragraph with a run of text.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text with fill color and transparency.");
+        builder.Writeln("Sample text with custom fill color and transparency.");
 
-        // Retrieve the first run that was just added.
+        // Get the Font of the last run (the one we just added).
+        // The Run is the first (and only) run of the first paragraph.
         Run run = doc.FirstSection.Body.Paragraphs[0].Runs[0];
+        Aspose.Words.Font font = run.Font; // Fully qualified to avoid ambiguity
 
-        // Access the Fill formatting of the run's font.
-        Fill fill = run.Font.Fill;
+        // Ensure the fill is set to a solid color.
+        font.Fill.Solid();
 
-        // Ensure the fill is a solid fill.
-        fill.Solid();
-
-        // Create an Aspose.Drawing.Color (red) and convert it to System.Drawing.Color.
+        // Create a red color using Aspose.Drawing.Color.
         Aspose.Drawing.Color asposeRed = Aspose.Drawing.Color.Red;
+
+        // Convert Aspose.Drawing.Color to System.Drawing.Color because Fill.Color expects System.Drawing.Color.
         System.Drawing.Color sysRed = System.Drawing.Color.FromArgb(asposeRed.ToArgb());
 
-        // Set the fill color to red (System.Drawing.Color required).
-        fill.Color = sysRed;
+        // Apply the color and set transparency to 30% (0.3).
+        font.Fill.Color = sysRed;
+        font.Fill.Transparency = 0.3; // 30% transparent
 
-        // Set the fill transparency to 30% (0.3).
-        fill.Transparency = 0.3;
+        // Validate that the properties were set correctly.
+        if (font.Fill.Transparency != 0.3 ||
+            font.Fill.Color.ToArgb() != sysRed.ToArgb())
+        {
+            throw new InvalidOperationException("Font fill properties were not set as expected.");
+        }
 
-        // Optional validation (can be removed if not needed).
-        Console.WriteLine($"Fill color ARGB: {fill.Color.ToArgb():X8}");
-        Console.WriteLine($"Fill transparency: {fill.Transparency * 100}%");
+        // Define output path.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "FontFillExample.docx");
 
-        // Save the document to a file.
-        string outputPath = "FontFillExample.docx";
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
-        if (File.Exists(outputPath))
+        if (!File.Exists(outputPath))
         {
-            Console.WriteLine("Document saved successfully.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
+            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
         }
     }
 }

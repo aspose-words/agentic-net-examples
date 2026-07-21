@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings; // For LineSpacingRule enum
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,37 +10,35 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content.
+        // Use DocumentBuilder to add a paragraph with some text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph will have 1.5 line spacing.");
 
-        // Set the paragraph line spacing to 1.5 lines.
-        // 1 line = 12 points, so 1.5 lines = 18 points.
+        // Set the paragraph's line spacing to 1.5 lines.
+        // Use the Multiple rule where the value represents a multiple of the default line height (12 points).
         builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 18.0;
+        builder.ParagraphFormat.LineSpacing = 1.5; // 1.5 * 12 points = 18 points.
 
-        // Add a sample paragraph.
-        builder.Writeln("This paragraph has 1.5 line spacing.");
-
-        // Validate that the line spacing was set correctly.
-        double actualSpacing = builder.ParagraphFormat.LineSpacing;
-        if (Math.Abs(actualSpacing - 18.0) > 0.001)
+        // Validate that the line spacing rule and value were applied.
+        if (builder.ParagraphFormat.LineSpacingRule != LineSpacingRule.Multiple ||
+            Math.Abs(builder.ParagraphFormat.LineSpacing - 1.5) > 0.0001)
         {
-            throw new InvalidOperationException("Line spacing was not set to the expected value.");
+            throw new InvalidOperationException("Failed to set paragraph line spacing to 1.5 lines.");
         }
 
-        // Define the output file path.
+        // Define output path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ParagraphLineSpacing.docx");
 
         // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Ensure the file was created.
         if (!File.Exists(outputPath))
         {
             throw new FileNotFoundException("The document was not saved correctly.", outputPath);
         }
 
-        // Optionally, inform that the process completed.
-        Console.WriteLine("Document saved successfully to: " + outputPath);
+        // Optionally, inform the user (no interactive input required).
+        Console.WriteLine("Document saved to: " + outputPath);
     }
 }
