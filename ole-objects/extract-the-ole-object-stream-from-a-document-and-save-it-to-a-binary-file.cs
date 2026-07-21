@@ -7,37 +7,52 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a simple text file that will be embedded as an OLE package.
-        string sampleFilePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.txt");
-        File.WriteAllText(sampleFilePath, "This is sample content for the OLE object.");
+        // Paths for the temporary document and the extracted OLE binary file.
+        const string docPath = "OleDocument.docx";
+        const string extractedPath = "ExtractedOle.bin";
 
-        // Create a new blank document.
+        // -------------------------------------------------
+        // 1. Create a new document and embed a simple OLE package.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the OLE object (as a package) into the document.
-        using (FileStream sampleFileStream = new FileStream(sampleFilePath, FileMode.Open, FileAccess.Read))
+        // Sample data that will be stored inside the OLE object.
+        byte[] oleData = System.Text.Encoding.UTF8.GetBytes("This is the content of the embedded OLE object.");
+
+        using (MemoryStream oleStream = new MemoryStream(oleData))
         {
-            // progId "Package" indicates a generic OLE package.
-            // asIcon = false to embed the content directly.
-            // presentation = null uses the default presentation.
-            builder.InsertOleObject(sampleFileStream, "Package", false, null);
+            // Insert the OLE object as a generic package.
+            // Parameters: data stream, progId ("Package"), display as content (false), no custom icon (null).
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
+
+            // Optional: give the package a file name and display name.
+            oleShape.OleFormat.OlePackage.FileName = "Sample.txt";
+            oleShape.OleFormat.OlePackage.DisplayName = "Sample.txt";
         }
 
-        // Retrieve the first shape that contains the OLE object.
-        Shape oleShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
-        OleFormat oleFormat = oleShape.OleFormat;
+        // Save the document that now contains the OLE object.
+        doc.Save(docPath);
 
-        // Define the output binary file path for the extracted OLE data.
-        string outputOlePath = Path.Combine(Directory.GetCurrentDirectory(), "extracted_ole.bin");
+        // -------------------------------------------------
+        // 2. Load the document (demonstrating the load rule).
+        // -------------------------------------------------
+        Document loadedDoc = new Document(docPath);
 
-        // Save the OLE object data to the binary file using a stream.
-        using (FileStream outputStream = new FileStream(outputOlePath, FileMode.Create, FileAccess.Write))
+        // Locate the first shape that holds an OLE object.
+        Shape shape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
+        OleFormat oleFormat = shape.OleFormat;
+
+        // -------------------------------------------------
+        // 3. Extract the OLE object data to a binary file.
+        // -------------------------------------------------
+        using (FileStream fileStream = new FileStream(extractedPath, FileMode.Create))
         {
-            oleFormat.Save(outputStream);
+            // The OleFormat.Save method writes the embedded object's raw stream.
+            oleFormat.Save(fileStream);
         }
 
-        // Optional: indicate completion.
-        Console.WriteLine("OLE object extracted to: " + outputOlePath);
+        // Indicate that the operation has completed.
+        Console.WriteLine("OLE object extracted to: " + Path.GetFullPath(extractedPath));
     }
 }

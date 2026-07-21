@@ -11,23 +11,30 @@ public class OleObjectInsertionDemo
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a simple byte array to act as OLE data.
-        byte[] dummyData = new byte[] { 0x00, 0x01, 0x02, 0x03 };
-        using (MemoryStream oleStream = new MemoryStream(dummyData))
+        // Prepare a simple text file in memory to be inserted as an OLE package.
+        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("Sample OLE package content");
+        using (MemoryStream oleStream = new MemoryStream(sampleData))
         {
-            // Insert the OLE object into the document.
-            // Parameters: stream, progId ("Package" for generic OLE package), asIcon = true, presentation = null.
-            Shape oleShape = builder.InsertOleObject(oleStream, "Package", true, null);
+            // Insert the OLE object from the stream.
+            // Parameters: stream, progId ("Package"), asIcon = false, presentation = null.
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
 
-            // Verify that the insertion returned a non‑null shape and that it contains an OleFormat.
-            bool insertionSuccessful = oleShape != null && oleShape.OleFormat != null;
+            // Verify that the insertion returned a non‑null Shape.
+            if (oleShape == null)
+                throw new InvalidOperationException("InsertOleObject returned null.");
 
-            // Output the verification result.
-            Console.WriteLine("OLE object insertion successful: " + insertionSuccessful);
+            // Verify that the Shape contains a valid OleFormat object.
+            OleFormat oleFormat = oleShape.OleFormat;
+            if (oleFormat == null)
+                throw new InvalidOperationException("OleFormat is null after insertion.");
+
+            // Optional: output some properties to confirm successful insertion.
+            Console.WriteLine($"OLE object inserted. IsLink: {oleFormat.IsLink}, OleIcon: {oleFormat.OleIcon}");
         }
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectDemo.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "OleObjectDemo.docx");
         doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

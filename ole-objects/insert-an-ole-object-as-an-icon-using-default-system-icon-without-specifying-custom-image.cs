@@ -11,16 +11,17 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a temporary file to embed as an OLE object.
-        string tempFilePath = Path.Combine(Path.GetTempPath(), "SampleText.txt");
-        File.WriteAllText(tempFilePath, "This is a sample text file embedded as an OLE object.");
+        // Prepare a sample file to embed as an OLE object.
+        string tempDir = Path.GetTempPath();
+        string sampleFilePath = Path.Combine(tempDir, "SampleTextFile.txt");
+        File.WriteAllText(sampleFilePath, "This is a sample text file embedded as an OLE icon.");
 
         // Insert the OLE object as an icon.
-        // Parameters: file name, isLinked = false (embed), iconFile = null (use default system icon), iconCaption = null (use file name).
-        builder.InsertOleObjectAsIcon(tempFilePath, false, null, null);
+        // Passing null for iconFile and iconCaption makes Aspose.Words use the default system icon and file name as caption.
+        builder.InsertOleObjectAsIcon(sampleFilePath, false, null, null);
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectAsIcon.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "OleObjectIcon.docx");
         doc.Save(outputPath);
     }
 }

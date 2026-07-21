@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class SetOlePackageFileName
 {
     public static void Main()
     {
@@ -11,22 +11,25 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a simple byte array that mimics a ZIP file (PK header).
-        byte[] zipFileBytes = new byte[] { 0x50, 0x4B, 0x03, 0x04 };
+        // Prepare some dummy data to embed as an OLE package.
+        // In a real scenario this could be the bytes of a ZIP, PDF, etc.
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("This is the content of the embedded file.");
 
-        // Insert the OLE package from the byte array.
-        using (MemoryStream stream = new MemoryStream(zipFileBytes))
+        // Insert the OLE object from the stream.
+        // progId "Package" indicates a generic OLE package.
+        // asIcon = true so the object appears as an icon.
+        using (MemoryStream stream = new MemoryStream(dummyData))
         {
-            // Insert as an OLE object displayed as an icon.
-            Shape shape = builder.InsertOleObject(stream, "Package", true, null);
+            Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
 
-            // Set the original file name and display name to preserve metadata.
-            shape.OleFormat.OlePackage.FileName = "Package file name.zip";
-            shape.OleFormat.OlePackage.DisplayName = "Package display name.zip";
+            // Set the original file name and display name for the OLE package.
+            // This preserves the metadata when the document is opened in Word.
+            oleShape.OleFormat.OlePackage.FileName = "EmbeddedFile.txt";
+            oleShape.OleFormat.OlePackage.DisplayName = "EmbeddedFile.txt";
         }
 
-        // Ensure the output directory exists.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OlePackageExample.docx");
         doc.Save(outputPath);
     }
 }

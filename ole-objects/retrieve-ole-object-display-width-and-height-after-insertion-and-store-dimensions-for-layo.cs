@@ -7,37 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary file to embed as an OLE object.
-        string tempFolder = Path.GetTempPath();
-        string tempFilePath = Path.Combine(tempFolder, "SampleText.txt");
-        File.WriteAllText(tempFilePath, "This is a sample text file for OLE embedding.");
-
-        // Create a new document and a DocumentBuilder.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the OLE object from the temporary file as a package (generic OLE object).
-        // The InsertOleObject method returns the Shape that contains the OLE object.
-        Shape oleShape;
-        using (FileStream fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.Read))
+        // Prepare some dummy data to embed as an OLE object (a simple text file).
+        byte[] oleData = System.Text.Encoding.UTF8.GetBytes("Hello, OLE object!");
+        using (MemoryStream oleStream = new MemoryStream(oleData))
         {
-            oleShape = builder.InsertOleObject(fs, "Package", false, null);
+            // Insert the OLE object into the document.
+            // progId "Package" indicates a generic OLE package.
+            // asIcon = false so the object is displayed as its content, not as an icon.
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
+
+            // After insertion, retrieve the display width and height of the OLE shape (in points).
+            double displayWidth = oleShape.Width;
+            double displayHeight = oleShape.Height;
+
+            // Store or use the dimensions for layout calculations.
+            // For demonstration, write them to the console.
+            Console.WriteLine($"OLE object display width: {displayWidth} points");
+            Console.WriteLine($"OLE object display height: {displayHeight} points");
         }
 
-        // Retrieve the display width and height of the OLE object (in points).
-        double displayWidth = oleShape.Width;
-        double displayHeight = oleShape.Height;
-
-        // Store dimensions for further layout calculations (example: calculate area).
-        double oleArea = displayWidth * displayHeight;
-
-        // Output the dimensions to the console (no user interaction required).
-        Console.WriteLine($"OLE object width: {displayWidth} pt");
-        Console.WriteLine($"OLE object height: {displayHeight} pt");
-        Console.WriteLine($"Calculated area: {oleArea} pt²");
-
-        // Save the document to a temporary location.
-        string outputPath = Path.Combine(tempFolder, "OleObjectDocument.docx");
+        // Save the document to the file system.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "OleObject.docx");
         doc.Save(outputPath);
     }
 }

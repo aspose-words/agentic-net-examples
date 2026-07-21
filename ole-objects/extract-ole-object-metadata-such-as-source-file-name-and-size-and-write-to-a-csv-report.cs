@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -8,44 +8,59 @@ public class Program
 {
     public static void Main()
     {
-        // Path to the Word document that may contain OLE objects.
-        string docPath = "InputDocument.docx";
+        // Input Word document that may contain OLE objects.
+        const string inputPath = "Input.docx";
 
-        // Path for the CSV report that will be generated.
-        string csvPath = "OleMetadataReport.csv";
+        // Output CSV file that will contain the OLE metadata.
+        const string outputCsv = "OleMetadataReport.csv";
 
-        // Load the document if it exists; otherwise create an empty document.
-        Document doc = File.Exists(docPath) ? new Document(docPath) : new Document();
-
-        // Prepare a StringBuilder to compose CSV content.
-        // Header: SourceFileName,SizeInBytes
-        StringBuilder csvBuilder = new StringBuilder();
-        csvBuilder.AppendLine("SourceFileName,SizeInBytes");
-
-        // Iterate through all shapes in the document.
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        // Load the document. If the file does not exist, create an empty document instead.
+        Document doc;
+        if (File.Exists(inputPath))
         {
-            // Check if the shape contains an OLE object.
-            OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat == null)
-                continue;
-
-            // Retrieve the source file name. For embedded objects this may be empty.
-            string sourceFileName = oleFormat.SourceFullName ?? string.Empty;
-
-            // Retrieve the raw data of the OLE object to determine its size.
-            // GetRawData returns a byte array; its Length is the size in bytes.
-            byte[] rawData = oleFormat.GetRawData();
-            long sizeInBytes = rawData?.LongLength ?? 0;
-
-            // Escape any double quotes in the file name and wrap it in quotes.
-            string escapedFileName = $"\"{sourceFileName.Replace("\"", "\"\"")}\"";
-
-            // Append a line to the CSV.
-            csvBuilder.AppendLine($"{escapedFileName},{sizeInBytes}");
+            doc = new Document(inputPath);
+        }
+        else
+        {
+            // Create a new blank document to avoid a FileNotFoundException.
+            doc = new Document();
         }
 
-        // Write the CSV content to the output file.
-        File.WriteAllText(csvPath, csvBuilder.ToString(), Encoding.UTF8);
+        // Prepare a writer for the CSV report.
+        using (StreamWriter writer = new StreamWriter(outputCsv))
+        {
+            // Write CSV header.
+            writer.WriteLine("ShapeIndex,SourceFileName,SizeBytes");
+
+            // Retrieve all Shape nodes in the document.
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+            // Iterate through each shape and extract OLE metadata when applicable.
+            for (int i = 0; i < shapes.Count; i++)
+            {
+                Shape shape = (Shape)shapes[i];
+                OleFormat ole = shape.OleFormat;
+
+                // Skip shapes that do not contain OLE data.
+                if (ole == null)
+                    continue;
+
+                // Determine the source file name.
+                // For linked OLE objects this is SourceFullName; for embedded objects use SuggestedFileName.
+                string sourceFileName = !string.IsNullOrEmpty(ole.SourceFullName)
+                    ? ole.SourceFullName
+                    : ole.SuggestedFileName ?? string.Empty;
+
+                // Get the raw data of the OLE object to calculate its size.
+                byte[] rawData = ole.GetRawData();
+                long sizeBytes = rawData?.Length ?? 0;
+
+                // Write a CSV line with the collected information.
+                writer.WriteLine($"{i},\"{sourceFileName}\",{sizeBytes}");
+            }
+        }
+
+        // Save the (potentially unchanged) document back to disk.
+        doc.Save("Output.docx");
     }
 }

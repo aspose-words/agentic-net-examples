@@ -1,35 +1,65 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class OlePackageExample
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Path for the document that will contain the OLE package.
+        string docPath = Path.Combine(outputDir, "OlePackageDocument.docx");
+
+        // 1. Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare some dummy data to embed as an OLE package.
-        byte[] packageData = Encoding.UTF8.GetBytes("Sample OLE package content");
-        using (MemoryStream packageStream = new MemoryStream(packageData))
+        // 2. Create some sample data to embed as an OLE package.
+        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("Hello, this is the content of the OLE package.");
+        using (MemoryStream dataStream = new MemoryStream(sampleData))
         {
-            // Insert the OLE package into the document as an icon.
-            Shape oleShape = builder.InsertOleObject(packageStream, "Package", true, null);
+            // 3. Insert the OLE package into the document as an icon.
+            //    ProgId "Package" indicates a generic OLE package.
+            Shape oleShape = builder.InsertOleObject(dataStream, "Package", true, null);
 
-            // Modify the OLE package properties.
-            oleShape.OleFormat.OlePackage.FileName = "SamplePackage.txt";
-            oleShape.OleFormat.OlePackage.DisplayName = "Sample Package Display";
+            // 4. Access the OlePackage object to modify its properties.
+            OlePackage olePackage = oleShape.OleFormat.OlePackage;
+            olePackage.FileName = "Greeting.txt";
+            olePackage.DisplayName = "Greeting File";
 
-            // Read back the modified properties and output them.
-            Console.WriteLine("Modified OLE Package properties:");
-            Console.WriteLine($"FileName   : {oleShape.OleFormat.OlePackage.FileName}");
-            Console.WriteLine($"DisplayName: {oleShape.OleFormat.OlePackage.DisplayName}");
+            // Optional: write the modified values to the console.
+            Console.WriteLine("Inserted OLE package with:");
+            Console.WriteLine($"  FileName   = {olePackage.FileName}");
+            Console.WriteLine($"  DisplayName= {olePackage.DisplayName}");
         }
 
-        // Save the document to the file system.
-        doc.Save("OlePackageExample.docx");
+        // 5. Save the document containing the OLE package.
+        doc.Save(docPath);
+        Console.WriteLine($"Document saved to: {docPath}");
+
+        // -----------------------------------------------------------------
+        // 6. Load the saved document and read back the OLE package properties.
+        Document loadedDoc = new Document(docPath);
+        // Find the first shape that has an OleFormat (the OLE package we inserted).
+        Shape loadedOleShape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
+        OlePackage loadedOlePackage = loadedOleShape.OleFormat.OlePackage;
+
+        // 7. Output the properties read from the loaded document.
+        Console.WriteLine("Loaded OLE package properties:");
+        Console.WriteLine($"  FileName   = {loadedOlePackage.FileName}");
+        Console.WriteLine($"  DisplayName= {loadedOlePackage.DisplayName}");
+
+        // 8. Optionally, extract the raw data of the OLE package to a file.
+        string extractedFilePath = Path.Combine(outputDir, loadedOlePackage.FileName);
+        using (FileStream fileStream = new FileStream(extractedFilePath, FileMode.Create, FileAccess.Write))
+        {
+            // OleFormat.Save writes the embedded object's data to the provided stream.
+            loadedOleShape.OleFormat.Save(fileStream);
+        }
+        Console.WriteLine($"Extracted OLE package data saved to: {extractedFilePath}");
     }
 }

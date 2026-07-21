@@ -7,54 +7,45 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Path for the temporary document.
+        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "OlePackageExample.docx");
+
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a simple byte array that represents a ZIP file header.
-        // In a real scenario this would be the content of the file you want to embed.
-        byte[] packageBytes = new byte[] { 0x50, 0x4B, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00 };
+        // Prepare some sample data to embed as an OLE package.
+        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("This is the content of the embedded file.");
 
         // Insert the OLE package into the document.
-        using (MemoryStream packageStream = new MemoryStream(packageBytes))
+        using (MemoryStream dataStream = new MemoryStream(sampleData))
         {
-            // "Package" is the ProgID for a generic OLE package.
-            Shape oleShape = builder.InsertOleObject(packageStream, "Package", true, null);
+            // Insert as an OLE object with progId "Package".
+            Shape oleShape = builder.InsertOleObject(dataStream, "Package", true, null);
 
-            // Access the OlePackage object to set its properties.
+            // Access the OlePackage and set its properties.
             OlePackage olePackage = oleShape.OleFormat.OlePackage;
-            if (olePackage != null)
-            {
-                olePackage.FileName = "sample.zip";
-                olePackage.DisplayName = "Sample Package";
-            }
+            olePackage.FileName = "Sample.txt";
+            olePackage.DisplayName = "Sample Display.txt";
         }
 
-        // Save the document to a temporary file (required for loading later).
-        string docPath = Path.Combine(Path.GetTempPath(), "OlePackageDemo.docx");
+        // Save the document.
         doc.Save(docPath);
 
-        // Load the document back (demonstrates loading with default options).
+        // Load the document back.
         Document loadedDoc = new Document(docPath);
 
-        // Enumerate all shapes in the document and inspect OLE packages.
+        // Enumerate all shapes and inspect OLE packages.
         foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
         {
             OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat == null)
-                continue;
-
-            OlePackage package = oleFormat.OlePackage;
-            if (package != null)
+            if (oleFormat != null && oleFormat.OlePackage != null)
             {
+                OlePackage pkg = oleFormat.OlePackage;
                 Console.WriteLine("Found OLE Package:");
-                Console.WriteLine($"  FileName   : {package.FileName}");
-                Console.WriteLine($"  DisplayName: {package.DisplayName}");
+                Console.WriteLine($"  FileName   : {pkg.FileName}");
+                Console.WriteLine($"  DisplayName: {pkg.DisplayName}");
             }
         }
-
-        // Clean up the temporary file.
-        if (File.Exists(docPath))
-            File.Delete(docPath);
     }
 }

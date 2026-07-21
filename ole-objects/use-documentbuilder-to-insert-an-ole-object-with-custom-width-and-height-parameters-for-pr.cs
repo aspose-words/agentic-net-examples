@@ -7,28 +7,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and attach a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a description before the OLE object.
-        builder.Writeln("Embedded OLE object with custom width and height:");
+        // Write a description before the OLE object.
+        builder.Writeln("Below is an embedded OLE object with custom size:");
 
-        // Create a simple text file in memory to embed as an OLE package.
-        byte[] fileContent = System.Text.Encoding.UTF8.GetBytes("Sample embedded text file content.");
-        using (MemoryStream oleStream = new MemoryStream(fileContent))
+        // Prepare some data to embed – here we use a simple text file content.
+        byte[] fileBytes = System.Text.Encoding.UTF8.GetBytes("This is sample content for the OLE package.");
+        using (MemoryStream oleStream = new MemoryStream(fileBytes))
         {
-            // Insert the OLE object. "Package" is a generic progId for unknown file types.
-            // The object is inserted as an icon (asIcon = true) with no custom presentation image.
-            Shape oleShape = builder.InsertOleObject(oleStream, "Package", true, null);
+            // Insert the OLE object. "Package" is the ProgID for a generic OLE package.
+            // asIcon = false (display the content), presentation = null (default icon if needed).
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
 
-            // Set precise layout dimensions (points). 1 point = 1/72 inch.
-            oleShape.Width = 200;   // ~2.78 inches
-            oleShape.Height = 100;  // ~1.39 inches
+            // Set custom width and height (in points). 1 point = 1/72 inch.
+            oleShape.Width = 300;   // approx 4.17 inches
+            oleShape.Height = 150;  // approx 2.08 inches
         }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "OleObjectCustomSize.docx");
+        // Save the document to the file system.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "OleObject.docx");
         doc.Save(outputPath);
     }
 }

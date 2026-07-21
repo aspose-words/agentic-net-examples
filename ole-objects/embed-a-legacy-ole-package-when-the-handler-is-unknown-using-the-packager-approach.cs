@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class OlePackageExample
 {
     public static void Main()
     {
@@ -11,23 +11,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare some sample data to embed as an OLE package.
-        string sampleText = "Hello, this is embedded data.";
-        byte[] sampleBytes = System.Text.Encoding.UTF8.GetBytes(sampleText);
+        // Prepare some dummy data to embed. Here we use a simple text file content.
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("This is a sample OLE package content.");
 
-        // Insert the OLE object using the legacy Packager approach (ProgID "Package").
-        using (MemoryStream stream = new MemoryStream(sampleBytes))
+        // Insert the OLE object using the legacy "Package" progId.
+        // The object will be displayed as an icon.
+        using (MemoryStream dataStream = new MemoryStream(dummyData))
         {
-            // Insert as an icon (asIcon = true) with the default presentation.
-            Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
+            Shape oleShape = builder.InsertOleObject(dataStream, "Package", true, null);
 
             // Configure the OLE package properties.
-            oleShape.OleFormat.OlePackage.FileName = "sample.txt";
-            oleShape.OleFormat.OlePackage.DisplayName = "Sample Text File";
+            oleShape.OleFormat.OlePackage.FileName = "SamplePackage.txt";
+            oleShape.OleFormat.OlePackage.DisplayName = "Sample Package";
         }
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OlePackageExample.docx");
         doc.Save(outputPath);
     }
 }

@@ -12,11 +12,11 @@ public class Program
         // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an online YouTube video. Width and height are specified in points.
-        builder.InsertOnlineVideo("https://youtu.be/g1N9ke8Prmk", 360, 270);
+        // URL of the YouTube video to embed.
+        string videoUrl = "https://youtu.be/dQw4w9WgXcQ";
 
-        // Add a paragraph break after the video (optional).
-        builder.Writeln();
+        // Insert the online video with a size of 320x180 points (16:9 aspect ratio).
+        builder.InsertOnlineVideo(videoUrl, 320, 180);
 
         // Save the document to the local file system.
         doc.Save("OnlineVideo.docx");
