@@ -8,21 +8,18 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x1 table.
-        builder.StartTable();
+        // Start a table with a single cell.
+        Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell with shape");
-        builder.EndTable();
 
         // Move the cursor to the first paragraph of the first cell.
-        Table table = doc.FirstSection.Body.Tables[0];
         builder.MoveTo(table.FirstRow.FirstCell.FirstParagraph);
 
-        // Insert a floating rectangle shape.
+        // Insert a floating rectangle shape inside the cell.
         Shape shape = builder.InsertShape(
             ShapeType.Rectangle,
             RelativeHorizontalPosition.LeftMargin, 50,
@@ -34,12 +31,20 @@ public class Program
         shape.IsLayoutInCell = true;
         shape.WrapType = WrapType.None; // Required for IsLayoutInCell to take effect.
 
-        // Save the document.
+        // End the table.
+        builder.EndTable();
+
+        // Define the output file path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeLayoutInCell.docx");
+
+        // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created and the property is set correctly.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved successfully.");
+            throw new InvalidOperationException("The output document was not created.");
+
+        if (!shape.IsLayoutInCell)
+            throw new InvalidOperationException("IsLayoutInCell property was not set to true.");
     }
 }

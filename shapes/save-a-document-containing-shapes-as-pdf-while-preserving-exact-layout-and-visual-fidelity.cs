@@ -16,50 +16,42 @@ public class Program
         Shape rect = builder.InsertShape(
             ShapeType.Rectangle,
             RelativeHorizontalPosition.Page, 100,   // 100 points from the left of the page
-            RelativeVerticalPosition.Page, 100,    // 100 points from the top of the page
-            200,                                    // width
-            100,                                    // height
-            WrapType.None);                         // no text wrapping
+            RelativeVerticalPosition.Page, 100,     // 100 points from the top of the page
+            200, 100,                               // width = 200 points, height = 100 points
+            WrapType.None);                         // No text wrapping
 
         rect.FillColor = System.Drawing.Color.LightBlue;
         rect.StrokeColor = System.Drawing.Color.DarkBlue;
         rect.StrokeWeight = 2.0;
 
-        // Insert a text box shape (inline) and add some text to it.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 150, 80);
+        // Insert a floating text box shape with some text.
+        Shape textBox = builder.InsertShape(
+            ShapeType.TextBox,
+            RelativeHorizontalPosition.Page, 350,
+            RelativeVerticalPosition.Page, 150,
+            250, 100,
+            WrapType.None);
+
         textBox.FillColor = System.Drawing.Color.LightYellow;
         textBox.StrokeColor = System.Drawing.Color.Orange;
         textBox.StrokeWeight = 1.5;
 
         // Add a paragraph inside the text box.
-        Paragraph para = textBox.FirstParagraph;
-        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        Run run = new Run(doc, "Hello Aspose.Words!");
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Hello Aspose.Words Shapes!");
         run.Font.Size = 14;
         run.Font.Bold = true;
         para.AppendChild(run);
+        textBox.AppendChild(para);
 
-        // Create a simple in‑memory PNG image (a single green pixel) using a base‑64 string.
-        // This avoids the need for System.Drawing.Bitmap which may not be available on all platforms.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP8z8BQDwAFgwJ/lKXK5wAAAABJRU5ErkJggg==";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
-
-        // Insert the PNG as an inline image.
-        Shape imageShape = builder.InsertImage(imageBytes);
-        imageShape.WrapType = WrapType.None;
-        imageShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        imageShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        imageShape.Left = 350; // position it to the right of the rectangle
-        imageShape.Top = 120;
-
-        // Prepare PDF save options to render DrawingML shapes directly.
+        // Configure PDF save options to render DrawingML shapes directly.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             DmlRenderingMode = DmlRenderingMode.DrawingML
         };
 
-        // Define output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapesDocument.pdf");
+        // Determine output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Shapes.pdf");
 
         // Save the document as PDF.
         doc.Save(outputPath, pdfOptions);
@@ -67,5 +59,7 @@ public class Program
         // Validate that the PDF file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("Failed to create the PDF file.");
+
+        // Optionally, you could add further validation of file size, etc.
     }
 }

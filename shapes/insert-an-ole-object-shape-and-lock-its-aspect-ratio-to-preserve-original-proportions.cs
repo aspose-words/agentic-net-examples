@@ -3,37 +3,37 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class InsertOleObjectExample
+public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string outputPath = Path.Combine(artifactsDir, "OleObjectWithLockedAspectRatio.docx");
-
-        // Create a simple text file to act as the OLE object source.
-        string oleSourcePath = Path.Combine(artifactsDir, "Sample.txt");
-        File.WriteAllText(oleSourcePath, "This is a sample OLE object content.");
-
-        // Create a new document and a builder.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the OLE object. Use the text file as the source, embed it (isLinked = false),
-        // display it as content (asIcon = false), and let Aspose.Words use the default presentation.
-        Shape oleShape = builder.InsertOleObject(oleSourcePath, false, false, null);
+        // Prepare a simple text file content to embed as an OLE object.
+        byte[] oleData = System.Text.Encoding.UTF8.GetBytes("This is a sample OLE object content.");
+        using (MemoryStream oleStream = new MemoryStream(oleData))
+        {
+            // Ensure the stream is positioned at the beginning.
+            oleStream.Position = 0;
 
-        // Lock the aspect ratio to preserve original proportions.
-        oleShape.AspectRatioLocked = true;
+            // Insert the OLE object. Use the generic "Package" progId for a plain file.
+            // asIcon = false to embed the object directly, presentation = null to use default icon.
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
+
+            // Lock the aspect ratio to preserve original proportions.
+            oleShape.AspectRatioLocked = true;
+        }
+
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectShape.docx");
 
         // Save the document.
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        Console.WriteLine("Document created successfully at: " + outputPath);
+            throw new Exception("The output document was not saved successfully.");
     }
 }

@@ -3,65 +3,68 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Rendering; // Needed for ShapeRenderer
 using Aspose.Words.Saving;
-using Aspose.Words.Rendering;
 
-public class ExportShapesExample
+public class Program
 {
     public static void Main()
     {
-        // Prepare output directories.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        string imagesDir = Path.Combine(artifactsDir, "Images");
-        Directory.CreateDirectory(imagesDir);
-
-        // Create a new document and insert several shapes.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape.
-        builder.InsertShape(ShapeType.Rectangle, 120, 60);
-
-        // Insert an ellipse shape.
+        // Insert a few primitive shapes.
+        builder.InsertShape(ShapeType.Rectangle, 100, 50);
         builder.InsertShape(ShapeType.Ellipse, 80, 80);
+        builder.InsertShape(ShapeType.Star, 70, 70);
 
-        // Insert a text box shape.
-        builder.InsertShape(ShapeType.TextBox, 150, 50);
-
-        // Insert an image shape using a minimal in‑memory PNG (1×1 pixel).
-        // This avoids the need for System.Drawing.
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/lK5XAAAAAElFTkSuQmCC");
+        // Insert a simple 1x1 PNG image (transparent pixel) from a base64 string.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
         using (MemoryStream ms = new MemoryStream(pngBytes))
         {
-            // InsertImage returns the Shape that represents the image.
+            // InsertImage returns the Shape that contains the image.
             builder.InsertImage(ms);
         }
 
-        // Save the document (optional, just to have a reference file).
-        string docPath = Path.Combine(artifactsDir, "SampleDocument.docx");
+        // Save the document (optional, useful for inspection).
+        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "SampleShapes.docx");
         doc.Save(docPath);
 
-        // Export each shape's visual representation to a separate PNG file.
+        // Prepare output directory for the exported shape images.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "ShapeImages");
+        Directory.CreateDirectory(outputDir);
+
+        // Retrieve all Shape nodes from the document.
         var shapes = doc.GetChildNodes(NodeType.Shape, true)
                         .OfType<Shape>()
-                        .Where(s => s.ShapeType != ShapeType.Group) // Skip group shapes (no appearance).
                         .ToList();
 
+        // Export each shape to a separate PNG file.
         for (int i = 0; i < shapes.Count; i++)
         {
             Shape shape = shapes[i];
+
             // Render the shape to an image.
             ShapeRenderer renderer = shape.GetShapeRenderer();
+
+            // Configure image saving options (PNG format).
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
+
+            // Build a file name that includes the shape index and its type.
             string fileName = $"shape_{i}_{shape.ShapeType}.png";
-            string filePath = Path.Combine(imagesDir, fileName);
-            renderer.Save(filePath, new ImageSaveOptions(SaveFormat.Png));
+            string filePath = Path.Combine(outputDir, fileName);
+
+            // Save the rendered image.
+            renderer.Save(filePath, options);
 
             // Validate that the file was created.
             if (!File.Exists(filePath))
-                throw new InvalidOperationException($"Failed to save shape image: {filePath}");
+                throw new InvalidOperationException($"Failed to create image file: {filePath}");
         }
 
-        // Program ends automatically after Main finishes.
+        // Indicate successful completion.
+        Console.WriteLine("All shapes have been exported successfully.");
     }
 }

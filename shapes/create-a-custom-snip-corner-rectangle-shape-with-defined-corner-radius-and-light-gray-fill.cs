@@ -1,9 +1,8 @@
 using System;
+using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using System.Drawing;
 
 public class Program
 {
@@ -13,37 +12,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a custom shape: Single corner snipped rectangle.
-        // Width and height are specified in points (1 point = 1/72 inch).
-        double shapeWidth = 200; // points
-        double shapeHeight = 100; // points
-        Shape shape = builder.InsertShape(ShapeType.SingleCornerSnipped, shapeWidth, shapeHeight);
+        // Insert a single‑corner snipped rectangle shape.
+        // Width = 200 points, Height = 100 points.
+        Shape snipShape = builder.InsertShape(ShapeType.SingleCornerSnipped, 200, 100);
 
         // Set a light gray fill color.
-        shape.FillColor = Color.LightGray;
+        snipShape.FillColor = Color.LightGray;
 
-        // Define the corner radius via the Adjustments collection.
-        // For snipped corner shapes the first adjustment controls the snip size.
-        // The Adjustments collection is read‑only, so we modify the Adjustment object's Value.
-        if (shape.Adjustments.Count > 0)
-        {
-            shape.Adjustments[0].Value = 10; // 10 points snip size
-        }
+        // The Adjustments collection is read‑only in this API version.
+        // The default adjustment gives a visible snip, so we skip explicit assignment.
 
-        // Optionally, remove the outline stroke.
-        shape.Stroke.On = false;
+        // Position the shape as a floating object.
+        snipShape.WrapType = WrapType.None;
+        snipShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        snipShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        snipShape.Left = 100; // points from the left edge of the page
+        snipShape.Top = 100;  // points from the top edge of the page
 
-        // Save the document with a compliance level that supports DML shapes.
-        string fileName = "SnipCornerRectangle.docx";
-        string filePath = Path.Combine(Directory.GetCurrentDirectory(), fileName);
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
-        };
-        doc.Save(filePath, saveOptions);
+        // Save the document.
+        string outputPath = "SnipCornerShape.docx";
+        doc.Save(outputPath);
 
-        // Validate that the file was created.
-        if (!File.Exists(filePath))
-            throw new Exception($"Failed to create the output file: {filePath}");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+
+        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

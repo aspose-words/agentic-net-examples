@@ -7,31 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a tiny placeholder PNG (1x1 pixel) from a Base64 string.
+        // This avoids the need for System.Drawing dependencies.
+        string imagePath = Path.Combine(outputDir, "placeholder.png");
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/lKXK5wAAAABJRU5ErkJggg==");
+        File.WriteAllBytes(imagePath, pngBytes);
+
+        // Create a new Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 80);
+        // Insert the placeholder image as a shape.
+        Shape shape = builder.InsertImage(imagePath);
 
-        // Apply a hyperlink that points to an external website.
-        const string url = "https://www.example.com";
-        shape.HRef = url;               // Set the hyperlink address.
-        shape.Target = "New Window";    // Open the link in a new browser window.
-        shape.ScreenTip = "Open Example.com"; // Tooltip shown on hover.
-
-        // Validate that the hyperlink was set correctly.
-        if (shape.HRef != url)
-            throw new InvalidOperationException("Failed to set the shape hyperlink.");
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HyperlinkedShape.docx");
+        // Apply hyperlink to the shape.
+        string url = "https://www.example.com/";
+        shape.HRef = url;          // Destination URL.
+        shape.Target = "New Window"; // Open in a new window.
+        shape.ScreenTip = "Open example website";
 
         // Save the document.
-        doc.Save(outputPath);
+        string docPath = Path.Combine(outputDir, "HyperlinkedShape.docx");
+        doc.Save(docPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+        // Validate that the document was saved.
+        if (!File.Exists(docPath))
+            throw new Exception("Failed to save the document.");
+
+        // Validate that the shape contains the expected hyperlink.
+        if (shape.HRef != url)
+            throw new Exception("Hyperlink was not set correctly on the shape.");
+
+        Console.WriteLine("Document created successfully at: " + docPath);
     }
 }

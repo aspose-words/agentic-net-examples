@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 public class Program
 {
@@ -12,34 +12,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the first floating rectangle shape.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 200);
-        rectangle.FillColor = Color.LightBlue;
-        rectangle.Left = 50;   // Position from the left edge of the page.
-        rectangle.Top = 50;    // Position from the top edge of the page.
-        rectangle.WrapType = WrapType.None; // Make it a floating shape.
+        // Insert the first rectangle (will be sent to the back).
+        Shape backShape = builder.InsertShape(ShapeType.Rectangle, 200, 200);
+        backShape.FillColor = System.Drawing.Color.LightBlue;
+        backShape.Left = 100;   // Position to overlap with the second shape.
+        backShape.Top = 100;
 
-        // Insert the second floating ellipse shape that overlaps the rectangle.
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 200, 200);
-        ellipse.FillColor = Color.LightCoral;
-        ellipse.Left = 100;
-        ellipse.Top = 100;
-        ellipse.WrapType = WrapType.None;
+        // Insert the second rectangle (will stay in front).
+        Shape frontShape = builder.InsertShape(ShapeType.Rectangle, 200, 200);
+        frontShape.FillColor = System.Drawing.Color.OrangeRed;
+        frontShape.Left = 150;  // Overlap the first shape.
+        frontShape.Top = 150;
 
-        // Adjust ZOrder so that the rectangle is behind the ellipse.
-        // Lower ZOrder values are rendered behind higher values.
-        rectangle.ZOrder = 0;
-        ellipse.ZOrder = 1;
+        // Send the first shape to the back by setting a lower ZOrder.
+        backShape.ZOrder = 0;   // Lowest stacking order.
+        frontShape.ZOrder = 1;  // Higher stacking order, appears in front.
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeBack.docx");
-        doc.Save(outputPath);
+        // Define output path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ShapeSendToBack.docx");
 
-        // Verify that the file was created.
+        // Save the document.
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
-
-        // Optionally, inform that the process completed (no interactive prompts required).
-        Console.WriteLine("Document saved to: " + outputPath);
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

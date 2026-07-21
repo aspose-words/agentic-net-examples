@@ -11,20 +11,21 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a bookmark named "MyBookmark" and some placeholder text.
+        // Insert a bookmark named "MyBookmark" and add some text inside it.
         builder.StartBookmark("MyBookmark");
-        builder.Writeln("This text is inside the bookmark.");
+        builder.Write("This text is inside the bookmark.");
         builder.EndBookmark("MyBookmark");
 
         // Move the builder's cursor to the start of the bookmark.
         bool moved = builder.MoveToBookmark("MyBookmark");
         if (!moved)
-            throw new Exception("Bookmark 'MyBookmark' was not found.");
+            throw new InvalidOperationException("Bookmark 'MyBookmark' was not found.");
 
         // Insert a rectangle shape at the bookmark location.
+        // Using InsertShape for simplicity; width and height are in points.
         Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        // Optional: set a fill color to make the shape visible.
         shape.FillColor = System.Drawing.Color.LightBlue;
-        shape.Stroke.Color = System.Drawing.Color.DarkBlue;
 
         // Define the output file path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BookmarkShape.docx");
@@ -32,11 +33,8 @@ public class Program
         // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception($"Failed to create the output file at '{outputPath}'.");
-
-        // Optional: indicate success.
-        Console.WriteLine($"Document saved successfully to: {outputPath}");
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }
