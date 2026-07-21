@@ -1,6 +1,5 @@
 using System;
-using System.IO;
-using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Fields;
@@ -9,91 +8,96 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // -------------------- Create sample document --------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Intro paragraph.
-        builder.Writeln("Intro paragraph.");
+        builder.Writeln("Paragraph before the table.");
 
-        // Insert a table.
+        // Insert a simple 2x2 table.
         Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("A1");
+        builder.InsertCell();
+        builder.Write("B1");
         builder.EndRow();
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("A2");
+        builder.InsertCell();
+        builder.Write("B2");
+        builder.EndRow();
         builder.EndTable();
 
-        // Content that will be extracted (two paragraphs).
-        builder.Writeln("Extracted paragraph 1.");
-        builder.Writeln("Extracted paragraph 2.");
+        // Paragraph that will be extracted and duplicated.
+        builder.Writeln("Between content that will be duplicated.");
 
-        // Insert a MERGEFIELD (field node).
-        builder.InsertField("MERGEFIELD SampleField");
+        // Insert a MERGEFIELD as the field node.
+        builder.InsertField("MERGEFIELD SampleField", "FieldResult");
 
-        // Closing paragraph.
-        builder.Writeln("After field paragraph.");
+        builder.Writeln("Paragraph after the field.");
 
-        // Save the original document (optional, for inspection).
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "original.docx");
-        doc.Save(originalPath);
+        // Save the source document (optional, just for inspection).
+        const string sourcePath = "source.docx";
+        doc.Save(sourcePath);
+
+        // -------------------- Load document and locate nodes --------------------
+        Document loadedDoc = new Document(sourcePath);
 
         // Locate the first table in the document.
-        Table targetTable = doc.GetChildNodes(NodeType.Table, true).OfType<Table>().FirstOrDefault();
+        Table targetTable = loadedDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
         if (targetTable == null)
             throw new InvalidOperationException("Table not found in the document.");
 
-        // Locate the first field start node (the MERGEFIELD we inserted).
-        FieldStart fieldStart = doc.GetChildNodes(NodeType.FieldStart, true).OfType<FieldStart>().FirstOrDefault();
-        if (fieldStart == null)
-            throw new InvalidOperationException("Field start not found in the document.");
+        // Locate the first field in the document.
+        Field field = loadedDoc.Range.Fields[0];
+        if (field == null)
+            throw new InvalidOperationException("Field not found in the document.");
 
-        // Get the corresponding field end node via the Field object.
-        Field field = fieldStart.GetField();
-        FieldEnd fieldEnd = field?.End;
-        if (fieldEnd == null)
-            throw new InvalidOperationException("Field end not found in the document.");
+        // Get the paragraph that contains the field.
+        Paragraph fieldParagraph = field.Start.GetAncestor(NodeType.Paragraph) as Paragraph;
+        if (fieldParagraph == null)
+            throw new InvalidOperationException("Field paragraph not found.");
 
-        // The body that contains the nodes.
-        Body body = doc.FirstSection.Body;
+        // Get the body that holds the block‑level nodes.
+        Body body = loadedDoc.FirstSection.Body;
 
-        // Collect block-level nodes that appear after the table and before the paragraph that holds the field start.
-        var nodesToDuplicate = new System.Collections.Generic.List<Node>();
-        Node current = targetTable.NextSibling;
-        while (current != null && !(current is Paragraph para && para.GetChildNodes(NodeType.FieldStart, true).Contains(fieldStart)))
+        // -------------------- Collect nodes between the table and the field paragraph --------------------
+        List<Node> nodesToDuplicate = new List<Node>();
+        Node curNode = targetTable.NextSibling;
+        while (curNode != null && curNode != fieldParagraph)
         {
-            nodesToDuplicate.Add(current);
-            current = current.NextSibling;
+            nodesToDuplicate.Add(curNode);
+            curNode = curNode.NextSibling;
         }
 
-        if (!nodesToDuplicate.Any())
-            throw new InvalidOperationException("No nodes found between the table and the field.");
+        if (nodesToDuplicate.Count == 0)
+            throw new InvalidOperationException("No content found between the table and the field.");
 
-        // Duplicate each extracted node and insert after the paragraph that contains the field.
-        // fieldEnd is an inline node inside a paragraph; we need the paragraph as the insertion point.
-        Paragraph fieldParagraph = fieldEnd.ParentNode as Paragraph;
-        if (fieldParagraph == null)
-            throw new InvalidOperationException("Field end does not have a parent paragraph.");
-
+        // -------------------- Duplicate the collected nodes after the field paragraph --------------------
         Node insertionPoint = fieldParagraph;
         foreach (Node node in nodesToDuplicate)
         {
-            // Clone the node deeply to preserve formatting.
+            // Clone the node (deep clone) and insert it after the current insertion point.
             Node clonedNode = node.Clone(true);
-            // Insert the cloned block node after the field's paragraph.
             body.InsertAfter(clonedNode, insertionPoint);
-            insertionPoint = clonedNode; // Update insertion point so duplicates stay in order.
+            insertionPoint = clonedNode;
         }
 
         // Save the resulting document.
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "result.docx");
-        doc.Save(resultPath);
+        const string resultPath = "result.docx";
+        loadedDoc.Save(resultPath);
 
-        // Validate that the result file was created.
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException("Result document was not created.");
+        // Validation: ensure the duplicated paragraph exists twice.
+        int duplicatedParagraphCount = 0;
+        foreach (Paragraph para in loadedDoc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            if (para.GetText().Trim() == "Between content that will be duplicated.")
+                duplicatedParagraphCount++;
+        }
 
-        Console.WriteLine("Document processing completed successfully.");
+        if (duplicatedParagraphCount != 2)
+            throw new InvalidOperationException("The content was not duplicated correctly.");
+
+        Console.WriteLine("Content duplicated successfully. Result saved to " + resultPath);
     }
 }

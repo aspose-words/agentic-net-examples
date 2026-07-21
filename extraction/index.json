@@ -10,7 +10,7 @@
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
@@ -18,58 +18,50 @@
       "Aspose.Words",
       "Aspose.Words.Tables",
       "Newtonsoft.Json",
-      "System.Collections.Generic",
       "Aspose.Words.Fields",
       "Aspose.Words.Drawing",
-      "System.Linq",
       "Aspose.Words.Saving",
+      "System.Collections.Generic",
+      "System.Linq",
+      "System.Text",
       "System.IO.Compression",
-      "Aspose.Words.Markup",
       "Aspose.Words.Notes",
       "System.Threading.Tasks"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Node",
       "File",
       "Paragraph",
-      "JsonConvert",
+      "Node",
       "NodeType",
       "SaveFormat",
-      "FieldType",
       "Range",
+      "Field",
       "Run",
       "Table",
+      "Row",
       "Cell",
-      "Bookmark",
-      "Font",
       "MemoryStream",
-      "Shape",
       "StyleIdentifier",
       "CompositeNode",
+      "FieldType",
       "Directory",
       "Path",
-      "Field",
+      "Shape",
       "ImageData",
-      "Comment",
-      "Footnote"
+      "Font"
     ]
   },
   "stats": {
     "total_examples": 30,
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
-      "image-shape-extraction": 3,
-      "input-bootstrap": 1,
-      "table-structured-extraction": 6,
+      "text-range-extraction": 11,
       "targeted-node-extraction": 9,
-      "text-range-extraction": 11
-    },
-    "winner_counts": {
-      "existing_repo": 4,
-      "llm": 6,
-      "mcp": 20
+      "table-structured-extraction": 6,
+      "input-bootstrap": 1,
+      "image-shape-extraction": 3
     }
   },
   "rules_summary": {
@@ -139,8 +131,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 3,
@@ -172,8 +164,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 6,
@@ -183,8 +175,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 7,
@@ -238,8 +230,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 12,
@@ -348,8 +340,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 22,
@@ -376,13 +368,13 @@
     {
       "id": 24,
       "file_name": "create-a-command-line-tool-that-accepts-start-and-end-node-ids-and-outputs-the-extracted-s.cs",
-      "task": "Create a command-line tool that accepts start and end node IDs and outputs the extracted segment as PDF.",
+      "task": "Create a command‑line tool that accepts start and end node IDs and outputs the extracted segment as PDF.",
       "workflow": "text-range-extraction",
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 25,
@@ -392,8 +384,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 26,
@@ -403,8 +395,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 27,
@@ -425,8 +417,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 29,

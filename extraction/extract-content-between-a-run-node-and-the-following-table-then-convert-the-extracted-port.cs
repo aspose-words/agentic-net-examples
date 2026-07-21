@@ -2,102 +2,87 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // Create a sample source document containing a run of text followed by a table.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 1. Create a sample source document with a run and a table.
+        // -------------------------------------------------
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
 
-        // First paragraph with some text.
-        builder.Writeln("Paragraph before the target run.");
+        // First paragraph with a run.
+        builder.Writeln("Intro paragraph.");
+        builder.Write("Run text "); // This creates a Run inside the current paragraph.
+        builder.Writeln(); // End the paragraph.
 
-        // Second paragraph with the target run.
-        builder.Write("TargetRunText "); // This creates a Run inside the current paragraph.
-
-        // End the paragraph.
-        builder.Writeln();
-
-        // Insert a table after the run.
-        Table table = builder.StartTable();
+        // Insert a simple table after the run.
+        builder.StartTable();
         builder.InsertCell();
         builder.Write("Cell 1");
         builder.EndRow();
         builder.EndTable();
 
-        // Save the source document to a local file.
+        // Save the source document locally.
         const string sourcePath = "source.docx";
         source.Save(sourcePath);
 
-        // -----------------------------------------------------------------
-        // Load the document for extraction.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 2. Load the document for extraction.
+        // -------------------------------------------------
         Document loaded = new Document(sourcePath);
 
-        // Locate the run that contains the marker text "TargetRunText".
-        Run runNode = null;
-        foreach (Run run in loaded.GetChildNodes(NodeType.Run, true))
-        {
-            if (run.Text != null && run.Text.Contains("TargetRunText"))
-            {
-                runNode = run;
-                break;
-            }
-        }
-
+        // Locate the first Run node.
+        Paragraph firstParagraph = loaded.FirstSection.Body.Paragraphs[0];
+        Run runNode = firstParagraph.Runs.Count > 0 ? firstParagraph.Runs[0] : null;
         if (runNode == null)
-            throw new InvalidOperationException("Target run node not found.");
+            throw new InvalidOperationException("Run node not found.");
 
-        // Find the first table node that appears after the paragraph containing the run.
-        Paragraph startParagraph = runNode.ParentParagraph;
-        Node nextNode = startParagraph.NextSibling;
-        Table tableNode = null;
-
-        while (nextNode != null)
-        {
-            if (nextNode.NodeType == NodeType.Table)
-            {
-                tableNode = (Table)nextNode;
-                break;
-            }
-            nextNode = nextNode.NextSibling;
-        }
-
+        // Locate the first Table node that follows the run.
+        Table tableNode = loaded.GetChildNodes(NodeType.Table, true)[0] as Table;
         if (tableNode == null)
-            throw new InvalidOperationException("Following table not found.");
+            throw new InvalidOperationException("Table node not found.");
 
-        // -----------------------------------------------------------------
-        // Build a new document that will contain the extracted content.
-        // Use NodeImporter to import nodes from the source document into the new document.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 3. Build a new document that will contain the extracted content.
+        // -------------------------------------------------
         Document result = new Document();
-        result.RemoveAllChildren();
+        result.RemoveAllChildren(); // Remove the default empty section/paragraph.
 
+        // Create a new section and body.
         Section section = new Section(result);
         result.AppendChild(section);
-
         Body body = new Body(result);
         section.AppendChild(body);
 
-        // Import the paragraph that contains the run (preserves styling).
+        // -------------------------------------------------
+        // 4. Import the Run and Table nodes into the new document.
+        // -------------------------------------------------
+        // NodeImporter handles style and list translation between documents.
         NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
-        Paragraph importedParagraph = (Paragraph)importer.ImportNode(startParagraph, true);
-        body.AppendChild(importedParagraph);
 
-        // Import the table.
-        Table importedTable = (Table)importer.ImportNode(tableNode, true);
+        // Import the Run node.
+        Node importedRun = importer.ImportNode(runNode, true);
+        // Wrap the imported Run inside a new Paragraph (inline nodes must be inside a Paragraph).
+        Paragraph extractedParagraph = new Paragraph(result);
+        extractedParagraph.AppendChild(importedRun);
+        body.AppendChild(extractedParagraph);
+
+        // Import the Table node.
+        Node importedTable = importer.ImportNode(tableNode, true);
         body.AppendChild(importedTable);
 
-        // Save the extracted portion as XPS.
+        // -------------------------------------------------
+        // 5. Save the extracted portion as XPS.
+        // -------------------------------------------------
         const string outputPath = "extracted.xps";
         result.Save(outputPath, SaveFormat.Xps);
 
         // Verify that the XPS file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The XPS output file was not created.");
+            throw new InvalidOperationException("Failed to create the XPS output file.");
     }
 }

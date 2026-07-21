@@ -6,75 +6,73 @@ using Newtonsoft.Json;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Create a sample source document with several paragraphs.
+        // Create a sample source document.
+        const string sourcePath = "source.docx";
         var sourceDoc = new Document();
         var builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Paragraph 1 - Intro");
-        builder.Writeln("Paragraph 2 - Start");
-        builder.Writeln("Paragraph 3 - Middle");
-        builder.Writeln("Paragraph 4 - End");
-        builder.Writeln("Paragraph 5 - After");
-        const string sourcePath = "source.docx";
+        builder.Writeln("Paragraph 0 - before start");
+        builder.Writeln("Paragraph 1 - start");
+        builder.Writeln("Paragraph 2 - middle");
+        builder.Writeln("Paragraph 3 - end");
+        builder.Writeln("Paragraph 4 - after end");
         sourceDoc.Save(sourcePath);
 
-        // Load the source document.
-        var loadedDoc = new Document(sourcePath);
-        var body = loadedDoc.FirstSection?.Body;
-        if (body == null)
-            throw new InvalidOperationException("The source document does not contain a body.");
+        // Load the document.
+        var doc = new Document(sourcePath);
+        var body = doc.FirstSection.Body;
 
         // Identify the start and end paragraphs (by index).
-        // Here we choose the second and fourth paragraphs (zero‑based indices 1 and 3).
-        if (body.Paragraphs.Count <= 3)
+        if (body.Paragraphs.Count < 4)
             throw new InvalidOperationException("The source document does not contain enough paragraphs.");
 
-        Paragraph startParagraph = body.Paragraphs[1];
-        Paragraph endParagraph = body.Paragraphs[3];
+        var startParagraph = body.Paragraphs[1];
+        var endParagraph = body.Paragraphs[3];
 
-        int startIdx = body.Paragraphs.IndexOf(startParagraph);
-        int endIdx = body.Paragraphs.IndexOf(endParagraph);
+        // Determine their positions.
+        int startIndex = body.Paragraphs.IndexOf(startParagraph);
+        int endIndex = body.Paragraphs.IndexOf(endParagraph);
+        if (startIndex < 0 || endIndex < 0 || startIndex > endIndex)
+            throw new InvalidOperationException("Invalid paragraph boundaries.");
 
-        if (startIdx < 0 || endIdx < 0 || startIdx > endIdx)
-            throw new InvalidOperationException("Invalid paragraph boundaries for extraction.");
-
-        // Prepare the result document with a clean structure.
+        // Prepare the result document.
         var resultDoc = new Document();
-        resultDoc.RemoveAllChildren(); // Remove the default section/body.
+        resultDoc.RemoveAllChildren(); // Remove the default empty section.
 
         var resultSection = new Section(resultDoc);
         resultDoc.AppendChild(resultSection);
         var resultBody = new Body(resultDoc);
         resultSection.AppendChild(resultBody);
 
-        // Import and append the selected paragraphs into the result document.
-        for (int i = startIdx; i <= endIdx; i++)
+        // Importer to copy nodes between documents.
+        var importer = new NodeImporter(doc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+
+        // Clone and copy paragraphs from start to end inclusive.
+        for (int i = startIndex; i <= endIndex; i++)
         {
-            Node importedNode = resultDoc.ImportNode(body.Paragraphs[i], true);
+            var paragraph = body.Paragraphs[i];
+            var importedNode = importer.ImportNode(paragraph, true);
             resultBody.AppendChild(importedNode);
         }
 
+        // Save the extracted document.
         const string resultPath = "extracted.docx";
         resultDoc.Save(resultPath);
 
-        // Write simple extraction metadata as JSON.
-        var metadata = new
-        {
-            SourceDocument = sourcePath,
-            ExtractedDocument = resultPath,
-            StartParagraphIndex = startIdx,
-            EndParagraphIndex = endIdx,
-            ExtractedParagraphCount = endIdx - startIdx + 1
-        };
-        File.WriteAllText("extraction-metadata.json",
-            JsonConvert.SerializeObject(metadata, Formatting.Indented));
-
-        // Validate that the output files were created.
+        // Verify that the output file was created.
         if (!File.Exists(resultPath))
             throw new InvalidOperationException("The extracted document was not created.");
 
-        if (!File.Exists("extraction-metadata.json"))
-            throw new InvalidOperationException("The extraction metadata file was not created.");
+        // Optional: write a small JSON report.
+        var report = new
+        {
+            SourceDocument = sourcePath,
+            ExtractedDocument = resultPath,
+            ExtractedParagraphCount = resultBody.Paragraphs.Count,
+            ExtractionTime = DateTime.UtcNow
+        };
+        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText("extractionInfo.json", json);
     }
 }

@@ -1,124 +1,125 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample source document.
+        // -------------------------------------------------
+        // 1. Create a sample source document with a start run and an end bookmark.
+        // -------------------------------------------------
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
 
-        // Text before the start run.
-        builder.Writeln("Paragraph before start run.");
+        builder.Writeln("Paragraph before start.");
+        // This run will be the start node we look for.
+        builder.Write("StartRun");
+        builder.Writeln(); // finish the paragraph.
 
-        // Insert a paragraph containing the start run.
-        Paragraph startParagraph = new Paragraph(source);
-        Run startRun = new Run(source, "StartRun");
-        startParagraph.AppendChild(startRun);
-        source.FirstSection.Body.AppendChild(startParagraph);
+        builder.Writeln("Middle paragraph 1.");
+        builder.Writeln("Middle paragraph 2.");
 
-        // Add some content that will be extracted.
-        builder.Writeln("First extracted paragraph.");
-        builder.Writeln("Second extracted paragraph.");
-
-        // Insert a table that will also be extracted.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Insert the end bookmark.
+        // End bookmark.
         builder.StartBookmark("EndBookmark");
-        builder.Writeln("Paragraph inside end bookmark.");
+        builder.Writeln("Paragraph after end.");
         builder.EndBookmark("EndBookmark");
 
-        // Text after the end bookmark.
-        builder.Writeln("Paragraph after end bookmark.");
-
-        // Save the source document.
+        // Save the source document to a deterministic local file.
         const string sourcePath = "source.docx";
         source.Save(sourcePath);
 
-        // Load the document for processing.
-        Document doc = new Document(sourcePath);
+        // -------------------------------------------------
+        // 2. Load the document for processing.
+        // -------------------------------------------------
+        Document loaded = new Document(sourcePath);
 
-        // Locate the start run node by its text.
-        Run startRunNode = null;
-        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+        // -------------------------------------------------
+        // 3. Locate the start Run node with the exact text "StartRun".
+        // -------------------------------------------------
+        Run startRun = null;
+        foreach (Run run in loaded.GetChildNodes(NodeType.Run, true))
         {
             if (run.Text == "StartRun")
             {
-                startRunNode = run;
+                startRun = run;
                 break;
             }
         }
-        if (startRunNode == null)
+
+        if (startRun == null)
             throw new InvalidOperationException("Start run node not found.");
 
-        // Locate the end bookmark.
-        Bookmark endBookmark = doc.Range.Bookmarks["EndBookmark"];
+        // -------------------------------------------------
+        // 4. Locate the end bookmark.
+        // -------------------------------------------------
+        Bookmark endBookmark = loaded.Range.Bookmarks["EndBookmark"];
         if (endBookmark == null)
             throw new InvalidOperationException("End bookmark not found.");
 
-        // The bookmark start node marks the end boundary.
-        Node endNode = endBookmark.BookmarkStart;
+        // The bookmark start node marks the end of the extraction range.
+        BookmarkStart endBookmarkStart = endBookmark.BookmarkStart;
 
-        // Collect nodes that lie between the start run and the end bookmark (exclusive).
-        List<Node> extractedNodes = new List<Node>();
-        Node current = startRunNode;
-        while (true)
-        {
-            current = current.NextPreOrder(doc);
-            if (current == null || current == endNode)
-                break;
+        // -------------------------------------------------
+        // 5. Determine the paragraphs that bound the extraction range.
+        // -------------------------------------------------
+        Paragraph startParagraph = startRun.ParentNode as Paragraph;
+        Paragraph endParagraph = endBookmarkStart.ParentNode as Paragraph;
 
-            // Skip the start run itself; we want intervening nodes only.
-            extractedNodes.Add(current);
-        }
+        if (startParagraph == null || endParagraph == null)
+            throw new InvalidOperationException("Unable to determine paragraph boundaries.");
 
-        // Prepare the destination document.
+        // -------------------------------------------------
+        // 6. Prepare the destination document (empty body).
+        // -------------------------------------------------
         Document result = new Document();
-        result.RemoveAllChildren();
+        result.RemoveAllChildren(); // Ensure a clean document.
         Section resultSection = new Section(result);
         result.AppendChild(resultSection);
         Body resultBody = new Body(result);
         resultSection.AppendChild(resultBody);
 
-        // Import and append the collected nodes.
-        NodeImporter importer = new NodeImporter(doc, result, ImportFormatMode.KeepSourceFormatting);
-        foreach (Node node in extractedNodes)
+        // -------------------------------------------------
+        // 7. Importer to copy nodes while preserving formatting.
+        // -------------------------------------------------
+        NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
+
+        // -------------------------------------------------
+        // 8. Collect paragraphs that lie strictly between the start and end paragraphs.
+        // -------------------------------------------------
+        bool withinRange = false;
+        int extractedCount = 0;
+        foreach (Paragraph para in loaded.GetChildNodes(NodeType.Paragraph, true))
         {
-            // Only block-level nodes can be appended directly to the body.
-            if (node.NodeType == NodeType.Paragraph || node.NodeType == NodeType.Table)
+            if (para == startParagraph)
             {
-                Node imported = importer.ImportNode(node, true);
+                withinRange = true;
+                continue; // Skip the start paragraph itself.
+            }
+
+            if (para == endParagraph)
+                break; // Stop before the end paragraph.
+
+            if (withinRange)
+            {
+                Node imported = importer.ImportNode(para, true);
                 resultBody.AppendChild(imported);
+                extractedCount++;
             }
-            else if (node.NodeType == NodeType.Run)
-            {
-                // Wrap inline runs in a new paragraph.
-                Paragraph para = new Paragraph(result);
-                Node importedRun = importer.ImportNode(node, true);
-                para.AppendChild(importedRun);
-                resultBody.AppendChild(para);
-            }
-            // Other node types are ignored for this example.
         }
 
-        // Save the extracted content.
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No nodes were extracted between the specified markers.");
+
+        // -------------------------------------------------
+        // 9. Save the extracted content.
+        // -------------------------------------------------
         const string resultPath = "extracted.docx";
         result.Save(resultPath);
 
-        // Validate that the output file was created.
+        // Simple validation that the output file exists.
         if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The extracted document was not created.");
+            throw new InvalidOperationException("Extraction failed: output file was not created.");
     }
 }

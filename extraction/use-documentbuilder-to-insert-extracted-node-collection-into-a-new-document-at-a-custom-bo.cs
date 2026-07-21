@@ -1,82 +1,97 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a source document with a table.
+        // -----------------------------------------------------------------
+        // 1. Create a source document with a bookmark that encloses some nodes.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("Source Document Intro");
-        srcBuilder.StartTable();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell 1");
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell 2");
-        srcBuilder.EndRow();
-        srcBuilder.EndTable();
+
+        srcBuilder.Writeln("Source document - before bookmark.");
+        srcBuilder.StartBookmark("ExtractHere");
+        srcBuilder.Writeln("First paragraph inside bookmark.");
+        srcBuilder.Writeln("Second paragraph inside bookmark.");
+        srcBuilder.EndBookmark("ExtractHere");
+        srcBuilder.Writeln("Source document - after bookmark.");
 
         const string sourcePath = "source.docx";
         sourceDoc.Save(sourcePath);
 
-        // Extract the first table from the source document.
-        Table extractedTable = sourceDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
-        if (extractedTable == null)
-            throw new InvalidOperationException("No table found in the source document.");
+        // -----------------------------------------------------------------
+        // 2. Load the source document and extract the nodes that are inside the bookmark.
+        // -----------------------------------------------------------------
+        Document loadedSource = new Document(sourcePath);
+        Bookmark sourceBookmark = loadedSource.Range.Bookmarks["ExtractHere"];
+        if (sourceBookmark == null)
+            throw new InvalidOperationException("Source bookmark not found.");
 
-        // Create a destination document with a custom bookmark.
+        // The bookmark start and end nodes act as markers; the actual content lies between them.
+        Node startNode = sourceBookmark.BookmarkStart;
+        Node endNode = sourceBookmark.BookmarkEnd;
+
+        List<Node> extractedNodes = new List<Node>();
+        Node cur = startNode.NextSibling;
+        while (cur != null && cur != endNode)
+        {
+            extractedNodes.Add(cur);
+            cur = cur.NextSibling;
+        }
+
+        if (extractedNodes.Count == 0)
+            throw new InvalidOperationException("No nodes were extracted from the source bookmark.");
+
+        // -----------------------------------------------------------------
+        // 3. Create a destination document that contains a custom bookmark where the extracted nodes will be inserted.
+        // -----------------------------------------------------------------
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("Destination Document Start");
-        destBuilder.StartBookmark("InsertHere");
-        destBuilder.Writeln("Placeholder paragraph for insertion");
-        destBuilder.EndBookmark("InsertHere");
-        destBuilder.Writeln("Destination Document End");
 
-        // Move to the bookmark.
-        destBuilder.MoveToBookmark("InsertHere");
+        destBuilder.Writeln("Destination document - before insertion point.");
+        destBuilder.StartBookmark("InsertPoint");
+        // The bookmark is intentionally left empty.
+        destBuilder.EndBookmark("InsertPoint");
+        destBuilder.Writeln("Destination document - after insertion point.");
 
-        // Import the table from the source document into the destination document.
-        NodeImporter importer = new NodeImporter(sourceDoc, destDoc, ImportFormatMode.KeepSourceFormatting);
-        Node importedTable = importer.ImportNode(extractedTable, true);
-
-        // Insert the imported table after the paragraph that contains the bookmark.
-        Paragraph placeholderParagraph = destBuilder.CurrentParagraph;
-        if (placeholderParagraph == null)
-            throw new InvalidOperationException("Failed to locate the placeholder paragraph.");
-
-        CompositeNode parent = placeholderParagraph.ParentNode as CompositeNode;
-        if (parent == null)
-            throw new InvalidOperationException("Placeholder paragraph does not have a valid parent.");
-
-        parent.InsertAfter(importedTable, placeholderParagraph);
-        // Optionally remove the placeholder paragraph.
-        placeholderParagraph.Remove();
-
-        // Save the destination document.
         const string destPath = "destination.docx";
         destDoc.Save(destPath);
 
-        // Write a simple JSON report about the extraction.
-        var report = new
-        {
-            ExtractedNodeType = "Table",
-            ExtractedNodeCount = 1,
-            SourceDocument = sourcePath,
-            DestinationDocument = destPath
-        };
-        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
-        const string reportPath = "extraction_report.json";
-        File.WriteAllText(reportPath, jsonReport);
+        // -----------------------------------------------------------------
+        // 4. Load the destination document and insert the extracted nodes at the custom bookmark.
+        // -----------------------------------------------------------------
+        Document loadedDest = new Document(destPath);
+        Bookmark destBookmark = loadedDest.Range.Bookmarks["InsertPoint"];
+        if (destBookmark == null)
+            throw new InvalidOperationException("Destination bookmark not found.");
 
-        // Validate that the output files were created.
-        if (!File.Exists(destPath))
-            throw new InvalidOperationException("Destination document was not created.");
-        if (!File.Exists(reportPath))
-            throw new InvalidOperationException("Extraction report was not created.");
+        // The insertion point is the bookmark start node.
+        Node insertionNode = destBookmark.BookmarkStart;
+        CompositeNode parent = insertionNode.ParentNode;
+
+        // Use NodeImporter to import nodes from the source document into the destination document.
+        NodeImporter importer = new NodeImporter(loadedSource, loadedDest, ImportFormatMode.KeepSourceFormatting);
+
+        foreach (Node node in extractedNodes)
+        {
+            Node importedNode = importer.ImportNode(node, true);
+            parent.InsertAfter(importedNode, insertionNode);
+            insertionNode = importedNode; // Move the insertion point forward.
+        }
+
+        const string resultPath = "result.docx";
+        loadedDest.Save(resultPath);
+
+        // -----------------------------------------------------------------
+        // 5. Validate that the result file was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("Result document was not created.");
+
+        // Example completed successfully.
     }
 }

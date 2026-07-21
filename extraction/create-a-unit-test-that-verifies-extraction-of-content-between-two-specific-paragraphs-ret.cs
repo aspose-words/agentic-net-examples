@@ -2,104 +2,91 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Newtonsoft.Json;
 
-public class Program
+public class ExtractionStyleTest
 {
     public static void Main()
     {
-        // ------------------------------------------------------------
-        // 1. Create a source document with styled paragraphs.
-        // ------------------------------------------------------------
+        // Create a source document with styled paragraphs.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Intro paragraph."); // Paragraph 0 (no special style)
-
+        // Paragraph 1 – bold text.
         builder.Font.Bold = true;
-        builder.Writeln("Styled paragraph one."); // Paragraph 1 (Bold)
+        builder.Writeln("Bold paragraph");
 
+        // Paragraph 2 – normal text.
         builder.Font.Bold = false;
-        builder.Font.Italic = true;
-        builder.Writeln("Styled paragraph two."); // Paragraph 2 (Italic)
-
         builder.Font.Italic = false;
-        builder.Writeln("Ending paragraph."); // Paragraph 3 (no special style)
+        builder.Writeln("Normal paragraph");
 
-        // ------------------------------------------------------------
-        // 2. Identify the start and end paragraphs for extraction.
-        // ------------------------------------------------------------
+        // Paragraph 3 – italic text.
+        builder.Font.Italic = true;
+        builder.Writeln("Italic paragraph");
+
+        // Paragraph 4 – underline text.
+        builder.Font.Italic = false;
+        builder.Font.Underline = Underline.Single;
+        builder.Writeln("Underlined paragraph");
+
+        // Identify the start and end paragraphs for extraction (Paragraph 2 and 3).
         Paragraph startPara = sourceDoc.FirstSection.Body.Paragraphs[1];
         Paragraph endPara = sourceDoc.FirstSection.Body.Paragraphs[2];
-
         if (startPara == null || endPara == null)
             throw new InvalidOperationException("Boundary paragraphs not found.");
 
-        // ------------------------------------------------------------
-        // 3. Prepare a new document that will hold the extracted content.
-        // ------------------------------------------------------------
+        // Create a new document to hold the extracted content.
         Document extractedDoc = new Document();
-        extractedDoc.RemoveAllChildren(); // Remove the default empty section.
+        extractedDoc.RemoveAllChildren();
 
-        Section newSection = new Section(extractedDoc);
-        extractedDoc.AppendChild(newSection);
-        Body newBody = new Body(extractedDoc);
-        newSection.AppendChild(newBody);
+        // Build a valid document structure (Section + Body).
+        Section targetSection = new Section(extractedDoc);
+        extractedDoc.AppendChild(targetSection);
+        Body targetBody = new Body(extractedDoc);
+        targetSection.AppendChild(targetBody);
 
-        // ------------------------------------------------------------
-        // 4. Import (clone) the selected paragraphs preserving formatting.
-        // ------------------------------------------------------------
-        NodeImporter importer = new NodeImporter(sourceDoc, extractedDoc, ImportFormatMode.KeepSourceFormatting);
-
-        Paragraph importedStart = importer.ImportNode(startPara, true) as Paragraph;
-        Paragraph importedEnd = importer.ImportNode(endPara, true) as Paragraph;
-
-        if (importedStart == null || importedEnd == null)
-            throw new InvalidOperationException("Failed to import paragraphs.");
-
-        newBody.AppendChild(importedStart);
-        newBody.AppendChild(importedEnd);
-
-        // ------------------------------------------------------------
-        // 5. Validate that the styling is retained in the cloned paragraphs.
-        // ------------------------------------------------------------
-        Paragraph clonedFirst = extractedDoc.FirstSection.Body.Paragraphs[0];
-        Paragraph clonedSecond = extractedDoc.FirstSection.Body.Paragraphs[1];
-
-        if (clonedFirst == null || clonedSecond == null)
-            throw new InvalidOperationException("Cloned paragraphs not found.");
-
-        Run runFirst = clonedFirst.Runs.Count > 0 ? clonedFirst.Runs[0] : null;
-        Run runSecond = clonedSecond.Runs.Count > 0 ? clonedSecond.Runs[0] : null;
-
-        if (runFirst == null || runSecond == null)
-            throw new InvalidOperationException("Runs missing in cloned paragraphs.");
-
-        bool firstBold = runFirst.Font.Bold;
-        bool secondItalic = runSecond.Font.Italic;
-
-        if (!firstBold || !secondItalic)
-            throw new InvalidOperationException("Extracted paragraph styling does not match the source.");
-
-        // ------------------------------------------------------------
-        // 6. Save the extracted document and a JSON test result.
-        // ------------------------------------------------------------
-        extractedDoc.Save("extracted.docx");
-
-        var testResult = new
+        // Clone and import paragraphs from start to end (inclusive).
+        int startIndex = sourceDoc.FirstSection.Body.Paragraphs.IndexOf(startPara);
+        int endIndex = sourceDoc.FirstSection.Body.Paragraphs.IndexOf(endPara);
+        for (int i = startIndex; i <= endIndex; i++)
         {
-            Test = "ParagraphStylingExtraction",
-            Passed = true,
-            Details = new
+            Paragraph srcParagraph = sourceDoc.FirstSection.Body.Paragraphs[i];
+            Paragraph importedParagraph = (Paragraph)extractedDoc.ImportNode(srcParagraph, true, ImportFormatMode.KeepSourceFormatting);
+            targetBody.AppendChild(importedParagraph);
+        }
+
+        // Validate that the extracted document contains the expected number of paragraphs.
+        if (extractedDoc.FirstSection.Body.Paragraphs.Count != 2)
+            throw new InvalidOperationException("Extracted paragraph count mismatch.");
+
+        // Verify that styling of each run is preserved.
+        for (int i = 0; i < 2; i++)
+        {
+            Paragraph srcPara = sourceDoc.FirstSection.Body.Paragraphs[startIndex + i];
+            Paragraph extPara = extractedDoc.FirstSection.Body.Paragraphs[i];
+
+            if (srcPara.Runs.Count != extPara.Runs.Count)
+                throw new InvalidOperationException($"Run count mismatch in paragraph {i + 1}.");
+
+            for (int j = 0; j < srcPara.Runs.Count; j++)
             {
-                FirstParagraphBold = firstBold,
-                SecondParagraphItalic = secondItalic
+                Run srcRun = srcPara.Runs[j];
+                Run extRun = extPara.Runs[j];
+
+                if (srcRun.Font.Bold != extRun.Font.Bold ||
+                    srcRun.Font.Italic != extRun.Font.Italic ||
+                    srcRun.Font.Underline != extRun.Font.Underline)
+                {
+                    throw new InvalidOperationException($"Styling mismatch in paragraph {i + 1}, run {j + 1}.");
+                }
             }
-        };
+        }
 
-        File.WriteAllText("test-result.json",
-            JsonConvert.SerializeObject(testResult, Formatting.Indented));
+        // Save the extracted document (optional verification artifact).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "extracted.docx");
+        extractedDoc.Save(outputPath);
 
-        Console.WriteLine("Extraction test passed. Results written to extracted.docx and test-result.json.");
+        // Indicate success.
+        Console.WriteLine("Extraction test passed. Output saved to: " + outputPath);
     }
 }
