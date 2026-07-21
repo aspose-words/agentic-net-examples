@@ -7,15 +7,18 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert several paragraphs inside a loop using Writeln.
+        // Insert several paragraphs inside a loop.
         for (int i = 1; i <= 5; i++)
         {
-            builder.Writeln($"This is paragraph number {i}.");
+            // Writeln adds the supplied text and then creates a new paragraph.
+            builder.Writeln($"This is paragraph number {i} inserted in a loop.");
         }
 
-        // Save the resulting document.
-        doc.Save("InsertedParagraphs.docx");
+        // Save the document to the file system.
+        doc.Save("Output.docx");
     }
 }

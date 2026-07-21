@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class ExportParagraphsWithLineNumbers
 {
     public static void Main()
     {
@@ -11,30 +11,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable line numbering for the whole section.
-        // Numbers will start at 1 and increase by 1 for each line.
-        builder.PageSetup.LineStartingNumber = 1;
-        builder.PageSetup.LineNumberCountBy = 1;
-        builder.PageSetup.LineNumberRestartMode = LineNumberRestartMode.Continuous;
-
-        // Add several paragraphs to the document.
+        // Add a few paragraphs.
         builder.Writeln("First paragraph of the document.");
-        builder.Writeln("Second paragraph, containing more text.");
-        builder.Writeln("Third paragraph, demonstrating line numbering.");
-        builder.Writeln("Fourth paragraph, final example.");
+        builder.Writeln("Second paragraph follows the first one.");
+        builder.Writeln("Third paragraph completes the sample.");
 
-        // Configure save options for plain‑text export.
-        // Line numbers are automatically included because line numbering is enabled in the document.
+        // Enable line numbering for the section via PageSetup.
+        PageSetup pageSetup = builder.PageSetup;
+        pageSetup.LineStartingNumber = 1;                     // Start numbering at 1.
+        pageSetup.LineNumberCountBy = 1;                      // Number every line.
+        pageSetup.LineNumberRestartMode = LineNumberRestartMode.Continuous;
+        pageSetup.LineNumberDistanceFromText = 0;             // Default distance.
+
+        // Save the document as plain text using TxtSaveOptions.
         TxtSaveOptions saveOptions = new TxtSaveOptions();
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ExportedWithLineNumbers.txt");
-
-        // Save the document as plain text using the configured options.
-        doc.Save(outputPath, saveOptions);
-
-        // Display the resulting file content on the console.
-        Console.WriteLine("Exported text with line numbers:");
-        Console.WriteLine(File.ReadAllText(outputPath));
+        doc.Save("ParagraphsWithLineNumbers.txt", saveOptions);
     }
 }

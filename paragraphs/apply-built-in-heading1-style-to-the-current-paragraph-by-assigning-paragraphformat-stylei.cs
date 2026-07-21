@@ -8,16 +8,16 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Apply the built‑in Heading1 style to the current paragraph.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
 
-        // Add text; this paragraph will be formatted as Heading1.
-        builder.Writeln("This is a Heading 1 paragraph.");
+        // Add some text that will be formatted with Heading1.
+        builder.Writeln("This paragraph uses the Heading1 style.");
 
-        // Save the document.
-        doc.Save("Heading1Example.docx");
+        // Save the document to the local file system.
+        doc.Save("Output.docx");
     }
 }

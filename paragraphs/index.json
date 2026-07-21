@@ -4,24 +4,27 @@
     "slug": "paragraphs",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Prefer simple DocumentBuilder and Paragraph DOM workflows. Keep validation narrow and task-specific. Do not add broad structural assertions unless the task explicitly requires them.",
+    "preferred_workflow": "Prefer simple DocumentBuilder workflows for paragraph insertion and formatting tasks. Use direct Paragraph DOM traversal for counting, filtering, reporting, text import/export, and structural edits.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
       "Aspose.Words",
-      "System.Drawing",
       "System.IO",
+      "System.Drawing",
+      "Aspose.Words.Layout",
+      "Aspose.Words.Drawing",
       "System.Text",
       "Aspose.Words.Saving",
       "Aspose.Words.Loading",
+      "System.Text.RegularExpressions",
+      "Aspose.Words.Lists",
       "Aspose.Words.Tables",
-      "Aspose.Words.Drawing",
-      "Aspose.Words.Fonts",
+      "System.Collections.Generic",
       "Aspose.Words.Fields",
       "System.Linq"
     ],
@@ -29,33 +32,28 @@
       "Document",
       "DocumentBuilder",
       "Paragraph",
-      "StyleIdentifier",
       "Path",
+      "Directory",
+      "StyleIdentifier",
       "Style",
       "Font",
       "NodeType",
-      "Directory",
+      "Run",
       "File",
       "MemoryStream",
-      "Run",
       "Table",
-      "Field",
-      "FieldType",
-      "Cell"
+      "Field"
     ]
   },
   "stats": {
     "total_examples": 35,
     "publish_ready_successful_examples": 35,
     "workflow_counts": {
-      "editing": 3,
       "insertion": 6,
       "paragraph-formatting": 16,
+      "traversal-reporting": 6,
       "text-export": 4,
-      "traversal-reporting": 6
-    },
-    "winner_counts": {
-      "mcp": 35
+      "editing": 3
     }
   },
   "rules_summary": {
@@ -169,7 +167,7 @@
     {
       "id": 6,
       "file_name": "apply-built-in-heading1-style-to-the-current-paragraph-by-assigning-paragraphformat-stylei.cs",
-      "task": "Apply built-in Heading1 style to the current paragraph by assigning ParagraphFormat.StyleIdentifier to StyleIdentifier.Heading1.",
+      "task": "Apply built‑in Heading1 style to the current paragraph by assigning ParagraphFormat.StyleIdentifier to StyleIdentifier.Heading1.",
       "workflow": "paragraph-formatting",
       "outputs": [
         "docx"
@@ -191,7 +189,7 @@
     {
       "id": 8,
       "file_name": "use-styleidentifier-enumeration-to-select-a-locale-independent-style-for-a-paragraph-ensur.cs",
-      "task": "Use StyleIdentifier enumeration to select a locale-independent style for a paragraph, ensuring consistent formatting.",
+      "task": "Use StyleIdentifier enumeration to select a locale‑independent style for a paragraph, ensuring consistent formatting.",
       "workflow": "paragraph-formatting",
       "outputs": [
         "docx"
@@ -213,7 +211,7 @@
     {
       "id": 10,
       "file_name": "log-each-paragraph-s-line-count-to-the-console-for-debugging-paragraph-layout-issues.cs",
-      "task": "Log each paragraph's line count to the console for debugging paragraph layout issues.",
+      "task": "Log each paragraph’s line count to the console for debugging paragraph layout issues.",
       "workflow": "traversal-reporting",
       "outputs": [
         "docx"
@@ -246,7 +244,7 @@
     {
       "id": 13,
       "file_name": "enable-bi-directional-marks-before-saving-to-plain-text-by-setting-document-addbidimarks-p.cs",
-      "task": "Enable bi-directional marks before saving to plain text by setting Document.AddBidiMarks property to true.",
+      "task": "Enable bi‑directional marks before saving to plain text by setting Document.AddBidiMarks property to true.",
       "workflow": "paragraph-formatting",
       "outputs": [
         "docx"
@@ -279,7 +277,7 @@
     {
       "id": 16,
       "file_name": "load-a-plain-text-file-with-detectnumberingwithwhitespaces-enabled-to-automatically-recogn.cs",
-      "task": "Load a plain-text file with DetectNumberingWithWhitespaces enabled to automatically recognize list items.",
+      "task": "Load a plain‑text file with DetectNumberingWithWhitespaces enabled to automatically recognize list items.",
       "workflow": "paragraph-formatting",
       "outputs": [
         "docx"
@@ -290,7 +288,7 @@
     {
       "id": 17,
       "file_name": "convert-detected-plain-text-list-numbering-into-word-list-structures-after-loading-the-doc.cs",
-      "task": "Convert detected plain-text list numbering into Word list structures after loading the document successfully.",
+      "task": "Convert detected plain‑text list numbering into Word list structures after loading the document successfully.",
       "workflow": "paragraph-formatting",
       "outputs": [
         "docx"
@@ -334,7 +332,7 @@
     {
       "id": 21,
       "file_name": "apply-right-to-left-paragraph-direction-by-setting-paragraphformat-bidi-property-to-true-f.cs",
-      "task": "Apply right-to-left paragraph direction by setting ParagraphFormat.Bidi property to true for Arabic text.",
+      "task": "Apply right‑to‑left paragraph direction by setting ParagraphFormat.Bidi property to true for Arabic text.",
       "workflow": "paragraph-formatting",
       "outputs": [
         "docx"
@@ -444,7 +442,7 @@
     {
       "id": 31,
       "file_name": "add-a-paragraph-containing-a-hyperlink-run-and-assign-the-built-in-hyperlink-style-to-it.cs",
-      "task": "Add a paragraph containing a hyperlink run and assign the built-in Hyperlink style to it.",
+      "task": "Add a paragraph containing a hyperlink run and assign the built‑in Hyperlink style to it.",
       "workflow": "insertion",
       "outputs": [
         "docx"

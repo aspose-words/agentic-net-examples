@@ -8,31 +8,37 @@ public class Program
 {
     public static void Main()
     {
-        // Plain‑text content that contains list items separated by whitespace.
-        const string text = "Shopping list:\n" +
-                            "1 Milk\n" +
-                            "2 Bread\n" +
-                            "3 Eggs\n\n" +
-                            "Tasks:\n" +
-                            "1 Finish report\n" +
-                            "2 Call client\n";
+        // Sample plain‑text containing list items.
+        // The fourth list uses a whitespace delimiter, which is recognized only when
+        // DetectNumberingWithWhitespaces is set to true.
+        const string text = 
+            "Full stop delimiters:\n" +
+            "1. First list item 1\n" +
+            "2. First list item 2\n" +
+            "3. First list item 3\n\n" +
+            "Whitespace delimiters:\n" +
+            "1 Fourth list item 1\n" +
+            "2 Fourth list item 2\n" +
+            "3 Fourth list item 3";
 
-        // Configure load options to treat whitespace as a list delimiter.
+        // Configure load options to detect list items that use whitespaces as delimiters.
         TxtLoadOptions loadOptions = new TxtLoadOptions
         {
             DetectNumberingWithWhitespaces = true
         };
 
-        // Load the text into a Word document using a memory stream.
+        // Load the plain‑text into a Document using a memory stream.
         using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(text)))
         {
             Document doc = new Document(stream, loadOptions);
 
-            // Verify that the lists were detected (optional).
-            Console.WriteLine($"Detected {doc.Lists.Count} list(s).");
+            // Optional: display the number of detected lists.
+            Console.WriteLine($"Detected lists: {doc.Lists.Count}");
 
-            // Save the resulting document.
-            doc.Save("Output.docx");
+            // Save the resulting document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DetectedLists.docx");
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

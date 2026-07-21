@@ -11,17 +11,14 @@ public class Program
         // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Arabic sample text.
-        string arabicText = "مرحبا بالعالم! هذا نص عربي.";
-
-        // Apply right‑to‑left direction to the current paragraph.
+        // Set the paragraph direction to right‑to‑left.
         builder.ParagraphFormat.Bidi = true;
 
-        // Write the Arabic text into the paragraph.
-        builder.Writeln(arabicText);
+        // Write Arabic text into the paragraph.
+        builder.Writeln("مرحبا بالعالم!"); // "Hello world!" in Arabic
 
         // Save the document to a file.
-        string outputPath = "BidiParagraph.docx";
+        string outputPath = "ParagraphBidi.docx";
         doc.Save(outputPath);
     }
 }

@@ -10,28 +10,25 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a paragraph that contains two runs with different formatting.
-        // First run: normal text.
-        builder.Font.Bold = false;
+        builder.Font.Bold = true;               // First run – bold.
         builder.Write("Hello ");
+        builder.Font.Bold = false;              // Second run – regular.
+        builder.Write("World");
+        builder.Writeln("!");                   // End the paragraph.
 
-        // Second run: bold text that we will replace.
-        builder.Font.Bold = true;
-        builder.Write("World!");
+        // The paragraph we just created.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Replace the word "World" with "Aspose" while preserving the original formatting of each run.
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Replace the word "World" with "Aspose" while keeping each run's formatting.
+        foreach (Run run in paragraph.Runs)
         {
-            foreach (Run run in paragraph.Runs)
+            if (run.Text.Contains("World"))
             {
-                if (run.Text.Contains("World"))
-                {
-                    // Only the text inside this run is changed; its formatting (bold) remains intact.
-                    run.Text = run.Text.Replace("World", "Aspose");
-                }
+                run.Text = run.Text.Replace("World", "Aspose");
             }
         }
 
-        // Save the resulting document.
+        // Save the result to a file in the current directory.
         doc.Save("Output.docx");
     }
 }
