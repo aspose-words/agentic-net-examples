@@ -1,7 +1,7 @@
 using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;               // Needed for Shape
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 using Aspose.Words.Saving;
 
@@ -14,108 +14,87 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // -------------------------------------------------
-        // First chart: Column chart with data labels.
+        // Insert the first chart: a column chart.
         // -------------------------------------------------
-        Shape columnShape = builder.InsertChart(ChartType.Column, 400, 300);
-        if (columnShape.HasChart)
+        Shape columnChartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        if (columnChartShape.HasChart)
         {
-            Chart columnChart = columnShape.Chart;
+            Chart columnChart = columnChartShape.Chart;
 
-            // Remove the demo data.
+            // Remove the demo data series.
             columnChart.Series.Clear();
 
-            // Define categories and values.
+            // Define categories and series data.
             string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-            double[] values = { 15000, 20000, 18000, 22000 };
-
-            // Add a series.
-            columnChart.Series.Add("Revenue", categories, values);
-
-            // Enable data labels and show the value for each point.
-            ChartSeries series = columnChart.Series[0];
-            series.HasDataLabels = true;
-            for (int i = 0; i < series.DataLabels.Count; i++)
-            {
-                series.DataLabels[i].ShowValue = true;
-            }
+            columnChart.Series.Add("Product A", categories, new double[] { 120, 150, 170, 130 });
+            columnChart.Series.Add("Product B", categories, new double[] { 80, 110, 130, 90 });
 
             // Set chart title.
-            columnChart.Title.Text = "Quarterly Revenue";
+            columnChart.Title.Text = "Quarterly Sales";
             columnChart.Title.Show = true;
 
-            // Position the legend.
-            columnChart.Legend.Position = LegendPosition.Right;
+            // Enable data labels for each series and format them.
+            foreach (ChartSeries series in columnChart.Series)
+            {
+                series.HasDataLabels = true;
+                for (int i = 0; i < series.DataLabels.Count; i++)
+                {
+                    series.DataLabels[i].ShowValue = true;
+                    series.DataLabels[i].NumberFormat.FormatCode = "#,##0";
+                }
+            }
 
-            // Apply a simple fill color to the series.
-            series.Format.Fill.ForeColor = Color.Blue;
+            // Apply custom colors to the series.
+            columnChart.Series[0].Format.Fill.ForeColor = Color.CornflowerBlue;
+            columnChart.Series[1].Format.Fill.ForeColor = Color.Orange;
         }
 
-        // Add a paragraph break between charts.
+        // Add a paragraph break between the charts.
         builder.Writeln();
 
         // -------------------------------------------------
-        // Second chart: Pie chart with percentage labels.
+        // Insert the second chart: a pie chart.
         // -------------------------------------------------
-        Shape pieShape = builder.InsertChart(ChartType.Pie, 300, 300);
-        if (pieShape.HasChart)
+        Shape pieChartShape = builder.InsertChart(ChartType.Pie, 432, 252);
+        if (pieChartShape.HasChart)
         {
-            Chart pieChart = pieShape.Chart;
+            Chart pieChart = pieChartShape.Chart;
+
+            // Remove the demo data series.
             pieChart.Series.Clear();
 
-            string[] productNames = { "Product A", "Product B", "Product C" };
-            double[] marketShare = { 45, 30, 25 };
+            // Define categories and values.
+            string[] categories = { "Apples", "Bananas", "Cherries", "Dates" };
+            pieChart.Series.Add("Fruits", categories, new double[] { 30, 20, 25, 25 });
 
-            pieChart.Series.Add("Market Share", productNames, marketShare);
+            // Set chart title.
+            pieChart.Title.Text = "Fruit Distribution";
+            pieChart.Title.Show = true;
 
+            // Enable data labels and configure them.
             ChartSeries pieSeries = pieChart.Series[0];
             pieSeries.HasDataLabels = true;
             for (int i = 0; i < pieSeries.DataLabels.Count; i++)
             {
-                pieSeries.DataLabels[i].ShowPercentage = true;
                 pieSeries.DataLabels[i].ShowCategoryName = true;
+                pieSeries.DataLabels[i].ShowValue = true;
+                pieSeries.DataLabels[i].NumberFormat.FormatCode = "#,##0";
             }
 
-            pieChart.Title.Text = "Product Market Share";
-            pieChart.Title.Show = true;
-
-            pieChart.Legend.Position = LegendPosition.Bottom;
+            // Apply a base fill color for the series (individual slice colors can be set per point if needed).
+            pieSeries.Format.Fill.ForeColor = Color.LightSalmon;
         }
 
-        // Add another paragraph break.
-        builder.Writeln();
+        // -------------------------------------------------
+        // Save the document in DOCX format.
+        // -------------------------------------------------
+        string docxPath = "MultipleCharts.docx";
+        doc.Save(docxPath);
 
         // -------------------------------------------------
-        // Third chart: Line chart with category and value labels.
+        // Export the same document to PDF while preserving chart formatting.
         // -------------------------------------------------
-        Shape lineShape = builder.InsertChart(ChartType.Line, 400, 300);
-        if (lineShape.HasChart)
-        {
-            Chart lineChart = lineShape.Chart;
-            lineChart.Series.Clear();
-
-            string[] months = { "Jan", "Feb", "Mar", "Apr", "May" };
-            double[] temperatures = { 30, 35, 40, 45, 50 };
-
-            lineChart.Series.Add("Temperature", months, temperatures);
-
-            ChartSeries lineSeries = lineChart.Series[0];
-            lineSeries.HasDataLabels = true;
-            for (int i = 0; i < lineSeries.DataLabels.Count; i++)
-            {
-                lineSeries.DataLabels[i].ShowCategoryName = true;
-                lineSeries.DataLabels[i].ShowValue = true;
-            }
-
-            lineChart.Title.Text = "Monthly Temperatures";
-            lineChart.Title.Show = true;
-
-            lineChart.Legend.Position = LegendPosition.Top;
-        }
-
-        // Save the document with charts.
-        doc.Save("MultipleCharts.docx");
-
-        // Export the same document to PDF, preserving chart formatting.
-        doc.Save("MultipleCharts.pdf", SaveFormat.Pdf);
+        string pdfPath = "MultipleCharts.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
     }
 }

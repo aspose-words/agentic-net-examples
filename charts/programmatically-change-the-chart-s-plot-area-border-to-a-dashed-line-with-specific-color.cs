@@ -16,14 +16,14 @@ public class Program
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Change the chart's border (applies to the whole chart area) to a dashed red line with a width of 2 points.
-        // Aspose.Words for .NET does not expose a separate PlotArea object in this version,
-        // so we format the chart's outer border via the Chart.Format property.
-        chart.Format.Stroke.Color = Color.Red;
-        chart.Format.Stroke.Weight = 2.0;
+        // Aspose.Words does not expose a dedicated PlotArea object.
+        // The closest available formatting is the chart's overall format.
+        // Here we set a dashed red border with a width of 2 points for the chart area.
         chart.Format.Stroke.DashStyle = DashStyle.Dash;
+        chart.Format.Stroke.Color = Color.Red;
+        chart.Format.Stroke.Weight = 2.0; // Width in points.
 
-        // Save the document to the working directory.
-        doc.Save("ChartPlotAreaBorder.docx");
+        // Save the document.
+        doc.Save("PlotAreaBorder.docx");
     }
 }

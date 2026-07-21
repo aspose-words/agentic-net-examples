@@ -1,9 +1,9 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Drawing;          // Needed for the Shape class
+using Aspose.Words.Drawing.Charts;   // Chart‑related types
 
-public class ChartSeriesExample
+public class Program
 {
     public static void Main()
     {
@@ -11,21 +11,23 @@ public class ChartSeriesExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
+        // Insert a column chart with a defined size.
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data that comes with a newly inserted chart.
+        // Remove the default demo series to start with a clean chart.
         chart.Series.Clear();
 
-        // Define custom category labels and corresponding values.
+        // Define custom category labels for the X‑axis.
         string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+
+        // Define the numeric values for the series.
         double[] values = { 1500, 2300, 1800, 2100 };
 
-        // Add a new series with the custom categories and values.
+        // Add a new series using the categories and values.
         chart.Series.Add("Fiscal Year 2023", categories, values);
 
-        // Save the document to the local file system.
-        doc.Save("ChartSeriesExample.docx");
+        // Save the document to the working directory.
+        doc.Save("ChartSeriesValues.docx");
     }
 }

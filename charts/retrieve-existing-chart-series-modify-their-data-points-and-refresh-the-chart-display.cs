@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -15,37 +15,25 @@ public class Program
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Save the initial document.
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "original.docx");
-        doc.Save(originalPath);
+        // Retrieve the first two series from the chart.
+        ChartSeries series1 = chart.Series[0];
+        ChartSeries series2 = chart.Series[1];
 
-        // Load the document containing the chart.
-        Document loadedDoc = new Document(originalPath);
+        // Remove the first data point from each series.
+        series1.Remove(0);
+        series2.Remove(0);
 
-        // Locate the first shape that contains a chart.
-        Shape? shapeWithChart = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                         .OfType<Shape>()
-                                         .FirstOrDefault(s => s.HasChart);
-        if (shapeWithChart == null)
-            throw new InvalidOperationException("No chart shape found in the document.");
+        // Add a new data point with a custom category and value to each series.
+        ChartXValue newCategory = ChartXValue.FromString("New Category");
+        series1.Add(newCategory, ChartYValue.FromDouble(15.0));
+        series2.Add(newCategory, ChartYValue.FromDouble(8.5));
 
-        Chart loadedChart = shapeWithChart.Chart;
+        // Change the fill color of the newly added point in the first series.
+        int newIndex = series1.DataPoints.Count - 1;
+        series1.DataPoints[newIndex].Format.Fill.Color = Color.Green;
 
-        // Modify each existing series: clear current values and add new ones.
-        foreach (ChartSeries series in loadedChart.Series)
-        {
-            // Remove existing data while preserving formatting.
-            series.ClearValues();
-
-            // Add new data points for the same categories.
-            series.Add(ChartXValue.FromString("Category 1"), ChartYValue.FromDouble(10));
-            series.Add(ChartXValue.FromString("Category 2"), ChartYValue.FromDouble(20));
-            series.Add(ChartXValue.FromString("Category 3"), ChartYValue.FromDouble(30));
-            series.Add(ChartXValue.FromString("Category 4"), ChartYValue.FromDouble(40));
-        }
-
-        // Save the updated document.
-        string updatedPath = Path.Combine(Directory.GetCurrentDirectory(), "updated.docx");
-        loadedDoc.Save(updatedPath);
+        // Save the document with the modified chart.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ModifiedChart.docx");
+        doc.Save(outputPath);
     }
 }

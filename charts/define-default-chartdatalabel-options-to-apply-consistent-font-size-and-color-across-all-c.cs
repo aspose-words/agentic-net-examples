@@ -1,10 +1,10 @@
 using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;          // Required for the Shape class
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-public class ChartDataLabelDefaultsExample
+public class Program
 {
     public static void Main()
     {
@@ -12,32 +12,33 @@ public class ChartDataLabelDefaultsExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart and obtain its Chart object.
+        // Insert a column chart.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data series that Aspose.Words adds by default.
+        // Remove the demo data series.
         chart.Series.Clear();
 
-        // Define categories for the X‑axis.
-        string[] categories = new[] { "Category 1", "Category 2", "Category 3" };
+        // Define categories and add two custom series.
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        chart.Series.Add("Product A", categories, new double[] { 120, 150, 170, 200 });
+        chart.Series.Add("Product B", categories, new double[] { 80, 110, 130, 160 });
 
-        // Add two series with sample values.
-        chart.Series.Add("Series 1", categories, new double[] { 10, 20, 30 });
-        chart.Series.Add("Series 2", categories, new double[] { 15, 25, 35 });
-
-        // Apply default data‑label formatting to every series.
+        // Apply default data label options to every series.
         foreach (ChartSeries series in chart.Series)
         {
             // Enable data labels for the series.
             series.HasDataLabels = true;
 
             // Set a consistent font size and color for all data labels in the series.
-            series.DataLabels.Font.Size = 12;
+            series.DataLabels.Font.Size = 10;
             series.DataLabels.Font.Color = Color.DarkBlue;
+
+            // Show the value in each label.
+            series.DataLabels.ShowValue = true;
         }
 
         // Save the document.
-        doc.Save("ChartDataLabelDefaults.docx");
+        doc.Save("DefaultDataLabelOptions.docx");
     }
 }

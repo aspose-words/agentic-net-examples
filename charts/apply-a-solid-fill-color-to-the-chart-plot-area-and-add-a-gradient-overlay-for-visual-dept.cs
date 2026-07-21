@@ -13,21 +13,23 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        if (!chartShape.HasChart)
-            throw new InvalidOperationException("Inserted shape does not contain a chart.");
-
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data series and add custom data.
+        // Remove the default demo series.
         chart.Series.Clear();
-        string[] categories = { "A", "B", "C" };
-        chart.Series.Add("Series 1", categories, new double[] { 10, 20, 30 });
 
-        // Apply a solid fill color to the chart area (plot area is not directly exposed in Aspose.Words).
-        chart.Format.Fill.Solid(Color.LightBlue);
+        // Add custom data.
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        chart.Series.Add("Revenue", categories, new double[] { 15000, 20000, 18000, 22000 });
 
-        // Add a vertical two‑color gradient overlay for visual depth.
+        // Apply a solid fill to the chart area (used as a substitute for PlotArea).
+        chart.Format.Fill.Solid(Color.LightGray);
+
+        // Configure a two‑color vertical gradient overlay.
+        // ForeColor is the start color, BackColor is the end color.
+        chart.Format.Fill.ForeColor = Color.FromArgb(128, Color.LightBlue); // semi‑transparent light blue
+        chart.Format.Fill.BackColor = Color.FromArgb(64, Color.DarkBlue);   // more transparent dark blue
         chart.Format.Fill.TwoColorGradient(GradientStyle.Vertical, GradientVariant.Variant1);
 
         // Save the document.

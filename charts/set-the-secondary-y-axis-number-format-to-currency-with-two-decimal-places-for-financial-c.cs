@@ -1,13 +1,14 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Drawing;               // Needed for Shape
+using Aspose.Words.Drawing.Charts;        // Chart‑related types
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -18,25 +19,26 @@ public class Program
         // Remove the demo data series.
         chart.Series.Clear();
 
-        // Add a primary series.
-        string[] categories = new[] { "Q1", "Q2", "Q3", "Q4" };
-        chart.Series.Add("Primary Series", categories, new double[] { 1000, 1500, 1200, 1300 });
+        // Primary series (uses the primary Y‑axis).
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        chart.Series.Add("Primary Series", categories, new double[] { 1200, 1500, 1800, 2100 });
 
-        // Create a secondary series group and assign it to the secondary axis.
+        // Create a secondary series group that uses the secondary axes.
         ChartSeriesGroup secondaryGroup = chart.SeriesGroups.Add(ChartSeriesType.Line);
         secondaryGroup.AxisGroup = AxisGroup.Secondary;
 
-        // Set the number format of the secondary Y‑axis to currency with two decimals.
-        secondaryGroup.AxisY.NumberFormat.FormatCode = "\"$\"#,##0.00";
+        // Hide the secondary X‑axis (optional, keeps the chart tidy).
+        secondaryGroup.AxisX.Hidden = true;
 
-        // Optional: give the secondary Y‑axis a title.
-        secondaryGroup.AxisY.Title.Show = true;
-        secondaryGroup.AxisY.Title.Text = "Secondary Y Axis (USD)";
+        // Set the number format of the secondary Y‑axis to currency with two decimal places.
+        // Format code: "$#,##0.00"
+        secondaryGroup.AxisY.NumberFormat.FormatCode = "$#,##0.00";
 
-        // Add a series to the secondary group.
-        secondaryGroup.Series.Add("Secondary Series", categories, new double[] { 200, 250, 220, 210 });
+        // Add a series to the secondary group (uses the secondary Y‑axis).
+        secondaryGroup.Series.Add("Secondary Series", categories, new double[] { 3000, 3500, 4000, 4500 });
 
         // Save the document.
-        doc.Save("SetSecondaryYAxisNumberFormat.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SecondaryAxisNumberFormat.docx");
+        doc.Save(outputPath);
     }
 }

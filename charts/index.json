@@ -9,37 +9,34 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
+      "System.Linq",
       "Aspose.Words",
       "Aspose.Words.Drawing",
       "Aspose.Words.Drawing.Charts",
-      "Aspose.Words.Tables",
       "System.Drawing",
-      "System.Linq",
+      "Aspose.Words.Tables",
       "Aspose.Words.Saving"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Node",
       "NodeType",
       "Shape",
       "Chart",
       "ChartType",
       "CellFormat",
-      "RowFormat",
+      "Node",
       "Font",
-      "ChartSeries",
-      "ChartDataLabel",
       "Directory",
       "Path",
+      "ChartSeries",
       "SaveFormat",
-      "MemoryStream",
-      "File"
+      "MemoryStream"
     ]
   },
   "stats": {
@@ -48,11 +45,8 @@
     "workflow_counts": {
       "existing-docx-and-export": 5,
       "native-chart-api": 28,
-      "stream-batch-io": 3,
-      "validation": 3
-    },
-    "winner_counts": {
-      "mcp": 39
+      "validation": 3,
+      "stream-batch-io": 3
     }
   },
   "rules_summary": {
@@ -137,7 +131,7 @@
     {
       "id": 4,
       "file_name": "insert-a-chart-using-a-two-dimensional-array-as-a-custom-data-source-mapping-series-and-ca.cs",
-      "task": "Insert a chart using a two-dimensional array as a custom data source, mapping series and categories.",
+      "task": "Insert a chart using a two‑dimensional array as a custom data source, mapping series and categories.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -230,8 +224,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 13,
@@ -247,7 +241,7 @@
     {
       "id": 14,
       "file_name": "align-multi-line-chart-data-labels-to-the-center-and-enable-text-wrapping-for-better-reada.cs",
-      "task": "Align multi-line chart data labels to the center and enable text wrapping for better readability.",
+      "task": "Align multi‑line chart data labels to the center and enable text wrapping for better readability.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -302,7 +296,7 @@
     {
       "id": 19,
       "file_name": "set-major-gridlines-visibility-on-the-primary-x-axis-and-customize-their-line-color-and-th.cs",
-      "task": "Set major gridlines visibility on the primary X-axis and customize their line color and thickness.",
+      "task": "Set major gridlines visibility on the primary X‑axis and customize their line color and thickness.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -313,7 +307,7 @@
     {
       "id": 20,
       "file_name": "adjust-the-primary-y-axis-scaling-to-fixed-minimum-and-maximum-values-and-set-major-unit-i.cs",
-      "task": "Adjust the primary Y-axis scaling to fixed minimum and maximum values and set major unit intervals.",
+      "task": "Adjust the primary Y‑axis scaling to fixed minimum and maximum values and set major unit intervals.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -324,7 +318,7 @@
     {
       "id": 21,
       "file_name": "set-display-units-for-the-secondary-x-axis-to-thousands-and-format-axis-labels-with-a-cust.cs",
-      "task": "Set display units for the secondary X-axis to thousands and format axis labels with a custom number format.",
+      "task": "Set display units for the secondary X‑axis to thousands and format axis labels with a custom number format.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -335,7 +329,7 @@
     {
       "id": 22,
       "file_name": "set-the-secondary-y-axis-number-format-to-currency-with-two-decimal-places-for-financial-c.cs",
-      "task": "Set the secondary Y-axis number format to currency with two decimal places for financial charts.",
+      "task": "Set the secondary Y‑axis number format to currency with two decimal places for financial charts.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -357,7 +351,7 @@
     {
       "id": 24,
       "file_name": "programmatically-set-the-chart-s-background-fill-to-a-semi-transparent-color-to-create-a-w.cs",
-      "task": "Programmatically set the chart's background fill to a semi-transparent color to create a watermark effect.",
+      "task": "Programmatically set the chart's background fill to a semi‑transparent color to create a watermark effect.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -412,7 +406,7 @@
     {
       "id": 29,
       "file_name": "apply-a-three-dimensional-rotation-effect-to-a-column-chart-to-enhance-visual-perspective.cs",
-      "task": "Apply a three-dimensional rotation effect to a column chart to enhance visual perspective.",
+      "task": "Apply a three‑dimensional rotation effect to a column chart to enhance visual perspective.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -512,13 +506,13 @@
     {
       "id": 38,
       "file_name": "implement-error-handling-to-catch-exceptions-when-inserting-a-chart-into-a-read-only-docum.cs",
-      "task": "Implement error handling to catch exceptions when inserting a chart into a read-only document stream.",
+      "task": "Implement error handling to catch exceptions when inserting a chart into a read‑only document stream.",
       "workflow": "existing-docx-and-export",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 39,

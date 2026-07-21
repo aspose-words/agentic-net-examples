@@ -1,7 +1,7 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;               // Needed for the Shape class
-using Aspose.Words.Drawing.Charts;        // Chart‑related APIs
+using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
 
 public class Program
 {
@@ -11,46 +11,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an empty column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        // Insert a column chart with a defined size.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data that Aspose.Words inserts by default.
+        // Remove the demo data that comes with a newly inserted chart.
         chart.Series.Clear();
 
         // Define categories (X‑axis labels) and series names (legend entries).
         string[] categories = { "Q1", "Q2", "Q3", "Q4" };
         string[] seriesNames = { "Product A", "Product B", "Product C" };
 
-        // Two‑dimensional array where rows correspond to series and columns to categories.
+        // Two‑dimensional array where rows represent series and columns represent category values.
         double[,] data = new double[,]
         {
-            { 120, 150, 170, 200 }, // Product A
-            {  80, 130, 160, 190 }, // Product B
-            { 100, 110, 130, 180 }  // Product C
+            { 120.5, 135.0, 150.2, 165.3 }, // Product A
+            { 80.0,  95.5, 110.0, 125.7 }, // Product B
+            { 60.3,  70.1,  85.4,  95.0 }  // Product C
         };
 
-        int seriesCount = seriesNames.Length;
-        int categoryCount = categories.Length;
-
-        // Populate the chart with the custom data.
-        for (int i = 0; i < seriesCount; i++)
+        // Populate the chart with the custom data source.
+        for (int seriesIndex = 0; seriesIndex < seriesNames.Length; seriesIndex++)
         {
-            double[] values = new double[categoryCount];
-            for (int j = 0; j < categoryCount; j++)
+            double[] values = new double[categories.Length];
+            for (int catIndex = 0; catIndex < categories.Length; catIndex++)
             {
-                values[j] = data[i, j];
+                values[catIndex] = data[seriesIndex, catIndex];
             }
 
-            // Add a series using the categories array and the values for this series.
-            chart.Series.Add(seriesNames[i], categories, values);
+            // Add a series using the categories array and the extracted values.
+            chart.Series.Add(seriesNames[seriesIndex], categories, values);
         }
 
-        // Optional: give the chart a title.
-        chart.Title.Text = "Quarterly Sales";
-        chart.Title.Show = true;
-
-        // Save the document.
-        doc.Save("ChartFromArray.docx");
+        // Save the document containing the chart.
+        doc.Save("CustomDataChart.docx");
     }
 }

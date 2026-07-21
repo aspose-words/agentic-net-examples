@@ -1,8 +1,7 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;               // Required for Shape
-using Aspose.Words.Drawing.Charts;        // Chart related types
+using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
 
 public class ChartValidationExample
 {
@@ -13,50 +12,32 @@ public class ChartValidationExample
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
         // Remove the demo data that Aspose.Words inserts by default.
         chart.Series.Clear();
 
         // Define categories that will be used for all series.
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        string[] categories = { "Category 1", "Category 2", "Category 3" };
 
-        // Define values for two series. Ensure each values array matches the categories length.
-        double[] salesValues = { 15000, 20000, 18000, 22000 };
-        double[] profitValues = { 3000, 4000, 3500, 5000 };
+        // Add series with matching category/value counts.
+        chart.Series.Add("Series A", categories, new double[] { 10, 20, 30 });
+        chart.Series.Add("Series B", categories, new double[] { 15, 25, 35 });
 
-        // Validation: category count must equal values count for each series.
-        ValidateSeriesData(categories, salesValues);
-        ValidateSeriesData(categories, profitValues);
-
-        // Add the series to the chart.
-        chart.Series.Add("Sales", categories, salesValues);
-        chart.Series.Add("Profit", categories, profitValues);
-
-        // After adding, verify that every series has the same number of data points as categories.
+        // Validate that every series has the same number of Y‑values as there are categories.
         foreach (ChartSeries series in chart.Series)
         {
-            // YValues holds the numeric data for the series.
-            // Its Count should match the number of categories.
-            if (series.YValues.Count != categories.Length)
+            // For category‑based charts the numeric values are stored in YValues.
+            int valuesCount = series.YValues.Count;
+            if (valuesCount != categories.Length)
+            {
                 throw new InvalidOperationException(
-                    $"Series \"{series.Name}\" has {series.YValues.Count} values, expected {categories.Length}.");
+                    $"Series '{series.Name}' contains {valuesCount} values, but the chart expects {categories.Length} categories.");
+            }
         }
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "validated-chart.docx");
-        doc.Save(outputPath);
-    }
-
-    // Helper method to validate that a values array matches the categories array length.
-    private static void ValidateSeriesData(string[] categories, double[] values)
-    {
-        if (categories == null) throw new ArgumentNullException(nameof(categories));
-        if (values == null) throw new ArgumentNullException(nameof(values));
-
-        if (categories.Length != values.Length)
-            throw new InvalidOperationException(
-                $"Category count ({categories.Length}) does not match values count ({values.Length}).");
+        // Save the document. The validation runs before this point.
+        doc.Save("validated-chart.docx");
     }
 }
