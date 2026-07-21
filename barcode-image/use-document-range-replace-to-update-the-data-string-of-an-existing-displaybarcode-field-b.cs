@@ -7,14 +7,14 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a DISPLAYBARCODE field with an initial barcode value.
+        // Insert a DISPLAYBARCODE field with an initial value.
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
         barcodeField.BarcodeType = "QR";
-        barcodeField.BarcodeValue = "ABC123";
+        barcodeField.BarcodeValue = "OLDVALUE";
         barcodeField.BackgroundColor = "0xF8BD69";
         barcodeField.ForegroundColor = "0xB5413B";
         barcodeField.ErrorCorrectionLevel = "3";
@@ -24,14 +24,14 @@ public class Program
 
         builder.Writeln();
 
-        // Replace the old barcode data string with a new one using Range.Replace.
-        FindReplaceOptions replaceOptions = new FindReplaceOptions();
-        doc.Range.Replace("ABC123", "XYZ789", replaceOptions);
+        // Replace the old barcode data string with a new one.
+        FindReplaceOptions options = new FindReplaceOptions();
+        doc.Range.Replace("OLDVALUE", "NEWVALUE", options);
 
-        // Update fields so the DISPLAYBARCODE reflects the new value.
+        // Update fields to reflect the new barcode value.
         doc.UpdateFields();
 
-        // Save the updated document.
-        doc.Save("UpdatedBarcode.docx");
+        // Save the document.
+        doc.Save("UpdatedBarCode.docx");
     }
 }

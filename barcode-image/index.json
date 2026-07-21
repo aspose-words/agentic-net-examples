@@ -11,8 +11,8 @@
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0",
-      "Aspose.BarCode": "26.5.0",
+      "Aspose.Words": "26.6.0",
+      "Aspose.BarCode": "26.6.0",
       "Aspose.Drawing.Common": "25.11.0"
     },
     "required_namespaces": [
@@ -20,15 +20,14 @@
       "Aspose.Words",
       "Aspose.Words.Fields",
       "System.IO",
+      "Aspose.Words.Saving",
       "Aspose.Words.Drawing",
       "Aspose.Words.Replacing",
       "Aspose.BarCode.Generation",
       "Aspose.Drawing",
       "Aspose.Drawing.Imaging",
-      "Aspose.Words.Saving",
-      "Aspose.Words.BuildingBlocks",
-      "Aspose.Drawing.Drawing2D",
       "System.Collections.Generic",
+      "Aspose.Drawing.Drawing2D",
       "Aspose.BarCode",
       "System.Threading.Tasks"
     ],
@@ -37,19 +36,16 @@
       "DocumentBuilder",
       "FieldType",
       "FieldDisplayBarcode",
+      "Directory",
+      "Path",
+      "SaveFormat",
       "NodeType",
       "MemoryStream",
       "Shape",
       "BarcodeParameters",
       "IBarcodeGenerator",
-      "BarcodeGenerator",
-      "EncodeTypes",
-      "SymbologyEncodeType",
       "File",
-      "Path",
       "Font",
-      "SaveFormat",
-      "Directory",
       "Range",
       "Field",
       "FindReplaceOptions",
@@ -62,12 +58,8 @@
     "total_examples": 30,
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
-      "custom-generator": 25,
-      "word-field-only": 5
-    },
-    "winner_counts": {
-      "existing_repo": 22,
-      "mcp": 8
+      "word-field-only": 5,
+      "custom-generator": 25
     }
   },
   "rules_summary": {
@@ -276,8 +268,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 13,
@@ -304,7 +296,7 @@
     {
       "id": 15,
       "file_name": "configure-the-barcode-generator-to-produce-high-resolution-images-suitable-for-large-forma.cs",
-      "task": "Configure the barcode generator to produce high-resolution images suitable for large-format PDF printing.",
+      "task": "Configure the barcode generator to produce high‑resolution images suitable for large‑format PDF printing.",
       "workflow": "custom-generator",
       "outputs": [
         "pdf"

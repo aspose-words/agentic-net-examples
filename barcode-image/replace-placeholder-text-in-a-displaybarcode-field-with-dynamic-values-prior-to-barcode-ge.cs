@@ -6,29 +6,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and insert a DISPLAYBARCODE field with a placeholder value.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a DISPLAYBARCODE field with a placeholder value.
-        // Use the typed insertion method as required.
-        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        barcodeField.BarcodeType = "CODE39";
-        barcodeField.BarcodeValue = "PLACEHOLDER";
+        // Insert the field using the typed API.
+        FieldDisplayBarcode placeholderField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        placeholderField.BarcodeType = "CODE39";
+        placeholderField.BarcodeValue = "PLACEHOLDER"; // placeholder text
+        placeholderField.AddStartStopChar = true;      // optional appearance setting
+        builder.Writeln();
 
-        // Dynamic value that should replace the placeholder.
-        string dynamicValue = "987654321";
+        // Save the document that contains the placeholder field.
+        doc.Save("Placeholder.docx");
 
-        // Replace the placeholder text with the dynamic value before updating fields.
-        if (barcodeField.BarcodeValue == "PLACEHOLDER")
+        // Load the document again to simulate a later processing step.
+        Document loadedDoc = new Document("Placeholder.docx");
+
+        // Locate the DISPLAYBARCODE field and replace the placeholder with the actual value.
+        foreach (Field field in loadedDoc.Range.Fields)
         {
-            barcodeField.BarcodeValue = dynamicValue;
+            if (field.Type == FieldType.FieldDisplayBarcode)
+            {
+                FieldDisplayBarcode displayBarcode = (FieldDisplayBarcode)field;
+                if (displayBarcode.BarcodeValue == "PLACEHOLDER")
+                {
+                    displayBarcode.BarcodeValue = "12345ABCDE"; // dynamic value
+                }
+            }
         }
 
         // Update fields so the barcode is generated with the new value.
-        doc.UpdateFields();
+        loadedDoc.UpdateFields();
 
-        // Save the document.
-        doc.Save("DisplayBarcodeDynamic.docx");
+        // Save the final document.
+        loadedDoc.Save("Result.docx");
     }
 }
