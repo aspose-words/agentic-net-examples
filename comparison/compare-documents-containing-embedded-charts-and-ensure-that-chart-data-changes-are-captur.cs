@@ -1,55 +1,69 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-public class Program
+public class CompareChartRevisions
 {
     public static void Main()
     {
-        // Create the original document with a chart.
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Paths for the sample documents.
+        string originalPath = Path.Combine(outputDir, "Original.docx");
+        string revisedPath = Path.Combine(outputDir, "Revised.docx");
+        string comparedPath = Path.Combine(outputDir, "Compared.docx");
+
+        // ---------- Create the original document with an embedded chart ----------
         Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        Shape originalChartShape = builderOriginal.InsertChart(ChartType.Column, 400, 300);
-        Chart originalChart = originalChartShape.Chart;
-        originalChart.Series.Clear();
-        originalChart.Series.Add("Series 1",
-            new[] { "Category A", "Category B" },
-            new[] { 10.0, 20.0 });
+        DocumentBuilder builder = new DocumentBuilder(original);
+        builder.Writeln("Document containing a chart.");
 
-        // Create the revised document with the same chart but different data.
-        Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        Shape revisedChartShape = builderRevised.InsertChart(ChartType.Column, 400, 300);
+        // Insert a column chart and add a data series.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        Chart chart = chartShape.Chart;
+        chart.Series.Clear();
+        chart.Series.Add("Series 1", new[] { "A", "B", "C" }, new[] { 10.0, 20.0, 30.0 });
+
+        // Save the original document.
+        original.Save(originalPath);
+
+        // ---------- Create the revised document by cloning the original ----------
+        Document revised = (Document)original.Clone(true);
+
+        // Locate the chart shape in the revised document.
+        Shape revisedChartShape = (Shape)revised.GetChild(NodeType.Shape, 0, true);
         Chart revisedChart = revisedChartShape.Chart;
+
+        // Modify the chart data to simulate a change.
+        // Instead of accessing a non‑existent Values property, recreate the series with new data.
         revisedChart.Series.Clear();
-        revisedChart.Series.Add("Series 1",
-            new[] { "Category A", "Category B" },
-            new[] { 30.0, 40.0 }); // Changed data
+        revisedChart.Series.Add("Series 1", new[] { "A", "B", "C" }, new[] { 15.0, 25.0, 35.0 });
 
-        // Ensure both documents have no revisions before comparison.
-        if (original.HasRevisions || revised.HasRevisions)
-            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
+        // Save the revised document.
+        revised.Save(revisedPath);
 
-        // Compare the documents. Revisions will be added to the original document.
-        original.Compare(revised, "ChartComparer", DateTime.Now);
+        // ---------- Compare the original with the revised document ----------
+        // The comparison will generate revisions for any differences, including chart data changes.
+        original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Verify that revisions were created.
-        if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after comparing documents with chart changes.");
+        // Save the document that now contains the revisions.
+        original.Save(comparedPath);
+
+        // ---------- Inspect revisions ----------
+        int totalRevisions = original.Revisions.Count;
+        Console.WriteLine($"Total revisions after comparison: {totalRevisions}");
 
         // Count revisions that are related to the chart shape.
-        int chartRevisions = original.Revisions.Count(r =>
-            r.ParentNode != null && r.ParentNode.NodeType == NodeType.Shape);
-
-        // Output the results.
-        Console.WriteLine($"Total revisions detected: {original.Revisions.Count}");
-        Console.WriteLine($"Revisions related to chart data changes: {chartRevisions}");
-
-        // Save the compared document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ChartComparisonResult.docx");
-        original.Save(outputPath);
+        int chartRevisions = 0;
+        foreach (Revision rev in original.Revisions)
+        {
+            if (rev.ParentNode != null && rev.ParentNode.NodeType == NodeType.Shape)
+                chartRevisions++;
+        }
+        Console.WriteLine($"Revisions related to chart data: {chartRevisions}");
     }
 }

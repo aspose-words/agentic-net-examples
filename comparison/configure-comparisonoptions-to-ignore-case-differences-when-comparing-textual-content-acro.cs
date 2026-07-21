@@ -1,20 +1,21 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class ComparisonIgnoreCaseExample
+public class Program
 {
     public static void Main()
     {
         // Create the original document with mixed‑case text.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello World!");
+        builderOriginal.Writeln("Hello World");
 
-        // Create the revised document with the same text but different case.
+        // Create the revised document that differs only by case.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("hello world!");
+        builderRevised.Writeln("hello world");
 
         // Configure comparison to ignore case changes.
         CompareOptions compareOptions = new CompareOptions
@@ -25,11 +26,12 @@ public class ComparisonIgnoreCaseExample
         // Perform the comparison.
         original.Compare(revised, "Author", DateTime.Now, compareOptions);
 
-        // Verify that no revisions were created because case differences are ignored.
+        // Because case differences are ignored, there should be no revisions.
         if (original.Revisions.Count != 0)
-            throw new InvalidOperationException("Case differences should have been ignored, but revisions were found.");
+            throw new InvalidOperationException($"Expected zero revisions, but found {original.Revisions.Count}.");
 
-        // Save the result document.
-        original.Save("ComparisonResult.docx");
+        // Save the (unchanged) original document as the comparison result.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
+        original.Save(outputPath);
     }
 }

@@ -1,48 +1,51 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Comparing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the original document with some content.
+        // Create the original document.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");
         builderOriginal.Writeln("This is the original paragraph.");
+        builderOriginal.Writeln("It contains some sample text.");
 
-        // Create the revised document with differences.
+        // Create the revised document with intentional differences.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello world!"); // punctuation change
-        builderRevised.Writeln("This is the revised paragraph."); // text change
+        builderRevised.Writeln("This is the edited paragraph."); // changed text
+        builderRevised.Writeln("It contains some sample text."); // unchanged
+        builderRevised.Writeln("An additional line was added."); // new line
 
-        // Compare the documents. Revisions will be added to the original document.
-        string comparisonAuthor = "Comparer";
-        DateTime comparisonDate = DateTime.Now;
-        original.Compare(revised, comparisonAuthor, comparisonDate);
+        // Perform comparison. The revisions will be stored in the original document.
+        string author = "CustomLogger";
+        DateTime compareTime = DateTime.Now;
+        original.Compare(revised, author, compareTime);
 
-        // Ensure that revisions were detected.
-        if (original.Revisions.Count == 0)
+        // Prepare a logger to capture revision details.
+        List<string> logLines = new List<string>
         {
-            throw new InvalidOperationException("No revisions were detected after comparison.");
+            $"Comparison performed by '{author}' at {compareTime:u}",
+            $"Total revisions detected: {original.Revisions.Count}"
+        };
+
+        // Iterate through each revision and record its type, author, and timestamp.
+        foreach (Revision rev in original.Revisions)
+        {
+            string line = $"Revision Type: {rev.RevisionType}, Author: {rev.Author}, Timestamp: {rev.DateTime:u}";
+            logLines.Add(line);
         }
 
-        // Prepare a log file to record revision details.
-        string logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "revision_log.txt");
-        using (StreamWriter logger = new StreamWriter(logFilePath, false))
-        {
-            logger.WriteLine("RevisionType\tAuthor\tTimestamp");
-            foreach (Revision rev in original.Revisions)
-            {
-                // Log revision type, author, and timestamp in ISO 8601 format.
-                logger.WriteLine($"{rev.RevisionType}\t{rev.Author}\t{rev.DateTime:O}");
-            }
-        }
+        // Save the compared document with revisions.
+        string outputDocPath = Path.Combine(Directory.GetCurrentDirectory(), "compared.docx");
+        original.Save(outputDocPath);
 
-        // Save the compared document for reference.
-        string comparedDocPath = Path.Combine(Directory.GetCurrentDirectory(), "compared.docx");
-        original.Save(comparedDocPath);
+        // Save the revision log to a text file.
+        string logPath = Path.Combine(Directory.GetCurrentDirectory(), "revision_log.txt");
+        File.WriteAllLines(logPath, logLines);
     }
 }

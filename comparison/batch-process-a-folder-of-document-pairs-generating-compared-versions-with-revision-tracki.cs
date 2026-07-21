@@ -1,102 +1,63 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class Program
+public class BatchDocumentComparison
 {
     public static void Main()
     {
-        // Set up a deterministic folder for the example.
+        // Define the folder that will hold the sample documents and comparison results.
         string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonInput");
         Directory.CreateDirectory(inputDir);
 
-        // Create sample document pairs.
-        CreateSamplePair(inputDir, "pair1", "Original content for pair 1.", "Modified content for pair 1.");
-        CreateSamplePair(inputDir, "pair2", "First version of pair 2.", "Second version of pair 2 with change.");
-        CreateSamplePair(inputDir, "pair3", "Alpha version.", "Beta version with differences.");
-
-        // Process each pair: compare and save the result with revisions.
-        foreach (var pair in GetDocumentPairs(inputDir))
+        // Create a few pairs of documents with deterministic differences.
+        for (int i = 1; i <= 3; i++)
         {
-            // Load the original and the modified document.
-            Document original = new Document(pair.OriginalPath);
-            Document revised = new Document(pair.ModifiedPath);
+            // Original version.
+            Document original = new Document();
+            DocumentBuilder builderOrig = new DocumentBuilder(original);
+            builderOrig.Writeln($"Document {i} - Original version.");
+            string originalPath = Path.Combine(inputDir, $"Doc{i}_v1.docx");
+            original.Save(originalPath);
 
-            // Perform comparison. Provide author and timestamp.
-            original.Compare(revised, "BatchProcessor", DateTime.Now);
-
-            // Verify that revisions were generated.
-            if (original.Revisions.Count == 0)
-                throw new InvalidOperationException($"No revisions detected for pair '{pair.Prefix}'.");
-
-            // Save the compared document.
-            string resultPath = Path.Combine(inputDir, $"{pair.Prefix}_compared.docx");
-            original.Save(resultPath);
-        }
-    }
-
-    // Creates a pair of documents with given texts.
-    private static void CreateSamplePair(string folder, string prefix, string originalText, string modifiedText)
-    {
-        string originalPath = Path.Combine(folder, $"{prefix}_original.docx");
-        string modifiedPath = Path.Combine(folder, $"{prefix}_modified.docx");
-
-        CreateDocument(originalPath, originalText);
-        CreateDocument(modifiedPath, modifiedText);
-    }
-
-    // Helper to create a single document with specified text.
-    private static void CreateDocument(string path, string text)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(text);
-        doc.Save(path);
-    }
-
-    // Represents a pair of document file paths.
-    private class DocumentPair
-    {
-        public string Prefix { get; set; } = "";
-        public string OriginalPath { get; set; } = "";
-        public string ModifiedPath { get; set; } = "";
-    }
-
-    // Retrieves all document pairs from the folder based on naming convention.
-    private static IEnumerable<DocumentPair> GetDocumentPairs(string folder)
-    {
-        var files = Directory.GetFiles(folder, "*.docx");
-        var pairs = new Dictionary<string, DocumentPair>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var file in files)
-        {
-            string fileName = Path.GetFileNameWithoutExtension(file);
-            // Expected format: {prefix}_original or {prefix}_modified
-            int underscoreIndex = fileName.LastIndexOf('_');
-            if (underscoreIndex <= 0) continue;
-
-            string prefix = fileName.Substring(0, underscoreIndex);
-            string suffix = fileName.Substring(underscoreIndex + 1).ToLowerInvariant();
-
-            if (!pairs.TryGetValue(prefix, out var pair))
-            {
-                pair = new DocumentPair { Prefix = prefix };
-                pairs[prefix] = pair;
-            }
-
-            if (suffix == "original")
-                pair.OriginalPath = file;
-            else if (suffix == "modified")
-                pair.ModifiedPath = file;
+            // Revised version with an extra line to ensure a revision is generated.
+            Document revised = new Document();
+            DocumentBuilder builderRev = new DocumentBuilder(revised);
+            builderRev.Writeln($"Document {i} - Original version.");
+            builderRev.Writeln($"Document {i} - Revised additional line.");
+            string revisedPath = Path.Combine(inputDir, $"Doc{i}_v2.docx");
+            revised.Save(revisedPath);
         }
 
-        foreach (var pair in pairs.Values)
+        // Process each pair in the folder.
+        string[] originalFiles = Directory.GetFiles(inputDir, "*_v1.docx");
+        foreach (string originalFile in originalFiles)
         {
-            // Ensure both files exist before yielding.
-            if (!string.IsNullOrEmpty(pair.OriginalPath) && !string.IsNullOrEmpty(pair.ModifiedPath))
-                yield return pair;
+            string baseName = Path.GetFileNameWithoutExtension(originalFile);
+            string revisedFile = Path.Combine(inputDir, baseName.Replace("_v1", "_v2") + ".docx");
+
+            if (!File.Exists(revisedFile))
+                continue; // Skip if the counterpart does not exist.
+
+            // Load the documents.
+            Document docOriginal = new Document(originalFile);
+            Document docRevised = new Document(revisedFile);
+
+            // Perform the comparison, tracking revisions.
+            docOriginal.Compare(docRevised, "BatchUser", DateTime.Now);
+
+            // Verify that at least one revision was created.
+            if (docOriginal.Revisions.Count == 0)
+                throw new InvalidOperationException($"No revisions detected for pair {baseName}.");
+
+            // Save the compared document with revisions.
+            string resultPath = Path.Combine(inputDir, $"{baseName}_compared.docx");
+            docOriginal.Save(resultPath);
+
+            Console.WriteLine($"Compared {Path.GetFileName(originalFile)} with {Path.GetFileName(revisedFile)} -> {Path.GetFileName(resultPath)} (Revisions: {docOriginal.Revisions.Count})");
         }
+
+        Console.WriteLine("Batch comparison completed.");
     }
 }

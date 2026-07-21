@@ -1,30 +1,48 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Comparing;
 
-public class Program
+public class DocumentComparisonExample
 {
     public static void Main()
     {
-        // Create the original document.
+        // Define file paths in the current working directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonOutput");
+        Directory.CreateDirectory(outputDir);
+
+        string originalPath = Path.Combine(outputDir, "original.docx");
+        string revisedPath = Path.Combine(outputDir, "revised.docx");
+        string resultPath = Path.Combine(outputDir, "comparison-result.docx");
+
+        // Create the original document with some content.
         Document original = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(original);
-        builder1.Writeln("Hello world.");
+        DocumentBuilder builderOriginal = new DocumentBuilder(original);
+        builderOriginal.Writeln("Hello world.");
+        builderOriginal.Writeln("This is the original document.");
+        original.Save(originalPath);
 
-        // Create the revised document with a deliberate change.
+        // Create the revised document with differences.
         Document revised = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(revised);
-        builder2.Writeln("Hello revised world.");
+        DocumentBuilder builderRevised = new DocumentBuilder(revised);
+        builderRevised.Writeln("Hello world!"); // Slight change.
+        builderRevised.Writeln("This is the revised document with changes."); // Modified line.
+        revised.Save(revisedPath);
 
-        // Compare the documents. Revisions are added to the original document.
-        original.Compare(revised, "Author", DateTime.Now);
+        // Load the documents (optional, they are already in memory).
+        Document docOriginal = new Document(originalPath);
+        Document docRevised = new Document(revisedPath);
 
-        // Ensure that at least one revision was generated.
-        if (original.Revisions.Count == 0)
+        // Perform comparison. Revisions will be added to docOriginal.
+        docOriginal.Compare(docRevised, "Comparer", DateTime.Now);
+
+        // Verify that revisions were created.
+        if (docOriginal.Revisions.Count == 0)
         {
             throw new InvalidOperationException("Expected at least one revision after comparison.");
         }
 
-        // Save the result, which includes the tracked revisions.
-        original.Save("Compared.docx");
+        // Save the comparison result which includes the revisions.
+        docOriginal.Save(resultPath);
     }
 }

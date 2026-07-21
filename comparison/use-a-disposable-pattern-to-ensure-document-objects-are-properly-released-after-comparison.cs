@@ -1,52 +1,57 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class Program
 {
+    // Simple wrapper to apply the disposable pattern to Aspose.Words.Document.
+    private sealed class DisposableDocument : IDisposable
+    {
+        public Document Doc { get; }
+
+        public DisposableDocument()
+        {
+            Doc = new Document(); // Create a blank document.
+        }
+
+        public void Dispose()
+        {
+            // Document does not hold unmanaged resources that require explicit disposal,
+            // but implementing IDisposable allows a consistent using‑statement pattern.
+        }
+    }
+
     public static void Main()
     {
-        // Prepare a folder for the generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonDemo");
-        Directory.CreateDirectory(outputDir);
-
         // Create the original document with some content.
-        Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world!");
-        builderOriginal.Writeln("This is the original document.");
-
-        // Create the revised document with differences.
-        Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello world!");
-        builderRevised.Writeln("This is the revised document with changes.");
-
-        // Perform the comparison. The original document will receive revisions.
-        original.Compare(revised, "Comparer", DateTime.Now);
-
-        // Verify that revisions were created.
-        if (original.Revisions.Count == 0)
+        using (var originalWrapper = new DisposableDocument())
         {
-            throw new InvalidOperationException("Expected at least one revision after comparison.");
+            DocumentBuilder builder1 = new DocumentBuilder(originalWrapper.Doc);
+            builder1.Writeln("Hello world.");
+            
+            // Create the revised document that differs from the original.
+            using (var revisedWrapper = new DisposableDocument())
+            {
+                DocumentBuilder builder2 = new DocumentBuilder(revisedWrapper.Doc);
+                builder2.Writeln("Hello revised world.");
+
+                // Perform the comparison. The original document will receive revisions.
+                originalWrapper.Doc.Compare(revisedWrapper.Doc, "JD", DateTime.Now);
+
+                // Verify that at least one revision was created.
+                if (originalWrapper.Doc.Revisions.Count == 0)
+                    throw new InvalidOperationException("Expected at least one revision after comparison.");
+
+                // Accept all revisions so the original document becomes identical to the revised one.
+                originalWrapper.Doc.AcceptAllRevisions();
+
+                // Ensure that all revisions have been cleared.
+                if (originalWrapper.Doc.Revisions.Count != 0)
+                    throw new InvalidOperationException("All revisions should have been accepted.");
+
+                // Save the final document to the local file system.
+                originalWrapper.Doc.Save("ComparisonResult.docx");
+            }
         }
-
-        // Output the number of revisions to the console (non‑interactive).
-        Console.WriteLine($"Revisions detected: {original.Revisions.Count}");
-
-        // Accept all revisions so the original becomes identical to the revised version.
-        original.AcceptAllRevisions();
-
-        // Verify that all revisions have been accepted.
-        if (original.Revisions.Count != 0)
-        {
-            throw new InvalidOperationException("All revisions should have been accepted.");
-        }
-
-        // Save the final document.
-        string resultPath = Path.Combine(outputDir, "ComparedResult.docx");
-        original.Save(resultPath);
-        Console.WriteLine($"Result saved to: {resultPath}");
     }
 }
