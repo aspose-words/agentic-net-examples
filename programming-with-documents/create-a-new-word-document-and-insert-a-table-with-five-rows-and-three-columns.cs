@@ -8,30 +8,31 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to simplify adding content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start the table.
         builder.StartTable();
 
         // Insert 5 rows and 3 columns.
-        for (int row = 0; row < 5; row++)
+        for (int row = 1; row <= 5; row++)
         {
-            for (int col = 0; col < 3; col++)
+            for (int col = 1; col <= 3; col++)
             {
-                // Insert a cell and add some text.
+                // Insert a new cell and write some text into it.
                 builder.InsertCell();
-                builder.Write($"R{row + 1}C{col + 1}");
+                builder.Write($"Row {row}, Col {col}");
             }
 
-            // End the current row.
+            // End the current row before starting the next one.
             builder.EndRow();
         }
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
         // Save the document to a file in the current directory.
-        string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "Table.docx");
-        doc.Save(outputPath);
+        doc.Save("TableExample.docx");
     }
 }

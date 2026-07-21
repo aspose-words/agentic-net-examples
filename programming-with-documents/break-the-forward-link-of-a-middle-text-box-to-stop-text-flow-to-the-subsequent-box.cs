@@ -7,28 +7,24 @@ public class Program
 {
     public static void Main()
     {
-        // Define output folder and ensure it exists.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert four text boxes.
-        Shape shape1 = builder.InsertShape(ShapeType.TextBox, 100, 100);
+        Shape shape1 = builder.InsertShape(ShapeType.TextBox, 150, 100);
         TextBox textBox1 = shape1.TextBox;
         builder.Writeln();
 
-        Shape shape2 = builder.InsertShape(ShapeType.TextBox, 100, 100);
+        Shape shape2 = builder.InsertShape(ShapeType.TextBox, 150, 100);
         TextBox textBox2 = shape2.TextBox;
         builder.Writeln();
 
-        Shape shape3 = builder.InsertShape(ShapeType.TextBox, 100, 100);
+        Shape shape3 = builder.InsertShape(ShapeType.TextBox, 150, 100);
         TextBox textBox3 = shape3.TextBox;
         builder.Writeln();
 
-        Shape shape4 = builder.InsertShape(ShapeType.TextBox, 100, 100);
+        Shape shape4 = builder.InsertShape(ShapeType.TextBox, 150, 100);
         TextBox textBox4 = shape4.TextBox;
 
         // Link the first three text boxes: 1 -> 2 -> 3.
@@ -38,12 +34,17 @@ public class Program
         if (textBox2.IsValidLinkTarget(textBox3))
             textBox2.Next = textBox3;
 
-        // Break the forward link of the middle text box (textBox2) so that it no longer links to textBox3.
-        // The Previous property of textBox3 points to textBox2.
+        // At this point textBox2 is the middle box in the sequence.
+        // Break the forward link from textBox2 to textBox3.
+        // The BreakForwardLink method is called on the previous box of textBox3.
         if (textBox3.Previous != null)
             textBox3.Previous.BreakForwardLink();
 
-        // Save the resulting document.
-        doc.Save(Path.Combine(artifactsDir, "BreakForwardLink.docx"));
+        // Ensure the output directory exists.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Save the document.
+        doc.Save(Path.Combine(artifactsDir, "BreakForwardLinkExample.docx"));
     }
 }

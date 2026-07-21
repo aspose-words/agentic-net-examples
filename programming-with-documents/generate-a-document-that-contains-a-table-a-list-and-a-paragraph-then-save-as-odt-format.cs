@@ -12,42 +12,39 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a simple paragraph.
-        builder.Writeln("This is a sample paragraph added to the document.");
+        builder.Writeln("This is a sample paragraph.");
 
-        // Insert a table with two rows and two columns.
+        // Add a bulleted list.
+        builder.ListFormat.ApplyBulletDefault();
+        builder.Writeln("First bullet item");
+        builder.Writeln("Second bullet item");
+        builder.ListFormat.RemoveNumbers(); // End the list.
+
+        // Add a 2x2 table.
         builder.StartTable();
 
         // First row.
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        builder.Write("Cell 1,1");
         builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
+        builder.Write("Cell 1,2");
         builder.EndRow();
 
         // Second row.
         builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
+        builder.Write("Cell 2,1");
         builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
+        builder.Write("Cell 2,2");
         builder.EndRow();
 
-        // End the table.
         builder.EndTable();
 
-        // Insert a bulleted list.
-        builder.ListFormat.ApplyBulletDefault();
-        builder.Writeln("Bullet item 1");
-        builder.Writeln("Bullet item 2");
-        builder.Writeln("Bullet item 3");
-        // Stop list formatting.
-        builder.ListFormat.RemoveNumbers();
-
-        // Prepare output path.
+        // Ensure the output directory exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "SampleDocument.odt");
 
         // Save the document as ODT using OdtSaveOptions.
+        string outputPath = Path.Combine(outputDir, "SampleDocument.odt");
         OdtSaveOptions saveOptions = new OdtSaveOptions();
         doc.Save(outputPath, saveOptions);
     }

@@ -14,33 +14,37 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a floating text box shape.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 100);
-        textBox.WrapType = WrapType.None; // Ensure the shape is floating.
-
-        // Add a centered paragraph with some text inside the text box.
-        Paragraph para = new Paragraph(doc);
-        textBox.AppendChild(para);
-        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        Run run = new Run(doc, "Gradient Text Box");
-        para.AppendChild(run);
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.Width = 300;
+        textBox.Height = 150;
+        textBox.WrapType = WrapType.None;
+        textBox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        textBox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        textBox.HorizontalAlignment = HorizontalAlignment.Center;
+        textBox.VerticalAlignment = VerticalAlignment.Center;
 
         // Apply a one‑color horizontal gradient fill to the text box.
-        textBox.Fill.OneColorGradient(
-            Color.LightBlue,               // Gradient foreground color.
-            GradientStyle.Horizontal,      // Gradient direction.
-            GradientVariant.Variant2,      // Gradient variant.
-            0.2);                          // Lightness factor (0.0‑1.0).
+        // Foreground color is LightBlue, gradient runs horizontally.
+        textBox.Fill.OneColorGradient(Color.LightBlue, GradientStyle.Horizontal, GradientVariant.Variant2, 0.2);
 
-        // Optionally set the gradient angle (not needed for horizontal style).
-        textBox.Fill.GradientAngle = 0;
+        // Add a paragraph with centered text inside the text box.
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Gradient Text Box");
+        run.Font.Size = 24;
+        run.Font.Bold = true;
+        para.AppendChild(run);
+        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        textBox.AppendChild(para);
 
-        // Prepare PDF save options. Using default options is sufficient for gradient rendering.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Insert the text box into the document body.
+        builder.InsertNode(textBox);
 
-        // Define output path in the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GradientTextBox.pdf");
+        // Prepare output folder.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Save the document as PDF.
-        doc.Save(outputPath, pdfOptions);
+        // Save the document as PDF. The gradient fill will be rendered in the PDF.
+        string pdfPath = Path.Combine(outputDir, "GradientTextBox.pdf");
+        doc.Save(pdfPath, SaveFormat.Pdf);
     }
 }

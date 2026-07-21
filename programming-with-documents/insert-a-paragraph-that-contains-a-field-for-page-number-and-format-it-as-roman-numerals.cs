@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -9,21 +10,22 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a DocumentBuilder which will be used to insert content.
+        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph that contains a PAGE field.
-        builder.Writeln("Page ");
-        builder.InsertField("PAGE", "");
+        // Insert a paragraph with the text "Page " followed by a PAGE field.
+        builder.Write("Page ");
+        builder.InsertField("PAGE", ""); // Inserts the PAGE field.
+        builder.Writeln(); // Ends the paragraph.
 
-        // Configure the section to display page numbers as uppercase Roman numerals.
-        // RestartPageNumbering ensures the numbering starts from the first page.
-        PageSetup pageSetup = doc.FirstSection.PageSetup;
-        pageSetup.RestartPageNumbering = true;
-        pageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
+        // Configure the document to display page numbers as uppercase Roman numerals.
+        doc.FirstSection.PageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
+        // Ensure numbering starts from 1.
+        doc.FirstSection.PageSetup.RestartPageNumbering = true;
+        doc.FirstSection.PageSetup.PageStartingNumber = 1;
 
-        // Save the document to the local file system.
-        string outputPath = "RomanPageNumbers.docx";
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "PageNumberRoman.docx");
         doc.Save(outputPath);
     }
 }

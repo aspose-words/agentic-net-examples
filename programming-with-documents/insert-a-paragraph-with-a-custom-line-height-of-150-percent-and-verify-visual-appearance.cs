@@ -1,35 +1,44 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsParagraphLineHeight
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Define output folder and file.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string outputPath = Path.Combine(outputDir, "ParagraphLineHeight.docx");
 
-        // Use DocumentBuilder to add content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // 1. Create a new blank document.
+            Document doc = new Document();
 
-        // Set line spacing to 150% (1.5 lines). One line = 12 points, so 1.5 lines = 18 points.
-        builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 18; // 12 * 1.5 = 18 points
+            // 2. Use DocumentBuilder to insert a paragraph with custom line height (150% of default).
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Set line spacing rule to Multiple (percentage of default line spacing).
+            builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
+            // Default line spacing is 12 points; 150% => 1.5 * 12 = 18 points.
+            builder.ParagraphFormat.LineSpacing = 18;
+            builder.Writeln("This paragraph has a line height of 150% (1.5× default).");
 
-        // Insert a paragraph with some text.
-        builder.Writeln("This paragraph has a custom line height of 150%.");
+            // 3. Save the document.
+            doc.Save(outputPath);
 
-        // Save the document to the local file system.
-        string outputPath = "ParagraphLineHeight.docx";
-        doc.Save(outputPath);
+            // 4. Reload the document to verify that the formatting was persisted.
+            Document loadedDoc = new Document(outputPath);
+            Paragraph firstParagraph = loadedDoc.FirstSection.Body.FirstParagraph;
 
-        // Verify that the paragraph's formatting was applied correctly.
-        Paragraph para = doc.FirstSection.Body.Paragraphs[0];
-        bool ruleCorrect = para.ParagraphFormat.LineSpacingRule == LineSpacingRule.Multiple;
-        bool spacingCorrect = Math.Abs(para.ParagraphFormat.LineSpacing - 18) < 0.001;
+            bool lineHeightCorrect =
+                firstParagraph.ParagraphFormat.LineSpacingRule == LineSpacingRule.Multiple &&
+                Math.Abs(firstParagraph.ParagraphFormat.LineSpacing - 18) < 0.01;
 
-        Console.WriteLine($"Line spacing rule set correctly: {ruleCorrect}");
-        Console.WriteLine($"Line spacing value set correctly: {spacingCorrect}");
-        Console.WriteLine($"Document saved to: {outputPath}");
+            Console.WriteLine(lineHeightCorrect
+                ? "Verification passed: line height is correctly set to 150%."
+                : "Verification failed: line height is not set as expected.");
+        }
     }
 }

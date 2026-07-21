@@ -7,41 +7,44 @@ public class Program
 {
     public static void Main()
     {
+        // Define output folder and ensure it exists.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with one row and two columns.
+        // Build a table with a horizontally merged cell (spanning two columns).
         builder.StartTable();
 
-        // First cell – start of a horizontally merged range.
+        // First cell – mark as the start of a merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged cell content");
+        builder.Write("Merged cell");
 
-        // Second cell – merged to the previous cell.
+        // Second cell – merge with the previous cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text needed for the merged cell.
-        builder.EndRow();
 
+        builder.EndRow();
         builder.EndTable();
 
-        // Locate the cells in the first row.
+        // Locate the merged cells (the first row).
         Table table = doc.FirstSection.Body.Tables[0];
         Cell firstCell = table.Rows[0].Cells[0];
         Cell secondCell = table.Rows[0].Cells[1];
 
-        // Split the merged cells back into two separate cells.
-        // To "split", clear the merge flags on both cells.
+        // Split the merged cells by clearing the merge flags.
         firstCell.CellFormat.HorizontalMerge = CellMerge.None;
         secondCell.CellFormat.HorizontalMerge = CellMerge.None;
 
-        // Ensure the second cell has a paragraph so it can hold content if needed.
-        secondCell.EnsureMinimum();
+        // Add text to the now separate cells.
+        firstCell.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
+        secondCell.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
 
         // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SplitCellResult.docx");
+        string outputPath = Path.Combine(artifactsDir, "SplitCellExample.docx");
         doc.Save(outputPath);
     }
 }

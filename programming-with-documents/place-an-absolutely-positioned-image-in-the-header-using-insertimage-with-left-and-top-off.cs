@@ -3,44 +3,37 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-namespace HeaderImageExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Prepare a tiny PNG image (1x1 pixel, transparent) from a Base64 string.
-            // This avoids the need for System.Drawing dependencies.
-            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9YV6cVYAAAAASUVORK5CYII=";
-            byte[] imageBytes = Convert.FromBase64String(base64Png);
-            string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "tempImage.png");
-            File.WriteAllBytes(imagePath, imageBytes);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Move the cursor to the primary header of the first section.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-            // Move the cursor to the primary header.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        // A tiny 1x1 pixel PNG (transparent) encoded in Base64.
+        // This avoids the need for System.Drawing dependencies.
+        const string base64Png = 
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
+            "Z6XcAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
 
-            // Insert the image into the header.
-            Shape shape = builder.InsertImage(imagePath);
+        // Insert the image as a floating shape using the byte[] overload.
+        // Width and height are set to -1 to keep the original image dimensions.
+        Shape shape = builder.InsertImage(imageBytes, -1, -1);
 
-            // Configure the shape as a floating image with absolute offsets.
-            shape.WrapType = WrapType.None;                     // No text wrapping.
-            shape.BehindText = true;                            // Appear behind the text.
-            shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-            shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-            shape.Left = 100;                                   // Left offset in points.
-            shape.Top = 50;                                     // Top offset in points.
+        // Configure the shape to be absolutely positioned in the header.
+        shape.WrapType = WrapType.None;                     // No text wrapping.
+        shape.BehindText = true;                            // Place behind the text.
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page; // Position relative to page.
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;     // Position relative to page.
+        shape.Left = 50;   // Left offset in points.
+        shape.Top = 30;    // Top offset in points.
 
-            // Save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderImage.docx");
-            doc.Save(outputPath);
-
-            // Clean up the temporary image file.
-            if (File.Exists(imagePath))
-                File.Delete(imagePath);
-        }
+        // Save the document.
+        doc.Save("HeaderImage.docx");
     }
 }

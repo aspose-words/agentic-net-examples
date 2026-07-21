@@ -18,6 +18,8 @@ public class Program
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
         // Remove any existing borders.
@@ -27,9 +29,9 @@ public class Program
         table.SetBorder(BorderType.Top, LineStyle.Single, 1.5, Color.Black, true);
         // Apply a bottom border.
         table.SetBorder(BorderType.Bottom, LineStyle.Single, 1.5, Color.Black, true);
-        // Left and right borders remain unset (no side borders).
+        // Left and right borders remain cleared (no side borders).
 
-        // Save the document to the local file system.
-        doc.Save("TableStyleTopBottom.docx");
+        // Save the document to a file.
+        doc.Save("TableWithTopBottomBorder.docx");
     }
 }

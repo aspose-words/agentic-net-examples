@@ -3,67 +3,80 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsPageOrientationExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a wide table (10 columns, each 100 points wide).
-        builder.StartTable();
-        for (int col = 0; col < 10; col++)
+        public static void Main()
         {
-            builder.InsertCell();
-            // Set a fixed width for each cell to make the table wide.
-            builder.CellFormat.Width = 100;
-            builder.Write($"Column {col + 1}");
-        }
-        builder.EndRow();
-        builder.EndTable();
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "WideTableLandscape.docx");
-
-        // Iterate through each section and check for wide tables.
-        foreach (Section section in doc.Sections)
-        {
-            bool hasWideTable = false;
-
-            // Get all tables in the current section.
-            NodeCollection tables = section.GetChildNodes(NodeType.Table, true);
-            foreach (Table table in tables)
+            // -------------------------------------------------
+            // Section 1 – a normal table (portrait orientation).
+            // -------------------------------------------------
+            builder.Writeln("Section 1: Normal table (portrait).");
+            builder.StartTable();
+            for (int col = 0; col < 3; col++)
             {
-                // Calculate the total width of the first row (assumes uniform column widths).
-                double totalWidth = 0;
-                if (table.Rows.Count > 0)
+                builder.InsertCell();
+                builder.Write($"Cell {col + 1}");
+            }
+            builder.EndRow();
+            builder.EndTable();
+
+            // Insert a section break to start a new section.
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+            // -------------------------------------------------
+            // Section 2 – a wide table (will be set to landscape).
+            // -------------------------------------------------
+            builder.Writeln("Section 2: Wide table (landscape).");
+            builder.StartTable();
+            // Create a table with many columns to make it wide.
+            for (int col = 0; col < 10; col++)
+            {
+                builder.InsertCell();
+                builder.Write($"Wide {col + 1}");
+            }
+            builder.EndRow();
+            builder.EndTable();
+
+            // -------------------------------------------------
+            // Detect sections that contain a "wide" table and set orientation to landscape.
+            // For this example a table with more than 5 columns is considered wide.
+            // -------------------------------------------------
+            foreach (Section section in doc.Sections)
+            {
+                bool hasWideTable = false;
+
+                // Get all tables in the current section.
+                NodeCollection tables = section.GetChildNodes(NodeType.Table, true);
+                foreach (Table table in tables)
                 {
-                    foreach (Cell cell in table.Rows[0].Cells)
+                    // If the first row has more than 5 cells, treat it as a wide table.
+                    if (table.Rows.Count > 0 && table.Rows[0].Cells.Count > 5)
                     {
-                        totalWidth += cell.CellFormat.Width;
+                        hasWideTable = true;
+                        break;
                     }
                 }
 
-                // If the table width exceeds the page width, mark the section.
-                if (totalWidth > section.PageSetup.PageWidth)
+                // Apply landscape orientation if a wide table was found.
+                if (hasWideTable)
                 {
-                    hasWideTable = true;
-                    break;
+                    section.PageSetup.Orientation = Orientation.Landscape;
                 }
             }
 
-            // Set orientation to landscape for sections that contain a wide table.
-            if (hasWideTable)
-            {
-                section.PageSetup.Orientation = Orientation.Landscape;
-            }
-        }
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+            Directory.CreateDirectory(outputDir);
 
-        // Save the document.
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+            // Save the document.
+            string outputPath = Path.Combine(outputDir, "DocumentWithLandscapeSections.docx");
+            doc.Save(outputPath);
+        }
     }
 }

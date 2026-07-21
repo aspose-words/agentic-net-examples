@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Fields;
@@ -10,29 +11,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some introductory text.
-        builder.Write("Please visit ");
+        // Write introductory text.
+        builder.Write("Visit the ");
 
-        // Apply typical hyperlink formatting.
+        // Apply hyperlink formatting.
         builder.Font.Color = Color.Blue;
         builder.Font.Underline = Underline.Single;
 
-        // Insert the hyperlink. The method returns a Field object.
-        Field field = builder.InsertHyperlink("Aspose website", "https://www.aspose.com", false);
+        // Insert the hyperlink.
+        Field field = builder.InsertHyperlink("Aspose.Words site", "https://www.aspose.com/words", false);
 
-        // Cast to FieldHyperlink to enable opening in a new browser tab/window.
+        // Set the hyperlink to open in a new browser tab/window.
         if (field is FieldHyperlink hyperlink)
         {
             hyperlink.OpenInNewWindow = true;
         }
 
-        // Reset formatting to default for subsequent text.
+        // Reset formatting to default.
         builder.Font.ClearFormatting();
 
-        // Finish the paragraph.
+        // Complete the sentence.
         builder.Writeln(" for more information.");
 
-        // Save the document to the local file system.
+        // Save the document.
         doc.Save("HyperlinkNewTab.docx");
     }
 }

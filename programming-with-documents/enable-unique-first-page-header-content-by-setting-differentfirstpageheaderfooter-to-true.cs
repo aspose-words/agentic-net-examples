@@ -21,16 +21,16 @@ public class Program
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         builder.Write("Primary header for other pages");
 
-        // Return to the main body of the document and add three pages.
+        // Add three pages of content to demonstrate the different headers.
         builder.MoveToSection(0);
-        builder.Writeln("Page 1 content");
+        builder.Writeln("Content of page 1");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 content");
+        builder.Writeln("Content of page 2");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 content");
+        builder.Writeln("Content of page 3");
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FirstPageHeader.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "FirstPageHeader.docx");
         doc.Save(outputPath);
     }
 }

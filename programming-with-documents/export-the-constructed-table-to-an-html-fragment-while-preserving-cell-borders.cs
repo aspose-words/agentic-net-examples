@@ -1,9 +1,9 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables;   // Needed for the Table class
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -13,8 +13,11 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 2x2 table.
+        // Start a table.
         Table table = builder.StartTable();
+
+        // Apply a solid black border to the whole table.
+        table.SetBorders(LineStyle.Single, 1.0, Color.Black);
 
         // First row.
         builder.InsertCell();
@@ -28,29 +31,20 @@ public class Program
         builder.Write("Cell 3");
         builder.InsertCell();
         builder.Write("Cell 4");
-        builder.EndTable(); // Ends the table and moves the cursor out.
+        builder.EndRow();
 
-        // Apply a single black border to all sides of the table.
-        table.SetBorders(LineStyle.Single, 1.0, Color.Black);
+        // Finish the table.
+        builder.EndTable();
 
-        // Prepare HTML save options – export only the table, no headers/footers.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            ExportHeadersFootersMode = ExportHeadersFootersMode.None
-        };
-
-        // Export the table to an HTML fragment (preserves borders).
-        string htmlFragment = table.ToString(htmlOptions);
-
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
+        // Export the table node to an HTML fragment.
+        string htmlFragment = table.ToString(SaveFormat.Html);
 
         // Save the HTML fragment to a file.
-        string htmlPath = Path.Combine(outputDir, "TableFragment.html");
-        File.WriteAllText(htmlPath, htmlFragment);
+        string fragmentPath = Path.Combine(Directory.GetCurrentDirectory(), "TableFragment.html");
+        File.WriteAllText(fragmentPath, htmlFragment);
 
-        // Indicate completion.
-        Console.WriteLine($"HTML fragment saved to: {htmlPath}");
+        // (Optional) Save the whole document as HTML for visual verification.
+        string docHtmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Document.html");
+        doc.Save(docHtmlPath, SaveFormat.Html);
     }
 }

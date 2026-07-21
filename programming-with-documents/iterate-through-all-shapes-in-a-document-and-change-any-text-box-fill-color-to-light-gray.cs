@@ -11,35 +11,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a regular rectangle shape (just to have another shape in the document).
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        rectangle.FillColor = Color.Yellow;
-
-        // Insert a text box shape with some initial fill color.
+        // Insert a text box shape (the target shape type).
         Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.WrapType = WrapType.None;
-        textBox.Height = 50;
         textBox.Width = 200;
-        textBox.FillColor = Color.LightBlue; // initial color
+        textBox.Height = 100;
+        textBox.WrapType = WrapType.None;
+        textBox.FillColor = Color.AliceBlue; // Initial fill color.
+        builder.InsertNode(textBox);
 
-        // Add a paragraph with text inside the text box.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Sample text box");
-        para.AppendChild(run);
-        textBox.AppendChild(para);
-
-        // Place the text box into the document body.
-        builder.CurrentParagraph.AppendChild(textBox);
+        // Insert another shape (e.g., a rectangle) to demonstrate that only text boxes are changed.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 150, 80);
+        rectangle.FillColor = Color.Coral;
 
         // Iterate through all shapes in the document.
-        NodeCollection allShapes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in allShapes)
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
         {
-            // If the shape is a text box, change its fill color to light gray.
+            // Check if the shape is a text box.
             if (shape.ShapeType == ShapeType.TextBox)
             {
+                // Change the fill color to light gray.
                 shape.FillColor = Color.LightGray;
-                // Alternatively: shape.Fill.Solid(Color.LightGray);
+                // Alternatively, you could use: shape.Fill.Solid(Color.LightGray);
             }
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -7,13 +8,15 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the input and output documents.
-        const string inputPath = "SampleTable.docx";
-        const string outputPath = "ModifiedTable.docx";
+        // Define directories and file names.
+        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        Directory.CreateDirectory(dataDir);
+
+        string sourcePath = Path.Combine(dataDir, "Source.docx");
+        string outputPath = Path.Combine(dataDir, "Modified.docx");
 
         // -----------------------------------------------------------------
-        // Create a sample DOCX file containing a simple table.
-        // This ensures the example works even when no external file exists.
+        // 1. Create a sample document that contains a simple table.
         // -----------------------------------------------------------------
         Document sampleDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sampleDoc);
@@ -34,20 +37,28 @@ public class Program
         builder.EndTable();
 
         // Save the sample document to disk.
-        sampleDoc.Save(inputPath);
+        sampleDoc.Save(sourcePath);
 
-        // ---------------------------------------------------------------
-        // Load the existing document, locate the first table, and modify it.
-        // ---------------------------------------------------------------
-        Document doc = new Document(inputPath);
+        // -----------------------------------------------------------------
+        // 2. Load the existing document, locate the first table, and modify its borders.
+        // -----------------------------------------------------------------
+        Document doc = new Document(sourcePath);
 
         // Retrieve the first table in the document.
         Table firstTable = doc.FirstSection.Body.Tables[0];
 
-        // Set all borders of the table to a single line, 3 points thick, black color.
+        // Change all borders of the table to a single black line with a thickness of 3 points.
         firstTable.SetBorders(LineStyle.Single, 3.0, Color.Black);
 
-        // Save the modified document.
+        // -----------------------------------------------------------------
+        // 3. Save the modified document.
+        // -----------------------------------------------------------------
         doc.Save(outputPath);
+
+        // Optional: confirm that the output file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Modified document saved to: {outputPath}");
+        }
     }
 }

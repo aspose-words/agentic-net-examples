@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -8,20 +10,23 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document.
+        // Initialize a DocumentBuilder for easy content insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the built‑in Heading 2 style to the current paragraph.
+        // Apply the built‑in Heading 2 style to the next paragraph.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
 
-        // Set spacing before and after the paragraph (points).
+        // Adjust spacing before and after the paragraph (values are in points).
         builder.ParagraphFormat.SpaceBefore = 12; // 12 points before
-        builder.ParagraphFormat.SpaceAfter = 12;  // 12 points after
+        builder.ParagraphFormat.SpaceAfter = 6;   // 6 points after
 
-        // Add some text that will be formatted with Heading 2.
-        builder.Writeln("Sample Heading 2");
+        // Write the paragraph text.
+        builder.Writeln("This is a Heading 2 styled paragraph with custom spacing.");
 
-        // Save the document.
-        doc.Save("Heading2Spacing.docx");
+        // Define an output path in the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Heading2_Styled.docx");
+
+        // Save the document to the specified file.
+        doc.Save(outputPath);
     }
 }

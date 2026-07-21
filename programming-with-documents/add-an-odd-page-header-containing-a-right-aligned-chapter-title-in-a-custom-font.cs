@@ -3,46 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeWordsHeaderExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Initialize DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable different headers/footers for odd and even pages.
-        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
+            // Enable different headers/footers for odd and even pages.
+            builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // Move the cursor to the odd‑page (primary) header.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            // Move to the odd-page header (HeaderPrimary is used for odd pages when the above flag is true).
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Set custom font for the chapter title.
-        builder.Font.Name = "Times New Roman";
-        builder.Font.Size = 14;
-        builder.Font.Bold = true;
+            // Set paragraph alignment to right.
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
 
-        // Align the paragraph to the right.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
+            // Set custom font for the chapter title.
+            builder.Font.Name = "Georgia";
+            builder.Font.Size = 14;
+            builder.Font.Bold = true;
+            builder.Font.Color = System.Drawing.Color.DarkBlue;
 
-        // Write the chapter title into the odd‑page header.
-        builder.Write("Chapter 1 – Introduction");
+            // Write the chapter title.
+            builder.Writeln("Chapter 1: Introduction");
 
-        // Return the cursor to the main document body.
-        builder.MoveToSection(0);
+            // Return to the main document body.
+            builder.MoveToSection(0);
 
-        // Add some content and page breaks to create multiple pages.
-        builder.Writeln("Content of page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content of page 2.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content of page 3.");
+            // Add enough content to generate multiple pages.
+            for (int i = 1; i <= 3; i++)
+            {
+                builder.Writeln($"This is page {i} content.");
+                builder.InsertBreak(BreakType.PageBreak);
+            }
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OddPageHeader.docx");
-        doc.Save(outputPath);
+            // Prepare output folder.
+            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+            Directory.CreateDirectory(artifactsDir);
+
+            // Save the document.
+            string outputPath = Path.Combine(artifactsDir, "OddPageHeader.docx");
+            doc.Save(outputPath);
+        }
     }
 }

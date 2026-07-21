@@ -9,8 +9,6 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Enable a different header for the first page.
@@ -18,9 +16,6 @@ public class Program
 
         // Move the cursor to the first‑page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-
-        // Ensure there is a paragraph to host the shape.
-        builder.Writeln();
 
         // Create a floating text box shape.
         Shape textBox = new Shape(doc, ShapeType.TextBox);
@@ -30,25 +25,23 @@ public class Program
         textBox.HorizontalAlignment = HorizontalAlignment.Center;
         textBox.VerticalAlignment = VerticalAlignment.Top;
 
-        // Add a paragraph inside the text box and put some text.
+        // Add a paragraph and a run of text inside the text box.
         textBox.AppendChild(new Paragraph(doc));
-        Paragraph tbParagraph = textBox.FirstParagraph;
-        tbParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        Run tbRun = new Run(doc, "Header only on first page");
-        tbParagraph.AppendChild(tbRun);
+        Paragraph para = textBox.FirstParagraph;
+        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        Run run = new Run(doc, "First page header");
+        para.AppendChild(run);
 
-        // Append the text box to the current paragraph in the header.
+        // Insert the text box into the header.
         builder.CurrentParagraph.AppendChild(textBox);
 
-        // Return to the main document body.
+        // Return to the main document body and add some pages.
         builder.MoveToSection(0);
-
-        // Add content spanning three pages.
-        builder.Writeln("Content of the first page.");
+        builder.Writeln("Page 1 content");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content of the second page.");
+        builder.Writeln("Page 2 content");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content of the third page.");
+        builder.Writeln("Page 3 content");
 
         // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderFirstTextBox.docx");

@@ -12,32 +12,35 @@ namespace AsposeWordsTablePadding
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a sample table with a few rows and cells.
+            // Build a sample table with two rows and two columns.
             Table table = builder.StartTable();
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 0; j < 2; j++)
-                {
-                    builder.InsertCell();
-                    builder.Write($"Row {i + 1}, Cell {j + 1}");
-                }
-                builder.EndRow();
-            }
+            builder.InsertCell();
+            builder.Write("Cell 1,1");
+            builder.InsertCell();
+            builder.Write("Cell 1,2");
+            builder.EndRow();
+
+            builder.InsertCell();
+            builder.Write("Cell 2,1");
+            builder.InsertCell();
+            builder.Write("Cell 2,2");
             builder.EndTable();
 
-            // Iterate through all tables in the document and set uniform cell padding of 5 points.
+            // Iterate through all tables in the document.
             NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
             foreach (Table tbl in tables)
             {
-                // Apply padding to the whole table; this affects all its cells.
-                tbl.LeftPadding = 5;
-                tbl.RightPadding = 5;
-                tbl.TopPadding = 5;
-                tbl.BottomPadding = 5;
+                // Iterate through all cells of the current table.
+                NodeCollection cells = tbl.GetChildNodes(NodeType.Cell, true);
+                foreach (Cell cell in cells)
+                {
+                    // Apply a uniform padding of 5 points on all sides.
+                    cell.CellFormat.SetPaddings(5, 5, 5, 5);
+                }
             }
 
             // Save the modified document.
-            doc.Save("TablePaddingResult.docx");
+            doc.Save("Output.docx");
         }
     }
 }

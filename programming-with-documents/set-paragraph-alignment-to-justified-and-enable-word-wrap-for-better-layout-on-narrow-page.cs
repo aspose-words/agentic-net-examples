@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -8,26 +9,30 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Ensure the document has at least one section.
+        doc.EnsureMinimum();
 
-        // Set paragraph alignment to justified.
+        // Set narrow margins for better layout on narrow pages.
+        doc.FirstSection.PageSetup.Margins = Margins.Narrow;
+
+        // Insert a paragraph with sample text.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                        "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
+                        "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.");
+
+        // Apply justified alignment.
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
 
-        // Ensure word wrap is enabled (wrap by whole words).
+        // Enable word wrap (wrap by whole words). This is true by default, but set explicitly.
         builder.ParagraphFormat.WordWrap = true;
 
-        // Add a long paragraph to demonstrate justification and wrapping.
-        string longText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                          "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
-                          "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi " +
-                          "ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit " +
-                          "in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur " +
-                          "sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt " +
-                          "mollit anim id est laborum.";
-        builder.Writeln(longText);
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Save the document to a file.
-        doc.Save("JustifiedParagraph.docx");
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "JustifiedParagraph.docx");
+        doc.Save(outputPath);
     }
 }

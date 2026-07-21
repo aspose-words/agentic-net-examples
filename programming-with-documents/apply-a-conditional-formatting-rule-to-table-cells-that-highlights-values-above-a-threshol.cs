@@ -1,23 +1,25 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
 namespace AsposeWordsConditionalFormatting
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            // Create a new blank document.
+            // Define the output folder and ensure it exists.
+            string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Output");
+            Directory.CreateDirectory(artifactsDir);
+
+            // Create a new blank document and a DocumentBuilder.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Define a threshold value.
-            double threshold = 30.0;
-
             // Build a simple table with a header row and some numeric values.
-            Table table = builder.StartTable();
+            builder.StartTable();
 
             // Header row.
             builder.InsertCell();
@@ -26,48 +28,49 @@ namespace AsposeWordsConditionalFormatting
             builder.Write("Quantity");
             builder.EndRow();
 
-            // Row 1.
-            builder.InsertCell();
-            builder.Write("Apples");
-            builder.InsertCell();
-            builder.Write("20");
-            builder.EndRow();
+            // Data rows.
+            AddDataRow(builder, "Apples", 20);
+            AddDataRow(builder, "Bananas", 40);
+            AddDataRow(builder, "Carrots", 55);
+            AddDataRow(builder, "Dates", 15);
 
-            // Row 2.
-            builder.InsertCell();
-            builder.Write("Bananas");
-            builder.InsertCell();
-            builder.Write("40");
-            builder.EndRow();
-
-            // Row 3.
-            builder.InsertCell();
-            builder.Write("Carrots");
-            builder.InsertCell();
-            builder.Write("55");
-            builder.EndRow();
-
-            // Finish the table.
             builder.EndTable();
 
-            // Apply conditional formatting: highlight cells with values above the threshold.
-            // Skip the header row (row index 0).
+            // Define the threshold above which cells will be highlighted.
+            const int threshold = 30;
+
+            // Iterate over the table rows (skip the header) and apply shading to cells
+            // where the numeric value exceeds the threshold.
+            Table table = doc.FirstSection.Body.Tables[0];
             for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
             {
                 Row row = table.Rows[rowIndex];
-                // The quantity is in the second cell (index 1).
-                Cell quantityCell = row.Cells[1];
-                string cellText = quantityCell.ToString(SaveFormat.Text).Trim();
+                Cell quantityCell = row.Cells[1]; // Second column holds the quantity.
 
-                if (double.TryParse(cellText, out double value) && value > threshold)
+                // Try to parse the cell text as an integer.
+                if (int.TryParse(quantityCell.GetText().Trim(), out int value))
                 {
-                    // Highlight the cell background with yellow color.
-                    quantityCell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+                    if (value > threshold)
+                    {
+                        // Highlight the cell with a light yellow background.
+                        quantityCell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+                    }
                 }
             }
 
-            // Save the document to a file.
-            doc.Save("ConditionalFormattingTable.docx");
+            // Save the document.
+            string outputPath = Path.Combine(artifactsDir, "ConditionalFormattingTable.docx");
+            doc.Save(outputPath);
+        }
+
+        // Helper method to add a data row to the table.
+        private static void AddDataRow(DocumentBuilder builder, string item, int quantity)
+        {
+            builder.InsertCell();
+            builder.Write(item);
+            builder.InsertCell();
+            builder.Write(quantity.ToString());
+            builder.EndRow();
         }
     }
 }

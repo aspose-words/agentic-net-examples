@@ -1,38 +1,31 @@
 using System;
 using Aspose.Words;
 
-namespace BookmarkLister
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add a few sample bookmarks to the document.
+        for (int i = 1; i <= 3; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            string bookmarkName = $"MyBookmark_{i}";
+            builder.StartBookmark(bookmarkName);
+            builder.Write($"Text inside {bookmarkName}.");
+            builder.EndBookmark(bookmarkName);
+            builder.Writeln(); // Move to the next line.
+        }
 
-            // Insert a few sample bookmarks into the document.
-            for (int i = 1; i <= 3; i++)
-            {
-                string bookmarkName = $"SampleBookmark_{i}";
-                builder.StartBookmark(bookmarkName);
-                builder.Write($"Text inside {bookmarkName}.");
-                builder.EndBookmark(bookmarkName);
-                builder.Writeln(); // Add a line break after each bookmark.
-            }
+        // Retrieve the collection of bookmarks from the document's range.
+        BookmarkCollection bookmarks = doc.Range.Bookmarks;
 
-            // Get the collection of bookmarks from the document's range.
-            BookmarkCollection bookmarks = doc.Range.Bookmarks;
-
-            // Iterate through the collection and print each bookmark's name.
-            Console.WriteLine("Bookmarks found in the document:");
-            foreach (Bookmark bookmark in bookmarks)
-            {
-                Console.WriteLine(bookmark.Name);
-            }
-
-            // The document can be saved if needed.
-            // doc.Save("SampleBookmarks.docx");
+        // Iterate through the collection and print each bookmark's name.
+        foreach (Bookmark bookmark in bookmarks)
+        {
+            Console.WriteLine(bookmark.Name);
         }
     }
 }
