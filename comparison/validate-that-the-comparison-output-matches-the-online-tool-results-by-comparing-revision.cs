@@ -1,64 +1,50 @@
 using System;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class Program
+public class ComparisonValidation
 {
     public static void Main()
     {
-        // Create the original document with two paragraphs.
+        // Create the original document with a single paragraph.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");               // Paragraph 1
-        builderOriginal.Writeln("This is the second paragraph."); // Paragraph 2
+        builderOriginal.Writeln("Alpha");
 
-        // Create the revised document with modifications:
-        // - Change text in the first paragraph.
-        // - Remove the second paragraph.
-        // - Add a new third paragraph.
+        // Create the revised document with different content.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello brave new world."); // Modified first paragraph
-        builderRevised.Writeln("Added new paragraph.");   // New third paragraph
+        builderRevised.Writeln("Beta");
 
-        // Perform comparison. The original document will receive revisions.
-        original.Compare(revised, "Comparer", DateTime.Now);
+        // Perform the comparison. The original document will receive revisions.
+        original.Compare(revised, "Tester", DateTime.Now);
 
-        // Save the comparison result for visual inspection if needed.
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
-        original.Save(resultPath);
+        // Expected: one deletion (Alpha) and one insertion (Beta) => 2 revisions.
+        int expectedCount = 2;
+        if (original.Revisions.Count != expectedCount)
+            throw new InvalidOperationException($"Expected {expectedCount} revisions, but found {original.Revisions.Count}.");
 
-        // Validate revision count and types.
-        int revisionCount = original.Revisions.Count;
-        if (revisionCount == 0)
-            throw new InvalidOperationException("Expected at least one revision after comparison.");
+        bool hasDeletion = false;
+        bool hasInsertion = false;
 
-        // Determine which revision types are present.
-        var revisionTypes = original.Revisions
-                                    .Select(r => r.RevisionType)
-                                    .Distinct()
-                                    .ToList();
-
-        // Expect at least one insertion and one deletion.
-        bool hasInsertion = revisionTypes.Contains(RevisionType.Insertion);
-        bool hasDeletion = revisionTypes.Contains(RevisionType.Deletion);
-
-        if (!hasInsertion || !hasDeletion)
-            throw new InvalidOperationException("Expected both insertion and deletion revisions.");
-
-        // Output summary to console.
-        Console.WriteLine($"Total revisions: {revisionCount}");
-        Console.WriteLine("Revision types present:");
-        foreach (RevisionType type in revisionTypes)
+        foreach (Revision rev in original.Revisions)
         {
-            Console.WriteLine($"- {type}");
+            if (rev.RevisionType == RevisionType.Deletion)
+                hasDeletion = true;
+            else if (rev.RevisionType == RevisionType.Insertion)
+                hasInsertion = true;
         }
 
-        // Optional: accept all revisions to transform the original into the revised version.
-        original.AcceptAllRevisions();
-        string acceptedPath = Path.Combine(Directory.GetCurrentDirectory(), "Accepted.docx");
-        original.Save(acceptedPath);
+        if (!hasDeletion || !hasInsertion)
+            throw new InvalidOperationException("Revisions do not contain both deletion and insertion types as expected.");
+
+        // Save the document that now contains the revisions.
+        string outputPath = "ComparisonResult.docx";
+        original.Save(outputPath);
+
+        // Report the validation result.
+        Console.WriteLine($"Comparison successful. Revision count: {original.Revisions.Count}");
+        Console.WriteLine($"Contains Deletion: {hasDeletion}, Contains Insertion: {hasInsertion}");
+        Console.WriteLine($"Result saved to: {outputPath}");
     }
 }

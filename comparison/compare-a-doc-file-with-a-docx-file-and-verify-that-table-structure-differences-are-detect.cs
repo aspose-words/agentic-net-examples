@@ -7,67 +7,88 @@ public class Program
 {
     public static void Main()
     {
-        // Create a working directory for the sample files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonDemo");
-        Directory.CreateDirectory(workDir);
+        // Paths for the sample files in the current directory.
+        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.doc");
+        string docxPath = Path.Combine(Directory.GetCurrentDirectory(), "Revised.docx");
+        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
 
-        // ---------- Create the original DOC file ----------
-        var originalDoc = new Document();
-        var builder = new DocumentBuilder(originalDoc);
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndTable();
-        string originalPath = Path.Combine(workDir, "original.doc");
-        originalDoc.Save(originalPath, SaveFormat.Doc);
+        // ---------- Create the original DOC file with a 2x2 table ----------
+        Document originalDoc = new Document();
+        DocumentBuilder builder1 = new DocumentBuilder(originalDoc);
+        builder1.Writeln("Original document with a table:");
+        builder1.StartTable();
+        builder1.InsertCell();
+        builder1.Write("Cell 1A");
+        builder1.InsertCell();
+        builder1.Write("Cell 1B");
+        builder1.EndRow(); // First row finished
+        builder1.InsertCell();
+        builder1.Write("Cell 2A");
+        builder1.InsertCell();
+        builder1.Write("Cell 2B");
+        builder1.EndRow(); // Second row finished
+        builder1.EndTable(); // Close the table
+        originalDoc.Save(docPath, SaveFormat.Doc);
 
-        // ---------- Create the revised DOCX file with a different table structure ----------
-        var revisedDoc = new Document();
-        var builder2 = new DocumentBuilder(revisedDoc);
-        // First table (same as original)
+        // ---------- Create the revised DOCX file with a modified table ----------
+        Document revisedDoc = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(revisedDoc);
+        builder2.Writeln("Revised document with a changed table:");
         builder2.StartTable();
         builder2.InsertCell();
-        builder2.Write("Cell 1");
+        builder2.Write("Cell 1A - edited"); // changed text
         builder2.InsertCell();
-        builder2.Write("Cell 2");
-        builder2.EndTable();
-        // Additional table to create a structural difference
-        builder2.StartTable();
+        builder2.Write("Cell 1B");
+        builder2.EndRow(); // First row finished
         builder2.InsertCell();
-        builder2.Write("Cell 3");
+        builder2.Write("Cell 2A");
         builder2.InsertCell();
-        builder2.Write("Cell 4");
-        builder2.EndTable();
-        string revisedPath = Path.Combine(workDir, "revised.docx");
-        revisedDoc.Save(revisedPath, SaveFormat.Docx);
+        builder2.Write("Cell 2B");
+        builder2.EndRow(); // Second row finished
+        // Add an extra row to create a structural difference.
+        builder2.InsertCell();
+        builder2.Write("Cell 3A");
+        builder2.InsertCell();
+        builder2.Write("Cell 3B");
+        builder2.EndRow(); // Third row finished
+        builder2.EndTable(); // Close the table
+        revisedDoc.Save(docxPath, SaveFormat.Docx);
 
-        // ---------- Load the documents ----------
-        var docOriginal = new Document(originalPath);
-        var docRevised = new Document(revisedPath);
+        // ---------- Load the two documents ----------
+        Document docToCompare = new Document(docPath);
+        Document docRevised = new Document(docxPath);
 
-        // ---------- Perform comparison ----------
-        docOriginal.Compare(docRevised, "Comparer", DateTime.Now);
+        // ---------- Perform the comparison ----------
+        // The original document will receive revisions describing the differences.
+        docToCompare.Compare(docRevised, "Comparer", DateTime.Now);
 
-        // Verify that at least one revision was created.
-        if (docOriginal.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
+        // ---------- Verify that at least one revision exists ----------
+        if (docToCompare.Revisions.Count == 0)
+            throw new InvalidOperationException("Expected at least one revision after comparison, but none were found.");
 
-        // Count revisions that are related to tables.
-        int tableRevisionCount = 0;
-        foreach (Revision rev in docOriginal.Revisions)
+        // ---------- Verify that a table‑related revision was detected ----------
+        bool tableRevisionFound = false;
+        foreach (Revision rev in docToCompare.Revisions)
         {
-            if (rev.ParentNode != null && rev.ParentNode.NodeType == NodeType.Table)
-                tableRevisionCount++;
+            // Table structure changes can appear on Table, Row or Cell nodes.
+            if (rev.ParentNode != null)
+            {
+                NodeType type = rev.ParentNode.NodeType;
+                if (type == NodeType.Table || type == NodeType.Row || type == NodeType.Cell)
+                {
+                    tableRevisionFound = true;
+                    break;
+                }
+            }
         }
 
-        // Output the results.
-        Console.WriteLine($"Total revisions detected: {docOriginal.Revisions.Count}");
-        Console.WriteLine($"Table-related revisions detected: {tableRevisionCount}");
+        if (!tableRevisionFound)
+            throw new InvalidOperationException("Table structure differences were not detected as revisions.");
 
-        // Save the comparison result.
-        string resultPath = Path.Combine(workDir, "comparisonResult.docx");
-        docOriginal.Save(resultPath, SaveFormat.Docx);
+        // ---------- Save the comparison result ----------
+        docToCompare.Save(resultPath, SaveFormat.Docx);
+
+        Console.WriteLine("Comparison completed successfully. Revisions detected and result saved to:");
+        Console.WriteLine(resultPath);
     }
 }
