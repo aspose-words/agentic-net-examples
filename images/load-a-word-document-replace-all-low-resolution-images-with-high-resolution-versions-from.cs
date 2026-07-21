@@ -3,79 +3,50 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing; // Provides Bitmap, Graphics, Color, Pen
+using Aspose.Drawing;
 
 namespace ImageResolutionReplacement
 {
     public class Program
     {
-        // Threshold for considering an image low‑resolution (pixel width).
-        private const int LowResolutionWidthThreshold = 200;
+        // Threshold for considering an image low‑resolution (in pixels).
+        private const int LowResolutionPixelThreshold = 150;
 
         public static void Main()
         {
-            // Prepare folders.
-            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
+            // File names used in the example.
+            const string lowResImagePath = "lowRes.png";
+            const string highResImagePath = "highRes.png";
+            const string inputDocPath = "input.docx";
+            const string outputDocPath = "output.docx";
 
-            // Create sample low‑resolution and high‑resolution images.
-            string lowResImagePath = Path.Combine(artifactsDir, "low.png");
-            string highResImagePath = Path.Combine(artifactsDir, "high.png");
+            // -----------------------------------------------------------------
+            // 1. Create sample low‑resolution and high‑resolution images.
+            // -----------------------------------------------------------------
             CreateSampleImage(lowResImagePath, 100, 100);   // 100 × 100 px
-            CreateSampleImage(highResImagePath, 300, 300); // 300 × 300 px
+            CreateSampleImage(highResImagePath, 400, 400); // 400 × 400 px
 
-            // Build a document that contains low‑resolution images.
-            string inputDocPath = Path.Combine(artifactsDir, "input.docx");
-            CreateDocumentWithLowResImages(inputDocPath, lowResImagePath);
-
-            // Load the document and replace low‑resolution images.
-            string outputDocPath = Path.Combine(artifactsDir, "output.docx");
-            ReplaceLowResolutionImages(inputDocPath, outputDocPath, highResImagePath);
-
-            // Simple validation – ensure the output file exists.
-            if (!File.Exists(outputDocPath))
-                throw new InvalidOperationException("The output document was not created.");
-
-            Console.WriteLine("Image replacement completed successfully.");
-        }
-
-        // Creates a deterministic PNG image with the given dimensions.
-        private static void CreateSampleImage(string filePath, int width, int height)
-        {
-            // Use Aspose.Drawing.Bitmap and related types.
-            using (var bitmap = new Bitmap(width, height))
-            using (var graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.White);
-                // Draw a simple rectangle border to make the image visible.
-                using (var pen = new Pen(Color.Black))
-                {
-                    graphics.DrawRectangle(pen, 0, 0, width - 1, height - 1);
-                }
-                bitmap.Save(filePath);
-            }
-        }
-
-        // Generates a Word document that contains only low‑resolution images.
-        private static void CreateDocumentWithLowResImages(string docPath, string lowResImagePath)
-        {
+            // -----------------------------------------------------------------
+            // 2. Build a Word document that contains low‑resolution images.
+            // -----------------------------------------------------------------
             var doc = new Document();
             var builder = new DocumentBuilder(doc);
 
-            // Insert the low‑resolution image twice to have multiple candidates.
-            builder.InsertImage(lowResImagePath);
-            builder.InsertParagraph(); // separate the images
-            builder.InsertImage(lowResImagePath);
+            // Insert three low‑resolution images separated by page breaks.
+            for (int i = 0; i < 3; i++)
+            {
+                builder.InsertImage(lowResImagePath);
+                if (i < 2)
+                    builder.InsertBreak(BreakType.PageBreak);
+            }
 
-            doc.Save(docPath);
-        }
+            doc.Save(inputDocPath);
 
-        // Loads a document, finds images whose pixel width is below the threshold,
-        // and replaces them with the high‑resolution version.
-        private static void ReplaceLowResolutionImages(string inputPath, string outputPath, string highResImagePath)
-        {
-            var doc = new Document(inputPath);
-            var shapes = doc.GetChildNodes(NodeType.Shape, true);
+            // -----------------------------------------------------------------
+            // 3. Load the document and replace low‑resolution images.
+            // -----------------------------------------------------------------
+            var loadedDoc = new Document(inputDocPath);
+            var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
             int replacedCount = 0;
 
@@ -87,20 +58,47 @@ namespace ImageResolutionReplacement
                 // Retrieve image size information.
                 ImageSize size = shape.ImageData.ImageSize;
 
-                // Determine if the image is low‑resolution based on pixel width.
-                if (size.WidthPixels < LowResolutionWidthThreshold)
+                // Determine if the image is below the resolution threshold.
+                if (size.WidthPixels < LowResolutionPixelThreshold ||
+                    size.HeightPixels < LowResolutionPixelThreshold)
                 {
-                    // Replace the image data with the high‑resolution image.
+                    // Replace the image with the high‑resolution version.
                     shape.ImageData.SetImage(highResImagePath);
                     replacedCount++;
                 }
             }
 
-            // Ensure at least one image was replaced; otherwise, something went wrong.
+            // Save the modified document.
+            loadedDoc.Save(outputDocPath);
+
+            // -----------------------------------------------------------------
+            // 4. Validation.
+            // -----------------------------------------------------------------
+            if (!File.Exists(outputDocPath))
+                throw new InvalidOperationException("The output document was not created.");
+
             if (replacedCount == 0)
                 throw new InvalidOperationException("No low‑resolution images were found to replace.");
 
-            doc.Save(outputPath);
+            // Example completed successfully.
+        }
+
+        // Creates a deterministic PNG image using Aspose.Drawing.
+        private static void CreateSampleImage(string filePath, int width, int height)
+        {
+            // Ensure any existing file is removed.
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            // Create a bitmap and fill it with a solid color.
+            using (var bitmap = new Bitmap(width, height))
+            using (var graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.LightGray);
+                // Optionally, draw a simple rectangle to make the image distinguishable.
+                graphics.DrawRectangle(new Pen(Color.DarkGray, 2), 0, 0, width - 1, height - 1);
+                bitmap.Save(filePath);
+            }
         }
     }
 }

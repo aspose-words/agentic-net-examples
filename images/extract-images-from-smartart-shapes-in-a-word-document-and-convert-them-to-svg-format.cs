@@ -1,108 +1,90 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Drawing; // For deterministic bitmap creation
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
+using Newtonsoft.Json;
 
-public class ExtractSmartArtToSvg
+public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Prepare output folder.
-        // -----------------------------------------------------------------
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Create a deterministic sample image (PNG)
+        const string inputImagePath = "input.png";
+        const int imgWidth = 200;
+        const int imgHeight = 100;
 
-        // -----------------------------------------------------------------
-        // 2. Create a deterministic sample PNG image.
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(outputDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 200, 200);
-
-        // -----------------------------------------------------------------
-        // 3. Build a document that contains the image (simulating a SmartArt shape).
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape imageShape = builder.InsertImage(sampleImagePath);
-        imageShape.Width = 400;
-        imageShape.Height = 400;
-
-        // Save the document (optional, for reference).
-        string docPath = Path.Combine(outputDir, "SampleDocument.docx");
-        doc.Save(docPath);
-
-        // -----------------------------------------------------------------
-        // 4. Load the document and render each shape that contains an image to SVG.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-
-        int svgIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            // For SmartArt shapes, ensure the pre‑rendered drawing is up‑to‑date.
-            // This call is safe for non‑SmartArt shapes as well.
-            shape.UpdateSmartArtDrawing();
-
-            // Only shapes that actually have image data can be rendered.
-            if (shape.HasImage)
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                // Configure SVG save options.
-                SvgSaveOptions svgOptions = new SvgSaveOptions
+                g.Clear(Aspose.Drawing.Color.LightBlue);
+                using (Pen pen = new Pen(Aspose.Drawing.Color.DarkBlue, 3))
                 {
-                    ExportEmbeddedImages = false,
-                    // When ExportEmbeddedImages is false Aspose.Words needs a folder to write the
-                    // raster resources (e.g., PNGs) that belong to the SVG.
-                    ResourcesFolder = outputDir,
-                    ResourcesFolderAlias = outputDir
-                };
-
-                string svgFileName = Path.Combine(outputDir, $"Shape_{svgIndex}.svg");
-                shape.GetShapeRenderer().Save(svgFileName, svgOptions);
-                svgIndex++;
-            }
-        }
-
-        // -----------------------------------------------------------------
-        // 5. Validate that at least one SVG file was created.
-        // -----------------------------------------------------------------
-        if (svgIndex == 0)
-            throw new InvalidOperationException("No image shapes were found or SVG files were not created.");
-    }
-
-    // Helper method to create a deterministic sample PNG image.
-    private static void CreateSampleImage(string filePath, int width, int height)
-    {
-        // Use Aspose.Drawing types as required by the rule set.
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        try
-        {
-            Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-            try
-            {
-                // Fill background with white.
-                graphics.Clear(Aspose.Drawing.Color.White);
-                // Draw a simple blue rectangle border.
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
-                {
-                    graphics.DrawRectangle(pen, 0, 0, width - 1, height - 1);
+                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
                 }
             }
-            finally
-            {
-                graphics.Dispose();
-            }
+            bitmap.Save(inputImagePath);
+        }
 
-            // Save the bitmap as PNG.
-            bitmap.Save(filePath);
-        }
-        finally
+        // Create a Word document and insert the image (simulating a SmartArt shape)
+        const string docPath = "sample.docx";
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(inputImagePath);
+        doc.Save(docPath);
+
+        // Reload the document to simulate a real scenario
+        Document loadedDoc = new Document(docPath);
+
+        // Extract images from shapes (including those that could be SmartArt)
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(Aspose.Words.NodeType.Shape, true);
+        int extractedCount = 0;
+
+        foreach (Shape shape in shapeNodes)
         {
-            bitmap.Dispose();
+            if (shape.HasImage)
+            {
+                using (MemoryStream imgStream = new MemoryStream())
+                {
+                    shape.ImageData.Save(imgStream);
+                    imgStream.Position = 0;
+                    byte[] imgBytes = imgStream.ToArray();
+                    string base64 = Convert.ToBase64String(imgBytes);
+
+                    // Determine image format for data URI (use PNG as we inserted PNG)
+                    const string imageMime = "image/png";
+
+                    // Build simple SVG containing the image as base64
+                    double widthPt = shape.Width;   // points
+                    double heightPt = shape.Height; // points
+                    // Convert points to pixels (1 point = 1/72 inch, assume 96 DPI)
+                    const double dpi = 96.0;
+                    double widthPx = widthPt * dpi / 72.0;
+                    double heightPx = heightPt * dpi / 72.0;
+
+                    string svgContent = $@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<svg xmlns=""http://www.w3.org/2000/svg"" width=""{widthPx:F2}px"" height=""{heightPx:F2}px"">
+  <image href=""data:{imageMime};base64,{base64}"" width=""{widthPx:F2}"" height=""{heightPx:F2}""/>
+</svg>";
+
+                    string svgPath = $"extracted-image-{extractedCount + 1}.svg";
+                    File.WriteAllText(svgPath, svgContent, Encoding.UTF8);
+                    extractedCount++;
+                }
+            }
         }
+
+        // Validation
+        if (extractedCount == 0)
+        {
+            throw new InvalidOperationException("No images were extracted from the document.");
+        }
+
+        // Optional cleanup (commented out)
+        // File.Delete(inputImagePath);
+        // File.Delete(docPath);
     }
 }

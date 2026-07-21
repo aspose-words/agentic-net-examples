@@ -1,94 +1,107 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+using Aspose.Drawing;          // Aspose.Drawing for Bitmap, Graphics, Color, etc.
 
 public class Program
 {
     public static void Main()
     {
-        // Define deterministic file names.
-        const string gifPath = "sample.gif";
-        const string pngPath = "sample.png";
-        const string inputDocPath = "input.docx";
-        const string outputDocPath = "output.docx";
+        // Define deterministic file names (non‑constant because they are built at runtime).
+        string artifactsDir = "Artifacts";
+        string gifPath = Path.Combine(artifactsDir, "sample.gif");
+        string pngPath = Path.Combine(artifactsDir, "sample.png");
+        string inputDocPath = Path.Combine(artifactsDir, "input.docx");
+        string outputDocPath = Path.Combine(artifactsDir, "output.docx");
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample image and save it as both GIF and PNG formats.
-        // -----------------------------------------------------------------
-        const int width = 200;
-        const int height = 200;
+        // Ensure the output folder exists.
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a bitmap and draw simple content.
-        Bitmap bitmap = new Bitmap(width, height);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.LightBlue);
-        // Draw a red ellipse for visual distinction.
-        graphics.DrawEllipse(new Pen(Color.Red, 5), 20, 20, width - 40, height - 40);
-        // Save as GIF.
-        bitmap.Save(gifPath, ImageFormat.Gif);
-        // Save as PNG (the replacement image).
-        bitmap.Save(pngPath, ImageFormat.Png);
-        // Clean up drawing resources.
-        graphics.Dispose();
-        bitmap.Dispose();
+        // -------------------------------------------------
+        // 1. Create a sample GIF image.
+        // -------------------------------------------------
+        using (Bitmap gifBitmap = new Bitmap(100, 100))
+        {
+            using (Graphics g = Graphics.FromImage(gifBitmap))
+            {
+                g.Clear(Color.White);
+                g.FillRectangle(new SolidBrush(Color.Red), 10, 10, 80, 80);
+            }
+            // Save as GIF.
+            gifBitmap.Save(gifPath, Aspose.Drawing.Imaging.ImageFormat.Gif);
+        }
 
-        // --------------------------------------------------------------
-        // 2. Create a Word document and insert the GIF image into it.
-        // --------------------------------------------------------------
+        // -------------------------------------------------
+        // 2. Create a corresponding PNG image (same visual content).
+        // -------------------------------------------------
+        using (Bitmap pngBitmap = new Bitmap(100, 100))
+        {
+            using (Graphics g = Graphics.FromImage(pngBitmap))
+            {
+                g.Clear(Color.White);
+                g.FillRectangle(new SolidBrush(Color.Red), 10, 10, 80, 80);
+            }
+            // Save as PNG.
+            pngBitmap.Save(pngPath, Aspose.Drawing.Imaging.ImageFormat.Png);
+        }
+
+        // -------------------------------------------------
+        // 3. Create a Word document that contains the GIF image.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document containing a GIF image:");
+        builder.Writeln("Document with a GIF image:");
         // Insert the GIF image.
         Shape gifShape = builder.InsertImage(gifPath);
-        // Ensure the shape indeed holds a GIF.
-        if (gifShape.ImageData.ImageType != ImageType.Gif)
-            throw new InvalidOperationException("The inserted image is not a GIF as expected.");
+        // Verify that the inserted image is indeed a GIF.
+        if (!gifShape.HasImage || gifShape.ImageData.ImageType != ImageType.Gif)
+            throw new InvalidOperationException("Inserted image is not a GIF as expected.");
 
         // Save the original document.
         doc.Save(inputDocPath);
 
-        // --------------------------------------------------------------
-        // 3. Load the document and replace all GIF images with PNGs.
-        // --------------------------------------------------------------
+        // -------------------------------------------------
+        // 4. Load the document and replace GIF images with PNG equivalents.
+        // -------------------------------------------------
         Document loadedDoc = new Document(inputDocPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int replacedCount = 0;
 
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // Custom mapping: GIF file name -> PNG file name.
+        // In this simple example we map any GIF to the prepared PNG.
+        string mappingGifToPng = pngPath;
+
+        // Iterate over all Shape nodes.
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int replacedCount = 0;
+        foreach (Shape shape in shapes)
         {
             if (shape.HasImage && shape.ImageData.ImageType == ImageType.Gif)
             {
-                // Replace the GIF with the corresponding PNG.
-                shape.ImageData.SetImage(pngPath);
+                // Replace the image data with the PNG version.
+                shape.ImageData.SetImage(mappingGifToPng);
                 replacedCount++;
             }
         }
 
-        // Validate that at least one image was replaced.
+        // Validation: ensure at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("No GIF images were found to replace.");
 
-        // --------------------------------------------------------------
-        // 4. Save the modified document.
-        // --------------------------------------------------------------
+        // Ensure no GIF images remain.
+        foreach (Shape shape in shapes)
+        {
+            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Gif)
+                throw new InvalidOperationException("A GIF image still remains after replacement.");
+        }
+
+        // Save the modified document.
         loadedDoc.Save(outputDocPath);
 
-        // Simple verification that the output file exists.
+        // Final validation: output file must exist.
         if (!File.Exists(outputDocPath))
             throw new FileNotFoundException("The output document was not created.", outputDocPath);
 
-        // Optional: confirm that all images in the output are PNG.
-        Document verifyDoc = new Document(outputDocPath);
-        foreach (Shape shape in verifyDoc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
-        {
-            if (shape.HasImage && shape.ImageData.ImageType != ImageType.Png)
-                throw new InvalidOperationException("An image was not converted to PNG as expected.");
-        }
-
-        // The program finishes without requiring user interaction.
+        // Indicate success (no interactive prompts required).
+        Console.WriteLine("GIF images successfully replaced with PNG equivalents.");
     }
 }

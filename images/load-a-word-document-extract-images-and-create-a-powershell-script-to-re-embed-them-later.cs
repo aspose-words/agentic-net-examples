@@ -1,102 +1,127 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing; // Provides Bitmap, Graphics, Color, Pen
+using Aspose.Drawing;
 
-public class Program
+namespace ImageExtractionExample
 {
-    public static void Main()
+    public class Program
     {
-        // -----------------------------------------------------------------
-        // 1. Prepare deterministic folders.
-        // -----------------------------------------------------------------
-        string baseDir = Directory.GetCurrentDirectory();
-        string artifactsDir = Path.Combine(baseDir, "Artifacts");
-        string extractedDir = Path.Combine(artifactsDir, "Extracted");
-        Directory.CreateDirectory(artifactsDir);
-        Directory.CreateDirectory(extractedDir);
-
-        // -----------------------------------------------------------------
-        // 2. Create a sample image (sample.png) using Aspose.Drawing.
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        const int imgWidth = 200;
-        const int imgHeight = 200;
-
-        Bitmap bitmap = new Bitmap(imgWidth, imgHeight);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        Pen pen = new Pen(Color.Blue, 5);
-        graphics.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
-        bitmap.Save(sampleImagePath);
-        graphics.Dispose();
-        bitmap.Dispose();
-
-        // -----------------------------------------------------------------
-        // 3. Create a Word document and insert the sample image.
-        // -----------------------------------------------------------------
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        doc.Save(docPath);
-
-        // -----------------------------------------------------------------
-        // 4. Load the document and extract all embedded images.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        List<string> extractedImagePaths = new List<string>();
-        int imageIndex = 0;
-
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        public static void Main()
         {
-            if (shape.HasImage)
+            // Prepare directories and file names
+            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+            Directory.CreateDirectory(artifactsDir);
+
+            string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+            string documentPath = Path.Combine(artifactsDir, "sample.docx");
+            string extractedImagesDir = Path.Combine(artifactsDir, "ExtractedImages");
+            Directory.CreateDirectory(extractedImagesDir);
+            string powershellScriptPath = Path.Combine(artifactsDir, "ReembedImages.ps1");
+
+            // 1. Create a deterministic sample image using Aspose.Drawing
+            CreateSampleImage(sampleImagePath);
+
+            // 2. Create a Word document and insert the sample image
+            CreateDocumentWithImage(documentPath, sampleImagePath);
+
+            // 3. Load the document and extract all images
+            int extractedCount = ExtractImages(documentPath, extractedImagesDir);
+            if (extractedCount == 0)
+                throw new InvalidOperationException("No images were extracted from the document.");
+
+            // 4. Generate a PowerShell script that re‑embeds the extracted images
+            GeneratePowerShellScript(documentPath, extractedImagesDir, powershellScriptPath);
+            if (!File.Exists(powershellScriptPath))
+                throw new InvalidOperationException("Failed to create the PowerShell script.");
+        }
+
+        // Creates a simple 200x200 white PNG with a black rectangle.
+        private static void CreateSampleImage(string filePath)
+        {
+            const int width = 200;
+            const int height = 200;
+
+            using (Bitmap bitmap = new Bitmap(width, height))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
+                graphics.Clear(Aspose.Drawing.Color.White);
+                using (Pen pen = new Pen(Aspose.Drawing.Color.Black, 5))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+
+                bitmap.Save(filePath);
+            }
+        }
+
+        // Creates a new Word document and inserts the image at the end of the first paragraph.
+        private static void CreateDocumentWithImage(string docPath, string imagePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Document with an embedded image:");
+            builder.InsertImage(imagePath);
+            doc.Save(docPath);
+        }
+
+        // Extracts all images from the document and saves them to the target folder.
+        // Returns the number of extracted images.
+        private static int ExtractImages(string docPath, string outputFolder)
+        {
+            Document doc = new Document(docPath);
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+
+            int imageIndex = 0;
+            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            {
+                if (!shape.HasImage) continue;
+
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string extractedImagePath = Path.Combine(extractedDir, $"extracted_{imageIndex}{extension}");
-                shape.ImageData.Save(extractedImagePath);
-                extractedImagePaths.Add(extractedImagePath);
+                string fileName = $"extracted_{imageIndex}{extension}";
+                string fullPath = Path.Combine(outputFolder, fileName);
+                shape.ImageData.Save(fullPath);
                 imageIndex++;
             }
+
+            return imageIndex;
         }
 
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        // -----------------------------------------------------------------
-        // 5. Generate a PowerShell script that re‑embeds the extracted images.
-        // -----------------------------------------------------------------
-        string psScriptPath = Path.Combine(artifactsDir, "reembed_images.ps1");
-        using (StreamWriter writer = new StreamWriter(psScriptPath, false))
+        // Generates a simple PowerShell script that demonstrates how to re‑embed the extracted images.
+        private static void GeneratePowerShellScript(string docPath, string imagesFolder, string scriptPath)
         {
-            writer.WriteLine("# PowerShell script to re‑embed extracted images into a new Word document");
-            writer.WriteLine("$word = New-Object -ComObject Word.Application");
-            writer.WriteLine("$word.Visible = $false");
-            writer.WriteLine("$doc = $word.Documents.Add()");
-            writer.WriteLine("$range = $doc.Content");
+            var sb = new StringBuilder();
 
-            foreach (string imgPath in extractedImagePaths)
-            {
-                // Escape backslashes for PowerShell string literals.
-                string psImgPath = imgPath.Replace("\\", "\\\\");
-                writer.WriteLine($"$range.InlineShapes.AddPicture(\"{psImgPath}\")");
-                writer.WriteLine("$range.InsertParagraphAfter()");
-            }
+            sb.AppendLine("# PowerShell script to re‑embed extracted images into a Word document");
+            sb.AppendLine("$docPath = \"" + EscapeForPowerShell(docPath) + "\"");
+            sb.AppendLine("$imagesFolder = \"" + EscapeForPowerShell(imagesFolder) + "\"");
+            sb.AppendLine("$outputPath = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($docPath), \"Reembedded.docx\")");
+            sb.AppendLine();
+            sb.AppendLine("Add-Type -Path \"$(Join-Path $PSScriptRoot \"Aspose.Words.dll\")\"");
+            sb.AppendLine("Add-Type -Path \"$(Join-Path $PSScriptRoot \"Aspose.Drawing.Common.dll\")\"");
+            sb.AppendLine();
+            sb.AppendLine("$doc = New-Object Aspose.Words.Document $docPath");
+            sb.AppendLine("$builder = New-Object Aspose.Words.DocumentBuilder $doc");
+            sb.AppendLine();
+            sb.AppendLine("$imageFiles = Get-ChildItem -Path $imagesFolder -File");
+            sb.AppendLine("foreach ($img in $imageFiles) {");
+            sb.AppendLine("    $builder.Writeln(\"Re‑embedding image: $($img.Name)\")");
+            sb.AppendLine("    $builder.InsertImage($img.FullName)");
+            sb.AppendLine("}");
+            sb.AppendLine();
+            sb.AppendLine("$doc.Save($outputPath)");
+            sb.AppendLine("Write-Host \"Document saved to $outputPath\"");
 
-            string reembeddedDocPath = Path.Combine(artifactsDir, "reembedded.docx").Replace("\\", "\\\\");
-            writer.WriteLine($"$doc.SaveAs([ref]\"{reembeddedDocPath}\")");
-            writer.WriteLine("$doc.Close()");
-            writer.WriteLine("$word.Quit()");
+            File.WriteAllText(scriptPath, sb.ToString());
         }
 
-        // -----------------------------------------------------------------
-        // 6. Validation – ensure the PowerShell script was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(psScriptPath))
-            throw new FileNotFoundException("PowerShell script was not created.", psScriptPath);
+        // Helper to escape backslashes for PowerShell string literals.
+        private static string EscapeForPowerShell(string path)
+        {
+            return path.Replace("\\", "\\\\");
+        }
     }
 }

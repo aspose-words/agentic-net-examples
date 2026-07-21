@@ -3,71 +3,93 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
+using Aspose.Words.Loading;
+using Aspose.Drawing; // Provides Bitmap, Graphics, Color
 
-public class ExtractOleImages
+public class Program
 {
     public static void Main()
     {
-        // Define file and folder names.
-        const string docPath = "DocumentWithOle.docx";
-        const string oleDataFile = "sample.txt";
+        // Folder for generated files
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a simple text file to embed as an OLE object.
-        File.WriteAllText(oleDataFile, "This is sample OLE embedded content.");
-
-        // Create a new Word document and embed the OLE object as an icon.
+        // -----------------------------------------------------------------
+        // 1. Create a sample Word document with an embedded OLE object.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Read the sample file into a memory stream.
-        using (MemoryStream oleStream = new MemoryStream(File.ReadAllBytes(oleDataFile)))
+        // Create dummy data for the OLE object (e.g., a simple text file content)
+        byte[] oleData = System.Text.Encoding.UTF8.GetBytes("Sample OLE content");
+        using (MemoryStream oleStream = new MemoryStream(oleData))
         {
-            // Insert the OLE object. The 'asIcon' flag is true so the shape will contain an image.
-            builder.InsertOleObject(oleStream, "Package", true, null);
+            // Insert the OLE object as an icon so that it has an image representation.
+            // ProgId "Package" denotes a generic OLE package.
+            builder.Writeln("Below is an embedded OLE object displayed as an icon:");
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", true, null);
+            // Ensure the shape is added to the document.
+            builder.InsertParagraph();
         }
 
-        // Save the document that now contains an OLE object.
+        // Save the document to disk.
+        string docPath = Path.Combine(outputDir, "SampleDocument.docx");
         doc.Save(docPath);
 
-        // Load the document back (demonstrates the load step).
+        // -----------------------------------------------------------------
+        // 2. Load the document and extract images from embedded OLE objects.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
-        // Get all shape nodes in the document.
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-
-        int extractedCount = 0;
-
-        foreach (Shape shape in shapes.OfType<Shape>())
+        int imageIndex = 0;
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Process only OLE object shapes that have an image (icon).
-            if (shape.ShapeType == ShapeType.OleObject && shape.HasImage)
+            // Identify OLE objects.
+            OleFormat oleFormat = shape.OleFormat;
+            if (oleFormat == null)
+                continue; // Not an OLE object.
+
+            // If the OLE shape has an image (icon), extract it.
+            if (shape.HasImage)
             {
-                OleFormat oleFormat = shape.OleFormat;
-                // Use the ProgId as part of the file name; replace characters that are invalid in file names.
-                string progId = oleFormat.ProgId ?? "OleObject";
-                foreach (char c in Path.GetInvalidFileNameChars())
-                    progId = progId.Replace(c, '_');
+                // Determine file extension based on the image type.
+                string extension = Aspose.Words.FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                // Build a deterministic file name using the OLE ProgId.
+                string imageFileName = $"OleImage_{oleFormat.ProgId}_{imageIndex}{extension}";
+                string imagePath = Path.Combine(outputDir, imageFileName);
 
-                // Determine the appropriate image file extension.
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imageFileName = $"{progId}_icon{extension}";
-                string imagePath = Path.Combine(Directory.GetCurrentDirectory(), imageFileName);
-
-                // Save the image (icon) to the file system.
+                // Save the image.
                 shape.ImageData.Save(imagePath);
-                extractedCount++;
-
-                // Optional: verify that the file was created.
-                if (!File.Exists(imagePath))
-                    throw new InvalidOperationException($"Failed to save extracted image to '{imagePath}'.");
+                imageIndex++;
             }
         }
 
         // Validate that at least one image was extracted.
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No OLE object images were found and extracted.");
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No images were extracted from OLE objects.");
 
-        // Clean up temporary files used for the example.
-        File.Delete(oleDataFile);
+        // -----------------------------------------------------------------
+        // 3. (Optional) Extract the raw OLE data itself for reference.
+        // -----------------------------------------------------------------
+        int oleDataIndex = 0;
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        {
+            OleFormat oleFormat = shape.OleFormat;
+            if (oleFormat == null)
+                continue;
+
+            // Use the suggested file extension for the embedded object.
+            string oleExtension = oleFormat.SuggestedExtension ?? ".bin";
+            string oleFileName = $"OleData_{oleFormat.ProgId}_{oleDataIndex}{oleExtension}";
+            string olePath = Path.Combine(outputDir, oleFileName);
+
+            // Save the OLE data to a file.
+            oleFormat.Save(olePath);
+            oleDataIndex++;
+        }
+
+        // The example finishes without requiring user interaction.
     }
 }

@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
@@ -12,92 +12,87 @@ public class Program
 {
     public static void Main()
     {
-        // Directories for artifacts
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        string imagesDir = Path.Combine(artifactsDir, "Images");
+        // Prepare output folders.
+        string artifactsDir = "Artifacts";
         Directory.CreateDirectory(artifactsDir);
-        Directory.CreateDirectory(imagesDir);
+        string tempDir = Path.Combine(artifactsDir, "Temp");
+        Directory.CreateDirectory(tempDir);
 
-        // 1. Create a sample PNG image using Aspose.Drawing
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        CreateSamplePng(sampleImagePath);
-
-        // 2. Build an RTF document that contains the sample image
-        string rtfPath = Path.Combine(artifactsDir, "sample.rtf");
-        CreateRtfWithImage(sampleImagePath, rtfPath);
-
-        // 3. Load the RTF document and extract images, converting each to a losslessly compressed TIFF
-        string tiffOutputDir = Path.Combine(artifactsDir, "TiffImages");
-        Directory.CreateDirectory(tiffOutputDir);
-        ExtractImagesToTiff(rtfPath, tiffOutputDir);
-
-        // 4. Verify that at least one TIFF file was created
-        var tiffFiles = Directory.GetFiles(tiffOutputDir, "*.tiff");
-        if (tiffFiles.Length == 0)
-            throw new InvalidOperationException("No TIFF images were generated.");
-
-        // 5. Archive the TIFF images into a ZIP file
-        string zipPath = Path.Combine(artifactsDir, "TiffImages.zip");
-        if (File.Exists(zipPath))
-            File.Delete(zipPath);
-        ZipFile.CreateFromDirectory(tiffOutputDir, zipPath);
-
-        // Verify archive creation
-        if (!File.Exists(zipPath))
-            throw new InvalidOperationException("Failed to create the ZIP archive.");
-    }
-
-    private static void CreateSamplePng(string filePath)
-    {
-        // Create a 100x100 white bitmap and save as PNG
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(100, 100))
-        using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+        // 1. Create a deterministic sample image (PNG) using Aspose.Drawing.
+        string sampleImagePath = Path.Combine(tempDir, "sample.png");
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            graphics.Clear(Aspose.Drawing.Color.White);
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.LightBlue);
+            }
+            bitmap.Save(sampleImagePath);
         }
-    }
 
-    private static void CreateRtfWithImage(string imagePath, string rtfPath)
-    {
+        // 2. Create a Word document, insert the image, and save it as RTF.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
+        builder.InsertImage(sampleImagePath);
+        string rtfPath = Path.Combine(artifactsDir, "sample.rtf");
         doc.Save(rtfPath, SaveFormat.Rtf);
-    }
 
-    private static void ExtractImagesToTiff(string rtfPath, string outputDir)
-    {
-        Document doc = new Document(rtfPath);
-        var shapes = doc.GetChildNodes(NodeType.Shape, true)
-                        .OfType<Shape>()
-                        .Where(s => s.HasImage)
-                        .ToList();
+        // 3. Load the RTF document.
+        Document loadedDoc = new Document(rtfPath);
 
-        int index = 0;
-        foreach (Shape shape in shapes)
+        // 4. Extract each image, convert it to a TIFF with lossless LZW compression, and collect the TIFF file paths.
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        List<string> tiffFiles = new List<string>();
+        int imageIndex = 0;
+
+        foreach (Shape shape in shapeNodes)
         {
-            // Obtain the image bytes from the shape
-            using (MemoryStream imageStream = new MemoryStream())
+            if (!shape.HasImage)
+                continue;
+
+            // Save the original image bytes to a memory stream.
+            using (MemoryStream imgStream = new MemoryStream())
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0; // Reset before reuse
+                shape.ImageData.Save(imgStream);
+                imgStream.Position = 0;
 
-                // Create a temporary document that contains only this image
-                Document tempDoc = new Document();
-                DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-                tempBuilder.InsertImage(imageStream);
+                // Create a temporary document that contains only this image.
+                Document imgDoc = new Document();
+                DocumentBuilder imgBuilder = new DocumentBuilder(imgDoc);
+                imgBuilder.InsertImage(imgStream);
 
-                // Configure TIFF save options with lossless LZW compression
-                ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+                // Configure TIFF save options with lossless LZW compression.
+                ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
                 {
                     TiffCompression = TiffCompression.Lzw
                 };
 
-                string tiffPath = Path.Combine(outputDir, $"image_{index}.tiff");
-                tempDoc.Save(tiffPath, options);
-                index++;
+                // Save the image as a TIFF file.
+                string tiffPath = Path.Combine(tempDir, $"image_{imageIndex}.tiff");
+                imgDoc.Save(tiffPath, tiffOptions);
+                tiffFiles.Add(tiffPath);
+                imageIndex++;
             }
         }
+
+        // Validate that at least one TIFF image was produced.
+        if (tiffFiles.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the RTF document.");
+
+        // 5. Store all TIFF images in a ZIP archive.
+        string zipPath = Path.Combine(artifactsDir, "ImagesArchive.zip");
+        using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
+        {
+            using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
+            {
+                foreach (string tiffFile in tiffFiles)
+                {
+                    archive.CreateEntryFromFile(tiffFile, Path.GetFileName(tiffFile));
+                }
+            }
+        }
+
+        // Validate that the ZIP archive was created.
+        if (!File.Exists(zipPath))
+            throw new InvalidOperationException("Failed to create the ZIP archive.");
     }
 }

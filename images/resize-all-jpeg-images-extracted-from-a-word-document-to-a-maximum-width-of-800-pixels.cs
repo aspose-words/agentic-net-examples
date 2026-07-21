@@ -1,9 +1,7 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -15,32 +13,18 @@ public class Program
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a sample JPEG image (1200x900) using Aspose.Drawing
-        string sampleJpegPath = Path.Combine(artifactsDir, "sample.jpg");
-        using (Bitmap bitmap = new Bitmap(1200, 900))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.LightBlue);
-            }
-            bitmap.Save(sampleJpegPath, ImageFormat.Jpeg);
-        }
+        // 1. Create a sample JPEG image.
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.jpg");
+        CreateSampleJpeg(sampleImagePath, 1200, 800); // 1200x800 pixels
 
-        // 2. Create a Word document and insert the JPEG image multiple times
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleJpegPath);
-        builder.InsertParagraph();
-        builder.InsertImage(sampleJpegPath);
+        // 2. Build a Word document that contains the JPEG image multiple times.
         string inputDocPath = Path.Combine(artifactsDir, "input.docx");
-        doc.Save(inputDocPath);
+        CreateDocumentWithImages(inputDocPath, sampleImagePath);
 
-        // 3. Load the document (optional, we already have it)
-        Document loadedDoc = new Document(inputDocPath);
-
-        // 4. Extract JPEG images, resize if width > 800px, and save resized versions
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int jpegIndex = 0;
+        // 3. Load the document and process JPEG images.
+        Document doc = new Document(inputDocPath);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int jpegCount = 0;
         int resizedCount = 0;
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
@@ -51,63 +35,94 @@ public class Program
             if (shape.ImageData.ImageType != ImageType.Jpeg)
                 continue;
 
-            // Save original image to a memory stream
-            using (MemoryStream originalStream = new MemoryStream())
-            {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
+            jpegCount++;
 
-                // Load image with Aspose.Drawing
-                using (Bitmap originalBitmap = new Bitmap(originalStream))
+            // Extract image bytes.
+            byte[] imageBytes = shape.ImageData.ToByteArray();
+
+            // Load image into Aspose.Drawing.Bitmap.
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            {
+                ms.Position = 0;
+                using (Bitmap originalBitmap = new Bitmap(ms))
                 {
                     int originalWidth = originalBitmap.Width;
                     int originalHeight = originalBitmap.Height;
 
-                    // Determine if resizing is needed
-                    if (originalWidth <= 800)
+                    // If width exceeds 800 pixels, resize while preserving aspect ratio.
+                    if (originalWidth > 800)
                     {
-                        // No resizing needed, just save the original
-                        string outPath = Path.Combine(artifactsDir, $"Image_{jpegIndex}{FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType)}");
-                        using (FileStream fs = new FileStream(outPath, FileMode.Create, FileAccess.Write))
-                        {
-                            originalBitmap.Save(fs, ImageFormat.Jpeg);
-                        }
-                        resizedCount++;
-                    }
-                    else
-                    {
-                        // Calculate new dimensions while preserving aspect ratio
+                        double scale = 800.0 / originalWidth;
                         int newWidth = 800;
-                        int newHeight = (int)Math.Round((double)originalHeight * newWidth / originalWidth);
+                        int newHeight = (int)Math.Round(originalHeight * scale);
 
                         using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
                         {
-                            using (Graphics g = Graphics.FromImage(resizedBitmap))
+                            using (Graphics graphics = Graphics.FromImage(resizedBitmap))
                             {
-                                g.Clear(Color.Transparent);
-                                g.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
+                                graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
                             }
 
-                            string outPath = Path.Combine(artifactsDir, $"Resized_{jpegIndex}{FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType)}");
-                            using (FileStream fs = new FileStream(outPath, FileMode.Create, FileAccess.Write))
-                            {
-                                resizedBitmap.Save(fs, ImageFormat.Jpeg);
-                            }
+                            // Save resized image to file.
+                            string resizedImagePath = Path.Combine(artifactsDir, $"resized_{jpegCount}.jpg");
+                            resizedBitmap.Save(resizedImagePath, ImageFormat.Jpeg);
                             resizedCount++;
+
+                            // Replace the image in the document with the resized version.
+                            using (MemoryStream resizedStream = new MemoryStream())
+                            {
+                                resizedBitmap.Save(resizedStream, ImageFormat.Jpeg);
+                                resizedStream.Position = 0;
+                                shape.ImageData.SetImage(resizedStream);
+                            }
                         }
                     }
                 }
             }
-
-            jpegIndex++;
         }
 
-        // Validation: ensure at least one resized image was produced
-        if (resizedCount == 0)
-            throw new InvalidOperationException("No JPEG images were processed.");
+        // Validate that at least one JPEG image was processed.
+        if (jpegCount == 0)
+            throw new InvalidOperationException("No JPEG images were found in the document.");
 
-        // Optional: clean up sample files (comment out if you want to inspect them)
-        // File.Delete(sampleJpegPath);
-        // File.Delete(inputDocPath);
+        // Validate that at least one image was resized.
+        if (resizedCount == 0)
+            throw new InvalidOperationException("No JPEG images required resizing.");
+
+        // Save the modified document.
+        string outputDocPath = Path.Combine(artifactsDir, "output.docx");
+        doc.Save(outputDocPath);
+    }
+
+    // Creates a deterministic JPEG image using Aspose.Drawing.
+    private static void CreateSampleJpeg(string filePath, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.LightBlue);
+                // Draw a simple rectangle for visual distinction.
+                graphics.FillRectangle(new SolidBrush(Color.Coral), width / 4, height / 4, width / 2, height / 2);
+            }
+
+            bitmap.Save(filePath, ImageFormat.Jpeg);
+        }
+    }
+
+    // Creates a Word document and inserts the specified image multiple times.
+    private static void CreateDocumentWithImages(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert the image three times.
+        for (int i = 0; i < 3; i++)
+        {
+            builder.InsertParagraph();
+            builder.InsertImage(imagePath);
+        }
+
+        doc.Save(docPath);
     }
 }

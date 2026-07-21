@@ -1,71 +1,67 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 using Aspose.Words.Saving;
 
-public class ExtractChartImagesToSvg
+public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare folders for the document and the extracted SVG files.
+        string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        Directory.CreateDirectory(dataFolder);
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputFolder);
 
-        // Create a sample document with a chart.
+        // -----------------------------------------------------------------
+        // 1. Create a Word document that contains a chart.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple column chart.
+        // Insert a column chart with a deterministic size.
         Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
-        Chart chart = chartShape.Chart;
 
-        // Populate chart with sample data.
-        chart.Series.Clear();
-        chart.Series.Add("Series 1",
-            new[] { "Category A", "Category B", "Category C" },
-            new[] { 10.0, 20.0, 30.0 });
-        chart.Series.Add("Series 2",
-            new[] { "Category A", "Category B", "Category C" },
-            new[] { 15.0, 25.0, 35.0 });
+        // Add a simple title to the chart (optional, just to have content).
+        chartShape.Chart.Title.Text = "Sample Chart";
 
-        // Save the document (creation step).
-        string docPath = Path.Combine(outputDir, "SampleWithChart.docx");
+        // Save the document (optional, demonstrates the source file).
+        string docPath = Path.Combine(dataFolder, "ChartDocument.docx");
         doc.Save(docPath);
 
-        // Load the document (loading step).
-        Document loadedDoc = new Document(docPath);
-
-        // Find all chart shapes.
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int svgIndex = 0;
-
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // -----------------------------------------------------------------
+        // 2. Extract each chart shape and export it as an SVG file.
+        // -----------------------------------------------------------------
+        int chartIndex = 0;
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            // Chart shapes are OLE objects; they expose HasChart.
             if (shape.HasChart)
             {
-                // Render the chart shape to an SVG file.
-                string svgPath = Path.Combine(outputDir, $"ChartImage_{svgIndex}.svg");
+                string svgFileName = Path.Combine(outputFolder, $"Chart_{chartIndex}.svg");
+
+                // Configure SVG save options – we do not embed images because the chart is vector.
                 SvgSaveOptions svgOptions = new SvgSaveOptions
                 {
                     ExportEmbeddedImages = false,
-                    ResourcesFolder = outputDir,
+                    ResourcesFolder = outputFolder,
+                    ResourcesFolderAlias = outputFolder,
                     ShowPageBorder = false
                 };
-                shape.GetShapeRenderer().Save(svgPath, svgOptions);
-                svgIndex++;
+
+                // Render the chart shape directly to an SVG file.
+                shape.GetShapeRenderer().Save(svgFileName, svgOptions);
+                chartIndex++;
             }
         }
 
-        // Validate that at least one SVG file was created.
-        if (svgIndex == 0)
-            throw new InvalidOperationException("No chart shapes were found to export as SVG.");
+        // -----------------------------------------------------------------
+        // 3. Validate that at least one SVG file was produced.
+        // -----------------------------------------------------------------
+        if (chartIndex == 0)
+            throw new InvalidOperationException("No chart shapes were found in the document.");
 
-        // List generated SVG files.
-        foreach (string file in Directory.GetFiles(outputDir, "*.svg"))
-            Console.WriteLine($"Generated SVG: {file}");
+        Console.WriteLine($"Extracted {chartIndex} chart(s) as SVG files to \"{outputFolder}\".");
     }
 }

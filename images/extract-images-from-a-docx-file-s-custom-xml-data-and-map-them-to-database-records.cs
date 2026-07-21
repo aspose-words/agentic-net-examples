@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Xml;
 using System.Collections.Generic;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Drawing;
@@ -11,7 +11,6 @@ using Newtonsoft.Json;
 
 public class Program
 {
-    // Simple record to simulate a database entry.
     public class ImageRecord
     {
         public int Id { get; set; }
@@ -20,122 +19,87 @@ public class Program
 
     public static void Main()
     {
-        // Directories for artifacts.
+        // Directories for artifacts
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a sample image (PNG) using Aspose.Drawing.
+        // 1. Create a deterministic sample image (sample.png)
         string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 200, 200);
+        CreateSampleImage(sampleImagePath, 100, 100);
 
-        // 2. Build a DOCX with a Custom XML Part that contains the image as Base64.
+        // 2. Encode the image to Base64 and embed it into custom XML
+        byte[] imageBytes = File.ReadAllBytes(sampleImagePath);
+        string base64Image = Convert.ToBase64String(imageBytes);
+        string xmlContent = $"<root><image>{base64Image}</image></root>";
+
+        // 3. Create a DOCX document and add the custom XML part
+        Document doc = new Document();
+        string xmlPartId = Guid.NewGuid().ToString("B");
+        doc.CustomXmlParts.Add(xmlPartId, xmlContent);
         string docPath = Path.Combine(artifactsDir, "sample.docx");
-        CreateDocumentWithCustomXml(docPath, sampleImagePath);
+        doc.Save(docPath);
 
-        // 3. Load the document and extract images from its Custom XML Parts.
-        List<ImageRecord> records = ExtractImagesFromCustomXml(docPath, artifactsDir);
+        // 4. Load the document (simulating a real scenario)
+        Document loadedDoc = new Document(docPath);
 
-        // 4. Serialize the mapping to JSON (simulating a DB write) and write to file.
-        string jsonPath = Path.Combine(artifactsDir, "mapping.json");
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(records, Newtonsoft.Json.Formatting.Indented));
+        // 5. Extract images from custom XML parts and map them to records
+        List<ImageRecord> records = new List<ImageRecord>();
+        int imageIndex = 0;
 
-        // Validation: ensure at least one image was extracted.
+        foreach (CustomXmlPart part in loadedDoc.CustomXmlParts)
+        {
+            // Convert the part data (byte[]) to a UTF-8 string
+            string partXml = Encoding.UTF8.GetString(part.Data);
+            XDocument xDoc = XDocument.Parse(partXml);
+
+            foreach (XElement imgElement in xDoc.Descendants("image"))
+            {
+                string base64 = imgElement.Value.Trim();
+                if (string.IsNullOrEmpty(base64))
+                    continue;
+
+                byte[] imgData = Convert.FromBase64String(base64);
+                string extractedPath = Path.Combine(artifactsDir, $"extracted_{imageIndex}.png");
+
+                // Ensure the stream position is at the beginning before writing
+                using (MemoryStream ms = new MemoryStream(imgData))
+                {
+                    ms.Position = 0;
+                    using (FileStream fs = new FileStream(extractedPath, FileMode.Create, FileAccess.Write))
+                    {
+                        ms.CopyTo(fs);
+                    }
+                }
+
+                records.Add(new ImageRecord
+                {
+                    Id = ++imageIndex,
+                    ImagePath = extractedPath
+                });
+            }
+        }
+
+        // Validation: at least one image must be extracted
         if (records.Count == 0)
             throw new InvalidOperationException("No images were extracted from the custom XML data.");
 
-        // Example output.
-        Console.WriteLine($"Extracted {records.Count} image(s). Mapping saved to: {jsonPath}");
+        // 6. Output the mapping as JSON (simulating a database insert)
+        string json = JsonConvert.SerializeObject(records, Formatting.Indented);
+        Console.WriteLine(json);
     }
 
-    // Creates a deterministic PNG image.
     private static void CreateSampleImage(string filePath, int width, int height)
     {
+        // Create a bitmap and fill it with a solid color
         using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            graphics.Clear(Aspose.Drawing.Color.LightBlue);
-            using (Pen pen = new Pen(Aspose.Drawing.Color.DarkBlue, 5))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                graphics.Clear(Color.Red);
             }
+
+            // Save the bitmap to the specified file in PNG format
             bitmap.Save(filePath, ImageFormat.Png);
         }
-    }
-
-    // Creates a DOCX file with a Custom XML Part that embeds the image as Base64.
-    private static void CreateDocumentWithCustomXml(string docPath, string imagePath)
-    {
-        // Load image bytes and encode to Base64.
-        byte[] imageBytes = File.ReadAllBytes(imagePath);
-        string base64Image = Convert.ToBase64String(imageBytes);
-
-        // Build simple XML containing the image.
-        string xmlContent = $"<Images><Image id=\"1\">{base64Image}</Image></Images>";
-
-        // Create a new document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document with Custom XML containing an image.");
-
-        // Add the custom XML part.
-        string partId = Guid.NewGuid().ToString("B");
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(partId, xmlContent);
-
-        // Save the document.
-        doc.Save(docPath);
-    }
-
-    // Loads the document, parses Custom XML Parts, extracts images, and creates mapping records.
-    private static List<ImageRecord> ExtractImagesFromCustomXml(string docPath, string artifactsDir)
-    {
-        Document doc = new Document(docPath);
-        List<ImageRecord> records = new List<ImageRecord>();
-        int imageCounter = 0;
-
-        foreach (CustomXmlPart part in doc.CustomXmlParts)
-        {
-            // Convert the part's byte data to a string.
-            string xmlString = Encoding.UTF8.GetString(part.Data);
-            XmlDocument xmlDoc = new XmlDocument();
-            xmlDoc.LoadXml(xmlString);
-
-            XmlNodeList imageNodes = xmlDoc.SelectNodes("//Image");
-            foreach (XmlNode imgNode in imageNodes)
-            {
-                string idAttr = imgNode.Attributes["id"]?.Value ?? (imageCounter + 1).ToString();
-                string base64Data = imgNode.InnerText.Trim();
-
-                if (string.IsNullOrEmpty(base64Data))
-                    continue;
-
-                byte[] imgBytes = Convert.FromBase64String(base64Data);
-                using (MemoryStream ms = new MemoryStream(imgBytes))
-                {
-                    // Ensure stream position is at start.
-                    ms.Position = 0;
-
-                    // Determine file name.
-                    string imageFileName = $"extracted_{idAttr}.png";
-                    string imageFullPath = Path.Combine(artifactsDir, imageFileName);
-
-                    // Save the image to disk using Aspose.Drawing.
-                    using (Bitmap bitmap = new Bitmap(ms))
-                    {
-                        bitmap.Save(imageFullPath, ImageFormat.Png);
-                    }
-
-                    // Create a record linking the image to a simulated DB entry.
-                    records.Add(new ImageRecord
-                    {
-                        Id = int.Parse(idAttr),
-                        ImagePath = imageFullPath
-                    });
-                }
-
-                imageCounter++;
-            }
-        }
-
-        return records;
     }
 }

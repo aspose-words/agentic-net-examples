@@ -1,145 +1,165 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Words.Loading;
-using Aspose.Drawing; // Aspose.Drawing.Common provides Bitmap, Graphics, Color
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-public class Program
+public class BatchImageExtractorAndPdfCatalog
 {
     public static void Main()
     {
-        // Define working folders
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "ImageCatalogDemo");
-        string inputDocsDir = Path.Combine(baseDir, "InputDocs");
-        string extractedImagesDir = Path.Combine(baseDir, "ExtractedImages");
-        string thumbnailsDir = Path.Combine(baseDir, "Thumbnails");
-        string outputDir = Path.Combine(baseDir, "Output");
+        // Base working directory.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string extractedDir = Path.Combine(baseDir, "ExtractedImages");
+        string thumbDir = Path.Combine(baseDir, "Thumbnails");
+        string outputPdf = Path.Combine(baseDir, "Catalog.pdf");
 
-        // Ensure folders exist
-        Directory.CreateDirectory(inputDocsDir);
-        Directory.CreateDirectory(extractedImagesDir);
-        Directory.CreateDirectory(thumbnailsDir);
-        Directory.CreateDirectory(outputDir);
+        // Ensure all directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(extractedDir);
+        Directory.CreateDirectory(thumbDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic sample image that will be used in the docs
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 200, 200, Aspose.Drawing.Color.LightBlue, Aspose.Drawing.Color.DarkBlue);
+        // 1. Create deterministic sample images (PNG) using Aspose.Drawing.
+        string[] sampleImagePaths = CreateSampleImages(baseDir);
 
-        // -----------------------------------------------------------------
-        // 2. Generate a few sample DOCX files that contain the sample image
-        // -----------------------------------------------------------------
-        const int docCount = 3;
-        for (int i = 1; i <= docCount; i++)
-        {
-            string docPath = Path.Combine(inputDocsDir, $"Document{i}.docx");
-            CreateDocumentWithImage(docPath, sampleImagePath, $"Sample document {i}");
-        }
+        // 2. Create deterministic sample DOCX files and insert the images.
+        CreateSampleDocuments(inputDir, sampleImagePaths);
 
-        // -----------------------------------------------------------------
-        // 3. Process each DOCX: extract images, create thumbnails
-        // -----------------------------------------------------------------
-        var docFiles = Directory.GetFiles(inputDocsDir, "*.docx");
-        int globalImageIndex = 0;
+        // 3. Extract images from each DOCX, save them and create thumbnails.
+        var extractedImages = ExtractImagesAndCreateThumbnails(inputDir, extractedDir, thumbDir);
 
-        foreach (var docFile in docFiles)
-        {
-            // Load the source document
-            Document srcDoc = new Document(docFile);
+        // 4. Build a PDF catalog that contains the thumbnails.
+        BuildPdfCatalog(thumbDir, outputPdf);
 
-            // Get all shapes that contain images
-            var shapeNodes = srcDoc.GetChildNodes(NodeType.Shape, true)
-                                   .Cast<Shape>()
-                                   .Where(s => s.HasImage);
+        // 5. Validation.
+        if (!File.Exists(outputPdf))
+            throw new InvalidOperationException("Catalog PDF was not created.");
 
-            foreach (var shape in shapeNodes)
-            {
-                // Save the original image
-                string imageExtension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imageFileName = $"Img_{globalImageIndex}{imageExtension}";
-                string imageFullPath = Path.Combine(extractedImagesDir, imageFileName);
-                shape.ImageData.Save(imageFullPath);
-                globalImageIndex++;
-
-                // Create a thumbnail for the saved image
-                string thumbFileName = Path.GetFileNameWithoutExtension(imageFileName) + "_thumb.png";
-                string thumbFullPath = Path.Combine(thumbnailsDir, thumbFileName);
-                CreateThumbnailFromImage(imageFullPath, thumbFullPath, 100, 100);
-            }
-        }
-
-        // -----------------------------------------------------------------
-        // 4. Build a PDF catalog that shows all thumbnails
-        // -----------------------------------------------------------------
-        Document catalog = new Document();
-        DocumentBuilder builder = new DocumentBuilder(catalog);
-
-        builder.Writeln("Image Catalog");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln();
-
-        var thumbnailFiles = Directory.GetFiles(thumbnailsDir, "*_thumb.png");
-        foreach (var thumbPath in thumbnailFiles)
-        {
-            // Insert thumbnail image
-            builder.InsertImage(thumbPath);
-            builder.Writeln(); // add spacing
-        }
-
-        // Save the final PDF catalog
-        string catalogPath = Path.Combine(outputDir, "ImageCatalog.pdf");
-        catalog.Save(catalogPath, SaveFormat.Pdf);
-
-        Console.WriteLine($"Catalog created at: {catalogPath}");
+        if (extractedImages.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the documents.");
     }
 
-    // Creates a simple PNG image using Aspose.Drawing
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color background, Aspose.Drawing.Color rectangle)
+    // Creates three sample PNG images and returns their file paths.
+    private static string[] CreateSampleImages(string baseDir)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
+        string[] colors = { "Red", "Green", "Blue" };
+        var paths = new string[colors.Length];
+
+        for (int i = 0; i < colors.Length; i++)
         {
+            string filePath = Path.Combine(baseDir, $"sample{i + 1}.png");
+            using (Bitmap bitmap = new Bitmap(200, 200))
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(background);
-                // Draw a simple rectangle
-                int rectSize = Math.Min(width, height) / 2;
-                int offset = (width - rectSize) / 2;
-                g.FillRectangle(new SolidBrush(rectangle), offset, offset, rectSize, rectSize);
+                Aspose.Drawing.Color fillColor = colors[i] switch
+                {
+                    "Red" => Aspose.Drawing.Color.Red,
+                    "Green" => Aspose.Drawing.Color.Green,
+                    "Blue" => Aspose.Drawing.Color.Blue,
+                    _ => Aspose.Drawing.Color.White
+                };
+                g.Clear(fillColor);
+                bitmap.Save(filePath);
             }
-            bitmap.Save(filePath);
+            paths[i] = filePath;
+        }
+
+        return paths;
+    }
+
+    // Creates two DOCX files, each containing the sample images.
+    private static void CreateSampleDocuments(string inputDir, string[] imagePaths)
+    {
+        for (int docIndex = 1; docIndex <= 2; docIndex++)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Document {docIndex} - Sample content.");
+
+            foreach (string imgPath in imagePaths)
+            {
+                // Insert each sample image.
+                builder.InsertImage(imgPath);
+                builder.Writeln(); // Add a line break after each image.
+            }
+
+            string docPath = Path.Combine(inputDir, $"Doc{docIndex}.docx");
+            doc.Save(docPath);
         }
     }
 
-    // Creates a DOCX with a single image and saves it
-    private static void CreateDocumentWithImage(string docPath, string imagePath, string title)
+    // Extracts images from all DOCX files in inputDir, saves them to extractedDir,
+    // creates thumbnails in thumbDir, and returns a list of extracted image file paths.
+    private static List<string> ExtractImagesAndCreateThumbnails(
+        string inputDir,
+        string extractedDir,
+        string thumbDir)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(title);
-        builder.InsertImage(imagePath);
-        doc.Save(docPath);
+        var extractedImages = new List<string>();
+
+        // Process each DOCX file.
+        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
+        {
+            Document doc = new Document(docPath);
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+
+            int imageIndex = 0;
+            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            {
+                if (!shape.HasImage)
+                    continue;
+
+                // Determine file extension based on image type.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string imageFileName = $"Extracted_{Path.GetFileNameWithoutExtension(docPath)}_{imageIndex}{extension}";
+                string imageFullPath = Path.Combine(extractedDir, imageFileName);
+
+                // Save the original image.
+                shape.ImageData.Save(imageFullPath);
+                extractedImages.Add(imageFullPath);
+                imageIndex++;
+
+                // Create a thumbnail (100x100) using Aspose.Drawing.
+                using (Bitmap original = new Bitmap(imageFullPath))
+                {
+                    const int thumbWidth = 100;
+                    const int thumbHeight = 100;
+                    using (Bitmap thumb = new Bitmap(thumbWidth, thumbHeight))
+                    using (Graphics g = Graphics.FromImage(thumb))
+                    {
+                        g.Clear(Aspose.Drawing.Color.White);
+                        g.DrawImage(original, 0, 0, thumbWidth, thumbHeight);
+                        string thumbFileName = Path.GetFileNameWithoutExtension(imageFileName) + "_thumb.png";
+                        string thumbFullPath = Path.Combine(thumbDir, thumbFileName);
+                        thumb.Save(thumbFullPath);
+                    }
+                }
+            }
+        }
+
+        return extractedImages;
     }
 
-    // Generates a thumbnail by inserting the image into a temporary document and rendering it at a lower resolution
-    private static void CreateThumbnailFromImage(string sourceImagePath, string thumbnailPath, int thumbWidth, int thumbHeight)
+    // Builds a PDF document that contains all thumbnail images.
+    private static void BuildPdfCatalog(string thumbDir, string outputPdfPath)
     {
-        // Load image into a temporary document
-        Document tempDoc = new Document();
-        DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-        Shape imgShape = tempBuilder.InsertImage(sourceImagePath);
-        imgShape.Width = thumbWidth;
-        imgShape.Height = thumbHeight;
+        Document catalog = new Document();
+        DocumentBuilder builder = new DocumentBuilder(catalog);
+        builder.Writeln("Image Catalog");
+        builder.Writeln();
 
-        // Render the document page (which contains only the image) to a PNG thumbnail
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+        // Insert each thumbnail image.
+        foreach (string thumbPath in Directory.GetFiles(thumbDir, "*_thumb.png"))
         {
-            Resolution = 72,
-            ImageSize = new System.Drawing.Size(thumbWidth, thumbHeight) // System.Drawing.Size is allowed here as part of Aspose.Words options
-        };
-        tempDoc.Save(thumbnailPath, options);
+            builder.InsertImage(thumbPath);
+            builder.Writeln(); // Separate images with a line break.
+        }
+
+        // Save as PDF.
+        catalog.Save(outputPdfPath, SaveFormat.Pdf);
     }
 }

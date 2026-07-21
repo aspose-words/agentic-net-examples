@@ -5,122 +5,87 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Words.Loading;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Prepare output directory.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         // 1. Create a deterministic sample image (sample.png).
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 200, 200);
-
-        // -----------------------------------------------------------------
-        // 2. Create a Word document and insert the sample image twice.
-        // -----------------------------------------------------------------
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
-        CreateWordDocumentWithImages(docPath, sampleImagePath);
-
-        // -----------------------------------------------------------------
-        // 3. Load the document and extract all images.
-        // -----------------------------------------------------------------
-        List<string> extractedImagePaths = ExtractImagesFromDocument(docPath, artifactsDir);
-
-        // Validate that at least one image was extracted.
-        if (extractedImagePaths.Count == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        // -----------------------------------------------------------------
-        // 4. Generate a LaTeX file that references each extracted image.
-        // -----------------------------------------------------------------
-        string texPath = Path.Combine(artifactsDir, "output.tex");
-        GenerateLatexFile(texPath, extractedImagePaths);
-
-        // The example finishes execution here.
-    }
-
-    private static void CreateSampleImage(string filePath, int width, int height)
-    {
-        // Create a bitmap, fill it with white, and save it.
-        using (Bitmap bitmap = new Bitmap(width, height))
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        graphics.Clear(Aspose.Drawing.Color.LightBlue);
+        // Draw a simple rectangle for visual distinction.
+        using (var pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 5))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.White);
-                // Additional deterministic drawing can be added here if needed.
-            }
-            bitmap.Save(filePath);
+            graphics.DrawRectangle(pen, 20, 20, 160, 160);
         }
-    }
+        bitmap.Save(sampleImagePath);
+        graphics.Dispose();
+        bitmap.Dispose();
 
-    private static void CreateWordDocumentWithImages(string docPath, string imagePath)
-    {
+        // -------------------------------------------------
+        // 2. Create a Word document and insert the sample image twice.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the image twice, separated by a paragraph.
-        builder.InsertImage(imagePath);
-        builder.InsertParagraph();
-        builder.InsertImage(imagePath);
-
+        builder.InsertImage(sampleImagePath);
+        builder.InsertParagraph(); // separate images
+        builder.InsertImage(sampleImagePath);
+        string docPath = Path.Combine(artifactsDir, "sample.docx");
         doc.Save(docPath);
-    }
 
-    private static List<string> ExtractImagesFromDocument(string docPath, string outputDir)
-    {
-        Document doc = new Document(docPath);
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
-        var extractedPaths = new List<string>();
+        // -------------------------------------------------
+        // 3. Load the document and extract all images.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
+        List<string> extractedImageFiles = new List<string>();
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
             {
-                // Determine file extension based on image type.
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
                 string imageFileName = $"image{imageIndex}{extension}";
-                string imageFullPath = Path.Combine(outputDir, imageFileName);
-
-                // Save the image to the file system.
+                string imageFullPath = Path.Combine(artifactsDir, imageFileName);
                 shape.ImageData.Save(imageFullPath);
-                extractedPaths.Add(imageFullPath);
+                extractedImageFiles.Add(imageFileName);
                 imageIndex++;
             }
         }
 
-        return extractedPaths;
-    }
+        // Validate that at least one image was extracted.
+        if (extractedImageFiles.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
 
-    private static void GenerateLatexFile(string texFilePath, List<string> imagePaths)
-    {
-        using (StreamWriter writer = new StreamWriter(texFilePath))
+        // -------------------------------------------------
+        // 4. Generate a LaTeX file referencing each extracted image.
+        // -------------------------------------------------
+        string texPath = Path.Combine(artifactsDir, "output.tex");
+        using (StreamWriter writer = new StreamWriter(texPath))
         {
-            writer.WriteLine(@"\documentclass{article}");
-            writer.WriteLine(@"\usepackage{graphicx}");
-            writer.WriteLine(@"\begin{document}");
-            writer.WriteLine(@"\section*{Extracted Images}");
-
-            for (int i = 0; i < imagePaths.Count; i++)
+            writer.WriteLine("\\documentclass{article}");
+            writer.WriteLine("\\usepackage{graphicx}");
+            writer.WriteLine("\\begin{document}");
+            foreach (string imgFile in extractedImageFiles)
             {
-                string fileName = Path.GetFileName(imagePaths[i]);
-                writer.WriteLine(@"\begin{figure}[h]");
-                writer.WriteLine(@"\centering");
-                writer.WriteLine($@"\includegraphics[width=\linewidth]{{{fileName}}}");
-                writer.WriteLine($@"\caption{{Image {i}}}");
-                writer.WriteLine(@"\end{figure}");
-                writer.WriteLine();
+                writer.WriteLine($"\\includegraphics[width=\\linewidth]{{{imgFile}}}");
+                writer.WriteLine("\\\\"); // line break between images
             }
-
-            writer.WriteLine(@"\end{document}");
+            writer.WriteLine("\\end{document}");
         }
+
+        // Optional: inform the user where files are located.
+        Console.WriteLine($"Artifacts written to: {artifactsDir}");
     }
 }

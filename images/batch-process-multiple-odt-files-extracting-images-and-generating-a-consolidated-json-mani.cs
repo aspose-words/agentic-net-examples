@@ -1,9 +1,10 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
@@ -11,95 +12,121 @@ using Newtonsoft.Json;
 
 public class Program
 {
-    public class DocumentManifest
-    {
-        public string DocumentName { get; set; }
-        public List<string> Images { get; set; }
-    }
-
     public static void Main()
     {
-        // Base working directory.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        string imagesDir = Path.Combine(baseDir, "Images");
-        string docsDir = Path.Combine(baseDir, "Docs");
-        string outputDir = Path.Combine(baseDir, "ExtractedImages");
-        string manifestPath = Path.Combine(baseDir, "manifest.json");
+        // Define folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputFolder = Path.Combine(baseDir, "InputDocs");
+        string imageFolder = Path.Combine(baseDir, "ExtractedImages");
+        string manifestPath = Path.Combine(baseDir, "Manifest.json");
 
-        // Ensure directories exist.
-        Directory.CreateDirectory(imagesDir);
-        Directory.CreateDirectory(docsDir);
-        Directory.CreateDirectory(outputDir);
+        // Ensure clean environment.
+        if (Directory.Exists(inputFolder)) Directory.Delete(inputFolder, true);
+        if (Directory.Exists(imageFolder)) Directory.Delete(imageFolder, true);
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(imageFolder);
 
-        // Create a deterministic sample image.
-        string sampleImagePath = Path.Combine(imagesDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 200, 200);
+        // Create a deterministic sample image (sample.png).
+        string sampleImagePath = Path.Combine(baseDir, "sample.png");
+        CreateSampleImage(sampleImagePath, 100, 100);
 
-        // Create sample ODT documents containing the image.
+        // Create a few ODT documents containing the sample image.
         const int documentCount = 3;
         for (int i = 1; i <= documentCount; i++)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Document {i}");
-            builder.InsertImage(sampleImagePath);
-            string docPath = Path.Combine(docsDir, $"Doc{i}.odt");
-            doc.Save(docPath, SaveFormat.Odt);
+            string docPath = Path.Combine(inputFolder, $"Doc{i}.odt");
+            CreateOdtWithImages(docPath, sampleImagePath, i);
         }
 
-        // Batch process ODT files.
-        var manifest = new List<DocumentManifest>();
-        string[] odtFiles = Directory.GetFiles(docsDir, "*.odt");
+        // Batch process ODT files: extract images and build manifest.
+        var manifest = new List<ManifestEntry>();
+        var odtFiles = Directory.GetFiles(inputFolder, "*.odt");
+        int totalExtractedImages = 0;
+
         foreach (string odtFile in odtFiles)
         {
-            Document doc = new Document(odtFile);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-            var extractedImages = new List<string>();
-            int imageIndex = 0;
-
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            var entry = new ManifestEntry
             {
-                if (shape.HasImage)
-                {
-                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(odtFile)}_img{imageIndex}{extension}";
-                    string imageFullPath = Path.Combine(outputDir, imageFileName);
-                    shape.ImageData.Save(imageFullPath);
-                    extractedImages.Add(imageFileName);
-                    imageIndex++;
-                }
+                Document = Path.GetFileName(odtFile),
+                Images = new List<string>()
+            };
+
+            // Load the document.
+            var loadOptions = new LoadOptions(); // default options
+            Document doc = new Document(odtFile, loadOptions);
+
+            // Find all shapes that contain images.
+            var shapeNodes = doc.GetChildNodes(NodeType.Shape, true)
+                                .Cast<Shape>()
+                                .Where(s => s.HasImage)
+                                .ToList();
+
+            int imageIndex = 0;
+            foreach (Shape shape in shapeNodes)
+            {
+                // Determine file extension based on image type.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string imageFileName = $"{Path.GetFileNameWithoutExtension(odtFile)}_Image{imageIndex}{extension}";
+                string imageFullPath = Path.Combine(imageFolder, imageFileName);
+
+                // Save the image.
+                shape.ImageData.Save(imageFullPath);
+                entry.Images.Add(imageFileName);
+                imageIndex++;
+                totalExtractedImages++;
             }
 
-            if (extractedImages.Count == 0)
-                throw new InvalidOperationException($"No images were extracted from '{odtFile}'.");
-
-            manifest.Add(new DocumentManifest
-            {
-                DocumentName = Path.GetFileName(odtFile),
-                Images = extractedImages
-            });
+            manifest.Add(entry);
         }
+
+        // Validate that at least one image was extracted.
+        if (totalExtractedImages == 0)
+            throw new InvalidOperationException("No images were extracted from the ODT files.");
 
         // Serialize manifest to JSON.
         string json = JsonConvert.SerializeObject(manifest, Formatting.Indented);
         File.WriteAllText(manifestPath, json);
 
-        // Validation.
-        if (!File.Exists(manifestPath) || manifest.Count == 0)
-            throw new InvalidOperationException("Manifest generation failed.");
-
-        Console.WriteLine($"Processed {manifest.Count} document(s). Manifest saved to: {manifestPath}");
+        // Simple verification output (optional, not interactive).
+        Console.WriteLine($"Processed {odtFiles.Length} ODT files.");
+        Console.WriteLine($"Extracted {totalExtractedImages} images to '{imageFolder}'.");
+        Console.WriteLine($"Manifest written to '{manifestPath}'.");
     }
 
-    private static void CreateSampleImage(string path, int width, int height)
+    // Creates a simple white PNG image using Aspose.Drawing.
+    private static void CreateSampleImage(string filePath, int width, int height)
     {
         using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            graphics.Clear(Color.LightBlue);
-            // Draw a simple rectangle for visual distinction.
-            graphics.DrawRectangle(new Pen(Color.DarkBlue, 5), 10, 10, width - 20, height - 20);
-            bitmap.Save(path, ImageFormat.Png);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Aspose.Drawing.Color.White);
+            }
+            bitmap.Save(filePath, ImageFormat.Png);
         }
+    }
+
+    // Creates an ODT document with a given number of inserted images.
+    private static void CreateOdtWithImages(string docPath, string imagePath, int imageCount)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        for (int i = 0; i < imageCount; i++)
+        {
+            builder.Writeln($"Image {i + 1} in {Path.GetFileName(docPath)}:");
+            builder.InsertImage(imagePath);
+            builder.InsertBreak(BreakType.PageBreak);
+        }
+
+        // Save as ODT.
+        doc.Save(docPath, SaveFormat.Odt);
+    }
+
+    // Helper class for JSON manifest entries.
+    private class ManifestEntry
+    {
+        public string Document { get; set; }
+        public List<string> Images { get; set; }
     }
 }

@@ -5,68 +5,74 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample image that will act as audio cover art.
-        const string coverImagePath = "cover.png";
-        CreateSampleImage(coverImagePath);
+        // Folder for all generated files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
-        // Build a DOCX document and insert the sample image.
-        const string docPath = "sample.docx";
-        CreateDocumentWithImage(docPath, coverImagePath);
-
-        // Load the document and extract all images, saving them as JPEG files.
-        ExtractImagesAsJpeg(docPath);
-    }
-
-    private static void CreateSampleImage(string filePath)
-    {
-        // Create a 200x200 white bitmap.
+        // -----------------------------------------------------------------
+        // 1. Create a sample cover‑art image (200×200 white background).
+        // -----------------------------------------------------------------
+        string coverPath = Path.Combine(workDir, "cover.png");
         using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        using (Graphics g = Graphics.FromImage(bitmap))
         {
-            graphics.Clear(Color.White);
-            // Additional deterministic drawing can be added here if needed.
-            bitmap.Save(filePath);
+            g.Clear(Color.White);
+            // Draw a simple red ellipse to make the image recognizable.
+            using (Pen pen = new Pen(Color.Red, 5))
+            {
+                g.DrawEllipse(pen, 20, 20, 160, 160);
+            }
+            bitmap.Save(coverPath);
         }
-    }
 
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
-    {
+        // -----------------------------------------------------------------
+        // 2. Create a DOCX file and insert the image as if it were audio cover art.
+        // -----------------------------------------------------------------
+        string docPath = Path.Combine(workDir, "sample.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the image into the document (simulating audio cover art).
-        builder.InsertImage(imagePath);
-
-        // Save the document.
+        // Insert the image inline; in a real scenario this would be the audio cover art.
+        builder.InsertImage(coverPath);
         doc.Save(docPath);
-    }
 
-    private static void ExtractImagesAsJpeg(string docPath)
-    {
-        Document doc = new Document(docPath);
-
-        // Get all shape nodes in the document.
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
+        // -----------------------------------------------------------------
+        // 3. Load the document and extract all images from shapes.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
+
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (shape.HasImage)
+            if (!shape.HasImage)
+                continue;
+
+            // Obtain the raw image bytes from the shape.
+            byte[] imageBytes = shape.ImageData.ToByteArray();
+
+            // Load the bytes into an Aspose.Drawing.Image.
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            using (Image img = Image.FromStream(ms))
             {
-                // Save each image as a JPEG file with a deterministic name.
-                string outputFileName = $"extracted_{imageIndex}.jpg";
-                shape.ImageData.Save(outputFileName);
+                // Save the image as JPEG regardless of its original format.
+                string outFile = Path.Combine(workDir, $"extracted_{imageIndex}.jpg");
+                img.Save(outFile, ImageFormat.Jpeg);
                 imageIndex++;
             }
         }
 
-        // Validate that at least one image was extracted.
+        // -----------------------------------------------------------------
+        // 4. Validate that at least one image was extracted.
+        // -----------------------------------------------------------------
         if (imageIndex == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
+
+        // The program finishes automatically; all files are written to the Work folder.
     }
 }

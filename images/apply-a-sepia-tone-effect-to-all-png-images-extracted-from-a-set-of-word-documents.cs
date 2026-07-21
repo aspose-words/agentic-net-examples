@@ -4,135 +4,120 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class SepiaImageProcessor
 {
     public static void Main()
     {
-        // Prepare directories.
-        string artifactsDir = "Artifacts";
+        // Prepare folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string artifactsDir = Path.Combine(baseDir, "Artifacts");
+        string inputDocsDir = Path.Combine(baseDir, "InputDocs");
         Directory.CreateDirectory(artifactsDir);
-        string inputDocsDir = Path.Combine(artifactsDir, "InputDocs");
         Directory.CreateDirectory(inputDocsDir);
-        string outputImagesDir = Path.Combine(artifactsDir, "SepiaImages");
-        Directory.CreateDirectory(outputImagesDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic sample PNG image.
-        // -----------------------------------------------------------------
-        string samplePngPath = Path.Combine(artifactsDir, "sample.png");
-        using (Bitmap bmp = new Bitmap(200, 200))
-        {
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                // Fill background.
-                g.Clear(Aspose.Drawing.Color.LightGray);
-                // Draw a simple red ellipse.
-                using (Brush brush = new SolidBrush(Aspose.Drawing.Color.Red))
-                {
-                    g.FillEllipse(brush, 25, 25, 150, 150);
-                }
-            }
-            bmp.Save(samplePngPath);
-        }
+        // Create a sample PNG image.
+        string sampleImagePath = Path.Combine(baseDir, "sample.png");
+        CreateSamplePng(sampleImagePath);
 
-        // -----------------------------------------------------------------
-        // 2. Create a few Word documents that contain the PNG image.
-        // -----------------------------------------------------------------
-        int docCount = 2;
-        for (int i = 0; i < docCount; i++)
+        // Create a few Word documents that contain the PNG image.
+        const int documentCount = 2;
+        for (int i = 1; i <= documentCount; i++)
         {
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Document {i + 1}");
-            // Insert the sample PNG.
-            builder.InsertImage(samplePngPath);
-            string docPath = Path.Combine(inputDocsDir, $"Doc{i + 1}.docx");
+            builder.InsertImage(sampleImagePath);
+            string docPath = Path.Combine(inputDocsDir, $"Doc{i}.docx");
             doc.Save(docPath);
         }
 
-        // -----------------------------------------------------------------
-        // 3. Extract PNG images, apply sepia tone, and save them.
-        // -----------------------------------------------------------------
+        // Extract PNG images from each document and apply a sepia tone effect.
         int processedImageCount = 0;
         string[] docFiles = Directory.GetFiles(inputDocsDir, "*.docx");
-        foreach (string docFile in docFiles)
+        for (int docIndex = 0; docIndex < docFiles.Length; docIndex++)
         {
-            Document doc = new Document(docFile);
+            Document doc = new Document(docFiles[docIndex]);
             NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
 
             foreach (Shape shape in shapeNodes.OfType<Shape>())
             {
-                if (!shape.HasImage)
-                    continue;
-
-                // Process only PNG images.
-                if (shape.ImageData.ImageType != ImageType.Png)
-                    continue;
-
-                // Obtain image bytes.
-                byte[] imageBytes = shape.ImageData.ToByteArray();
-
-                // Load into Aspose.Drawing.Bitmap and ensure a non‑indexed pixel format.
-                using (MemoryStream ms = new MemoryStream(imageBytes))
+                if (shape.HasImage && shape.ImageData.ImageType == ImageType.Png)
                 {
-                    using (Bitmap original = new Bitmap(ms))
+                    // Save the shape image to a memory stream.
+                    using (MemoryStream imgStream = new MemoryStream())
                     {
-                        // Create a 32‑bpp ARGB bitmap to allow SetPixel.
-                        using (Bitmap bitmap = new Bitmap(original.Width, original.Height, PixelFormat.Format32bppArgb))
+                        shape.ImageData.Save(imgStream);
+                        imgStream.Position = 0; // Reset before reading.
+
+                        // Load the image with Aspose.Drawing.
+                        using (Bitmap bitmap = new Bitmap(imgStream))
                         {
-                            using (Graphics g = Graphics.FromImage(bitmap))
-                            {
-                                g.DrawImage(original, 0, 0, original.Width, original.Height);
-                            }
-
-                            ApplySepia(bitmap);
-
-                            // Build output file name.
-                            string outFileName = $"sepia_{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}.png";
-                            string outPath = Path.Combine(outputImagesDir, outFileName);
-                            bitmap.Save(outPath);
+                            ApplySepiaEffect(bitmap);
+                            string outFile = Path.Combine(
+                                artifactsDir,
+                                $"sepia_doc{docIndex + 1}_img{imageIndex + 1}.png");
+                            bitmap.Save(outFile);
                             processedImageCount++;
-                            imageIndex++;
                         }
                     }
+
+                    imageIndex++;
                 }
             }
         }
 
-        // -----------------------------------------------------------------
-        // 4. Validation.
-        // -----------------------------------------------------------------
+        // Validate that at least one image was processed.
         if (processedImageCount == 0)
             throw new InvalidOperationException("No PNG images were found and processed.");
 
-        Console.WriteLine($"Processed {processedImageCount} PNG image(s). Sepia images saved to: {outputImagesDir}");
+        Console.WriteLine($"Processed {processedImageCount} PNG image(s).");
+    }
+
+    // Creates a deterministic sample PNG image.
+    private static void CreateSamplePng(string filePath)
+    {
+        const int width = 200;
+        const int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                // Fill background with white.
+                g.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple blue rectangle.
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
+                {
+                    g.DrawRectangle(pen, 20, 20, width - 40, height - 40);
+                }
+            }
+            bitmap.Save(filePath);
+        }
     }
 
     // Applies a sepia tone effect to the provided bitmap.
-    private static void ApplySepia(Bitmap bitmap)
+    private static void ApplySepiaEffect(Bitmap bitmap)
     {
-        int width = bitmap.Width;
-        int height = bitmap.Height;
-
-        for (int y = 0; y < height; y++)
+        for (int y = 0; y < bitmap.Height; y++)
         {
-            for (int x = 0; x < width; x++)
+            for (int x = 0; x < bitmap.Width; x++)
             {
                 Aspose.Drawing.Color original = bitmap.GetPixel(x, y);
+                double r = original.R;
+                double g = original.G;
+                double b = original.B;
 
-                int tr = (int)(original.R * 0.393 + original.G * 0.769 + original.B * 0.189);
-                int tg = (int)(original.R * 0.349 + original.G * 0.686 + original.B * 0.168);
-                int tb = (int)(original.R * 0.272 + original.G * 0.534 + original.B * 0.131);
+                // Sepia conversion formula.
+                int tr = (int)(0.393 * r + 0.769 * g + 0.189 * b);
+                int tg = (int)(0.349 * r + 0.686 * g + 0.168 * b);
+                int tb = (int)(0.272 * r + 0.534 * g + 0.131 * b);
 
-                // Clamp values to byte range.
-                byte r = (byte)(tr > 255 ? 255 : tr);
-                byte g = (byte)(tg > 255 ? 255 : tg);
-                byte b = (byte)(tb > 255 ? 255 : tb);
+                // Clamp values to [0,255].
+                tr = Math.Min(255, tr);
+                tg = Math.Min(255, tg);
+                tb = Math.Min(255, tb);
 
-                Aspose.Drawing.Color sepia = Aspose.Drawing.Color.FromArgb(r, g, b);
+                Aspose.Drawing.Color sepia = Aspose.Drawing.Color.FromArgb(original.A, tr, tg, tb);
                 bitmap.SetPixel(x, y, sepia);
             }
         }

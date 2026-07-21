@@ -2,110 +2,100 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        const string inputImagePath = "input.png";
-        const string documentPath = "doc_with_image.docx";
+        // Create a deterministic sample PNG image larger than the target size.
+        const string sampleImagePath = "sample.png";
+        CreateSamplePng(sampleImagePath, 2000, 1500); // 2000x1500 pixels
 
-        // -------------------------------------------------
-        // 1. Create a sample PNG image larger than 1200px
-        // -------------------------------------------------
-        const int originalWidth = 2000;
-        const int originalHeight = 1500;
-        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(Color.White);
-            // Draw a simple rectangle to have some content
-            graphics.FillRectangle(new SolidBrush(Color.LightBlue), 100, 100, originalWidth - 200, originalHeight - 200);
-            bitmap.Save(inputImagePath);
-        }
-
-        // -------------------------------------------------
-        // 2. Insert the image into a Word document
-        // -------------------------------------------------
+        // Build a simple document that contains the sample image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
-        doc.Save(documentPath);
+        builder.InsertImage(sampleImagePath);
+        const string docPath = "DocumentWithImage.docx";
+        doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the document and extract PNG images
-        // -------------------------------------------------
-        Document loadedDoc = new Document(documentPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        // Extract all PNG images from the document.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int extractedCount = 0;
+
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (!shape.HasImage)
+            if (!shape.HasImage || shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Process only PNG images
-            if (shape.ImageData.ImageType != ImageType.Png)
-                continue;
-
-            // -------------------------------------------------
-            // 4. Obtain the image as a Bitmap
-            // -------------------------------------------------
-            using (MemoryStream ms = new MemoryStream())
+            // Save the image data to a memory stream.
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                shape.ImageData.Save(ms);
-                ms.Position = 0; // Reset before reading
-                using (Bitmap originalBitmap = new Bitmap(ms))
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0; // reset before reading
+
+                // Load the image into a bitmap for processing.
+                using (Bitmap originalBitmap = new Bitmap(imageStream))
                 {
-                    int width = originalBitmap.Width;
-                    int height = originalBitmap.Height;
+                    int originalWidth = originalBitmap.Width;
+                    int originalHeight = originalBitmap.Height;
 
-                    // -------------------------------------------------
-                    // 5. Determine scaling factor to keep max dimension <= 1200
-                    // -------------------------------------------------
-                    const int maxDimension = 1200;
+                    const double maxDimension = 1200.0;
                     double scale = 1.0;
-                    int maxCurrent = Math.Max(width, height);
-                    if (maxCurrent > maxDimension)
-                        scale = (double)maxDimension / maxCurrent;
 
-                    int newWidth = (int)Math.Round(width * scale);
-                    int newHeight = (int)Math.Round(height * scale);
-
-                    // If no resizing needed, just save the original
-                    if (scale >= 1.0)
+                    // Determine scaling factor if either dimension exceeds the maximum.
+                    if (originalWidth > maxDimension || originalHeight > maxDimension)
                     {
-                        string unchangedPath = $"extracted_{imageIndex}.png";
-                        originalBitmap.Save(unchangedPath);
-                        if (!File.Exists(unchangedPath))
-                            throw new InvalidOperationException("Failed to save extracted image.");
+                        scale = maxDimension / Math.Max(originalWidth, originalHeight);
+                    }
+
+                    string outputFileName = $"Resized_{extractedCount}.png";
+
+                    if (scale < 1.0)
+                    {
+                        // Calculate new dimensions while preserving aspect ratio.
+                        int newWidth = (int)(originalWidth * scale);
+                        int newHeight = (int)(originalHeight * scale);
+
+                        // Create a new bitmap with the target size and draw the scaled image.
+                        using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
+                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
+                        {
+                            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                            graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
+                            resizedBitmap.Save(outputFileName, ImageFormat.Png);
+                        }
                     }
                     else
                     {
-                        // -------------------------------------------------
-                        // 6. Resize the bitmap
-                        // -------------------------------------------------
-                        using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
-                        using (Graphics g = Graphics.FromImage(resizedBitmap))
-                        {
-                            g.Clear(Color.Transparent);
-                            g.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
-                            string resizedPath = $"resized_{imageIndex}.png";
-                            resizedBitmap.Save(resizedPath);
-                            if (!File.Exists(resizedPath))
-                                throw new InvalidOperationException("Failed to save resized image.");
-                        }
+                        // Image already within limits; save it unchanged.
+                        originalBitmap.Save(outputFileName, ImageFormat.Png);
                     }
+
+                    extractedCount++;
                 }
             }
-
-            imageIndex++;
         }
 
-        // Validation: ensure at least one image was processed
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No PNG images were found to process.");
+        // Validation: ensure at least one PNG image was processed.
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No PNG images were extracted from the document.");
+    }
+
+    // Helper: creates a deterministic PNG file with simple graphics.
+    private static void CreateSamplePng(string filePath, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
+        {
+            graphics.Clear(Color.LightBlue);
+            using (Pen pen = new Pen(Color.Red, 5))
+            {
+                graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+            }
+            bitmap.Save(filePath, ImageFormat.Png);
+        }
     }
 }

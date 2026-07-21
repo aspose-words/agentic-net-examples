@@ -1,109 +1,155 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Security.Cryptography;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;               // Aspose.Drawing.Common
-using Aspose.Drawing.Imaging;
+using Aspose.Words.Saving;
+using Aspose.Drawing; // Aspose.Drawing.Common provides Bitmap, Graphics, Color
 
 public class Program
 {
-    // Entry point
+    // Password used for encrypting the final ZIP archive
+    private const string ZipPassword = "Secret123";
+
     public static void Main()
     {
-        // Prepare working folders
+        // Prepare working directories
         string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        string inputDocsDir = Path.Combine(baseDir, "InputDocs");
+        string docsDir = Path.Combine(baseDir, "InputDocs");
         string imagesDir = Path.Combine(baseDir, "ExtractedImages");
-        string zipPath = Path.Combine(baseDir, "ImagesArchive.zip");
-
-        Directory.CreateDirectory(inputDocsDir);
+        Directory.CreateDirectory(docsDir);
         Directory.CreateDirectory(imagesDir);
 
-        // 1. Create a deterministic sample image
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 200, 100);
+        // Step 1: Create sample images and DOC files
+        CreateSampleDocs(docsDir);
 
-        // 2. Generate a few DOC files that contain the sample image
-        CreateSampleDocument(Path.Combine(inputDocsDir, "Document1.doc"), sampleImagePath);
-        CreateSampleDocument(Path.Combine(inputDocsDir, "Document2.doc"), sampleImagePath);
+        // Step 2: Extract images from each DOC file
+        List<string> extractedImageFiles = ExtractImagesFromDocs(docsDir, imagesDir);
 
-        // 3. Extract all images from the DOC files into a folder
-        ExtractImagesFromDocuments(inputDocsDir, imagesDir);
+        // Validate that at least one image was extracted
+        if (extractedImageFiles.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the documents.");
 
-        // 4. Create a ZIP archive (without password – .NET built‑in ZIP does not support encryption)
-        CreateZip(imagesDir, zipPath);
+        // Step 3: Create a ZIP archive containing the extracted images
+        string zipPath = Path.Combine(baseDir, "ImagesArchive.zip");
+        CreateZipArchive(extractedImageFiles, zipPath);
 
-        // Validation – ensure the ZIP file exists and contains entries
-        if (!File.Exists(zipPath))
-            throw new InvalidOperationException("ZIP archive was not created.");
+        // Step 4: Apply simple password‑based AES encryption to the ZIP file
+        string protectedZipPath = Path.Combine(baseDir, "ImagesArchive_Protected.zip");
+        EncryptFileWithPassword(zipPath, protectedZipPath, ZipPassword);
 
-        Console.WriteLine($"ZIP archive created at: {zipPath}");
+        // Validate final output
+        if (!File.Exists(protectedZipPath))
+            throw new FileNotFoundException("Protected ZIP archive was not created.", protectedZipPath);
+
+        // Clean up intermediate ZIP (optional)
+        File.Delete(zipPath);
     }
 
-    // Creates a deterministic PNG image using Aspose.Drawing
-    private static void CreateSampleImage(string filePath, int width, int height)
+    // Creates a few DOC files, each containing a deterministic sample image
+    private static void CreateSampleDocs(string docsFolder)
     {
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
-        using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+        // Create a deterministic sample image
+        string sampleImagePath = Path.Combine(docsFolder, "sample.png");
+        CreateSampleImage(sampleImagePath, 100, 100);
+
+        // Create two documents that embed the same image
+        for (int i = 1; i <= 2; i++)
         {
-            graphics.Clear(Aspose.Drawing.Color.White);
-            // Draw a simple rectangle
-            using (var brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.LightBlue))
-            {
-                graphics.FillRectangle(brush, 10, 10, width - 20, height - 20);
-            }
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Document {i}");
+            builder.InsertImage(sampleImagePath);
+            string docPath = Path.Combine(docsFolder, $"Document{i}.docx");
+            doc.Save(docPath);
         }
     }
 
-    // Generates a DOC file with a single image inserted
-    private static void CreateSampleDocument(string docPath, string imagePath)
+    // Generates a simple white PNG image using Aspose.Drawing
+    private static void CreateSampleImage(string filePath, int width, int height)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln($"This document contains an image inserted from {Path.GetFileName(imagePath)}:");
-        builder.InsertImage(imagePath);
-        doc.Save(docPath);
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        graphics.Clear(Aspose.Drawing.Color.White);
+        bitmap.Save(filePath);
+        graphics.Dispose();
+        bitmap.Dispose();
     }
 
-    // Extracts all images from every DOC file in the source folder
-    private static void ExtractImagesFromDocuments(string sourceFolder, string outputFolder)
+    // Extracts all images from DOC files in the source folder into the target folder
+    private static List<string> ExtractImagesFromDocs(string sourceDocsFolder, string targetImagesFolder)
     {
-        string[] docFiles = Directory.GetFiles(sourceFolder, "*.doc", SearchOption.TopDirectoryOnly);
-        if (docFiles.Length == 0)
-            throw new InvalidOperationException("No DOC files found to process.");
+        List<string> extractedFiles = new List<string>();
+        string[] docFiles = Directory.GetFiles(sourceDocsFolder, "*.docx", SearchOption.TopDirectoryOnly);
+        int imageCounter = 0;
 
-        foreach (string docFile in docFiles)
+        foreach (string docPath in docFiles)
         {
-            Document doc = new Document(docFile);
-            var shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 0;
+            Document doc = new Document(docPath);
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
 
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            foreach (Shape shape in shapes.OfType<Shape>())
             {
                 if (shape.HasImage)
                 {
                     string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}{extension}";
-                    string imageFullPath = Path.Combine(outputFolder, imageFileName);
+                    string imageFileName = $"Image_{imageCounter}{extension}";
+                    string imageFullPath = Path.Combine(targetImagesFolder, imageFileName);
                     shape.ImageData.Save(imageFullPath);
-                    imageIndex++;
+                    extractedFiles.Add(imageFullPath);
+                    imageCounter++;
                 }
             }
+        }
 
-            if (imageIndex == 0)
-                throw new InvalidOperationException($"No images extracted from {docFile}.");
+        return extractedFiles;
+    }
+
+    // Creates a ZIP archive from a list of files
+    private static void CreateZipArchive(List<string> files, string zipFilePath)
+    {
+        using (FileStream zipToOpen = new FileStream(zipFilePath, FileMode.Create))
+        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+        {
+            foreach (string filePath in files)
+            {
+                string entryName = Path.GetFileName(filePath);
+                archive.CreateEntryFromFile(filePath, entryName);
+            }
         }
     }
 
-    // Creates a ZIP archive using System.IO.Compression (no password protection)
-    private static void CreateZip(string sourceFolder, string zipFilePath)
+    // Encrypts a file using AES (CBC) with a password‑derived key
+    private static void EncryptFileWithPassword(string inputPath, string outputPath, string password)
     {
-        // Remove any existing archive
-        if (File.Exists(zipFilePath))
-            File.Delete(zipFilePath);
+        // Derive a 256‑bit key from the password using SHA‑256
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] key = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
 
-        ZipFile.CreateFromDirectory(sourceFolder, zipFilePath, CompressionLevel.Optimal, includeBaseDirectory: false);
+            // Generate a random IV and prepend it to the encrypted file
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.PKCS7;
+                aes.GenerateIV();
+
+                using (FileStream inputFile = new FileStream(inputPath, FileMode.Open, FileAccess.Read))
+                using (FileStream outputFile = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+                {
+                    // Write IV first
+                    outputFile.Write(aes.IV, 0, aes.IV.Length);
+
+                    using (CryptoStream cryptoStream = new CryptoStream(outputFile, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                    {
+                        inputFile.CopyTo(cryptoStream);
+                    }
+                }
+            }
+        }
     }
 }

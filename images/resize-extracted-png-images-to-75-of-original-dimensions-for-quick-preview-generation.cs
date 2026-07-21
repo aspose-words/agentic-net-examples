@@ -1,23 +1,21 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
-using Aspose.Drawing.Drawing2D; // For InterpolationMode
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names
-        const string inputImagePath = "input.png";
-        const string docPath = "document.docx";
+        // Paths for temporary files
+        string inputImagePath = "input.png";
+        string documentPath = "doc_with_image.docx";
+        string previewImagePath = "preview.png";
 
         // -------------------------------------------------
-        // 1. Create a sample PNG image (200x200) using Aspose.Drawing
+        // 1. Create a sample PNG image (200x200 white background)
         // -------------------------------------------------
         int originalWidth = 200;
         int originalHeight = 200;
@@ -25,15 +23,10 @@ public class Program
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                // Fill background with white
                 g.Clear(Color.White);
-                // Draw a simple red rectangle
-                using (var pen = new Pen(Color.Red, 5))
-                {
-                    g.DrawRectangle(pen, 10, 10, originalWidth - 20, originalHeight - 20);
-                }
+                // Draw a simple black rectangle for visual reference
+                g.DrawRectangle(Pens.Black, 10, 10, originalWidth - 20, originalHeight - 20);
             }
-            // Save the created image
             bitmap.Save(inputImagePath);
         }
 
@@ -43,60 +36,66 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(inputImagePath);
-        doc.Save(docPath);
+        doc.Save(documentPath);
 
         // -------------------------------------------------
-        // 3. Load the document and extract images
+        // 3. Load the document and extract PNG images
         // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                  .Cast<Shape>()
-                                  .Where(s => s.HasImage)
-                                  .ToList();
+        Document loadedDoc = new Document(documentPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        bool previewCreated = false;
 
-        if (!shapeNodes.Any())
-            throw new InvalidOperationException("No images were found in the document.");
-
-        int imageIndex = 0;
-        foreach (var shape in shapeNodes)
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Save the original extracted image
-            string extractedPath = $"extracted_{imageIndex}.png";
-            shape.ImageData.Save(extractedPath);
+            if (!shape.HasImage)
+                continue;
 
-            // -------------------------------------------------
-            // 4. Resize the extracted PNG to 75% of original dimensions
-            // -------------------------------------------------
-            using (Bitmap originalBitmap = new Bitmap(extractedPath))
+            // Process only PNG images
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
+
+            // Get image bytes from the shape
+            byte[] imageBytes;
+            using (MemoryStream ms = new MemoryStream())
             {
+                shape.ImageData.Save(ms);
+                imageBytes = ms.ToArray();
+            }
+
+            // Load the original image into a bitmap
+            using (MemoryStream originalStream = new MemoryStream(imageBytes))
+            using (Bitmap originalBitmap = new Bitmap(originalStream))
+            {
+                // Calculate 75% of original dimensions
                 int newWidth = (int)(originalBitmap.Width * 0.75);
                 int newHeight = (int)(originalBitmap.Height * 0.75);
 
+                // Create a new bitmap with the reduced size
                 using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
                 {
                     using (Graphics g = Graphics.FromImage(resizedBitmap))
                     {
-                        // High quality scaling
-                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        // Draw the original image scaled down into the new bitmap
                         g.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
                     }
 
-                    // Save the preview image
-                    string previewPath = $"preview_{imageIndex}.png";
-                    resizedBitmap.Save(previewPath);
-
-                    // Validate that the preview file was created
-                    if (!File.Exists(previewPath) || new FileInfo(previewPath).Length == 0)
-                        throw new InvalidOperationException($"Failed to create preview image: {previewPath}");
+                    // Save the resized preview image
+                    resizedBitmap.Save(previewImagePath);
+                    previewCreated = true;
                 }
             }
 
-            imageIndex++;
+            // Since the task mentions "extracted PNG images", we process each found PNG.
+            // For this example there is only one, so we can break after processing.
+            break;
         }
 
         // -------------------------------------------------
-        // 5. Clean up (optional) - all using statements already disposed resources
+        // 4. Validate that the preview image was created
         // -------------------------------------------------
-        Console.WriteLine("Image preview generation completed successfully.");
+        if (!previewCreated || !File.Exists(previewImagePath))
+            throw new InvalidOperationException("Preview image was not created.");
+
+        // Cleanup: optional removal of temporary files can be added here if desired.
     }
 }

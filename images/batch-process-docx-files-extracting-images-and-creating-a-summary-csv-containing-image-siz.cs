@@ -1,113 +1,106 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Bitmap, Graphics, Color
-using Newtonsoft.Json; // Included as required package
+using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Base working directory
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        // Prepare folders
+        string baseDir = Directory.GetCurrentDirectory();
         string inputDir = Path.Combine(baseDir, "InputDocs");
-        string sampleImageDir = Path.Combine(baseDir, "SampleImages");
-        string extractedImageDir = Path.Combine(baseDir, "ExtractedImages");
-        string csvPath = Path.Combine(baseDir, "summary.csv");
+        string imageOutputDir = Path.Combine(baseDir, "ExtractedImages");
+        string summaryCsvPath = Path.Combine(baseDir, "ImageSummary.csv");
 
-        // Ensure directories exist
         Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(sampleImageDir);
-        Directory.CreateDirectory(extractedImageDir);
+        Directory.CreateDirectory(imageOutputDir);
 
-        // -------------------------------------------------
-        // 1. Create deterministic sample images (PNG)
-        // -------------------------------------------------
-        for (int i = 1; i <= 3; i++)
+        // Create deterministic sample images
+        string sampleImage1 = Path.Combine(baseDir, "sample1.png");
+        string sampleImage2 = Path.Combine(baseDir, "sample2.png");
+        CreateSampleImage(sampleImage1, 200, 100, Color.LightBlue);
+        CreateSampleImage(sampleImage2, 150, 150, Color.LightGreen);
+
+        // Create sample DOCX files that contain the images
+        CreateSampleDocument(Path.Combine(inputDir, "Doc1.docx"), new[] { sampleImage1, sampleImage2 });
+        CreateSampleDocument(Path.Combine(inputDir, "Doc2.docx"), new[] { sampleImage2 });
+
+        // Batch process all DOCX files in the input folder
+        var csvLines = new List<string>();
+        csvLines.Add("Document,ImageFile,WidthPixels,HeightPixels,Extension");
+
+        int totalImages = 0;
+
+        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            string imagePath = Path.Combine(sampleImageDir, $"sample{i}.png");
-            // Create a 100x100 bitmap with a distinct background color
-            using (Bitmap bitmap = new Bitmap(100, 100))
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                // Simple solid color background
-                graphics.Clear(i == 1 ? Color.Red : i == 2 ? Color.Green : Color.Blue);
-                // Save the bitmap to a PNG file
-                bitmap.Save(imagePath);
-            }
-        }
-
-        // -------------------------------------------------
-        // 2. Create sample DOCX files that contain images
-        // -------------------------------------------------
-        string[] sampleImages = Directory.GetFiles(sampleImageDir, "*.png");
-        for (int docIndex = 1; docIndex <= 2; docIndex++)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Document {docIndex} - contains sample images.");
-
-            // Insert two images per document
-            builder.InsertImage(sampleImages[(docIndex - 1) % sampleImages.Length]);
-            builder.InsertParagraph();
-            builder.InsertImage(sampleImages[(docIndex) % sampleImages.Length]);
-
-            string docPath = Path.Combine(inputDir, $"SampleDocument{docIndex}.docx");
-            doc.Save(docPath);
-        }
-
-        // -------------------------------------------------
-        // 3. Batch process DOCX files: extract images & CSV summary
-        // -------------------------------------------------
-        List<string> csvLines = new List<string>();
-        csvLines.Add("Document,ImageFile,WidthPixels,HeightPixels,ImageType");
-
-        string[] docFiles = Directory.GetFiles(inputDir, "*.docx");
-        foreach (string docFile in docFiles)
-        {
-            Document doc = new Document(docFile);
+            Document doc = new Document(docPath);
             NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
 
             foreach (Shape shape in shapeNodes.OfType<Shape>())
             {
                 if (!shape.HasImage)
-                    continue;
+                    continue; // Skip shapes without images
 
-                // Retrieve image size information
-                ImageSize imgSize = shape.ImageData.ImageSize;
+                ImageData imgData = shape.ImageData;
+                string extension = FileFormatUtil.ImageTypeToExtension(imgData.ImageType);
+                string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_img{imageIndex}{extension}";
+                string imageFullPath = Path.Combine(imageOutputDir, imageFileName);
 
-                // Determine file extension based on image type
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                // Save the extracted image
+                imgData.Save(imageFullPath);
 
-                // Build deterministic image file name
-                string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}{extension}";
-                string imageFullPath = Path.Combine(extractedImageDir, imageFileName);
+                // Retrieve image size in pixels
+                int widthPx = imgData.ImageSize.WidthPixels;
+                int heightPx = imgData.ImageSize.HeightPixels;
 
-                // Save the image to disk
-                shape.ImageData.Save(imageFullPath);
-
-                // Record CSV entry
-                csvLines.Add($"{Path.GetFileName(docFile)},{imageFileName},{imgSize.WidthPixels},{imgSize.HeightPixels},{shape.ImageData.ImageType}");
+                // Add a line to the CSV summary
+                csvLines.Add($"{Path.GetFileName(docPath)},{imageFileName},{widthPx},{heightPx},{extension}");
 
                 imageIndex++;
+                totalImages++;
             }
         }
 
-        // Validate that at least one image was extracted
-        if (csvLines.Count <= 1)
-            throw new Exception("No images were extracted from the documents.");
-
         // Write CSV summary
-        File.WriteAllLines(csvPath, csvLines);
+        File.WriteAllLines(summaryCsvPath, csvLines);
 
-        // Optional: indicate completion (no interactive input required)
-        Console.WriteLine("Batch image extraction completed.");
-        Console.WriteLine($"Extracted images folder: {extractedImageDir}");
-        Console.WriteLine($"CSV summary file: {csvPath}");
+        // Simple validation
+        if (totalImages == 0)
+            throw new InvalidOperationException("No images were extracted from the documents.");
+    }
+
+    // Creates a deterministic PNG image using Aspose.Drawing
+    private static void CreateSampleImage(string filePath, int width, int height, Color fillColor)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(fillColor);
+            }
+            bitmap.Save(filePath);
+        }
+    }
+
+    // Creates a DOCX document and inserts the provided images
+    private static void CreateSampleDocument(string docPath, string[] imagePaths)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        foreach (string imgPath in imagePaths)
+        {
+            // Insert each image on a new paragraph
+            builder.Writeln();
+            builder.InsertImage(imgPath);
+        }
+
+        doc.Save(docPath);
     }
 }

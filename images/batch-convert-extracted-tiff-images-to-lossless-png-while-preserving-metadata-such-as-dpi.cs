@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,87 +11,79 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare working directories
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(workDir);
+        // Set up deterministic folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputImages");
+        string outputDir = Path.Combine(baseDir, "OutputImages");
+        Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create a sample TIFF image with a known DPI (150)
-        string tiffPath = Path.Combine(workDir, "sample.tif");
-        using (Bitmap bmp = new Bitmap(200, 200))
+        // Create sample TIFF images with a known DPI.
+        const int imageCount = 3;
+        const int width = 200;
+        const int height = 200;
+        const float dpi = 300f;
+
+        for (int i = 0; i < imageCount; i++)
         {
-            using (Graphics g = Graphics.FromImage(bmp))
+            string tiffPath = Path.Combine(inputDir, $"Sample_{i}.tiff");
+            using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
             {
-                g.Clear(Aspose.Drawing.Color.LightBlue);
+                using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+                {
+                    g.Clear(Aspose.Drawing.Color.White);
+                }
+                bitmap.SetResolution(dpi, dpi);
+                bitmap.Save(tiffPath, Aspose.Drawing.Imaging.ImageFormat.Tiff);
             }
-            bmp.SetResolution(150f, 150f);
-            bmp.Save(tiffPath, ImageFormat.Tiff);
         }
 
-        // Insert the TIFF image into a Word document multiple times
+        // Build a Word document and insert the TIFF images.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 0; i < 3; i++)
+        foreach (string tiffFile in Directory.GetFiles(inputDir, "*.tiff"))
         {
-            builder.InsertImage(tiffPath);
-            builder.Writeln(); // separate images
+            builder.InsertParagraph();
+            builder.InsertImage(tiffFile);
         }
 
-        // Save and reload the document to ensure proper image handling
-        string docPath = Path.Combine(workDir, "sample.docx");
-        doc.Save(docPath);
+        // Save the document (optional, just to demonstrate loading later).
+        string docPath = Path.Combine(baseDir, "SampleDoc.docx");
+        doc.Save(docPath, SaveFormat.Docx);
+
+        // Load the document and extract all images (TIFF or otherwise).
         Document loadedDoc = new Document(docPath);
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                              .Cast<Shape>()
+                              .Where(s => s.HasImage)
+                              .ToList();
 
-        // Find all shapes that contain images (including the inserted TIFFs)
-        var imageShapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                   .Cast<Shape>()
-                                   .Where(s => s.HasImage)
-                                   .ToList();
-
-        if (!imageShapes.Any())
-            throw new InvalidOperationException("No images were found in the document.");
-
-        int index = 0;
-        foreach (var shape in imageShapes)
+        int extractedCount = 0;
+        foreach (var shape in shapes)
         {
-            // Export the image data to a memory stream
-            using (MemoryStream imageStream = new MemoryStream())
+            // Save the image data to a memory stream.
+            using (MemoryStream ms = new MemoryStream())
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0;
+                shape.ImageData.Save(ms);
+                ms.Position = 0; // Reset before reading.
 
-                // Load the image with Aspose.Drawing to read DPI and pixel data
-                using (Bitmap sourceBmp = new Bitmap(imageStream))
+                // Load the image with Aspose.Drawing to keep metadata (e.g., DPI).
+                using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(ms))
                 {
-                    float dpiX = sourceBmp.HorizontalResolution;
-                    float dpiY = sourceBmp.VerticalResolution;
-
-                    // Create a new bitmap for PNG output, preserving size and DPI
-                    using (Bitmap pngBmp = new Bitmap(sourceBmp.Width, sourceBmp.Height))
-                    {
-                        pngBmp.SetResolution(dpiX, dpiY);
-                        using (Graphics g = Graphics.FromImage(pngBmp))
-                        {
-                            g.Clear(Aspose.Drawing.Color.Transparent);
-                            g.DrawImage(sourceBmp, 0, 0, sourceBmp.Width, sourceBmp.Height);
-                        }
-
-                        // Save as lossless PNG
-                        string pngPath = Path.Combine(outputDir, $"image_{index}.png");
-                        pngBmp.Save(pngPath, ImageFormat.Png);
-
-                        if (!File.Exists(pngPath))
-                            throw new InvalidOperationException($"Failed to create PNG file: {pngPath}");
-                    }
+                    // Save as lossless PNG while preserving DPI.
+                    string pngPath = Path.Combine(outputDir, $"Extracted_{extractedCount}.png");
+                    img.Save(pngPath, Aspose.Drawing.Imaging.ImageFormat.Png);
+                    extractedCount++;
                 }
             }
-            index++;
         }
 
-        // Validate that PNG files were created
-        int pngCount = Directory.GetFiles(outputDir, "*.png").Length;
-        if (pngCount == 0)
-            throw new InvalidOperationException("No PNG files were generated.");
+        // Validation: at least one PNG should have been created.
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No images were extracted and converted.");
+
+        // Optional cleanup (commented out for inspection).
+        // Directory.Delete(inputDir, true);
+        // File.Delete(docPath);
     }
 }

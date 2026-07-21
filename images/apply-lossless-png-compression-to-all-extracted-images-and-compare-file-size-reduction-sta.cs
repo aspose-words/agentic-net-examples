@@ -15,76 +15,71 @@ public class Program
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a deterministic sample PNG image.
-        string inputImagePath = Path.Combine(artifactsDir, "input.png");
+        // -----------------------------------------------------------------
+        // 1. Create a sample PNG image using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        string sampleImagePath = Path.Combine(artifactsDir, "input.png");
         using (Bitmap bitmap = new Bitmap(200, 200))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            graphics.Clear(Color.White);
+            using (Pen pen = new Pen(Color.Black, 2))
             {
-                g.Clear(Color.White);
-                // Draw a simple red rectangle.
-                using (Brush brush = new SolidBrush(Color.Red))
-                {
-                    g.FillRectangle(brush, 50, 50, 100, 100);
-                }
+                graphics.DrawRectangle(pen, 10, 10, 180, 180);
             }
-            bitmap.Save(inputImagePath, ImageFormat.Png);
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
         }
 
-        // 2. Create a Word document and insert the sample image.
+        // -----------------------------------------------------------------
+        // 2. Build a Word document that contains the sample image twice.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
+        builder.InsertImage(sampleImagePath);
+        builder.InsertParagraph();
+        builder.InsertImage(sampleImagePath);
         string docPath = Path.Combine(artifactsDir, "sample.docx");
         doc.Save(docPath);
 
-        // 3. Load the document and extract all images.
-        Document loadedDoc = new Document(docPath);
-        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                  .Cast<Shape>()
-                                  .Where(s => s.HasImage)
-                                  .ToList();
+        // -----------------------------------------------------------------
+        // 3. Extract all images from the document.
+        // -----------------------------------------------------------------
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        var imageShapes = shapeNodes.OfType<Shape>().Where(s => s.HasImage).ToList();
 
-        if (!shapeNodes.Any())
+        if (imageShapes.Count == 0)
             throw new InvalidOperationException("No images were found in the document.");
 
-        long totalOriginalSize = 0;
-        long totalCompressedSize = 0;
-
-        for (int i = 0; i < shapeNodes.Count; i++)
+        int imageIndex = 0;
+        foreach (Shape shape in imageShapes)
         {
-            Shape shape = shapeNodes[i];
+            // Save the original extracted image.
+            string originalPath = Path.Combine(artifactsDir, $"original_{imageIndex}.png");
+            shape.ImageData.Save(originalPath);
 
-            // Save original image.
-            string originalPath = Path.Combine(artifactsDir, $"original_{i}.png");
-            using (FileStream originalFs = File.Create(originalPath))
+            // -----------------------------------------------------------------
+            // 4. Re‑encode the image as lossless PNG (Aspose.Drawing does this by default).
+            // -----------------------------------------------------------------
+            string compressedPath = Path.Combine(artifactsDir, $"compressed_{imageIndex}.png");
+            using (Image img = Image.FromFile(originalPath))
             {
-                shape.ImageData.Save(originalFs);
+                img.Save(compressedPath, ImageFormat.Png);
             }
+
+            // -----------------------------------------------------------------
+            // 5. Compare file sizes and output statistics.
+            // -----------------------------------------------------------------
             long originalSize = new FileInfo(originalPath).Length;
-            totalOriginalSize += originalSize;
+            long compressedSize = new FileInfo(compressedPath).Length;
+            double reductionPercent = originalSize == 0
+                ? 0
+                : (originalSize - compressedSize) * 100.0 / originalSize;
 
-            // Load the original image into Aspose.Drawing.Bitmap.
-            using (FileStream originalFsRead = File.OpenRead(originalPath))
-            using (Bitmap bmp = new Bitmap(originalFsRead))
-            {
-                // Re‑save the bitmap as PNG (lossless compression).
-                string compressedPath = Path.Combine(artifactsDir, $"compressed_{i}.png");
-                using (FileStream compressedFs = File.Create(compressedPath))
-                {
-                    bmp.Save(compressedFs, ImageFormat.Png);
-                }
-                long compressedSize = new FileInfo(compressedPath).Length;
-                totalCompressedSize += compressedSize;
+            Console.WriteLine($"Image {imageIndex}: Original = {originalSize} bytes, " +
+                              $"Compressed = {compressedSize} bytes, " +
+                              $"Reduction = {reductionPercent:0.##}%");
 
-                // Output size comparison for this image.
-                Console.WriteLine($"Image {i}: Original = {originalSize} bytes, Compressed = {compressedSize} bytes, Reduction = {originalSize - compressedSize} bytes");
-            }
+            imageIndex++;
         }
-
-        // 4. Output overall statistics.
-        Console.WriteLine($"Total original size: {totalOriginalSize} bytes");
-        Console.WriteLine($"Total compressed size: {totalCompressedSize} bytes");
-        Console.WriteLine($"Total reduction: {totalOriginalSize - totalCompressedSize} bytes");
     }
 }

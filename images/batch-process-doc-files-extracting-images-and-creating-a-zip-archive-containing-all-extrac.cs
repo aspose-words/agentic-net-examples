@@ -1,150 +1,117 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
+using Aspose.Drawing; // Aspose.Drawing.Common namespace
+using Aspose.Drawing.Imaging;
 
-namespace AsposeWordsImageBatchExtract
+// Alias to disambiguate the CompressionLevel enum used for ZIP creation.
+using SysCompressionLevel = System.IO.Compression.CompressionLevel;
+
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Root folder for all temporary data
+        string rootFolder = Path.Combine(Directory.GetCurrentDirectory(), "ImageBatchDemo");
+        string docsFolder = Path.Combine(rootFolder, "Docs");
+        string imagesFolder = Path.Combine(rootFolder, "ExtractedImages");
+        string zipFolder = Path.Combine(rootFolder, "Output");
+
+        // Ensure folders exist
+        Directory.CreateDirectory(docsFolder);
+        Directory.CreateDirectory(imagesFolder);
+        Directory.CreateDirectory(zipFolder);
+
+        // -------------------------------------------------
+        // 1. Create deterministic sample images (PNG)
+        // -------------------------------------------------
+        string sampleImagePath1 = Path.Combine(rootFolder, "sample1.png");
+        string sampleImagePath2 = Path.Combine(rootFolder, "sample2.png");
+        CreateSamplePng(sampleImagePath1, 200, 150, Aspose.Drawing.Color.LightBlue);
+        CreateSamplePng(sampleImagePath2, 150, 200, Aspose.Drawing.Color.LightCoral);
+
+        // -------------------------------------------------
+        // 2. Create sample DOCX files that contain the images
+        // -------------------------------------------------
+        for (int i = 1; i <= 2; i++)
         {
-            // Root folder for all temporary files.
-            string rootFolder = Path.Combine(Directory.GetCurrentDirectory(), "BatchImageExtract");
-            Directory.CreateDirectory(rootFolder);
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Folder that will hold the sample DOCX files.
-            string docsFolder = Path.Combine(rootFolder, "Docs");
-            Directory.CreateDirectory(docsFolder);
+            // Insert one of the sample images into the document
+            string imagePath = i == 1 ? sampleImagePath1 : sampleImagePath2;
+            builder.InsertImage(imagePath);
 
-            // Folder that will receive extracted images.
-            string extractedFolder = Path.Combine(rootFolder, "ExtractedImages");
-            Directory.CreateDirectory(extractedFolder);
-
-            // Create deterministic sample images that will be inserted into the documents.
-            string[] sampleImagePaths = CreateSampleImages(rootFolder);
-
-            // Create a few sample DOCX files, each containing one of the sample images.
-            CreateSampleDocuments(docsFolder, sampleImagePaths);
-
-            // Process each DOCX file, extract its images and save them to the extracted folder.
-            int totalExtracted = ExtractImagesFromDocuments(docsFolder, extractedFolder);
-
-            // Validate that at least one image was extracted.
-            if (totalExtracted == 0)
-                throw new InvalidOperationException("No images were extracted from the documents.");
-
-            // Create a zip archive that contains all extracted images.
-            string zipPath = Path.Combine(rootFolder, "ExtractedImages.zip");
-            if (File.Exists(zipPath))
-                File.Delete(zipPath);
-            ZipFile.CreateFromDirectory(extractedFolder, zipPath);
-
-            // Validate that the zip file was created.
-            if (!File.Exists(zipPath))
-                throw new InvalidOperationException("Failed to create the zip archive.");
-
-            // Example finished – all files are created on disk.
+            // Save the document
+            string docPath = Path.Combine(docsFolder, $"SampleDoc{i}.docx");
+            doc.Save(docPath);
         }
 
-        // Creates two deterministic PNG images using Aspose.Drawing and returns their file paths.
-        private static string[] CreateSampleImages(string folder)
+        // -------------------------------------------------
+        // 3. Batch process each DOCX, extract images to folder
+        // -------------------------------------------------
+        int totalExtracted = 0;
+        string[] docFiles = Directory.GetFiles(docsFolder, "*.docx");
+        foreach (string docFile in docFiles)
         {
-            string[] paths = new string[2];
+            Document doc = new Document(docFile);
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
-            for (int i = 0; i < 2; i++)
+            int imageIndex = 0;
+            foreach (Shape shape in shapeNodes.OfType<Shape>())
             {
-                string filePath = Path.Combine(folder, $"sample{i + 1}.png");
-
-                // Create a 100x100 bitmap.
-                using (Bitmap bitmap = new Bitmap(100, 100))
+                if (shape.HasImage)
                 {
-                    // Obtain a graphics object for drawing.
-                    using (Graphics graphics = Graphics.FromImage(bitmap))
-                    {
-                        // Fill background with a distinct color.
-                        Aspose.Drawing.Color fillColor = i == 0
-                            ? Aspose.Drawing.Color.FromArgb(255, 200, 100)   // Light orange
-                            : Aspose.Drawing.Color.FromArgb(100, 200, 255); // Light blue
-                        graphics.Clear(fillColor);
-                    }
-
-                    // Save the bitmap to a PNG file.
-                    bitmap.Save(filePath);
-                }
-
-                // Ensure the file exists.
-                if (!File.Exists(filePath))
-                    throw new InvalidOperationException($"Failed to create sample image: {filePath}");
-
-                paths[i] = filePath;
-            }
-
-            return paths;
-        }
-
-        // Generates a couple of DOCX files, each containing one of the supplied images.
-        private static void CreateSampleDocuments(string docsFolder, string[] imagePaths)
-        {
-            for (int i = 0; i < imagePaths.Length; i++)
-            {
-                Document doc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(doc);
-
-                // Insert the image into the document.
-                builder.InsertImage(imagePaths[i]);
-
-                string docPath = Path.Combine(docsFolder, $"Document{i + 1}.docx");
-                doc.Save(docPath);
-
-                // Validate that the document was saved.
-                if (!File.Exists(docPath))
-                    throw new InvalidOperationException($"Failed to save sample document: {docPath}");
-            }
-        }
-
-        // Iterates over all DOCX files in the specified folder, extracts images, and returns the total count.
-        private static int ExtractImagesFromDocuments(string docsFolder, string outputFolder)
-        {
-            int extractedCount = 0;
-            string[] docFiles = Directory.GetFiles(docsFolder, "*.docx", SearchOption.TopDirectoryOnly);
-
-            foreach (string docPath in docFiles)
-            {
-                // Load the document.
-                Document doc = new Document(docPath);
-
-                // Retrieve all shape nodes (including images).
-                NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
-                int imageIndex = 0;
-                foreach (Shape shape in shapeNodes.OfType<Shape>())
-                {
-                    if (!shape.HasImage)
-                        continue;
-
-                    // Determine the appropriate file extension for the image type.
+                    // Determine file extension based on image type
                     string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_img{imageIndex}{extension}";
-                    string imagePath = Path.Combine(outputFolder, imageFileName);
+                    string extractedFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_Image{imageIndex}{extension}";
+                    string extractedPath = Path.Combine(imagesFolder, extractedFileName);
 
-                    // Save the image to disk.
-                    shape.ImageData.Save(imagePath);
-
-                    // Validate that the image file was created.
-                    if (!File.Exists(imagePath))
-                        throw new InvalidOperationException($"Failed to save extracted image: {imagePath}");
-
-                    extractedCount++;
+                    // Save the image
+                    shape.ImageData.Save(extractedPath);
                     imageIndex++;
+                    totalExtracted++;
                 }
             }
+        }
 
-            return extractedCount;
+        // Validate that at least one image was extracted
+        if (totalExtracted == 0)
+            throw new InvalidOperationException("No images were extracted from the documents.");
+
+        // -------------------------------------------------
+        // 4. Create a ZIP archive containing all extracted images
+        // -------------------------------------------------
+        string zipPath = Path.Combine(zipFolder, "ExtractedImages.zip");
+        if (File.Exists(zipPath))
+            File.Delete(zipPath);
+
+        // Use the aliased CompressionLevel to avoid ambiguity
+        ZipFile.CreateFromDirectory(imagesFolder, zipPath, SysCompressionLevel.Optimal, includeBaseDirectory: false);
+
+        // Simple verification output
+        Console.WriteLine($"Processed {docFiles.Length} document(s).");
+        Console.WriteLine($"Extracted {totalExtracted} image(s) to \"{imagesFolder}\".");
+        Console.WriteLine($"Created ZIP archive at \"{zipPath}\".");
+    }
+
+    // Helper method to create a deterministic PNG image using Aspose.Drawing
+    private static void CreateSamplePng(string filePath, int width, int height, Aspose.Drawing.Color backgroundColor)
+    {
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+        {
+            graphics.Clear(backgroundColor);
+            // Optionally draw a simple rectangle border
+            using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 3))
+            {
+                graphics.DrawRectangle(pen, 0, 0, width - 1, height - 1);
+            }
+            // Save the bitmap as PNG
+            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
         }
     }
 }
