@@ -2,51 +2,52 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class TrackChangesDemo
+public class TrackChangesExample
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define file paths in the current directory.
+        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
+        string trackedPath = Path.Combine(Directory.GetCurrentDirectory(), "Tracked.docx");
 
+        // -----------------------------------------------------------------
         // Step 1: Create a sample document and save it.
-        string samplePath = Path.Combine(outputDir, "Sample.docx");
-        Document sampleDoc = new Document();
-        DocumentBuilder sampleBuilder = new DocumentBuilder(sampleDoc);
-        sampleBuilder.Writeln("This is the original paragraph.");
-        sampleDoc.Save(samplePath);
-
-        // Step 2: Load the document.
-        Document doc = new Document(samplePath);
-
-        // Step 3: Enable revision tracking.
-        doc.StartTrackRevisions("Alice", DateTime.Now);
-
-        // Step 4: Insert new text (creates an insertion revision).
+        // -----------------------------------------------------------------
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This paragraph was inserted while tracking changes.");
+        builder.Writeln("This is the original paragraph.");
+        doc.Save(originalPath);
 
-        // Step 5: Apply a formatting change (won't be recorded as a revision by Aspose.Words).
-        Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
-        firstParagraph.Runs[0].Font.Bold = true;
+        // -----------------------------------------------------------------
+        // Step 2: Load the document, start tracking revisions, apply changes.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
+        loadedDoc.StartTrackRevisions("Alice", DateTime.Now);
 
-        // Step 6: Delete the original paragraph (creates a deletion revision).
-        firstParagraph.Remove();
+        // Apply a formatting change (bold) to the first run.
+        // Formatting changes are not recorded as revisions, but the operation is performed.
+        Paragraph firstParagraph = loadedDoc.FirstSection.Body.FirstParagraph;
+        Run firstRun = (Run)firstParagraph.Runs[0];
+        firstRun.Font.Bold = true;
 
-        // Step 7: Stop tracking revisions.
-        doc.StopTrackRevisions();
+        // Insert new text while tracking to generate an insertion revision.
+        DocumentBuilder trackingBuilder = new DocumentBuilder(loadedDoc);
+        trackingBuilder.Writeln("Inserted paragraph while tracking.");
 
-        // Step 8: Save the revised document.
-        string revisedPath = Path.Combine(outputDir, "Revised.docx");
-        doc.Save(revisedPath);
+        // Stop tracking further changes.
+        loadedDoc.StopTrackRevisions();
 
-        // Step 9: List all revisions with their details.
+        // Save the document with revisions.
+        loadedDoc.Save(trackedPath);
+
+        // -----------------------------------------------------------------
+        // Step 3: List all revisions and their types.
+        // -----------------------------------------------------------------
         Console.WriteLine("Revisions found in the document:");
-        foreach (Revision rev in doc.Revisions)
+        foreach (Revision rev in loadedDoc.Revisions)
         {
-            string text = rev.ParentNode != null ? rev.ParentNode.GetText().Trim() : "<no node>";
-            Console.WriteLine($"- Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}, Text: \"{text}\"");
+            string revText = rev.ParentNode?.GetText().Trim() ?? string.Empty;
+            Console.WriteLine($"- Type: {rev.RevisionType}, Author: {rev.Author}, Text: \"{revText}\"");
         }
     }
 }

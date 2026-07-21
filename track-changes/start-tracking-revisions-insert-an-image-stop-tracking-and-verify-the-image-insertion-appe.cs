@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -8,49 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial text (not a revision).
-        builder.Writeln("Initial text before tracking.");
+        // Add some initial text (not tracked).
+        builder.Writeln("Document before tracking changes.");
 
-        // Start tracking revisions.
-        string author = "TestAuthor";
-        doc.StartTrackRevisions(author, DateTime.Now);
+        // Start tracking revisions with a specific author.
+        doc.StartTrackRevisions("Demo Author", DateTime.Now);
 
-        // Insert a simple 1x1 PNG image while tracking is enabled.
-        // This PNG is a transparent pixel encoded in base64.
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=");
-        builder.InsertImage(pngBytes);
-
-        // Add more text after the image (still tracked).
-        builder.Writeln("Text after image.");
+        // Insert an image while tracking is enabled.
+        // The image is a 1x1 pixel PNG encoded in base64 to avoid external files.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK0cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        using (MemoryStream imageStream = new MemoryStream(imageBytes))
+        {
+            builder.InsertImage(imageStream);
+        }
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Verify that an insertion revision exists for the image.
-        if (!doc.HasRevisions)
-            throw new InvalidOperationException("No revisions were created.");
-
-        // Find the first insertion revision that is a shape.
-        Revision imageRevision = doc.Revisions
-            .FirstOrDefault(r => r.RevisionType == RevisionType.Insertion && r.ParentNode is Shape);
-
-        if (imageRevision == null)
-            throw new InvalidOperationException("Insertion revision for the image was not found.");
-
-        if (imageRevision.Author != author)
-            throw new InvalidOperationException($"Expected author '{author}', got '{imageRevision.Author}'.");
-
-        // The parent node of the revision should be a Shape (the inserted image) and marked as an insert revision.
-        if (!(imageRevision.ParentNode is Shape shape) || !shape.IsInsertRevision)
-            throw new InvalidOperationException("The inserted image is not marked as an insertion revision.");
-
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TrackChangesImage.docx");
+        // Save the document (optional, demonstrates full lifecycle).
+        const string outputPath = "TrackChangesImage.docx";
         doc.Save(outputPath);
+
+        // Verify that the image insertion was recorded as a revision.
+        bool insertionFound = false;
+        foreach (Revision rev in doc.Revisions)
+        {
+            if (rev.RevisionType == RevisionType.Insertion && rev.ParentNode.NodeType == NodeType.Shape)
+            {
+                // The inserted shape (image) should also report IsInsertRevision = true.
+                Shape insertedShape = (Shape)rev.ParentNode;
+                if (insertedShape.IsInsertRevision)
+                {
+                    insertionFound = true;
+                    break;
+                }
+            }
+        }
+
+        if (!insertionFound)
+        {
+            throw new InvalidOperationException("The image insertion was not recorded as a revision.");
+        }
+
+        // Program ends without waiting for user input.
     }
 }
