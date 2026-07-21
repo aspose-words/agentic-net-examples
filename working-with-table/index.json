@@ -10,79 +10,62 @@
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Tables",
+      "System.Collections.Generic",
+      "System.Linq",
       "Aspose.Words.Replacing",
       "System.Drawing",
+      "Aspose.Words.Saving",
       "Aspose.Words.Drawing",
-      "System.Collections.Generic",
       "System.Data",
       "Aspose.Words.Notes",
-      "Aspose.Words.Loading",
-      "Aspose.Words.Saving",
       "Newtonsoft.Json",
       "Aspose.Words.Fields",
       "System.Xml",
-      "System.Linq",
       "System.Xml.Linq"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "Directory",
-      "File",
       "Path",
-      "Table",
       "Row",
+      "Cell",
+      "File",
       "Paragraph",
       "Run",
-      "Cell",
+      "Table",
+      "CellFormat",
       "NodeType",
       "StyleIdentifier",
       "Range",
       "FindReplaceOptions",
       "SaveFormat",
-      "CellFormat",
-      "PreferredWidth",
-      "Style",
       "Font",
-      "RowFormat",
-      "CompositeNode",
-      "DataTable",
-      "Bookmark",
+      "Style",
       "Shape",
-      "ShapeType",
-      "Footnote",
-      "MemoryStream",
+      "Node",
       "LoadOptions",
       "HtmlSaveOptions",
-      "JsonConvert",
-      "Node",
-      "Field",
       "FieldType",
       "ProtectionType",
       "ImageSaveOptions",
-      "Watermark",
-      "TextWatermarkOptions",
-      "Comment"
+      "CompositeNode",
+      "Field"
     ]
   },
   "stats": {
     "total_examples": 198,
     "publish_ready_successful_examples": 198,
     "workflow_counts": {
-      "table-dom-api": 1,
-      "table-workflow": 197
-    },
-    "winner_counts": {
-      "existing_repo": 1,
-      "llm": 1,
-      "mcp": 196
+      "table-workflow": 197,
+      "table-dom-api": 1
     }
   },
   "rules_summary": {
@@ -164,8 +147,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 5,
@@ -412,7 +395,7 @@
     {
       "id": 27,
       "file_name": "apply-the-built-in-grid-table-5-dark-style-to-a-table-after-inserting-its-rows.cs",
-      "task": "Apply the built-in \"Grid Table 5 Dark\" style to a table after inserting its rows.",
+      "task": "Apply the built‑in \"Grid Table 5 Dark\" style to a table after inserting its rows.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -610,7 +593,7 @@
     {
       "id": 45,
       "file_name": "set-cell-text-direction-to-right-to-left-for-arabic-content-by-configuring-cellformat-text.cs",
-      "task": "Set cell text direction to right-to-left for Arabic content by configuring CellFormat.TextDirection property.",
+      "task": "Set cell text direction to right‑to‑left for Arabic content by configuring CellFormat.TextDirection property.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -621,7 +604,7 @@
     {
       "id": 46,
       "file_name": "set-the-table-s-text-direction-to-right-to-left-for-languages-requiring-bidirectional-layo.cs",
-      "task": "Set the table's text direction to right-to-left for languages requiring bidirectional layout.",
+      "task": "Set the table's text direction to right‑to‑left for languages requiring bidirectional layout.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -632,7 +615,7 @@
     {
       "id": 47,
       "file_name": "set-the-table-s-text-direction-to-top-to-bottom-for-vertical-asian-scripts-by-configuring.cs",
-      "task": "Set the table's text direction to top-to-bottom for vertical Asian scripts by configuring Table.TextDirection property.",
+      "task": "Set the table's text direction to top‑to‑bottom for vertical Asian scripts by configuring Table.TextDirection property.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -786,7 +769,7 @@
     {
       "id": 61,
       "file_name": "prevent-a-table-from-being-split-across-columns-in-a-multi-column-layout-by-setting-allowb.cs",
-      "task": "Prevent a table from being split across columns in a multi-column layout by setting AllowBreakAcrossColumns to false.",
+      "task": "Prevent a table from being split across columns in a multi‑column layout by setting AllowBreakAcrossColumns to false.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -852,7 +835,7 @@
     {
       "id": 67,
       "file_name": "create-a-table-with-one-cell-spanning-full-width-by-merging-all-first-row-cells-horizontal.cs",
-      "task": "Create a table with one cell spanning full width by merging all first-row cells horizontally.",
+      "task": "Create a table with one cell spanning full width by merging all first‑row cells horizontally.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -863,7 +846,7 @@
     {
       "id": 68,
       "file_name": "create-a-table-with-a-merged-cell-spanning-the-entire-first-row-by-merging-all-first-row-c.cs",
-      "task": "Create a table with a merged cell spanning the entire first row by merging all first-row cells horizontally.",
+      "task": "Create a table with a merged cell spanning the entire first row by merging all first‑row cells horizontally.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -1127,7 +1110,7 @@
     {
       "id": 92,
       "file_name": "set-table-preferredwidth-to-half-page-and-enable-auto-fit-to-adjust-columns-dynamically.cs",
-      "task": "Set table PreferredWidth to half page and enable auto-fit to adjust columns dynamically.",
+      "task": "Set table PreferredWidth to half page and enable auto‑fit to adjust columns dynamically.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -1138,7 +1121,7 @@
     {
       "id": 93,
       "file_name": "disable-table-auto-fit-by-setting-allowautofit-property-to-false-keeping-column-widths-fix.cs",
-      "task": "Disable table auto-fit by setting AllowAutoFit property to false, keeping column widths fixed.",
+      "task": "Disable table auto‑fit by setting AllowAutoFit property to false, keeping column widths fixed.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -1253,8 +1236,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 104,
@@ -1336,7 +1319,7 @@
     {
       "id": 111,
       "file_name": "set-table-direction-to-right-to-left-for-arabic-text-by-enabling-table-righttoleft-propert.cs",
-      "task": "Set table direction to right-to-left for Arabic text by enabling Table.RightToLeft property.",
+      "task": "Set table direction to right‑to‑left for Arabic text by enabling Table.RightToLeft property.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -1470,7 +1453,7 @@
     {
       "id": 123,
       "file_name": "protect-a-table-from-editing-by-applying-a-read-only-restriction-using-document-protect-wi.cs",
-      "task": "Protect a table from editing by applying a read-only restriction using Document.Protect with editing type.",
+      "task": "Protect a table from editing by applying a read‑only restriction using Document.Protect with editing type.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -1750,8 +1733,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 149,
@@ -1932,7 +1915,7 @@
     {
       "id": 165,
       "file_name": "set-table-text-direction-to-right-to-left-for-the-entire-table-by-enabling-table-righttole.cs",
-      "task": "Set table text direction to right-to-left for the entire table by enabling Table.RightToLeft property.",
+      "task": "Set table text direction to right‑to‑left for the entire table by enabling Table.RightToLeft property.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -2152,7 +2135,7 @@
     {
       "id": 185,
       "file_name": "apply-a-predefined-built-in-tablestyle-by-setting-table-style-to-tablegrid.cs",
-      "task": "Apply a predefined built-in TableStyle by setting Table.Style to \"TableGrid\".",
+      "task": "Apply a predefined built‑in TableStyle by setting Table.Style to \"TableGrid\".",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -2289,8 +2272,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 198,

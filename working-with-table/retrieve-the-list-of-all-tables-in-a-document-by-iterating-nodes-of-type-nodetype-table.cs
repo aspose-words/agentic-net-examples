@@ -1,57 +1,65 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build first table.
-        Table table1 = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Table 1 - Cell 1");
-        builder.InsertCell();
-        builder.Write("Table 1 - Cell 2");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Build second table.
-        Table table2 = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Table 2 - Cell 1");
-        builder.InsertCell();
-        builder.Write("Table 2 - Cell 2");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Save the sample document (optional, demonstrates file creation).
-        doc.Save("Sample.docx");
-
-        // Retrieve all tables in the document by iterating nodes of type NodeType.Table.
-        NodeCollection tableNodes = doc.GetChildNodes(NodeType.Table, true);
-
-        // Output information about each table.
-        for (int i = 0; i < tableNodes.Count; i++)
+        public static void Main()
         {
-            Table tbl = (Table)tableNodes[i];
-            int rowCount = tbl.Rows.Count;
-            int columnCount = tbl.FirstRow?.Cells.Count ?? 0;
-            Console.WriteLine($"Table {i}: {rowCount} rows, {columnCount} columns");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Optionally, print the text of each cell.
-            for (int r = 0; r < rowCount; r++)
+            // Build first table (2 rows x 2 columns).
+            Table table1 = builder.StartTable();
+            builder.InsertCell();
+            builder.Write("R1C1");
+            builder.InsertCell();
+            builder.Write("R1C2");
+            builder.EndRow();
+
+            builder.InsertCell();
+            builder.Write("R2C1");
+            builder.InsertCell();
+            builder.Write("R2C2");
+            builder.EndRow();
+            builder.EndTable();
+
+            // Build second table (1 row x 3 columns).
+            Table table2 = builder.StartTable();
+            builder.InsertCell();
+            builder.Write("A");
+            builder.InsertCell();
+            builder.Write("B");
+            builder.InsertCell();
+            builder.Write("C");
+            builder.EndRow();
+            builder.EndTable();
+
+            // Save the document to a local file (required by the rules).
+            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
+            doc.Save(filePath);
+
+            // Load the document back (demonstrates load workflow).
+            Document loadedDoc = new Document(filePath);
+
+            // Retrieve all tables by iterating nodes of type NodeType.Table.
+            NodeCollection tableNodes = loadedDoc.GetChildNodes(NodeType.Table, true);
+
+            // Iterate through the tables and output basic information.
+            for (int i = 0; i < tableNodes.Count; i++)
             {
-                Row row = tbl.Rows[r];
-                for (int c = 0; c < row.Cells.Count; c++)
-                {
-                    string cellText = row.Cells[c].ToString(SaveFormat.Text).Trim();
-                    Console.WriteLine($"  Cell[{r},{c}] = \"{cellText}\"");
-                }
+                Table tbl = (Table)tableNodes[i];
+                int rowCount = tbl.Rows.Count;
+                int firstRowCellCount = tbl.FirstRow?.Cells.Count ?? 0;
+
+                Console.WriteLine($"Table {i}: Rows = {rowCount}, Cells in first row = {firstRowCellCount}");
             }
+
+            // The program finishes without waiting for user input.
         }
     }
 }

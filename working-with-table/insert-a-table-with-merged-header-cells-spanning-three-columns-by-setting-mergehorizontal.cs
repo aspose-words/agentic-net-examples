@@ -11,29 +11,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start building the table.
         Table table = builder.StartTable();
 
-        // ---- Header row (merged across three columns) ----
-        // Insert the first cell and mark it as the start of a merged range.
+        // ---------- Header row (merged across three columns) ----------
+        // First cell: marks the start of a merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
         builder.Write("Header spanning three columns");
 
-        // Insert the next two cells and merge them with the previous cell.
+        // Second cell: merges with the previous cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
+        // Third cell: also merges with the previous cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
         // End the header row.
         builder.EndRow();
 
-        // Reset merge settings for normal cells.
+        // Reset merge settings for subsequent rows.
         builder.CellFormat.HorizontalMerge = CellMerge.None;
 
-        // ---- First data row (three separate cells) ----
+        // ---------- First data row ----------
         builder.InsertCell();
         builder.Write("Row 1, Col 1");
         builder.InsertCell();
@@ -42,7 +43,7 @@ public class Program
         builder.Write("Row 1, Col 3");
         builder.EndRow();
 
-        // ---- Second data row (three separate cells) ----
+        // ---------- Second data row ----------
         builder.InsertCell();
         builder.Write("Row 2, Col 1");
         builder.InsertCell();
@@ -57,5 +58,12 @@ public class Program
         // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedHeaderTable.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not created.");
+
+        // Inform the user where the file was saved.
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

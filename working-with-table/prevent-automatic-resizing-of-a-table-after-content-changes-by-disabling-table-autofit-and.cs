@@ -11,44 +11,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Start building the table.
         Table table = builder.StartTable();
 
-        // First row, first cell with a fixed width of 100 points.
+        // First row – set fixed column widths.
         builder.InsertCell();
         builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-        builder.Writeln("Short text");
+        builder.Writeln("Header 1");
 
-        // First row, second cell with a fixed width of 200 points.
         builder.InsertCell();
         builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-        builder.Writeln("Longer text that might cause auto‑fit");
-
-        // End the first row.
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Second row, first cell with a long paragraph.
+        // Second row – add long content that would normally trigger auto‑fit.
         builder.InsertCell();
-        builder.Writeln("Very very very long text that would normally expand the column if auto‑fit were enabled.");
-
-        // Second row, second cell with another long paragraph.
+        builder.Writeln("This is a very long piece of text that would normally cause the first column to expand if auto‑fit were enabled.");
         builder.InsertCell();
-        builder.Writeln("Another long text that could trigger auto‑fit.");
-
-        // End the second row and the table.
+        builder.Writeln("Another long piece of text that would normally cause the second column to expand.");
         builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
         // Disable automatic resizing and enforce fixed column widths.
         table.AllowAutoFit = false;
         table.AutoFit(AutoFitBehavior.FixedColumnWidths);
 
-        // Save the document to a local file.
-        string outputPath = "TableFixedWidth.docx";
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableFixedWidth.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple verification that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved successfully.");
+            throw new Exception("Failed to create the output document.");
     }
 }

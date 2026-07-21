@@ -9,43 +9,36 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Create a DocumentBuilder attached to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial text so the document is not empty.
-        builder.Writeln("Document before the table.");
-
-        // Move the builder cursor to the end of the document.
+        // Move the builder's cursor to the end of the document.
         builder.MoveToDocumentEnd();
 
-        // Start a table at the current cursor position (document end).
+        // Start a new table at the current position (the end of the document).
         Table table = builder.StartTable();
 
         // First row with two cells.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2, Row 1");
+        builder.Write("Cell 2");
         builder.EndRow();
 
         // Second row with two cells.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 2");
+        builder.Write("Cell 3");
         builder.InsertCell();
-        builder.Write("Cell 2, Row 2");
-        builder.EndRow();
+        builder.Write("Cell 4");
+        builder.EndTable(); // Ends the table and moves the cursor after it.
 
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document to a file in the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputTable.docx");
+        // Save the document to a file.
+        string outputPath = "TableAtEnd.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The document was not saved correctly.");
-
-        // Output the location of the saved file.
-        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

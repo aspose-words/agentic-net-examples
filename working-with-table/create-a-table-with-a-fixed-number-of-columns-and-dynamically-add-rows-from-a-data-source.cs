@@ -6,24 +6,39 @@ using Aspose.Words.Tables;
 
 public class Program
 {
+    // Simple data model for the table rows.
+    private class Person
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public string City { get; set; }
+
+        public Person(string name, int age, string city)
+        {
+            Name = name;
+            Age = age;
+            City = city;
+        }
+    }
+
     public static void Main()
     {
-        // Prepare a simple data source – a list of objects.
-        var people = new List<Person>
+        // Prepare a sample data source.
+        List<Person> people = new List<Person>
         {
-            new Person { Name = "Alice", Age = 30, City = "New York" },
-            new Person { Name = "Bob", Age = 25, City = "London" },
-            new Person { Name = "Charlie", Age = 35, City = "Paris" }
+            new Person("Alice", 30, "New York"),
+            new Person("Bob", 25, "London"),
+            new Person("Charlie", 35, "Paris")
         };
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table with a fixed number of columns (3 in this example).
+        // Start a table with a fixed number of columns (3 in this case).
         Table table = builder.StartTable();
 
-        // ---- Header row ----
+        // Header row.
         builder.InsertCell();
         builder.Write("Name");
         builder.InsertCell();
@@ -32,39 +47,30 @@ public class Program
         builder.Write("City");
         builder.EndRow();
 
-        // ---- Data rows ----
-        foreach (var person in people)
+        // Data rows – added dynamically from the collection.
+        foreach (Person p in people)
         {
             builder.InsertCell();
-            builder.Write(person.Name);
+            builder.Write(p.Name);
             builder.InsertCell();
-            builder.Write(person.Age.ToString());
+            builder.Write(p.Age.ToString());
             builder.InsertCell();
-            builder.Write(person.City);
+            builder.Write(p.City);
             builder.EndRow();
         }
 
         // Finish the table.
         builder.EndTable();
 
-        // Define output path.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "PeopleTable.docx");
-
-        // Save the document.
+        // Save the document to a file in the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DynamicTable.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
-    }
+            throw new Exception("The output document was not saved correctly.");
 
-    // Simple POCO representing a row of data.
-    private class Person
-    {
-        public string Name { get; set; }
-        public int Age { get; set; }
-        public string City { get; set; }
+        // Optionally, inform that the process completed (no interactive prompts required).
+        Console.WriteLine("Document created successfully at: " + outputPath);
     }
 }

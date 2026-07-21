@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -15,48 +17,84 @@ namespace AsposeWordsTableInsertion
 
             // Add sample heading paragraphs.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Heading 1");
+            builder.Writeln("Chapter 1");
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("Some introductory text.");
 
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-            builder.Writeln("Heading 2");
-
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-            builder.Writeln("Heading 3");
-
-            // Add a normal paragraph to demonstrate that only headings get tables.
+            builder.Writeln("Section 1.1");
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("This is a normal paragraph without a table.");
+            builder.Writeln("Details about section 1.1.");
 
-            // Iterate through all paragraphs to find headings.
-            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-            foreach (Paragraph para in paragraphs)
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 2");
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("More content.");
+
+            // Collect all heading paragraphs first to avoid modifying the collection while iterating.
+            List<Paragraph> headingParagraphs = doc.GetChildNodes(NodeType.Paragraph, true)
+                .Cast<Paragraph>()
+                .Where(p => IsHeading(p))
+                .ToList();
+
+            // Insert a table after each heading.
+            foreach (Paragraph heading in headingParagraphs)
             {
-                // Check if the paragraph style is a heading (Heading1‑Heading9).
-                StyleIdentifier styleId = para.ParagraphFormat.StyleIdentifier;
-                if (styleId >= StyleIdentifier.Heading1 && styleId <= StyleIdentifier.Heading9)
-                {
-                    // Create a simple 1‑row, 1‑cell table.
-                    Table table = new Table(doc);
-                    Row row = new Row(doc);
-                    table.AppendChild(row);
-                    Cell cell = new Cell(doc);
-                    cell.AppendChild(new Paragraph(doc));
-                    cell.FirstParagraph.AppendChild(new Run(doc, $"Table after \"{para.GetText().Trim()}\""));
-                    row.AppendChild(cell);
-
-                    // Insert the table immediately after the heading paragraph.
-                    // The parent of the paragraph is typically a Body node.
-                    para.ParentNode.InsertAfter(table, para);
-                }
+                Table table = CreateSampleTable(doc);
+                // Insert the table after the heading paragraph.
+                heading.ParentNode.InsertAfter(table, heading);
             }
 
             // Save the document.
             string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
             doc.Save(outputPath);
+        }
 
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new Exception("The output document was not saved correctly.");
+        // Determines whether a paragraph is a heading (any heading level).
+        private static bool IsHeading(Paragraph paragraph)
+        {
+            StyleIdentifier style = paragraph.ParagraphFormat.StyleIdentifier;
+            return style == StyleIdentifier.Heading1 ||
+                   style == StyleIdentifier.Heading2 ||
+                   style == StyleIdentifier.Heading3 ||
+                   style == StyleIdentifier.Heading4 ||
+                   style == StyleIdentifier.Heading5 ||
+                   style == StyleIdentifier.Heading6 ||
+                   style == StyleIdentifier.Heading7 ||
+                   style == StyleIdentifier.Heading8 ||
+                   style == StyleIdentifier.Heading9;
+        }
+
+        // Creates a simple 2x2 table with sample text.
+        private static Table CreateSampleTable(Document doc)
+        {
+            Table table = new Table(doc);
+
+            // First row
+            Row row1 = new Row(doc);
+            table.AppendChild(row1);
+            Cell cell11 = new Cell(doc);
+            cell11.AppendChild(new Paragraph(doc));
+            cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1,1"));
+            row1.AppendChild(cell11);
+            Cell cell12 = new Cell(doc);
+            cell12.AppendChild(new Paragraph(doc));
+            cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 1,2"));
+            row1.AppendChild(cell12);
+
+            // Second row
+            Row row2 = new Row(doc);
+            table.AppendChild(row2);
+            Cell cell21 = new Cell(doc);
+            cell21.AppendChild(new Paragraph(doc));
+            cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 2,1"));
+            row2.AppendChild(cell21);
+            Cell cell22 = new Cell(doc);
+            cell22.AppendChild(new Paragraph(doc));
+            cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 2,2"));
+            row2.AppendChild(cell22);
+
+            return table;
         }
     }
 }

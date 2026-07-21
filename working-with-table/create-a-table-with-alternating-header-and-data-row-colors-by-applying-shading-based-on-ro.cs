@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -12,36 +11,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start the table.
         Table table = builder.StartTable();
 
-        // ----- Header row -----
-        // Apply a distinct shading color for the header.
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+        // ---------- Header row ----------
+        // Apply a distinct background color for the header.
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
 
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
-        builder.InsertCell();
-        builder.Write("Header 3");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // ----- Data rows -----
-        int dataRowCount = 6; // Number of data rows to create.
-
+        // ---------- Data rows ----------
+        // Generate several data rows with alternating shading based on row index parity.
+        int dataRowCount = 6; // Example number of data rows.
         for (int i = 0; i < dataRowCount; i++)
         {
-            // Alternate shading based on row index parity.
-            Color rowColor = (i % 2 == 0) ? Color.White : Color.LightBlue;
+            // Choose shading color: even rows white, odd rows light gray.
+            Color rowColor = (i % 2 == 0) ? Color.White : Color.LightGray;
             builder.CellFormat.Shading.BackgroundPatternColor = rowColor;
 
             builder.InsertCell();
-            builder.Write($"Row {i + 1} Col 1");
+            builder.Writeln($"Row {i + 1} - Col 1");
             builder.InsertCell();
-            builder.Write($"Row {i + 1} Col 2");
-            builder.InsertCell();
-            builder.Write($"Row {i + 1} Col 3");
+            builder.Writeln($"Row {i + 1} - Col 2");
             builder.EndRow();
         }
 
@@ -49,11 +44,7 @@ public class Program
         builder.EndTable();
 
         // Save the document to the local file system.
-        string outputPath = "AlternatingRowColors.docx";
+        string outputPath = "AlternatingRows.docx";
         doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
     }
 }

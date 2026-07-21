@@ -1,38 +1,44 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableBorderExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑cell table.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.EndTable();
+            // Start a table.
+            Table table = builder.StartTable();
 
-        // Apply a custom top border: blue color, single line, 2 pt width.
-        // Use the Table.SetBorder method because Table.Borders is not available.
-        table.SetBorder(BorderType.Top, LineStyle.Single, 2.0, Color.Blue, true);
+            // Add a simple 2x2 table.
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
 
-        // Define output path (relative to the executable folder).
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomTopBorderTable.docx");
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
 
-        // Save the document.
-        doc.Save(outputPath);
+            // End the table construction.
+            builder.EndTable();
 
-        // Simple validation – ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+            // Apply a custom color to the top border of the table.
+            // Use SetBorder to modify the top edge directly.
+            table.SetBorder(BorderType.Top, LineStyle.Single, 1.5, Color.DarkCyan, true);
+
+            // Save the document to the local file system.
+            string outputPath = "TableWithCustomTopBorder.docx";
+            doc.Save(outputPath);
+        }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -9,36 +8,32 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to construct a large table.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a large table (500 rows × 10 columns) while layout updates are not required.
+        // The layout will be calculated only once after the table is fully constructed.
         Table table = builder.StartTable();
 
-        // Add 1000 rows with two cells each.
-        for (int i = 0; i < 1000; i++)
+        int rowCount = 500;
+        int columnCount = 10;
+
+        for (int r = 0; r < rowCount; r++)
         {
-            builder.InsertCell();
-            builder.Write($"Row {i + 1}, Cell 1");
-            builder.InsertCell();
-            builder.Write($"Row {i + 1}, Cell 2");
+            for (int c = 0; c < columnCount; c++)
+            {
+                builder.InsertCell();
+                builder.Write($"R{r + 1}C{c + 1}");
+            }
             builder.EndRow();
         }
 
         // Finish the table.
         builder.EndTable();
 
-        // Force a layout pass after all modifications.
+        // Perform a single layout pass now that all modifications are complete.
         doc.UpdatePageLayout();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OptimizedTable.docx");
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
-
-        // Confirmation message.
-        Console.WriteLine($"Document saved successfully to: {outputPath}");
+        // Save the resulting document.
+        doc.Save("LargeTable.docx");
     }
 }

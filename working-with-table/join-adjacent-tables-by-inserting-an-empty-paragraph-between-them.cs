@@ -11,47 +11,21 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- First table ----------
-        Table firstTable = builder.StartTable();
-
-        // Row 1
+        // ---------- First Table ----------
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("First Table - Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("First Table - Row 1, Cell 2");
+        builder.Write("First table, Cell 1");
         builder.EndRow();
-
-        // Row 2
-        builder.InsertCell();
-        builder.Write("First Table - Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("First Table - Row 2, Cell 2");
-        builder.EndRow();
-
-        // Finish first table.
         builder.EndTable();
 
         // Insert an empty paragraph to separate the tables.
         builder.InsertParagraph();
 
-        // ---------- Second table ----------
-        Table secondTable = builder.StartTable();
-
-        // Row 1
+        // ---------- Second Table ----------
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Second Table - Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Second Table - Row 1, Cell 2");
+        builder.Write("Second table, Cell 1");
         builder.EndRow();
-
-        // Row 2
-        builder.InsertCell();
-        builder.Write("Second Table - Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Second Table - Row 2, Cell 2");
-        builder.EndRow();
-
-        // Finish second table.
         builder.EndTable();
 
         // Save the document.

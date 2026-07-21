@@ -3,67 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableFixedLayout
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a new table.
-            Table table = builder.StartTable();
+        // Start building a table.
+        Table table = builder.StartTable();
 
-            // ---- First Row ----
-            // First cell – set explicit width.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-            builder.Writeln("Column 1, Row 1");
+        // First row – set explicit widths for each column.
+        builder.InsertCell();
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+        builder.Write("Header 1");
 
-            // Second cell – set explicit width.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-            builder.Writeln("Column 2, Row 1");
+        builder.InsertCell();
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
+        builder.Write("Header 2");
 
-            // End the first row.
-            builder.EndRow();
+        builder.InsertCell();
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
+        builder.Write("Header 3");
 
-            // ---- Second Row ----
-            // First cell – reuse the same width as column 1.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-            builder.Writeln("Column 1, Row 2");
+        builder.EndRow();
 
-            // Second cell – reuse the same width as column 2.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-            builder.Writeln("Column 2, Row 2");
+        // Second row – repeat the same column widths.
+        builder.InsertCell();
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+        builder.Write("Row 1, Col 1");
 
-            // End the second row.
-            builder.EndRow();
+        builder.InsertCell();
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
+        builder.Write("Row 1, Col 2");
 
-            // Finish the table.
-            builder.EndTable();
+        builder.InsertCell();
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
+        builder.Write("Row 1, Col 3");
 
-            // Disable AutoFit and enforce fixed column widths.
-            table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+        builder.EndRow();
 
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
+        // Finish the table.
+        builder.EndTable();
 
-            // Save the document.
-            string outputPath = Path.Combine(outputDir, "FixedLayoutTable.docx");
-            doc.Save(outputPath);
+        // Disable AutoFit to enforce the fixed column widths.
+        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
 
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-
-            // Optional: inform that the process completed.
-            Console.WriteLine($"Document saved to: {outputPath}");
-        }
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FixedLayoutTable.docx");
+        doc.Save(outputPath);
     }
 }

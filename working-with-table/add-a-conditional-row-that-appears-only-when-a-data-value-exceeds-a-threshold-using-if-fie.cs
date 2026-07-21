@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Tables;
 
 public class Program
@@ -12,64 +11,51 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define a document variable that will be used in the IF field.
-        // Change this value to test the conditional row visibility.
-        doc.Variables.Add("Qty", "40"); // Example value exceeding the threshold.
-
-        // Start the table.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // ----- Header row -----
+        // Header row.
         builder.InsertCell();
         builder.Write("Item");
         builder.InsertCell();
         builder.Write("Quantity");
         builder.EndRow();
 
-        // ----- Data rows -----
-        // Row 1
+        // Add some data rows.
+        AddDataRow(builder, "Apples", 20);
+        AddDataRow(builder, "Bananas", 150);
+        AddDataRow(builder, "Carrots", 80);
+
+        // Define a document variable that will be used in the IF field.
+        // In a real scenario this could be set via MailMerge or other means.
+        doc.Variables.Add("Qty", "150"); // Change this value to test the condition.
+
+        // Conditional row: appears only when Qty > 100.
         builder.InsertCell();
-        builder.Write("Apples");
-        builder.InsertCell();
-        builder.Write("20");
+        // IF field: if the variable Qty is greater than 100, display "Special Offer", otherwise display nothing.
+        // Use normal string escaping for the double quotes inside the field code.
+        builder.InsertField("IF { DOCVARIABLE Qty } > 100 \"Special Offer\" \"\"");
+        builder.InsertCell(); // Second cell left empty.
         builder.EndRow();
 
-        // Row 2
-        builder.InsertCell();
-        builder.Write("Bananas");
-        builder.InsertCell();
-        builder.Write("40");
-        builder.EndRow();
-
-        // ----- Conditional row -----
-        // This row will display the text "Exceeds threshold" only if the variable Qty > 30.
-        builder.InsertCell();
-
-        // Insert an IF field using the strongly‑typed API.
-        FieldIf ifField = (FieldIf)builder.InsertField(FieldType.FieldIf, true);
-        ifField.LeftExpression = "Qty";
-        ifField.ComparisonOperator = ">";
-        ifField.RightExpression = "30";
-        ifField.TrueText = "Exceeds threshold";
-        ifField.FalseText = string.Empty;
-        ifField.Update();
-
-        // Second cell (empty) to keep the table structure.
-        builder.InsertCell();
-        builder.EndRow();
-
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Update all fields so the IF field evaluates with the current variable value.
-        doc.UpdateFields();
-
-        // Save the document to a local file.
+        // Save the document.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ConditionalRow.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new Exception("The output document was not created.");
+    }
+
+    private static void AddDataRow(DocumentBuilder builder, string item, int quantity)
+    {
+        builder.InsertCell();
+        builder.Write(item);
+        builder.InsertCell();
+        builder.Write(quantity.ToString());
+        builder.EndRow();
     }
 }

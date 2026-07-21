@@ -16,69 +16,63 @@ public class Program
         // -------------------------------------------------
         Table table = builder.StartTable();
 
-        // First cell – start of a merged range.
+        // First cell – start of the merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged cell content");
+        builder.Write("Merged Cell");
 
-        // Second cell – merged with the previous one.
+        // Second cell – merged with the previous cell.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+        // Third cell – also merged with the previous cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
         // End the first row.
         builder.EndRow();
 
-        // Add two normal cells in the second row.
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        // Add a normal second row with three separate cells.
         builder.InsertCell();
-        builder.Write("Cell 2,1");
+        builder.Write("Row 2, Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2,2");
+        builder.Write("Row 2, Cell 2");
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 3");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
         // Save the document that contains the merged cell.
-        string mergedPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedCell.docx");
+        string mergedPath = Path.Combine(Environment.CurrentDirectory, "MergedTable.docx");
         doc.Save(mergedPath);
 
         // -------------------------------------------------
         // Split the previously merged cell back into separate cells.
         // -------------------------------------------------
-        // Aspose.Words does not provide a Cell.Split method, so we recreate the row
-        // with the desired number of cells while preserving the original content.
-        Row firstRow = table.FirstRow;
-        Cell mergedCell = firstRow.FirstCell;
-
-        // Preserve the text that was inside the merged cell.
-        string mergedText = mergedCell.GetText().Trim();
-
-        // Remove all existing cells from the first row.
-        firstRow.Cells.Clear();
-
-        // Create the first new cell and copy the original merged text.
-        Cell cell1 = new Cell(doc);
-        cell1.AppendChild(new Paragraph(doc));
-        cell1.FirstParagraph.AppendChild(new Run(doc, mergedText));
-        firstRow.AppendChild(cell1);
-
-        // Create the second new (empty) cell.
-        Cell cell2 = new Cell(doc);
-        cell2.AppendChild(new Paragraph(doc));
-        firstRow.AppendChild(cell2);
-
-        // Create the third cell that corresponds to the original second cell (empty).
-        Cell cell3 = new Cell(doc);
-        cell3.AppendChild(new Paragraph(doc));
-        firstRow.AppendChild(cell3);
-
-        // Verify that the split produced the expected number of cells.
-        if (firstRow.Cells.Count != 3)
-            throw new InvalidOperationException("Cell split did not produce the expected number of cells.");
+        // The merged region consists of three cells in the first row.
+        // To split them, clear the merge flags on each cell.
+        Row firstRow = table.Rows[0];
+        foreach (Cell cell in firstRow.Cells)
+        {
+            cell.CellFormat.HorizontalMerge = CellMerge.None;
+            cell.CellFormat.VerticalMerge = CellMerge.None;
+        }
 
         // Save the document after splitting.
-        string splitPath = Path.Combine(Directory.GetCurrentDirectory(), "SplitMergedCell.docx");
+        string splitPath = Path.Combine(Environment.CurrentDirectory, "SplitMergedCell.docx");
         doc.Save(splitPath);
+
+        // Simple validation to ensure the files were created.
+        if (!File.Exists(mergedPath))
+            throw new FileNotFoundException("Merged table document was not saved.", mergedPath);
+        if (!File.Exists(splitPath))
+            throw new FileNotFoundException("Split table document was not saved.", splitPath);
+
+        // Indicate successful completion.
+        Console.WriteLine("Documents created successfully:");
+        Console.WriteLine($"- Merged table: {mergedPath}");
+        Console.WriteLine($"- Split table: {splitPath}");
     }
 }

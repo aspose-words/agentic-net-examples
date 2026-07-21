@@ -3,66 +3,73 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class HtmlToWordConverter
 {
     public static void Main()
     {
-        // Define paths for the temporary HTML file and the resulting DOCX file.
-        string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(tempFolder);
-
-        string htmlPath = Path.Combine(tempFolder, "sample.html");
-        string docxPath = Path.Combine(tempFolder, "result.docx");
-
-        // Create an HTML string that contains a complex table with merged cells.
+        // Define HTML content with a complex table that includes merged cells.
         string htmlContent = @"
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset='UTF-8'>
-    <title>Complex Table</title>
+    <title>Sample Table</title>
 </head>
 <body>
     <table border='1' cellspacing='0' cellpadding='5'>
         <tr>
-            <td colspan='2' style='background:#DDEEFF;'>Horizontally Merged Cell (colspan=2)</td>
-            <td style='background:#FFEEDD;'>Cell 3</td>
+            <th rowspan='2'>Header 1</th>
+            <th colspan='2'>Header 2-3</th>
+            <th>Header 4</th>
         </tr>
         <tr>
-            <td rowspan='2' style='background:#DDFFDD;'>Vertically Merged Cell (rowspan=2)</td>
-            <td style='background:#FFDDDD;'>Cell 2</td>
-            <td style='background:#DDDDFF;'>Cell 3</td>
+            <th>Subheader 2</th>
+            <th>Subheader 3</th>
+            <th>Subheader 4</th>
         </tr>
         <tr>
-            <td colspan='2' style='background:#FFFFDD;'>Horizontally Merged Cell (colspan=2) in second row</td>
+            <td>R1C1</td>
+            <td colspan='2'>R1C2-3 merged</td>
+            <td>R1C4</td>
+        </tr>
+        <tr>
+            <td rowspan='2'>R2-3C1 merged</td>
+            <td>R2C2</td>
+            <td>R2C3</td>
+            <td>R2C4</td>
+        </tr>
+        <tr>
+            <td colspan='2'>R3C2-3 merged</td>
+            <td>R3C4</td>
         </tr>
     </table>
 </body>
 </html>";
 
-        // Write the HTML content to the temporary file.
-        File.WriteAllText(htmlPath, htmlContent);
+        // Create a temporary HTML file.
+        string tempHtmlPath = Path.Combine(Path.GetTempPath(), "sample_table.html");
+        File.WriteAllText(tempHtmlPath, htmlContent);
 
         // Load the HTML file into an Aspose.Words Document.
-        Document doc = new Document(htmlPath);
+        Document doc = new Document(tempHtmlPath);
 
-        // Ensure that merged cells are represented using merge flags.
-        // This converts cells merged by width (as may happen when loading HTML) to proper CellMerge flags.
-        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
-        {
-            table.ConvertToHorizontallyMergedCells();
-        }
+        // Ensure that the document contains at least one table.
+        if (doc.FirstSection?.Body?.Tables?.Count == 0)
+            throw new InvalidOperationException("No tables were found in the loaded HTML document.");
 
-        // Save the document as a DOCX file.
-        doc.Save(docxPath, SaveFormat.Docx);
+        // Convert any width‑based merged cells to proper merge flags.
+        Table table = doc.FirstSection.Body.Tables[0];
+        table.ConvertToHorizontallyMergedCells();
+
+        // Save the resulting document as a Word file.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ConvertedTable.docx");
+        doc.Save(outputPath, SaveFormat.Docx);
 
         // Verify that the output file was created.
-        if (!File.Exists(docxPath))
-        {
-            throw new InvalidOperationException("The DOCX file was not created successfully.");
-        }
+        if (!File.Exists(outputPath))
+            throw new IOException($"Failed to create the output file at '{outputPath}'.");
 
-        // Optionally, clean up the temporary HTML file.
-        // File.Delete(htmlPath);
+        // Clean up the temporary HTML file.
+        File.Delete(tempHtmlPath);
     }
 }

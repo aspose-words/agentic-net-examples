@@ -1,69 +1,53 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace ConditionalCellShadingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a 4x3 table and fill it with sample numeric values.
+        int rows = 4;
+        int cols = 3;
+        for (int r = 0; r < rows; r++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a simple table with numeric values.
-            Table table = builder.StartTable();
-
-            // Header row.
-            builder.InsertCell();
-            builder.Write("Item");
-            builder.InsertCell();
-            builder.Write("Quantity");
-            builder.EndRow();
-
-            // Data rows.
-            AddDataRow(builder, "Apples", 30);
-            AddDataRow(builder, "Bananas", 70);
-            AddDataRow(builder, "Cherries", 45);
-            AddDataRow(builder, "Dates", 90);
-            AddDataRow(builder, "Elderberries", 20);
-
-            builder.EndTable();
-
-            // Apply conditional shading: values > 50 get LightSalmon, otherwise LightGreen.
-            foreach (Row row in table.Rows)
+            for (int c = 0; c < cols; c++)
             {
-                // Skip the header row (the first row of the table).
-                if (row == table.FirstRow) continue;
+                builder.InsertCell();
+                int value = (r + 1) * (c + 1) * 10; // sample calculation
+                builder.Write(value.ToString());
+            }
+            builder.EndRow();
+        }
+        builder.EndTable();
 
-                Cell valueCell = row.Cells[1];
-                string text = valueCell.ToString(SaveFormat.Text).Trim();
-
-                if (int.TryParse(text, out int numericValue))
+        // Iterate through each cell and apply shading based on its numeric value.
+        Table table = doc.FirstSection.Body.Tables[0];
+        foreach (Row row in table.Rows)
+        {
+            foreach (Cell cell in row.Cells)
+            {
+                // Retrieve the cell text and try to parse it as an integer.
+                string cellText = cell.ToString(SaveFormat.Text).Trim();
+                if (int.TryParse(cellText, out int number))
                 {
-                    if (numericValue > 50)
-                        valueCell.CellFormat.Shading.BackgroundPatternColor = Color.LightSalmon;
+                    // Apply green shading for values >= 50, otherwise apply coral shading.
+                    if (number >= 50)
+                        cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
                     else
-                        valueCell.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
+                        cell.CellFormat.Shading.BackgroundPatternColor = Color.LightCoral;
                 }
             }
-
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ConditionalCellShading.docx");
-            doc.Save(outputPath);
         }
 
-        // Helper method to add a data row with an item name and a numeric quantity.
-        private static void AddDataRow(DocumentBuilder builder, string item, int quantity)
-        {
-            builder.InsertCell();
-            builder.Write(item);
-            builder.InsertCell();
-            builder.Write(quantity.ToString());
-            builder.EndRow();
-        }
+        // Save the resulting document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ConditionalCellShading.docx");
+        doc.Save(outputPath);
     }
 }

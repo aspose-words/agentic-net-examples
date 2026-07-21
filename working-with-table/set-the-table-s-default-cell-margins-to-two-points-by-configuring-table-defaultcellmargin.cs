@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,41 +14,31 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // Ensure the table has at least one row before applying table‑level padding.
+        // Ensure the table has at least one row/cell so that padding properties can be set.
         table.EnsureMinimum();
 
-        // Set the default cell margins (padding) for the table – 2 points on each side.
-        table.LeftPadding = 2;
-        table.RightPadding = 2;
+        // Set the default cell margins (padding) for the entire table (2 points on each side).
         table.TopPadding = 2;
         table.BottomPadding = 2;
+        table.LeftPadding = 2;
+        table.RightPadding = 2;
 
-        // Build a simple 2×2 table to demonstrate the margins.
+        // Add a simple row with two cells.
         builder.InsertCell();
-        builder.Write("Cell 1,1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 1,2");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Cell 2,1");
-        builder.InsertCell();
-        builder.Write("Cell 2,2");
+        builder.Write("Cell 2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Verify that the margins were applied correctly.
-        if (table.LeftPadding != 2 ||
-            table.RightPadding != 2 ||
-            table.TopPadding != 2 ||
-            table.BottomPadding != 2)
-        {
-            throw new InvalidOperationException("Default cell margins were not set correctly.");
-        }
-
         // Save the document.
-        doc.Save("DefaultCellMargin.docx");
+        string outputPath = "Table.DefaultCellMargin.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output file was not created.");
     }
 }

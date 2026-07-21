@@ -1,64 +1,62 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace SplitMergedCellExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a builder to construct its content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
+            // Build a table with three columns.
+            Table table = builder.StartTable();
 
-        // ---- First row with a horizontally merged cell spanning two columns ----
-        // Insert the first cell and mark it as the start of a merge.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged cell");
+            // First cell – start of a horizontally merged range.
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.First;
+            builder.Write("Merged Cell");
 
-        // Insert the second cell and mark it as merged to the previous cell.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text is needed for the merged part.
+            // Second cell – merged with the previous cell.
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+            // No text needed for merged cells.
 
-        // End the first row.
-        builder.EndRow();
+            // Third cell – independent.
+            builder.InsertCell();
+            builder.Write("Cell 3");
 
-        // ---- Second row with normal (unmerged) cells ----
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.Write("Cell 1");
+            // End the first row and the table.
+            builder.EndRow();
+            builder.EndTable();
 
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.Write("Cell 2");
+            // At this point the first two cells are merged.
+            // Now split the merged cells by resetting merge properties.
+            Table firstTable = doc.FirstSection.Body.Tables[0];
+            Row firstRow = firstTable.Rows[0];
 
-        // End the second row and the table.
-        builder.EndRow();
-        builder.EndTable();
+            foreach (Cell cell in firstRow.Cells)
+            {
+                // Reset both horizontal and vertical merge flags.
+                cell.CellFormat.HorizontalMerge = CellMerge.None;
+                cell.CellFormat.VerticalMerge = CellMerge.None;
+            }
 
-        // Save the document that contains the merged cell.
-        string mergedPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedCell.docx");
-        doc.Save(mergedPath);
+            // Validate that all cells are now unmerged.
+            foreach (Cell cell in firstRow.Cells)
+            {
+                if (cell.CellFormat.HorizontalMerge != CellMerge.None ||
+                    cell.CellFormat.VerticalMerge != CellMerge.None)
+                {
+                    throw new InvalidOperationException("Cell merge flags were not cleared correctly.");
+                }
+            }
 
-        // -------- Split the merged cell back into individual cells --------
-        // Access the cells of the first row (the merged ones).
-        Row firstRow = table.FirstRow;
-        Cell firstCell = firstRow.FirstCell;
-        Cell secondCell = firstRow.LastCell;
-
-        // Reset both horizontal and vertical merge flags to None.
-        firstCell.CellFormat.HorizontalMerge = CellMerge.None;
-        secondCell.CellFormat.HorizontalMerge = CellMerge.None;
-        firstCell.CellFormat.VerticalMerge = CellMerge.None;
-        secondCell.CellFormat.VerticalMerge = CellMerge.None;
-
-        // Save the document after splitting the cell.
-        string splitPath = Path.Combine(Directory.GetCurrentDirectory(), "SplitCell.docx");
-        doc.Save(splitPath);
+            // Save the resulting document.
+            doc.Save("SplitMergedCell.docx");
+        }
     }
 }

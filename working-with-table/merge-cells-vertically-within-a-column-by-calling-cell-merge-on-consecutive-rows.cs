@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,74 +6,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and a DocumentBuilder for constructing content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table. The builder will now operate inside this table.
-        Table table = builder.StartTable();
+        // Build a 4x2 table.
+        builder.StartTable();
 
-        // ---------- First Row ----------
-        // First cell: start of a vertically merged range.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.First;
-        builder.Write("Merged vertically");
+        for (int row = 0; row < 4; row++)
+        {
+            for (int col = 0; col < 2; col++)
+            {
+                builder.InsertCell();
+                builder.Write($"R{row + 1}C{col + 1}");
+            }
+            builder.EndRow();
+        }
 
-        // Second cell: regular, not merged.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row 1, Col 2");
-
-        // End the first row.
-        builder.EndRow();
-
-        // ---------- Second Row ----------
-        // First cell: merge with the cell above.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;
-        // No text needed for merged cells.
-
-        // Second cell: regular.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row 2, Col 2");
-
-        builder.EndRow();
-
-        // ---------- Third Row ----------
-        // First cell: continue merging vertically.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;
-
-        // Second cell: regular.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row 3, Col 2");
-
-        builder.EndRow();
-
-        // Finish the table.
         builder.EndTable();
 
-        // Save the document to a local file.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "VerticalMergeTable.docx");
-        doc.Save(outputPath);
+        // Retrieve the first table in the document.
+        Table table = doc.FirstSection.Body.Tables[0];
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved correctly.");
+        // Merge the first three cells in the first column vertically.
+        // Set the first cell as the start of a vertical merge range.
+        Cell firstCell = table.Rows[0].Cells[0];
+        firstCell.CellFormat.VerticalMerge = CellMerge.First;
 
-        // Load the saved document and output the vertical merge state of each cell in the first column.
-        Document loadedDoc = new Document(outputPath);
-        Table loadedTable = loadedDoc.FirstSection.Body.Tables[0];
-        foreach (Row row in loadedTable.Rows)
-        {
-            // Get the row index within the table (zero‑based) and add 1 for display.
-            int rowNumber = loadedTable.IndexOf(row) + 1;
-            Cell firstCell = row.FirstCell;
-            Console.WriteLine($"Cell at row {rowNumber} vertical merge: {firstCell.CellFormat.VerticalMerge}");
-        }
+        // Mark the next two cells as part of the same vertical merge range.
+        table.Rows[1].Cells[0].CellFormat.VerticalMerge = CellMerge.Previous;
+        table.Rows[2].Cells[0].CellFormat.VerticalMerge = CellMerge.Previous;
+
+        // Save the resulting document.
+        doc.Save("MergedCells.docx");
     }
 }

@@ -2,106 +2,72 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for all generated files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample source document that contains two tables,
-        //    each with its own table style.
-        // -----------------------------------------------------------------
+        // Create a sample document containing two tables with different built‑in styles.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // ----- First table ------------------------------------------------
+        // First table.
         Table table1 = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Table 1, Cell 1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Table 1, Cell 2");
         builder.EndRow();
-
         builder.InsertCell();
-        builder.Write("Row1 Col1");
+        builder.Write("Table 1, Cell 3");
         builder.InsertCell();
-        builder.Write("Row1 Col2");
+        builder.Write("Table 1, Cell 4");
         builder.EndRow();
-
         builder.EndTable();
+        table1.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
 
-        // Define a custom style for the first table.
-        TableStyle style1 = (TableStyle)sourceDoc.Styles.Add(StyleType.Table, "MyStyle1");
-        style1.RowStripe = 1;
-        style1.CellSpacing = 2;
-        style1.Shading.BackgroundPatternColor = Color.LightYellow;
-        style1.Borders.Color = Color.Blue;
-        style1.Borders.LineStyle = LineStyle.Single;
-        table1.Style = style1;
-
-        // ----- Second table -----------------------------------------------
+        // Second table.
         Table table2 = builder.StartTable();
         builder.InsertCell();
-        builder.Write("A");
+        builder.Write("Table 2, Cell 1");
         builder.InsertCell();
-        builder.Write("B");
+        builder.Write("Table 2, Cell 2");
         builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("C");
-        builder.InsertCell();
-        builder.Write("D");
-        builder.EndRow();
-
         builder.EndTable();
+        table2.StyleIdentifier = StyleIdentifier.MediumShading1Accent2;
 
-        // Define a custom style for the second table.
-        TableStyle style2 = (TableStyle)sourceDoc.Styles.Add(StyleType.Table, "MyStyle2");
-        style2.RowStripe = 2;
-        style2.CellSpacing = 5;
-        style2.Shading.BackgroundPatternColor = Color.LightGreen;
-        style2.Borders.Color = Color.Red;
-        style2.Borders.LineStyle = LineStyle.Double;
-        table2.Style = style2;
+        // Convert style formatting to direct formatting so it is retained after export.
+        sourceDoc.ExpandTableStylesToDirectFormatting();
 
-        // Save the source document (optional, demonstrates loading later).
-        string sourcePath = Path.Combine(artifactsDir, "Source.docx");
-        sourceDoc.Save(sourcePath);
+        // Prepare the output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputTables");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and extract each table.
-        // -----------------------------------------------------------------
-        Document doc = new Document(sourcePath);
-        NodeCollection allTables = doc.GetChildNodes(NodeType.Table, true);
+        // Get all tables from the source document.
+        NodeCollection tables = sourceDoc.GetChildNodes(NodeType.Table, true);
 
-        for (int i = 0; i < allTables.Count; i++)
+        for (int i = 0; i < tables.Count; i++)
         {
-            Table srcTable = (Table)allTables[i];
+            Table srcTable = (Table)tables[i];
 
-            // Create a new empty document for the current table.
+            // Create a new empty document for the individual table.
             Document tableDoc = new Document();
 
-            // Import the table node into the new document, preserving formatting.
-            NodeImporter importer = new NodeImporter(srcTable.Document, tableDoc, ImportFormatMode.KeepSourceFormatting);
-            Node importedNode = importer.ImportNode(srcTable, true); // ImportNode takes only (Node, bool)
-            Table importedTable = (Table)importedNode;
+            // Import the table node from the source document into the new document.
+            // Use the source document (not the table) as the first argument of NodeImporter.
+            NodeImporter importer = new NodeImporter(sourceDoc, tableDoc, ImportFormatMode.KeepSourceFormatting);
+            Node importedTable = importer.ImportNode(srcTable, true);
 
             // Append the imported table to the body of the new document.
             tableDoc.FirstSection.Body.AppendChild(importedTable);
 
-            // Convert any table style to direct formatting so the visual appearance
-            // stays the same when the style definition is not present in the new document.
-            tableDoc.ExpandTableStylesToDirectFormatting();
-
             // Save the individual table document.
-            string outPath = Path.Combine(artifactsDir, $"Table_{i + 1}.docx");
+            string outPath = Path.Combine(outputDir, $"Table_{i + 1}.docx");
             tableDoc.Save(outPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outPath))
+                throw new InvalidOperationException($"Failed to create output file: {outPath}");
         }
     }
 }

@@ -14,33 +14,39 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // Insert the first cell and mark it as the first cell in a horizontally merged range.
+        // First cell – mark it as the first cell in a horizontally merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged cell content");
+        builder.Write("Merged cells");
 
-        // Insert the second adjacent cell and merge it with the previous cell.
+        // Second cell – merge it with the previous cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text is written to the merged cell.
+        // No text is needed for the merged cell.
 
-        // End the current row and the table.
+        // End the first row.
         builder.EndRow();
+
+        // Add a second row with normal (unmerged) cells for demonstration.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.Write("Cell 2");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Define the output file path.
+        // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedCells.docx");
-
-        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
+            throw new InvalidOperationException("The output document was not created.");
         }
-
-        // Optionally, inform that the operation completed successfully.
-        Console.WriteLine($"Document saved successfully to: {outputPath}");
     }
 }

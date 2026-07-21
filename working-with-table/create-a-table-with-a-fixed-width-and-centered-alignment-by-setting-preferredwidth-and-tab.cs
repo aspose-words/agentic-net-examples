@@ -14,38 +14,47 @@ public class Program
         // Start a new table.
         Table table = builder.StartTable();
 
-        // Insert first row with two cells.
+        // Insert first cell and add some text.
         builder.InsertCell();
         builder.Write("Cell 1");
+
+        // Insert second cell and add some text.
         builder.InsertCell();
         builder.Write("Cell 2");
+
+        // End the first row.
         builder.EndRow();
 
-        // Insert second row with two cells.
+        // Insert third cell (new row) and add text.
         builder.InsertCell();
         builder.Write("Cell 3");
+
+        // Insert fourth cell and add text.
         builder.InsertCell();
         builder.Write("Cell 4");
+
+        // End the second row.
         builder.EndRow();
 
-        // End the table construction.
+        // Finish the table.
         builder.EndTable();
 
-        // Set a fixed width for the table (e.g., 300 points) and center it on the page.
+        // Set a fixed preferred width for the table (e.g., 300 points).
         table.PreferredWidth = PreferredWidth.FromPoints(300);
+
+        // Center the table on the page.
         table.Alignment = TableAlignment.Center;
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableFixedWidthCentered.docx");
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FixedWidthCenteredTable.docx");
 
         // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        // Optionally, inform that the process completed (no interactive input required).
-        Console.WriteLine("Document created successfully at: " + outputPath);
+        {
+            throw new InvalidOperationException("The document was not saved correctly.");
+        }
     }
 }

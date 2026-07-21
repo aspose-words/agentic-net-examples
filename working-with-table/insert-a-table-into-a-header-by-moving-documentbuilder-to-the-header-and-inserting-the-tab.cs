@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -23,22 +24,27 @@ public class Program
         builder.Write("Header Cell 2");
         builder.EndRow();
 
-        // Second row with two cells.
+        // Second row with a single cell that spans two columns.
         builder.InsertCell();
-        builder.Write("Header Cell 3");
+        builder.CellFormat.HorizontalMerge = CellMerge.First; // Begin horizontal merge.
+        builder.Write("Spanned Cell");
         builder.InsertCell();
-        builder.Write("Header Cell 4");
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue merge.
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Return to the main document body and add some regular content.
+        // Return to the main document body and add a sample paragraph.
         builder.MoveToSection(0);
-        builder.Writeln("This is the main document body.");
+        builder.Writeln("Document body text.");
 
-        // Save the document to a file.
-        const string outputPath = "HeaderTable.docx";
+        // Save the document to disk.
+        string outputPath = "HeaderTable.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output file was not created.");
     }
 }

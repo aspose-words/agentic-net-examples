@@ -11,31 +11,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start a table and add the first row.
         Table table = builder.StartTable();
-
-        // First row (default height).
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        builder.Write("Row 1, Cell 1.");
         builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
+        builder.Write("Row 1, Cell 2.");
         builder.EndRow();
 
-        // Second row – set height to exactly 10 points.
-        builder.RowFormat.Height = 10;
+        // Set the height of the next row to exactly 10 points.
+        builder.RowFormat.Height = 10;               // Height in points.
         builder.RowFormat.HeightRule = HeightRule.Exactly;
 
+        // Add the second row which will inherit the height settings above.
         builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
+        builder.Write("Row 2, Cell 1.");
         builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
+        builder.Write("Row 2, Cell 2.");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RowHeightExample.docx");
+        // Save the document to a local file.
+        string outputPath = "TableRowSpacing.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

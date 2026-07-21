@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -39,17 +40,20 @@ namespace RowSpacingExample
             // Finish the table.
             builder.EndTable();
 
-            // Adjust the height of each row to simulate spacing.
-            // Height is measured in points. Here we increase the height progressively.
+            // Adjust row height as a simple way to add visual spacing.
+            // The RowFormat class does not expose SpaceBefore/SpaceAfter properties,
+            // so we use the Height property with the AtLeast rule to create extra space.
+            double[] extraHeights = { 5, 10, 15 }; // points of additional space per row
+
             for (int i = 0; i < table.Rows.Count; i++)
             {
                 Row row = table.Rows[i];
-                row.RowFormat.Height = (i + 1) * 5.0;          // 5, 10, 15 points
-                row.RowFormat.HeightRule = HeightRule.AtLeast; // Ensure the row can grow if needed
+                row.RowFormat.Height = extraHeights[i];
+                row.RowFormat.HeightRule = HeightRule.AtLeast;
             }
 
-            // Save the document to the local file system.
-            string outputPath = "RowSpacing.docx";
+            // Save the document to the local folder.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "RowSpacing.docx");
             doc.Save(outputPath);
         }
     }

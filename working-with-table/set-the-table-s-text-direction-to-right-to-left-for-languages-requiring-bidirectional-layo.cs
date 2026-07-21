@@ -3,42 +3,43 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableBidiExample
+public class SetTableBidirectional
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Use DocumentBuilder to construct a simple 2‑cell table.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
 
-            builder.InsertCell();
-            builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
+        builder.InsertCell();
+        builder.Write("Cell 1,2");
+        builder.EndRow();
 
-            builder.InsertCell();
-            builder.Write("Cell 2");
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+        builder.EndTable();
 
-            builder.EndRow();
-            builder.EndTable();
+        // Set the table to be right‑to‑left (bidirectional).
+        table.Bidi = true;
 
-            // Set the table to right‑to‑left (bidirectional) layout.
-            table.Bidi = true;
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BidirectionalTable.docx");
 
-            // Define an output path relative to the current directory.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableBidi.docx");
+        // Save the document.
+        doc.Save(outputPath);
 
-            // Save the document.
-            doc.Save(outputPath);
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output file was not created.");
 
-            // Simple verification that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output file was not created.");
-
-            // The program ends automatically; no user interaction required.
-        }
+        // Optional: inform that the process completed successfully.
+        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

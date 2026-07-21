@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -12,47 +13,43 @@ namespace AsposeWordsTableStyleExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 3x2 table.
+            // Build a simple 2x2 table.
             Table table = builder.StartTable();
 
             // First row (header).
             builder.InsertCell();
-            builder.Write("Product");
+            builder.Write("Header 1");
             builder.InsertCell();
-            builder.Write("Quantity");
+            builder.Write("Header 2");
             builder.EndRow();
 
-            // Second row.
+            // Second row (data).
             builder.InsertCell();
-            builder.Write("Apples");
+            builder.Write("Data 1");
             builder.InsertCell();
-            builder.Write("10");
-            builder.EndRow();
-
-            // Third row.
-            builder.InsertCell();
-            builder.Write("Bananas");
-            builder.InsertCell();
-            builder.Write("20");
+            builder.Write("Data 2");
             builder.EndRow();
 
             // Finish the table.
             builder.EndTable();
 
-            // Create a custom table style.
-            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyBoldFirstRowStyle");
+            // Apply a built‑in table style.
+            table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-            // Make the first row bold via the conditional style.
-            customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
-
-            // Apply the custom style to the table.
-            table.Style = customStyle;
-
-            // Enable the FirstRow style option so that the conditional formatting is applied.
+            // Enable the style for the first row only.
             table.StyleOptions = TableStyleOptions.FirstRow;
 
+            // Retrieve the style object and make the first‑row text bold.
+            TableStyle tableStyle = (TableStyle)doc.Styles[StyleIdentifier.MediumShading1Accent1];
+            tableStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
+
             // Save the document.
-            doc.Save("TableStyleFirstRowBold.docx");
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableStyleFirstRowBold.docx");
+            doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not saved correctly.");
         }
     }
 }

@@ -6,31 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Begin a table.
         Table table = builder.StartTable();
 
-        // Build a 2x2 table where each cell's text is aligned to the bottom.
-        for (int row = 0; row < 2; row++)
+        int rows = 3;
+        int columns = 2;
+
+        // Build the table rows and cells.
+        for (int r = 0; r < rows; r++)
         {
-            for (int col = 0; col < 2; col++)
+            for (int c = 0; c < columns; c++)
             {
-                // Apply bottom vertical alignment to the next cell.
+                // Set vertical alignment to Bottom for each new cell.
                 builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Bottom;
 
-                // Insert the cell and write some text.
+                // Insert the cell and add some sample text.
                 builder.InsertCell();
-                builder.Write($"Row {row + 1}, Cell {col + 1}");
+                builder.Write($"Row {r + 1}, Col {c + 1}");
             }
 
             // End the current row.
             builder.EndRow();
         }
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
         // Save the document to a file.

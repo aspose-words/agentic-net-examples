@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,38 +10,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start the table.
         Table table = builder.StartTable();
 
-        // Insert the first cell of the first row and mark it as the start of a merged range.
+        // ----- First row: a single cell that spans the full width -----
+        // Insert the first cell and mark it as the start of a merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
         builder.Write("Header spanning all columns");
 
-        // Insert additional cells in the same row and merge them with the first cell.
-        // The number of cells determines how many columns the table will have.
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        }
+        // Insert additional cells and merge them with the previous cell.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
         // End the first (merged) row.
         builder.EndRow();
 
-        // Add a second row with regular, unmerged cells to illustrate the table layout.
-        for (int i = 0; i < 4; i++)
-        {
-            builder.InsertCell();
-            builder.Write($"Cell {i + 1}");
-        }
+        // Reset merge settings for subsequent rows.
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+
+        // ----- Second row: regular separate cells -----
+        builder.InsertCell();
+        builder.Write("Cell 1");
+
+        builder.InsertCell();
+        builder.Write("Cell 2");
+
+        builder.InsertCell();
+        builder.Write("Cell 3");
+
+        // End the second row.
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedTable.docx");
-        doc.Save(outputPath);
+        // Save the document to a file.
+        doc.Save("MergedCellTable.docx");
     }
 }

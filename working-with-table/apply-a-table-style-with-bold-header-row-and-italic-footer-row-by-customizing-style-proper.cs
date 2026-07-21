@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
@@ -15,71 +14,58 @@ namespace TableStyleExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // -----------------------------------------------------------------
-            // Build a simple table with a header row, two data rows and a footer row.
-            // -----------------------------------------------------------------
-            Table table = builder.StartTable();
+            // Build a simple table: header row, two data rows, footer row.
+            builder.StartTable();
 
-            // Header row (first row)
+            // ----- Header row -----
             builder.InsertCell();
-            builder.Write("Header Column 1");
+            builder.Write("Header 1");
             builder.InsertCell();
-            builder.Write("Header Column 2");
+            builder.Write("Header 2");
             builder.EndRow();
 
-            // First data row
+            // ----- Data row 1 -----
             builder.InsertCell();
-            builder.Write("Data 1-1");
+            builder.Write("Data 1A");
             builder.InsertCell();
-            builder.Write("Data 1-2");
+            builder.Write("Data 1B");
             builder.EndRow();
 
-            // Second data row
+            // ----- Data row 2 -----
             builder.InsertCell();
-            builder.Write("Data 2-1");
+            builder.Write("Data 2A");
             builder.InsertCell();
-            builder.Write("Data 2-2");
+            builder.Write("Data 2B");
             builder.EndRow();
 
-            // Footer row (last row)
+            // ----- Footer row -----
             builder.InsertCell();
-            builder.Write("Footer Column 1");
+            builder.Write("Footer 1");
             builder.InsertCell();
-            builder.Write("Footer Column 2");
+            builder.Write("Footer 2");
             builder.EndRow();
 
             // Finish the table.
-            builder.EndTable();
+            Table table = builder.EndTable();
 
-            // -----------------------------------------------------------------
             // Create a custom table style.
-            // The style will make the first row bold and the last row italic.
-            // -----------------------------------------------------------------
-            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomStyle");
 
-            // Apply bold formatting to the first (header) row.
+            // Make the first row (header) bold.
             customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
 
-            // Apply italic formatting to the last (footer) row.
+            // Make the last row (footer) italic.
             customStyle.ConditionalStyles[ConditionalStyleType.LastRow].Font.Italic = true;
 
-            // Assign the custom style to the table.
+            // Apply the custom style to the table.
             table.Style = customStyle;
 
             // Enable the conditional formatting for first and last rows.
             table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.LastRow;
 
-            // -----------------------------------------------------------------
             // Save the document.
-            // -----------------------------------------------------------------
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableStyleCustom.docx");
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomTableStyle.docx");
             doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-
-            // The program finishes automatically; no user interaction required.
         }
     }
 }

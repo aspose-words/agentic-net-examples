@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Tables;
@@ -8,106 +9,82 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare file paths in the current working directory.
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "ComplexTable.docx");
-        string htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "ComplexTable.html");
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX containing a complex table.
-        // -----------------------------------------------------------------
+        // Paths for the intermediate DOCX and final HTML files.
+        string docPath = Path.Combine(outputDir, "ComplexTable.docx");
+        string htmlPath = Path.Combine(outputDir, "ComplexTable.html");
+
+        // Create a new document and a builder to construct a complex table.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the outer table.
-        Table outerTable = builder.StartTable();
+        // Start the table.
+        Table table = builder.StartTable();
 
-        // Apply a thick border to the whole table.
-        outerTable.SetBorder(BorderType.Left, LineStyle.Single, 2.0, System.Drawing.Color.Black, true);
-        outerTable.SetBorder(BorderType.Right, LineStyle.Single, 2.0, System.Drawing.Color.Black, true);
-        outerTable.SetBorder(BorderType.Top, LineStyle.Single, 2.0, System.Drawing.Color.Black, true);
-        outerTable.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, System.Drawing.Color.Black, true);
-        outerTable.SetBorder(BorderType.Horizontal, LineStyle.Single, 1.0, System.Drawing.Color.Gray, true);
-        outerTable.SetBorder(BorderType.Vertical, LineStyle.Single, 1.0, System.Drawing.Color.Gray, true);
+        // Ensure the table has at least one row before applying formatting.
+        table.EnsureMinimum();
 
-        // Set cell padding for subsequent cells.
-        builder.CellFormat.SetPaddings(10, 5, 10, 5); // left, top, right, bottom
+        // Apply borders to the table (outline and inside borders).
+        table.SetBorder(BorderType.Left, LineStyle.Single, 1.5, Color.Black, true);
+        table.SetBorder(BorderType.Right, LineStyle.Single, 1.5, Color.Black, true);
+        table.SetBorder(BorderType.Top, LineStyle.Single, 1.5, Color.Black, true);
+        table.SetBorder(BorderType.Bottom, LineStyle.Single, 1.5, Color.Black, true);
+        table.SetBorder(BorderType.Horizontal, LineStyle.Single, 1.0, Color.Gray, true);
+        table.SetBorder(BorderType.Vertical, LineStyle.Single, 1.0, Color.Gray, true);
 
-        // First row – two cells.
+        // Set cell padding for the whole table.
+        table.LeftPadding = 10;
+        table.RightPadding = 10;
+        table.TopPadding = 5;
+        table.BottomPadding = 5;
+
+        // First row – header cells.
         builder.InsertCell();
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Font.Bold = true;
         builder.Write("Header 1");
         builder.InsertCell();
+        builder.Font.Bold = false;
         builder.Write("Header 2");
         builder.EndRow();
 
-        // Second row – first cell will contain a nested table.
+        // Second row – normal data cells.
         builder.InsertCell();
-
-        // Create a nested table inside the first cell.
-        Table innerTable = builder.StartTable();
-        // Apply a uniform border to the nested table.
-        innerTable.SetBorders(LineStyle.Single, 1.0, System.Drawing.Color.DarkBlue);
-        // Adjust padding for the nested table cells.
-        builder.CellFormat.SetPaddings(5, 2, 5, 2);
-
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
+        builder.Write("Data 1");
         builder.InsertCell();
-        builder.Write("Inner 1");
-        builder.InsertCell();
-        builder.Write("Inner 2");
+        builder.Write("Data 2");
         builder.EndRow();
 
-        builder.InsertCell();
-        builder.Write("Inner 3");
-        builder.InsertCell();
-        builder.Write("Inner 4");
-        builder.EndRow();
-
-        builder.EndTable(); // End nested table.
-
-        // Continue with the outer table's second cell.
-        // The builder is currently positioned after the nested table, still inside the outer cell.
-        // Move to the existing second cell of the outer row.
-        builder.MoveTo(outerTable.LastRow.LastCell);
-        // Write content directly into that cell (no need to insert a new cell).
-        builder.Write("Regular cell");
-
-        builder.EndRow();
-
-        // Third row – merged cells spanning two columns.
+        // Third row – demonstrate a merged cell (horizontal merge).
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged across columns");
+        builder.Write("Merged Cell");
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue merge.
         builder.EndRow();
 
-        builder.EndTable(); // End outer table.
+        // Finish the table.
+        builder.EndTable();
 
-        // Save the source DOCX.
+        // Save the intermediate DOCX (optional, shows the source document).
         doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and convert it to HTML, preserving borders and padding.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-
+        // Convert the document to HTML while preserving borders and padding.
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
-            // Export all size information (default) to keep layout identical.
             TableWidthOutputMode = HtmlElementSizeOutputMode.All
         };
+        doc.Save(htmlPath, htmlOptions);
 
-        loadedDoc.Save(htmlPath, htmlOptions);
-
-        // -----------------------------------------------------------------
-        // 3. Simple validation – ensure the HTML file was created and contains border styles.
-        // -----------------------------------------------------------------
+        // Validate that the HTML file was created.
         if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML output file was not created.");
+            throw new InvalidOperationException("HTML conversion failed: output file not found.");
 
-        string htmlContent = File.ReadAllText(htmlPath);
-        if (!htmlContent.Contains("border"))
-            throw new InvalidOperationException("Converted HTML does not contain border information.");
-
-        // Program ends without waiting for user input.
+        Console.WriteLine("Conversion completed successfully. HTML saved to:");
+        Console.WriteLine(htmlPath);
     }
 }

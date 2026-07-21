@@ -12,42 +12,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define table dimensions.
-        int rowCount = 6;
-        int columnCount = 3;
-
-        // Build the table.
+        // Begin a table.
         Table table = builder.StartTable();
-        for (int i = 0; i < rowCount; i++)
+
+        int rowCount = 6;   // Total number of rows.
+        int colCount = 3;   // Number of cells per row.
+
+        for (int row = 0; row < rowCount; row++)
         {
-            for (int j = 0; j < columnCount; j++)
+            // Apply a light gray shading to every second row (odd index).
+            if (row % 2 == 1)
+                builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+            else
+                builder.CellFormat.Shading.ClearFormatting(); // No shading for other rows.
+
+            // Populate the cells of the current row.
+            for (int col = 0; col < colCount; col++)
             {
                 builder.InsertCell();
-                builder.Write($"Row {i + 1}, Col {j + 1}");
+                builder.Write($"R{row + 1}C{col + 1}");
             }
+
+            // Finish the current row.
             builder.EndRow();
         }
+
+        // Finish the table.
         builder.EndTable();
 
-        // Apply shading to every second row (index 1,3,5,...).
-        for (int i = 0; i < table.Rows.Count; i++)
-        {
-            if (i % 2 == 1) // even-numbered rows in 1‑based terms
-            {
-                Row row = table.Rows[i];
-                foreach (Cell cell in row.Cells)
-                {
-                    cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-                }
-            }
-        }
-
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingRows.docx");
+        // Save the document to the working directory.
+        string outputPath = "AlternatingRows.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new InvalidOperationException($"Output file was not created: {outputPath}");
     }
 }

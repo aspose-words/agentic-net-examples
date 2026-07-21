@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,32 +10,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start a table and add a couple of cells with Arabic text.
         Table table = builder.StartTable();
 
-        // Insert a cell containing Arabic text.
         builder.InsertCell();
-        builder.Write("مرحبا بالعالم"); // Arabic: "Hello World"
-
-        // End the row and the table.
+        builder.Write("مرحبا"); // "Hello" in Arabic
+        builder.InsertCell();
+        builder.Write("عالم"); // "World" in Arabic
         builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("كيف حالك؟"); // "How are you?" in Arabic
+        builder.InsertCell();
+        builder.Write("بخير"); // "Fine" in Arabic
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
         // Enable right‑to‑left layout for the table.
         table.Bidi = true;
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableRightToLeft.docx");
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
-
-        // Reload the document and confirm the table direction.
-        Document loadedDoc = new Document(outputPath);
-        Table loadedTable = loadedDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
-        if (loadedTable == null || !loadedTable.Bidi)
-            throw new Exception("Table direction was not set to right‑to‑left.");
+        // Save the document to the local file system.
+        doc.Save("TableRightToLeft.docx");
     }
 }

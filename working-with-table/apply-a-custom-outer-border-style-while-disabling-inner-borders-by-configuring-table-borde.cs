@@ -1,6 +1,6 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -29,22 +29,22 @@ public class Program
 
         builder.EndTable();
 
-        // Remove any existing borders (including inner cell borders).
+        // Remove any existing borders (including cell borders).
         table.ClearBorders();
 
-        // Apply a custom outer border style.
-        // The 'true' flag overrides any explicit cell borders, ensuring inner borders stay hidden.
+        // Apply a custom outer border (single blue line, 2 points thick) to each side.
+        // The last parameter 'true' overrides any explicit cell borders.
         table.SetBorder(BorderType.Left,   LineStyle.Single, 2.0, Color.Blue, true);
         table.SetBorder(BorderType.Right,  LineStyle.Single, 2.0, Color.Blue, true);
         table.SetBorder(BorderType.Top,    LineStyle.Single, 2.0, Color.Blue, true);
         table.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, Color.Blue, true);
 
         // Save the document.
-        string outputPath = "CustomOuterBorder.docx";
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomOuterBorderTable.docx");
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved successfully.");
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

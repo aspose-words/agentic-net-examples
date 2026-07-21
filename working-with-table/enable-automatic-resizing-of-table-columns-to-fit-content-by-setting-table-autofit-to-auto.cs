@@ -1,46 +1,55 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableAutoFitExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3x2 table.
-        Table table = builder.StartTable();
+            // Start a new table.
+            Table table = builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Write("Item");
-        builder.InsertCell();
-        builder.Write("Quantity (kg)");
-        builder.EndRow();
+            // Insert first row with two cells containing long text to demonstrate autofit.
+            builder.InsertCell();
+            builder.Write("This is a very long piece of text that should cause the column to expand when autofit is applied.");
+            builder.InsertCell();
+            builder.Write("Short text");
+            builder.EndRow();
 
-        // First data row.
-        builder.InsertCell();
-        builder.Write("Apples");
-        builder.InsertCell();
-        builder.Write("20");
-        builder.EndRow();
+            // Insert second row.
+            builder.InsertCell();
+            builder.Write("Another long text entry that will test the auto resizing behavior of the table columns.");
+            builder.InsertCell();
+            builder.Write("Another short");
+            builder.EndRow();
 
-        // Second data row.
-        builder.InsertCell();
-        builder.Write("Bananas");
-        builder.InsertCell();
-        builder.Write("40");
-        builder.EndRow();
+            // Finish the table.
+            builder.EndTable();
 
-        // Finish the table.
-        builder.EndTable();
+            // Enable automatic resizing of columns to fit the content.
+            table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Enable automatic column resizing to fit the cell contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+            // Define output file path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AutoFitTable.docx");
 
-        // Save the document to a file.
-        doc.Save("AutoFitTable.docx");
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+            {
+                throw new Exception($"Failed to create the output file at '{outputPath}'.");
+            }
+
+            // Optionally, inform that the process completed successfully.
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
     }
 }

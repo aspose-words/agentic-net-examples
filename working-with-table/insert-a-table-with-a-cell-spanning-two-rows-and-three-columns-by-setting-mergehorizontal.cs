@@ -14,46 +14,71 @@ public class Program
         Table table = builder.StartTable();
 
         // ---------- First Row ----------
-        // Cell (0,0) – first cell of the merged block (starts both horizontal and vertical merge).
+        // Cell (1,1) – first cell of the merged block (spans 2 rows x 3 columns).
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First; // Start horizontal merge.
-        builder.CellFormat.VerticalMerge = CellMerge.First;   // Start vertical merge.
-        builder.Write("Merged cell spanning 2 rows and 3 columns.");
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.CellFormat.VerticalMerge = CellMerge.First;
+        builder.Write("Merged cell (2 rows x 3 cols)");
 
-        // Cell (0,1) – continues horizontal merge, starts its own vertical merge.
+        // Cells (1,2) and (1,3) – continue horizontal merge.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue horizontal merge.
-        builder.CellFormat.VerticalMerge = CellMerge.First;      // Start vertical merge for this column.
-
-        // Cell (0,2) – continues horizontal merge, starts its own vertical merge.
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // No vertical merge needed for these cells in the first row.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue horizontal merge.
-        builder.CellFormat.VerticalMerge = CellMerge.First;      // Start vertical merge for this column.
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // End the first row.
+        // Reset merge settings before adding a normal cell.
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+
+        // Cell (1,4) – regular cell.
+        builder.InsertCell();
+        builder.Write("R1C4");
+
+        // End first row.
         builder.EndRow();
 
         // ---------- Second Row ----------
-        // Cell (1,0) – continuation of both horizontal and vertical merge.
+        // Cell (2,1) – continuation of vertical merge, first in horizontal range.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue horizontal merge.
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;   // Continue vertical merge.
-
-        // Cell (1,1) – continuation of both merges for the second column.
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+        // No text needed for merged cells.
+        // Cell (2,2) – continuation both horizontally and vertically.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+        // Cell (2,3) – same as above.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
         builder.CellFormat.VerticalMerge = CellMerge.Previous;
 
-        // Cell (1,2) – continuation of both merges for the third column.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+        // Reset merge settings before the next normal cell.
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.CellFormat.VerticalMerge = CellMerge.None;
 
-        // End the second row and the table.
+        // Cell (2,4) – regular cell.
+        builder.InsertCell();
+        builder.Write("R2C4");
+
+        // End second row.
         builder.EndRow();
+
+        // ---------- Third Row (no merged cells) ----------
+        builder.InsertCell();
+        builder.Write("R3C1");
+        builder.InsertCell();
+        builder.Write("R3C2");
+        builder.InsertCell();
+        builder.Write("R3C3");
+        builder.InsertCell();
+        builder.Write("R3C4");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file.
+        // Save the document to the local file system.
         doc.Save("MergedTable.docx");
     }
 }

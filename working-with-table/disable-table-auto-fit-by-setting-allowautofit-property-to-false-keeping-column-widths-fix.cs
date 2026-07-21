@@ -2,49 +2,35 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableAutoFit
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new empty document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start building a table.
-            Table table = builder.StartTable();
+        // Start building a table.
+        Table table = builder.StartTable();
 
-            // First row, first cell with a fixed width.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-            builder.Write("Fixed width column 1");
+        // First cell – set a fixed width.
+        builder.InsertCell();
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+        builder.Write("Fixed width cell 1");
 
-            // First row, second cell with a fixed width.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-            builder.Write("Fixed width column 2");
+        // Second cell – set a different fixed width.
+        builder.InsertCell();
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
+        builder.Write("Fixed width cell 2");
 
-            // End the first row.
-            builder.EndRow();
+        // Finish the row and the table.
+        builder.EndRow();
+        builder.EndTable();
 
-            // Second row, first cell (widths remain fixed).
-            builder.InsertCell();
-            builder.Write("Row 2, col 1");
+        // Disable automatic table autofit to keep column widths fixed.
+        table.AllowAutoFit = false;
 
-            // Second row, second cell.
-            builder.InsertCell();
-            builder.Write("Row 2, col 2");
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Disable automatic resizing of cells; keep column widths fixed.
-            table.AllowAutoFit = false;
-
-            // Save the document to a file.
-            doc.Save("TableAllowAutoFit.docx");
-        }
+        // Save the document to a file.
+        doc.Save("TableAllowAutoFit.docx");
     }
 }

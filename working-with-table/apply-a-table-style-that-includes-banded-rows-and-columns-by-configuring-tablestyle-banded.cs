@@ -11,25 +11,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Start a table and add a few rows/columns.
         Table table = builder.StartTable();
 
-        // Header row.
+        // First row (header).
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Product");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Quantity");
         builder.EndRow();
 
-        // Add a few data rows.
-        for (int i = 1; i <= 4; i++)
-        {
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 1");
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 2");
-            builder.EndRow();
-        }
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Apples");
+        builder.InsertCell();
+        builder.Write("10");
+        builder.EndRow();
+
+        // Third row.
+        builder.InsertCell();
+        builder.Write("Bananas");
+        builder.InsertCell();
+        builder.Write("20");
+        builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
@@ -37,21 +41,23 @@ public class Program
         // Apply a built‑in table style.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Enable banded rows and columns.
+        // Enable banded rows and banded columns.
         table.StyleOptions = TableStyleOptions.RowBands | TableStyleOptions.ColumnBands;
 
         // Auto‑fit the table to its contents.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
+        // Define the output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithBandedRowsAndColumns.docx");
+
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithBanding.docx");
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+            throw new InvalidOperationException("The output document was not created.");
 
-        // Indicate success.
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Optionally inform that the process completed.
+        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 namespace TableUnmergeExample
 {
@@ -9,137 +8,114 @@ namespace TableUnmergeExample
     {
         public static void Main()
         {
-            // Create a sample document with a table that contains merged cells.
+            // Create a sample document with a table that contains horizontally merged cells.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // Start the table.
             Table table = builder.StartTable();
 
-            // First row – horizontally merged cells (cells 1‑2) and a normal cell.
+            // First row – merge first three cells horizontally.
             builder.InsertCell();
             builder.CellFormat.HorizontalMerge = CellMerge.First;
-            builder.Write("Merged H1");
+            builder.Write("Merged Cell");
+
             builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous; // part of the merge
-            builder.Write(""); // content will be redistributed later
-            builder.InsertCell(); // third cell, not merged
-            builder.Write("Normal");
+            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+            // Add a normal cell.
+            builder.CellFormat.HorizontalMerge = CellMerge.None;
+            builder.InsertCell();
+            builder.Write("Normal Cell");
+
             builder.EndRow();
 
-            // Second row – vertically merged cells (cells 1‑2) and a normal cell.
+            // Second row – normal cells only.
             builder.InsertCell();
-            builder.CellFormat.VerticalMerge = CellMerge.First;
-            builder.Write("Merged V1");
+            builder.Write("Row2 Cell1");
             builder.InsertCell();
-            builder.CellFormat.VerticalMerge = CellMerge.Previous; // part of the vertical merge
-            builder.Write(""); // content will be redistributed later
-            builder.InsertCell();
-            builder.Write("Normal2");
+            builder.Write("Row2 Cell2");
             builder.EndRow();
 
-            // Third row – normal cells.
-            builder.InsertCell();
-            builder.Write("Cell3-1");
-            builder.InsertCell();
-            builder.Write("Cell3-2");
-            builder.InsertCell();
-            builder.Write("Cell3-3");
-            builder.EndRow();
-
-            // Finish the table.
             builder.EndTable();
 
             // Save the original document (optional, for reference).
             doc.Save("OriginalTable.docx");
 
             // -----------------------------------------------------------------
-            // Unmerge the table and redistribute the merged content.
+            // Flatten the table: unmerge cells and duplicate the original content
+            // into each cell that was part of a merged range.
             // -----------------------------------------------------------------
             // Get the first table in the document.
-            Table targetTable = doc.FirstSection.Body.Tables[0];
+            Table originalTable = doc.FirstSection.Body.Tables[0];
 
-            // First, handle horizontal merges.
-            foreach (Row row in targetTable.Rows)
+            // Create a new table that will hold the flattened structure.
+            Table flatTable = new Table(doc);
+            doc.FirstSection.Body.InsertAfter(flatTable, originalTable);
+
+            // Process each row of the original table.
+            foreach (Row originalRow in originalTable.Rows)
             {
-                for (int i = 0; i < row.Cells.Count; i++)
-                {
-                    Cell cell = row.Cells[i];
-                    if (cell.CellFormat.HorizontalMerge == CellMerge.First)
-                    {
-                        // Capture the text from the first cell of the merge.
-                        string mergedText = cell.GetText().Trim();
+                Row newRow = new Row(doc);
+                flatTable.AppendChild(newRow);
 
-                        // Propagate the text to all subsequent cells that are marked as Previous.
-                        int j = i + 1;
-                        while (j < row.Cells.Count && row.Cells[j].CellFormat.HorizontalMerge == CellMerge.Previous)
+                int cellIndex = 0;
+                while (cellIndex < originalRow.Cells.Count)
+                {
+                    Cell currentCell = originalRow.Cells[cellIndex];
+                    CellMerge hMerge = currentCell.CellFormat.HorizontalMerge;
+
+                    if (hMerge == CellMerge.First)
+                    {
+                        // Determine how many cells are merged together.
+                        int mergedCount = 1;
+                        int nextIndex = cellIndex + 1;
+                        while (nextIndex < originalRow.Cells.Count &&
+                               originalRow.Cells[nextIndex].CellFormat.HorizontalMerge == CellMerge.Previous)
                         {
-                            Cell prevCell = row.Cells[j];
-                            // Clear existing content.
-                            prevCell.RemoveAllChildren();
-                            // Add a new paragraph with the same text.
-                            Paragraph para = new Paragraph(doc);
-                            para.AppendChild(new Run(doc, mergedText));
-                            prevCell.AppendChild(para);
-                            j++;
+                            mergedCount++;
+                            nextIndex++;
                         }
+
+                        // Get the text from the first cell of the merged range.
+                        string cellText = currentCell.GetText().Trim();
+
+                        // Create separate cells for each part of the merged range,
+                        // duplicating the original text.
+                        for (int i = 0; i < mergedCount; i++)
+                        {
+                            Cell newCell = new Cell(doc);
+                            newCell.AppendChild(new Paragraph(doc));
+                            newCell.FirstParagraph.AppendChild(new Run(doc, cellText));
+                            newRow.AppendChild(newCell);
+                        }
+
+                        // Move the index past the merged range.
+                        cellIndex = nextIndex;
+                    }
+                    else if (hMerge == CellMerge.Previous)
+                    {
+                        // This cell is part of a merged range that has already been handled.
+                        cellIndex++;
+                    }
+                    else // CellMerge.None – normal cell.
+                    {
+                        // Clone the cell (including its content) and add it to the new row.
+                        Cell clonedCell = (Cell)currentCell.Clone(true);
+                        newRow.AppendChild(clonedCell);
+                        cellIndex++;
                     }
                 }
             }
 
-            // Next, handle vertical merges.
-            // Determine the maximum number of columns in the table.
-            int maxCols = 0;
-            foreach (Row row in targetTable.Rows)
-                if (row.Cells.Count > maxCols) maxCols = row.Cells.Count;
+            // Remove the original table from the document.
+            originalTable.Remove();
 
-            for (int col = 0; col < maxCols; col++)
-            {
-                for (int rowIdx = 0; rowIdx < targetTable.Rows.Count; rowIdx++)
-                {
-                    Row row = targetTable.Rows[rowIdx];
-                    if (col >= row.Cells.Count) continue; // safety check
-
-                    Cell cell = row.Cells[col];
-                    if (cell.CellFormat.VerticalMerge == CellMerge.First)
-                    {
-                        // Capture the text from the first cell of the vertical merge.
-                        string mergedText = cell.GetText().Trim();
-
-                        // Propagate the text to all subsequent cells in the same column marked as Previous.
-                        int nextRow = rowIdx + 1;
-                        while (nextRow < targetTable.Rows.Count)
-                        {
-                            Row nextRowObj = targetTable.Rows[nextRow];
-                            if (col >= nextRowObj.Cells.Count) break;
-                            Cell nextCell = nextRowObj.Cells[col];
-                            if (nextCell.CellFormat.VerticalMerge != CellMerge.Previous) break;
-
-                            // Clear existing content.
-                            nextCell.RemoveAllChildren();
-                            // Add a new paragraph with the same text.
-                            Paragraph para = new Paragraph(doc);
-                            para.AppendChild(new Run(doc, mergedText));
-                            nextCell.AppendChild(para);
-
-                            nextRow++;
-                        }
-                    }
-                }
-            }
-
-            // Finally, remove all merge flags so the table becomes a flat structure.
-            foreach (Row row in targetTable.Rows)
-            {
-                foreach (Cell cell in row.Cells)
-                {
-                    cell.CellFormat.HorizontalMerge = CellMerge.None;
-                    cell.CellFormat.VerticalMerge = CellMerge.None;
-                }
-            }
-
-            // Save the resulting document.
-            doc.Save("UnmergedTable.docx");
+            // Save the resulting document with the flattened table.
+            doc.Save("FlattenedTable.docx");
         }
     }
 }

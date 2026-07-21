@@ -15,13 +15,11 @@ namespace AsposeWordsTableInsertExample
 
             // Add some paragraphs. One of them contains the keyword we will search for.
             builder.Writeln("This is the first paragraph.");
-            builder.Writeln("This paragraph contains the KEYWORD and will be the anchor point.");
+            builder.Writeln("Paragraph with the keyword: INSERT_TABLE_HERE.");
             builder.Writeln("This is the third paragraph.");
 
-            // Define the keyword to look for.
-            const string keyword = "KEYWORD";
-
-            // Search for the paragraph that contains the keyword.
+            // Search for the paragraph that contains the specific keyword.
+            const string keyword = "INSERT_TABLE_HERE";
             Paragraph targetParagraph = null;
             NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
             foreach (Paragraph para in paragraphs)
@@ -34,46 +32,29 @@ namespace AsposeWordsTableInsertExample
             }
 
             if (targetParagraph == null)
-                throw new InvalidOperationException("Keyword not found in any paragraph.");
+                throw new InvalidOperationException($"Keyword \"{keyword}\" not found in the document.");
 
-            // Build a simple 2x2 table.
+            // Create a new table that will be inserted after the found paragraph.
             Table table = new Table(doc);
+            // Ensure the table has at least one row and one cell.
+            table.EnsureMinimum();
 
-            // First row.
-            Row row1 = new Row(doc);
-            table.AppendChild(row1);
+            // Populate the table with a single cell containing some text.
+            Row row = table.FirstRow;
+            Cell cell = row.FirstCell;
+            cell.FirstParagraph.AppendChild(new Run(doc, "This is the inserted table cell."));
 
-            Cell cell11 = new Cell(doc);
-            cell11.AppendChild(new Paragraph(doc));
-            cell11.FirstParagraph.AppendChild(new Run(doc, "Row 1, Cell 1"));
-            row1.AppendChild(cell11);
-
-            Cell cell12 = new Cell(doc);
-            cell12.AppendChild(new Paragraph(doc));
-            cell12.FirstParagraph.AppendChild(new Run(doc, "Row 1, Cell 2"));
-            row1.AppendChild(cell12);
-
-            // Second row.
-            Row row2 = new Row(doc);
-            table.AppendChild(row2);
-
-            Cell cell21 = new Cell(doc);
-            cell21.AppendChild(new Paragraph(doc));
-            cell21.FirstParagraph.AppendChild(new Run(doc, "Row 2, Cell 1"));
-            row2.AppendChild(cell21);
-
-            Cell cell22 = new Cell(doc);
-            cell22.AppendChild(new Paragraph(doc));
-            cell22.FirstParagraph.AppendChild(new Run(doc, "Row 2, Cell 2"));
-            row2.AppendChild(cell22);
-
-            // Insert the table after the paragraph that contains the keyword.
-            // InsertAfter is a method of the parent node (Body), not of Paragraph itself.
+            // Insert the table after the target paragraph.
+            // The paragraph's parent is a Body node, which can accept block-level nodes like Table.
             targetParagraph.ParentNode.InsertAfter(table, targetParagraph);
 
             // Save the document.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "OutputTableAfterParagraph.docx");
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "InsertedTable.docx");
             doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not saved correctly.", outputPath);
         }
     }
 }

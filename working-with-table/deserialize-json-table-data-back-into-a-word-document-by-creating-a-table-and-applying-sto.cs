@@ -6,145 +6,154 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-public class Program
+namespace AsposeWordsTableFromJson
 {
-    // Represents a single cell in the JSON table definition.
-    public class CellData
+    // Represents the whole table structure.
+    public class TableData
     {
-        public string Text { get; set; }
-        // Hex color string like "#FFCC00". Null means no shading.
-        public string BackgroundColor { get; set; }
-        // Width in points. Zero means default.
-        public double Width { get; set; }
-        // "Left", "Center", "Right", or "Justify". Null means default.
-        public string HorizontalAlignment { get; set; }
+        public List<RowData> Rows { get; set; }
     }
 
-    // Represents a row in the JSON table definition.
+    // Represents a single row.
     public class RowData
     {
         public List<CellData> Cells { get; set; }
     }
 
-    // Represents the whole table in the JSON table definition.
-    public class TableData
+    // Represents a single cell with optional formatting.
+    public class CellData
     {
-        public List<RowData> Rows { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public string Text { get; set; }
+
+        // Optional width in points.
+        public double? Width { get; set; }
+
+        // Optional padding values in points.
+        public double? LeftPadding { get; set; }
+        public double? RightPadding { get; set; }
+        public double? TopPadding { get; set; }
+        public double? BottomPadding { get; set; }
+
+        // Optional background color in hex format, e.g. "#FFCC00".
+        public string BackgroundColor { get; set; }
+
+        // Optional vertical alignment: "Top", "Center", "Bottom".
+        public string VerticalAlignment { get; set; }
     }
 
-    static void Main()
+    public class Program
     {
-        // Sample JSON that stores table content and simple formatting.
-        string json = @"
+        public static void Main()
         {
-            ""Title"": ""Sample Table"",
-            ""Description"": ""Generated from JSON"",
-            ""Rows"": [
-                {
-                    ""Cells"": [
-                        { ""Text"": ""Header 1"", ""BackgroundColor"": ""#D9E1F2"", ""Width"": 150, ""HorizontalAlignment"": ""Center"" },
-                        { ""Text"": ""Header 2"", ""BackgroundColor"": ""#D9E1F2"", ""Width"": 150, ""HorizontalAlignment"": ""Center"" }
-                    ]
-                },
-                {
-                    ""Cells"": [
-                        { ""Text"": ""Row 1, Col 1"", ""BackgroundColor"": ""#FFFFFF"", ""Width"": 150, ""HorizontalAlignment"": ""Left"" },
-                        { ""Text"": ""Row 1, Col 2"", ""BackgroundColor"": ""#FFFFFF"", ""Width"": 150, ""HorizontalAlignment"": ""Right"" }
-                    ]
-                },
-                {
-                    ""Cells"": [
-                        { ""Text"": ""Row 2, Col 1"", ""BackgroundColor"": ""#FFFFFF"", ""Width"": 150, ""HorizontalAlignment"": ""Left"" },
-                        { ""Text"": ""Row 2, Col 2"", ""BackgroundColor"": ""#FFFFFF"", ""Width"": 150, ""HorizontalAlignment"": ""Right"" }
-                    ]
-                }
-            ]
-        }";
-
-        // Deserialize JSON into strongly‑typed objects.
-        TableData tableData = JsonConvert.DeserializeObject<TableData>(json);
-
-        // Create a new blank Word document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start building the table.
-        Table table = builder.StartTable();
-
-        // Iterate over rows.
-        foreach (RowData row in tableData.Rows)
+            // Sample JSON describing a table with two rows and two columns.
+            string json = @"
+{
+  ""Rows"": [
+    {
+      ""Cells"": [
         {
-            // Iterate over cells in the current row.
-            foreach (CellData cell in row.Cells)
+          ""Text"": ""Header 1"",
+          ""BackgroundColor"": ""#D9E1F2"",
+          ""VerticalAlignment"": ""Center"",
+          ""Width"": 150,
+          ""LeftPadding"": 5,
+          ""RightPadding"": 5,
+          ""TopPadding"": 2,
+          ""BottomPadding"": 2
+        },
+        {
+          ""Text"": ""Header 2"",
+          ""BackgroundColor"": ""#D9E1F2"",
+          ""VerticalAlignment"": ""Center"",
+          ""Width"": 150,
+          ""LeftPadding"": 5,
+          ""RightPadding"": 5,
+          ""TopPadding"": 2,
+          ""BottomPadding"": 2
+        }
+      ]
+    },
+    {
+      ""Cells"": [
+        {
+          ""Text"": ""Row 1, Cell 1"",
+          ""BackgroundColor"": ""#FFFFFF"",
+          ""VerticalAlignment"": ""Top""
+        },
+        {
+          ""Text"": ""Row 1, Cell 2"",
+          ""BackgroundColor"": ""#FFFFFF"",
+          ""VerticalAlignment"": ""Top""
+        }
+      ]
+    }
+  ]
+}";
+            // Deserialize JSON into TableData object.
+            TableData tableData = JsonConvert.DeserializeObject<TableData>(json);
+            if (tableData == null || tableData.Rows == null)
+                throw new InvalidOperationException("Failed to deserialize table data.");
+
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start building the table.
+            Table table = builder.StartTable();
+
+            foreach (RowData rowData in tableData.Rows)
             {
-                // Insert a new cell.
-                builder.InsertCell();
+                if (rowData?.Cells == null)
+                    continue;
 
-                // Apply cell width if specified.
-                if (cell.Width > 0)
-                    builder.CellFormat.Width = cell.Width;
-
-                // Apply background shading if a color is provided.
-                if (!string.IsNullOrEmpty(cell.BackgroundColor))
+                foreach (CellData cellData in rowData.Cells)
                 {
-                    Color bg = ColorTranslator.FromHtml(cell.BackgroundColor);
-                    builder.CellFormat.Shading.BackgroundPatternColor = bg;
-                }
+                    // Insert a new cell.
+                    builder.InsertCell();
 
-                // Set paragraph alignment based on the requested horizontal alignment.
-                if (!string.IsNullOrEmpty(cell.HorizontalAlignment))
-                {
-                    switch (cell.HorizontalAlignment.Trim().ToLower())
+                    // Apply optional formatting.
+                    if (cellData.Width.HasValue)
+                        builder.CellFormat.Width = cellData.Width.Value;
+
+                    if (cellData.LeftPadding.HasValue)
+                        builder.CellFormat.LeftPadding = cellData.LeftPadding.Value;
+                    if (cellData.RightPadding.HasValue)
+                        builder.CellFormat.RightPadding = cellData.RightPadding.Value;
+                    if (cellData.TopPadding.HasValue)
+                        builder.CellFormat.TopPadding = cellData.TopPadding.Value;
+                    if (cellData.BottomPadding.HasValue)
+                        builder.CellFormat.BottomPadding = cellData.BottomPadding.Value;
+
+                    if (!string.IsNullOrEmpty(cellData.BackgroundColor))
                     {
-                        case "left":
-                            builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
-                            break;
-                        case "center":
-                            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-                            break;
-                        case "right":
-                            builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
-                            break;
-                        case "justify":
-                            builder.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
-                            break;
-                        default:
-                            builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
-                            break;
+                        Color bg = ColorTranslator.FromHtml(cellData.BackgroundColor);
+                        builder.CellFormat.Shading.BackgroundPatternColor = bg;
                     }
+
+                    if (!string.IsNullOrEmpty(cellData.VerticalAlignment))
+                    {
+                        if (Enum.TryParse(cellData.VerticalAlignment, out CellVerticalAlignment vAlign))
+                            builder.CellFormat.VerticalAlignment = vAlign;
+                    }
+
+                    // Write the cell text.
+                    builder.Write(cellData.Text ?? string.Empty);
                 }
 
-                // Write the cell text.
-                builder.Write(cell.Text ?? string.Empty);
+                // End the current row.
+                builder.EndRow();
             }
 
-            // End the current row.
-            builder.EndRow();
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputTable.docx");
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not saved.", outputPath);
         }
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Apply stored table title and description.
-        if (!string.IsNullOrEmpty(tableData.Title))
-            table.Title = tableData.Title;
-        if (!string.IsNullOrEmpty(tableData.Description))
-            table.Description = tableData.Description;
-
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "TableFromJson.docx");
-        doc.Save(outputPath);
-
-        // Simple validation that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the output document.");
-
-        // The program ends here without waiting for user input.
     }
 }

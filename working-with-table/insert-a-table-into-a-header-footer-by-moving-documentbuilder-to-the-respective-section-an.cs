@@ -9,14 +9,24 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Add a primary header to the first section.
+        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+        doc.FirstSection.HeadersFooters.Add(header);
+
+        // Add a primary footer to the first section.
+        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
+        doc.FirstSection.HeadersFooters.Add(footer);
+
+        // Create a DocumentBuilder attached to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable different first page header/footer (optional, shows usage of multiple headers/footers).
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
-
-        // ----- Insert a table into the primary header -----
+        // -------------------------------------------------
+        // Insert a table into the header.
+        // -------------------------------------------------
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        // Start the table.
+
+        // Start a 2x2 table.
         Table headerTable = builder.StartTable();
 
         // First row.
@@ -33,34 +43,36 @@ public class Program
         builder.Write("Header Cell 4");
         builder.EndRow();
 
-        // Finish the header table.
+        // Finish the table.
         builder.EndTable();
 
-        // ----- Insert a table into the primary footer -----
+        // -------------------------------------------------
+        // Insert a table into the footer.
+        // -------------------------------------------------
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+
+        // Start a 2x2 table.
         Table footerTable = builder.StartTable();
 
-        // Single row with three cells.
+        // First row.
         builder.InsertCell();
-        builder.Write("Footer Col 1");
+        builder.Write("Footer Cell 1");
         builder.InsertCell();
-        builder.Write("Footer Col 2");
-        builder.InsertCell();
-        builder.Write("Footer Col 3");
+        builder.Write("Footer Cell 2");
         builder.EndRow();
 
-        // Finish the footer table.
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Footer Cell 3");
+        builder.InsertCell();
+        builder.Write("Footer Cell 4");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file.
-        string outputPath = "HeaderFooterTable.docx";
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "HeaderFooterTable.docx");
         doc.Save(outputPath);
-
-        // Validate that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
-
-        // Indicate successful completion.
-        Console.WriteLine("Document saved to: " + Path.GetFullPath(outputPath));
     }
 }

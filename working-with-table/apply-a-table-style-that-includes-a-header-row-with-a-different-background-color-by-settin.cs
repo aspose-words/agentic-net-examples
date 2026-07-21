@@ -1,15 +1,14 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
-namespace TableStyleHeaderExample
+namespace AsposeWordsTableStyleExample
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
             // Create a new blank document.
             Document doc = new Document();
@@ -25,38 +24,44 @@ namespace TableStyleHeaderExample
             builder.Write("Quantity");
             builder.EndRow();
 
-            // First data row.
+            // Data rows.
             builder.InsertCell();
             builder.Write("Apples");
             builder.InsertCell();
             builder.Write("10");
             builder.EndRow();
 
-            // Second data row.
             builder.InsertCell();
             builder.Write("Bananas");
             builder.InsertCell();
             builder.Write("20");
             builder.EndRow();
 
-            // Finish the table.
             builder.EndTable();
 
             // Create a custom table style.
-            TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "HeaderBlueStyle");
+            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
 
-            // Set the background color of the first row (header) via conditional style.
-            tableStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightBlue;
+            // Set a distinct background color for the header (first) row.
+            customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightBlue;
 
             // Apply the style to the table.
-            table.Style = tableStyle;
+            table.Style = customStyle;
 
-            // Enable the first‑row conditional formatting.
+            // Enable the first‑row conditional formatting in the style options.
             table.StyleOptions = TableStyleOptions.FirstRow;
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableStyleHeaderRow.docx");
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // Save the document.
+            string outputPath = Path.Combine(outputDir, "TableWithHeaderStyle.docx");
             doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The document was not saved correctly.");
         }
     }
 }

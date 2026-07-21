@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,36 +11,49 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a bookmark that will mark the insertion point for the table.
-        builder.StartBookmark("TableBookmark");
-        builder.Writeln("Text before the table.");
-        builder.EndBookmark("TableBookmark");
+        // Insert some introductory text.
+        builder.Writeln("Document with a bookmark where a table will be inserted.");
 
-        // Move the builder cursor to the start of the bookmark (after the bookmark start node).
-        // This positions the insertion point exactly where the table should be placed.
-        builder.MoveToBookmark("TableBookmark", isStart: true, isAfter: true);
+        // Insert a bookmark named "InsertHere".
+        builder.StartBookmark("InsertHere");
+        builder.Writeln("This paragraph is inside the bookmark.");
+        builder.EndBookmark("InsertHere");
 
-        // Build the table at the bookmark location using the DocumentBuilder workflow.
-        Table table = builder.StartTable();
+        // Move the builder to the bookmark location.
+        builder.MoveToBookmark("InsertHere");
+
+        // Insert a table at the bookmark location.
+        builder.StartTable();
 
         // First row.
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
+        builder.Write("Header 2");
         builder.EndRow();
 
         // Second row.
         builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
+        builder.Write("Cell A1");
         builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
+        builder.Write("Cell A2");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Save the resulting document.
-        doc.Save("TableAtBookmark.docx");
+        // Save the document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
+
+        // Optionally, you could load the document again to ensure it is readable.
+        Document loadedDoc = new Document(outputPath);
+        // No further actions; program ends here.
     }
 }

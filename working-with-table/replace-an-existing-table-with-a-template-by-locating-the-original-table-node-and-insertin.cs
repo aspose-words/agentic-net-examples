@@ -1,64 +1,101 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Replacing;
 
-public class Program
+namespace AsposeWordsTableReplace
 {
-    public static void Main()
+    public class Program
     {
-        // ---------- Create a source document with an original table ----------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        public static void Main()
+        {
+            // Folder for generated files.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-        // Build a simple 2x2 table that will be replaced later
-        Table originalTable = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Original 1,1");
-        builder.InsertCell();
-        builder.Write("Original 1,2");
-        builder.EndRow();
+            // -----------------------------------------------------------------
+            // 1. Create a source document that contains an original table.
+            // -----------------------------------------------------------------
+            Document sourceDoc = new Document();
+            DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
 
-        builder.InsertCell();
-        builder.Write("Original 2,1");
-        builder.InsertCell();
-        builder.Write("Original 2,2");
-        builder.EndRow();
-        builder.EndTable();
+            // Build a simple 2x2 table with placeholder text "Old".
+            srcBuilder.StartTable();
+            srcBuilder.InsertCell();
+            srcBuilder.Write("Old Row 1, Cell 1");
+            srcBuilder.InsertCell();
+            srcBuilder.Write("Old Row 1, Cell 2");
+            srcBuilder.EndRow();
 
-        // Save the source document (optional, but demonstrates the file exists)
-        sourceDoc.Save("Source.docx");
+            srcBuilder.InsertCell();
+            srcBuilder.Write("Old Row 2, Cell 1");
+            srcBuilder.InsertCell();
+            srcBuilder.Write("Old Row 2, Cell 2");
+            srcBuilder.EndRow();
+            srcBuilder.EndTable();
 
-        // ---------- Create a template document containing the replacement table ----------
-        Document templateDoc = new Document();
-        DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
+            string sourcePath = Path.Combine(outputDir, "Original.docx");
+            sourceDoc.Save(sourcePath);
 
-        // Build a different 2x2 table that will replace the original one
-        Table templateTable = tmplBuilder.StartTable();
-        tmplBuilder.InsertCell();
-        tmplBuilder.Write("Template A");
-        tmplBuilder.InsertCell();
-        tmplBuilder.Write("Template B");
-        tmplBuilder.EndRow();
+            // -----------------------------------------------------------------
+            // 2. Load the source document and create a new table that will replace the old one.
+            // -----------------------------------------------------------------
+            Document targetDoc = new Document(sourcePath);
 
-        tmplBuilder.InsertCell();
-        tmplBuilder.Write("Template C");
-        tmplBuilder.InsertCell();
-        tmplBuilder.Write("Template D");
-        tmplBuilder.EndRow();
-        tmplBuilder.EndTable();
+            // Build the replacement table in a separate temporary document.
+            Document templateDoc = new Document();
+            DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
 
-        // ---------- Import the template table into the source document ----------
-        NodeImporter importer = new NodeImporter(templateDoc, sourceDoc, ImportFormatMode.KeepSourceFormatting);
-        Table importedTable = (Table)importer.ImportNode(templateTable, true);
+            tmplBuilder.StartTable();
+            tmplBuilder.InsertCell();
+            tmplBuilder.Write("New Row 1, Cell 1");
+            tmplBuilder.InsertCell();
+            tmplBuilder.Write("New Row 1, Cell 2");
+            tmplBuilder.EndRow();
 
-        // ---------- Locate the original table and replace it ----------
-        Table tableToReplace = (Table)sourceDoc.GetChild(NodeType.Table, 0, true);
-        // Insert the new table after the original one
-        tableToReplace.ParentNode.InsertAfter(importedTable, tableToReplace);
-        // Remove the original table from the document
-        tableToReplace.Remove();
+            tmplBuilder.InsertCell();
+            tmplBuilder.Write("New Row 2, Cell 1");
+            tmplBuilder.InsertCell();
+            tmplBuilder.Write("New Row 2, Cell 2");
+            tmplBuilder.EndRow();
+            tmplBuilder.EndTable();
 
-        // ---------- Save the final document ----------
-        sourceDoc.Save("Result.docx");
+            // The table we just built.
+            Table templateTable = (Table)templateDoc.GetChild(NodeType.Table, 0, true);
+
+            // Import the template table into the target document.
+            NodeImporter importer = new NodeImporter(templateDoc, targetDoc, ImportFormatMode.KeepSourceFormatting);
+            Table newTable = (Table)importer.ImportNode(templateTable, true);
+
+            // -----------------------------------------------------------------
+            // 3. Locate the original table node in the document.
+            // -----------------------------------------------------------------
+            Table originalTable = (Table)targetDoc.GetChild(NodeType.Table, 0, true);
+            if (originalTable == null)
+                throw new InvalidOperationException("Original table not found.");
+
+            // -----------------------------------------------------------------
+            // 4. Replace the original table with the new one.
+            // -----------------------------------------------------------------
+            CompositeNode parent = originalTable.ParentNode as CompositeNode;
+            if (parent == null)
+                throw new InvalidOperationException("Original table does not have a valid parent.");
+
+            // Insert the new table after the original table.
+            parent.InsertAfter(newTable, originalTable);
+            // Remove the original table.
+            originalTable.Remove();
+
+            // -----------------------------------------------------------------
+            // 5. Save the modified document.
+            // -----------------------------------------------------------------
+            string resultPath = Path.Combine(outputDir, "Result.docx");
+            targetDoc.Save(resultPath);
+
+            // Simple validation that the file was created.
+            if (!File.Exists(resultPath))
+                throw new FileNotFoundException("Result document was not saved.", resultPath);
+        }
     }
 }

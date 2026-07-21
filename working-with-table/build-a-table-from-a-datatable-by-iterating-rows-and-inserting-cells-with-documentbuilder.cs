@@ -8,22 +8,24 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DataTable with some data.
+        // Create a sample DataTable.
         DataTable dataTable = new DataTable("Sample");
         dataTable.Columns.Add("Product");
-        dataTable.Columns.Add("Quantity");
-        dataTable.Rows.Add("Apples", 10);
-        dataTable.Rows.Add("Bananas", 20);
-        dataTable.Rows.Add("Carrots", 30);
+        dataTable.Columns.Add("Quantity", typeof(int));
+        dataTable.Columns.Add("Price", typeof(decimal));
 
-        // Initialize a new blank document and a builder.
+        dataTable.Rows.Add("Apples", 10, 0.5m);
+        dataTable.Rows.Add("Bananas", 5, 0.3m);
+        dataTable.Rows.Add("Carrots", 7, 0.2m);
+
+        // Initialize a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start the table.
         Table table = builder.StartTable();
 
-        // Add a header row using the column names.
+        // Insert header cells.
         foreach (DataColumn column in dataTable.Columns)
         {
             builder.InsertCell();
@@ -31,10 +33,10 @@ public class Program
         }
         builder.EndRow();
 
-        // Add rows for each DataRow in the DataTable.
-        foreach (DataRow dataRow in dataTable.Rows)
+        // Insert data rows.
+        foreach (DataRow row in dataTable.Rows)
         {
-            foreach (object value in dataRow.ItemArray)
+            foreach (object value in row.ItemArray)
             {
                 builder.InsertCell();
                 builder.Write(value?.ToString() ?? string.Empty);
@@ -48,11 +50,5 @@ public class Program
         // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableFromDataTable.docx");
         doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("The output document was not created.");
-        }
     }
 }

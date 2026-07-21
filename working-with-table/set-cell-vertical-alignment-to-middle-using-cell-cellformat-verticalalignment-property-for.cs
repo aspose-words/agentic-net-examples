@@ -7,52 +7,50 @@ public class Program
 {
     public static void Main()
     {
-        // Path where the resulting document will be saved.
-        string outputPath = "VerticalAlignmentTable.docx";
-
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // First row, first cell – set vertical alignment to middle (center).
+        // First row, first cell.
         builder.InsertCell();
         builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-        builder.Write("Cell 1\r\nLine 2\r\nLine 3");
+        builder.Write("Cell 1, Row 1");
 
-        // First row, second cell – also middle-aligned.
+        // First row, second cell.
         builder.InsertCell();
         builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-        builder.Write("Cell 2");
-
-        // End the first row.
+        builder.Write("Cell 2, Row 1");
         builder.EndRow();
-
-        // Second row – increase row height to demonstrate vertical centering.
-        builder.RowFormat.Height = 100;
-        builder.RowFormat.HeightRule = HeightRule.Exactly;
 
         // Second row, first cell.
         builder.InsertCell();
         builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-        builder.Write("Second row, cell 1");
+        builder.Write("Cell 1, Row 2");
 
         // Second row, second cell.
         builder.InsertCell();
         builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-        builder.Write("Second row, cell 2");
-
-        // End the second row and the table.
+        builder.Write("Cell 2, Row 2");
         builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document to disk.
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "VerticalAlignmentTable.docx");
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception("Failed to create the output document.");
+
+        // Reload the document and verify the vertical alignment of the first cell.
+        Document loaded = new Document(outputPath);
+        Cell firstCell = loaded.FirstSection.Body.Tables[0].Rows[0].Cells[0];
+        if (firstCell.CellFormat.VerticalAlignment != CellVerticalAlignment.Center)
+            throw new Exception("Cell vertical alignment was not set correctly.");
     }
 }

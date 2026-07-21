@@ -8,17 +8,23 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for constructing the document content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a single cell with some text.
+        // Start a new table.
         Table table = builder.StartTable();
+
+        // Add a single cell with some text.
         builder.InsertCell();
-        builder.Write("Sample cell");
+        builder.Write("Sample cell content.");
+
+        // End the current row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Set the distance between the top of the table and surrounding text to 3 points.
-        // This property represents the table's top margin.
+        // Set the distance between the table top and surrounding text to 3 points.
+        // This property controls the vertical placement of the table relative to surrounding paragraphs.
         table.DistanceTop = 3.0;
 
         // Save the document to the local file system.

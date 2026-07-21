@@ -1,109 +1,80 @@
 using System;
+using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
+        // Path for the output document.
+        string outputPath = "TableWithFooter.docx";
+
         // Create a new blank document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with a header row and some numeric data.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // Header row.
+        // ---------- Header row ----------
         builder.InsertCell();
         builder.Write("Item");
         builder.InsertCell();
         builder.Write("Quantity");
-        builder.InsertCell();
-        builder.Write("Price");
         builder.EndRow();
 
-        // Data rows.
-        AddDataRow(builder, "Apples", 10, 1.20);
-        AddDataRow(builder, "Bananas", 5, 0.80);
-        AddDataRow(builder, "Carrots", 8, 0.50);
-        AddDataRow(builder, "Dates", 3, 2.00);
+        // ---------- Data rows ----------
+        AddDataRow(builder, "Apples", 20);
+        AddDataRow(builder, "Bananas", 40);
+        AddDataRow(builder, "Carrots", 50);
 
-        // Finish the table and obtain the Table object.
-        table = builder.EndTable();
-
-        // Calculate column sums for the numeric columns (Quantity and Price).
+        // ---------- Calculate column sums ----------
         double quantitySum = 0;
-        double priceSum = 0;
-
         // Skip the header row (index 0).
         for (int i = 1; i < table.Rows.Count; i++)
         {
             Row row = table.Rows[i];
-            // Quantity column (index 1).
-            double qty = ParseDouble(row.Cells[1].GetText());
-            quantitySum += qty;
-
-            // Price column (index 2).
-            double price = ParseDouble(row.Cells[2].GetText());
-            priceSum += price;
+            // The quantity is in the second cell (index 1).
+            string cellText = row.Cells[1].ToString(SaveFormat.Text).Trim();
+            if (double.TryParse(cellText, out double value))
+                quantitySum += value;
         }
 
-        // Add a footer row with the totals.
-        Row footerRow = new Row(doc);
-        table.Rows.Add(footerRow);
+        // ---------- Footer row with totals ----------
+        // Apply formatting only to this row.
+        builder.Font.Bold = true;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
 
-        // First cell: label "Total".
-        Cell labelCell = new Cell(doc);
-        labelCell.AppendChild(new Paragraph(doc));
-        Run labelRun = new Run(doc, "Total");
-        labelRun.Font.Bold = true;
-        labelCell.FirstParagraph.AppendChild(labelRun);
-        // Apply shading to the footer row cells.
-        labelCell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-        footerRow.Cells.Add(labelCell);
+        builder.InsertCell();
+        builder.Write("Total");
+        builder.InsertCell();
+        builder.Write(quantitySum.ToString());
+        builder.EndRow();
 
-        // Second cell: sum of Quantity.
-        Cell qtyCell = new Cell(doc);
-        qtyCell.AppendChild(new Paragraph(doc));
-        Run qtyRun = new Run(doc, quantitySum.ToString());
-        qtyRun.Font.Bold = true;
-        qtyCell.FirstParagraph.AppendChild(qtyRun);
-        qtyCell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-        footerRow.Cells.Add(qtyCell);
+        // Reset formatting so it does not affect later content.
+        builder.Font.Bold = false;
+        builder.CellFormat.Shading.ClearFormatting();
 
-        // Third cell: sum of Price.
-        Cell priceCell = new Cell(doc);
-        priceCell.AppendChild(new Paragraph(doc));
-        Run priceRun = new Run(doc, priceSum.ToString("F2"));
-        priceRun.Font.Bold = true;
-        priceCell.FirstParagraph.AppendChild(priceRun);
-        priceCell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-        footerRow.Cells.Add(priceCell);
+        // End the table.
+        builder.EndTable();
 
         // Save the document.
-        doc.Save("TableWithFooter.docx");
+        doc.Save(outputPath);
+
+        // Simple validation that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception($"Failed to create the output file: {outputPath}");
     }
 
-    // Helper method to add a data row to the table.
-    private static void AddDataRow(DocumentBuilder builder, string item, int quantity, double price)
+    // Helper method to add a data row with an item name and a numeric quantity.
+    private static void AddDataRow(DocumentBuilder builder, string item, int quantity)
     {
         builder.InsertCell();
         builder.Write(item);
         builder.InsertCell();
         builder.Write(quantity.ToString());
-        builder.InsertCell();
-        builder.Write(price.ToString("F2"));
         builder.EndRow();
-    }
-
-    // Helper method to parse a double from cell text (removes any trailing control characters).
-    private static double ParseDouble(string text)
-    {
-        // Cell.GetText() returns text ending with a cell marker (\\a). Trim it.
-        string trimmed = text.Trim('\a', '\r', '\n', '\t', ' ');
-        double result;
-        double.TryParse(trimmed, out result);
-        return result;
     }
 }

@@ -11,7 +11,7 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a simple 2x2 table.
+        // Start a table and add a simple 2x2 grid.
         Table table = builder.StartTable();
 
         // First row.
@@ -31,13 +31,14 @@ public class Program
         // Finish the table.
         builder.EndTable();
 
-        // Apply a double line border to each side of the table.
-        table.SetBorder(BorderType.Left, LineStyle.Double, 2.0, Color.Black, true);
-        table.SetBorder(BorderType.Right, LineStyle.Double, 2.0, Color.Black, true);
-        table.SetBorder(BorderType.Top, LineStyle.Double, 2.0, Color.Black, true);
-        table.SetBorder(BorderType.Bottom, LineStyle.Double, 2.0, Color.Black, true);
+        // Apply a double border to each side of the table.
+        // The last parameter 'true' overrides any explicit cell borders.
+        table.SetBorder(BorderType.Left, LineStyle.Double, 1.5, Color.Black, true);
+        table.SetBorder(BorderType.Right, LineStyle.Double, 1.5, Color.Black, true);
+        table.SetBorder(BorderType.Top, LineStyle.Double, 1.5, Color.Black, true);
+        table.SetBorder(BorderType.Bottom, LineStyle.Double, 1.5, Color.Black, true);
 
-        // Save the document to the local file system.
-        doc.Save("Table.DoubleBorder.docx");
+        // Save the document.
+        doc.Save("TableDoubleBorder.docx");
     }
 }

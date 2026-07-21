@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,56 +12,51 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // Create a custom table style.
-        // -----------------------------------------------------------------
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyHeaderStyle");
-
-        // Increase the font size for the first row (header) of the table.
-        // ConditionalStyles[ConditionalStyleType.FirstRow] targets the header row.
-        customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Size = 20;
-
-        // Optionally set a background color for the header row to make it stand out.
-        customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = System.Drawing.Color.LightGray;
-
-        // -----------------------------------------------------------------
-        // Build a simple table with a header row.
-        // -----------------------------------------------------------------
+        // Start a table.
         Table table = builder.StartTable();
 
-        // Header row.
+        // ----- Header row -----
         builder.InsertCell();
-        builder.Write("Product");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Write("Header 2");
         builder.EndRow();
 
-        // Data rows.
+        // ----- Data rows -----
         builder.InsertCell();
-        builder.Write("Apples");
+        builder.Write("Row 1, Col 1");
         builder.InsertCell();
-        builder.Write("50");
+        builder.Write("Row 1, Col 2");
         builder.EndRow();
 
         builder.InsertCell();
-        builder.Write("Bananas");
+        builder.Write("Row 2, Col 1");
         builder.InsertCell();
-        builder.Write("30");
+        builder.Write("Row 2, Col 2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Apply the custom style to the table.
-        table.Style = customStyle;
+        // Create a custom table style.
+        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
+        // Default font size for the table.
+        customStyle.Font.Size = 12;
+        // Larger font size for the first (header) row.
+        customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Size = 20;
+        // Optional: give the header a background color.
+        customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightGray;
 
-        // Enable the FirstRow style option so that the conditional formatting is applied.
+        // Apply the style to the table and enable the FirstRow conditional formatting.
+        table.Style = customStyle;
         table.StyleOptions = TableStyleOptions.FirstRow;
 
-        // -----------------------------------------------------------------
-        // Save the document to the local file system.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithHeaderStyle.docx");
+        // Save the document.
+        string outputPath = "TableWithHeaderStyle.docx";
         doc.Save(outputPath);
+
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not saved correctly.");
     }
 }
