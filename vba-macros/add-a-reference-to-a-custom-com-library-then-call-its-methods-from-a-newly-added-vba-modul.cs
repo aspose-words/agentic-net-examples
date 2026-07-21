@@ -1,54 +1,61 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-namespace AsposeWordsVbaExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Prepare output directory.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+        string docPath = Path.Combine(outputDir, "CustomComMacro.docm");
+
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Create a new VBA project and assign it to the document.
+        VbaProject vbaProject = new VbaProject
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            Name = "CustomComProject"
+        };
+        doc.VbaProject = vbaProject;
 
-            // Ensure the document has a VBA project; create one if it does not exist.
-            VbaProject vbaProject = new VbaProject
-            {
-                Name = "CustomCOMProject"
-            };
-            doc.VbaProject = vbaProject;
-
-            // VBA code that creates an instance of a custom COM library (late binding) and calls a method.
-            string vbaCode = @"
+        // Create a new procedural VBA module.
+        VbaModule vbaModule = new VbaModule
+        {
+            Name = "CustomComModule",
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = @"
 Sub CallCustomCom()
-    Dim comObj As Object
-    ' Replace ""MyCustomLib.Class"" with the ProgID of the actual COM library.
-    Set comObj = CreateObject(""MyCustomLib.Class"")
-    comObj.DoSomething
-End Sub
-";
+    Dim obj As Object
+    Set obj = CreateObject(""MyCustomLib.MyClass"")
+    obj.DoSomething
+End Sub"
+        };
 
-            // Create a new procedural VBA module and assign the source code.
-            VbaModule vbaModule = new VbaModule
-            {
-                Name = "CustomComModule",
-                Type = VbaModuleType.ProceduralModule,
-                SourceCode = vbaCode
-            };
+        // Add the module to the VBA project.
+        doc.VbaProject.Modules.Add(vbaModule);
 
-            // Add the module to the VBA project.
-            doc.VbaProject.Modules.Add(vbaModule);
+        // Save the document in a macro‑enabled format.
+        doc.Save(docPath);
 
-            // Save the document in a macro‑enabled format.
-            const string outputPath = "CustomComMacro.docm";
-            doc.Save(outputPath);
+        // Reload the document to verify that the module was added correctly.
+        Document loadedDoc = new Document(docPath);
+        VbaProject loadedProject = loadedDoc.VbaProject;
 
-            // Simple validation output.
-            Console.WriteLine($"Document saved to {outputPath}");
-            Console.WriteLine($"Has macros: {doc.HasMacros}");
-            Console.WriteLine($"Module count: {doc.VbaProject.Modules.Count}");
-            Console.WriteLine($"Module \"{vbaModule.Name}\" source code:");
-            Console.WriteLine(vbaModule.SourceCode);
+        if (loadedProject != null && loadedProject.Modules["CustomComModule"] != null)
+        {
+            string source = loadedProject.Modules["CustomComModule"].SourceCode ?? string.Empty;
+            bool containsCreateObject = source.Contains("CreateObject(\"MyCustomLib.MyClass\")");
+            Console.WriteLine(containsCreateObject
+                ? "VBA module added with COM reference call."
+                : "VBA module added, but COM call not found.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to add VBA module.");
         }
     }
 }

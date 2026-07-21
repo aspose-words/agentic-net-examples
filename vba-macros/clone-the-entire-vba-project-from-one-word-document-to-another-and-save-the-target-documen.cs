@@ -1,76 +1,64 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+namespace CloneVbaProjectExample
 {
-    public static void Main()
+    public class Program
     {
-        // Folder for generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create a source macro‑enabled document with a VBA project.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-
-        // Create a new VBA project and give it a name.
-        VbaProject sourceProject = new VbaProject
+        public static void Main()
         {
-            Name = "SourceProject"
-        };
+            // Paths for the source and target macro-enabled documents.
+            const string sourcePath = "Source.docm";
+            const string targetPath = "Target.docm";
 
-        // Create a procedural module with some simple VBA code.
-        VbaModule sourceModule = new VbaModule
-        {
-            Name = "Module1",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"
-Sub HelloWorld()
-    MsgBox ""Hello from source document!""
-End Sub"
-        };
+            // -------------------------------------------------
+            // Step 1: Create a source document with a VBA project.
+            // -------------------------------------------------
+            Document sourceDoc = new Document();
 
-        // Add the module to the project.
-        sourceProject.Modules.Add(sourceModule);
+            // Create a new VBA project and assign it to the document.
+            VbaProject sourceProject = new VbaProject
+            {
+                Name = "SourceProject"
+            };
+            sourceDoc.VbaProject = sourceProject;
 
-        // Attach the VBA project to the document.
-        sourceDoc.VbaProject = sourceProject;
+            // Add a procedural module with sample macro code.
+            VbaModule module1 = new VbaModule
+            {
+                Name = "Module1",
+                Type = VbaModuleType.ProceduralModule,
+                SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from source\"\nEnd Sub"
+            };
+            sourceDoc.VbaProject.Modules.Add(module1);
 
-        // Save the source document as a macro‑enabled file.
-        string sourcePath = Path.Combine(outputDir, "Source.docm");
-        sourceDoc.Save(sourcePath);
+            // Add a second module to demonstrate multiple modules.
+            VbaModule module2 = new VbaModule
+            {
+                Name = "Module2",
+                Type = VbaModuleType.ProceduralModule,
+                SourceCode = "Function Add(a As Integer, b As Integer) As Integer\n    Add = a + b\nEnd Function"
+            };
+            sourceDoc.VbaProject.Modules.Add(module2);
 
-        // -----------------------------------------------------------------
-        // 2. Load the source document (optional – we already have it in memory).
-        // -----------------------------------------------------------------
-        Document loadedSource = new Document(sourcePath);
+            // Save the source document in macro-enabled format.
+            sourceDoc.Save(sourcePath);
 
-        // -----------------------------------------------------------------
-        // 3. Clone the entire VBA project from the source document.
-        // -----------------------------------------------------------------
-        VbaProject clonedProject = loadedSource.VbaProject.Clone();
+            // -------------------------------------------------
+            // Step 2: Load the source document and clone its VBA project.
+            // -------------------------------------------------
+            Document src = new Document(sourcePath);
+            VbaProject clonedProject = src.VbaProject.Clone();
 
-        // -----------------------------------------------------------------
-        // 4. Create a new target document and assign the cloned VBA project.
-        // -----------------------------------------------------------------
-        Document targetDoc = new Document();
-        targetDoc.VbaProject = clonedProject;
+            // -------------------------------------------------
+            // Step 3: Create a new target document and assign the cloned VBA project.
+            // -------------------------------------------------
+            Document targetDoc = new Document();
+            targetDoc.VbaProject = clonedProject;
 
-        // Save the target document; it now contains the same VBA macros.
-        string targetPath = Path.Combine(outputDir, "Target.docm");
-        targetDoc.Save(targetPath);
-
-        // Simple validation – the target document should have macros.
-        if (targetDoc.HasMacros)
-        {
-            Console.WriteLine("VBA project successfully cloned to target document.");
-        }
-        else
-        {
-            Console.WriteLine("Cloning failed – target document has no macros.");
+            // Save the target document, which now contains the cloned VBA project.
+            targetDoc.Save(targetPath);
         }
     }
 }

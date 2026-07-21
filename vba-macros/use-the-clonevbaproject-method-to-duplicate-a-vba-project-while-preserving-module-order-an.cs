@@ -1,55 +1,56 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+public class CloneVbaProjectExample
 {
     public static void Main()
     {
-        // Create a source macro-enabled document with a VBA project and two modules.
+        // Create a source macro-enabled document.
         Document sourceDoc = new Document();
+
+        // Create a new VBA project and assign it to the source document.
         VbaProject sourceProject = new VbaProject();
         sourceProject.Name = "SourceProject";
         sourceDoc.VbaProject = sourceProject;
 
-        VbaModule module1 = new VbaModule();
-        module1.Name = "Module1";
-        module1.Type = VbaModuleType.ProceduralModule;
-        module1.SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from Module1\"\nEnd Sub";
-        sourceDoc.VbaProject.Modules.Add(module1);
+        // Create a VBA module with some simple code.
+        VbaModule sourceModule = new VbaModule();
+        sourceModule.Name = "Module1";
+        sourceModule.Type = VbaModuleType.ProceduralModule;
+        sourceModule.SourceCode = @"
+Sub HelloWorld()
+    MsgBox ""Hello from source document!""
+End Sub";
+        // Add the module to the VBA project.
+        sourceDoc.VbaProject.Modules.Add(sourceModule);
 
-        VbaModule module2 = new VbaModule();
-        module2.Name = "Module2";
-        module2.Type = VbaModuleType.ProceduralModule;
-        module2.SourceCode = "Sub GoodbyeWorld()\n    MsgBox \"Goodbye from Module2\"\nEnd Sub";
-        sourceDoc.VbaProject.Modules.Add(module2);
+        // Save the source document (optional, just for demonstration).
+        sourceDoc.Save("Source.docm");
 
-        // Save the source document as a macro-enabled file.
-        string artifactsDir = "Artifacts";
-        Directory.CreateDirectory(artifactsDir);
-        string sourcePath = Path.Combine(artifactsDir, "Source.docm");
-        sourceDoc.Save(sourcePath);
-
-        // Load the source document (optional, we already have it in memory).
-        Document src = new Document(sourcePath);
+        // Clone the VBA project from the source document.
+        VbaProject clonedProject = sourceDoc.VbaProject.Clone();
 
         // Create a destination document.
         Document destDoc = new Document();
 
-        // Clone the VBA project from the source and assign it to the destination.
-        VbaProject clonedProject = src.VbaProject.Clone();
+        // Assign the cloned VBA project to the destination document.
         destDoc.VbaProject = clonedProject;
 
-        // Output the names of the cloned modules to verify order preservation.
-        Console.WriteLine("Cloned VBA project modules order:");
-        foreach (VbaModule mod in destDoc.VbaProject.Modules)
+        // The destination document now contains a default module (created during cloning).
+        // Replace it with the cloned module from the source to preserve original module order.
+        VbaModule oldModule = destDoc.VbaProject.Modules["Module1"];
+        if (oldModule != null)
         {
-            Console.WriteLine(mod.Name);
+            // Clone the original module from the source document.
+            VbaModule copiedModule = sourceDoc.VbaProject.Modules["Module1"].Clone();
+
+            // Remove the default module and add the copied one.
+            destDoc.VbaProject.Modules.Remove(oldModule);
+            destDoc.VbaProject.Modules.Add(copiedModule);
         }
 
-        // Save the destination document, which now contains the cloned VBA project.
-        string destPath = Path.Combine(artifactsDir, "Cloned.docm");
-        destDoc.Save(destPath);
+        // Save the destination document with the duplicated VBA project.
+        destDoc.Save("ClonedVbaProject.docm");
     }
 }

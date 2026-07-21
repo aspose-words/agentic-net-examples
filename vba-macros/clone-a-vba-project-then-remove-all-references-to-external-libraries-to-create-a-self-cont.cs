@@ -2,57 +2,64 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-namespace VbaCloneAndStripReferences
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a blank document.
-            Document originalDoc = new Document();
+        // Create a blank document.
+        Document sourceDoc = new Document();
 
-            // Create a new VBA project and assign a name.
-            VbaProject vbaProject = new VbaProject { Name = "OriginalProject" };
-            originalDoc.VbaProject = vbaProject;
+        // Create a new VBA project and assign it to the document.
+        VbaProject vbaProject = new VbaProject();
+        vbaProject.Name = "OriginalProject";
+        sourceDoc.VbaProject = vbaProject;
 
-            // Add a simple procedural module with sample macro code.
-            VbaModule module = new VbaModule
-            {
-                Name = "SampleModule",
-                Type = VbaModuleType.ProceduralModule,
-                SourceCode = @"
+        // Add a procedural module with sample VBA code.
+        VbaModule module1 = new VbaModule();
+        module1.Name = "Module1";
+        module1.Type = VbaModuleType.ProceduralModule;
+        module1.SourceCode = @"
 Sub HelloWorld()
     MsgBox ""Hello from VBA!""
-End Sub"
-            };
-            originalDoc.VbaProject.Modules.Add(module);
+End Sub";
+        sourceDoc.VbaProject.Modules.Add(module1);
 
-            // Save the original macro‑enabled document.
-            const string originalPath = "Original.docm";
-            originalDoc.Save(originalPath);
+        // Add another module.
+        VbaModule module2 = new VbaModule();
+        module2.Name = "Module2";
+        module2.Type = VbaModuleType.ProceduralModule;
+        module2.SourceCode = @"
+Function AddNumbers(a As Integer, b As Integer) As Integer
+    AddNumbers = a + b
+End Function";
+        sourceDoc.VbaProject.Modules.Add(module2);
 
-            // Clone the VBA project.
-            VbaProject clonedProject = originalDoc.VbaProject.Clone();
+        // Save the source document (macro‑enabled).
+        string sourcePath = "SourceMacro.docm";
+        sourceDoc.Save(sourcePath);
 
-            // Create a new document and assign the cloned project.
-            Document clonedDoc = new Document();
-            clonedDoc.VbaProject = clonedProject;
+        // Clone the VBA project from the source document.
+        VbaProject clonedProject = sourceDoc.VbaProject.Clone();
 
-            // Remove all references from the cloned project to make it self‑contained.
-            // Iterate backwards because we are modifying the collection while iterating.
-            for (int i = clonedDoc.VbaProject.References.Count - 1; i >= 0; i--)
-            {
-                clonedDoc.VbaProject.References.RemoveAt(i);
-            }
+        // Create a new document and assign the cloned VBA project.
+        Document destDoc = new Document();
+        destDoc.VbaProject = clonedProject;
 
-            // Save the cloned, self‑contained macro‑enabled document.
-            const string clonedPath = "ClonedSelfContained.docm";
-            clonedDoc.Save(clonedPath);
-
-            // Simple verification output.
-            Console.WriteLine($"Original document saved to: {originalPath}");
-            Console.WriteLine($"Cloned document saved to: {clonedPath}");
-            Console.WriteLine($"Cloned document has {clonedDoc.VbaProject.References.Count} VBA references (expected 0).");
+        // Remove all references to external libraries from the cloned project.
+        VbaReferenceCollection references = destDoc.VbaProject.References;
+        for (int i = references.Count - 1; i >= 0; i--)
+        {
+            references.RemoveAt(i);
         }
+
+        // Save the resulting document, which now contains a self‑contained macro set.
+        string destPath = "ClonedNoReferences.docm";
+        destDoc.Save(destPath);
+
+        // Simple verification output.
+        Console.WriteLine($"Source document saved to: {sourcePath}");
+        Console.WriteLine($"Cloned document without references saved to: {destPath}");
+        Console.WriteLine($"Cloned document has macros: {destDoc.HasMacros}");
+        Console.WriteLine($"Number of references after removal: {destDoc.VbaProject.References.Count}");
     }
 }

@@ -7,70 +7,68 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define folder for output files (relative to the executable location).
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Step 1: Create a new macro‑enabled document and add a VBA module with an absolute file path.
+        // -----------------------------------------------------------------
+        // Step 1: Create a new macro‑enabled document and add a VBA module.
+        // -----------------------------------------------------------------
         Document doc = new Document();
 
-        // Create a new VBA project if none exists.
+        // Create a new VBA project and assign it to the document.
         VbaProject vbaProject = new VbaProject();
         vbaProject.Name = "SampleProject";
         doc.VbaProject = vbaProject;
 
-        // Create a procedural VBA module.
+        // Create a VBA module with hard‑coded absolute file paths.
         VbaModule module = new VbaModule();
         module.Name = "PathMacro";
         module.Type = VbaModuleType.ProceduralModule;
-
-        // Sample VBA code containing a hard‑coded absolute path.
-        // The macro simply opens a file using the absolute path.
         module.SourceCode = @"
 Sub OpenFile()
     Dim filePath As String
-    filePath = ""C:\Data\Files\myfile.txt""
+    filePath = ""C:\Data\input.txt""
+    ' Open the file (placeholder code)
     MsgBox ""Opening: "" & filePath
 End Sub
 ";
 
-        // Add the module to the project.
+        // Add the module to the VBA project.
         doc.VbaProject.Modules.Add(module);
 
-        // Save the document with the absolute path in the macro.
-        string absoluteMacroPath = Path.Combine(artifactsDir, "MacroWithAbsolutePaths.docm");
-        doc.Save(absoluteMacroPath);
+        // Save the document as a macro‑enabled .docm file.
+        string originalPath = Path.Combine(outputDir, "MacroDocument.docm");
+        doc.Save(originalPath);
 
-        // Step 2: Load the saved document and replace the absolute path with a relative one.
-        Document loadedDoc = new Document(absoluteMacroPath);
+        // -----------------------------------------------------------------
+        // Step 2: Load the saved document and replace absolute paths with
+        //         relative paths in the VBA source code.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
 
-        // Ensure the document actually has a VBA project.
+        // Ensure the document actually contains macros.
         if (loadedDoc.HasMacros && loadedDoc.VbaProject != null)
         {
-            foreach (VbaModule vbaModule in loadedDoc.VbaProject.Modules)
+            foreach (VbaModule mod in loadedDoc.VbaProject.Modules)
             {
                 // Guard against null source code.
-                string source = vbaModule.SourceCode ?? string.Empty;
+                string source = mod.SourceCode ?? string.Empty;
 
-                // Replace the hard‑coded absolute directory with a relative path.
-                // Example: "C:\Data\Files\" -> "./Files/"
-                string absoluteDir = @"C:\Data\Files\";
-                string relativeDir = "./Files/";
+                // Replace the hard‑coded absolute path with a relative one.
+                // Example: "C:\Data\" -> ".\Data\"
+                source = source.Replace(@"C:\Data\", @".\Data\");
 
-                if (source.Contains(absoluteDir))
-                {
-                    source = source.Replace(absoluteDir, relativeDir);
-                    vbaModule.SourceCode = source;
-                }
+                // Assign the modified source back to the module.
+                mod.SourceCode = source;
             }
+
+            // Save the updated document.
+            string updatedPath = Path.Combine(outputDir, "MacroDocument_Updated.docm");
+            loadedDoc.Save(updatedPath);
         }
 
-        // Save the modified document.
-        string relativeMacroPath = Path.Combine(artifactsDir, "MacroWithRelativePaths.docm");
-        loadedDoc.Save(relativeMacroPath);
-
-        // Output the paths of the generated files (no user interaction required).
-        Console.WriteLine("Created document with absolute paths: " + absoluteMacroPath);
-        Console.WriteLine("Created document with relative paths: " + relativeMacroPath);
+        // Indicate completion (no interactive input required).
+        Console.WriteLine("Macro path replacement completed.");
     }
 }

@@ -1,67 +1,77 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+namespace RemoveStandardModulesExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Create a new VBA project and assign it to the document.
-        VbaProject project = new VbaProject();
-        project.Name = "SampleProject";
-        doc.VbaProject = project;
-
-        // Add a procedural module.
-        VbaModule procModule = new VbaModule
+        public static void Main()
         {
-            Name = "StandardModule",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from procedural module\"\nEnd Sub"
-        };
-        doc.VbaProject.Modules.Add(procModule);
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Add a class module.
-        VbaModule classModule = new VbaModule
-        {
-            Name = "MyClass",
-            Type = VbaModuleType.ClassModule,
-            SourceCode = "Public Sub Greet()\n    MsgBox \"Hello from class module\"\nEnd Sub"
-        };
-        doc.VbaProject.Modules.Add(classModule);
+            // Create a new VBA project and assign it to the document.
+            VbaProject vbaProject = new VbaProject
+            {
+                Name = "SampleProject"
+            };
+            doc.VbaProject = vbaProject;
 
-        // Add a document module.
-        VbaModule docModule = new VbaModule
-        {
-            Name = "DocumentModule",
-            Type = VbaModuleType.DocumentModule,
-            SourceCode = "Sub DocumentMacro()\n    MsgBox \"Document module macro\"\nEnd Sub"
-        };
-        doc.VbaProject.Modules.Add(docModule);
+            // Add a procedural module.
+            VbaModule procModule = new VbaModule
+            {
+                Name = "ProceduralModule",
+                Type = VbaModuleType.ProceduralModule,
+                SourceCode = "Sub ProcMacro()\n    MsgBox \"Procedural\"\nEnd Sub"
+            };
+            doc.VbaProject.Modules.Add(procModule);
 
-        // Add a designer module.
-        VbaModule designerModule = new VbaModule
-        {
-            Name = "DesignerModule",
-            Type = VbaModuleType.DesignerModule,
-            SourceCode = "' Designer module placeholder"
-        };
-        doc.VbaProject.Modules.Add(designerModule);
+            // Add a document module.
+            VbaModule docModule = new VbaModule
+            {
+                Name = "DocumentModule",
+                Type = VbaModuleType.DocumentModule,
+                SourceCode = "Sub DocMacro()\n    MsgBox \"Document\"\nEnd Sub"
+            };
+            doc.VbaProject.Modules.Add(docModule);
 
-        // Remove all modules that are not class modules.
-        VbaModuleCollection modules = doc.VbaProject.Modules;
-        for (int i = modules.Count - 1; i >= 0; i--)
-        {
-            VbaModule module = modules[i];
-            if (module.Type != VbaModuleType.ClassModule)
-                modules.Remove(module);
+            // Add a designer module.
+            VbaModule designerModule = new VbaModule
+            {
+                Name = "DesignerModule",
+                Type = VbaModuleType.DesignerModule,
+                SourceCode = "Sub DesignerMacro()\n    MsgBox \"Designer\"\nEnd Sub"
+            };
+            doc.VbaProject.Modules.Add(designerModule);
+
+            // Add a class module (this one should be kept).
+            VbaModule classModule = new VbaModule
+            {
+                Name = "ClassModule",
+                Type = VbaModuleType.ClassModule,
+                SourceCode = "Public Sub ClassMacro()\n    MsgBox \"Class\"\nEnd Sub"
+            };
+            doc.VbaProject.Modules.Add(classModule);
+
+            // Identify and remove all modules that are not class modules.
+            List<VbaModule> modulesToRemove = new List<VbaModule>();
+            foreach (VbaModule module in doc.VbaProject.Modules)
+            {
+                if (module.Type != VbaModuleType.ClassModule)
+                {
+                    modulesToRemove.Add(module);
+                }
+            }
+
+            foreach (VbaModule module in modulesToRemove)
+            {
+                doc.VbaProject.Modules.Remove(module);
+            }
+
+            // Save the resulting document as a macro-enabled file.
+            doc.Save("Result.docm");
         }
-
-        // Save the document in a macro-enabled format.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docm");
-        doc.Save(outputPath);
     }
 }

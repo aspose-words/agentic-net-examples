@@ -3,64 +3,59 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+public class RetrieveVbaModuleSource
 {
     public static void Main()
     {
-        // Define file names for the macro-enabled document and the output text file.
-        string docPath = Path.Combine(Environment.CurrentDirectory, "MacroDocument.docm");
-        string txtPath = Path.Combine(Environment.CurrentDirectory, "ModuleSource.txt");
+        // Define file names.
+        string docPath = Path.Combine(Environment.CurrentDirectory, "Sample.docm");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ModuleSource.txt");
+        string moduleName = "SampleModule";
 
         // -----------------------------------------------------------------
-        // 1. Create a new Word document and add a VBA project with a module.
+        // Create a new macro‑enabled document and add a VBA module if needed.
         // -----------------------------------------------------------------
         Document doc = new Document();
 
-        // Create a new VBA project and assign it to the document.
-        VbaProject vbaProject = new VbaProject
+        // Ensure the document has a VBA project.
+        if (doc.VbaProject == null)
         {
-            Name = "SampleVbaProject"
-        };
-        doc.VbaProject = vbaProject;
+            VbaProject project = new VbaProject();
+            project.Name = "AsposeProject";
+            doc.VbaProject = project;
+        }
 
-        // Create a procedural VBA module, give it a name and some source code.
-        VbaModule vbaModule = new VbaModule
+        // Add a VBA module with some sample code if it does not already exist.
+        if (doc.VbaProject.Modules[moduleName] == null)
         {
-            Name = "TestModule",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"
-Sub HelloWorld()
+            VbaModule module = new VbaModule();
+            module.Name = moduleName;
+            module.Type = VbaModuleType.ProceduralModule;
+            module.SourceCode = @"Sub HelloWorld()
     MsgBox ""Hello from VBA!""
-End Sub"
-        };
+End Sub";
+            doc.VbaProject.Modules.Add(module);
+        }
 
-        // Add the module to the VBA project.
-        doc.VbaProject.Modules.Add(vbaModule);
-
-        // Save the document in a macro‑enabled format (.docm).
+        // Save the document in macro‑enabled format.
         doc.Save(docPath);
 
         // ---------------------------------------------------------------
-        // 2. Load the document (optional – we can reuse the same instance).
+        // Load the document (optional) and retrieve the source of the module.
         // ---------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
+        VbaProject vbaProject = loadedDoc.VbaProject;
 
-        // Ensure the document actually contains a VBA project.
-        if (!loadedDoc.HasMacros || loadedDoc.VbaProject == null)
+        // Guard against missing project or module.
+        string sourceCode = string.Empty;
+        if (vbaProject != null)
         {
-            Console.WriteLine("The document does not contain any VBA macros.");
-            return;
+            VbaModule targetModule = vbaProject.Modules[moduleName];
+            if (targetModule != null && !string.IsNullOrEmpty(targetModule.SourceCode))
+                sourceCode = targetModule.SourceCode;
         }
 
-        // ---------------------------------------------------------------
-        // 3. Retrieve the source code of the specific module by name.
-        // ---------------------------------------------------------------
-        VbaModule targetModule = loadedDoc.VbaProject.Modules["TestModule"];
-        string sourceCode = targetModule?.SourceCode ?? string.Empty;
-
-        // ---------------------------------------------------------------
-        // 4. Write the retrieved source code to a text file for analysis.
-        // ---------------------------------------------------------------
-        File.WriteAllText(txtPath, sourceCode);
+        // Write the retrieved source code to a text file.
+        File.WriteAllText(outputPath, sourceCode);
     }
 }

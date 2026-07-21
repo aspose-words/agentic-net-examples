@@ -3,45 +3,41 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-namespace AsposeWordsVbaExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank Word document.
-            Document doc = new Document();
+        // Create a blank Word document.
+        Document doc = new Document();
 
-            // Create a new VBA project and assign a name.
-            VbaProject vbaProject = new VbaProject();
-            vbaProject.Name = "MyVbaProject";
+        // Create a new VBA project and give it a name.
+        VbaProject vbaProject = new VbaProject();
+        vbaProject.Name = "MyVbaProject";
 
-            // Attach the VBA project to the document.
-            doc.VbaProject = vbaProject;
+        // Attach the VBA project to the document.
+        doc.VbaProject = vbaProject;
 
-            // Create a new procedural VBA module.
-            VbaModule vbaModule = new VbaModule();
-            vbaModule.Name = "MyStandardModule";
-            vbaModule.Type = VbaModuleType.ProceduralModule;
+        // Create a new procedural module.
+        VbaModule module = new VbaModule();
+        module.Name = "MyModule";
+        module.Type = VbaModuleType.ProceduralModule;
 
-            // Assign custom macro code to the module's SourceCode property.
-            vbaModule.SourceCode = @"
+        // Assign custom macro code to the module.
+        module.SourceCode = @"
 Sub HelloWorld()
-    MsgBox ""Hello from Aspose.Words VBA!""
+    MsgBox ""Hello from Aspose.Words!""
 End Sub
 ";
 
-            // Add the module to the VBA project.
-            doc.VbaProject.Modules.Add(vbaModule);
+        // Add the module to the VBA project.
+        doc.VbaProject.Modules.Add(module);
 
-            // Define the output file path (macro-enabled .docm format).
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "VbaProject_CreateMacro.docm");
+        // Save the document in a macro‑enabled format.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CreatedMacro.docm");
+        doc.Save(outputPath);
 
-            // Save the document with macros.
-            doc.Save(outputPath, SaveFormat.Docm);
-
-            // Indicate completion.
-            Console.WriteLine($"Document saved to: {outputPath}");
-        }
+        // Output simple verification information.
+        Console.WriteLine($"Document saved to: {outputPath}");
+        Console.WriteLine($"VBA project contains {doc.VbaProject.Modules.Count} module(s).");
     }
 }

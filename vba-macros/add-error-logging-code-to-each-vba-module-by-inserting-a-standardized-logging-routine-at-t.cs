@@ -2,64 +2,67 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-namespace AsposeWordsVbaExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        // Standardized logging routine to prepend to each VBA module.
-        private const string LoggingRoutine = 
-            "'=== Error Logging Routine ===\n" +
-            "Sub LogError()\n" +
-            "    Debug.Print \"Error at \" & Now\n" +
-            "End Sub\n\n";
+        // Create a new blank document.
+        Document doc = new Document();
 
-        public static void Main()
+        // Create a new VBA project and assign it to the document.
+        VbaProject project = new VbaProject();
+        project.Name = "SampleProject";
+        doc.VbaProject = project;
+
+        // Add a sample procedural module with some dummy code.
+        VbaModule sampleModule = new VbaModule();
+        sampleModule.Name = "SampleModule";
+        sampleModule.Type = VbaModuleType.ProceduralModule;
+        sampleModule.SourceCode = @"
+Sub TestMacro()
+    MsgBox ""Hello from VBA!""
+End Sub
+";
+        doc.VbaProject.Modules.Add(sampleModule);
+
+        // Add another module to demonstrate handling multiple modules.
+        VbaModule anotherModule = new VbaModule();
+        anotherModule.Name = "AnotherModule";
+        anotherModule.Type = VbaModuleType.ProceduralModule;
+        anotherModule.SourceCode = @"
+Function AddNumbers(a As Integer, b As Integer) As Integer
+    AddNumbers = a + b
+End Function
+";
+        doc.VbaProject.Modules.Add(anotherModule);
+
+        // Define the standardized logging routine to be inserted.
+        string loggingRoutine = @"
+Sub LogError(errMsg As String)
+    ' Simple logging routine – writes to the Immediate Window.
+    Debug.Print ""Error: "" & errMsg
+End Sub
+
+";
+
+        // Insert the logging routine at the beginning of each VBA module.
+        foreach (VbaModule module in doc.VbaProject.Modules)
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            // Guard against null source code.
+            string originalSource = module.SourceCode ?? string.Empty;
 
-            // Ensure the document has a VBA project.
-            VbaProject vbaProject = new VbaProject
+            // If the logging routine already exists, skip insertion to avoid duplication.
+            if (!originalSource.Contains("Sub LogError"))
             {
-                Name = "SampleProject"
-            };
-            doc.VbaProject = vbaProject;
-
-            // Add sample VBA modules.
-            AddSampleModule(doc, "Module1", 
-                "Sub Test1()\n" +
-                "    MsgBox \"Hello from Test1\"\n" +
-                "End Sub\n");
-
-            AddSampleModule(doc, "Module2", 
-                "Function AddNumbers(a As Integer, b As Integer) As Integer\n" +
-                "    AddNumbers = a + b\n" +
-                "End Function\n");
-
-            // Insert the logging routine at the beginning of each module.
-            foreach (VbaModule module in doc.VbaProject.Modules)
-            {
-                // Guard against null source code.
-                string originalSource = module.SourceCode ?? string.Empty;
-
-                // Prepend the logging routine.
-                module.SourceCode = LoggingRoutine + originalSource;
+                module.SourceCode = loggingRoutine + originalSource;
             }
-
-            // Save the document in a macro-enabled format.
-            doc.Save("OutputWithLogging.docm");
         }
 
-        // Helper method to create and add a VBA module with given name and source code.
-        private static void AddSampleModule(Document doc, string moduleName, string sourceCode)
-        {
-            VbaModule module = new VbaModule
-            {
-                Name = moduleName,
-                Type = VbaModuleType.ProceduralModule,
-                SourceCode = sourceCode
-            };
-            doc.VbaProject.Modules.Add(module);
-        }
+        // Save the document in a macro‑enabled format.
+        const string outputPath = "Output.docm";
+        doc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Document saved to '{outputPath}' with logging routines added to VBA modules.");
     }
 }

@@ -7,93 +7,96 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths.
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "MacroDocument.docm");
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "VbaModulesReport.txt");
+        // Define paths for the temporary macro-enabled document.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string docPath = Path.Combine(outputDir, "MacroDocument.docm");
 
-        // -----------------------------------------------------------------
-        // 1. Create a new blank document and a VBA project with sample modules.
-        // -----------------------------------------------------------------
+        // 1. Create a blank document.
         Document doc = new Document();
 
-        // Create a new VBA project and assign it to the document.
-        VbaProject vbaProject = new VbaProject
-        {
-            Name = "SampleProject"
-        };
-        doc.VbaProject = vbaProject;
+        // 2. Create a new VBA project and assign it to the document.
+        VbaProject project = new VbaProject();
+        project.Name = "SampleProject";
+        doc.VbaProject = project;
 
-        // Helper to add a module.
-        void AddModule(string name, VbaModuleType type, string source)
-        {
-            VbaModule module = new VbaModule
-            {
-                Name = name,
-                Type = type,
-                SourceCode = source
-            };
-            doc.VbaProject.Modules.Add(module);
-        }
-
-        // Add a procedural module.
-        AddModule(
-            "ModuleProcedural",
-            VbaModuleType.ProceduralModule,
-            @"Sub HelloWorld()
+        // 3. Add a procedural module.
+        VbaModule procModule = new VbaModule();
+        procModule.Name = "ProceduralModule";
+        procModule.Type = VbaModuleType.ProceduralModule;
+        procModule.SourceCode = @"
+Sub HelloWorld()
     MsgBox ""Hello, World!""
-End Sub"
-        );
+End Sub
 
-        // Add a class module.
-        AddModule(
-            "ClassHelper",
-            VbaModuleType.ClassModule,
-            @"Option Explicit
+Function AddNumbers(a As Integer, b As Integer) As Integer
+    AddNumbers = a + b
+End Function
+";
+        doc.VbaProject.Modules.Add(procModule);
 
-Public Sub ShowMessage()
-    MsgBox ""Message from ClassHelper!""
-End Sub"
-        );
+        // 4. Add a class module.
+        VbaModule classModule = new VbaModule();
+        classModule.Name = "MyClass";
+        classModule.Type = VbaModuleType.ClassModule;
+        classModule.SourceCode = @"
+Option Explicit
 
-        // Save the macro-enabled document.
+Private m_Value As Long
+
+Public Property Get Value() As Long
+    Value = m_Value
+End Property
+
+Public Property Let Value(ByVal v As Long)
+    m_Value = v
+End Property
+
+Public Sub Increment()
+    m_Value = m_Value + 1
+End Sub
+";
+        doc.VbaProject.Modules.Add(classModule);
+
+        // 5. Add a document module.
+        VbaModule docModule = new VbaModule();
+        docModule.Name = "DocumentModule";
+        docModule.Type = VbaModuleType.DocumentModule;
+        docModule.SourceCode = @"
+Sub AutoOpen()
+    MsgBox ""Document opened!""
+End Sub
+";
+        doc.VbaProject.Modules.Add(docModule);
+
+        // 6. Save the document in macro-enabled format.
         doc.Save(docPath, SaveFormat.Docm);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and generate a report of VBA modules.
-        // -----------------------------------------------------------------
+        // 7. Load the saved document.
         Document loadedDoc = new Document(docPath);
 
-        // Ensure the document actually contains macros.
+        // 8. Ensure the document contains a VBA project.
         if (!loadedDoc.HasMacros || loadedDoc.VbaProject == null)
         {
-            Console.WriteLine("The document does not contain any VBA project.");
+            Console.WriteLine("No VBA project found in the document.");
             return;
         }
 
+        // 9. Iterate through each VBA module and generate the report.
         VbaModuleCollection modules = loadedDoc.VbaProject.Modules;
-
-        using (StreamWriter writer = new StreamWriter(reportPath))
+        foreach (VbaModule module in modules)
         {
-            writer.WriteLine("VBA Module Report");
-            writer.WriteLine("-----------------");
-            writer.WriteLine($"Document: {Path.GetFileName(docPath)}");
-            writer.WriteLine();
+            // Guard against null source code.
+            string source = module.SourceCode ?? string.Empty;
 
-            foreach (VbaModule module in modules)
-            {
-                // Guard against null source code.
-                string source = module.SourceCode ?? string.Empty;
+            // Normalize line endings and count lines.
+            source = source.Replace("\r\n", "\n");
+            int lineCount = source.Length == 0 ? 0 : source.Split('\n').Length;
 
-                // Count lines (including empty lines) by splitting on newline characters.
-                int lineCount = source.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
-
-                string line = $"Name: {module.Name}, Type: {module.Type}, Lines of Code: {lineCount}";
-                Console.WriteLine(line);
-                writer.WriteLine(line);
-            }
+            Console.WriteLine($"Module Name: {module.Name}");
+            Console.WriteLine($"Module Type: {module.Type}");
+            Console.WriteLine($"Lines of Code: {lineCount}");
+            Console.WriteLine(new string('-', 30));
         }
-
-        // Output location of the generated report.
-        Console.WriteLine($"Report saved to: {reportPath}");
     }
 }

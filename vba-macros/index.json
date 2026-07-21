@@ -9,28 +9,31 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Vba",
-      "System.Text.RegularExpressions",
       "System.Collections.Generic",
-      "System.Linq",
+      "System.Text.RegularExpressions",
       "System.Text.Json",
-      "System.IO.Compression"
+      "System.IO.Compression",
+      "System.Text",
+      "System.Linq"
     ],
     "key_apis": [
       "Document",
-      "Directory",
-      "Path",
-      "SaveFormat",
       "File",
+      "Path",
+      "Directory",
+      "SaveFormat",
       "DocumentBuilder",
-      "Style",
-      "Table"
+      "Range",
+      "Font",
+      "Table",
+      "Cell"
     ]
   },
   "stats": {
@@ -38,9 +41,6 @@
     "publish_ready_successful_examples": 34,
     "workflow_counts": {
       "vba-workflow": 34
-    },
-    "winner_counts": {
-      "mcp": 34
     }
   },
   "rules_summary": {
@@ -141,7 +141,7 @@
     {
       "id": 6,
       "file_name": "perform-a-case-insensitive-search-across-all-vba-modules-for-deprecated-function-names-and.cs",
-      "task": "Perform a case-insensitive search across all VBA modules for deprecated function names and replace them.",
+      "task": "Perform a case‑insensitive search across all VBA modules for deprecated function names and replace them.",
       "workflow": "vba-workflow",
       "outputs": [
         "docm"
@@ -152,7 +152,7 @@
     {
       "id": 7,
       "file_name": "replace-hard-coded-file-paths-in-macro-source-code-with-relative-paths-using-string-manipu.cs",
-      "task": "Replace hard-coded file paths in macro source code with relative paths using string manipulation functions.",
+      "task": "Replace hard‑coded file paths in macro source code with relative paths using string manipulation functions.",
       "workflow": "vba-workflow",
       "outputs": [
         "docm"
@@ -306,7 +306,7 @@
     {
       "id": 21,
       "file_name": "clone-a-vba-project-then-remove-all-references-to-external-libraries-to-create-a-self-cont.cs",
-      "task": "Clone a VBA project, then remove all references to external libraries to create a self-contained macro set.",
+      "task": "Clone a VBA project, then remove all references to external libraries to create a self‑contained macro set.",
       "workflow": "vba-workflow",
       "outputs": [
         "docm"
@@ -455,7 +455,7 @@
     {
       "id": 34,
       "file_name": "use-the-document-vbaproject-property-to-replace-an-existing-vba-project-with-a-pre-configu.cs",
-      "task": "Use the Document.VbaProject property to replace an existing VBA project with a pre-configured project template.",
+      "task": "Use the Document.VbaProject property to replace an existing VBA project with a pre‑configured project template.",
       "workflow": "vba-workflow",
       "outputs": [
         "doc"

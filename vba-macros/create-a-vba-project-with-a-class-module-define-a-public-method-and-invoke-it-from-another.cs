@@ -1,63 +1,63 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+namespace VbaMacroExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Create a new VBA project and assign it to the document.
-        VbaProject vbaProject = new VbaProject();
-        vbaProject.Name = "AsposeVbaProject";
-        doc.VbaProject = vbaProject;
+            // Create a new VBA project and assign it to the document.
+            VbaProject vbaProject = new VbaProject
+            {
+                Name = "AsposeVbaProject"
+            };
+            doc.VbaProject = vbaProject;
 
-        // ---------- Create a class module ----------
-        VbaModule classModule = new VbaModule();
-        classModule.Name = "MyClass";
-        classModule.Type = VbaModuleType.ClassModule;
-        classModule.SourceCode =
-@"Option Explicit
+            // ---------- Class module ----------
+            // Create a class module that contains a public method.
+            VbaModule classModule = new VbaModule
+            {
+                Name = "MyClass",
+                Type = VbaModuleType.ClassModule,
+                SourceCode = @"Option Explicit
 
 Public Sub SayHello()
     MsgBox ""Hello from MyClass!""
-End Sub
-";
-        // Add the class module to the VBA project.
-        doc.VbaProject.Modules.Add(classModule);
+End Sub"
+            };
 
-        // ---------- Create a procedural module that invokes the class method ----------
-        VbaModule procModule = new VbaModule();
-        procModule.Name = "MainModule";
-        procModule.Type = VbaModuleType.ProceduralModule;
-        procModule.SourceCode =
-@"Option Explicit
+            // Add the class module to the VBA project.
+            doc.VbaProject.Modules.Add(classModule);
+
+            // ---------- Procedural module ----------
+            // Create a standard module that creates an instance of the class and calls its method.
+            VbaModule procModule = new VbaModule
+            {
+                Name = "MainModule",
+                Type = VbaModuleType.ProceduralModule,
+                SourceCode = @"Option Explicit
 
 Public Sub RunMacro()
     Dim obj As New MyClass
     obj.SayHello
-End Sub
-";
-        // Add the procedural module to the VBA project.
-        doc.VbaProject.Modules.Add(procModule);
+End Sub"
+            };
 
-        // Save the document as a macro‑enabled file.
-        const string fileName = "VbaProjectExample.docm";
-        doc.Save(fileName);
+            // Add the procedural module to the VBA project.
+            doc.VbaProject.Modules.Add(procModule);
 
-        // Load the saved document to verify the modules were added.
-        Document loadedDoc = new Document(fileName);
-        Console.WriteLine("Document has macros: " + loadedDoc.HasMacros);
-        Console.WriteLine("VBA Project Name: " + loadedDoc.VbaProject.Name);
-        Console.WriteLine("Modules count: " + loadedDoc.VbaProject.Modules.Count);
+            // Save the document as a macro‑enabled file.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "VbaProjectClassMacro.docm");
+            doc.Save(outputPath);
 
-        // Output the source code of each module.
-        foreach (VbaModule module in loadedDoc.VbaProject.Modules)
-        {
-            Console.WriteLine("--- Module: " + module.Name + " (" + module.Type + ") ---");
-            Console.WriteLine(module.SourceCode ?? string.Empty);
+            // Indicate completion.
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

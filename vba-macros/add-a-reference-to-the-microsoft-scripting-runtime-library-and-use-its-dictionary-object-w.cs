@@ -18,18 +18,15 @@ namespace AsposeWordsVbaExample
             };
             doc.VbaProject = vbaProject;
 
-            // Create a new procedural VBA module.
+            // Create a new procedural module that contains VBA code using the Dictionary object.
             VbaModule vbaModule = new VbaModule
             {
                 Name = "DictionaryModule",
                 Type = VbaModuleType.ProceduralModule,
-                // VBA macro that uses the Scripting.Dictionary object.
-                // The Microsoft Scripting Runtime library should be referenced in the VBA project.
                 SourceCode = @"
-Sub UseDictionary()
-    ' Create a Dictionary object (requires reference to Microsoft Scripting Runtime).
-    Dim dict As Object
-    Set dict = CreateObject(""Scripting.Dictionary"")
+Sub TestDictionary()
+    ' Requires reference to Microsoft Scripting Runtime (scrrun.dll)
+    Dim dict As New Scripting.Dictionary
     dict.Add ""Key1"", ""Value1""
     MsgBox dict(""Key1"")
 End Sub"
@@ -39,7 +36,11 @@ End Sub"
             doc.VbaProject.Modules.Add(vbaModule);
 
             // Save the document as a macro‑enabled file.
-            doc.Save("DictionaryMacro.docm");
+            string outputPath = "SampleDocument.docm";
+            doc.Save(outputPath, SaveFormat.Docm);
+
+            // Indicate completion.
+            Console.WriteLine($"Document saved to '{outputPath}'.");
         }
     }
 }
