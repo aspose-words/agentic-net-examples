@@ -4,64 +4,83 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
-namespace AsposeMailMergeExample
+public class Program
 {
-    // Callback that supplies the static logo image for every image merge field.
-    public class StaticLogoCallback : IFieldMergingCallback
+    public static void Main()
     {
-        private readonly string _logoPath;
+        // Prepare a temporary PNG image that will be used as the company logo.
+        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "logo.png");
+        CreateSampleLogo(imagePath);
 
-        public StaticLogoCallback(string logoPath)
-        {
-            _logoPath = logoPath;
-        }
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // No custom text merging needed.
-        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args) { }
+        // Insert text merge fields.
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln();
 
-        // Called for MERGEFIELDs with the "Image:" prefix.
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
-        {
-            // Use the static logo file for every image field.
-            args.ImageFileName = _logoPath;
-        }
+        // Insert an image merge field. The part after "Image:" is the field name used in the data source.
+        builder.InsertField("MERGEFIELD Image:CompanyLogo");
+
+        // Build a simple data source. The value for the image field is ignored because the callback supplies a static image.
+        DataTable data = new DataTable("Employees");
+        data.Columns.Add("FirstName");
+        data.Columns.Add("LastName");
+        data.Columns.Add("CompanyLogo"); // placeholder column
+        data.Rows.Add("John", "Doe", "");
+        data.Rows.Add("Jane", "Smith", "");
+
+        // Assign a callback that will provide the static logo image for every merge.
+        doc.MailMerge.FieldMergingCallback = new StaticImageCallback(imagePath);
+
+        // Perform the mail merge.
+        doc.MailMerge.Execute(data);
+
+        // Save the merged document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedDocument.docx");
+        doc.Save(outputPath);
+
+        // Clean up the temporary image file.
+        if (File.Exists(imagePath))
+            File.Delete(imagePath);
     }
 
-    public class Program
+    // Writes a minimal 1x1 PNG image to the specified path.
+    private static void CreateSampleLogo(string path)
     {
-        public static void Main()
+        // This is a base64‑encoded 1×1 pixel transparent PNG.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(path, pngBytes);
+    }
+
+    // Callback that supplies a static image for the "CompanyLogo" merge field.
+    private class StaticImageCallback : IFieldMergingCallback
+    {
+        private readonly string _imagePath;
+
+        public StaticImageCallback(string imagePath)
         {
-            // Prepare a working directory.
-            string workDir = Path.Combine(Path.GetTempPath(), "AsposeMailMergeExample");
-            Directory.CreateDirectory(workDir);
+            _imagePath = imagePath;
+        }
 
-            // Create a tiny PNG image (1x1 pixel) from a base‑64 string.
-            string logoPath = Path.Combine(workDir, "logo.png");
-            const string base64Png =
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/lKXKAAAAAElFTkSuQmCC";
-            byte[] logoBytes = Convert.FromBase64String(base64Png);
-            File.WriteAllBytes(logoPath, logoBytes);
+        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
+        {
+            // No custom text handling required.
+        }
 
-            // Build a simple mail‑merge template with an image field.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-            // Insert an image merge field named "Logo".
-            builder.InsertField("MERGEFIELD Image:Logo");
-
-            // Set the callback that will supply the static logo.
-            template.MailMerge.FieldMergingCallback = new StaticLogoCallback(logoPath);
-
-            // Prepare a data source. The actual value is irrelevant because the callback ignores it.
-            DataTable data = new DataTable("Data");
-            data.Columns.Add("Logo");
-            data.Rows.Add("ignored");
-
-            // Perform the mail merge.
-            template.MailMerge.Execute(data);
-
-            // Save the merged document.
-            string outputPath = Path.Combine(workDir, "MergedDocument.docx");
-            template.Save(outputPath);
+        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
+        {
+            // Ensure we only handle the intended merge field.
+            if (!string.IsNullOrEmpty(args.FieldName) &&
+                args.FieldName.Equals("CompanyLogo", StringComparison.OrdinalIgnoreCase))
+            {
+                // Use the file name instead of a System.Drawing.Image instance.
+                args.ImageFileName = _imagePath;
+            }
         }
     }
 }

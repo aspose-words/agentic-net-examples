@@ -1,6 +1,5 @@
 using System;
 using System.Data;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -12,44 +11,43 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table that will act as a mail merge region placeholder.
+        // Start a table that will contain the mail merge region.
         builder.StartTable();
 
-        // First cell – start of the mail merge region named "Orders".
+        // Insert the first cell and place the TableStart field for the region named "Products".
         builder.InsertCell();
-        builder.InsertField(" MERGEFIELD TableStart:Orders ");
+        builder.InsertField(" MERGEFIELD TableStart:Products ");
 
-        // Second cell – merge field for the first column.
+        // Insert a cell for the first column and add a merge field for the product name.
         builder.InsertCell();
-        builder.InsertField(" MERGEFIELD OrderID ");
+        builder.InsertField(" MERGEFIELD ProductName ");
 
-        // Third cell – merge field for the second column.
+        // Insert a cell for the second column and add a merge field for the price.
         builder.InsertCell();
-        builder.InsertField(" MERGEFIELD Quantity ");
+        builder.InsertField(" MERGEFIELD Price ");
 
-        // Fourth cell – end of the mail merge region.
+        // Insert the last cell and place the TableEnd field to close the region.
         builder.InsertCell();
-        builder.InsertField(" MERGEFIELD TableEnd:Orders ");
+        builder.InsertField(" MERGEFIELD TableEnd:Products ");
 
-        // Finish the row and the table.
+        // End the row that will be repeated for each record.
         builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Prepare a DataTable that matches the region name and column names.
-        DataTable orders = new DataTable("Orders");
-        orders.Columns.Add("OrderID", typeof(int));
-        orders.Columns.Add("Quantity", typeof(int));
+        // Prepare a DataTable that matches the region name and contains the data.
+        DataTable products = new DataTable("Products");
+        products.Columns.Add("ProductName");
+        products.Columns.Add("Price");
+        products.Rows.Add("Apple", "$1.00");
+        products.Rows.Add("Banana", "$0.50");
+        products.Rows.Add("Cherry", "$2.00");
 
-        // Add sample rows.
-        orders.Rows.Add(1001, 5);
-        orders.Rows.Add(1002, 2);
-        orders.Rows.Add(1003, 9);
+        // Execute the mail merge with regions. The row inside the table will be duplicated for each record.
+        doc.MailMerge.ExecuteWithRegions(products);
 
-        // Execute mail merge with regions – the table will be expanded for each row.
-        doc.MailMerge.ExecuteWithRegions(orders);
-
-        // Save the result to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "MailMergeTableRegion.docx");
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save("MailMergeTableRegion.docx");
     }
 }

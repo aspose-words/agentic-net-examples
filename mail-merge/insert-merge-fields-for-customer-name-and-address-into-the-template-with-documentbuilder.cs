@@ -1,8 +1,7 @@
 using System;
 using System.Data;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.BuildingBlocks;
 
 namespace MailMergeExample
 {
@@ -14,22 +13,26 @@ namespace MailMergeExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert MERGEFIELDs for CustomerName and Address.
-            builder.InsertField(" MERGEFIELD CustomerName ");
-            builder.InsertParagraph(); // Move to a new paragraph.
-            builder.InsertField(" MERGEFIELD Address ");
+            // Insert MERGEFIELD for the customer's name.
+            builder.InsertField("MERGEFIELD CustomerName", "<CustomerName>");
+            builder.Writeln(); // Move to the next line.
 
-            // Prepare a data source with one record.
+            // Insert MERGEFIELD for the customer's address.
+            builder.InsertField("MERGEFIELD Address", "<Address>");
+            builder.Writeln();
+
+            // Prepare a data source with two columns: CustomerName and Address.
             DataTable table = new DataTable("Customers");
             table.Columns.Add("CustomerName");
             table.Columns.Add("Address");
             table.Rows.Add("Thomas Hardy", "120 Hanover Sq., London");
+            table.Rows.Add("Paolo Accorti", "Via Monte Bianco 34, Torino");
 
             // Execute the mail merge using the data table.
             doc.MailMerge.Execute(table);
 
-            // Save the merged document to the current directory.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "MergedDocument.docx");
+            // Save the merged document to the file system.
+            string outputPath = "MergedDocument.docx";
             doc.Save(outputPath);
         }
     }

@@ -2,7 +2,6 @@ using System;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -12,30 +11,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a page break before the mail merge region so each region starts on a new page.
-        builder.InsertBreak(BreakType.PageBreak);
+        // Define a mail merge region named "MyRegion".
+        builder.InsertField(" MERGEFIELD TableStart:MyRegion");
 
-        // Define a mail merge region named "Employees".
-        builder.InsertField(" MERGEFIELD TableStart:Employees");
+        // Insert a PAGE_BREAK field that will be repeated for each record.
+        // This ensures each repeat starts on a new page.
+        builder.InsertField(" PAGEBREAK ");
 
         // Add some content inside the region.
-        builder.Write("Employee Name: ");
+        builder.Write("Name: ");
         builder.InsertField(" MERGEFIELD Name");
-        builder.Writeln();
+        builder.InsertParagraph();
 
-        // End the mail merge region.
-        builder.InsertField(" MERGEFIELD TableEnd:Employees");
+        // End the region.
+        builder.InsertField(" MERGEFIELD TableEnd:MyRegion");
 
-        // Prepare a DataTable that will be used for the mail merge.
-        DataTable employees = new DataTable("Employees");
-        employees.Columns.Add("Name");
-        employees.Rows.Add("John Doe");
-        employees.Rows.Add("Jane Smith");
-        employees.Rows.Add("Bob Johnson");
+        // Prepare a data source with several rows.
+        DataTable table = new DataTable("MyRegion");
+        table.Columns.Add("Name");
+        table.Rows.Add("Alice");
+        table.Rows.Add("Bob");
+        table.Rows.Add("Charlie");
 
-        // Perform mail merge with regions. The region will be repeated for each row,
-        // and because we placed a page break before the region, each repeat starts on a new page.
-        doc.MailMerge.ExecuteWithRegions(employees);
+        // Execute the mail merge with regions. Each row will be placed in the region,
+        // and the PAGE_BREAK field ensures each repeat starts on a new page.
+        doc.MailMerge.ExecuteWithRegions(table);
 
         // Save the resulting document.
         doc.Save("MailMergeWithPageBreak.docx");

@@ -1,47 +1,56 @@
 using System;
-using System.Data;
 using System.Globalization;
-using System.Threading;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.MailMerging;
 
-namespace AsposeWordsMailMergeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a MERGEFIELD that expects a date value and includes a date format switch.
+        // The format switch (\\@) will be ignored because we will supply the formatted text ourselves.
+        builder.InsertField("MERGEFIELD OrderDate \\@ \"dddd, d MMMM yyyy\"");
+
+        // Register a field merging callback that formats DateTime values using a specific culture.
+        doc.MailMerge.FieldMergingCallback = new DateFormattingCallback();
+
+        // Perform the mail merge with a single date value.
+        DateTime orderDate = new DateTime(2023, 12, 15);
+        doc.MailMerge.Execute(new[] { "OrderDate" }, new object[] { orderDate });
+
+        // Save the result to a file.
+        doc.Save("FormattedDates.docx");
+    }
+
+    // Implements IFieldMergingCallback to control the text inserted for merge fields.
+    private class DateFormattingCallback : IFieldMergingCallback
+    {
+        // Called for each MERGEFIELD encountered during mail merge.
+        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Check that the field value is a DateTime.
+            if (args.FieldValue is DateTime dateValue)
+            {
+                // Define the culture you want to use for formatting (e.g., German).
+                CultureInfo culture = new CultureInfo("de-DE");
 
-            // Set the builder's font locale to German – this will be the locale stored in the field code.
-            builder.Font.LocaleId = new CultureInfo("de-DE").LCID;
+                // Apply the same format string that was used in the field's \\@ switch.
+                // This ensures the output matches the expected pattern.
+                string format = "dddd, d MMMM yyyy";
 
-            // Insert two MERGEFIELDs with a date format switch.
-            builder.InsertField("MERGEFIELD Date1 \\@ \"dddd, d MMMM yyyy\"");
-            builder.Write(" - ");
-            builder.InsertField("MERGEFIELD Date2 \\@ \"dddd, d MMMM yyyy\"");
+                // Format the date using the specified culture.
+                string formattedDate = dateValue.ToString(format, culture);
 
-            // Preserve the original thread culture.
-            CultureInfo originalCulture = Thread.CurrentThread.CurrentCulture;
-
-            // First merge: use the current thread's culture (English US) for formatting.
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            doc.MailMerge.Execute(new[] { "Date1" }, new object[] { new DateTime(2020, 1, 1) });
-
-            // Second merge: tell Aspose.Words to obtain the culture from the field code (German).
-            doc.FieldOptions.FieldUpdateCultureSource = FieldUpdateCultureSource.FieldCode;
-            doc.MailMerge.Execute(new[] { "Date2" }, new object[] { new DateTime(2020, 1, 1) });
-
-            // Output the merged result to the console.
-            Console.WriteLine(doc.Range.Text.Trim());
-
-            // Save the document (optional – demonstrates the save rule).
-            doc.Save("MergedDates.docx");
-
-            // Restore the original thread culture.
-            Thread.CurrentThread.CurrentCulture = originalCulture;
+                // Set the Text property to the formatted string.
+                args.Text = formattedDate;
+            }
         }
+
+        // Required by the interface but not needed for this example.
+        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args) { }
     }
 }

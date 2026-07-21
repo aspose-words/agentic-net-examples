@@ -1,61 +1,74 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.MailMerging;
 
-public class Program
+namespace MailMergeExample
 {
-    public static void Main()
+    // Simple data entity representing a record for the mail merge.
+    public class Person
     {
-        // Create a template document that contains the merge fields.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        public string FirstName { get; set; }
+        public string LastName  { get; set; }
+        public string Message   { get; set; }
 
-        builder.Write("Dear ");
-        builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
-        builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName", "<LastName>");
-        builder.Writeln(":");
-        builder.InsertField("MERGEFIELD Message", "<Message>");
-
-        // Prepare a collection of records to merge.
-        var people = new List<Person>
-        {
-            new Person("John", "Doe", "Hello! This is the first message."),
-            new Person("Jane", "Smith", "Greetings from the second record."),
-            new Person("Bob", "Johnson", "Another message for you.")
-        };
-
-        // For each record, clone the template, execute the mail merge, and save a separate document.
-        int docIndex = 1;
-        foreach (var person in people)
-        {
-            // Clone the template to keep the original unchanged.
-            Document mergedDoc = (Document)template.Clone();
-
-            // Perform a simple mail merge for a single record.
-            mergedDoc.MailMerge.Execute(
-                new[] { "FirstName", "LastName", "Message" },
-                new object[] { person.FirstName, person.LastName, person.Message });
-
-            // Save the merged document with a unique filename.
-            string outputFileName = $"MergedDocument_{docIndex}.docx";
-            mergedDoc.Save(outputFileName);
-            docIndex++;
-        }
-    }
-
-    // Simple data class representing a record for the mail merge.
-    private class Person
-    {
         public Person(string firstName, string lastName, string message)
         {
             FirstName = firstName;
-            LastName = lastName;
-            Message = message;
+            LastName  = lastName;
+            Message   = message;
         }
+    }
 
-        public string FirstName { get; }
-        public string LastName { get; }
-        public string Message { get; }
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare output directory.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // 1. Create a mail‑merge template document in memory.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Insert merge fields that correspond to the Person properties.
+            builder.Write("Dear ");
+            builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
+            builder.Write(" ");
+            builder.InsertField("MERGEFIELD LastName", "<LastName>");
+            builder.Writeln(":");
+            builder.InsertField("MERGEFIELD Message", "<Message>");
+
+            // 2. Define a collection of records to merge.
+            List<Person> people = new List<Person>
+            {
+                new Person("John",  "Doe",   "Hello! This is your first merged document."),
+                new Person("Jane",  "Smith", "Welcome to the mail merge example."),
+                new Person("Bob",   "Brown", "Your order has been shipped.")
+            };
+
+            // 3. For each record, clone the template, execute the mail merge, and save a separate file.
+            foreach (Person person in people)
+            {
+                // Clone the template to keep the original unchanged.
+                Document doc = (Document)template.Clone();
+
+                // Execute mail merge for a single record using field names and corresponding values.
+                string[] fieldNames = { "FirstName", "LastName", "Message" };
+                object[] fieldValues = { person.FirstName, person.LastName, person.Message };
+                doc.MailMerge.Execute(fieldNames, fieldValues);
+
+                // Build a unique filename for the merged document.
+                string fileName = $"{person.FirstName}_{person.LastName}.docx";
+                string filePath = Path.Combine(outputDir, fileName);
+
+                // Save the merged document.
+                doc.Save(filePath);
+            }
+
+            // The program finishes without waiting for user input.
+        }
     }
 }
