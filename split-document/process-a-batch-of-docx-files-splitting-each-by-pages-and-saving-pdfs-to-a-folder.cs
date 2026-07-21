@@ -16,8 +16,12 @@ public class Program
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create sample DOCX documents if the input folder is empty.
-        CreateSampleDocumentsIfNeeded(inputDir);
+        // Create a few sample DOCX files if the input folder is empty.
+        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
+        {
+            CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"));
+            CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"));
+        }
 
         // Process each DOCX file in the input folder.
         foreach (string docxPath in Directory.GetFiles(inputDir, "*.docx"))
@@ -25,13 +29,13 @@ public class Program
             // Load the source document.
             Document sourceDoc = new Document(docxPath);
 
-            // Ensure the document has been laid out so PageCount is accurate.
+            // Ensure the layout is up‑to‑date and obtain the page count.
             int pageCount = sourceDoc.PageCount;
 
-            // Split the document page by page.
+            // Extract each page and save it as an individual PDF.
             for (int pageIndex = 0; pageIndex < pageCount; pageIndex++)
             {
-                // Extract a single page (pageIndex is zero‑based, count is 1).
+                // Extract a single page (pageIndex is zero‑based). The second parameter is the count of pages to extract.
                 Document pageDoc = sourceDoc.ExtractPages(pageIndex, 1);
 
                 // Build the output PDF file name.
@@ -40,48 +44,37 @@ public class Program
 
                 // Save the extracted page as PDF.
                 pageDoc.Save(pdfPath, SaveFormat.Pdf);
-
-                // Validate that the PDF was created.
-                if (!File.Exists(pdfPath))
-                {
-                    throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
-                }
             }
         }
 
-        // Optional: write a simple completion message.
-        Console.WriteLine("Document splitting completed.");
+        // Validate that PDFs were created.
+        int createdPdfCount = Directory.GetFiles(outputDir, "*.pdf").Length;
+        if (createdPdfCount == 0)
+        {
+            throw new InvalidOperationException("No PDF files were generated.");
+        }
+
+        // Report the result.
+        Console.WriteLine($"Processing complete. {createdPdfCount} PDF files created in '{outputDir}'.");
     }
 
-    // Creates a couple of sample multi‑page DOCX files if none exist in the input folder.
-    private static void CreateSampleDocumentsIfNeeded(string inputDir)
+    // Helper method to create a simple multi‑page DOCX document.
+    private static void CreateSampleDocument(string filePath)
     {
-        string[] existingDocs = Directory.GetFiles(inputDir, "*.docx");
-        if (existingDocs.Length > 0)
-            return; // Samples already exist.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Sample 1: three pages.
-        Document doc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(doc1);
+        // Add three pages with distinct content.
         for (int i = 1; i <= 3; i++)
         {
-            builder1.Writeln($"Sample1 - Page {i}");
+            builder.Writeln($"This is page {i} of {Path.GetFileName(filePath)}.");
             if (i < 3)
-                builder1.InsertBreak(BreakType.PageBreak);
+            {
+                builder.InsertBreak(BreakType.PageBreak);
+            }
         }
-        string path1 = Path.Combine(inputDir, "Sample1.docx");
-        doc1.Save(path1);
 
-        // Sample 2: five pages.
-        Document doc2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(doc2);
-        for (int i = 1; i <= 5; i++)
-        {
-            builder2.Writeln($"Sample2 - Page {i}");
-            if (i < 5)
-                builder2.InsertBreak(BreakType.PageBreak);
-        }
-        string path2 = Path.Combine(inputDir, "Sample2.docx");
-        doc2.Save(path2);
+        // Save the document.
+        doc.Save(filePath);
     }
 }

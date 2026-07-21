@@ -4,12 +4,12 @@
     "slug": "split-document",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Prefer simple documented Aspose.Words splitting workflows. Create local sample source documents when needed, use Document, Section, Node, PageSet, LayoutCollector, or extraction helpers only when directly required by the task, and keep validation narrow and task-specific.",
+    "preferred_workflow": "Use simple documented Aspose.Words splitting workflows. Create local sample source documents when needed, use Document, Section, Node, page extraction APIs, or import/clone workflows only when directly required by the task, and keep validation narrow and task-specific.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
@@ -18,21 +18,22 @@
       "Aspose.Words.Saving",
       "System.Linq",
       "System.Collections.Generic",
-      "Aspose.Words.Tables",
-      "Aspose.Words.Rendering"
+      "Aspose.Words.Tables"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Node",
       "Directory",
       "File",
       "Path",
+      "HtmlSaveOptions",
       "SaveFormat",
       "StyleIdentifier",
-      "HtmlSaveOptions",
       "Paragraph",
+      "Node",
       "NodeType",
+      "Style",
+      "Range",
       "Table",
       "Row",
       "Cell"
@@ -43,11 +44,6 @@
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
       "split-workflow": 30
-    },
-    "winner_counts": {
-      "existing_repo": 1,
-      "llm": 1,
-      "mcp": 28
     }
   },
   "rules_summary": {
@@ -141,8 +137,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
@@ -209,8 +205,8 @@
         "doc",
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 12,
@@ -305,8 +301,8 @@
         "doc",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 20,
@@ -323,7 +319,7 @@
     {
       "id": 21,
       "file_name": "split-a-large-word-file-into-50-page-chunks-and-save-each-chunk-as-pdf.cs",
-      "task": "Split a large Word file into 50-page chunks and save each chunk as PDF.",
+      "task": "Split a large Word file into 50‑page chunks and save each chunk as PDF.",
       "workflow": "split-workflow",
       "outputs": [
         "pdf"
@@ -372,8 +368,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 26,
@@ -395,8 +391,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 28,
@@ -406,8 +402,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 29,

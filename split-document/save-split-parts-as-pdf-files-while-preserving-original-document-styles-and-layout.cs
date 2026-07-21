@@ -3,58 +3,83 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class SplitDocumentToPdf
+public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "SplitPdfParts");
-        Directory.CreateDirectory(outputFolder);
+        // Prepare folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string artifactsDir = Path.Combine(baseDir, "Artifacts");
+        string outputDir = Path.Combine(artifactsDir, "SplitPdfParts");
+        Directory.CreateDirectory(artifactsDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create a sample source document with multiple sections.
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with multiple sections, each having its
+        //    own header and body content. This document will be the source for
+        //    the split operation.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Section 1
-        builder.Writeln("Section 1 - Introduction");
-        builder.Writeln("This is the first section.");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Section 2
-        builder.Writeln("Section 2 - Details");
-        builder.Writeln("Details go here.");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Section 3
-        builder.Writeln("Section 3 - Conclusion");
-        builder.Writeln("Final remarks.");
-
-        // Save the source document (optional, for inspection).
-        string sourcePath = Path.Combine(outputFolder, "SourceDocument.docx");
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
-
-        // Split the document by sections and save each part as a PDF.
-        for (int i = 0; i < sourceDoc.Sections.Count; i++)
+        for (int i = 1; i <= 3; i++)
         {
-            // Create a new empty document.
-            Document partDoc = new Document();
+            // Write body content for the current section.
+            builder.Writeln($"This is the content of section {i}.");
 
-            // Import the current section from the source document.
-            Section importedSection = (Section)partDoc.ImportNode(sourceDoc.Sections[i], true, ImportFormatMode.KeepSourceFormatting);
-            partDoc.Sections.Add(importedSection);
+            // Add a header that belongs to the current section.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            builder.Writeln($"Header for section {i}");
 
-            // Define the output PDF file name.
-            string pdfPath = Path.Combine(outputFolder, $"Part_{i + 1}.pdf");
+            // Return the cursor to the main body.
+            builder.MoveToDocumentEnd();
 
-            // Save the split part as PDF, preserving styles and layout.
-            partDoc.Save(pdfPath, SaveFormat.Pdf);
-
-            // Verify that the file was created.
-            if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF part: {pdfPath}");
+            // Insert a section break after all but the last section.
+            if (i < 3)
+                builder.InsertBreak(BreakType.SectionBreakNewPage);
         }
 
-        // All split PDF files are now available in the output folder.
-        Console.WriteLine($"Document split into {sourceDoc.Sections.Count} PDF parts at: {outputFolder}");
+        // Save the source document (optional, useful for inspection).
+        string sourcePath = Path.Combine(artifactsDir, "SourceDocument.docx");
+        sourceDoc.Save(sourcePath);
+
+        // -----------------------------------------------------------------
+        // 2. Split the source document by its sections.
+        //    For each section we create a new Document, import the section
+        //    (including its headers/footers), and save it as a PDF.
+        // -----------------------------------------------------------------
+        int partNumber = 1;
+        foreach (Section section in sourceDoc.Sections)
+        {
+            // Create an empty document that will hold the single section.
+            Document partDoc = new Document();
+            partDoc.RemoveAllChildren(); // Remove the default empty section.
+
+            // Import the section from the source document, preserving formatting.
+            Section importedSection = (Section)partDoc.ImportNode(section, true, ImportFormatMode.KeepSourceFormatting);
+            partDoc.AppendChild(importedSection);
+
+            // Define the output PDF file name.
+            string partPath = Path.Combine(outputDir, $"Part_{partNumber}.pdf");
+
+            // Save the part as PDF.
+            partDoc.Save(partPath, SaveFormat.Pdf);
+
+            // Verify that the file was created.
+            if (!File.Exists(partPath))
+                throw new InvalidOperationException($"Failed to create split PDF: {partPath}");
+
+            partNumber++;
+        }
+
+        // -----------------------------------------------------------------
+        // 3. Simple validation: ensure the expected number of PDF files exist.
+        // -----------------------------------------------------------------
+        int expectedParts = sourceDoc.Sections.Count;
+        int actualParts = Directory.GetFiles(outputDir, "*.pdf").Length;
+        if (actualParts != expectedParts)
+            throw new InvalidOperationException($"Expected {expectedParts} PDF parts, but found {actualParts}.");
+
+        // Program completed successfully.
     }
 }

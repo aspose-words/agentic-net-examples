@@ -1,112 +1,87 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 using Aspose.Words.Tables;
 
-public class SplitDocumentWithCompleteTableRows
+public class Program
 {
     public static void Main()
     {
-        // Output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
+        if (Directory.Exists(outputDir))
+            Directory.Delete(outputDir, true);
         Directory.CreateDirectory(outputDir);
 
-        // --------------------------------------------------------------------
-        // Create a sample document that contains a table split across two sections.
-        // The table is closed before the section break, then a new table is started
-        // in the next section to simulate a logical table that spans sections.
-        // --------------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample document where each table row is placed in its own section.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First part of the table (section 1).
-        Table table = builder.StartTable();
-        for (int i = 1; i <= 3; i++)
+        const int totalRows = 30;
+        for (int i = 1; i <= totalRows; i++)
         {
+            // Start a new table for the current row.
+            Table table = builder.StartTable();
+
+            // First cell.
             builder.InsertCell();
-            builder.Write($"Row {i}, Cell 1");
+            builder.Writeln($"Row {i} - Cell 1");
+
+            // Second cell.
             builder.InsertCell();
-            builder.Write($"Row {i}, Cell 2");
+            builder.Writeln($"Row {i} - Cell 2");
+
+            // Finish the row and the table.
             builder.EndRow();
+            builder.EndTable();
+
+            // Insert a section break after the row except for the last one.
+            if (i < totalRows)
+                builder.InsertBreak(BreakType.SectionBreakNewPage);
         }
-        builder.EndTable(); // Close the table before the break.
 
-        // Insert a section break.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Second part of the same logical table (section 2).
-        table = builder.StartTable();
-        for (int i = 4; i <= 5; i++)
-        {
-            builder.InsertCell();
-            builder.Write($"Row {i}, Cell 1");
-            builder.InsertCell();
-            builder.Write($"Row {i}, Cell 2");
-            builder.EndRow();
-        }
-        builder.EndTable(); // Close the second part.
-
-        // Save the source document (optional, for inspection).
+        // Save the original document (optional, for inspection).
         string sourcePath = Path.Combine(outputDir, "Source.docx");
-        sourceDoc.Save(sourcePath);
+        doc.Save(sourcePath);
 
-        // --------------------------------------------------------------------
-        // Merge tables that are split across consecutive sections.
-        // If a section ends with a table and the next section starts with a table,
-        // move all rows from the next table into the previous one and remove the empty table.
-        // --------------------------------------------------------------------
-        for (int i = 0; i < sourceDoc.Sections.Count - 1; i++)
+        // Configure HTML save options to split the document by section.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            Section currentSection = sourceDoc.Sections[i];
-            Section nextSection = sourceDoc.Sections[i + 1];
+            DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
+            DocumentPartSavingCallback = new SectionPartRenamer(outputDir)
+        };
 
-            // Get the last table of the current section (if any).
-            Table currentTable = null;
-            if (currentSection.Body.Tables.Count > 0)
-                currentTable = currentSection.Body.Tables[currentSection.Body.Tables.Count - 1];
+        // Perform the split save. Each section becomes a separate HTML file.
+        doc.Save(Path.Combine(outputDir, "Combined.html"), saveOptions);
 
-            // Get the first table of the next section (if any).
-            Table nextTable = null;
-            if (nextSection.Body.Tables.Count > 0)
-                nextTable = nextSection.Body.Tables[0];
+        // Validate that the number of generated parts matches the number of sections.
+        int expectedParts = doc.Sections.Count;
+        string[] partFiles = Directory.GetFiles(outputDir, "Part_*.html");
+        if (partFiles.Length != expectedParts)
+            throw new InvalidOperationException($"Expected {expectedParts} split parts, but found {partFiles.Length}.");
+    }
 
-            // If both tables exist, treat them as parts of the same logical table.
-            if (currentTable != null && nextTable != null)
-            {
-                // Move rows from the next table to the current table.
-                foreach (Row row in nextTable.Rows)
-                {
-                    currentTable.Rows.Add(row.Clone(true));
-                }
+    // Callback that assigns deterministic filenames to each split part.
+    private class SectionPartRenamer : IDocumentPartSavingCallback
+    {
+        private readonly string _outputFolder;
+        private int _partIndex = 0;
 
-                // Remove the now‑empty table from the next section.
-                nextTable.Remove();
-            }
+        public SectionPartRenamer(string outputFolder)
+        {
+            _outputFolder = outputFolder;
         }
 
-        // --------------------------------------------------------------------
-        // Split the document by sections. Each part will contain a complete
-        // section (with any tables already merged), ensuring that no table row
-        // is broken between parts.
-        // --------------------------------------------------------------------
-        for (int i = 0; i < sourceDoc.Sections.Count; i++)
+        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Create a new empty document for the part.
-            Document partDoc = new Document();
+            // Generate a filename like "Part_1.html", "Part_2.html", etc.
+            string partFileName = $"Part_{++_partIndex}.html";
+            args.DocumentPartFileName = partFileName;
 
-            // Import the section into the new document.
-            Section importedSection = (Section)partDoc.ImportNode(sourceDoc.Sections[i], true, ImportFormatMode.KeepSourceFormatting);
-            partDoc.AppendChild(importedSection);
-
-            // Save the part.
-            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
-            partDoc.Save(partPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(partPath))
-                throw new InvalidOperationException($"Failed to create split part: {partPath}");
+            // Direct the part to be saved into the designated output folder.
+            args.DocumentPartStream = new FileStream(Path.Combine(_outputFolder, partFileName), FileMode.Create);
+            args.KeepDocumentPartStreamOpen = false; // Let Aspose.Words close the stream.
         }
-
-        Console.WriteLine($"Document split into {sourceDoc.Sections.Count} parts. Files are located in: {outputDir}");
     }
 }

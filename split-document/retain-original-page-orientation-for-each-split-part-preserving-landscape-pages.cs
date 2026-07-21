@@ -1,71 +1,76 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Rendering;
+using Aspose.Words.Saving;
 
-public class SplitDocumentPreserveOrientation
+public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        if (Directory.Exists(outputDir))
-            Directory.Delete(outputDir, true);
-        Directory.CreateDirectory(outputDir);
+        // Define folders for input and output.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a sample document with mixed page orientations.
+        // -----------------------------------------------------------------
+        // 1. Create a sample document that contains both portrait and
+        //    landscape pages (two sections with different orientations).
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // First two pages – portrait orientation (default).
-        builder.Writeln("Portrait page 1");
+        // First section – portrait orientation (default).
+        builder.Writeln("Page 1 – Portrait");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Portrait page 2");
 
-        // Start a new section and switch to landscape orientation.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Second section – landscape orientation.
         builder.PageSetup.Orientation = Orientation.Landscape;
-        builder.Writeln("Landscape page 3");
+        builder.Writeln("Page 2 – Landscape");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Landscape page 4");
 
-        // Ensure the document layout is up‑to‑date.
-        sourceDoc.UpdatePageLayout();
+        // Third section – back to portrait.
+        builder.PageSetup.Orientation = Orientation.Portrait;
+        builder.Writeln("Page 3 – Portrait");
 
-        // Split the document page by page, preserving each page's orientation.
-        int pageCount = sourceDoc.PageCount;
-        for (int i = 1; i <= pageCount; i++)
+        // Save the source document.
+        string sourcePath = Path.Combine(artifactsDir, "Source.docx");
+        sourceDoc.Save(sourcePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the source document and split it page‑by‑page.
+        //    Each extracted page retains its original page setup,
+        //    including orientation.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
+        int pageCount = loadedDoc.PageCount;
+
+        for (int i = 0; i < pageCount; i++)
         {
-            // Extract a single page. ExtractPages(startPageIndex, pageCount) uses zero‑based index.
-            Document pageDoc = sourceDoc.ExtractPages(i - 1, 1);
+            // Determine the orientation of the current page before extraction.
+            bool isLandscape = loadedDoc.GetPageInfo(i).Landscape;
+
+            // Extract a single page (zero‑based start index, count = 1).
+            Document pageDoc = loadedDoc.ExtractPages(i, 1);
 
             // Save the extracted page.
-            string pagePath = Path.Combine(outputDir, $"Page_{i}.docx");
+            string pageFileName = $"Page_{i + 1}.docx";
+            string pagePath = Path.Combine(artifactsDir, pageFileName);
             pageDoc.Save(pagePath);
-        }
 
-        // Validate that each split part retains the original orientation.
-        for (int i = 1; i <= pageCount; i++)
-        {
-            string pagePath = Path.Combine(outputDir, $"Page_{i}.docx");
+            // -----------------------------------------------------------------
+            // 3. Validate that the saved file exists and that its orientation
+            //    matches the original page's orientation.
+            // -----------------------------------------------------------------
             if (!File.Exists(pagePath))
-                throw new FileNotFoundException($"Expected split file not found: {pagePath}");
+                throw new InvalidOperationException($"Failed to create split file: {pageFileName}");
 
-            // Load the split document.
-            Document splitDoc = new Document(pagePath);
+            Document verifyDoc = new Document(pagePath);
+            bool extractedIsLandscape = verifyDoc.Sections[0].PageSetup.Orientation == Orientation.Landscape;
 
-            // Determine expected orientation from the original document.
-            Orientation expected = sourceDoc.GetPageInfo(i - 1).Landscape
-                ? Orientation.Landscape
-                : Orientation.Portrait;
-
-            // The extracted document contains a single section.
-            Orientation actual = splitDoc.Sections[0].PageSetup.Orientation;
-
-            if (actual != expected)
-                throw new InvalidOperationException($"Orientation mismatch on page {i}: expected {expected}, got {actual}");
+            if (isLandscape != extractedIsLandscape)
+                throw new InvalidOperationException($"Orientation mismatch in {pageFileName}");
         }
 
-        Console.WriteLine($"Document split into {pageCount} parts. Files are located in: {outputDir}");
+        // All pages have been split and validated successfully.
+        Console.WriteLine($"Document split into {pageCount} parts. Files are located in: {artifactsDir}");
     }
 }

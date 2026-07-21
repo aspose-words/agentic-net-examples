@@ -8,63 +8,63 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory.
+        // Prepare an output folder.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a new blank document.
+        // Build a sample document containing headings and explicit page breaks.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First heading (level 1) and some text.
+        // Heading 1.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1");
+        builder.Writeln("Chapter 1");
+        // Normal paragraph.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content under heading 1.");
+        builder.Writeln("This is the first chapter.");
 
-        // Insert an explicit page break.
+        // First page break.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Second heading (level 2) and some text.
+        // Heading 2.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 2");
+        builder.Writeln("Section 1.1");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content under heading 2.");
+        builder.Writeln("Details of section 1.1.");
 
-        // Another page break.
+        // Second page break.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Third heading (level 1) and some text.
+        // Another Heading 1.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 3");
+        builder.Writeln("Chapter 2");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content under heading 3.");
+        builder.Writeln("Content of the second chapter.");
 
         // Configure HtmlSaveOptions to split on both page breaks and heading paragraphs.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
             DocumentSplitCriteria = DocumentSplitCriteria.PageBreak | DocumentSplitCriteria.HeadingParagraph,
-            DocumentSplitHeadingLevel = 2 // Split at headings up to level 2.
+            DocumentSplitHeadingLevel = 2 // Split at Heading 1 and Heading 2.
         };
 
-        // Save the document. This will produce the main file and additional split parts.
-        string baseFileName = "CombinedSplit.html";
-        string baseFilePath = Path.Combine(outputDir, baseFileName);
-        doc.Save(baseFilePath, saveOptions);
+        // Save the document; Aspose.Words will generate several HTML files.
+        string mainFilePath = Path.Combine(outputDir, "SplitDocument.html");
+        doc.Save(mainFilePath, saveOptions);
 
-        // Validate that split parts were created.
-        string baseNameWithoutExt = Path.GetFileNameWithoutExtension(baseFileName);
-        string[] splitFiles = Directory.GetFiles(outputDir, $"{baseNameWithoutExt}*.html")
-                                       .OrderBy(f => f)
-                                       .ToArray();
+        // Verify that split parts were created.
+        var splitFiles = Directory.GetFiles(outputDir, "SplitDocument-*.html");
+        if (!splitFiles.Any())
+        {
+            throw new InvalidOperationException("No split HTML files were generated.");
+        }
 
-        // Expect at least the main file and one split part.
-        if (splitFiles.Length < 2)
-            throw new InvalidOperationException("Expected split output files were not created.");
-
-        // Output the list of generated files.
-        Console.WriteLine("Generated HTML parts:");
+        // List generated files (optional).
+        Console.WriteLine("Generated files:");
+        Console.WriteLine(mainFilePath);
         foreach (string file in splitFiles)
-            Console.WriteLine(Path.GetFileName(file));
+        {
+            Console.WriteLine(file);
+        }
     }
 }
