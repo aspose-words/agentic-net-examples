@@ -7,41 +7,52 @@ public class Program
 {
     public static void Main()
     {
-        // Define a folder to hold the sample source DOCX files.
-        string sourceFolder = Path.Combine(Directory.GetCurrentDirectory(), "SampleDocs");
-        Directory.CreateDirectory(sourceFolder);
+        // Define folders for input documents and output PDF.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputPdfPath = Path.Combine(baseDir, "MergedOutput.pdf");
 
-        // Create a few sample DOCX documents programmatically.
+        // Ensure the input directory exists.
+        Directory.CreateDirectory(inputDir);
+
+        // Create sample DOCX files inside the input directory.
         for (int i = 1; i <= 3; i++)
         {
+            string docPath = Path.Combine(inputDir, $"Doc{i}.docx");
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"This is the content of sample document {i}.");
-            string docPath = Path.Combine(sourceFolder, $"Doc{i}.docx");
+            builder.Writeln($"Sample document {i} content.");
             sampleDoc.Save(docPath, SaveFormat.Docx);
         }
 
-        // Create the master document that will receive all appended content.
+        // Create an empty master document that will receive the appended content.
         Document masterDoc = new Document();
 
-        // Append each DOCX file in the folder to the master document.
-        foreach (string filePath in Directory.GetFiles(sourceFolder, "*.docx"))
+        // Append each DOCX file in the input directory to the master document.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
             Document srcDoc = new Document(filePath);
             masterDoc.AppendDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
         }
 
-        // Save the combined document as a PDF file.
-        string outputPdf = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutput.pdf");
-        masterDoc.Save(outputPdf, SaveFormat.Pdf);
+        // Save the merged document as a PDF file.
+        masterDoc.Save(outputPdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
-        if (!File.Exists(outputPdf))
-        {
+        // Validation: ensure the PDF was created.
+        if (!File.Exists(outputPdfPath))
             throw new InvalidOperationException("The merged PDF file was not created.");
+
+        // Load the PDF back and verify that it contains text from all source documents.
+        Document pdfDoc = new Document(outputPdfPath);
+        string pdfText = pdfDoc.GetText();
+
+        for (int i = 1; i <= 3; i++)
+        {
+            if (!pdfText.Contains($"Sample document {i} content."))
+                throw new InvalidOperationException($"Merged PDF is missing content from Doc{i}.docx.");
         }
 
-        // Optional: inform the user that the process completed.
-        Console.WriteLine($"Merged PDF created at: {outputPdf}");
+        // Optional: clean up sample files (comment out if you want to inspect them).
+        //Directory.Delete(inputDir, true);
     }
 }

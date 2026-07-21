@@ -7,42 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the output files.
-        const string outputHtmlPath = "MergedDocument.html";
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // ---------- Create the destination document ----------
-        Document destination = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destination);
-        destBuilder.Writeln("This is the destination document.");
+        // Create a sample source DOCX file.
+        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is the source document.");
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // Move the cursor to the end of the destination document.
-        destBuilder.MoveToDocumentEnd();
+        // Create the destination document.
+        Document destDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(destDoc);
+        builder.Writeln("This is the destination document before insertion.");
+        builder.InsertBreak(BreakType.PageBreak);
 
-        // Insert a page break to separate the documents (optional).
-        destBuilder.InsertBreak(BreakType.PageBreak);
+        // Load the source document and insert it at the current cursor position,
+        // preserving its original formatting.
+        Document srcToInsert = new Document(sourcePath);
+        builder.InsertDocument(srcToInsert, ImportFormatMode.KeepSourceFormatting);
 
-        // ---------- Create the source document ----------
-        Document source = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(source);
-        srcBuilder.Writeln("This is the source document that will be inserted.");
+        // Save the merged result as HTML.
+        string htmlPath = Path.Combine(outputDir, "Merged.html");
+        destDoc.Save(htmlPath, SaveFormat.Html);
 
-        // ---------- Insert the source document ----------
-        // KeepSourceFormatting ensures the source formatting is preserved.
-        destBuilder.InsertDocument(source, ImportFormatMode.KeepSourceFormatting);
+        // Validate that the HTML file was created and contains content from both documents.
+        if (!File.Exists(htmlPath))
+            throw new InvalidOperationException("Merged HTML file was not created.");
 
-        // ---------- Save the merged document as HTML ----------
-        destination.Save(outputHtmlPath, SaveFormat.Html);
-
-        // ---------- Validation ----------
-        if (!File.Exists(outputHtmlPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputHtmlPath}");
-
-        // Verify that both pieces of text are present in the merged document.
-        string mergedText = destination.GetText();
-        if (!mergedText.Contains("destination document") || !mergedText.Contains("source document"))
-            throw new InvalidOperationException("The merged document does not contain expected content.");
-
-        // Indicate successful completion.
-        Console.WriteLine("Document merged and saved as HTML successfully.");
+        string htmlContent = File.ReadAllText(htmlPath);
+        if (!htmlContent.Contains("destination document", StringComparison.OrdinalIgnoreCase) ||
+            !htmlContent.Contains("source document", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Merged HTML does not contain expected content.");
     }
 }

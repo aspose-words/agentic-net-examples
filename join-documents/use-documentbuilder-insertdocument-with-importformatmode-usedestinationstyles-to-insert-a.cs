@@ -1,95 +1,92 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using System.Drawing;
 
-public class Program
+public class InsertDocumentExample
 {
     public static void Main()
     {
-        // Define folder for temporary files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "AsposeJoinDemo");
-        Directory.CreateDirectory(workDir);
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Paths for the template and the document to be inserted.
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string sourcePath = Path.Combine(workDir, "Source.docx");
-        string outputHtmlPath = Path.Combine(workDir, "Result.html");
+        // File paths.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        string mergedHtmlPath = Path.Combine(outputDir, "Merged.html");
 
-        // -----------------------------------------------------------------
-        // 1. Create a styled template document.
-        // -----------------------------------------------------------------
+        // ---------- Create the template document ----------
         Document templateDoc = new Document();
         DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
 
-        // Define a custom paragraph style in the template.
+        // Define a custom style named "MyStyle" in the template.
         Style templateStyle = templateDoc.Styles.Add(StyleType.Paragraph, "MyStyle");
-        templateStyle.Font.Name = "Arial";
         templateStyle.Font.Size = 16;
-        templateStyle.Font.Color = System.Drawing.Color.Blue;
+        templateStyle.Font.Name = "Arial";
+        templateStyle.Font.Color = Color.Blue;
 
-        // Apply the style and write some content.
-        templateBuilder.ParagraphFormat.StyleName = templateStyle.Name;
-        templateBuilder.Writeln("This is the template document.");
+        // Apply the custom style.
+        templateBuilder.ParagraphFormat.StyleName = "MyStyle";
+        templateBuilder.Writeln("Template Document Heading");
+
+        // Add a normal paragraph.
+        templateBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        templateBuilder.Writeln("This is the body of the template document.");
 
         // Save the template.
-        templateDoc.Save(templatePath);
+        templateDoc.Save(templatePath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Create a source document that will be inserted.
-        // -----------------------------------------------------------------
+        // ---------- Create the source document ----------
         Document sourceDoc = new Document();
         DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
 
-        // Create a style with the same name but different formatting.
+        // Define a style with the same name but different formatting.
         Style sourceStyle = sourceDoc.Styles.Add(StyleType.Paragraph, "MyStyle");
+        sourceStyle.Font.Size = 20;
         sourceStyle.Font.Name = "Times New Roman";
-        sourceStyle.Font.Size = 14;
-        sourceStyle.Font.Color = System.Drawing.Color.Red;
+        sourceStyle.Font.Color = Color.Red;
 
-        // Apply the style and write some content.
-        sourceBuilder.ParagraphFormat.StyleName = sourceStyle.Name;
-        sourceBuilder.Writeln("This is the inserted document.");
+        // Apply the source style.
+        sourceBuilder.ParagraphFormat.StyleName = "MyStyle";
+        sourceBuilder.Writeln("Source Document Heading");
+
+        // Add a normal paragraph.
+        sourceBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        sourceBuilder.Writeln("This is the body of the source document.");
 
         // Save the source document.
-        sourceDoc.Save(sourcePath);
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and insert the source document using
-        //    ImportFormatMode.UseDestinationStyles.
-        // -----------------------------------------------------------------
-        Document resultDoc = new Document(templatePath);
-        DocumentBuilder resultBuilder = new DocumentBuilder(resultDoc);
+        // ---------- Load the template and insert the source document ----------
+        Document mergedDoc = new Document(templatePath);
+        DocumentBuilder insertBuilder = new DocumentBuilder(mergedDoc);
 
-        // Move the cursor to the end of the template document.
-        resultBuilder.MoveToDocumentEnd();
+        // Move cursor to the end of the template.
+        insertBuilder.MoveToDocumentEnd();
 
-        // Insert a page break for visual separation (optional).
-        resultBuilder.InsertBreak(BreakType.PageBreak);
+        // Optional: insert a page break before the inserted content.
+        insertBuilder.InsertBreak(BreakType.PageBreak);
 
         // Load the source document to be inserted.
         Document docToInsert = new Document(sourcePath);
 
-        // Insert the source document, forcing the use of destination styles.
-        resultBuilder.InsertDocument(docToInsert, ImportFormatMode.UseDestinationStyles);
+        // Insert the source document using UseDestinationStyles to adopt the template's styles.
+        insertBuilder.InsertDocument(docToInsert, ImportFormatMode.UseDestinationStyles);
 
-        // -----------------------------------------------------------------
-        // 4. Save the combined document as HTML.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
-        resultDoc.Save(outputHtmlPath, htmlOptions);
+        // ---------- Save the merged document as HTML ----------
+        mergedDoc.Save(mergedHtmlPath, SaveFormat.Html);
 
-        // -----------------------------------------------------------------
-        // 5. Simple validation that the HTML file was created.
-        // -----------------------------------------------------------------
-        if (File.Exists(outputHtmlPath))
+        // Verify that the HTML file was created.
+        if (!File.Exists(mergedHtmlPath))
         {
-            Console.WriteLine("HTML file successfully created at:");
-            Console.WriteLine(outputHtmlPath);
+            throw new InvalidOperationException("The merged HTML file was not created.");
         }
-        else
-        {
-            throw new InvalidOperationException("Failed to create the HTML output file.");
-        }
+
+        // Inform the user (optional, not required for non‑interactive execution).
+        Console.WriteLine("Merged document saved as HTML at:");
+        Console.WriteLine(mergedHtmlPath);
     }
 }

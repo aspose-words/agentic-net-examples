@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,65 +7,62 @@ public class Program
 {
     public static void Main()
     {
-        // Directory for temporary source documents and final output.
+        // Define a working directory relative to the executable location.
         string workDir = Path.Combine(Directory.GetCurrentDirectory(), "JoinDocsExample");
         Directory.CreateDirectory(workDir);
 
-        // Create sample source DOCX files.
-        string[] sourceFiles = CreateSampleDocuments(workDir);
-
-        // Destination document that will hold the merged content.
-        var destination = new Document();
-
-        // Different ImportFormatMode values to use for each append operation.
-        ImportFormatMode[] importModes = new[]
+        // Paths for the source documents.
+        string[] sourcePaths = new string[]
         {
-            ImportFormatMode.UseDestinationStyles,
-            ImportFormatMode.KeepSourceFormatting,
-            ImportFormatMode.KeepDifferentStyles
+            Path.Combine(workDir, "Source1.docx"),
+            Path.Combine(workDir, "Source2.docx"),
+            Path.Combine(workDir, "Source3.docx")
         };
 
-        // Append each source document with a corresponding ImportFormatMode.
-        for (int i = 0; i < sourceFiles.Length; i++)
+        // Create three sample source documents with distinct content.
+        CreateSampleDocument(sourcePaths[0], "First source document. Style: Normal.", StyleIdentifier.Normal);
+        CreateSampleDocument(sourcePaths[1], "Second source document. Style: Heading1.", StyleIdentifier.Heading1);
+        CreateSampleDocument(sourcePaths[2], "Third source document. Style: Heading2.", StyleIdentifier.Heading2);
+
+        // Destination document that will receive the appended content.
+        Document destination = new Document();
+
+        // Append each source document using a different ImportFormatMode.
+        for (int i = 0; i < sourcePaths.Length; i++)
         {
-            var srcDoc = new Document(sourceFiles[i]);
-            ImportFormatMode mode = importModes[i % importModes.Length];
-            destination.AppendDocument(srcDoc, mode);
+            Document src = new Document(sourcePaths[i]);
+
+            ImportFormatMode mode = i switch
+            {
+                0 => ImportFormatMode.UseDestinationStyles,
+                1 => ImportFormatMode.KeepSourceFormatting,
+                _ => ImportFormatMode.KeepDifferentStyles
+            };
+
+            destination.AppendDocument(src, mode);
         }
 
-        // Validate that the expected number of sections are present.
-        // Each source document adds one section; the destination started with one.
-        int expectedSections = sourceFiles.Length + 1;
-        if (destination.Sections.Count != expectedSections)
-            throw new InvalidOperationException($"Expected {expectedSections} sections after merging, but found {destination.Sections.Count}.");
-
-        // Save the merged document as PDF.
-        string pdfPath = Path.Combine(workDir, "MergedDocument.pdf");
+        // Save the combined document as PDF.
+        string pdfPath = Path.Combine(workDir, "Combined.pdf");
         destination.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
+        // Validate that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new FileNotFoundException("The merged PDF file was not created.", pdfPath);
-
-        // Optional: output the location of the generated PDF.
-        Console.WriteLine($"Merged PDF created at: {pdfPath}");
-    }
-
-    // Creates a few sample DOCX files with simple text and returns their file paths.
-    private static string[] CreateSampleDocuments(string folder)
-    {
-        var filePaths = new string[3];
-
-        for (int i = 0; i < filePaths.Length; i++)
         {
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is the content of source document #{i + 1}.");
-            string filePath = Path.Combine(folder, $"SourceDoc{i + 1}.docx");
-            doc.Save(filePath, SaveFormat.Docx);
-            filePaths[i] = filePath;
+            throw new InvalidOperationException("The combined PDF file was not created.");
         }
 
-        return filePaths;
+        // Optional: clean up source files (comment out if inspection is needed).
+        // foreach (var path in sourcePaths) File.Delete(path);
+    }
+
+    // Helper method to create a simple DOCX file with specified text and style.
+    private static void CreateSampleDocument(string filePath, string text, StyleIdentifier styleId)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.ParagraphFormat.StyleIdentifier = styleId;
+        builder.Writeln(text);
+        doc.Save(filePath, SaveFormat.Docx);
     }
 }
