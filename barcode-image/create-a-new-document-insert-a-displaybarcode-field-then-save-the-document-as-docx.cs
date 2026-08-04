@@ -13,17 +13,17 @@ public class Program
         // Insert a DISPLAYBARCODE field using the typed API.
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        // Set required properties for the barcode.
-        barcodeField.BarcodeType = "QR";               // Type of barcode.
-        barcodeField.BarcodeValue = "ABC123";          // Data to encode.
-        barcodeField.BackgroundColor = "0xF8BD69";    // Optional background color.
-        barcodeField.ForegroundColor = "0xB5413B";    // Optional foreground color.
-        barcodeField.ErrorCorrectionLevel = "3";      // QR specific parameter.
-        barcodeField.ScalingFactor = "250";           // Scale the symbol.
-        barcodeField.SymbolHeight = "1000";           // Height in twips.
-        barcodeField.SymbolRotation = "0";            // Rotation.
+        // Configure the barcode (example: QR code with custom colors and scaling).
+        barcodeField.BarcodeType = "QR";
+        barcodeField.BarcodeValue = "1234567890";
+        barcodeField.BackgroundColor = "0xFFFFFF"; // white background
+        barcodeField.ForegroundColor = "0x000000"; // black bars
+        barcodeField.ErrorCorrectionLevel = "3";
+        barcodeField.ScalingFactor = "250";
+        barcodeField.SymbolHeight = "1000";
+        barcodeField.SymbolRotation = "0";
 
-        // Update fields to ensure the barcode result is generated.
+        // Ensure the field result is updated.
         doc.UpdateFields();
 
         // Save the document as DOCX.
