@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Lists;
@@ -9,31 +10,36 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a numbered list to the document.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Modify the list definition – enable restarting at each section.
+        // Enable restarting the list at each section (requires OOXML compliance higher than Ecma376).
         list.IsRestartAtEachSection = true;
 
-        // Determine the OOXML compliance of the current document.
-        OoxmlCompliance currentCompliance = doc.Compliance;
+        // Verify the current compliance of the in‑memory document (should be Ecma376_2006).
+        Console.WriteLine("Document compliance before saving: " + doc.Compliance);
 
-        // Prepare save options. If the document compliance is the default (Ecma376_2006),
-        // set a higher compliance level so that the modified list definition is persisted.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        if (currentCompliance == OoxmlCompliance.Ecma376_2006)
+        // Prepare save options with a higher compliance level.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
-            saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
-        }
+            // Use a compliance level newer than Ecma376 to preserve the list setting.
+            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
+        };
 
-        // Save the document with the specified options.
-        string outputPath = "ListCompliance.docx";
+        // Define the output path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ListRestart.docx");
+
+        // Save the document with the specified compliance.
         doc.Save(outputPath, saveOptions);
 
-        // Load the saved document to verify the compliance level.
+        // Load the saved document to confirm the settings were persisted.
         Document loadedDoc = new Document(outputPath);
-        Console.WriteLine($"Saved document compliance: {loadedDoc.Compliance}");
+
+        // Output the compliance of the loaded document.
+        Console.WriteLine("Document compliance after loading: " + loadedDoc.Compliance);
+
+        // Output the IsRestartAtEachSection value of the first list.
+        Console.WriteLine("IsRestartAtEachSection: " + loadedDoc.Lists[0].IsRestartAtEachSection);
     }
 }

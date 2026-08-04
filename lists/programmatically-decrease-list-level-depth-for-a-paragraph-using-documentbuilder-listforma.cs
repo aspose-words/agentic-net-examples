@@ -12,24 +12,18 @@ public class Program
 
         // Start a default numbered list.
         builder.ListFormat.ApplyNumberDefault();
-
-        // First level items.
         builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
 
-        // Increase the list level (indent) to create a sub‑list.
+        // Increase the list level (create a sub‑item).
         builder.ListFormat.ListIndent();
-        builder.Writeln("Subitem 2.1");
-        builder.Writeln("Subitem 2.2");
+        builder.Writeln("Subitem 1.1");
 
-        // Conditionally decrease the list level (outdent) only if we are not already at the top level.
+        // Decrease the list level only if we are not already at the top level.
         if (builder.ListFormat.ListLevelNumber > 0)
         {
-            builder.ListFormat.ListOutdent(); // Decrease indent by one level.
+            builder.ListFormat.ListOutdent(); // Decrease indent.
         }
-
-        // Continue adding items at the (now) first level.
-        builder.Writeln("Item 3");
+        builder.Writeln("Back to level 1");
 
         // End the list formatting.
         builder.ListFormat.RemoveNumbers();

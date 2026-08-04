@@ -1,71 +1,61 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using System.Drawing;
 
-public class MultiLevelListExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Create a DocumentBuilder which will be used to insert content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a new multilevel list based on a default numbered template.
-        // All lists created this way contain 9 levels.
+        // Create a multilevel list based on a default numbered template.
+        // All 9 levels are created automatically.
         List multiLevelList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Configure each level: even levels use bullets, odd levels use Arabic numbers.
+        // Configure each level: even levels -> bullet, odd levels -> Arabic number.
         for (int i = 0; i < multiLevelList.ListLevels.Count; i++)
         {
             ListLevel level = multiLevelList.ListLevels[i];
 
-            // Alternate between bullet and number styles.
-            if (i % 2 == 0) // Even level – bullet.
+            if (i % 2 == 0) // Bullet level
             {
                 level.NumberStyle = NumberStyle.Bullet;
-                // Use a simple bullet character. The NumberFormat can be any character; here we use the standard bullet.
-                level.NumberFormat = "\u2022";
-                level.Font.Name = "Symbol";
-                level.Font.Size = 12;
+                level.Font.Name = "Wingdings";
+                // Unicode bullet character (•) – you can use any symbol you prefer.
+                level.NumberFormat = "\x2022";
                 level.TrailingCharacter = ListTrailingCharacter.Space;
             }
-            else // Odd level – Arabic number.
+            else // Numbered level
             {
                 level.NumberStyle = NumberStyle.Arabic;
-                level.NumberFormat = "\x0000."; // Placeholder for the current level number.
-                level.Font.Name = "Times New Roman";
-                level.Font.Size = 12;
-                level.TrailingCharacter = ListTrailingCharacter.Tab;
+                // Placeholder for the current level's number followed by a period.
+                level.NumberFormat = "\x0000.";
+                level.TrailingCharacter = ListTrailingCharacter.Space;
             }
 
-            // Optional: set indentation so that each level is indented further.
-            level.NumberPosition = -18; // Position of the bullet/number.
-            level.TextPosition = 36;    // Position where the text starts.
-            level.TabPosition = 36;     // Tab stop after the label.
+            // Optional: set indent positions so the list looks tidy.
+            level.NumberPosition = -18;   // Position of the bullet/number.
+            level.TextPosition = 18;      // Position of the text after the bullet/number.
+            level.TabPosition = 36;       // Tab stop for wrapped lines.
         }
 
-        // Apply the list to the builder.
+        // Use DocumentBuilder to add paragraphs that use the custom list.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.ListFormat.List = multiLevelList;
 
-        // Add sample items for three levels, two items per level.
-        for (int level = 0; level < 3; level++)
+        // Add items for the first four levels to demonstrate alternating styles.
+        for (int level = 0; level < 4; level++)
         {
-            // Set the current list level.
             builder.ListFormat.ListLevelNumber = level;
-
-            // Write two items at this level.
-            builder.Writeln($"Item {level + 1}.1");
-            builder.Writeln($"Item {level + 1}.2");
+            builder.Writeln($"Item at level {level}");
         }
 
         // End the list formatting.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the output folder.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "MultiLevelList.docx");
-        doc.Save(outputPath);
+        // Save the document to the current directory.
+        doc.Save("MultiLevelList.docx");
     }
 }

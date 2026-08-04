@@ -2,35 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace RemoveListNumbersExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a numbered list and add three items.
-        builder.ListFormat.ApplyNumberDefault();
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
-
-        // Stop list formatting for subsequent paragraphs.
-        builder.ListFormat.RemoveNumbers();
-
-        // Add a normal paragraph after the list.
-        builder.Writeln("This paragraph is not part of the list.");
-
-        // Ensure any existing list formatting is removed from all paragraphs.
-        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        static void Main()
         {
-            if (para.ListFormat.IsListItem)
-                para.ListFormat.RemoveNumbers();
-        }
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document.
-        string outputPath = "RemoveNumbersExample.docx";
-        doc.Save(outputPath);
+            // Start a default numbered list.
+            builder.ListFormat.ApplyNumberDefault();
+            builder.Writeln("Item 1");
+            builder.Writeln("Item 2");
+            builder.Writeln("Item 3");
+
+            // Stop list formatting for the current paragraph and subsequent ones.
+            builder.ListFormat.RemoveNumbers();
+
+            // This paragraph will not have numbering.
+            builder.Writeln("This paragraph is not part of the list.");
+
+            // Save the document to the current directory.
+            string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "RemoveNumbers.docx");
+            doc.Save(outputPath);
+        }
     }
 }
