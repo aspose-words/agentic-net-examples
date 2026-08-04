@@ -2,63 +2,63 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Notes;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Paths for the output files
+        string destinationPath = "Destination.docx";
+        string sourcePath = "SourceWithFootnotes.docx";
+        string mergedPdfPath = "MergedDocument.pdf";
 
-        // File paths.
-        string destPath = Path.Combine(outputDir, "Destination.docx");
-        string srcPath = Path.Combine(outputDir, "Source.docx");
-        string mergedPath = Path.Combine(outputDir, "Merged.docx");
-        string pdfPath = Path.Combine(outputDir, "Merged.pdf");
+        // -----------------------------------------------------------------
+        // Create the destination document with a footnote
+        // -----------------------------------------------------------------
+        Document destinationDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destinationDoc);
+        destBuilder.Writeln("This is the destination document.");
+        destBuilder.InsertFootnote(FootnoteType.Footnote, "First footnote in destination.");
+        // Ensure continuous footnote numbering
+        destinationDoc.FootnoteOptions.RestartRule = FootnoteNumberingRule.Continuous;
+        destinationDoc.Save(destinationPath, SaveFormat.Docx);
 
-        // ---------- Create destination document with footnotes ----------
-        Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("Destination document start.");
-        destBuilder.InsertFootnote(FootnoteType.Footnote, "Destination footnote 1.");
-        destBuilder.Writeln("More text in destination.");
-        destBuilder.InsertFootnote(FootnoteType.Footnote, "Destination footnote 2.");
-        destDoc.Save(destPath);
+        // -----------------------------------------------------------------
+        // Create the source document that also contains footnotes
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is the source document that will be appended.");
+        srcBuilder.InsertFootnote(FootnoteType.Footnote, "First footnote in source.");
+        srcBuilder.InsertFootnote(FootnoteType.Footnote, "Second footnote in source.");
+        // Ensure continuous footnote numbering in the source as well
+        sourceDoc.FootnoteOptions.RestartRule = FootnoteNumberingRule.Continuous;
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // ---------- Create source document with footnotes ----------
-        Document srcDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Writeln("Source document start.");
-        srcBuilder.InsertFootnote(FootnoteType.Footnote, "Source footnote 1.");
-        srcBuilder.Writeln("More text in source.");
-        srcBuilder.InsertFootnote(FootnoteType.Footnote, "Source footnote 2.");
-        srcDoc.Save(srcPath);
+        // -----------------------------------------------------------------
+        // Load the documents (simulating a real‑world scenario)
+        // -----------------------------------------------------------------
+        Document dst = new Document(destinationPath);
+        Document src = new Document(sourcePath);
 
-        // ---------- Append source to destination ----------
-        // Load the previously saved documents (optional, we could use the objects directly).
-        Document destination = new Document(destPath);
-        Document source = new Document(srcPath);
-
-        // Append while keeping source formatting.
-        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
-
-        // Ensure footnote numbering continues throughout the merged document.
-        destination.FootnoteOptions.RestartRule = FootnoteNumberingRule.Continuous;
-
-        // Save the merged document.
-        destination.Save(mergedPath);
+        // Append the source document to the destination document.
+        // Keep source formatting; footnote numbering will continue because both
+        // documents use the Continuous restart rule.
+        dst.AppendDocument(src, ImportFormatMode.KeepSourceFormatting);
 
         // Save the merged document as PDF.
-        destination.Save(pdfPath, SaveFormat.Pdf);
+        dst.Save(mergedPdfPath, SaveFormat.Pdf);
 
-        // ---------- Validation ----------
-        if (!File.Exists(pdfPath))
-            throw new Exception("PDF file was not created.");
+        // -----------------------------------------------------------------
+        // Validation: ensure the PDF was created
+        // -----------------------------------------------------------------
+        if (!File.Exists(mergedPdfPath))
+        {
+            throw new InvalidOperationException($"Failed to create the merged PDF at '{mergedPdfPath}'.");
+        }
 
-        // Optional: output paths for verification (no console interaction required).
-        Console.WriteLine("Merged DOCX: " + mergedPath);
-        Console.WriteLine("Merged PDF: " + pdfPath);
+        // Optional: clean up intermediate files (comment out if you need them)
+        // File.Delete(destinationPath);
+        // File.Delete(sourcePath);
     }
 }

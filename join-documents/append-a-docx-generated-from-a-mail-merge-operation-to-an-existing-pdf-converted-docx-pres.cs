@@ -8,84 +8,65 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
+        // Prepare output directory
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a mail‑merge template DOCX
-        // -----------------------------------------------------------------
+        // File paths
         string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
-        tmplBuilder.Writeln("Dear ");
-        tmplBuilder.InsertField(" MERGEFIELD Name ", "<Name>");
-        tmplBuilder.Writeln(",");
-        tmplBuilder.Writeln("Your address is:");
-        tmplBuilder.InsertField(" MERGEFIELD Address ", "<Address>");
-        tmplBuilder.Writeln(".");
-        templateDoc.Save(templatePath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // 2. Execute mail merge to produce a DOCX document
-        // -----------------------------------------------------------------
-        // Prepare data source
-        DataTable table = new DataTable("Data");
-        table.Columns.Add("Name");
-        table.Columns.Add("Address");
-        table.Rows.Add("John Doe", "123 Main St, Anytown");
-
-        // Load the template and perform the merge
-        Document mergedMailDoc = new Document(templatePath);
-        mergedMailDoc.MailMerge.Execute(table);
-        string mergedMailPath = Path.Combine(outputDir, "MergedFromMailMerge.docx");
-        mergedMailDoc.Save(mergedMailPath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // 3. Create a source DOCX, convert it to PDF, then back to DOCX
-        // -----------------------------------------------------------------
-        string sourceDocPath = Path.Combine(outputDir, "Source.docx");
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("This is the original document that will be converted from PDF.");
-        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
-
-        // Convert to PDF
+        string mergedPath = Path.Combine(outputDir, "Merged.docx");
         string pdfPath = Path.Combine(outputDir, "Source.pdf");
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        string pdfConvertedPath = Path.Combine(outputDir, "PdfConverted.docx");
+        string finalPath = Path.Combine(outputDir, "Final.docx");
 
-        // Load the PDF and save it as a DOCX (PDF‑converted DOCX)
-        Document pdfConvertedDoc = new Document(pdfPath);
-        string pdfConvertedDocPath = Path.Combine(outputDir, "PdfConverted.docx");
-        pdfConvertedDoc.Save(pdfConvertedDocPath, SaveFormat.Docx);
+        // 1. Create a mail‑merge template with fields
+        Document template = new Document();
+        DocumentBuilder templateBuilder = new DocumentBuilder(template);
+        templateBuilder.Write("Dear ");
+        templateBuilder.InsertField(" MERGEFIELD FirstName ", "<FirstName>");
+        templateBuilder.Write(" ");
+        templateBuilder.InsertField(" MERGEFIELD LastName ", "<LastName>");
+        templateBuilder.Writeln(":");
+        templateBuilder.InsertField(" MERGEFIELD Message ", "<Message>");
+        template.Save(templatePath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 4. Append the mail‑merged DOCX to the PDF‑converted DOCX
-        //    preserving destination styles (UseDestinationStyles)
-        // -----------------------------------------------------------------
-        Document destinationDoc = new Document(pdfConvertedDocPath);
-        Document sourceToAppend = new Document(mergedMailPath);
-        destinationDoc.AppendDocument(sourceToAppend, ImportFormatMode.UseDestinationStyles);
-        string finalPath = Path.Combine(outputDir, "FinalMerged.docx");
-        destinationDoc.Save(finalPath, SaveFormat.Docx);
+        // 2. Execute mail merge using a DataTable
+        DataTable data = new DataTable("Data");
+        data.Columns.Add("FirstName");
+        data.Columns.Add("LastName");
+        data.Columns.Add("Message");
+        data.Rows.Add("John", "Doe", "Hello from mail merge!");
+        Document mergedDoc = new Document(templatePath);
+        mergedDoc.MailMerge.Execute(data);
+        mergedDoc.Save(mergedPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 5. Validation
-        // -----------------------------------------------------------------
+        // 3. Create a simple PDF document
+        Document pdfSource = new Document();
+        DocumentBuilder pdfBuilder = new DocumentBuilder(pdfSource);
+        pdfBuilder.Writeln("This is the content of the original PDF document.");
+        pdfSource.Save(pdfPath, SaveFormat.Pdf);
+
+        // 4. Load the PDF and convert it to DOCX
+        Document pdfConverted = new Document(pdfPath);
+        pdfConverted.Save(pdfConvertedPath, SaveFormat.Docx);
+
+        // 5. Load destination (PDF‑converted DOCX) and source (mail‑merged DOCX)
+        Document dstDoc = new Document(pdfConvertedPath);
+        Document srcDoc = new Document(mergedPath);
+
+        // 6. Append source document to destination while preserving destination styles
+        dstDoc.AppendDocument(srcDoc, ImportFormatMode.UseDestinationStyles);
+
+        // 7. Save the final combined document
+        dstDoc.Save(finalPath, SaveFormat.Docx);
+
+        // 8. Validate that the output file exists and contains expected content
         if (!File.Exists(finalPath))
-            throw new InvalidOperationException("The final merged document was not created.");
+            throw new InvalidOperationException("Final document was not created.");
 
-        // Verify that content from both source documents is present
-        string finalText = destinationDoc.GetText();
-
-        if (!finalText.Contains("This is the original document that will be converted from PDF.") ||
-            !finalText.Contains("Dear") ||
-            !finalText.Contains("John Doe"))
-        {
-            throw new InvalidOperationException("The final document does not contain expected content from both sources.");
-        }
-
-        // Indicate success (no interactive output required)
-        Console.WriteLine("Document merging completed successfully.");
+        string finalText = dstDoc.GetText();
+        if (!finalText.Contains("This is the content of the original PDF document.") ||
+            !finalText.Contains("Dear John Doe:"))
+            throw new InvalidOperationException("Final document does not contain expected content.");
     }
 }

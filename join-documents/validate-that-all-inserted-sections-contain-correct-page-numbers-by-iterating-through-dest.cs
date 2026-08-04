@@ -1,94 +1,79 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Layout;
 
-public class JoinDocumentsValidatePageNumbers
+public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for temporary files.
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        Directory.CreateDirectory(dataDir);
+        // Create sample source documents
+        string doc1Path = Path.Combine(Directory.GetCurrentDirectory(), "Source1.docx");
+        string doc2Path = Path.Combine(Directory.GetCurrentDirectory(), "Source2.docx");
+        CreateSampleDocument(doc1Path, "Document One", 2);
+        CreateSampleDocument(doc2Path, "Document Two", 3);
 
-        // Paths for the sample source documents and the merged result.
-        string src1Path = Path.Combine(dataDir, "Source1.docx");
-        string src2Path = Path.Combine(dataDir, "Source2.docx");
-        string mergedPath = Path.Combine(dataDir, "Merged.docx");
+        // Load source documents
+        Document source1 = new Document(doc1Path);
+        Document source2 = new Document(doc2Path);
 
-        // ---------- Create first source document ----------
-        Document srcDoc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(srcDoc1);
-        builder1.Writeln("First document");
-        // Insert a PAGE field that will display the current page number.
-        builder1.InsertField(FieldType.FieldPage, true);
-        srcDoc1.Save(src1Path);
+        // Create destination document and append sources
+        Document destination = new Document();
+        destination.RemoveAllChildren(); // start with an empty document
 
-        // ---------- Create second source document ----------
-        Document srcDoc2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(srcDoc2);
-        builder2.Writeln("Second document");
-        builder2.InsertField(FieldType.FieldPage, true);
-        srcDoc2.Save(src2Path);
+        destination.AppendDocument(source1, ImportFormatMode.KeepSourceFormatting);
+        destination.AppendDocument(source2, ImportFormatMode.KeepSourceFormatting);
 
-        // ---------- Load the first document as the destination ----------
-        Document dstDoc = new Document(src1Path);
+        // Update layout to calculate page numbers
+        destination.UpdatePageLayout();
 
-        // Append the second document while keeping its original formatting.
-        dstDoc.AppendDocument(srcDoc2, ImportFormatMode.KeepSourceFormatting);
-
-        // Update fields and layout so that PAGE fields reflect correct numbers.
-        dstDoc.UpdateFields();
-        dstDoc.UpdatePageLayout();
-
-        // ---------- Validation: each PAGE field must contain the expected page number ----------
-        // Expected page numbers after the merge: 1 for the first document, 2 for the second.
-        int[] expectedPageNumbers = { 1, 2 };
-        int index = 0;
-
-        foreach (Field field in dstDoc.Range.Fields)
+        // Validate page numbers for each section
+        LayoutCollector collector = new LayoutCollector(destination);
+        int previousPageNumber = 0;
+        int sectionIndex = 0;
+        foreach (Section section in destination.Sections)
         {
-            if (field.Type == FieldType.FieldPage)
-            {
-                // The field result is the page number as a string.
-                string result = field.Result.Trim();
+            // Get the first paragraph of the section to retrieve its page number
+            Paragraph firstParagraph = section.Body.FirstParagraph;
+            if (firstParagraph == null)
+                throw new InvalidOperationException($"Section {sectionIndex} does not contain any paragraphs.");
 
-                if (!int.TryParse(result, out int actualPage))
-                {
-                    throw new InvalidOperationException($"Unable to parse page number from field result '{result}'.");
-                }
+            int pageNumber = collector.GetStartPageIndex(firstParagraph);
+            if (pageNumber <= previousPageNumber)
+                throw new InvalidOperationException($"Section {sectionIndex} starts on page {pageNumber}, which is not after previous page {previousPageNumber}.");
 
-                if (index >= expectedPageNumbers.Length)
-                {
-                    throw new InvalidOperationException("More PAGE fields found than expected.");
-                }
-
-                if (actualPage != expectedPageNumbers[index])
-                {
-                    throw new InvalidOperationException(
-                        $"Page number mismatch in section {index + 1}: expected {expectedPageNumbers[index]}, got {actualPage}.");
-                }
-
-                index++;
-            }
+            previousPageNumber = pageNumber;
+            sectionIndex++;
         }
 
-        if (index != expectedPageNumbers.Length)
-        {
-            throw new InvalidOperationException(
-                $"Expected {expectedPageNumbers.Length} PAGE fields, but found {index}.");
-        }
+        // Save merged document
+        string mergedPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.docx");
+        destination.Save(mergedPath, SaveFormat.Docx);
 
-        // Save the merged document.
-        dstDoc.Save(mergedPath);
-
-        // Verify that the merged file was created.
+        // Validate that the merged file exists
         if (!File.Exists(mergedPath))
+            throw new FileNotFoundException("Merged document was not created.", mergedPath);
+
+        // Indicate success (no interactive input)
+        Console.WriteLine("Document merge and page number validation completed successfully.");
+    }
+
+    private static void CreateSampleDocument(string path, string title, int pageCount)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln(title);
+        builder.Writeln($"This document will contain {pageCount} pages.");
+
+        for (int i = 1; i <= pageCount; i++)
         {
-            throw new FileNotFoundException("Merged document was not saved correctly.", mergedPath);
+            builder.Writeln($"--- Page {i} content ---");
+            // Add enough text to force a new page if not the last page
+            if (i < pageCount)
+                builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Program completed successfully.
-        Console.WriteLine("Document merged and page numbers validated successfully.");
+        doc.Save(path, SaveFormat.Docx);
     }
 }

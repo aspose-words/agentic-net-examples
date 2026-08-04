@@ -1,62 +1,82 @@
 using System;
 using System.Data;
 using System.IO;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
+        // Output folder.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create sample documents that will be inserted during mail merge.
-        string doc1Path = Path.Combine(outputDir, "InsertDoc1.docx");
-        string doc2Path = Path.Combine(outputDir, "InsertDoc2.docx");
-        CreateSampleDocument(doc1Path, "Content of the first inserted document.");
-        CreateSampleDocument(doc2Path, "Content of the second inserted document.");
+        // -----------------------------------------------------------------
+        // 1. Create sample documents that will be inserted for each data row.
+        // -----------------------------------------------------------------
+        string docPath1 = Path.Combine(outputDir, "Sample1.docx");
+        string docPath2 = Path.Combine(outputDir, "Sample2.docx");
 
-        // Create a mail‑merge template containing a merge field that will trigger document insertion.
+        CreateSampleDocument(docPath1, "Content of the first inserted document.");
+        CreateSampleDocument(docPath2, "Content of the second inserted document.");
+
+        // ---------------------------------------------------------------
+        // 2. Build a mail‑merge template that contains a MERGEFIELD.
+        //    The field value will be the file name of the document to insert.
+        // ---------------------------------------------------------------
         string templatePath = Path.Combine(outputDir, "Template.docx");
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("=== Begin of combined document ===");
-        // The field name is "InsertDoc". The callback will replace this field with a whole document.
-        builder.InsertField("MERGEFIELD InsertDoc");
-        builder.Writeln("=== End of combined document ===");
-        template.Save(templatePath);
 
-        // Prepare data source – one row per document to be inserted.
-        DataTable data = new DataTable("Data");
-        data.Columns.Add("Dummy"); // Required column, not used.
-        data.Rows.Add("Row1");
-        data.Rows.Add("Row2");
+        builder.Writeln("=== Begin of merged document ===");
+        // The field name can be anything; we use "DocPath".
+        builder.InsertField("MERGEFIELD DocPath");
+        builder.Writeln(); // Ensure a line break after each inserted document.
+        builder.Writeln("=== End of merged document ===");
 
-        // List of documents to insert, aligned with the data rows.
-        List<string> docsToInsert = new List<string> { doc1Path, doc2Path };
+        template.Save(templatePath, SaveFormat.Docx);
 
-        // Set up a field‑merging callback that inserts the appropriate document.
-        template.MailMerge.FieldMergingCallback = new InsertDocumentCallback(docsToInsert);
+        // ---------------------------------------------------------------
+        // 3. Prepare a data source (DataTable) with a row for each document.
+        // ---------------------------------------------------------------
+        DataTable data = new DataTable("Docs");
+        data.Columns.Add("DocPath", typeof(string));
+        data.Rows.Add(docPath1);
+        data.Rows.Add(docPath2);
 
-        // Execute mail merge – the callback will be invoked for each record.
+        // ---------------------------------------------------------------
+        // 4. Subscribe to the FieldMergingCallback.
+        //    When the "DocPath" field is encountered we load the referenced
+        //    document and insert its content at the field location.
+        // ---------------------------------------------------------------
+        template.MailMerge.FieldMergingCallback = new InsertDocumentCallback();
+
+        // ---------------------------------------------------------------
+        // 5. Execute the mail merge. For each row the callback will insert
+        //    the corresponding document.
+        // ---------------------------------------------------------------
         template.MailMerge.Execute(data);
 
-        // Save the merged result as a single PDF file.
-        string pdfPath = Path.Combine(outputDir, "Combined.pdf");
+        // ---------------------------------------------------------------
+        // 6. Save the combined result as PDF.
+        // ---------------------------------------------------------------
+        string pdfPath = Path.Combine(outputDir, "CombinedResult.pdf");
         template.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The combined PDF was not generated.");
-
-        Console.WriteLine("Combined PDF created at: " + pdfPath);
+        // Simple validation that the PDF was created.
+        if (File.Exists(pdfPath))
+        {
+            Console.WriteLine($"Combined PDF generated successfully at: {pdfPath}");
+        }
+        else
+        {
+            throw new InvalidOperationException("Failed to generate the combined PDF file.");
+        }
     }
 
-    // Helper method to create a simple one‑page DOCX with specified text.
+    // Helper method to create a minimal DOCX with a single paragraph of text.
     private static void CreateSampleDocument(string filePath, string text)
     {
         Document doc = new Document();
@@ -65,32 +85,36 @@ public class Program
         doc.Save(filePath, SaveFormat.Docx);
     }
 
-    // Callback that replaces the merge field with a whole document.
+    // Callback that replaces the MERGEFIELD value with the contents of the
+    // document whose file name is stored in the field.
     private class InsertDocumentCallback : IFieldMergingCallback
     {
-        private readonly List<string> _documents;
-
-        public InsertDocumentCallback(List<string> documents)
-        {
-            _documents = documents ?? throw new ArgumentNullException(nameof(documents));
-        }
-
         void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // Determine which document to insert based on the current record index.
-            int index = args.RecordIndex;
-            if (index < 0 || index >= _documents.Count)
-                throw new IndexOutOfRangeException("Record index out of range for document insertion.");
+            // We only act on the "DocPath" field.
+            if (!args.DocumentFieldName.Equals("DocPath", StringComparison.OrdinalIgnoreCase))
+                return;
 
-            string path = _documents[index];
-            Document srcDoc = new Document(path);
+            string fileName = args.FieldValue?.ToString();
 
-            // Move the builder to the merge field and insert the whole document.
+            if (string.IsNullOrEmpty(fileName) || !File.Exists(fileName))
+            {
+                // Insert a placeholder text if the file is missing.
+                args.Text = "[Missing document]";
+                return;
+            }
+
+            // Load the document to be inserted.
+            Document insertDoc = new Document(fileName);
+
+            // Move the builder to the merge field location.
             DocumentBuilder builder = new DocumentBuilder(args.Document);
-            builder.MoveToMergeField(args.FieldName);
-            builder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+            builder.MoveToMergeField(args.DocumentFieldName);
 
-            // Suppress the original merge field text.
+            // Insert the whole document at the field position.
+            builder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
+
+            // Suppress the default text insertion for this field.
             args.Text = string.Empty;
         }
 

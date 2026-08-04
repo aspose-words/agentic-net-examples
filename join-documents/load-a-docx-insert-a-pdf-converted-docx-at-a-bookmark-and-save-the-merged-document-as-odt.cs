@@ -7,63 +7,68 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for the sample documents.
-        string mainDocPath = Path.Combine(outputDir, "MainDocument.docx");
-        string pdfConvertedDocPath = Path.Combine(outputDir, "PdfConvertedDocument.docx");
-        string mergedDocPath = Path.Combine(outputDir, "MergedDocument.odt");
+        // Define file names.
+        string baseDocPath = "BaseDocument.docx";
+        string insertDocPath = "InsertedDocument.docx";
+        string mergedDocPath = "MergedDocument.odt";
 
         // -----------------------------------------------------------------
-        // 1. Create the main DOCX document with a bookmark where we will insert.
+        // 1. Create the base DOCX with a bookmark where the content will be inserted.
         // -----------------------------------------------------------------
-        Document mainDoc = new Document();
-        DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
-        mainBuilder.Writeln("This is the original document.");
-        mainBuilder.StartBookmark("InsertHere");
-        mainBuilder.Writeln("Content before insertion (inside bookmark).");
-        mainBuilder.EndBookmark("InsertHere");
-        mainDoc.Save(mainDocPath, SaveFormat.Docx);
+        Document baseDoc = new Document();
+        DocumentBuilder baseBuilder = new DocumentBuilder(baseDoc);
+        baseBuilder.Writeln("This is the beginning of the base document.");
+        baseBuilder.StartBookmark("InsertHere");
+        baseBuilder.Writeln("[Placeholder for inserted content]");
+        baseBuilder.EndBookmark("InsertHere");
+        baseBuilder.Writeln("This is the end of the base document.");
+        baseDoc.Save(baseDocPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
         // 2. Create a second DOCX that simulates a PDF‑to‑DOCX conversion.
         // -----------------------------------------------------------------
-        Document pdfConvertedDoc = new Document();
-        DocumentBuilder pdfBuilder = new DocumentBuilder(pdfConvertedDoc);
-        pdfBuilder.Writeln("This content originated from a PDF conversion.");
-        pdfConvertedDoc.Save(pdfConvertedDocPath, SaveFormat.Docx);
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("Content that originated from a PDF file.");
+        insertBuilder.Writeln("Additional converted paragraph.");
+        insertDoc.Save(insertDocPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 3. Load the documents.
+        // 3. Load the base document.
         // -----------------------------------------------------------------
-        Document loadedMain = new Document(mainDocPath);
-        Document loadedInsert = new Document(pdfConvertedDocPath);
+        Document loadedBase = new Document(baseDocPath);
 
         // -----------------------------------------------------------------
-        // 4. Move to the bookmark and insert the second document.
+        // 4. Load the document to be inserted.
         // -----------------------------------------------------------------
-        DocumentBuilder insertBuilder = new DocumentBuilder(loadedMain);
-        insertBuilder.MoveToBookmark("InsertHere");
-        insertBuilder.InsertDocument(loadedInsert, ImportFormatMode.KeepSourceFormatting);
+        Document loadedInsert = new Document(insertDocPath);
 
         // -----------------------------------------------------------------
-        // 5. Save the merged document as ODT.
+        // 5. Move the builder to the bookmark and insert the second document.
         // -----------------------------------------------------------------
-        loadedMain.Save(mergedDocPath, SaveFormat.Odt);
+        DocumentBuilder builder = new DocumentBuilder(loadedBase);
+        builder.MoveToBookmark("InsertHere");
+        // InsertDocument keeps the source formatting.
+        builder.InsertDocument(loadedInsert, ImportFormatMode.KeepSourceFormatting);
 
         // -----------------------------------------------------------------
-        // 6. Validation: ensure the file exists and contains text from both sources.
+        // 6. Save the merged document as ODT.
+        // -----------------------------------------------------------------
+        OdtSaveOptions odtOptions = new OdtSaveOptions();
+        loadedBase.Save(mergedDocPath, odtOptions);
+
+        // -----------------------------------------------------------------
+        // 7. Validation: ensure the file exists and contains text from both sources.
         // -----------------------------------------------------------------
         if (!File.Exists(mergedDocPath))
             throw new InvalidOperationException("Merged ODT file was not created.");
 
-        Document validationDoc = new Document(mergedDocPath);
-        string mergedText = validationDoc.GetText();
+        Document resultDoc = new Document(mergedDocPath);
+        string resultText = resultDoc.GetText();
 
-        if (!mergedText.Contains("This is the original document.") ||
-            !mergedText.Contains("This content originated from a PDF conversion."))
+        if (!resultText.Contains("This is the beginning of the base document.") ||
+            !resultText.Contains("Content that originated from a PDF file.") ||
+            !resultText.Contains("This is the end of the base document."))
         {
             throw new InvalidOperationException("Merged document does not contain expected content.");
         }

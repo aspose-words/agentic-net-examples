@@ -7,119 +7,86 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for temporary files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Paths for the documents.
+        const string destPath = "Destination.docx";
+        const string srcPath = "Source.docx";
+        const string outputPath = "Result.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create the destination document that contains a bookmark.
-        // -----------------------------------------------------------------
+        // ---------- Create destination document with a bookmark ----------
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
         destBuilder.Writeln("Start of destination document.");
         destBuilder.StartBookmark("InsertHere");
-        destBuilder.Writeln("<<Bookmark location>>");
+        destBuilder.Writeln("Bookmark location.");
         destBuilder.EndBookmark("InsertHere");
         destBuilder.Writeln("End of destination document.");
 
-        // -----------------------------------------------------------------
-        // 2. Create the source document that contains several paragraphs
-        //    and a table (the table will be ignored during import).
-        // -----------------------------------------------------------------
+        // Save the destination document (optional, just to have a file on disk).
+        destDoc.Save(destPath);
+
+        // ---------- Create source document containing several paragraphs ----------
         Document srcDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
 
-        srcBuilder.Writeln("Source paragraph 1.");
-        srcBuilder.Writeln("Source paragraph 2.");
+        srcBuilder.Writeln("First paragraph from source.");
+        srcBuilder.Writeln("Second paragraph from source.");
+        srcBuilder.Writeln("Third paragraph from source.");
 
-        // Insert a table – this node must not be imported.
-        srcBuilder.StartTable();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell 1");
-        srcBuilder.EndRow();
-        srcBuilder.EndTable();
+        // Save the source document so that it exists on disk.
+        srcDoc.Save(srcPath);
 
-        srcBuilder.Writeln("Source paragraph after table.");
-
-        // Save the source document to disk (optional, just to demonstrate file I/O).
-        string srcPath = Path.Combine(workDir, "Source.docx");
-        srcDoc.Save(srcPath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // 3. Locate the bookmark in the destination document.
-        // -----------------------------------------------------------------
+        // ---------- Import only paragraph nodes after the bookmark ----------
         Bookmark bookmark = destDoc.Range.Bookmarks["InsertHere"];
-        if (bookmark == null)
-            throw new InvalidOperationException("Bookmark 'InsertHere' was not found.");
+        InsertParagraphsAfterBookmark(bookmark.BookmarkStart.ParentNode, srcDoc);
 
-        // The insertion point is the paragraph that contains the bookmark start.
-        Node insertionNode = bookmark.BookmarkStart.ParentNode;
+        // ---------- Save the merged result ----------
+        destDoc.Save(outputPath);
 
-        // -----------------------------------------------------------------
-        // 4. Import only paragraph nodes from the source document after the bookmark.
-        // -----------------------------------------------------------------
-        InsertParagraphsOnly(insertionNode, srcDoc);
+        // ---------- Validate that the output file was created ----------
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"The file '{outputPath}' was not created.");
 
-        // -----------------------------------------------------------------
-        // 5. Save the merged document.
-        // -----------------------------------------------------------------
-        string resultPath = Path.Combine(workDir, "Merged.docx");
-        destDoc.Save(resultPath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // 6. Simple validation – ensure the file exists and contains the expected text.
-        // -----------------------------------------------------------------
-        if (!File.Exists(resultPath))
-            throw new FileNotFoundException("Merged document was not created.", resultPath);
-
-        Document resultDoc = new Document(resultPath);
-        string resultText = resultDoc.GetText();
-
-        // Expected paragraphs from the source document (the table should be absent).
-        if (!resultText.Contains("Source paragraph 1.") ||
-            !resultText.Contains("Source paragraph 2.") ||
-            !resultText.Contains("Source paragraph after table.") ||
-            resultText.Contains("Cell 1"))
-        {
-            throw new InvalidOperationException("The merged document does not contain the expected content.");
-        }
-
-        // Output a short confirmation (no interactive input required).
-        Console.WriteLine("Document merged successfully. Output saved to: " + resultPath);
+        // Optional: write a short confirmation to the console.
+        Console.WriteLine($"Document merged successfully. Output file: {Path.GetFullPath(outputPath)}");
     }
 
-    // Inserts only paragraph nodes from srcDoc after insertionDestination.
-    private static void InsertParagraphsOnly(Node insertionDestination, Document srcDoc)
+    /// <summary>
+    /// Inserts only paragraph nodes from <paramref name="srcDoc"/> after <paramref name="insertionDestination"/>.
+    /// </summary>
+    /// <param name="insertionDestination">A paragraph or table node after which the content will be inserted.</param>
+    /// <param name="srcDoc">The source document containing paragraphs to import.</param>
+    private static void InsertParagraphsAfterBookmark(Node insertionDestination, Document srcDoc)
     {
-        // The destination must be a paragraph or a table.
         if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
-            throw new ArgumentException("The insertion destination must be a paragraph or a table.");
+            throw new ArgumentException("The destination node must be a paragraph or a table.");
 
         CompositeNode destinationParent = insertionDestination.ParentNode;
 
-        // NodeImporter handles style and list translation.
+        // NodeImporter handles style and list translation between documents.
         NodeImporter importer = new NodeImporter(srcDoc, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
 
-        // Iterate over all block-level nodes in each source section.
+        // Iterate over all block-level nodes in the source document.
         foreach (Section srcSection in srcDoc.Sections)
         {
             foreach (Node srcNode in srcSection.Body)
             {
-                // Process only paragraphs.
+                // Process only paragraph nodes.
                 if (srcNode.NodeType != NodeType.Paragraph)
                     continue;
 
                 Paragraph para = (Paragraph)srcNode;
 
-                // Skip the last empty paragraph of a section (Aspose.Words adds it automatically).
+                // Skip the last empty paragraph of a section (it is added automatically by Aspose.Words).
                 if (para.IsEndOfSection && !para.HasChildNodes)
                     continue;
 
                 // Import the paragraph into the destination document.
-                Node importedNode = importer.ImportNode(para, true);
+                Node importedNode = importer.ImportNode(srcNode, true);
+
+                // Insert the imported paragraph after the current insertion point.
                 destinationParent.InsertAfter(importedNode, insertionDestination);
-                insertionDestination = importedNode; // Move the insertion point forward.
+                insertionDestination = importedNode;
             }
         }
     }

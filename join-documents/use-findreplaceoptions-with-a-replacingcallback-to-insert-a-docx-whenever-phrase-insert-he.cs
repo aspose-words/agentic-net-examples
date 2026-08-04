@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -9,85 +8,76 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare file paths.
-        string baseDir = Directory.GetCurrentDirectory();
-        string mainDocPath = Path.Combine(baseDir, "MainDocument.docx");
-        string subDocPath = Path.Combine(baseDir, "InsertDocument.docx");
-        string resultPath = Path.Combine(baseDir, "ResultDocument.docx");
-
-        // Create the main document containing the placeholder.
+        // Create the main document that contains the placeholder text.
         Document mainDoc = new Document();
         DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
-        mainBuilder.Writeln("This is the beginning of the main document.");
+        mainBuilder.Writeln("This is the main document.");
         mainBuilder.Writeln("INSERT_HERE"); // Placeholder to be replaced.
-        mainBuilder.Writeln("This is the end of the main document.");
-        mainDoc.Save(mainDocPath);
+        mainBuilder.Writeln("End of the main document.");
 
-        // Create the document that will be inserted.
-        Document subDoc = new Document();
-        DocumentBuilder subBuilder = new DocumentBuilder(subDoc);
-        subBuilder.Writeln("This is the first line of the inserted document.");
-        subBuilder.Writeln("This is the second line of the inserted document.");
-        subDoc.Save(subDocPath);
+        // Create the document that will be inserted at the placeholder.
+        string insertPath = Path.Combine(Directory.GetCurrentDirectory(), "Insert.docx");
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("This is the inserted document content.");
+        insertDoc.Save(insertPath);
 
-        // Load the main document for processing.
-        Document srcDoc = new Document(mainDocPath);
-
-        // Configure find‑replace with a callback that inserts the sub‑document.
+        // Configure FindReplaceOptions with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new InsertDocumentAtReplaceHandler(subDocPath)
+            ReplacingCallback = new InsertDocumentAtReplaceHandler(insertPath)
         };
 
-        // Perform the replace operation. The placeholder text is removed by the callback.
-        srcDoc.Range.Replace(new Regex("INSERT_HERE"), string.Empty, options);
+        // Perform the replace operation. The placeholder text is removed,
+        // and the content of Insert.docx is inserted at its location.
+        mainDoc.Range.Replace(new Regex("INSERT_HERE"), "", options);
 
-        // Save the merged result.
-        srcDoc.Save(resultPath, SaveFormat.Docx);
+        // Save the resulting document.
+        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        mainDoc.Save(resultPath);
 
-        // Verify that the result file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(resultPath))
-        {
-            throw new InvalidOperationException($"The result file was not created: {resultPath}");
-        }
+            throw new InvalidOperationException("The merged document was not saved correctly.");
+
+        // Optional: verify that the inserted text is present.
+        Document resultDoc = new Document(resultPath);
+        string resultText = resultDoc.GetText();
+        if (!resultText.Contains("This is the inserted document content."))
+            throw new InvalidOperationException("The inserted document content was not found in the result.");
     }
 
-    // Callback that inserts a document at the location of each match.
+    // Callback that inserts a document at each match of the placeholder.
     private class InsertDocumentAtReplaceHandler : IReplacingCallback
     {
-        private readonly string _documentPath;
+        private readonly string _insertPath;
 
-        public InsertDocumentAtReplaceHandler(string documentPath)
-        {
-            _documentPath = documentPath;
-        }
+        public InsertDocumentAtReplaceHandler(string insertPath) => _insertPath = insertPath;
 
         ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
             // Load the document to be inserted.
-            Document insertDoc = new Document(_documentPath);
+            Document subDoc = new Document(_insertPath);
 
-            // The match is inside a paragraph; insert after that paragraph.
-            Paragraph paragraph = (Paragraph)args.MatchNode.ParentNode;
-            InsertDocument(paragraph, insertDoc);
+            // The placeholder resides in a paragraph; insert after that paragraph.
+            Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
+            InsertDocument(placeholderParagraph, subDoc);
 
-            // Remove the placeholder paragraph.
-            paragraph.Remove();
+            // Remove the paragraph that contained the placeholder text.
+            placeholderParagraph.Remove();
 
             // Skip further processing of this match.
             return ReplaceAction.Skip;
         }
 
-        // Inserts all nodes of another document after a paragraph or table.
+        // Inserts all nodes of the source document after the specified paragraph.
         private static void InsertDocument(Node insertionDestination, Document docToInsert)
         {
             if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
-                throw new ArgumentException("The destination node must be either a paragraph or a table.");
+                throw new ArgumentException("The destination node must be a paragraph or a table.");
 
             CompositeNode dstStory = insertionDestination.ParentNode;
-
-            NodeImporter importer = new NodeImporter(
-                docToInsert, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
+            NodeImporter importer = new NodeImporter(docToInsert, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
 
             foreach (Section srcSection in docToInsert.Sections)
             {

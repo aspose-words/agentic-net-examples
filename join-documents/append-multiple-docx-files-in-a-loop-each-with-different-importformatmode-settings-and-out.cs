@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -7,62 +8,55 @@ public class Program
 {
     public static void Main()
     {
-        // Define a working directory relative to the executable location.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "JoinDocsExample");
-        Directory.CreateDirectory(workDir);
+        // Directory for generated files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Paths for the source documents.
-        string[] sourcePaths = new string[]
+        // Destination document that will hold all appended content.
+        Document dstDoc = new Document();
+        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
+        dstBuilder.Writeln("Combined Document Start");
+        dstBuilder.Writeln(); // Add a blank line.
+
+        // Different ImportFormatMode values to use for each source document.
+        List<ImportFormatMode> importModes = new List<ImportFormatMode>
         {
-            Path.Combine(workDir, "Source1.docx"),
-            Path.Combine(workDir, "Source2.docx"),
-            Path.Combine(workDir, "Source3.docx")
+            ImportFormatMode.UseDestinationStyles,
+            ImportFormatMode.KeepSourceFormatting,
+            ImportFormatMode.KeepDifferentStyles
         };
 
-        // Create three sample source documents with distinct content.
-        CreateSampleDocument(sourcePaths[0], "First source document. Style: Normal.", StyleIdentifier.Normal);
-        CreateSampleDocument(sourcePaths[1], "Second source document. Style: Heading1.", StyleIdentifier.Heading1);
-        CreateSampleDocument(sourcePaths[2], "Third source document. Style: Heading2.", StyleIdentifier.Heading2);
-
-        // Destination document that will receive the appended content.
-        Document destination = new Document();
-
-        // Append each source document using a different ImportFormatMode.
-        for (int i = 0; i < sourcePaths.Length; i++)
+        // Append a source document for each mode.
+        for (int i = 0; i < importModes.Count; i++)
         {
-            Document src = new Document(sourcePaths[i]);
+            // Create a simple source document with unique text.
+            Document srcDoc = new Document();
+            DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+            srcBuilder.Writeln($"Source Document {i + 1}");
+            srcBuilder.Writeln($"This document is appended using {importModes[i]} mode.");
+            srcBuilder.Writeln(); // Separate sections.
 
-            ImportFormatMode mode = i switch
-            {
-                0 => ImportFormatMode.UseDestinationStyles,
-                1 => ImportFormatMode.KeepSourceFormatting,
-                _ => ImportFormatMode.KeepDifferentStyles
-            };
-
-            destination.AppendDocument(src, mode);
+            // Append the source document to the destination using the current mode.
+            dstDoc.AppendDocument(srcDoc, importModes[i]);
         }
 
         // Save the combined document as PDF.
-        string pdfPath = Path.Combine(workDir, "Combined.pdf");
-        destination.Save(pdfPath, SaveFormat.Pdf);
+        string outputPdfPath = Path.Combine(artifactsDir, "Combined.pdf");
+        dstDoc.Save(outputPdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
-        if (!File.Exists(pdfPath))
+        // Validation: ensure the PDF file was created and contains at least one page.
+        if (!File.Exists(outputPdfPath))
         {
             throw new InvalidOperationException("The combined PDF file was not created.");
         }
 
-        // Optional: clean up source files (comment out if inspection is needed).
-        // foreach (var path in sourcePaths) File.Delete(path);
-    }
+        Document pdfDoc = new Document(outputPdfPath);
+        if (pdfDoc.PageCount == 0)
+        {
+            throw new InvalidOperationException("The combined PDF file contains no pages.");
+        }
 
-    // Helper method to create a simple DOCX file with specified text and style.
-    private static void CreateSampleDocument(string filePath, string text, StyleIdentifier styleId)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ParagraphFormat.StyleIdentifier = styleId;
-        builder.Writeln(text);
-        doc.Save(filePath, SaveFormat.Docx);
+        // Optional: indicate success (no interactive output required).
+        // The program will exit normally if no exception is thrown.
     }
 }
