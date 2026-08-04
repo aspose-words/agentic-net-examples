@@ -1,86 +1,82 @@
 using System;
 using System.IO;
-using System.Text;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Loading;
-using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 public class Program
 {
-    // Expected token for authorized resource loading.
-    private const string ExpectedToken = "valid-token";
-
-    public static void Main()
+    // Entry point of the console application.
+    public static async Task Main()
     {
-        // Simulated token (hard‑coded for this demo).
-        string suppliedToken = "valid-token"; // Change to any other value to test the token check.
+        // Sample token that would normally be obtained from a secure source.
+        const string apiToken = "valid-token-123";
 
-        // Create a blank document.
-        Document doc = new Document();
-
-        // Attach a custom resource loading callback that validates the token before fetching external resources.
-        doc.ResourceLoadingCallback = new SecureResourceLoader(suppliedToken, ExpectedToken);
-
-        // Insert an image using a placeholder URI. The callback will intercept this request.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage("SecureImage");
-
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        doc.Save(outputPath);
-
-        // Reload the document to verify whether the image was actually loaded.
-        Document loadedDoc = new Document(outputPath);
-        int imageCount = loadedDoc.GetChildNodes(NodeType.Shape, true).Count;
-
-        // Validation: if the token was correct, the image should be present; otherwise, it should be absent.
-        if (suppliedToken == ExpectedToken)
+        // Validate the token before any network operation.
+        if (!IsTokenValid(apiToken))
         {
-            if (imageCount == 0)
-                throw new InvalidOperationException("Token was valid but the image was not loaded.");
-        }
-        else
-        {
-            if (imageCount != 0)
-                throw new InvalidOperationException("Invalid token allowed image loading.");
+            Console.WriteLine("Invalid API token. Skipping external resource retrieval.");
+            return;
         }
 
-        // Successful execution – no console output required.
-    }
-}
+        // URL of a sample Word document. In a real scenario this would be a protected endpoint.
+        const string documentUrl = "https://github.com/aspose-words/Aspose.Words-for-.NET/raw/master/Examples/Data/Document.docx";
 
-// Custom callback that checks a token before allowing an external image to be loaded.
-public class SecureResourceLoader : IResourceLoadingCallback
-{
-    private readonly string _providedToken;
-    private readonly string _expectedToken;
+        // Download the document only after the token has been validated.
+        byte[] documentBytes = await DownloadDocumentAsync(documentUrl, apiToken);
+        if (documentBytes == null || documentBytes.Length == 0)
+        {
+            Console.WriteLine("Failed to download the document.");
+            return;
+        }
 
-    // A tiny 1x1 PNG image (transparent) encoded in Base64.
-    private static readonly byte[] PlaceholderImage = Convert.FromBase64String(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YVh" +
-        "6V8AAAAASUVORK5CYII=");
+        // Load the document from the downloaded byte array using a MemoryStream.
+        using (var stream = new MemoryStream(documentBytes))
+        {
+            Document doc = new Document(stream);
 
-    public SecureResourceLoader(string providedToken, string expectedToken)
-    {
-        _providedToken = providedToken;
-        _expectedToken = expectedToken;
+            // Apply read‑only protection with a password.
+            const string docPassword = "DocPassword";
+            doc.Protect(ProtectionType.ReadOnly, docPassword);
+
+            // Prepare output folder.
+            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+            Directory.CreateDirectory(artifactsDir);
+
+            // Save the protected document.
+            string outputPath = Path.Combine(artifactsDir, "ProtectedDocument.docx");
+            doc.Save(outputPath, SaveFormat.Docx);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The protected document was not saved correctly.");
+
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        }
     }
 
-    public ResourceLoadingAction ResourceLoading(ResourceLoadingArgs args)
+    // Simple token validation logic. Replace with real validation as needed.
+    private static bool IsTokenValid(string token)
     {
-        // Intercept only the specific placeholder used in this example.
-        if (args.ResourceType == ResourceType.Image && args.OriginalUri == "SecureImage")
+        // Example rule: token must start with "valid-" and be at least 10 characters long.
+        return !string.IsNullOrEmpty(token) && token.StartsWith("valid-") && token.Length >= 10;
+    }
+
+    // Downloads a document using HttpClient, passing the token as a bearer token.
+    private static async Task<byte[]> DownloadDocumentAsync(string url, string token)
+    {
+        using (var httpClient = new HttpClient())
         {
-            // Validate the token.
-            if (_providedToken != _expectedToken)
-                return ResourceLoadingAction.Skip; // Do not load the image.
+            // Add the token to the Authorization header.
+            httpClient.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-            // Token is valid – provide the embedded placeholder image data.
-            args.SetData(PlaceholderImage);
-            return ResourceLoadingAction.UserProvided;
+            HttpResponseMessage response = await httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadAsByteArrayAsync();
         }
-
-        // For all other resources, use the default loading behavior.
-        return ResourceLoadingAction.Default;
     }
 }

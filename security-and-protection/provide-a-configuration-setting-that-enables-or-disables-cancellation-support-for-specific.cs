@@ -1,100 +1,70 @@
 using System;
 using System.IO;
+using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeCancellationDemo
+namespace AsposeWordsCancellationDemo
 {
-    // Simple configuration class to enable or disable cancellation.
-    public class Config
+    // Callback that aborts saving after a short time interval.
+    class CancelSavingCallback : IDocumentSavingCallback
     {
-        public bool EnableCancellation { get; set; }
-    }
-
-    // Callback that checks the configuration and throws if cancellation is enabled.
-    public class SavingProgressCallback : IDocumentSavingCallback
-    {
-        private readonly Config _config;
-
-        public SavingProgressCallback(Config config)
-        {
-            _config = config;
-        }
+        private readonly DateTime _startTime = DateTime.Now;
+        private const double MaxDurationSeconds = 0.01; // Adjust as needed.
 
         public void Notify(DocumentSavingArgs args)
         {
-            // If cancellation is enabled, abort the save operation.
-            if (_config.EnableCancellation)
+            if ((DateTime.Now - _startTime).TotalSeconds > MaxDurationSeconds)
                 throw new OperationCanceledException(
-                    $"Saving canceled at estimated progress {args.EstimatedProgress}%.");
+                    $"Saving canceled. EstimatedProgress = {args.EstimatedProgress}");
         }
     }
 
     public class Program
     {
+        // Configuration setting: turn cancellation support on or off.
+        private static readonly bool EnableCancellation = true;
+
         public static void Main()
         {
-            // Prepare a temporary folder for output files.
-            string outputDir = Path.Combine(Path.GetTempPath(), "AsposeCancellationDemo");
-            Directory.CreateDirectory(outputDir);
-
-            // Create a simple document.
+            // Prepare a simple document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("This is a sample document used to demonstrate cancellation support.");
+            builder.Writeln("Hello world! This document demonstrates cancellation support.");
 
-            // Configuration instance.
-            Config config = new Config();
+            // Define output path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
 
-            // ---------- Example 1: Cancellation enabled ----------
-            config.EnableCancellation = true;
-            string canceledPath = Path.Combine(outputDir, "CanceledOutput.pdf");
-            PdfSaveOptions cancelOptions = new PdfSaveOptions
+            if (EnableCancellation)
             {
-                ProgressCallback = new SavingProgressCallback(config)
-            };
+                // Attach a progress callback that may cancel the operation.
+                OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+                {
+                    ProgressCallback = new CancelSavingCallback()
+                };
 
-            try
-            {
-                doc.Save(canceledPath, cancelOptions);
-                Console.WriteLine("Document saved (cancellation disabled).");
+                try
+                {
+                    doc.Save(outputPath, saveOptions);
+                    Console.WriteLine("Document saved successfully (cancellation not triggered).");
+                }
+                catch (OperationCanceledException ex)
+                {
+                    Console.WriteLine($"Saving was canceled: {ex.Message}");
+                }
             }
-            catch (OperationCanceledException ex)
-            {
-                Console.WriteLine($"Save operation was canceled as expected: {ex.Message}");
-            }
-
-            // Verify that the file was not created.
-            if (!File.Exists(canceledPath))
-                Console.WriteLine("No file was created due to cancellation.");
-
-            // ---------- Example 2: Cancellation disabled ----------
-            config.EnableCancellation = false;
-            string savedPath = Path.Combine(outputDir, "SavedOutput.pdf");
-            PdfSaveOptions saveOptions = new PdfSaveOptions
-            {
-                ProgressCallback = new SavingProgressCallback(config)
-            };
-
-            try
-            {
-                doc.Save(savedPath, saveOptions);
-                Console.WriteLine("Document saved successfully.");
-            }
-            catch (OperationCanceledException ex)
-            {
-                // This block should not be reached in this example.
-                Console.WriteLine($"Unexpected cancellation: {ex.Message}");
-            }
-
-            // Validate that the file exists.
-            if (File.Exists(savedPath))
-                Console.WriteLine($"Output file exists: {savedPath}");
             else
-                Console.WriteLine("Failed to create the output file.");
+            {
+                // Save without cancellation support.
+                doc.Save(outputPath);
+                Console.WriteLine("Document saved successfully.");
 
-            // Clean up (optional).
-            // Directory.Delete(outputDir, true);
+                // Verify that the file exists.
+                if (File.Exists(outputPath))
+                    Console.WriteLine($"Output file verified at: {outputPath}");
+                else
+                    throw new FileNotFoundException("The expected output file was not created.", outputPath);
+            }
         }
     }
 }

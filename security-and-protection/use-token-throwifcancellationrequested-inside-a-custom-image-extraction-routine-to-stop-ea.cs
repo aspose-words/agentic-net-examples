@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -7,94 +8,91 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Prepare folders.
+        // Prepare folders
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        string outputDir = Path.Combine(artifactsDir, "ExtractedImages");
         Directory.CreateDirectory(artifactsDir);
-        string imagesDir = Path.Combine(artifactsDir, "ExtractedImages");
-        Directory.CreateDirectory(imagesDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with two images.
+        // Create a sample document with two images (red and green 1x1 PNGs)
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Small red dot PNG (1x1 pixel) encoded in base64.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        using (MemoryStream imgStream = new MemoryStream(pngBytes))
+        // First image (red square)
+        using (MemoryStream redStream = CreateSamplePng(RedPngBase64))
         {
-            builder.InsertImage(imgStream);
+            builder.InsertImage(redStream);
         }
 
-        // Insert the same image again to have more than one.
-        using (MemoryStream imgStream = new MemoryStream(pngBytes))
+        // Second image (green square)
+        using (MemoryStream greenStream = CreateSamplePng(GreenPngBase64))
         {
-            builder.InsertImage(imgStream);
+            builder.InsertImage(greenStream);
         }
 
-        // Save the document.
+        // Save the sample document
         string docPath = Path.Combine(artifactsDir, "Sample.docx");
         doc.Save(docPath);
 
-        // Load the document for extraction.
+        // Load the document back
         Document loadedDoc = new Document(docPath);
 
-        // Set up a cancellation token source that will be triggered after the first image.
+        // Set up a cancellation token that will be triggered after the first image is saved
         CancellationTokenSource cts = new CancellationTokenSource();
 
         try
         {
-            ExtractImages(loadedDoc, imagesDir, cts);
+            ExtractImages(loadedDoc, outputDir, cts.Token, cts);
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Image extraction was cancelled.");
+            // Expected when cancellation is requested
+            Console.WriteLine("Image extraction was cancelled as requested.");
         }
 
-        // Verify that at least one image was saved.
-        string[] extractedFiles = Directory.GetFiles(imagesDir);
-        if (extractedFiles.Length == 0)
-        {
+        // Verify that at least one image was extracted
+        if (Directory.GetFiles(outputDir).Length == 0)
             throw new InvalidOperationException("No images were extracted.");
-        }
-
-        Console.WriteLine($"Extraction completed. {extractedFiles.Length} image(s) saved to '{imagesDir}'.");
     }
 
-    /// <summary>
-    /// Extracts all images from the given document and saves them to the specified folder.
-    /// The method checks the cancellation token on each iteration and aborts if cancellation is requested.
-    /// </summary>
-    private static void ExtractImages(Document doc, string outputFolder, CancellationTokenSource cts)
+    // Extracts all images from the document, respecting the cancellation token.
+    private static void ExtractImages(Document doc, string folder, CancellationToken token, CancellationTokenSource cts)
     {
         int imageIndex = 0;
-        CancellationToken token = cts.Token;
 
-        // Iterate over all shapes in the document.
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
         {
-            // Throw if cancellation was requested.
+            // Throw if cancellation was requested before processing the next shape
             token.ThrowIfCancellationRequested();
 
-            if (shape.HasImage)
-            {
-                // Determine the proper file extension for the image.
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imagePath = Path.Combine(outputFolder, $"Image_{imageIndex}{extension}");
+            if (!shape.HasImage)
+                continue;
 
-                // Save the image to a file.
-                shape.ImageData.Save(imagePath);
-                Console.WriteLine($"Saved image {imageIndex} to '{imagePath}'.");
+            // Save the image to a file
+            string imagePath = Path.Combine(folder,
+                $"Image_{imageIndex}{FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType)}");
+            shape.ImageData.Save(imagePath);
+            imageIndex++;
 
-                imageIndex++;
-
-                // Cancel after the first image to demonstrate early termination.
-                if (imageIndex == 1)
-                {
-                    cts.Cancel(); // Request cancellation for the next iteration.
-                }
-            }
+            // Cancel after the first image to demonstrate early termination
+            if (imageIndex == 1)
+                cts.Cancel();
         }
+    }
+
+    // Base64-encoded 1x1 PNG images (red and green)
+    private const string RedPngBase64 =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mP8z/C/HwAFgwJ/lKXK5wAAAABJRU5ErkJggg==";
+
+    private const string GreenPngBase64 =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mP8z8DwHwAFgwJ/6cKX5wAAAABJRU5ErkJggg==";
+
+    // Creates a MemoryStream from a base64-encoded PNG image.
+    private static MemoryStream CreateSamplePng(string base64)
+    {
+        byte[] bytes = Convert.FromBase64String(base64);
+        return new MemoryStream(bytes);
     }
 }

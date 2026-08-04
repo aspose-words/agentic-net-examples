@@ -4,97 +4,82 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main()
+    public static async Task Main()
     {
-        // Prepare a temporary folder for the demo files.
-        string artifactsDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        // Prepare directories
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a sample Word document.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Hello world! This is the original document.");
+        // File paths
+        string protectedPath = Path.Combine(artifactsDir, "protected.docx");
+        string processedPath = Path.Combine(artifactsDir, "processed.docx");
 
-        // Apply read‑only protection with a password.
-        sourceDoc.Protect(ProtectionType.ReadOnly, "SecretPwd");
+        // 1. Create a sample document and protect it with a password
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Original content.");
+        doc.Protect(ProtectionType.ReadOnly, "SecretPwd");
+        doc.Save(protectedPath);
 
-        // Save the protected document.
-        string sourcePath = Path.Combine(artifactsDir, "ProtectedSource.docx");
-        sourceDoc.Save(sourcePath);
+        // Verify the protected file exists
+        if (!File.Exists(protectedPath))
+            throw new InvalidOperationException("Failed to create the protected document.");
 
-        // Verify that the source file was created.
-        if (!File.Exists(sourcePath))
-            throw new InvalidOperationException("Failed to create the source document.");
-
-        // Define the output path for the processed document.
-        string outputPath = Path.Combine(artifactsDir, "Processed.docx");
-
-        // Set up a cancellation token that will cancel after 3 seconds.
-        using var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromSeconds(3));
+        // 2. Set up a cancellation token that cancels after 5 seconds
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         CancellationToken token = cts.Token;
 
-        // Start the background processing task.
-        Task processingTask = Task.Run(() => ProcessDocumentAsync(sourcePath, outputPath, token), token);
+        // 3. Process the document in a background task
+        Task processingTask = Task.Run(() =>
+        {
+            // Periodically check for cancellation
+            token.ThrowIfCancellationRequested();
+
+            // Load the protected document with the correct password
+            LoadOptions loadOptions = new LoadOptions("SecretPwd");
+            Document loadedDoc = new Document(protectedPath, loadOptions);
+
+            token.ThrowIfCancellationRequested();
+
+            // Modify the document programmatically
+            DocumentBuilder bg = new DocumentBuilder(loadedDoc);
+            bg.Writeln("Appended text during background processing.");
+
+            token.ThrowIfCancellationRequested();
+
+            // Save the modified document
+            loadedDoc.Save(processedPath);
+        }, token);
 
         try
         {
-            // Wait for the task to complete (or be cancelled).
-            processingTask.Wait(token);
-        }
-        catch (AggregateException ae)
-        {
-            // Unwrap the cancellation exception if the operation was cancelled.
-            if (ae.InnerException is OperationCanceledException)
-                Console.WriteLine("Document processing was cancelled.");
-            else
-                throw;
+            await processingTask;
+            Console.WriteLine("Document processed successfully.");
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Document processing was cancelled.");
+            Console.WriteLine("Document processing was canceled.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
         }
 
-        // If the task completed without cancellation, verify the output file.
-        if (File.Exists(outputPath))
+        // 4. Validate that the processed file exists if the task completed
+        if (File.Exists(processedPath))
         {
-            Console.WriteLine($"Processed document saved to: {outputPath}");
+            // Load the result to ensure it is readable
+            Document resultDoc = new Document(processedPath);
+            Console.WriteLine("Processed document text:");
+            Console.WriteLine(resultDoc.GetText().Trim());
         }
         else
         {
-            Console.WriteLine("Processed document was not created (likely cancelled).");
+            Console.WriteLine("Processed document was not created.");
         }
-    }
-
-    // Background worker that loads, modifies, and saves the document.
-    private static void ProcessDocumentAsync(string inputPath, string outputPath, CancellationToken token)
-    {
-        // Simulate some preparatory work that can be cancelled.
-        for (int i = 0; i < 5; i++)
-        {
-            token.ThrowIfCancellationRequested();
-            Thread.Sleep(500); // Simulate work.
-        }
-
-        // Load the protected document. Protection does not encrypt the file,
-        // so it can be opened without a password.
-        Document doc = new Document(inputPath, new LoadOptions());
-
-        // Check for cancellation before modifying the document.
-        token.ThrowIfCancellationRequested();
-
-        // Append a new paragraph to indicate processing.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document processed by background worker.");
-
-        // Save the modified document. The .docx extension determines the format,
-        // so we can use the simple overload without specifying SaveOptions.
-        doc.Save(outputPath);
-
-        // Final cancellation check (optional).
-        token.ThrowIfCancellationRequested();
     }
 }

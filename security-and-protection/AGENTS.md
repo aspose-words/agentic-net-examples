@@ -6,7 +6,7 @@ framework: net8.0
 product: Aspose.Words
 ---
 
-# AGENTS.md - security-and-protection
+# AGENTS.md - Security and Protection
 
 ## Purpose
 
@@ -85,7 +85,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Use token.IsCancellationRequested in a custom LINQ Reporting Engine query to abort large reports.
   - Workflow: security-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `wrap-a-batch-of-document-load-calls-in-a-foreach-loop-that-checks-token-cancellation-befor.cs`
   - Task: Wrap a batch of Document.Load calls in a foreach loop that checks token cancellation before each load.
   - Workflow: security-workflow
@@ -135,7 +135,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Pass the token to DocumentBuilder operations to allow interruption while constructing complex documents.
   - Workflow: security-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `test-cancellation-behavior-by-simulating-user-aborts-during-document-layout-generation-in.cs`
   - Task: Test cancellation behavior by simulating user aborts during document layout generation in unit tests.
   - Workflow: security-workflow
@@ -204,7 +204,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -218,7 +218,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

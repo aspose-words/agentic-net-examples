@@ -7,45 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some text.
+        // Create a simple blank document and add some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words!");
+        builder.Writeln("This is a sample document.");
 
-        // Configure save options with a progress callback that will cancel the operation.
+        // Prepare save options with a progress callback that will cancel the operation.
         OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
             ProgressCallback = new SavingProgressCallback()
         };
 
-        string outputPath = Path.Combine(Path.GetTempPath(), "CanceledSave.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Sample.docx");
 
         try
         {
-            // Attempt to save the document; the callback will throw OperationCanceledException.
+            // Attempt to save the document. The callback will throw an OperationCanceledException.
             doc.Save(outputPath, saveOptions);
         }
         catch (OperationCanceledException ex)
         {
-            // Capture and log the stack trace for debugging.
-            Console.WriteLine("OperationCanceledException caught.");
+            // Capture and log the stack trace for debugging purposes.
+            Console.WriteLine("OperationCanceledException was caught.");
             Console.WriteLine("Message: " + ex.Message);
-            Console.WriteLine("StackTrace:");
+            Console.WriteLine("Stack Trace:");
             Console.WriteLine(ex.StackTrace);
         }
     }
 
-    // Callback that cancels the save operation almost immediately.
+    // Callback that aborts the saving process by throwing an OperationCanceledException.
     private class SavingProgressCallback : IDocumentSavingCallback
     {
-        private readonly DateTime _start = DateTime.Now;
-        private const double MaxDuration = 0.0; // Cancel right away.
-
         public void Notify(DocumentSavingArgs args)
         {
-            double elapsed = (DateTime.Now - _start).TotalSeconds;
-            if (elapsed > MaxDuration)
-                throw new OperationCanceledException($"EstimatedProgress = {args.EstimatedProgress}; CanceledAt = {DateTime.Now}");
+            // Immediately cancel the save operation.
+            throw new OperationCanceledException(
+                $"EstimatedProgress = {args.EstimatedProgress}; Save operation was cancelled for debugging.");
         }
     }
 }
