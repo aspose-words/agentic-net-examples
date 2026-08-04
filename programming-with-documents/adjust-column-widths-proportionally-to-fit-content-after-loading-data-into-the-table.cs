@@ -11,43 +11,49 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a header row.
+        // Start a table.
         Table table = builder.StartTable();
+
+        // Add header row.
         builder.InsertCell();
         builder.Write("Product");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Write("Description");
         builder.InsertCell();
         builder.Write("Price");
         builder.EndRow();
 
-        // Add some sample data rows.
-        AddRow(builder, "Apples", "120", "$1.20");
-        AddRow(builder, "Bananas", "85", "$0.80");
-        AddRow(builder, "Cherries", "200", "$2.50");
-        AddRow(builder, "Dates", "60", "$3.00");
-        AddRow(builder, "Elderberries", "30", "$4.10");
+        // Add sample data rows.
+        AddRow(builder, "Apple", "Fresh red apples from the orchard", "$1.20");
+        AddRow(builder, "Banana", "Ripe bananas, sweet and soft", "$0.80");
+        AddRow(builder, "Cherry", "Organic cherries, packed in a box", "$3.50");
+        AddRow(builder, "Date", "Dry dates, high in fiber", "$2.10");
+        AddRow(builder, "Elderberry", "Elderberries for jam making", "$4.00");
 
-        // End the table construction.
+        // End the table.
         builder.EndTable();
 
         // Adjust column widths proportionally to fit the content.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "AdjustedTable.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "AdjustedTable.docx");
         doc.Save(outputPath);
     }
 
-    // Helper method to insert a data row into the table.
-    private static void AddRow(DocumentBuilder builder, string product, string quantity, string price)
+    // Helper method to add a data row to the table.
+    private static void AddRow(DocumentBuilder builder, string col1, string col2, string col3)
     {
         builder.InsertCell();
-        builder.Write(product);
+        builder.Write(col1);
         builder.InsertCell();
-        builder.Write(quantity);
+        builder.Write(col2);
         builder.InsertCell();
-        builder.Write(price);
+        builder.Write(col3);
         builder.EndRow();
     }
 }

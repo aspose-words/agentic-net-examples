@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -12,34 +13,33 @@ public class Program
         // Create a multilevel list based on the default numbered template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Level 0 – decimal numbers (1., 2., 3., ...).
-        ListLevel level0 = list.ListLevels[0];
-        level0.NumberStyle = NumberStyle.Arabic;
+        // Level 0 – decimal numbers (default, but set explicitly for clarity).
+        list.ListLevels[0].NumberStyle = NumberStyle.Arabic;
 
-        // Level 1 – lower‑roman numbers (i., ii., iii., ...).
-        ListLevel level1 = list.ListLevels[1];
-        level1.NumberStyle = NumberStyle.LowercaseRoman;
+        // Level 1 – lower‑roman numerals.
+        list.ListLevels[1].NumberStyle = NumberStyle.LowercaseRoman;
 
-        // Use a DocumentBuilder to add paragraphs that use the list.
+        // Use DocumentBuilder to add paragraphs that use the list.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.ListFormat.List = list;
 
-        // First top‑level item.
-        builder.Writeln("First item (decimal)");
+        // Top‑level items (decimal).
+        builder.Writeln("Item 1");
+        builder.Writeln("Item 2");
 
-        // Indent to level 1 – will use lower‑roman numbering.
+        // Indent to level 1 (lower‑roman).
         builder.ListFormat.ListIndent();
-        builder.Writeln("Sub‑item (lower‑roman)");
-        builder.Writeln("Another sub‑item (lower‑roman)");
+        builder.Writeln("Subitem i");
+        builder.Writeln("Subitem ii");
 
-        // Outdent back to level 0.
+        // Return to top level.
         builder.ListFormat.ListOutdent();
-        builder.Writeln("Second item (decimal)");
 
-        // Remove list formatting from subsequent paragraphs.
+        // Finish the list.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to disk.
-        doc.Save("NumberedList.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "NumberedList.docx");
+        doc.Save(outputPath);
     }
 }

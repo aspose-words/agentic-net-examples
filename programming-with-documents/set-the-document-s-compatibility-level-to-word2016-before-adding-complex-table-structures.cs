@@ -3,81 +3,66 @@ using Aspose.Words;
 using Aspose.Words.Settings;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Set the compatibility level to Word 2016.
-            doc.CompatibilityOptions.OptimizeFor(MsWordVersion.Word2016);
+        // Set the compatibility level to Word 2016.
+        doc.CompatibilityOptions.OptimizeFor(MsWordVersion.Word2016);
 
-            // Build a complex table structure using DocumentBuilder.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Use DocumentBuilder to construct a complex table.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start the outer table (3 rows x 3 columns).
-            builder.StartTable();
+        // Start the outer table.
+        builder.StartTable();
 
-            // ----- First row (simple cells) -----
-            for (int i = 0; i < 3; i++)
-            {
-                builder.InsertCell();
-                builder.Write($"Outer R1C{i + 1}");
-            }
-            builder.EndRow();
+        // -----------------------------------------------------------------
+        // Row 1: A header cell that spans two columns (horizontal merge).
+        // -----------------------------------------------------------------
+        builder.InsertCell();
+        builder.RowFormat.Height = 30;
+        builder.RowFormat.HeightRule = HeightRule.Exactly;
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Write("Header spanning two columns");
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Merge with previous cell.
+        builder.EndRow();
 
-            // ----- Second row (merged cells + nested table) -----
-            // Merge the first two cells.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.First;
-            builder.Write("Merged cells");
+        // Reset merge for subsequent rows.
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
 
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // -----------------------------------------------------------------
+        // Row 2: Simple two‑cell row.
+        // -----------------------------------------------------------------
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
 
-            // Third cell will contain a nested table.
-            builder.InsertCell();
-            InsertNestedTable(builder);
-            builder.EndRow();
+        // -----------------------------------------------------------------
+        // Row 3: First cell contains a nested table, second cell regular text.
+        // -----------------------------------------------------------------
+        builder.InsertCell(); // First cell of the outer row.
 
-            // ----- Third row (simple cells) -----
-            for (int i = 0; i < 3; i++)
-            {
-                builder.InsertCell();
-                builder.Write($"Outer R3C{i + 1}");
-            }
-            builder.EndRow();
+        // Start a nested table inside the first cell.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Nested 1");
+        builder.EndTable(); // End of nested table.
 
-            // End the outer table.
-            builder.EndTable();
+        // Continue with the second cell of the outer row.
+        builder.InsertCell();
+        builder.Write("Outer cell 2");
+        builder.EndRow();
 
-            // Save the document to a file.
-            doc.Save("ComplexTable.docx");
-        }
+        // Finish the outer table.
+        builder.EndTable();
 
-        // Inserts a 2x2 nested table into the current cell.
-        private static void InsertNestedTable(DocumentBuilder builder)
-        {
-            builder.StartTable();
-
-            // First row of nested table.
-            builder.InsertCell();
-            builder.Write("Inner R1C1");
-            builder.InsertCell();
-            builder.Write("Inner R1C2");
-            builder.EndRow();
-
-            // Second row of nested table.
-            builder.InsertCell();
-            builder.Write("Inner R2C1");
-            builder.InsertCell();
-            builder.Write("Inner R2C2");
-            builder.EndRow();
-
-            builder.EndTable();
-        }
+        // Save the document to a file.
+        doc.Save("ComplexTable.docx");
     }
 }

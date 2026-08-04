@@ -3,7 +3,7 @@ using System.Data;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class ReportGenerator
+public class Program
 {
     public static void Main()
     {
@@ -11,50 +11,51 @@ public class ReportGenerator
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a mail‑merge region start field.
-        builder.InsertField(" MERGEFIELD TableStart:Data ");
+        // Sample data source.
+        DataTable table = new DataTable("Products");
+        table.Columns.Add("Product");
+        table.Columns.Add("Quantity", typeof(int));
 
-        // Build a simple two‑column table with merge fields for each column.
+        table.Rows.Add("Apples", 30);
+        table.Rows.Add("Bananas", 45);
+        table.Rows.Add("Oranges", 25);
+
+        // Insert a table with a header row.
         builder.StartTable();
 
-        // Header row (optional – not part of the merge region).
+        // Header cells.
         builder.InsertCell();
+        builder.Font.Bold = true;
         builder.Write("Product");
         builder.InsertCell();
         builder.Write("Quantity");
         builder.EndRow();
 
-        // Data row – contains the fields that will be populated by the merge.
-        builder.InsertCell();
-        builder.InsertField(" MERGEFIELD Product ");
-        builder.InsertCell();
-        builder.InsertField(" MERGEFIELD Quantity ");
-        builder.EndRow();
+        // Data rows.
+        int totalQuantity = 0;
+        foreach (DataRow row in table.Rows)
+        {
+            builder.InsertCell();
+            builder.Font.Bold = false;
+            builder.Write(row["Product"].ToString());
+
+            builder.InsertCell();
+            int qty = Convert.ToInt32(row["Quantity"]);
+            builder.Write(qty.ToString());
+
+            builder.EndRow();
+
+            totalQuantity += qty;
+        }
 
         builder.EndTable();
 
-        // Insert the mail‑merge region end field.
-        builder.InsertField(" MERGEFIELD TableEnd:Data ");
+        // Add a summary paragraph after the table.
+        builder.Writeln();
+        builder.Font.Bold = true;
+        builder.Writeln($"Total quantity: {totalQuantity}");
 
-        // Prepare a DataTable that will serve as the data source for the merge.
-        DataTable data = new DataTable("Data");
-        data.Columns.Add("Product", typeof(string));
-        data.Columns.Add("Quantity", typeof(int));
-
-        data.Rows.Add("Apples", 120);
-        data.Rows.Add("Bananas", 85);
-        data.Rows.Add("Cherries", 60);
-
-        // Execute the mail merge with regions – this will repeat the table row for each DataRow.
-        doc.MailMerge.ExecuteWithRegions(data);
-
-        // After the merge, add a summary paragraph that shows the total number of rows.
-        DocumentBuilder summaryBuilder = new DocumentBuilder(doc);
-        summaryBuilder.MoveToDocumentEnd();
-        summaryBuilder.Writeln();
-        summaryBuilder.Writeln($"Total products listed: {data.Rows.Count}");
-
-        // Save the final report to the local file system.
+        // Save the report document.
         doc.Save("Report.docx");
     }
 }

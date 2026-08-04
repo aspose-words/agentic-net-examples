@@ -12,41 +12,39 @@ public class Program
 
         // Insert a floating text box shape.
         Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.WrapType = WrapType.None;          // Make it free‑floating.
-        textBox.Width = 200;                       // Width in points.
-        textBox.Height = 50;                       // Height in points.
-        textBox.Left = 50;                         // Initial horizontal position.
-        textBox.Top = 50;                          // Initial vertical position.
+        textBox.WrapType = WrapType.None;
+        textBox.Width = 200;   // Width in points.
+        textBox.Height = 50;   // Height in points.
+
+        // Position the original text box at (50, 50) points from the page.
         textBox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
         textBox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        textBox.Left = 50;
+        textBox.Top = 50;
 
-        // Add a paragraph with some text inside the text box.
+        // Add a paragraph and a run of text inside the text box.
         textBox.AppendChild(new Paragraph(doc));
         Paragraph para = textBox.FirstParagraph;
-        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
         Run run = new Run(doc, "Original TextBox");
         para.AppendChild(run);
 
-        // Place the original text box into the document.
-        builder.InsertParagraph();                 // Ensure we have a paragraph to host the shape.
-        builder.CurrentParagraph.AppendChild(textBox);
+        // Insert the original text box into the document body.
+        builder.InsertParagraph();                     // Ensure we have a paragraph to work with.
+        builder.CurrentParagraph.AppendChild(textBox); // Add the shape to the current paragraph.
 
-        // Clone the text box node (deep copy).
+        // Clone the text box.
         Shape clonedBox = (Shape)textBox.Clone(true);
 
-        // Position the cloned box at an absolute location on the page.
-        clonedBox.Left = 300;                      // Horizontal position in points.
-        clonedBox.Top = 200;                       // Vertical position in points.
+        // Place the cloned box at a new absolute position, e.g., (300, 400) points from the page.
         clonedBox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
         clonedBox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        clonedBox.Left = 300;
+        clonedBox.Top = 400;
 
-        // Optionally change the text inside the cloned box.
-        clonedBox.FirstParagraph.Runs[0].Text = "Cloned TextBox";
-
-        // Insert the cloned text box after the original one.
+        // Insert the cloned text box into the document.
         builder.CurrentParagraph.AppendChild(clonedBox);
 
-        // Save the document to a file.
+        // Save the resulting document.
         doc.Save("DuplicatedTextBox.docx");
     }
 }

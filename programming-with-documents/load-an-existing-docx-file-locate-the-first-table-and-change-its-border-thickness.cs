@@ -8,18 +8,19 @@ public class Program
 {
     public static void Main()
     {
-        // Define directories and file names.
+        // Prepare a folder for the documents.
         string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
         Directory.CreateDirectory(dataDir);
 
+        // Paths for the source and the modified documents.
         string sourcePath = Path.Combine(dataDir, "Source.docx");
         string outputPath = Path.Combine(dataDir, "Modified.docx");
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document that contains a simple table.
+        // Create a sample DOCX file that contains a simple table.
         // -----------------------------------------------------------------
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        Document createDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(createDoc);
 
         // Build a 2x2 table.
         builder.StartTable();
@@ -36,29 +37,24 @@ public class Program
         builder.EndRow();
         builder.EndTable();
 
-        // Save the sample document to disk.
-        sampleDoc.Save(sourcePath);
+        // Save the sample document.
+        createDoc.Save(sourcePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the existing document, locate the first table, and modify its borders.
+        // Load the existing document, locate the first table, and change its border thickness.
         // -----------------------------------------------------------------
-        Document doc = new Document(sourcePath);
+        Document loadDoc = new Document(sourcePath);
 
-        // Retrieve the first table in the document.
-        Table firstTable = doc.FirstSection.Body.Tables[0];
-
-        // Change all borders of the table to a single black line with a thickness of 3 points.
-        firstTable.SetBorders(LineStyle.Single, 3.0, Color.Black);
-
-        // -----------------------------------------------------------------
-        // 3. Save the modified document.
-        // -----------------------------------------------------------------
-        doc.Save(outputPath);
-
-        // Optional: confirm that the output file was created.
-        if (File.Exists(outputPath))
+        // Ensure the document contains at least one table.
+        if (loadDoc.FirstSection?.Body?.Tables?.Count > 0)
         {
-            Console.WriteLine($"Modified document saved to: {outputPath}");
+            Table firstTable = loadDoc.FirstSection.Body.Tables[0];
+
+            // Set all borders of the table to a single line with a thickness of 3 points.
+            firstTable.SetBorders(LineStyle.Single, 3.0, Color.Black);
         }
+
+        // Save the modified document.
+        loadDoc.Save(outputPath);
     }
 }

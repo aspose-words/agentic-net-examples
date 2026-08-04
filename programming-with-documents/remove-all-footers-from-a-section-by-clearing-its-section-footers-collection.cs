@@ -10,7 +10,7 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample footers of each type to the first section.
+        // Add three types of footers to the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
         builder.Writeln("Primary footer");
         builder.MoveToHeaderFooter(HeaderFooterType.FooterFirst);
@@ -20,15 +20,18 @@ public class Program
 
         // Remove all footers from the first section.
         Section section = doc.FirstSection;
-
-        HeaderFooter footer = section.HeadersFooters[HeaderFooterType.FooterFirst];
-        footer?.Remove();
-
-        footer = section.HeadersFooters[HeaderFooterType.FooterPrimary];
-        footer?.Remove();
-
-        footer = section.HeadersFooters[HeaderFooterType.FooterEven];
-        footer?.Remove();
+        // Footer types to remove.
+        HeaderFooterType[] footerTypes = new HeaderFooterType[]
+        {
+            HeaderFooterType.FooterPrimary,
+            HeaderFooterType.FooterFirst,
+            HeaderFooterType.FooterEven
+        };
+        foreach (HeaderFooterType ft in footerTypes)
+        {
+            HeaderFooter footer = section.HeadersFooters[ft];
+            footer?.Remove();
+        }
 
         // Save the resulting document.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");

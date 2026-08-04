@@ -11,31 +11,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑row, 3‑column table.
+        // Start a table.
         builder.StartTable();
 
-        // First row – three separate cells.
+        // ---------- First row ----------
         builder.InsertCell();
-        builder.Write("R1C1");
+        builder.Write("Row 1, Cell 1");
         builder.InsertCell();
-        builder.Write("R1C2");
-        builder.InsertCell();
-        builder.Write("R1C3");
+        builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
-        // Second row – three cells that we will merge the first two.
-        builder.InsertCell();                     // Cell that will become the first in the merged range.
+        // ---------- Second row ----------
+        // First cell of the second row will be the start of a horizontally merged range.
+        builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged cell (R2C1‑C2)");
+        builder.Write("Merged cells (Row 2, Cells 1-2)");
 
-        builder.InsertCell();                     // Cell that merges with the previous one.
+        // Second cell merges with the previous cell.
+        builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text needed for the merged‑into cell.
+        // No text needed for the merged cell.
 
-        builder.InsertCell();                     // Third cell remains independent.
-        builder.Write("R2C3");
         builder.EndRow();
 
+        // End the table.
         builder.EndTable();
 
         // Save the document to the current directory.

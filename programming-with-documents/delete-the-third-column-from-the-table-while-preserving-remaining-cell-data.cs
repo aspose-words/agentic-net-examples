@@ -1,8 +1,9 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class DeleteThirdColumnExample
 {
     public static void Main()
     {
@@ -10,33 +11,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 3x3 table with sample data.
+        // Build a sample 3‑column table with two rows.
         Table table = builder.StartTable();
 
-        // Header row.
+        // First row.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("R1C1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("R1C2");
         builder.InsertCell();
-        builder.Write("Header 3");
+        builder.Write("R1C3");
         builder.EndRow();
 
-        // Two data rows.
-        for (int i = 1; i <= 2; i++)
-        {
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 1");
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 2");
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 3");
-            builder.EndRow();
-        }
+        // Second row.
+        builder.InsertCell();
+        builder.Write("R2C1");
+        builder.InsertCell();
+        builder.Write("R2C2");
+        builder.InsertCell();
+        builder.Write("R2C3");
+        builder.EndRow();
 
         builder.EndTable();
 
-        // Delete the third column (zero‑based index 2) from the table.
+        // Delete the third column (index 2) from the table.
+        // Iterate over each row and remove the cell at the target index.
         foreach (Row row in table.Rows)
         {
             if (row.Cells.Count > 2)
@@ -45,7 +44,8 @@ public class Program
             }
         }
 
-        // Save the modified document.
-        doc.Save("DeletedThirdColumn.docx");
+        // Save the modified document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedColumn.docx");
+        doc.Save(outputPath);
     }
 }

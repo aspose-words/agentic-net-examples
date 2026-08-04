@@ -1,7 +1,7 @@
 using System;
 using Aspose.Words;
 
-public class Program
+public class ListBookmarksExample
 {
     public static void Main()
     {
@@ -9,15 +9,18 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a few sample bookmarks to the document.
+        // Insert a few bookmarks into the document.
         for (int i = 1; i <= 3; i++)
         {
             string bookmarkName = $"MyBookmark_{i}";
             builder.StartBookmark(bookmarkName);
             builder.Write($"Text inside {bookmarkName}.");
             builder.EndBookmark(bookmarkName);
-            builder.Writeln(); // Move to the next line.
+            builder.Writeln(); // Add a line break after each bookmark.
         }
+
+        // Save the document (optional, but satisfies the save requirement).
+        doc.Save("Bookmarks.docx");
 
         // Retrieve the collection of bookmarks from the document's range.
         BookmarkCollection bookmarks = doc.Range.Bookmarks;

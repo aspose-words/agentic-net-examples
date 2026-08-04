@@ -1,84 +1,88 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using Aspose.Words.Tables;
 
-public class Program
+namespace ListConversionExample
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare a folder for the output documents.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a collection of sample documents.
-        List<Document> documents = new List<Document>
+        // Creates a sample document that contains a simple numbered list.
+        private static void CreateSampleDocument(string filePath)
         {
-            CreateNumberedDocument("First document with numbered list."),
-            CreateNumberedDocument("Second document with another numbered list.")
-        };
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Process each document: convert numbered lists to bulleted lists.
-        int docIndex = 1;
-        foreach (Document doc in documents)
+            // Start a default numbered list.
+            builder.ListFormat.ApplyNumberDefault();
+            builder.Writeln("Numbered item 1");
+            builder.Writeln("Numbered item 2");
+            builder.Writeln("Numbered item 3");
+            builder.ListFormat.RemoveNumbers();
+
+            // Save the document.
+            doc.Save(filePath);
+        }
+
+        // Converts all numbered list items in the given document to use a bulleted list.
+        private static void ConvertNumberedListsToBullets(Document doc)
         {
-            // Ensure the document has at least one section.
-            doc.EnsureMinimum();
-
-            // Create a single bulleted list that will replace all numbered lists in this document.
+            // Create a single bulleted list that will be reused for all paragraphs.
             List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
 
-            // Iterate over all paragraphs in the document.
+            // Get all paragraphs in the document.
             NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+
             foreach (Paragraph paragraph in paragraphs)
             {
-                // Check if the paragraph is part of a list.
-                if (paragraph.ListFormat.IsListItem)
+                // Process only paragraphs that are part of a list.
+                if (!paragraph.ListFormat.IsListItem)
+                    continue;
+
+                // Determine if the current list item uses a numbered style.
+                // Numbered lists have a NumberStyle other than Bullet.
+                List currentList = paragraph.ListFormat.List;
+                int levelNumber = paragraph.ListFormat.ListLevelNumber;
+                NumberStyle style = currentList.ListLevels[levelNumber].NumberStyle;
+
+                if (style != NumberStyle.Bullet)
                 {
-                    // Determine whether the current list is numbered.
-                    List currentList = paragraph.ListFormat.List;
-                    int levelIndex = paragraph.ListFormat.ListLevelNumber;
-                    if (currentList != null &&
-                        currentList.ListLevels[levelIndex].NumberStyle != NumberStyle.Bullet)
-                    {
-                        // Replace the numbered list with the bulleted list, preserving the level.
-                        paragraph.ListFormat.List = bulletList;
-                        paragraph.ListFormat.ListLevelNumber = levelIndex;
-                    }
+                    // Switch the paragraph to the bulleted list while preserving its level.
+                    paragraph.ListFormat.List = bulletList;
+                    paragraph.ListFormat.ListLevelNumber = levelNumber;
                 }
             }
-
-            // Save the modified document.
-            string outPath = Path.Combine(outputDir, $"ModifiedDocument{docIndex}.docx");
-            doc.Save(outPath);
-            docIndex++;
         }
-    }
 
-    // Helper method to create a sample document that contains a numbered list.
-    private static Document CreateNumberedDocument(string title)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a title.
-        builder.Writeln(title);
-        builder.Writeln();
-
-        // Create a numbered list using the default numbered template.
-        List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = numberedList;
-
-        // Add several items to the numbered list.
-        for (int i = 1; i <= 5; i++)
+        public static void Main()
         {
-            builder.Writeln($"Numbered item {i}");
+            // Prepare a collection of document file paths.
+            List<string> sourceFiles = new List<string>
+            {
+                "Document1.docx",
+                "Document2.docx"
+            };
+
+            // Ensure each source document exists by creating sample files.
+            foreach (string file in sourceFiles)
+            {
+                CreateSampleDocument(file);
+            }
+
+            // Process each document: load, convert lists, and save the result.
+            foreach (string sourcePath in sourceFiles)
+            {
+                // Load the document.
+                Document doc = new Document(sourcePath);
+
+                // Convert numbered lists to bulleted lists.
+                ConvertNumberedListsToBullets(doc);
+
+                // Save the modified document with a new name.
+                string outputPath = System.IO.Path.GetFileNameWithoutExtension(sourcePath) + "_Bulleted.docx";
+                doc.Save(outputPath);
+            }
         }
-
-        // End the list.
-        builder.ListFormat.RemoveNumbers();
-
-        return doc;
     }
 }

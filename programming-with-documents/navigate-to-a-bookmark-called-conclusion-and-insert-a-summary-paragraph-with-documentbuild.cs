@@ -7,26 +7,26 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some introductory text.
-        builder.Writeln("This is the beginning of the document.");
+        // Add some initial content.
+        builder.Writeln("Introduction");
+        builder.Writeln();
 
         // Insert a bookmark named "Conclusion".
         builder.StartBookmark("Conclusion");
-        builder.Writeln("Conclusion placeholder text.");
+        builder.Writeln("This is the conclusion placeholder.");
         builder.EndBookmark("Conclusion");
 
-        // Move the builder's cursor to the start of the "Conclusion" bookmark.
-        // The cursor will be positioned just after the bookmark start, inside the bookmark.
-        builder.MoveToBookmark("Conclusion");
+        // Move the builder's cursor to the start of the bookmark.
+        if (builder.MoveToBookmark("Conclusion"))
+        {
+            // Insert the summary paragraph at the bookmark location.
+            builder.Writeln("Summary: This document demonstrates navigating to a bookmark and inserting text.");
+        }
 
-        // Insert the summary paragraph at the bookmark location.
-        builder.Writeln("Summary: This document demonstrates how to navigate to a bookmark and insert text using Aspose.Words.");
-
-        // Save the document to a file in the same directory as the executable.
-        doc.Save("Output.docx");
+        // Save the document to the local file system.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
     }
 }

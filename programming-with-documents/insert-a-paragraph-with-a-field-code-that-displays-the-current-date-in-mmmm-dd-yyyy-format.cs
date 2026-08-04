@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Fields;
 
 public class Program
 {
@@ -16,8 +17,11 @@ public class Program
         // The field code is inserted without the surrounding braces.
         builder.InsertField("DATE \\@ \"MMMM dd, yyyy\"");
 
-        // End the paragraph.
+        // End the paragraph (adds a paragraph break after the field).
         builder.Writeln();
+
+        // Ensure the field result is up‑to‑date.
+        doc.UpdateFields();
 
         // Save the document to the local file system.
         doc.Save("DateField.docx");

@@ -1,37 +1,34 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
+using Aspose.Words.Drawing.Charts;
 
-public class ApplyTitleStyle
+namespace AsposeWordsTitleStyleExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Use DocumentBuilder to add content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the built‑in "Title" style to the first paragraph.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
+            // Write some text for the first paragraph.
+            builder.Writeln("Document Title");
 
-        // Ensure the paragraph appears in the document outline by setting an outline level.
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level1;
+            // Apply the built‑in "Title" style to the first paragraph.
+            Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+            firstParagraph.ParagraphFormat.StyleName = "Title";
 
-        // Write the title text.
-        builder.Writeln("My Document Title");
+            // Ensure the paragraph appears in the document outline by setting its outline level.
+            firstParagraph.ParagraphFormat.OutlineLevel = OutlineLevel.Level1;
 
-        // Add a normal paragraph after the title.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.BodyText;
-        builder.Writeln("This is the body of the document.");
-
-        // Prepare the output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "TitleStyleDocument.docx");
-        doc.Save(outputPath);
+            // Save the document to the local file system.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TitleStyle.docx");
+            doc.Save(outputPath);
+        }
     }
 }

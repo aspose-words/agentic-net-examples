@@ -2,12 +2,13 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define folders for input and output documents.
+        // Base directories for input and output documents.
         string baseDir = Directory.GetCurrentDirectory();
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string outputDir = Path.Combine(baseDir, "OutputDocs");
@@ -16,95 +17,90 @@ public class Program
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create a few sample documents that contain tables.
-        CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"));
-        CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"));
+        // -----------------------------------------------------------------
+        // 1. Create sample source documents (each contains a simple table).
+        // -----------------------------------------------------------------
+        for (int i = 1; i <= 3; i++)
+        {
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-        // Define a predefined table style that will be applied to every table.
-        // The style will have a simple border, shading and cell spacing.
-        TableStyle predefinedStyle = null;
+            // Add a heading.
+            builder.Writeln($"Sample Document {i}");
 
-        // Process each document in the input folder.
+            // Build a 2x2 table with placeholder text.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
+            builder.EndTable();
+
+            // Save the sample document.
+            string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
+            sampleDoc.Save(samplePath);
+        }
+
+        // -----------------------------------------------------------------
+        // 2. Define a predefined table style that will be applied to all tables.
+        // -----------------------------------------------------------------
+        // Create a temporary document solely to hold the style definition.
+        Document styleHolder = new Document();
+        TableStyle predefinedStyle = (TableStyle)styleHolder.Styles.Add(StyleType.Table, "MyPredefinedStyle");
+        predefinedStyle.Borders.Color = Color.Blue;
+        predefinedStyle.Borders.LineStyle = LineStyle.Single;
+        predefinedStyle.Borders.LineWidth = 1.5;
+        predefinedStyle.CellSpacing = 5;
+        predefinedStyle.BottomPadding = 10;
+        predefinedStyle.TopPadding = 10;
+        predefinedStyle.LeftPadding = 10;
+        predefinedStyle.RightPadding = 10;
+        predefinedStyle.Shading.BackgroundPatternColor = Color.LightYellow;
+
+        // -----------------------------------------------------------------
+        // 3. Process each document: apply page margins and the predefined table style.
+        // -----------------------------------------------------------------
         foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
             // Load the document.
             Document doc = new Document(filePath);
 
-            // Ensure the predefined style exists in the current document.
-            // If it does not exist, create it.
-            if (predefinedStyle == null || predefinedStyle.Document != doc)
-            {
-                predefinedStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyPredefinedTableStyle");
-                predefinedStyle.Borders.Color = System.Drawing.Color.Blue;
-                predefinedStyle.Borders.LineStyle = LineStyle.Single;
-                predefinedStyle.Borders.LineWidth = 1.0;
-                predefinedStyle.Shading.BackgroundPatternColor = System.Drawing.Color.LightYellow;
-                predefinedStyle.CellSpacing = 5.0;
-                predefinedStyle.LeftPadding = 10.0;
-                predefinedStyle.RightPadding = 10.0;
-                predefinedStyle.TopPadding = 8.0;
-                predefinedStyle.BottomPadding = 8.0;
-            }
+            // Apply a predefined page margin setting (e.g., Narrow).
+            if (doc.Sections.Count > 0)
+                doc.Sections[0].PageSetup.Margins = Margins.Narrow;
 
-            // Iterate over all tables in the document.
+            // Import the custom style from the holder document.
+            doc.CopyStylesFromTemplate(styleHolder);
+
+            // Retrieve the imported style from the current document.
+            Style importedStyle = doc.Styles["MyPredefinedStyle"];
+
+            // Iterate over all tables and assign the predefined style.
             NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-            foreach (Table table in tables)
+            foreach (Table tbl in tables)
             {
-                // Apply the predefined style.
-                table.Style = predefinedStyle;
-
-                // Set additional margin/indent settings for the table.
-                table.LeftIndent = 20.0;          // Indent from the left page margin.
-                table.CellSpacing = 5.0;          // Space between cells.
-                table.TopPadding = 10.0;          // Padding above cell contents.
-                table.BottomPadding = 10.0;       // Padding below cell contents.
-                table.LeftPadding = 10.0;         // Padding to the left of cell contents.
-                table.RightPadding = 10.0;        // Padding to the right of cell contents.
+                tbl.Style = importedStyle; // Now the style belongs to this document.
+                tbl.LeftIndent = 0;        // Reset left indent to align with page margins.
             }
 
-            // Save the modified document to the output folder, preserving the original file name.
+            // Save the processed document to the output folder.
             string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
             doc.Save(outputPath);
         }
 
-        // Inform the user that processing is complete.
-        Console.WriteLine($"Processed {Directory.GetFiles(inputDir, "*.docx").Length} document(s).");
-        Console.WriteLine($"Modified files are saved in: {outputDir}");
-    }
-
-    // Helper method to create a simple document containing a single table.
-    private static void CreateSampleDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a table with three rows and two columns.
-        Table table = builder.StartTable();
-
-        // First row.
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
-
-        // Third row.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // Save the sample document.
-        doc.Save(filePath);
+        // -----------------------------------------------------------------
+        // 4. Simple verification (optional): list processed files.
+        // -----------------------------------------------------------------
+        Console.WriteLine("Batch processing completed. Processed files:");
+        foreach (string outFile in Directory.GetFiles(outputDir, "*.docx"))
+        {
+            Console.WriteLine(Path.GetFileName(outFile));
+        }
     }
 }

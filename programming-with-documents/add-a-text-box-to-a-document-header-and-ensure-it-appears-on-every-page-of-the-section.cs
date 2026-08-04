@@ -11,36 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the primary header of the first (and only) section.
-        // The primary header appears on every page unless different headers are enabled.
+        // Move the builder's cursor to the primary header of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Insert a floating text box shape into the header.
-        // Width = 200 points, Height = 50 points.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
-        // Ensure the text box does not wrap with surrounding text.
-        textBox.WrapType = WrapType.None;
+        // Create a floating text box shape.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.WrapType = WrapType.None;          // No text wrapping – the box stays in the header.
+        textBox.Height = 50;                       // Height in points.
+        textBox.Width = 200;                       // Width in points.
+        textBox.HorizontalAlignment = HorizontalAlignment.Center;
+        textBox.VerticalAlignment = VerticalAlignment.Top;
 
-        // Add a paragraph inside the text box.
+        // Add a paragraph with a run of text inside the text box.
         textBox.AppendChild(new Paragraph(doc));
-        Paragraph para = textBox.FirstParagraph;
+        Paragraph para = (Paragraph)textBox.FirstParagraph;
         para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-
-        // Add the desired text to the text box.
         Run run = new Run(doc, "Header Text Box");
         para.AppendChild(run);
 
-        // Return the builder to the main document body.
+        // Insert the text box into the header.
+        builder.InsertNode(textBox);
+
+        // Return the cursor to the main document body.
         builder.MoveToSection(0);
 
-        // Add some content to generate multiple pages.
+        // Add enough content to generate multiple pages.
         builder.Writeln("Page 1");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Page 2");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Page 3");
 
-        // Save the document to a file in the same folder as the executable.
+        // Save the document. The text box will appear in the header on every page.
         doc.Save("HeaderWithTextBox.docx");
     }
 }

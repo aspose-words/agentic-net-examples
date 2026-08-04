@@ -7,22 +7,20 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank Word document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder to work with the document.
+        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text to the document.
-        builder.Write("This is a sample sentence with a footnote.");
+        // Write some sample text to the document.
+        builder.Write("This is a sentence that will have a footnote.");
 
         // Insert a footnote at the current cursor position with custom text.
         builder.InsertFootnote(FootnoteType.Footnote, "This is the footnote text.");
 
-        // Prepare the output directory and file path.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "FootnoteExample.docx");
+        // Define the output file path (saved in the current working directory).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FootnoteExample.docx");
 
         // Save the document to the specified path.
         doc.Save(outputPath);

@@ -9,22 +9,22 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set a hanging indent of 0.25 inches (18 points) for the next paragraph.
-        // Positive values create a first‑line indent, negative values create a hanging indent.
-        builder.ParagraphFormat.FirstLineIndent = -18; // 0.25 inch = 18 points
+        // Set a hanging indent of 0.25 inches (18 points). Negative value creates a hanging indent.
+        builder.ParagraphFormat.FirstLineIndent = -18; // 0.25 inch = 0.25 * 72 points
 
-        // Write a sample citation paragraph.
-        builder.Writeln("Doe, J. (2023). *Example Citation Title*. Publisher.");
+        // Add a sample citation paragraph.
+        builder.Writeln("Doe, J. (2020). Example citation text with a hanging indent for formatting purposes.");
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
+        // Determine the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HangingIndent.docx");
+
+        // Ensure the directory exists (in case the current directory is a root path).
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
         // Save the document.
-        string outputPath = Path.Combine(outputDir, "HangingIndent.docx");
         doc.Save(outputPath);
     }
 }

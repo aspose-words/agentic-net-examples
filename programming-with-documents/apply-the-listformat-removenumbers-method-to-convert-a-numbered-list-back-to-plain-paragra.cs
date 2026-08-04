@@ -1,43 +1,37 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-namespace ListRemoveNumbersExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a default numbered list and add a few items.
+        builder.ListFormat.ApplyNumberDefault();
+        builder.Writeln("Numbered list item 1");
+        builder.Writeln("Numbered list item 2");
+        builder.Writeln("Numbered list item 3");
+
+        // Convert each list item back to a plain paragraph by removing its list formatting.
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        foreach (Paragraph paragraph in paragraphs.OfType<Paragraph>())
         {
-            // Define a folder to store the output document.
-            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
-
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a default numbered list and add a few items.
-            builder.ListFormat.ApplyNumberDefault();
-            builder.Writeln("Numbered list item 1");
-            builder.Writeln("Numbered list item 2");
-            builder.Writeln("Numbered list item 3");
-
-            // Retrieve all paragraphs in the document.
-            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-
-            // For each paragraph that is part of a list, remove its list formatting.
-            foreach (Paragraph para in paragraphs)
-            {
-                if (para.ListFormat.IsListItem)
-                {
-                    para.ListFormat.RemoveNumbers();
-                }
-            }
-
-            // Save the resulting document. The list items are now plain paragraphs.
-            string outputPath = Path.Combine(artifactsDir, "ListWithoutNumbers.docx");
-            doc.Save(outputPath);
+            if (paragraph.ListFormat.IsListItem)
+                paragraph.ListFormat.RemoveNumbers();
         }
+
+        // Ensure the output folder exists.
+        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Save the resulting document.
+        string outputPath = Path.Combine(artifactsDir, "ListRemoved.docx");
+        doc.Save(outputPath);
     }
 }

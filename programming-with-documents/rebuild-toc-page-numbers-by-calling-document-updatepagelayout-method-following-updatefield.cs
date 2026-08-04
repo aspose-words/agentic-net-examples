@@ -1,24 +1,22 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents field.
+        // Insert a Table of Contents (TOC) field.
+        // The switches configure the TOC to include heading levels 1‑3, add hyperlinks, hide page numbers for hidden entries, and use outline levels.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Add headings that will be captured by the TOC.
+        // Populate the document with headings that the TOC will reference.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Heading 1");
 
@@ -46,14 +44,20 @@ public class Program
         builder.Writeln("Heading 3.2");
         builder.Writeln("Heading 3.3");
 
-        // Update all fields (including the TOC) to generate entries.
+        // Update all fields in the document (including the TOC field) to reflect the current content.
         doc.UpdateFields();
 
-        // Rebuild the page layout so that TOC page numbers are refreshed.
+        // Rebuild the page layout so that page‑related fields (PAGE, NUMPAGES, etc.) are refreshed.
+        // This also updates the page numbers shown in the TOC.
         doc.UpdatePageLayout();
 
+        // Define an output path relative to the executable's directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "TOC_Rebuilt.docx");
+
         // Save the document.
-        string outputPath = Path.Combine(artifactsDir, "RebuiltToc.docx");
         doc.Save(outputPath);
+
+        // Optional: indicate completion.
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

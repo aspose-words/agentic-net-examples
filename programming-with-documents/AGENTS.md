@@ -6,7 +6,7 @@ framework: net8.0
 product: Aspose.Words
 ---
 
-# AGENTS.md - Programming with Documents
+# AGENTS.md - Programming With Documents
 
 ## Purpose
 
@@ -400,7 +400,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a paragraph with a custom line height of 150 percent and verify visual appearance.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `add-a-paragraph-with-a-hanging-indent-of-0-25-inches-for-citation-formatting.cs`
   - Task: Add a paragraph with a hanging indent of 0.25 inches for citation formatting.
   - Workflow: document-workflow
@@ -604,7 +604,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -618,7 +618,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

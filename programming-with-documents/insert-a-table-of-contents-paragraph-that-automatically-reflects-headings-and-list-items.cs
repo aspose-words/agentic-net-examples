@@ -10,46 +10,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents (TOC) field.
-        // \o "1-3"  – include heading levels 1 through 3.
-        // \h        – make entries clickable hyperlinks.
-        // \z        – hide page numbers in web layout.
-        // \u        – use outline levels.
-        // \t "List Paragraph" – include paragraphs styled as List Paragraph (list items).
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u \\t \"List Paragraph\"");
+        // Insert a TOC that captures outline levels 1‑9 and creates hyperlinks.
+        builder.InsertTableOfContents("\\o \"1-9\" \\h \\z \\u");
         builder.InsertBreak(BreakType.PageBreak);
 
-        // ---------- Add headings ----------
+        // Add headings (levels 1‑3).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1: Introduction");
+        builder.Writeln("Chapter 1");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1: Overview");
+        builder.Writeln("Section 1.1");
+        builder.Writeln("Section 1.2");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Subsection 1.1.1: Details");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 2");
 
-        // ---------- Add a bulleted list ----------
-        // Create a bullet list using a predefined list template.
-        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
-        builder.ListFormat.List = bulletList;
-        builder.ListFormat.ListLevelNumber = 0; // top level
-
+        // Add a bulleted list and set its outline level so it appears in the TOC.
+        builder.ListFormat.List = doc.Lists.Add(ListTemplate.BulletDefault);
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level1; // Include in TOC.
         builder.Writeln("First bullet item");
         builder.Writeln("Second bullet item");
-        builder.Writeln("Third bullet item");
-
-        // End the list.
+        // Reset outline level for subsequent paragraphs.
+        builder.ParagraphFormat.OutlineLevel = OutlineLevel.BodyText;
         builder.ListFormat.RemoveNumbers();
 
-        // Add another heading after the list.
+        // Add another heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.2: After List");
+        builder.Writeln("Section 2.1");
 
-        // Update all fields (including the TOC) so the result is stored in the file.
+        // Update fields so the TOC reflects the added content.
         doc.UpdateFields();
 
-        // Save the document to the local file system.
+        // Save the document.
         doc.Save("TableOfContents.docx");
     }
 }

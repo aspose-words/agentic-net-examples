@@ -2,49 +2,65 @@ using System;
 using System.IO;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeWordsTableToHtml
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Define an output folder and ensure it exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-        // Start a table.
-        Table table = builder.StartTable();
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply a solid black border to the whole table.
-        table.SetBorders(LineStyle.Single, 1.0, Color.Black);
+            // Start a table.
+            Table table = builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
+            // Apply a uniform border to the whole table (rows and cells).
+            builder.RowFormat.Borders.LineStyle = LineStyle.Single;
+            builder.RowFormat.Borders.Color = Color.Black;
+            builder.RowFormat.Borders.LineWidth = 1.0;
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
+            builder.CellFormat.Borders.LineStyle = LineStyle.Single;
+            builder.CellFormat.Borders.Color = Color.Black;
+            builder.CellFormat.Borders.LineWidth = 1.0;
 
-        // Finish the table.
-        builder.EndTable();
+            // First row, first cell.
+            builder.InsertCell();
+            builder.Write("Cell 1,1");
 
-        // Export the table node to an HTML fragment.
-        string htmlFragment = table.ToString(SaveFormat.Html);
+            // First row, second cell.
+            builder.InsertCell();
+            builder.Write("Cell 1,2");
+            builder.EndRow();
 
-        // Save the HTML fragment to a file.
-        string fragmentPath = Path.Combine(Directory.GetCurrentDirectory(), "TableFragment.html");
-        File.WriteAllText(fragmentPath, htmlFragment);
+            // Second row, first cell.
+            builder.InsertCell();
+            builder.Write("Cell 2,1");
 
-        // (Optional) Save the whole document as HTML for visual verification.
-        string docHtmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Document.html");
-        doc.Save(docHtmlPath, SaveFormat.Html);
+            // Second row, second cell.
+            builder.InsertCell();
+            builder.Write("Cell 2,2");
+            builder.EndRow();
+
+            // Finish the table.
+            builder.EndTable();
+
+            // Export the constructed table as an HTML fragment.
+            string htmlFragment = table.ToString(SaveFormat.Html);
+
+            // Save the HTML fragment to a file.
+            string htmlPath = Path.Combine(outputDir, "TableFragment.html");
+            File.WriteAllText(htmlPath, htmlFragment);
+
+            // Optional: indicate completion (no interactive input required).
+            Console.WriteLine($"HTML fragment saved to: {htmlPath}");
+        }
     }
 }

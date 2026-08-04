@@ -1,14 +1,14 @@
-# Programming with Documents Examples for Aspose.Words for .NET
+# Programming With Documents Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Programming with Documents category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Programming With Documents category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
-- Category: Programming with Documents
+- Category: Programming With Documents
 - Slug: programming-with-documents
 - Total examples: 110
 - Publish-ready successful examples: 110 / 110
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Document Workflow examples: 110
 
 ## Category rules that shaped these examples
@@ -22,7 +22,7 @@ This folder contains the live, publish-ready C# examples for the Programming wit
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 
 ## Running Examples
 
@@ -31,7 +31,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -52,7 +52,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # PowerShell example
 Copy-Item ..\programming-with-documents\create-a-first-page-header-with-a-centered-logo-image-using-documentbuilder.cs .\Program.cs
@@ -137,7 +137,7 @@ dotnet run --configuration Release --no-build
 | 70 | `insert-a-paragraph-that-contains-a-field-for-page-number-and-format-it-as-roman-numerals.cs` | Insert a paragraph that contains a field for page number and format it as Roman numerals. | document-workflow | docx | mcp |
 | 71 | `apply-a-built-in-quote-style-to-a-paragraph-and-increase-its-left-indent-for-emphasis.cs` | Apply a built-in 'Quote' style to a paragraph and increase its left indent for emphasis. | document-workflow | docx | mcp |
 | 72 | `add-a-paragraph-with-a-custom-field-that-displays-the-document-s-author-name-dynamically.cs` | Add a paragraph with a custom field that displays the document's author name dynamically. | document-workflow | doc | mcp |
-| 73 | `insert-a-paragraph-with-a-custom-line-height-of-150-percent-and-verify-visual-appearance.cs` | Insert a paragraph with a custom line height of 150 percent and verify visual appearance. | document-workflow | docx | mcp |
+| 73 | `insert-a-paragraph-with-a-custom-line-height-of-150-percent-and-verify-visual-appearance.cs` | Insert a paragraph with a custom line height of 150 percent and verify visual appearance. | document-workflow | docx | llm |
 | 74 | `add-a-paragraph-with-a-hanging-indent-of-0-25-inches-for-citation-formatting.cs` | Add a paragraph with a hanging indent of 0.25 inches for citation formatting. | document-workflow | docx | mcp |
 | 75 | `create-a-text-box-set-its-internal-margins-and-insert-a-paragraph-with-bold-text-inside.cs` | Create a text box, set its internal margins, and insert a paragraph with bold text inside. | document-workflow | docx | mcp |
 | 76 | `link-two-text-boxes-sequentially-so-that-text-flows-from-the-first-to-the-second-automatic.cs` | Link two text boxes sequentially so that text flows from the first to the second automatically. | document-workflow | docx | mcp |
@@ -204,6 +204,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.
