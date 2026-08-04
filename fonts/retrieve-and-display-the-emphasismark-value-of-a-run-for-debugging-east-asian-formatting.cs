@@ -6,27 +6,25 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply an emphasis mark to the font.
+        // Apply an emphasis mark to the builder's font.
         builder.Font.EmphasisMark = Aspose.Words.EmphasisMark.OverSolidCircle;
-        builder.Write("East Asian text with emphasis mark");
+        builder.Write("East Asian text with emphasis mark.");
+
+        // Retrieve the first Run in the document.
+        Run run = (Run)doc.GetChildNodes(NodeType.Run, true)[0];
+        Aspose.Words.EmphasisMark emphasis = run.Font.EmphasisMark;
+
+        // Output the EmphasisMark value for debugging.
+        Console.WriteLine($"EmphasisMark of the run: {emphasis}");
 
         // Save the document to a local file.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
-        string docPath = Path.Combine(artifactsDir, "EmphasisMark.docx");
-        doc.Save(docPath);
-
-        // Retrieve the first run in the document.
-        Run run = (Run)doc.GetChildNodes(NodeType.Run, true)[0];
-
-        // Get the EmphasisMark value.
-        Aspose.Words.EmphasisMark emphasis = run.Font.EmphasisMark;
-
-        // Output the value for debugging.
-        Console.WriteLine($"EmphasisMark value: {emphasis}");
+        string outputPath = Path.Combine(artifactsDir, "EmphasisMarkDemo.docx");
+        doc.Save(outputPath);
     }
 }

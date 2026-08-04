@@ -1,6 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Drawing; // Aspose.Drawing.Color
+using Aspose.Drawing; // Provides Aspose.Drawing.Color
 
 public class Program
 {
@@ -10,57 +11,43 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add several paragraphs to the document.
-        const int paragraphCount = 9;
-        for (int i = 0; i < paragraphCount; i++)
+        // Define a few Aspose.Drawing colors to choose from.
+        Aspose.Drawing.Color redAspose = Aspose.Drawing.Color.Red;
+        Aspose.Drawing.Color greenAspose = Aspose.Drawing.Color.Green;
+        Aspose.Drawing.Color blueAspose = Aspose.Drawing.Color.Blue;
+
+        // Add several paragraphs, changing the font color based on the paragraph index.
+        for (int i = 0; i < 5; i++)
         {
-            builder.Writeln($"Paragraph {i + 1}");
-        }
-
-        // Loop through each paragraph and set its font color based on the paragraph index.
-        for (int i = 0; i < doc.FirstSection.Body.Paragraphs.Count; i++)
-        {
-            Paragraph para = doc.FirstSection.Body.Paragraphs[i];
-
-            // Ensure the paragraph contains at least one Run before accessing it.
-            if (para.Runs.Count == 0)
-                continue; // Skip empty paragraphs.
-
-            // Each paragraph created by DocumentBuilder contains at least one Run.
-            var run = para.Runs[0];
-
-            // Choose a color using Aspose.Drawing.Color.
-            Aspose.Drawing.Color aspColor;
-            switch (i % 3)
-            {
-                case 0:
-                    aspColor = Aspose.Drawing.Color.Red;
-                    break;
-                case 1:
-                    aspColor = Aspose.Drawing.Color.Green;
-                    break;
-                default:
-                    aspColor = Aspose.Drawing.Color.Blue;
-                    break;
-            }
+            // Select a color using conditional logic.
+            Aspose.Drawing.Color selectedAsposeColor;
+            if (i % 3 == 0)
+                selectedAsposeColor = redAspose;
+            else if (i % 3 == 1)
+                selectedAsposeColor = greenAspose;
+            else
+                selectedAsposeColor = blueAspose;
 
             // Convert Aspose.Drawing.Color to System.Drawing.Color as required by Font.Color.
-            System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
+            System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(selectedAsposeColor.ToArgb());
 
-            // Apply the color to the run's font.
-            run.Font.Color = sysColor;
+            // Apply the color to the current font.
+            builder.Font.Color = sysColor;
 
-            // Validation: ensure the color was set correctly.
-            if (run.Font.Color.ToArgb() != sysColor.ToArgb())
-                throw new InvalidOperationException("Font color assignment failed.");
+            // Write a paragraph.
+            builder.Writeln($"Paragraph {i + 1} with dynamically set color.");
+
+            // Validate that the color was set correctly.
+            if (builder.Font.Color.ToArgb() != sysColor.ToArgb())
+                throw new InvalidOperationException("Font color was not applied as expected.");
         }
 
-        // Save the document to the local file system.
-        string outputPath = "DynamicFontColors.docx";
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DynamicFontColors.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!System.IO.File.Exists(outputPath))
-            throw new InvalidOperationException("Output file was not created.");
+        // Ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
     }
 }

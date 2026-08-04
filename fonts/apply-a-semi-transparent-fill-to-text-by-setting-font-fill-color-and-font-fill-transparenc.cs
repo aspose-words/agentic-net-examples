@@ -11,40 +11,43 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content.
+        // Use DocumentBuilder to add a paragraph with a run of text.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("This text has a semi‑transparent fill.");
 
-        // Access the font of the recently added run.
+        // Access the Font of the last run (the one just added).
         Aspose.Words.Font font = builder.Font;
 
-        // Ensure the fill is solid.
+        // Ensure the fill is a solid fill.
         font.Fill.Solid();
 
-        // Create an Aspose.Drawing.Color (blue with full opacity).
-        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.FromArgb(255, 0, 0, 255);
-
-        // Convert to System.Drawing.Color because Fill.Color expects that type.
+        // Create an Aspose.Drawing.Color and convert it to System.Drawing.Color for the Fill.
+        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Blue;
         System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
 
-        // Set the fill color.
+        // Set the fill color and transparency.
         font.Fill.Color = sysColor;
-
-        // Set the transparency to 50% (0.5). 0.0 = opaque, 1.0 = clear.
         font.Fill.Transparency = 0.5;
 
-        // Output the applied fill properties for verification.
-        Console.WriteLine($"Fill type: {font.Fill.FillType}");
-        Console.WriteLine($"Fill color: {font.Fill.Color}");
-        Console.WriteLine($"Transparency: {font.Fill.Transparency}");
+        // Validate the applied properties.
+        if (Math.Abs(font.Fill.Transparency - 0.5) > 0.0001 ||
+            font.Fill.Color.ToArgb() != sysColor.ToArgb())
+        {
+            throw new InvalidOperationException("Font fill properties were not set correctly.");
+        }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SemiTransparentFill.docx");
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "SemiTransparentFill.docx");
         doc.Save(outputPath);
 
-        // Confirm that the file was created.
-        Console.WriteLine(File.Exists(outputPath)
-            ? $"Document saved successfully to: {outputPath}"
-            : "Failed to save the document.");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
+        }
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Settings;
 
 public class Program
 {
@@ -10,23 +10,23 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add a paragraph with some text.
+        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("This paragraph will have 1.5 line spacing.");
 
-        // Set the paragraph's line spacing to 1.5 lines.
-        // Use the Multiple rule where the value represents a multiple of the default line height (12 points).
+        // Set the line spacing rule to Multiple (number of lines) and specify 1.5 lines.
+        // One line equals 12 points, so 1.5 lines = 18 points.
         builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 1.5; // 1.5 * 12 points = 18 points.
+        builder.ParagraphFormat.LineSpacing = 18.0;
 
-        // Validate that the line spacing rule and value were applied.
-        if (builder.ParagraphFormat.LineSpacingRule != LineSpacingRule.Multiple ||
-            Math.Abs(builder.ParagraphFormat.LineSpacing - 1.5) > 0.0001)
+        // Validate that the line spacing was applied.
+        double appliedSpacing = builder.ParagraphFormat.LineSpacing;
+        if (Math.Abs(appliedSpacing - 18.0) > 0.001)
         {
-            throw new InvalidOperationException("Failed to set paragraph line spacing to 1.5 lines.");
+            throw new InvalidOperationException("Line spacing was not set correctly.");
         }
 
-        // Define output path.
+        // Define output file path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ParagraphLineSpacing.docx");
 
         // Save the document.
@@ -37,8 +37,5 @@ public class Program
         {
             throw new FileNotFoundException("The document was not saved correctly.", outputPath);
         }
-
-        // Optionally, inform the user (no interactive input required).
-        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

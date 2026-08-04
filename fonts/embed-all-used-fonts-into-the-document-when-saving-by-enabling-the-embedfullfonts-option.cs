@@ -2,9 +2,8 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Fonts;
 
-public class EmbedFontsExample
+public class Program
 {
     public static void Main()
     {
@@ -14,10 +13,10 @@ public class EmbedFontsExample
 
         // Add some text using different fonts.
         builder.Font.Name = "Arial";
-        builder.Writeln("This paragraph uses the Arial font.");
+        builder.Writeln("Hello world with Arial.");
 
         builder.Font.Name = "Times New Roman";
-        builder.Writeln("This paragraph uses the Times New Roman font.");
+        builder.Writeln("Hello world with Times New Roman.");
 
         // Configure PDF save options to embed the full fonts.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
@@ -26,19 +25,14 @@ public class EmbedFontsExample
         };
 
         // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EmbeddedFonts.pdf");
+        string outputFile = Path.Combine(Directory.GetCurrentDirectory(), "EmbeddedFonts.pdf");
 
         // Save the document as PDF with full font embedding.
-        doc.Save(outputPath, pdfOptions);
+        doc.Save(outputFile, pdfOptions);
 
-        // Simple verification that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("PDF saved successfully: " + outputPath);
-        }
-        else
-        {
-            Console.WriteLine("Failed to save PDF.");
-        }
+        // Verify that the PDF file was created.
+        Console.WriteLine(File.Exists(outputFile)
+            ? $"PDF saved successfully: {outputFile}"
+            : "Failed to save PDF.");
     }
 }

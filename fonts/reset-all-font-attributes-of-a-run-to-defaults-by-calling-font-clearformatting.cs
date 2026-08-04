@@ -1,36 +1,43 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
+using Aspose.Drawing;
+using Newtonsoft.Json;
 
-public class Program
+namespace FontResetExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Get the first paragraph that exists by default.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+            // Add a paragraph to the first section.
+            Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Create a run with some sample text.
-        Run run = new Run(doc, "Sample text with custom font.");
+            // Create a run with some sample text.
+            Run run = new Run(doc, "Sample text with custom formatting.");
+            paragraph.AppendChild(run);
 
-        // Apply custom font formatting to the run.
-        Aspose.Words.Font font = run.Font;
-        font.Name = "Courier New";
-        font.Size = 24;
-        font.Bold = true;
-        font.Color = System.Drawing.Color.Red; // Explicit System.Drawing.Color
-        font.Underline = Aspose.Words.Underline.Single;
+            // Apply various font attributes to the run.
+            Aspose.Words.Font font = run.Font;
+            font.Name = "Courier New";
+            font.Size = 24;
+            font.Bold = true;
+            font.Italic = true;
+            font.Underline = Underline.Single;
+            font.Color = System.Drawing.Color.Blue; // Explicit System.Drawing.Color
 
-        // Add the run to the paragraph.
-        paragraph.AppendChild(run);
+            // Reset all font attributes to their defaults.
+            font.ClearFormatting();
 
-        // Reset all font attributes of the run to their defaults.
-        run.Font.ClearFormatting();
+            // Define output path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontResetOutput.docx");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ResetFontExample.docx");
-        doc.Save(outputPath);
+            // Save the document.
+            doc.Save(outputPath);
+        }
     }
 }
