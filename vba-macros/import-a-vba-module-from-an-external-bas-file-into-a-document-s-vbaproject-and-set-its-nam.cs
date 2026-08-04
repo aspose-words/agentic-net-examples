@@ -3,68 +3,46 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-namespace AsposeWordsVbaImport
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Prepare a folder for temporary files.
-            string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-            Directory.CreateDirectory(dataDir);
+        // Define paths for the temporary VBA module file and the output document.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-            // Path to the external .bas file that will be imported.
-            string basFilePath = Path.Combine(dataDir, "SampleModule.bas");
+        string basFilePath = Path.Combine(artifactsDir, "SampleModule.bas");
+        string outputDocPath = Path.Combine(artifactsDir, "DocumentWithImportedModule.docm");
 
-            // Create a simple VBA module file if it does not exist.
-            if (!File.Exists(basFilePath))
-            {
-                string sampleVba = @"
-Attribute VB_Name = ""SampleModule""
+        // Create a simple VBA module source and write it to a .bas file.
+        string vbaSource = @"
 Sub HelloWorld()
     MsgBox ""Hello from imported VBA module!""
 End Sub
 ";
-                File.WriteAllText(basFilePath, sampleVba);
-            }
+        File.WriteAllText(basFilePath, vbaSource);
 
-            // Path where the macro‑enabled document will be saved.
-            string docPath = Path.Combine(dataDir, "DocumentWithMacro.docm");
+        // Create a new blank Word document.
+        Document doc = new Document();
 
-            // Create a new blank document.
-            Document doc = new Document();
+        // Ensure the document has a VBA project.
+        VbaProject vbaProject = new VbaProject();
+        vbaProject.Name = "ImportedProject";
+        doc.VbaProject = vbaProject;
 
-            // Ensure the document has a VBA project.
-            if (doc.VbaProject == null)
-            {
-                VbaProject project = new VbaProject();
-                project.Name = "ImportedProject";
-                doc.VbaProject = project;
-            }
+        // Load the VBA source code from the .bas file.
+        string importedSource = File.ReadAllText(basFilePath);
 
-            // Read the VBA source code from the .bas file.
-            string vbaSource = File.ReadAllText(basFilePath) ?? string.Empty;
+        // Create a new VBA module, set its name, type, and source code.
+        VbaModule vbaModule = new VbaModule();
+        vbaModule.Name = "ImportedModule";
+        vbaModule.Type = VbaModuleType.ProceduralModule;
+        vbaModule.SourceCode = importedSource;
 
-            // Create a new VBA module and set its properties.
-            VbaModule module = new VbaModule
-            {
-                Name = "ImportedModule",
-                Type = VbaModuleType.ProceduralModule,
-                SourceCode = vbaSource
-            };
+        // Add the module to the VBA project.
+        doc.VbaProject.Modules.Add(vbaModule);
 
-            // Add the module to the VBA project.
-            doc.VbaProject.Modules.Add(module);
-
-            // Save the document in a macro‑enabled format.
-            doc.Save(docPath);
-
-            // Simple verification: reload the document and output module info.
-            Document loadedDoc = new Document(docPath);
-            VbaModule imported = loadedDoc.VbaProject.Modules["ImportedModule"];
-            Console.WriteLine($"Module Name: {imported.Name}");
-            Console.WriteLine("First 100 characters of source code:");
-            Console.WriteLine(imported.SourceCode?.Substring(0, Math.Min(100, imported.SourceCode.Length)) ?? string.Empty);
-        }
+        // Save the document in a macro‑enabled format.
+        doc.Save(outputDocPath);
     }
 }

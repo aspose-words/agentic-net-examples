@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -19,16 +19,14 @@
       "System.Collections.Generic",
       "System.Text.RegularExpressions",
       "System.Text.Json",
-      "System.IO.Compression",
-      "System.Text",
-      "System.Linq"
+      "System.IO.Compression"
     ],
     "key_apis": [
       "Document",
-      "File",
-      "Path",
       "Directory",
+      "Path",
       "SaveFormat",
+      "File",
       "DocumentBuilder",
       "Range",
       "Font",

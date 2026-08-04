@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -7,73 +6,52 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "OriginalMacros.docm");
-        string modifiedPath = Path.Combine(Directory.GetCurrentDirectory(), "ModifiedMacros.docm");
-
-        // 1. Create a new blank document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // 2. Create a new VBA project and assign it to the document.
-        VbaProject vbaProject = new VbaProject
-        {
-            Name = "SampleProject"
-        };
-        doc.VbaProject = vbaProject;
+        // Create a new VBA project and assign it to the document.
+        VbaProject project = new VbaProject();
+        project.Name = "SampleProject";
+        doc.VbaProject = project;
 
-        // 3. Add a procedural module with sample VBA code that contains deprecated API calls.
-        VbaModule module1 = new VbaModule
-        {
-            Name = "Module1",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"
-Sub Example()
-    ' Deprecated call
+        // Create a VBA module with some sample code that contains a deprecated API call.
+        VbaModule module = new VbaModule();
+        module.Name = "SampleModule";
+        module.Type = VbaModuleType.ProceduralModule;
+        module.SourceCode = @"
+Sub ExampleMacro()
+    ' Deprecated API call
     Call OldFunction()
-    ' Another deprecated call
-    Selection.TypeParagraph
-End Sub"
-        };
-        doc.VbaProject.Modules.Add(module1);
+    MsgBox ""Done""
+End Sub
+";
 
-        // 4. Add a second module to demonstrate handling multiple modules.
-        VbaModule module2 = new VbaModule
+        // Add the module to the VBA project.
+        doc.VbaProject.Modules.Add(module);
+
+        // Save the initial document (optional, just to illustrate the before state).
+        doc.Save("Original.docm");
+
+        // Iterate through all VBA modules and replace deprecated API calls.
+        if (doc.HasMacros && doc.VbaProject != null)
         {
-            Name = "Module2",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"
-Function Compute()
-    ' Deprecated call
-    Dim result As Long
-    result = OldFunction()
-    Compute = result
-End Function"
-        };
-        doc.VbaProject.Modules.Add(module2);
+            foreach (VbaModule vbaModule in doc.VbaProject.Modules)
+            {
+                // Guard against null source code.
+                string source = vbaModule.SourceCode ?? string.Empty;
 
-        // 5. Save the original document (contains the deprecated calls).
-        doc.Save(originalPath);
+                // Replace the deprecated call "OldFunction" with the updated "NewFunction".
+                string updatedSource = source.Replace("OldFunction", "NewFunction");
 
-        // 6. Iterate through all VBA modules and replace deprecated API calls.
-        foreach (VbaModule module in doc.VbaProject.Modules)
-        {
-            // Guard against null source code.
-            string source = module.SourceCode ?? string.Empty;
-
-            // Replace deprecated calls with their updated equivalents.
-            source = source.Replace("OldFunction()", "NewFunction()");
-            source = source.Replace("Selection.TypeParagraph", "Selection.TypeText \"\\n\"");
-
-            // Update the module's source code.
-            module.SourceCode = source;
+                // Update the module only if a change was made.
+                if (!string.Equals(source, updatedSource, StringComparison.Ordinal))
+                {
+                    vbaModule.SourceCode = updatedSource;
+                }
+            }
         }
 
-        // 7. Save the modified document.
-        doc.Save(modifiedPath);
-
-        // 8. Output simple verification to the console.
-        Console.WriteLine($"Original document saved to: {originalPath}");
-        Console.WriteLine($"Modified document saved to: {modifiedPath}");
-        Console.WriteLine("Replacement of deprecated API calls completed.");
+        // Save the document after modifications.
+        doc.Save("Updated.docm");
     }
 }

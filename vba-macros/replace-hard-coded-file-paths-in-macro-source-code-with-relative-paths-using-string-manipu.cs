@@ -7,47 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Define folder for output files (relative to the executable location).
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare output folder.
+        string artifactsDir = "Artifacts";
+        Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a new macro‑enabled document and add a VBA module.
-        // -----------------------------------------------------------------
+        // Paths for the original and updated documents.
+        string originalPath = Path.Combine(artifactsDir, "MacroWithAbsolutePath.docm");
+        string updatedPath = Path.Combine(artifactsDir, "MacroWithRelativePath.docm");
+
+        // -------------------------------------------------
+        // Create a new macro‑enabled document with a VBA module that contains a hard‑coded absolute path.
+        // -------------------------------------------------
         Document doc = new Document();
 
-        // Create a new VBA project and assign it to the document.
-        VbaProject vbaProject = new VbaProject();
-        vbaProject.Name = "SampleProject";
-        doc.VbaProject = vbaProject;
+        VbaProject project = new VbaProject();
+        project.Name = "SampleProject";
+        doc.VbaProject = project;
 
-        // Create a VBA module with hard‑coded absolute file paths.
         VbaModule module = new VbaModule();
-        module.Name = "PathMacro";
+        module.Name = "PathModule";
         module.Type = VbaModuleType.ProceduralModule;
         module.SourceCode = @"
 Sub OpenFile()
     Dim filePath As String
-    filePath = ""C:\Data\input.txt""
-    ' Open the file (placeholder code)
-    MsgBox ""Opening: "" & filePath
+    filePath = ""C:\Data\myfile.txt""
+    MsgBox ""Opening "" & filePath
 End Sub
 ";
-
-        // Add the module to the VBA project.
         doc.VbaProject.Modules.Add(module);
 
-        // Save the document as a macro‑enabled .docm file.
-        string originalPath = Path.Combine(outputDir, "MacroDocument.docm");
+        // Save the document containing the absolute path.
         doc.Save(originalPath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the saved document and replace absolute paths with
-        //         relative paths in the VBA source code.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // Load the document and replace the absolute path with a relative one.
+        // -------------------------------------------------
         Document loadedDoc = new Document(originalPath);
 
-        // Ensure the document actually contains macros.
         if (loadedDoc.HasMacros && loadedDoc.VbaProject != null)
         {
             foreach (VbaModule mod in loadedDoc.VbaProject.Modules)
@@ -55,20 +51,18 @@ End Sub
                 // Guard against null source code.
                 string source = mod.SourceCode ?? string.Empty;
 
-                // Replace the hard‑coded absolute path with a relative one.
-                // Example: "C:\Data\" -> ".\Data\"
-                source = source.Replace(@"C:\Data\", @".\Data\");
+                // Replace the hard‑coded part of the path.
+                string updatedSource = source.Replace(@"C:\Data\", @".\Data\");
 
-                // Assign the modified source back to the module.
-                mod.SourceCode = source;
+                mod.SourceCode = updatedSource;
             }
-
-            // Save the updated document.
-            string updatedPath = Path.Combine(outputDir, "MacroDocument_Updated.docm");
-            loadedDoc.Save(updatedPath);
         }
 
-        // Indicate completion (no interactive input required).
-        Console.WriteLine("Macro path replacement completed.");
+        // Save the modified document.
+        loadedDoc.Save(updatedPath);
+
+        // Simple console output to indicate completion.
+        Console.WriteLine("Original macro saved to: " + originalPath);
+        Console.WriteLine("Updated macro saved to: " + updatedPath);
     }
 }

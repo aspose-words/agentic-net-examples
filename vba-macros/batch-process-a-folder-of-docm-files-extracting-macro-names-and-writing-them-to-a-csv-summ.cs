@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Vba;
@@ -10,82 +8,112 @@ public class Program
 {
     public static void Main()
     {
-        // Folder that will contain the macro-enabled documents.
-        string docsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
-        Directory.CreateDirectory(docsFolder);
+        // Define the folder that will contain the DOCM files.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
+        Directory.CreateDirectory(inputFolder);
 
-        // Create sample DOCM files with VBA macros.
-        for (int i = 1; i <= 2; i++)
+        // If the folder is empty, create sample macro‑enabled documents.
+        if (Directory.GetFiles(inputFolder, "*.docm").Length == 0)
         {
-            Document doc = new Document();
-
-            // Ensure the document has a VBA project.
-            VbaProject project = new VbaProject();
-            project.Name = $"Project{i}";
-            doc.VbaProject = project;
-
-            // Create a procedural module with a couple of macros.
-            VbaModule module = new VbaModule();
-            module.Name = $"Module{i}";
-            module.Type = VbaModuleType.ProceduralModule;
-            module.SourceCode = $@"
-Sub Macro{i}_One()
-    MsgBox ""Hello from macro {i}_One""
-End Sub
-
-Sub Macro{i}_Two()
-    MsgBox ""Hello from macro {i}_Two""
-End Sub
-";
-            doc.VbaProject.Modules.Add(module);
-
-            // Save as a macro‑enabled document.
-            string docPath = Path.Combine(docsFolder, $"Sample{i}.docm");
-            doc.Save(docPath);
+            CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docm"));
+            CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docm"));
         }
 
-        // Prepare CSV output.
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "MacroSummary.csv");
-        using (var writer = new StreamWriter(csvPath, false, Encoding.UTF8))
+        // Prepare a list to hold CSV rows.
+        var csvRows = new List<string> { "Document,MacroName" };
+
+        // Process each DOCM file in the folder.
+        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docm"))
         {
-            writer.WriteLine("FileName,MacroName");
+            Document doc = new Document(filePath);
 
-            // Process each DOCM file in the folder.
-            foreach (string filePath in Directory.GetFiles(docsFolder, "*.docm"))
+            // Ensure the document actually contains a VBA project.
+            if (doc.HasMacros && doc.VbaProject != null)
             {
-                Document doc = new Document(filePath);
-
-                // Skip files without macros.
-                if (!doc.HasMacros || doc.VbaProject == null)
-                    continue;
-
                 foreach (VbaModule module in doc.VbaProject.Modules)
                 {
                     // Guard against null source code.
                     string source = module.SourceCode ?? string.Empty;
 
-                    // Simple regex to capture Sub or Function names.
-                    foreach (Match match in Regex.Matches(source, @"\b(Sub|Function)\s+(\w+)", RegexOptions.IgnoreCase))
+                    // Extract macro names from the source code.
+                    foreach (string macroName in ExtractMacroNames(source))
                     {
-                        string macroName = match.Groups[2].Value;
-                        string fileName = Path.GetFileName(filePath);
-                        writer.WriteLine($"{EscapeCsv(fileName)},{EscapeCsv(macroName)}");
+                        // Add a CSV row: document file name and macro name.
+                        csvRows.Add($"{Path.GetFileName(filePath)},{macroName}");
                     }
                 }
             }
         }
 
-        // Optional: indicate completion.
-        Console.WriteLine($"Macro summary written to: {csvPath}");
+        // Write the CSV summary file.
+        string csvPath = Path.Combine(inputFolder, "MacroSummary.csv");
+        File.WriteAllLines(csvPath, csvRows);
     }
 
-    // Helper to escape CSV fields that may contain commas or quotes.
-    private static string EscapeCsv(string field)
+    // Creates a simple macro‑enabled document with one procedural module containing two macros.
+    private static void CreateSampleDocument(string filePath)
     {
-        if (field.Contains("\""))
-            field = field.Replace("\"", "\"\"");
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            field = $"\"{field}\"";
-        return field;
+        Document doc = new Document();
+
+        // Create a new VBA project and assign it to the document.
+        VbaProject project = new VbaProject();
+        project.Name = "SampleProject";
+        doc.VbaProject = project;
+
+        // Create a module with sample VBA code.
+        VbaModule module = new VbaModule();
+        module.Name = "SampleModule";
+        module.Type = VbaModuleType.ProceduralModule;
+        module.SourceCode = @"
+Sub MacroOne()
+    MsgBox ""Hello from MacroOne""
+End Sub
+
+Sub MacroTwo()
+    MsgBox ""Hello from MacroTwo""
+End Sub
+";
+
+        // Add the module to the VBA project.
+        doc.VbaProject.Modules.Add(module);
+
+        // Save as a macro‑enabled document.
+        doc.Save(filePath);
+    }
+
+    // Parses VBA source code and returns the names of Sub and Function macros.
+    private static IEnumerable<string> ExtractMacroNames(string source)
+    {
+        var macroNames = new List<string>();
+        using (StringReader reader = new StringReader(source))
+        {
+            string line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                line = line.TrimStart();
+
+                // Look for Sub or Function declarations.
+                if (line.StartsWith("Sub ", StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith("Function ", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Remove the keyword.
+                    int startIdx = line.IndexOf(' ') + 1;
+                    if (startIdx > 0 && startIdx < line.Length)
+                    {
+                        // Extract the name up to the first '(' or whitespace.
+                        int endIdx = line.IndexOf('(', startIdx);
+                        if (endIdx == -1)
+                            endIdx = line.IndexOf(' ', startIdx);
+                        if (endIdx == -1)
+                            endIdx = line.Length;
+
+                        string name = line.Substring(startIdx, endIdx - startIdx).Trim();
+                        if (!string.IsNullOrEmpty(name))
+                            macroNames.Add(name);
+                    }
+                }
+            }
+        }
+        return macroNames;
     }
 }

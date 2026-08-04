@@ -3,74 +3,73 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+public class ExtractVbaMacros
 {
     public static void Main()
     {
-        // Directory to store sample documents and extracted macro files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Base directory for generated files.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(baseDir);
 
-        // Create sample macro-enabled documents.
-        CreateSampleDocument(Path.Combine(workDir, "Sample1.docm"), "SampleProject1",
-            ("ModuleA", "Sub MacroA()\n    MsgBox \"Hello from MacroA\"\nEnd Sub"));
-        CreateSampleDocument(Path.Combine(workDir, "Sample2.docm"), "SampleProject2",
-            ("ModuleB", "Sub MacroB()\n    MsgBox \"Hello from MacroB\"\nEnd Sub"),
-            ("ModuleC", "Sub MacroC()\n    MsgBox \"Hello from MacroC\"\nEnd Sub"));
+        // Create sample macro‑enabled documents.
+        CreateSampleDocument(Path.Combine(baseDir, "Sample1.docm"), "SampleProject1",
+            ("ModuleA", "Sub Hello()\n    MsgBox \"Hello from ModuleA\"\nEnd Sub"));
+        CreateSampleDocument(Path.Combine(baseDir, "Sample2.docm"), "SampleProject2",
+            ("ModuleB", "Function Add(a As Integer, b As Integer) As Integer\n    Add = a + b\nEnd Function"));
 
-        // Directory to store extracted macro source files.
-        string macrosDir = Path.Combine(workDir, "ExtractedMacros");
+        // Directory where extracted macro source files will be saved.
+        string macrosDir = Path.Combine(baseDir, "ExtractedMacros");
         Directory.CreateDirectory(macrosDir);
 
-        // Load each .docm file, extract macro source code, and save to separate files.
-        foreach (string docPath in Directory.GetFiles(workDir, "*.docm"))
+        // Process each .docm file in the base directory.
+        foreach (string docPath in Directory.GetFiles(baseDir, "*.docm"))
         {
+            // Load the document.
             Document doc = new Document(docPath);
 
-            // Ensure the document contains a VBA project.
+            // Ensure the document actually contains a VBA project.
             if (!doc.HasMacros || doc.VbaProject == null)
                 continue;
 
             VbaProject vbaProject = doc.VbaProject;
-            foreach (VbaModule module in vbaProject.Modules)
+            VbaModuleCollection modules = vbaProject.Modules;
+
+            // Extract each module's source code.
+            foreach (VbaModule module in modules)
             {
                 // Guard against null source code.
                 string source = module.SourceCode ?? string.Empty;
 
-                // Build a filename that includes the original document name and module name.
-                string macroFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_{module.Name}.bas";
+                // Build a filename that identifies the source document and module.
+                string docFileName = Path.GetFileNameWithoutExtension(docPath);
+                string macroFileName = $"{docFileName}_{module.Name}.bas";
                 string macroFilePath = Path.Combine(macrosDir, macroFileName);
 
+                // Write the source code to a file.
                 File.WriteAllText(macroFilePath, source);
             }
         }
     }
 
-    // Helper method to create a macro-enabled document with one or more modules.
-    private static void CreateSampleDocument(string filePath, string projectName, params (string moduleName, string sourceCode)[] modules)
+    // Helper method to create a macro‑enabled document with a single module.
+    private static void CreateSampleDocument(string filePath, string projectName, (string Name, string Code) moduleInfo)
     {
+        // Create a blank document.
         Document doc = new Document();
 
-        // Create a new VBA project and assign it to the document.
-        VbaProject project = new VbaProject
-        {
-            Name = projectName
-        };
+        // Create a new VBA project and assign a name.
+        VbaProject project = new VbaProject();
+        project.Name = projectName;
         doc.VbaProject = project;
 
-        // Add each provided module to the VBA project.
-        foreach (var (moduleName, sourceCode) in modules)
-        {
-            VbaModule vbaModule = new VbaModule
-            {
-                Name = moduleName,
-                Type = VbaModuleType.ProceduralModule,
-                SourceCode = sourceCode
-            };
-            doc.VbaProject.Modules.Add(vbaModule);
-        }
+        // Create a new module, set its properties, and add it to the project.
+        VbaModule module = new VbaModule();
+        module.Name = moduleInfo.Name;
+        module.Type = VbaModuleType.ProceduralModule;
+        module.SourceCode = moduleInfo.Code;
+        doc.VbaProject.Modules.Add(module);
 
-        // Save as a macro-enabled document.
+        // Save as a macro‑enabled document.
         doc.Save(filePath);
     }
 }

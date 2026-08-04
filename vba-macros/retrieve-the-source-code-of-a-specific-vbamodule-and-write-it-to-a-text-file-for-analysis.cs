@@ -7,55 +7,64 @@ public class RetrieveVbaModuleSource
 {
     public static void Main()
     {
-        // Define file names.
-        string docPath = Path.Combine(Environment.CurrentDirectory, "Sample.docm");
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ModuleSource.txt");
-        string moduleName = "SampleModule";
+        // Define output directories and file names.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        string docPath = Path.Combine(artifactsDir, "SampleMacro.docm");
+        string outputPath = Path.Combine(artifactsDir, "ModuleSource.txt");
+        string targetModuleName = "SampleModule";
 
         // -----------------------------------------------------------------
-        // Create a new macro‑enabled document and add a VBA module if needed.
+        // 1. Create a new macro‑enabled document and add a VBA module.
         // -----------------------------------------------------------------
         Document doc = new Document();
 
-        // Ensure the document has a VBA project.
-        if (doc.VbaProject == null)
-        {
-            VbaProject project = new VbaProject();
-            project.Name = "AsposeProject";
-            doc.VbaProject = project;
-        }
+        // Create a new VBA project and assign it to the document.
+        VbaProject vbaProject = new VbaProject();
+        vbaProject.Name = "SampleProject";
+        doc.VbaProject = vbaProject;
 
-        // Add a VBA module with some sample code if it does not already exist.
-        if (doc.VbaProject.Modules[moduleName] == null)
-        {
-            VbaModule module = new VbaModule();
-            module.Name = moduleName;
-            module.Type = VbaModuleType.ProceduralModule;
-            module.SourceCode = @"Sub HelloWorld()
+        // Create a new VBA module with some sample code.
+        VbaModule vbaModule = new VbaModule();
+        vbaModule.Name = targetModuleName;
+        vbaModule.Type = VbaModuleType.ProceduralModule;
+        vbaModule.SourceCode = @"
+Sub HelloWorld()
     MsgBox ""Hello from VBA!""
-End Sub";
-            doc.VbaProject.Modules.Add(module);
-        }
+End Sub
+";
 
-        // Save the document in macro‑enabled format.
-        doc.Save(docPath);
+        // Add the module to the VBA project.
+        doc.VbaProject.Modules.Add(vbaModule);
 
-        // ---------------------------------------------------------------
-        // Load the document (optional) and retrieve the source of the module.
-        // ---------------------------------------------------------------
+        // Save the document in a macro‑enabled format.
+        doc.Save(docPath, SaveFormat.Docm);
+
+        // -----------------------------------------------------------------
+        // 2. Load the document and retrieve the source code of the target module.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
-        VbaProject vbaProject = loadedDoc.VbaProject;
 
-        // Guard against missing project or module.
-        string sourceCode = string.Empty;
-        if (vbaProject != null)
+        // Ensure the document actually contains macros.
+        if (!loadedDoc.HasMacros || loadedDoc.VbaProject == null)
         {
-            VbaModule targetModule = vbaProject.Modules[moduleName];
-            if (targetModule != null && !string.IsNullOrEmpty(targetModule.SourceCode))
-                sourceCode = targetModule.SourceCode;
+            Console.WriteLine("The document does not contain a VBA project.");
+            return;
         }
 
-        // Write the retrieved source code to a text file.
+        // Access the module by name; if not found, fall back to the first module.
+        VbaModule targetModule = loadedDoc.VbaProject.Modules[targetModuleName];
+        if (targetModule == null && loadedDoc.VbaProject.Modules.Count > 0)
+            targetModule = loadedDoc.VbaProject.Modules[0];
+
+        // Guard against null source code.
+        string sourceCode = targetModule?.SourceCode ?? string.Empty;
+
+        // Write the source code to a text file.
         File.WriteAllText(outputPath, sourceCode);
+
+        // Optional: indicate completion (no interactive input required).
+        Console.WriteLine($"VBA module source written to: {outputPath}");
     }
 }

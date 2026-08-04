@@ -6,60 +6,70 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Path for the temporary files.
+        string sourcePath = "source.docm";
+        string resultPath = "cloned_no_refs.docm";
+
+        // -------------------------------------------------
+        // 1. Create a macro‑enabled document with a VBA project.
+        // -------------------------------------------------
         Document sourceDoc = new Document();
 
-        // Create a new VBA project and assign it to the document.
-        VbaProject vbaProject = new VbaProject();
-        vbaProject.Name = "OriginalProject";
+        // Create a new VBA project and assign a name.
+        VbaProject vbaProject = new VbaProject { Name = "OriginalProject" };
+
+        // Create a simple procedural module with some VBA code.
+        VbaModule module = new VbaModule
+        {
+            Name = "SampleModule",
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = @"
+Sub HelloWorld()
+    MsgBox ""Hello, World!""
+End Sub"
+        };
+
+        // Add the module to the project.
+        vbaProject.Modules.Add(module);
+
+        // Attach the VBA project to the document.
         sourceDoc.VbaProject = vbaProject;
 
-        // Add a procedural module with sample VBA code.
-        VbaModule module1 = new VbaModule();
-        module1.Name = "Module1";
-        module1.Type = VbaModuleType.ProceduralModule;
-        module1.SourceCode = @"
-Sub HelloWorld()
-    MsgBox ""Hello from VBA!""
-End Sub";
-        sourceDoc.VbaProject.Modules.Add(module1);
-
-        // Add another module.
-        VbaModule module2 = new VbaModule();
-        module2.Name = "Module2";
-        module2.Type = VbaModuleType.ProceduralModule;
-        module2.SourceCode = @"
-Function AddNumbers(a As Integer, b As Integer) As Integer
-    AddNumbers = a + b
-End Function";
-        sourceDoc.VbaProject.Modules.Add(module2);
-
-        // Save the source document (macro‑enabled).
-        string sourcePath = "SourceMacro.docm";
+        // Save the document in a macro‑enabled format.
         sourceDoc.Save(sourcePath);
 
-        // Clone the VBA project from the source document.
-        VbaProject clonedProject = sourceDoc.VbaProject.Clone();
+        // -------------------------------------------------
+        // 2. Load the document and clone its VBA project.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
 
-        // Create a new document and assign the cloned VBA project.
-        Document destDoc = new Document();
-        destDoc.VbaProject = clonedProject;
-
-        // Remove all references to external libraries from the cloned project.
-        VbaReferenceCollection references = destDoc.VbaProject.References;
-        for (int i = references.Count - 1; i >= 0; i--)
+        // Ensure the document actually contains macros.
+        if (!loadedDoc.HasMacros || loadedDoc.VbaProject == null)
         {
-            references.RemoveAt(i);
+            Console.WriteLine("The source document does not contain a VBA project.");
+            return;
         }
 
-        // Save the resulting document, which now contains a self‑contained macro set.
-        string destPath = "ClonedNoReferences.docm";
-        destDoc.Save(destPath);
+        // Clone the VBA project.
+        VbaProject clonedProject = loadedDoc.VbaProject.Clone();
 
-        // Simple verification output.
-        Console.WriteLine($"Source document saved to: {sourcePath}");
-        Console.WriteLine($"Cloned document without references saved to: {destPath}");
-        Console.WriteLine($"Cloned document has macros: {destDoc.HasMacros}");
-        Console.WriteLine($"Number of references after removal: {destDoc.VbaProject.References.Count}");
+        // -------------------------------------------------
+        // 3. Remove all external references from the cloned project.
+        // -------------------------------------------------
+        // The References collection may be empty; iterate backwards to safely remove items.
+        for (int i = clonedProject.References.Count - 1; i >= 0; i--)
+        {
+            // Remove the reference at the current index.
+            clonedProject.References.RemoveAt(i);
+        }
+
+        // -------------------------------------------------
+        // 4. Create a new document and assign the cleaned VBA project.
+        // -------------------------------------------------
+        Document resultDoc = new Document();
+        resultDoc.VbaProject = clonedProject;
+
+        // Save the resulting document; it now contains the same macros but no external references.
+        resultDoc.Save(resultPath);
     }
 }
