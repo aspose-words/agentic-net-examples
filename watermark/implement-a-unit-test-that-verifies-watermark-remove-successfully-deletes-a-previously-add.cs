@@ -1,11 +1,13 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a blank document.
         Document doc = new Document();
 
         // Add a text watermark.
@@ -15,9 +17,15 @@ public class Program
         // Verify that the watermark was added.
         if (doc.Watermark.Type != WatermarkType.Text)
         {
-            Console.WriteLine("Error: Text watermark was not added.");
-            return;
+            Console.WriteLine("Error: Watermark was not added.");
+            Environment.Exit(1);
         }
+
+        // Save the document with the watermark.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+        string watermarkedPath = Path.Combine(outputDir, "watermarked.docx");
+        doc.Save(watermarkedPath);
 
         // Remove the watermark.
         doc.Watermark.Remove();
@@ -26,14 +34,13 @@ public class Program
         if (doc.Watermark.Type != WatermarkType.None)
         {
             Console.WriteLine("Error: Watermark was not removed.");
-        }
-        else
-        {
-            Console.WriteLine("Success: Watermark was removed.");
+            Environment.Exit(1);
         }
 
-        // Save the resulting document (optional, demonstrates that the file is still valid).
-        const string outputPath = "WatermarkRemovalResult.docx";
-        doc.Save(outputPath);
+        // Save the document after removal.
+        string removedPath = Path.Combine(outputDir, "removed.docx");
+        doc.Save(removedPath);
+
+        Console.WriteLine("Watermark removal test passed.");
     }
 }

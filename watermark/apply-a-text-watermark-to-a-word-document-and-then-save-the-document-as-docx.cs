@@ -6,30 +6,22 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a blank Word document.
         Document doc = new Document();
 
-        // Add some sample content so the watermark can be seen.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document with a text watermark.");
+        // Apply a text watermark to the document.
+        doc.Watermark.SetText("Confidential");
 
-        // Apply a text watermark using the native Watermark API.
-        doc.Watermark.SetText("CONFIDENTIAL");
-
-        // Define the output path for the DOCX file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkedDocument.docx");
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Watermarked.docx");
 
         // Save the document as DOCX.
         doc.Save(outputPath);
 
-        // Verify that the file was created and report the result.
+        // Validate that the file was created.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine($"Watermarked document saved successfully to: {outputPath}");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the watermarked document.");
+            Console.WriteLine("Watermark applied and document saved successfully.");
         }
     }
 }

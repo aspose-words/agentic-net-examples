@@ -1,96 +1,92 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using Aspose.Words;
-using Aspose.Words.Drawing;
 using System.Drawing;
-
-public class WatermarkConfig
-{
-    public string Text { get; set; }
-    public string FontFamily { get; set; }
-    public float FontSize { get; set; }
-    public string ColorHex { get; set; }   // e.g., "#FF0000"
-    public bool IsSemitrasparent { get; set; }
-}
+using Aspose.Words;
 
 public class Program
 {
-    private const string ConfigFileName = "watermarkConfig.json";
-    private const string OutputFolder = "Output";
+    // Model that matches the JSON configuration file.
+    private class WatermarkConfig
+    {
+        public string Text { get; set; }
+        public string FontFamily { get; set; }
+        public float FontSize { get; set; }
+        public string Color { get; set; }               // Color name or HTML hex (e.g., "#FF0000")
+        public bool IsSemitrasparent { get; set; }      // true = semi‑transparent, false = opaque
+    }
 
     public static void Main()
     {
-        // Ensure output directory exists.
-        Directory.CreateDirectory(OutputFolder);
-
-        // Create a sample configuration file if it does not exist.
-        if (!File.Exists(ConfigFileName))
+        // 1. Create a default configuration file if it does not exist.
+        const string configFile = "watermarkConfig.json";
+        if (!File.Exists(configFile))
         {
             var defaultConfig = new WatermarkConfig
             {
-                Text = "Confidential",
+                Text = "CONFIDENTIAL",
                 FontFamily = "Arial",
                 FontSize = 48,
-                ColorHex = "#FF0000",          // Red
-                IsSemitrasparent = false      // Opaque
+                Color = "#FF0000",          // Red
+                IsSemitrasparent = false   // Fully opaque
             };
-            var json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(ConfigFileName, json);
+            string json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(configFile, json);
         }
 
-        // Load configuration.
-        var configJson = File.ReadAllText(ConfigFileName);
-        var config = JsonSerializer.Deserialize<WatermarkConfig>(configJson);
+        // 2. Load configuration from the JSON file.
+        WatermarkConfig config = JsonSerializer.Deserialize<WatermarkConfig>(File.ReadAllText(configFile));
 
-        // Prepare a list of sample documents.
-        var sourceDocs = CreateSampleDocuments();
-
-        // Apply watermark to each document.
-        int index = 1;
-        foreach (var srcPath in sourceDocs)
+        // 3. Create sample source documents (if they do not already exist).
+        string[] sourceDocs = { "Sample1.docx", "Sample2.docx", "Sample3.docx" };
+        for (int i = 0; i < sourceDocs.Length; i++)
         {
-            var doc = new Document(srcPath);
+            if (!File.Exists(sourceDocs[i]))
+            {
+                Document doc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(doc);
+                builder.Writeln($"This is the content of {Path.GetFileNameWithoutExtension(sourceDocs[i])}.");
+                doc.Save(sourceDocs[i]);
+            }
+        }
 
-            var options = new TextWatermarkOptions
+        // 4. Apply the watermark to each document using the loaded configuration.
+        foreach (string srcPath in sourceDocs)
+        {
+            // Load the document.
+            Document doc = new Document(srcPath);
+
+            // Build watermark options from the configuration.
+            TextWatermarkOptions options = new TextWatermarkOptions
             {
                 FontFamily = config.FontFamily,
                 FontSize = config.FontSize,
-                Color = ColorTranslator.FromHtml(config.ColorHex),
-                IsSemitrasparent = config.IsSemitrasparent,
-                Layout = WatermarkLayout.Diagonal
+                Layout = WatermarkLayout.Diagonal,
+                IsSemitrasparent = config.IsSemitrasparent
             };
 
+            // Parse the color (supports named colors or HTML hex).
+            try
+            {
+                options.Color = ColorTranslator.FromHtml(config.Color);
+            }
+            catch
+            {
+                // Fallback to black if parsing fails.
+                options.Color = Color.Black;
+            }
+
+            // Apply the text watermark.
             doc.Watermark.SetText(config.Text, options);
 
-            string outPath = Path.Combine(OutputFolder, $"Watermarked_{index}.docx");
-            doc.Save(outPath);
+            // Save the watermarked document.
+            string outputPath = Path.GetFileNameWithoutExtension(srcPath) + "_Watermarked.docx";
+            doc.Save(outputPath);
 
-            // Simple validation: ensure the file was created.
-            if (File.Exists(outPath))
-                Console.WriteLine($"Document {outPath} saved successfully.");
-            else
-                Console.WriteLine($"Failed to save document {outPath}.");
-
-            index++;
+            // Simple validation: ensure the output file exists.
+            Console.WriteLine(File.Exists(outputPath)
+                ? $"Watermark applied and saved to '{outputPath}'."
+                : $"Failed to save watermarked document '{outputPath}'.");
         }
-    }
-
-    // Creates a few simple documents with placeholder text and returns their file paths.
-    private static List<string> CreateSampleDocuments()
-    {
-        var paths = new List<string>();
-        for (int i = 1; i <= 3; i++)
-        {
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            builder.Writeln($"Sample document {i}");
-            builder.Writeln("This is a test document used to demonstrate watermark application.");
-            string path = $"Sample_{i}.docx";
-            doc.Save(path);
-            paths.Add(path);
-        }
-        return paths;
     }
 }

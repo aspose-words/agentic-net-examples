@@ -2,35 +2,45 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define paths for the temporary image and the output document.
-        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "SampleImage.png");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkedDocument.docx");
+        // Create a folder for output files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a minimal 1x1 PNG image from a Base64 string and write it to disk.
-        // This avoids any System.Drawing or SkiaSharp usage.
-        const string pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/6VZcAAAAAElFTkSuQmCC";
-        byte[] pngBytes = Convert.FromBase64String(pngBase64);
+        // Minimal 1x1 transparent PNG (byte array).
+        byte[] pngBytes = new byte[]
+        {
+            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
+            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+            0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
+            0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
+            0x54,0x78,0x9C,0x63,0x60,0x00,0x00,0x00,
+            0x02,0x00,0x01,0xE2,0x21,0xBC,0x33,0x00,
+            0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
+            0x42,0x60,0x82
+        };
+
+        // Write the PNG to a file so it can be used by the watermark API.
+        string imagePath = Path.Combine(artifactsDir, "watermark.png");
         File.WriteAllBytes(imagePath, pngBytes);
 
-        // Create a new blank document and add a simple paragraph.
+        // Create a blank Word document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document contains an image watermark.");
 
-        // Optimize the document for Word 2010 compatibility.
+        // Optional: optimize the document for a specific Word version.
         doc.CompatibilityOptions.OptimizeFor(MsWordVersion.Word2010);
 
-        // Insert the image watermark using the file path.
-        // Use the overload that accepts a path and ImageWatermarkOptions (options can be default).
-        doc.Watermark.SetImage(imagePath, new ImageWatermarkOptions());
+        // Insert the image as a watermark using the overload that accepts a file path.
+        var imageOptions = new ImageWatermarkOptions(); // default options
+        doc.Watermark.SetImage(imagePath, imageOptions);
 
-        // Save the resulting document.
+        // Save the document with the watermark.
+        string outputPath = Path.Combine(artifactsDir, "DocumentWithImageWatermark.docx");
         doc.Save(outputPath);
     }
 }

@@ -6,44 +6,46 @@ public class Program
 {
     public static void Main()
     {
-        // Output file name.
-        const string outputPath = "WatermarkedDocument.docx";
+        // 1x1 pixel transparent PNG (base64 encoded)
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
 
-        // Create a blank document and add a paragraph.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document contains an image watermark.");
-
-        // 1x1 transparent PNG encoded in Base64.
-        const string pngBase64 =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
-            "Z6VQAAAAASUVORK5CYII=";
-
-        // Convert Base64 string to a byte array.
-        byte[] imageBytes = Convert.FromBase64String(pngBase64);
-
-        // Apply the image watermark using a memory stream.
-        using (MemoryStream imageStream = new MemoryStream(imageBytes))
+        // Simulate an Azure Blob stream.
+        using (MemoryStream imageStream = new MemoryStream(pngBytes))
         {
-            imageStream.Position = 0; // Ensure the stream is at the start.
+            // Ensure the stream is at the beginning.
+            imageStream.Position = 0;
+
+            // Create a new blank document.
+            Document doc = new Document();
+
+            // Add some content so the document is not empty.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This document contains an image watermark.");
 
             // Configure watermark appearance.
-            ImageWatermarkOptions options = new ImageWatermarkOptions
+            ImageWatermarkOptions watermarkOptions = new ImageWatermarkOptions
             {
-                Scale = 2.0,      // Make the watermark larger.
-                IsWashout = false // Keep the image fully opaque.
+                Scale = 5,          // Scale factor.
+                IsWashout = false   // Disable washout effect.
             };
 
-            // Set the image watermark from the stream.
-            doc.Watermark.SetImage(imageStream, options);
+            // Apply the image watermark from the stream.
+            doc.Watermark.SetImage(imageStream, watermarkOptions);
+
+            // Save the document.
+            const string outputPath = "OutputWithWatermark.docx";
+            doc.Save(outputPath);
+
+            // Simple validation.
+            if (File.Exists(outputPath))
+            {
+                Console.WriteLine($"Document saved successfully: {outputPath}");
+            }
+            else
+            {
+                Console.WriteLine("Failed to save the document.");
+            }
         }
-
-        // Save the document locally.
-        doc.Save(outputPath);
-
-        // Simple validation.
-        Console.WriteLine(File.Exists(outputPath)
-            ? $"Document saved successfully: {Path.GetFullPath(outputPath)}"
-            : "Failed to save the document.");
     }
 }

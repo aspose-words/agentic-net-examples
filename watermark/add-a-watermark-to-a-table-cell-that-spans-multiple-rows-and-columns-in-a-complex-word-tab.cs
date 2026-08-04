@@ -3,74 +3,69 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple 1x1 PNG file that will be used as the watermark image.
-        string imagePath = "watermark.png";
-        CreateSamplePng(imagePath);
-
         // Create a blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 4x4 table with sample text in each cell.
+        // Build a 4x4 table.
         Table table = builder.StartTable();
         for (int row = 0; row < 4; row++)
         {
             for (int col = 0; col < 4; col++)
             {
                 builder.InsertCell();
-                builder.Write($"R{row + 1}C{col + 1}");
+                builder.Write($"R{row}C{col}");
             }
             builder.EndRow();
         }
+        builder.EndTable();
 
-        // Merge cells to create a cell that spans rows 1‑2 and columns 1‑2.
-        // Top‑left cell of the span.
-        builder.MoveToCell(0, 0, 0, 0);
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.CellFormat.VerticalMerge = CellMerge.First;
+        // Merge the top‑left four cells to create a cell that spans two rows and two columns.
+        Cell startCell = table.Rows[0].Cells[0];
+        startCell.CellFormat.HorizontalMerge = CellMerge.First;
+        startCell.CellFormat.VerticalMerge = CellMerge.First;
 
-        // Cells that join the span horizontally.
-        builder.MoveToCell(0, 0, 0, 1);
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        table.Rows[0].Cells[1].CellFormat.HorizontalMerge = CellMerge.Previous;
+        table.Rows[1].Cells[0].CellFormat.VerticalMerge = CellMerge.Previous;
 
-        // Cells that join the span vertically.
-        builder.MoveToCell(0, 1, 0, 0);
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+        Cell bottomRightCell = table.Rows[1].Cells[1];
+        bottomRightCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+        bottomRightCell.CellFormat.VerticalMerge = CellMerge.Previous;
 
-        // Insert the image watermark into the merged cell.
-        builder.MoveToCell(0, 0, 0, 0);
-        builder.InsertImage(imagePath);
+        // Move the cursor to the merged cell.
+        builder.MoveToCell(0, 0, 0, 0); // tableIndex, rowIndex, columnIndex, cellIndex
 
-        // Retrieve the inserted shape (the image) and configure it as a watermark.
-        Shape shape = (Shape)builder.CurrentParagraph.GetChildNodes(NodeType.Shape, false)[0];
-        shape.WrapType = WrapType.None;   // No text wrapping.
-        shape.BehindText = true;          // Place behind the cell text.
+        // Insert a rectangle shape that will act as a watermark inside the cell.
+        Shape watermark = builder.InsertShape(ShapeType.Rectangle, 200, 50);
+        watermark.WrapType = WrapType.None;               // No text wrapping.
+        watermark.BehindText = true;                      // Appear behind cell content.
+        watermark.RelativeHorizontalPosition = RelativeHorizontalPosition.Column;
+        watermark.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
+        watermark.FillColor = Color.LightGray;            // Light background.
+        watermark.StrokeColor = Color.Gray;               // Border color.
+
+        // Add visible text inside the shape.
+        Paragraph para = new Paragraph(doc);
+        para.AppendChild(new Run(doc, "CONFIDENTIAL"));
+        watermark.AppendChild(para);
+
+        // Position the shape to fill the merged cell.
+        watermark.Left = 0;
+        watermark.Top = 0;
 
         // Save the document.
-        doc.Save("WatermarkedTable.docx");
-    }
+        string outputPath = "WatermarkedTableCell.docx";
+        doc.Save(outputPath);
 
-    // Writes a minimal 1x1 pixel PNG to the specified path.
-    private static void CreateSamplePng(string path)
-    {
-        // PNG data for a single transparent pixel.
-        byte[] pngBytes = new byte[]
-        {
-            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
-            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
-            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
-            0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
-            0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
-            0x54,0x78,0x9C,0x63,0x60,0x00,0x00,0x00,
-            0x02,0x00,0x01,0xE2,0x21,0xBC,0x33,0x00,
-            0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
-            0x42,0x60,0x82
-        };
-        File.WriteAllBytes(path, pngBytes);
+        // Simple validation that the file was created.
+        Console.WriteLine(File.Exists(outputPath)
+            ? $"Document saved successfully to '{outputPath}'."
+            : "Failed to save the document.");
     }
 }

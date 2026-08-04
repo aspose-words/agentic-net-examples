@@ -1,54 +1,62 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a temporary folder for the demo files.
-        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeWatermarkDemo");
-        Directory.CreateDirectory(tempFolder);
+        // Define a folder that simulates a network share.
+        string networkShareFolder = Path.Combine(Path.GetTempPath(), "NetworkShare");
+        Directory.CreateDirectory(networkShareFolder);
 
-        // Paths for the source document and the output document.
-        string sourcePath = Path.Combine(tempFolder, "source.docx");
-        string outputPath = Path.Combine(tempFolder, "watermarked.docx");
+        // Paths for the source and output documents on the simulated network share.
+        string sourceDocPath = Path.Combine(networkShareFolder, "Source.docx");
+        string outputDocPath = Path.Combine(networkShareFolder, "Watermarked.docx");
 
         // -----------------------------------------------------------------
-        // 1. Create a blank Word document and save it to the source path.
+        // 1. Create a blank document and save it to the network share.
         // -----------------------------------------------------------------
-        Document blankDoc = new Document();
-        blankDoc.Save(sourcePath);
-
-        // ---------------------------------------------------------------
-        // 2. Build a UNC style path that points to the same file.
-        //    The @"\\?\" prefix forces the path to be treated as an
-        //    extended-length (UNC-like) path, which satisfies the
-        //    "network share" requirement without needing an actual share.
-        // ---------------------------------------------------------------
-        string uncPath = @"\\?\" + sourcePath;
-
-        // ---------------------------------------------------------------
-        // 3. Open the document via a FileStream inside a using block to
-        //    guarantee that the file handle is released promptly.
-        // ---------------------------------------------------------------
-        using (FileStream stream = new FileStream(uncPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        var blankDoc = new Document();
+        // Use a FileStream inside a using block to ensure the file handle is released.
+        using (FileStream createStream = File.Create(sourceDocPath))
         {
-            Document doc = new Document(stream);
-
-            // -----------------------------------------------------------
-            // 4. Add a text watermark to the loaded document.
-            // -----------------------------------------------------------
-            doc.Watermark.SetText("Confidential");
-
-            // -----------------------------------------------------------
-            // 5. Save the watermarked document to the output path.
-            // -----------------------------------------------------------
-            doc.Save(outputPath);
+            blankDoc.Save(createStream, SaveFormat.Docx);
         }
 
-        // Simple validation to ensure the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The watermarked document was not saved correctly.");
+        // -----------------------------------------------------------------
+        // 2. Load the document from the network share.
+        // -----------------------------------------------------------------
+        Document loadedDoc;
+        using (FileStream readStream = File.OpenRead(sourceDocPath))
+        {
+            loadedDoc = new Document(readStream);
+        }
+
+        // -----------------------------------------------------------------
+        // 3. Add a text watermark to the loaded document.
+        // -----------------------------------------------------------------
+        loadedDoc.Watermark.SetText("Confidential");
+
+        // -----------------------------------------------------------------
+        // 4. Save the watermarked document back to the network share.
+        // -----------------------------------------------------------------
+        using (FileStream writeStream = File.Create(outputDocPath))
+        {
+            loadedDoc.Save(writeStream, SaveFormat.Docx);
+        }
+
+        // -----------------------------------------------------------------
+        // 5. Simple validation that the output file exists.
+        // -----------------------------------------------------------------
+        if (File.Exists(outputDocPath))
+        {
+            Console.WriteLine("Watermark applied successfully. Output file: " + outputDocPath);
+        }
+        else
+        {
+            Console.WriteLine("Failed to create the watermarked document.");
+        }
     }
 }
