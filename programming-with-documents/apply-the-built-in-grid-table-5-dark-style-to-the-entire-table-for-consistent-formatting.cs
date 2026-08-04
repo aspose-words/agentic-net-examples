@@ -9,56 +9,39 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a new table.
         Table table = builder.StartTable();
 
-        // Insert the first cell (required before setting table formatting).
+        // First row (header).
         builder.InsertCell();
-
-        // Apply the built‑in "Grid Table 5 Dark" style to the whole table.
-        table.StyleIdentifier = StyleIdentifier.GridTable5Dark;
-        // Apply the style to all parts of the table (rows, columns, bands, etc.).
-        table.StyleOptions = TableStyleOptions.Default;
-
-        // Populate the table with some sample data.
-        // Header row.
-        builder.Writeln("Product");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Writeln("Quantity");
+        builder.Write("Header 2");
         builder.EndRow();
 
-        // First data row.
+        // Second row (data).
         builder.InsertCell();
-        builder.Writeln("Apples");
+        builder.Write("Data 1");
         builder.InsertCell();
-        builder.Writeln("20");
-        builder.EndRow();
-
-        // Second data row.
-        builder.InsertCell();
-        builder.Writeln("Bananas");
-        builder.InsertCell();
-        builder.Writeln("35");
-        builder.EndRow();
-
-        // Third data row.
-        builder.InsertCell();
-        builder.Writeln("Carrots");
-        builder.InsertCell();
-        builder.Writeln("50");
+        builder.Write("Data 2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Ensure the output directory exists.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(artifactsDir);
+        // Apply the built‑in "Grid Table 5 Dark" style to the whole table.
+        table.StyleIdentifier = StyleIdentifier.GridTable5Dark;
+        // Apply all style options (first row, first column, row bands, etc.).
+        table.StyleOptions = TableStyleOptions.Default;
+
+        // Define output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GridTable5Dark.docx");
 
         // Save the document.
-        string outputPath = Path.Combine(artifactsDir, "TableWithGridTable5Dark.docx");
         doc.Save(outputPath);
     }
 }

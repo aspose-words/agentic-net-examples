@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -10,26 +9,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the left margin for the main body (e.g., 1 inch).
-        builder.PageSetup.LeftMargin = ConvertUtil.InchToPoint(1.0);
+        // Set a custom left margin for the body text (1 inch).
+        double leftMargin = ConvertUtil.InchToPoint(1.0);
+        builder.PageSetup.LeftMargin = leftMargin;
 
-        // Enable a distinct header for the first page.
+        // Enable a different header for the first page.
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // Move the cursor to the first‑page header.
+        // Move to the first‑page header and add some text.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
+        builder.Writeln("First page header");
 
-        // Insert header text.
-        builder.Writeln("First Page Header");
+        // Align the header's left margin with the main text margin.
+        // The header is a separate story; retrieve its first paragraph and set its left indent.
+        HeaderFooter firstHeader = doc.FirstSection.HeadersFooters[HeaderFooterType.HeaderFirst];
+        if (firstHeader != null && firstHeader.FirstParagraph != null)
+        {
+            // LeftIndent is measured relative to the page margin.
+            // Setting it to zero makes the header start at the same left edge as the body text.
+            firstHeader.FirstParagraph.ParagraphFormat.LeftIndent = 0;
+        }
 
-        // Align the header's left indent with the body left margin.
-        builder.CurrentParagraph.ParagraphFormat.LeftIndent = builder.PageSetup.LeftMargin;
-
-        // Return to the main section body.
+        // Return to the main document body and add some content.
         builder.MoveToSection(0);
         builder.Writeln("Body text starts here.");
 
-        // Save the document to a file.
-        doc.Save("FirstPageHeaderAligned.docx");
+        // Save the document.
+        doc.Save("AdjustedHeaderMargin.docx");
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -13,24 +12,25 @@ public class Program
         // Enable a different header/footer for the first page of the section.
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // Create the header that will appear only on the first page.
+        // ----- First‑page header -----
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Write("First page header");
+        builder.Write("Header for the first page");
 
-        // Create the primary header that will appear on all other pages.
+        // ----- Primary header (used on all other pages) -----
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Primary header for other pages");
+        builder.Write("Header for subsequent pages");
 
-        // Add three pages of content to demonstrate the different headers.
+        // Return to the main body of the first section.
         builder.MoveToSection(0);
+
+        // Add three pages to demonstrate the different headers.
         builder.Writeln("Content of page 1");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Content of page 2");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Content of page 3");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "FirstPageHeader.docx");
-        doc.Save(outputPath);
+        // Save the document to the local file system.
+        doc.Save("FirstPageHeader.docx");
     }
 }

@@ -9,18 +9,18 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to simplify adding content.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the table.
+        // Start a table.
         builder.StartTable();
 
-        // Insert 5 rows and 3 columns.
+        // Build a table with 5 rows and 3 columns.
         for (int row = 1; row <= 5; row++)
         {
             for (int col = 1; col <= 3; col++)
             {
-                // Insert a new cell and write some text into it.
+                // Insert a cell and write some sample text.
                 builder.InsertCell();
                 builder.Write($"Row {row}, Col {col}");
             }
@@ -32,7 +32,7 @@ public class Program
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file in the current directory.
+        // Save the document to a file in the same folder as the executable.
         doc.Save("TableExample.docx");
     }
 }

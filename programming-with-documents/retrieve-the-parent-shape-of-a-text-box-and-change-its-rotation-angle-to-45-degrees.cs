@@ -11,23 +11,24 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text box shape into the document.
+        // Insert a floating text box shape.
         Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 200, 100);
+
         // Add some text inside the text box.
         builder.MoveTo(textBoxShape.LastParagraph);
-        builder.Write("Sample text inside the text box.");
+        builder.Writeln("Sample text inside the textbox.");
 
-        // Retrieve the parent shape of the TextBox via the TextBox property.
+        // Retrieve the parent shape of the TextBox.
         Shape parentShape = textBoxShape.TextBox.Parent;
-        // Change the rotation angle of the parent shape to 45 degrees.
+
+        // Set the rotation angle of the parent shape to 45 degrees.
         parentShape.Rotation = 45;
 
-        // Define an output folder and ensure it exists.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
+        // Ensure the output directory exists.
+        string artifactsDir = "Artifacts";
+        Directory.CreateDirectory(artifactsDir);
 
         // Save the modified document.
-        string outputPath = Path.Combine(outputDir, "ParentShapeRotation.docx");
-        doc.Save(outputPath);
+        doc.Save(Path.Combine(artifactsDir, "TextBoxRotated.docx"));
     }
 }

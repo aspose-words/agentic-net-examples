@@ -1,5 +1,7 @@
 using System;
 using System.Data;
+using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,17 +9,17 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a DataTable with numeric values.
+        // Prepare a DataTable with sample numeric data.
         DataTable table = new DataTable("Products");
-        table.Columns.Add("Item", typeof(string));
+        table.Columns.Add("Product", typeof(string));
+        table.Columns.Add("Price", typeof(decimal));
         table.Columns.Add("Quantity", typeof(int));
-        table.Columns.Add("UnitPrice", typeof(decimal));
 
-        table.Rows.Add("Apple", 10, 0.75m);
-        table.Rows.Add("Banana", 5, 0.50m);
-        table.Rows.Add("Orange", 8, 0.65m);
+        table.Rows.Add("Apple", 1.25m, 10);
+        table.Rows.Add("Banana", 0.75m, 20);
+        table.Rows.Add("Cherry", 2.50m, 15);
 
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -25,49 +27,46 @@ public class Program
         Table wordTable = builder.StartTable();
 
         // Insert header row.
-        InsertHeaderCell(builder, "Item");
-        InsertHeaderCell(builder, "Quantity");
-        InsertHeaderCell(builder, "Unit Price");
+        InsertCell(builder, "Product", true);
+        InsertCell(builder, "Price", true);
+        InsertCell(builder, "Quantity", true);
         builder.EndRow();
 
         // Insert data rows.
         foreach (DataRow row in table.Rows)
         {
-            // Item (string)
-            builder.InsertCell();
-            builder.Write(row["Item"].ToString());
-
-            // Quantity (int) – keep as plain number.
-            builder.InsertCell();
-            builder.Write(row["Quantity"].ToString());
-
-            // Unit Price (decimal) – format as currency.
-            builder.InsertCell();
-            decimal price = (decimal)row["UnitPrice"];
-            builder.Write(price.ToString("C")); // Currency format based on current culture.
-
+            InsertCell(builder, row["Product"].ToString(), false);
+            // Format the numeric value as currency.
+            string price = Convert.ToDecimal(row["Price"]).ToString("C", CultureInfo.CurrentCulture);
+            InsertCell(builder, price, false);
+            InsertCell(builder, row["Quantity"].ToString(), false);
             builder.EndRow();
         }
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Optionally apply a simple style.
-        wordTable.StyleIdentifier = StyleIdentifier.LightListAccent1;
-        wordTable.AutoFit(AutoFitBehavior.AutoFitToContents);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "DataTableToWord.docx");
 
         // Save the document.
-        doc.Save("OutputTable.docx");
+        doc.Save(outputPath);
     }
 
-    // Helper method to insert a header cell with bold text.
-    private static void InsertHeaderCell(DocumentBuilder builder, string text)
+    // Helper method to insert a cell with optional bold header formatting.
+    private static void InsertCell(DocumentBuilder builder, string text, bool isHeader)
     {
         builder.InsertCell();
-        // Make header text bold.
-        builder.Font.Bold = true;
+        if (isHeader)
+        {
+            builder.Font.Bold = true;
+        }
+        else
+        {
+            builder.Font.Bold = false;
+        }
         builder.Write(text);
-        // Reset bold for subsequent cells.
-        builder.Font.Bold = false;
     }
 }

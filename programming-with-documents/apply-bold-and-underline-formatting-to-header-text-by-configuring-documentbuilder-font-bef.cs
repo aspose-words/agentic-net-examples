@@ -11,15 +11,14 @@ public class Program
         // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the font to be bold and underlined.
+        // Configure the font: make it bold and underline it.
         builder.Font.Bold = true;
         builder.Font.Underline = Underline.Single;
 
         // Insert the header text with the configured formatting.
-        builder.Writeln("Bold and Underlined Header");
+        builder.Writeln("Header Text");
 
-        // Save the document to a file.
-        string outputFile = "HeaderBoldUnderline.docx";
-        doc.Save(outputFile);
+        // Save the document to a file in the current directory.
+        doc.Save("HeaderFormatted.docx");
     }
 }

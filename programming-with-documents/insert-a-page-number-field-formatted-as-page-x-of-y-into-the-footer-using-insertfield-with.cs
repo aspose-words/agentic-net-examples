@@ -1,6 +1,6 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Fields;   // Required for the FieldType enum
 
 public class Program
 {
@@ -10,31 +10,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some content to generate multiple pages.
-        for (int i = 0; i < 3; i++)
-        {
-            builder.Writeln($"This is page {i + 1}.");
-            if (i < 2)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
-
-        // Move the builder to the primary footer of the first section.
+        // Move the builder cursor to the primary footer of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        // Center the footer text.
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
         // Insert the page number field in the format "Page X of Y".
         builder.Write("Page ");
-        // PAGE field with Arabic numeral switch.
-        builder.InsertField("PAGE \\* Arabic", "");
+        builder.InsertField(FieldType.FieldPage, true);          // PAGE field
         builder.Write(" of ");
-        // NUMPAGES field with Arabic numeral switch.
-        builder.InsertField("NUMPAGES \\* Arabic", "");
+        builder.InsertField(FieldType.FieldNumPages, true);     // NUMPAGES field
 
-        // Update all fields so they display the correct values.
+        // Update all fields so that the page numbers are calculated.
         doc.UpdateFields();
 
-        // Save the document to the local file system.
+        // Save the document.
         doc.Save("PageNumberFooter.docx");
     }
 }

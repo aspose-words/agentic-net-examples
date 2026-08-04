@@ -11,32 +11,42 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text box shape (the target shape type).
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.Width = 200;
-        textBox.Height = 100;
-        textBox.WrapType = WrapType.None;
-        textBox.FillColor = Color.AliceBlue; // Initial fill color.
-        builder.InsertNode(textBox);
+        // Insert some regular text.
+        builder.Writeln("Document before the text box.");
 
-        // Insert another shape (e.g., a rectangle) to demonstrate that only text boxes are changed.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 150, 80);
-        rectangle.FillColor = Color.Coral;
+        // Create a floating text box shape.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.WrapType = WrapType.None;
+        textBox.Height = 100;
+        textBox.Width = 200;
+
+        // Add a paragraph with a run of text inside the text box.
+        textBox.AppendChild(new Paragraph(doc));
+        Paragraph tbParagraph = (Paragraph)textBox.FirstChild;
+        Run tbRun = new Run(doc, "This is a text box.");
+        tbParagraph.AppendChild(tbRun);
+
+        // Add the text box to the document.
+        builder.CurrentParagraph.AppendChild(textBox);
+        builder.Writeln("Document after the text box.");
+
+        // Insert another shape (rectangle) to demonstrate that non‑textbox shapes are unchanged.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 120, 60);
+        rectangle.FillColor = Color.Blue;
 
         // Iterate through all shapes in the document.
         NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
         foreach (Shape shape in shapes)
         {
-            // Check if the shape is a text box.
+            // Change fill color only for text box shapes.
             if (shape.ShapeType == ShapeType.TextBox)
             {
-                // Change the fill color to light gray.
                 shape.FillColor = Color.LightGray;
-                // Alternatively, you could use: shape.Fill.Solid(Color.LightGray);
             }
         }
 
         // Save the modified document.
-        doc.Save("Output.docx");
+        const string outputPath = "Result.docx";
+        doc.Save(outputPath);
     }
 }

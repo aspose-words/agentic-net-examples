@@ -1,32 +1,30 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
-namespace AsposeWordsParagraphStyleExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Attach a DocumentBuilder to the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Add a custom paragraph style named "MyCustomStyle".
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
 
-            // Set the left indent to 0.5 inches (0.5 * 72 points per inch = 36 points).
-            builder.ParagraphFormat.LeftIndent = 36.0;
+        // Set left indent to 0.5 inches (36 points).
+        customStyle.ParagraphFormat.LeftIndent = 36.0;
 
-            // Set line spacing to 1.5 lines.
-            builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-            builder.ParagraphFormat.LineSpacing = 1.5;
+        // Set line spacing to 1.5 lines.
+        customStyle.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
+        customStyle.ParagraphFormat.LineSpacing = 18.0; // 1.5 * 12 points (default line height)
 
-            // Write a sample paragraph that will use the custom formatting.
-            builder.Writeln("This paragraph has a left indent of 0.5 inches and line spacing of 1.5.");
+        // Use DocumentBuilder to write a paragraph that uses the custom style.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.ParagraphFormat.StyleName = "MyCustomStyle";
+        builder.Writeln("This paragraph uses a custom style with a left indent of 0.5 inches and line spacing of 1.5.");
 
-            // Save the document to the local file system.
-            string outputPath = "CustomParagraphStyle.docx";
-            doc.Save(outputPath);
-        }
+        // Save the document to a file.
+        string outputPath = "CustomParagraphStyle.docx";
+        doc.Save(outputPath);
     }
 }

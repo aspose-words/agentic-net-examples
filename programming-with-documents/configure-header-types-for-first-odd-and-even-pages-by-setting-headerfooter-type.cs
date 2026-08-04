@@ -1,50 +1,47 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class Program
+namespace HeaderFooterDemo
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Use DocumentBuilder for convenience.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Enable different headers for the first page and for odd/even pages.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
-        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
-
-        // ----- First page header -----
-        HeaderFooter firstHeader = new HeaderFooter(doc, HeaderFooterType.HeaderFirst);
-        firstHeader.AppendParagraph("Header for the first page");
-        doc.FirstSection.HeadersFooters.Add(firstHeader);
-
-        // ----- Even page header -----
-        HeaderFooter evenHeader = new HeaderFooter(doc, HeaderFooterType.HeaderEven);
-        evenHeader.AppendParagraph("Header for even pages");
-        doc.FirstSection.HeadersFooters.Add(evenHeader);
-
-        // ----- Primary (odd) page header -----
-        HeaderFooter primaryHeader = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        primaryHeader.AppendParagraph("Header for odd pages");
-        doc.FirstSection.HeadersFooters.Add(primaryHeader);
-
-        // Add some content to generate multiple pages.
-        for (int i = 1; i <= 3; i++)
+        public static void Main()
         {
-            builder.Writeln($"Page {i}");
-            if (i < 3)
-                builder.InsertBreak(BreakType.PageBreak);
+            // Create a new blank document.
+            Document doc = new Document();
+
+            // Use DocumentBuilder to add content and configure headers.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Enable different headers for the first page and for odd/even pages.
+            builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+            builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
+
+            // First page header.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
+            builder.Write("Header for the first page");
+
+            // Even pages header.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
+            builder.Write("Header for even pages");
+
+            // Odd pages (primary) header.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            builder.Write("Header for odd pages");
+
+            // Return to the main body of the document.
+            builder.MoveToSection(0);
+            builder.Writeln("Page 1");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("Page 2");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("Page 3");
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "HeadersAndFooters.docx");
+            doc.Save(outputPath);
         }
-
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "HeadersExample.docx");
-        doc.Save(outputPath);
     }
 }

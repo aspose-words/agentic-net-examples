@@ -1,6 +1,6 @@
 {
   "category": {
-    "name": "Programming with Documents",
+    "name": "Programming With Documents",
     "slug": "programming-with-documents",
     "product": "Aspose.Words",
     "language": "csharp",
@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -17,16 +17,20 @@
       "Aspose.Words",
       "Aspose.Words.Drawing",
       "Aspose.Words.Tables",
+      "Aspose.Words.BuildingBlocks",
       "Aspose.Words.Saving",
       "Aspose.Words.Notes",
-      "Aspose.Words.Fields",
       "System.Drawing",
-      "System.Data",
-      "Aspose.Words.Lists",
+      "Aspose.Words.Fields",
       "System.Linq",
+      "System.Data",
+      "System.Globalization",
+      "Aspose.Words.Lists",
       "System.Collections.Generic",
+      "Aspose.Words.Properties",
       "Aspose.Words.Settings",
-      "System.Globalization"
+      "Aspose.Words.Loading",
+      "Aspose.Words.Drawing.Charts"
     ],
     "key_apis": [
       "Document",
@@ -43,12 +47,14 @@
       "Field",
       "FieldType",
       "NodeType",
-      "File",
       "Cell",
+      "Node",
       "Row",
       "CellFormat",
       "Run",
-      "SaveFormat"
+      "SaveFormat",
+      "File",
+      "PdfSaveOptions"
     ]
   },
   "stats": {
@@ -898,8 +904,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 74,

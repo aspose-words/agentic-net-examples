@@ -3,9 +3,8 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
-using System.Drawing;
 
-public class ApplyCustomTocStyle
+public class Program
 {
     public static void Main()
     {
@@ -13,12 +12,24 @@ public class ApplyCustomTocStyle
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents field at the beginning of the document.
-        // The switches configure the TOC to include heading levels 1‑3 and to create hyperlinks.
+        // -----------------------------------------------------------------
+        // Create a custom paragraph style that will be applied to TOC entries.
+        // -----------------------------------------------------------------
+        Style tocCustomStyle = doc.Styles.Add(StyleType.Paragraph, "MyTocStyle");
+        tocCustomStyle.Font.Name = "Arial";
+        tocCustomStyle.Font.Size = 14;
+        tocCustomStyle.Font.Color = System.Drawing.Color.DarkBlue;
+        tocCustomStyle.ParagraphFormat.SpaceAfter = 6;
+
+        // ---------------------------------------------------------------
+        // Insert a Table of Contents field. The switches pick up headings 1‑3.
+        // ---------------------------------------------------------------
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Add some headings that will be picked up by the TOC.
+        // ---------------------------------------------------------------
+        // Add some headings that will appear in the TOC.
+        // ---------------------------------------------------------------
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1");
 
@@ -31,33 +42,30 @@ public class ApplyCustomTocStyle
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.Writeln("Section 2.1");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+        builder.Writeln("Subsection 2.1.1");
 
+        // ---------------------------------------------------------------
         // Update all fields so the TOC is populated.
+        // ---------------------------------------------------------------
         doc.UpdateFields();
 
-        // Create a custom paragraph style that will be applied to TOC entries.
-        Style customTocStyle = doc.Styles.Add(StyleType.Paragraph, "MyTocStyle");
-        customTocStyle.Font.Name = "Arial";
-        customTocStyle.Font.Size = 12;
-        customTocStyle.Font.Color = Color.DarkBlue;
-        customTocStyle.Font.Bold = true;
-
-        // Apply the custom style to all TOC entry paragraphs (styles TOC1 … TOC9).
+        // ---------------------------------------------------------------
+        // Apply the custom style to all TOC entry paragraphs (TOC1‑TOC9).
+        // ---------------------------------------------------------------
         foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            Style paraStyle = para.ParagraphFormat.Style;
-            if (paraStyle != null &&
-                paraStyle.StyleIdentifier >= StyleIdentifier.Toc1 &&
-                paraStyle.StyleIdentifier <= StyleIdentifier.Toc9)
+            StyleIdentifier id = para.ParagraphFormat.StyleIdentifier;
+            if (id >= StyleIdentifier.Toc1 && id <= StyleIdentifier.Toc9)
             {
-                para.ParagraphFormat.Style = customTocStyle;
+                para.ParagraphFormat.Style = tocCustomStyle;
             }
         }
 
-        // Determine an output path in the current working directory.
+        // ---------------------------------------------------------------
+        // Save the document to the current directory.
+        // ---------------------------------------------------------------
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomTocStyle.docx");
-
-        // Save the document.
         doc.Save(outputPath);
     }
 }

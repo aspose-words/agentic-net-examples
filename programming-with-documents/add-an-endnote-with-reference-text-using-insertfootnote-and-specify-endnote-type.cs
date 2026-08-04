@@ -7,22 +7,22 @@ public class Program
 {
     public static void Main()
     {
-        // Create output folder and define file name
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputFolder);
-        string outputFile = Path.Combine(outputFolder, "EndnoteExample.docx");
-
-        // Create a new blank document
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text to the document body
-        builder.Write("This text will be referenced by an endnote.");
+        // Write some text that will be referenced by the endnote.
+        builder.Write("This sentence will have an endnote attached.");
 
-        // Insert an endnote with the specified reference text
-        builder.InsertFootnote(FootnoteType.Endnote, "Endnote comment regarding referenced text.");
+        // Insert an endnote with the desired reference text.
+        builder.InsertFootnote(FootnoteType.Endnote, "This is the endnote content.");
 
-        // Save the document to the output path
-        doc.Save(outputFile);
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EndnoteExample.docx");
+
+        // Ensure the directory exists (in this case, the current directory always exists).
+        doc.Save(outputPath);
     }
 }

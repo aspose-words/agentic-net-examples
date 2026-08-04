@@ -3,53 +3,43 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-namespace AsposeWordsHeaderExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create an output folder.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Prepare a simple PNG image (1x1 pixel) as a byte array.
-            // This avoids the need for System.Drawing.
-            byte[] logoBytes = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/lKXKAAAAAElFTkSuQmCC");
+        // Enable a different header for the first page.
+        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Move the cursor to the first‑page header.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
-            // Enable a different header for the first page.
-            builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+        // A tiny 1x1 PNG image encoded in Base64 (transparent pixel).
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6UAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
 
-            // Move the cursor to the first‑page header.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
+        // Insert the image into the header from the byte array.
+        Shape shape = builder.InsertImage(imageBytes);
 
-            // Insert the logo image into the header from the byte array.
-            Shape logoShape = builder.InsertImage(logoBytes);
+        // Make the image floating so we can position it.
+        shape.WrapType = WrapType.None;
+        shape.BehindText = true;
 
-            // Make the image floating (no text wrap) and place it behind the text.
-            logoShape.WrapType = WrapType.None;
-            logoShape.BehindText = true;
+        // Center the image on the page.
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        shape.HorizontalAlignment = HorizontalAlignment.Center;
+        shape.VerticalAlignment = VerticalAlignment.Center;
 
-            // Position the image relative to the page and center it.
-            logoShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-            logoShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-            logoShape.HorizontalAlignment = HorizontalAlignment.Center;
-            logoShape.VerticalAlignment = VerticalAlignment.Center;
+        // Add some body content to ensure the document has at least one page.
+        builder.MoveToSection(0);
+        builder.Writeln("This document has a centered logo in the first‑page header.");
 
-            // Return to the main document body.
-            builder.MoveToSection(0);
-            builder.Writeln("This is the first page of the document.");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln("This is the second page of the document.");
-
-            // Save the document.
-            string outputPath = Path.Combine(outputDir, "FirstPageHeader.docx");
-            doc.Save(outputPath);
-        }
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FirstPageHeaderWithLogo.docx");
+        doc.Save(outputPath);
     }
 }

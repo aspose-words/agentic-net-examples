@@ -1,7 +1,5 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -9,51 +7,30 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use a DocumentBuilder to add sample chapters (Heading1) and body text.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        for (int i = 1; i <= 3; i++)
+        // Define the number of chapters we want to create.
+        int chapterCount = 3;
+
+        for (int i = 1; i <= chapterCount; i++)
         {
-            // Insert a chapter heading.
+            // Insert a bookmark that marks the start of the current chapter.
+            // Use a unique name for each bookmark to avoid duplicate‑name conflicts.
+            string bookmarkName = $"ChapterStart_{i}";
+            builder.StartBookmark(bookmarkName);
+
+            // Write the chapter heading (styled as Heading 1) and some sample text.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
             builder.Writeln($"Chapter {i}");
-
-            // Insert some paragraph text for the chapter.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
             builder.Writeln($"This is the content of chapter {i}.");
-            builder.Writeln();
-        }
 
-        // Insert a bookmark named "ChapterStart" at the beginning of each chapter.
-        // A chapter is identified by a paragraph with the Heading1 style.
-        DocumentBuilder bookmarkBuilder = new DocumentBuilder(doc);
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-
-        foreach (Paragraph para in paragraphs)
-        {
-            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
-            {
-                // Move the builder's cursor to the start of the heading paragraph.
-                bookmarkBuilder.MoveTo(para);
-                // Create a zero‑length bookmark at this position.
-                bookmarkBuilder.StartBookmark("ChapterStart");
-                bookmarkBuilder.EndBookmark("ChapterStart");
-            }
+            // Close the bookmark after the chapter content.
+            builder.EndBookmark(bookmarkName);
         }
 
         // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ChapterBookmarks.docx");
+        string outputPath = "ChapterBookmarks.docx";
         doc.Save(outputPath);
-
-        // Optional: verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to: {outputPath}");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
     }
 }

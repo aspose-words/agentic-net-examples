@@ -1,28 +1,34 @@
 using System;
-using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTabStopExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Create a DocumentBuilder attached to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Attach a DocumentBuilder to the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a custom tab stop at 2 inches (144 points) with left alignment.
-        // TabLeader.None means no leader line will be displayed.
-        builder.ParagraphFormat.TabStops.Add(144.0, TabAlignment.Left, TabLeader.None);
+            // Add a custom tab stop at 2 inches (2 * 72 points = 144 points).
+            // The tab stop is left-aligned with no leader.
+            builder.ParagraphFormat.TabStops.Add(144.0, TabAlignment.Left, TabLeader.None);
 
-        // Insert text that uses the custom tab stop.
-        // The text before the tab will be left-aligned, and the text after the tab
-        // will start at the 2‑inch position.
-        builder.Writeln("Item" + ControlChar.Tab + "Aligned at 2 inches");
+            // Write some text, insert a tab character, then write more text.
+            // The text after the tab will align to the custom tab stop at 2 inches.
+            builder.Write("First part");
+            builder.Write(ControlChar.Tab);
+            builder.Write("Aligned at 2 inches");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "CustomTabStop.docx");
-        doc.Save(outputPath);
+            // Finish the paragraph.
+            builder.Writeln();
+
+            // Save the document to a file in the current directory.
+            doc.Save("CustomTabStop.docx");
+        }
     }
 }

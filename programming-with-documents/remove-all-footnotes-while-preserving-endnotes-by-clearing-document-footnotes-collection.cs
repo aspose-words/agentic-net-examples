@@ -1,40 +1,44 @@
 using System;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Notes;
 
-public class Program
+namespace AsposeWordsFootnoteRemoval
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert paragraphs with footnotes.
-        builder.Writeln("First paragraph with a footnote.");
-        builder.InsertFootnote(FootnoteType.Footnote, "This is footnote 1.");
-
-        builder.Writeln("Second paragraph with a footnote.");
-        builder.InsertFootnote(FootnoteType.Footnote, "This is footnote 2.");
-
-        // Insert paragraphs with endnotes.
-        builder.Writeln("First paragraph with an endnote.");
-        builder.InsertFootnote(FootnoteType.Endnote, "This is endnote 1.");
-
-        builder.Writeln("Second paragraph with an endnote.");
-        builder.InsertFootnote(FootnoteType.Endnote, "This is endnote 2.");
-
-        // Remove all footnotes while keeping endnotes intact.
-        // Get all footnote/endnote nodes, iterate backwards and delete only footnotes.
-        var footnoteNodes = doc.GetChildNodes(NodeType.Footnote, true);
-        for (int i = footnoteNodes.Count - 1; i >= 0; i--)
+        public static void Main()
         {
-            Footnote fn = (Footnote)footnoteNodes[i];
-            if (fn.FootnoteType == FootnoteType.Footnote)
-                fn.Remove();
-        }
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the modified document.
-        doc.Save("Result.docx");
+            // Add paragraphs with footnotes.
+            builder.Writeln("First paragraph with a footnote.");
+            builder.InsertFootnote(FootnoteType.Footnote, "Footnote 1 content.");
+
+            builder.Writeln("Second paragraph with a footnote.");
+            builder.InsertFootnote(FootnoteType.Footnote, "Footnote 2 content.");
+
+            // Add paragraphs with endnotes.
+            builder.Writeln("First paragraph with an endnote.");
+            builder.InsertFootnote(FootnoteType.Endnote, "Endnote 1 content.");
+
+            builder.Writeln("Second paragraph with an endnote.");
+            builder.InsertFootnote(FootnoteType.Endnote, "Endnote 2 content.");
+
+            // Remove all footnotes while preserving endnotes.
+            var footnotes = doc.GetChildNodes(NodeType.Footnote, true)
+                               .Cast<Footnote>()
+                               .Where(fn => fn.FootnoteType == FootnoteType.Footnote)
+                               .ToList();
+
+            foreach (var footnote in footnotes)
+                footnote.Remove();
+
+            // Save the modified document.
+            string outputFile = "Result.docx";
+            doc.Save(outputFile);
+        }
     }
 }

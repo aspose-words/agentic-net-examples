@@ -1,49 +1,57 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace RemoveTocExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a builder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a Table of Contents (TOC) field.
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Add some headings so the TOC has entries.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 1.1");
-        builder.Writeln("Heading 1.2");
-
-        // Update fields to populate the TOC.
-        doc.UpdateFields();
-
-        // Locate the first TOC field (FieldToc) in the document.
-        FieldToc tocField = null;
-        foreach (Field field in doc.Range.Fields)
+        public static void Main()
         {
-            if (field.Type == FieldType.FieldTOC)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a Table of Contents (TOC) field.
+            builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+            builder.InsertBreak(BreakType.PageBreak);
+
+            // Add some headings that will appear in the TOC.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 1");
+
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+            builder.Writeln("Section 1.1");
+            builder.Writeln("Section 1.2");
+
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 2");
+
+            // Update fields so the TOC is built (optional for this example).
+            doc.UpdateFields();
+
+            // Save the document with the TOC for reference.
+            doc.Save("DocumentWithToc.docx");
+
+            // Locate the first TOC field in the document.
+            Field tocField = null;
+            foreach (Field field in doc.Range.Fields)
             {
-                tocField = (FieldToc)field;
-                break;
+                if (field.Type == FieldType.FieldTOC)
+                {
+                    tocField = field;
+                    break;
+                }
             }
-        }
 
-        // Remove the TOC field if it was found.
-        if (tocField != null)
-        {
-            tocField.Remove();
-        }
+            // If a TOC field was found, remove it.
+            if (tocField != null)
+            {
+                tocField.Remove();
+            }
 
-        // Save the document after removal.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
-        doc.Save(outputPath);
+            // Save the document after the TOC has been removed.
+            doc.Save("DocumentWithoutToc.docx");
+        }
     }
 }

@@ -7,33 +7,36 @@ public class Program
 {
     public static void Main()
     {
+        // A 1x1 pixel transparent PNG encoded in Base64.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the primary header of the first section.
+        // Move the cursor to the primary header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // A tiny 1x1 pixel PNG (transparent) encoded in Base64.
-        // This avoids the need for System.Drawing dependencies.
-        const string base64Png = 
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
-            "Z6XcAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        // Desired position and size (in points).
+        double leftOffset = 50;   // points from the left margin
+        double topOffset = 30;    // points from the top margin
+        double imageWidth = 100;  // width in points
+        double imageHeight = 50;  // height in points
 
-        // Insert the image as a floating shape using the byte[] overload.
-        // Width and height are set to -1 to keep the original image dimensions.
-        Shape shape = builder.InsertImage(imageBytes, -1, -1);
+        // Insert the image as a floating shape with absolute positioning.
+        Shape shape = builder.InsertImage(
+            imageBytes,
+            RelativeHorizontalPosition.Margin, leftOffset,
+            RelativeVerticalPosition.Margin, topOffset,
+            imageWidth, imageHeight,
+            WrapType.None);
 
-        // Configure the shape to be absolutely positioned in the header.
-        shape.WrapType = WrapType.None;                     // No text wrapping.
-        shape.BehindText = true;                            // Place behind the text.
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page; // Position relative to page.
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;     // Position relative to page.
-        shape.Left = 50;   // Left offset in points.
-        shape.Top = 30;    // Top offset in points.
+        // Place the image behind the text.
+        shape.BehindText = true;
 
-        // Save the document.
-        doc.Save("HeaderImage.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderImage.docx");
+        doc.Save(outputPath);
     }
 }

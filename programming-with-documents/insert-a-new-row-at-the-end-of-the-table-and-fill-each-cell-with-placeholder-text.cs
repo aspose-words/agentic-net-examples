@@ -1,8 +1,9 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+namespace AsposeWordsInsertRowExample
 {
     public class Program
     {
@@ -11,11 +12,11 @@ namespace AsposeWordsTableExample
             // Create a new blank document.
             Document doc = new Document();
 
-            // Initialize DocumentBuilder for the document.
+            // Initialize DocumentBuilder for building the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // Build an initial 2x2 table.
-            Table table = builder.StartTable();
+            builder.StartTable();
 
             // First row.
             builder.InsertCell();
@@ -31,30 +32,41 @@ namespace AsposeWordsTableExample
             builder.Write("Cell 2, Row 2");
             builder.EndRow();
 
-            // Finish the table construction.
-            builder.EndTable();
+            // Finish the table and obtain a reference to it.
+            Table table = builder.EndTable();
 
+            // ------------------------------------------------------------
             // Insert a new row at the end of the existing table.
+            // ------------------------------------------------------------
+
+            // Create a new row associated with the document.
             Row newRow = new Row(doc);
-            // Assuming the table has two columns, create two cells with placeholder text.
-            for (int col = 1; col <= 2; col++)
+
+            // Append the new row to the table.
+            table.AppendChild(newRow);
+
+            // Define the number of columns (matching the existing table).
+            int columnCount = 2;
+
+            // Populate each cell in the new row with placeholder text.
+            for (int i = 0; i < columnCount; i++)
             {
+                // Create a new cell.
                 Cell cell = new Cell(doc);
-                // Each cell must contain at least one paragraph.
-                Paragraph para = new Paragraph(doc);
-                cell.AppendChild(para);
+
+                // Ensure the cell contains a paragraph.
+                cell.AppendChild(new Paragraph(doc));
+
                 // Add placeholder text to the paragraph.
-                Run run = new Run(doc, $"Placeholder {col}");
-                para.AppendChild(run);
+                cell.FirstParagraph.AppendChild(new Run(doc, $"Placeholder {i + 1}"));
+
                 // Append the cell to the new row.
                 newRow.AppendChild(cell);
             }
 
-            // Append the new row to the table (adds it as the last row).
-            table.AppendChild(newRow);
-
             // Save the document to the local file system.
-            doc.Save("Output.docx");
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "InsertedRow.docx");
+            doc.Save(outputPath);
         }
     }
 }

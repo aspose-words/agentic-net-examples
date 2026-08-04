@@ -1,53 +1,43 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace LinkedTextBoxExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a normal paragraph before the text boxes.
-        builder.Writeln("Paragraph before the linked text boxes.");
+            // Insert the first text box.
+            Shape textBox1 = builder.InsertShape(ShapeType.TextBox, 300, 100);
+            // Configure the text box to allow overflow (do not fit shape to text and no wrapping).
+            textBox1.TextBox.FitShapeToText = false;
+            textBox1.TextBox.TextBoxWrapMode = TextBoxWrapMode.None;
 
-        // Insert the first floating text box.
-        Shape shapeBox1 = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        TextBox textBox1 = shapeBox1.TextBox;
+            // Move the builder inside the first text box and add a long paragraph.
+            builder.MoveTo(textBox1.LastParagraph);
+            string longText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ";
+            // Repeat the text to ensure it exceeds the size of the first box.
+            for (int i = 0; i < 30; i++)
+                builder.Write(longText);
 
-        // Insert the second floating text box that will receive overflow text.
-        Shape shapeBox2 = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        TextBox textBox2 = shapeBox2.TextBox;
+            // Insert a second text box that will receive the overflow text.
+            // Move the cursor to the end of the document (after the first text box).
+            builder.MoveToDocumentEnd();
+            Shape textBox2 = builder.InsertShape(ShapeType.TextBox, 300, 100);
+            textBox2.TextBox.FitShapeToText = false;
+            textBox2.TextBox.TextBoxWrapMode = TextBoxWrapMode.None;
 
-        // Link the first text box to the second one so overflow text continues automatically.
-        if (textBox1.IsValidLinkTarget(textBox2))
-            textBox1.Next = textBox2;
+            // Link the first text box to the second one.
+            // Overflow text from the first box will continue in the second box.
+            textBox1.TextBox.Next = textBox2.TextBox;
 
-        // Move the builder's cursor inside the first text box and write a long paragraph.
-        builder.MoveTo(shapeBox1.LastParagraph);
-        builder.Writeln(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-            "Sed non risus. Suspendisse lectus tortor, dignissim sit amet, " +
-            "adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. " +
-            "Maecenas ligula massa, varius a, semper congue, euismod non, mi. " +
-            "Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, " +
-            "non fermentum diam nisl sit amet erat. Duis semper. " +
-            "Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. " +
-            "Pellentesque congue. Ut in risus volutpat libero pharetra tempor. " +
-            "Cras vestibulum bibendum augue. Praesent egestas leo in pede. " +
-            "Praesent blandit odio eu enim. Pellentesque sed dui ut augue blandit sodales. " +
-            "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; " +
-            "Aliquam nibh. Mauris ac mauris sed pede pellentesque fermentum. " +
-            "Maecenas adipiscing ante non diam sodales hendrerit.");
-
-        // Define output path and ensure the directory exists.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LinkedTextBox.docx");
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
-
-        // Save the document.
-        doc.Save(outputPath);
+            // Save the document.
+            doc.Save("LinkedTextBox.docx");
+        }
     }
 }

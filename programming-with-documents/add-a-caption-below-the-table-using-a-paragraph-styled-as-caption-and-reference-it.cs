@@ -11,41 +11,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple 2x2 table.
-        builder.StartTable();
+        // Insert a bookmark that will surround the table so we can reference it later.
+        builder.StartBookmark("MyTable");
+
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("R1C1");
+        builder.Write("Cell 1,1");
         builder.InsertCell();
-        builder.Write("R1C2");
+        builder.Write("Cell 1,2");
         builder.EndRow();
 
         builder.InsertCell();
-        builder.Write("R2C1");
+        builder.Write("Cell 2,1");
         builder.InsertCell();
-        builder.Write("R2C2");
+        builder.Write("Cell 2,2");
         builder.EndRow();
         builder.EndTable();
 
-        // Add a caption paragraph below the table.
-        // The caption is placed inside a bookmark so it can be referenced later.
-        builder.StartBookmark("TableCaption");
+        // End the bookmark after the table.
+        builder.EndBookmark("MyTable");
+
+        // Insert a caption paragraph directly below the table.
+        // Use the built‑in "Caption" style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Caption;
         builder.Writeln("Table 1: Sample table.");
-        builder.EndBookmark("TableCaption");
 
-        // Insert some intervening text.
+        // Add some regular text and a cross‑reference to the table.
+        builder.ParagraphFormat.ClearFormatting(); // reset to normal style
         builder.Writeln();
-        builder.Writeln("The following reference points to the table above:");
+        builder.Writeln("Reference to the table above:");
+        // Insert a REF field that points to the bookmark "MyTable" and makes it a hyperlink.
+        builder.InsertField(@" REF MyTable \h ");
 
-        // Insert a cross‑reference (REF) field that points to the caption bookmark.
-        // The \\h switch makes the reference a hyperlink.
-        builder.InsertField("REF TableCaption \\h");
-
-        // Update fields so that the reference shows the correct caption text.
-        doc.UpdateFields();
-
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableCaption.docx");
         doc.Save(outputPath);
     }
 }

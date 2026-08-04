@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Properties;
 
 public class Program
 {
@@ -9,20 +10,21 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a long sentence that will wrap onto multiple lines.
+        // Narrow the page width to increase the chance of wrapping.
+        builder.PageSetup.PageWidth = 100; // points
+
+        // Write a long sentence into a single paragraph.
         string longSentence = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
-        builder.Writeln(longSentence);
+        builder.Write(longSentence);
 
-        // Recalculate word count and line count.
+        // Update word count and line count.
         doc.UpdateWordCount(true);
-
-        // Retrieve the estimated number of lines occupied by the paragraph.
         int lineCount = doc.BuiltInDocumentProperties.Lines;
 
-        // Save the document (optional, demonstrates the lifecycle).
-        doc.Save("ParagraphLines.docx");
-
-        // Output the line count.
+        // Display the number of lines occupied by the paragraph.
         Console.WriteLine($"The paragraph occupies {lineCount} line(s).");
+
+        // Save the document to the file system.
+        doc.Save("ParagraphLines.docx");
     }
 }

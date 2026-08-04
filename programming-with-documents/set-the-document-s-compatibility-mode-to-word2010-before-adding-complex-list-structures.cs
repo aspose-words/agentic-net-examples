@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Settings;
@@ -11,57 +10,56 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Optimize the document for Word 2010 to avoid the Compatibility mode ribbon.
+        // Set the document's compatibility mode to Word 2010.
+        // This prevents Word from showing the "Compatibility mode" ribbon.
         doc.CompatibilityOptions.OptimizeFor(MsWordVersion.Word2010);
 
-        // Create a multi‑level numbered list based on a built‑in template.
+        // Create a multilevel list based on a predefined template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Customize the first level (1., 2., 3., ...).
+        // Customize the first three list levels (optional, demonstrates complex structure).
         ListLevel level0 = list.ListLevels[0];
+        level0.NumberFormat = "%1.";
+        level0.NumberStyle = NumberStyle.Arabic;
         level0.Font.Name = "Arial";
         level0.Font.Size = 12;
-        level0.NumberStyle = NumberStyle.Arabic;          // Fixed: use Arabic instead of Decimal
-        level0.NumberFormat = "%1.";
-        level0.Alignment = ListLevelAlignment.Left;
-        level0.NumberPosition = -18;   // Indent for the number.
-        level0.TextPosition = 0;       // Position of the text.
-        level0.TabPosition = 36;       // Tab stop after the number.
 
-        // Customize the second level (a), b), c), ...).
         ListLevel level1 = list.ListLevels[1];
+        level1.NumberFormat = "%2.";
+        level1.NumberStyle = NumberStyle.LowercaseLetter;
         level1.Font.Name = "Arial";
         level1.Font.Size = 12;
-        level1.NumberStyle = NumberStyle.LowercaseLetter; // Fixed: use LowercaseLetter instead of LowerLetter
-        level1.NumberFormat = "%2)";
-        level1.Alignment = ListLevelAlignment.Left;
-        level1.NumberPosition = 18;
-        level1.TextPosition = 36;
-        level1.TabPosition = 72;
 
-        // Use DocumentBuilder to add list items.
+        ListLevel level2 = list.ListLevels[2];
+        level2.NumberFormat = "%3.";
+        level2.NumberStyle = NumberStyle.LowercaseRoman;
+        level2.Font.Name = "Arial";
+        level2.Font.Size = 12;
+
+        // Use DocumentBuilder to add list items with varying levels.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.ListFormat.List = list;
 
-        // First‑level items.
+        // First level item.
         builder.ListFormat.ListLevelNumber = 0;
         builder.Writeln("First level item 1");
-        builder.Writeln("First level item 2");
 
-        // Second‑level items.
+        // Second level item.
         builder.ListFormat.ListLevelNumber = 1;
         builder.Writeln("Second level item 1");
-        builder.Writeln("Second level item 2");
+
+        // Third level item.
+        builder.ListFormat.ListLevelNumber = 2;
+        builder.Writeln("Third level item 1");
 
         // Back to first level.
         builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("First level item 3");
+        builder.Writeln("First level item 2");
 
         // End list formatting.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComplexList.docx");
-        doc.Save(outputPath);
+        // Save the document to the local file system.
+        doc.Save("ComplexList.docx");
     }
 }

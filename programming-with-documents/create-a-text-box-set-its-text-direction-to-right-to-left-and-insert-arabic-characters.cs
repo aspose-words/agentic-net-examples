@@ -2,46 +2,42 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace AsposeWordsTextBoxRtlExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Create a DocumentBuilder which will be used to add content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create a textbox shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox)
+        public static void Main()
         {
-            Width = 300,
-            Height = 100
-        };
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Add an empty paragraph to the textbox – this is where the text will go.
-        Paragraph para = new Paragraph(doc);
-        textBox.AppendChild(para);
+            // Initialize DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the textbox into the document.
-        builder.InsertNode(textBox);
+            // Create a text box shape.
+            Shape textBox = new Shape(doc, ShapeType.TextBox)
+            {
+                Width = 300,
+                Height = 100
+            };
 
-        // Move the builder's cursor to the first paragraph inside the textbox.
-        builder.MoveTo(textBox.FirstParagraph);
+            // Add an empty paragraph to the text box so we can write into it.
+            textBox.AppendChild(new Paragraph(doc));
 
-        // Set the paragraph to be right‑to‑left.
-        builder.ParagraphFormat.Bidi = true;
+            // Insert the text box into the document.
+            builder.InsertNode(textBox);
 
-        // Set the font to treat the run as right‑to‑left.
-        builder.Font.Bidi = true;
+            // Move the builder's cursor to the first paragraph inside the text box.
+            builder.MoveTo(textBox.FirstParagraph);
 
-        // Arabic text to insert.
-        string arabic = "مرحبا بالعالم!";
+            // Set the text direction to right‑to‑left.
+            builder.Font.Bidi = true;
 
-        // Write the Arabic text into the textbox.
-        builder.Write(arabic);
+            // Write Arabic text.
+            builder.Write("مرحبا بالعالم!"); // "Hello world!" in Arabic.
 
-        // Save the document.
-        doc.Save("TextBox_RTL_Arabic.docx");
+            // Save the document to a file in the same folder as the executable.
+            doc.Save("TextBoxRTL.docx");
+        }
     }
 }

@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.BuildingBlocks;
+using Aspose.Words.Saving;
 
 public class Program
 {
@@ -12,29 +15,26 @@ public class Program
         // Enable different footers for odd and even pages.
         builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // Move the builder to the even-page footer of the first section.
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        // Add a few pages so that we have both odd and even pages.
+        for (int i = 1; i <= 4; i++)
+        {
+            builder.Writeln($"Content of page {i}");
+            if (i < 4)
+                builder.InsertBreak(BreakType.PageBreak);
+        }
 
-        // Insert the PAGE field that will display the page number.
+        // Set the page number style for the whole section to uppercase Roman numerals.
+        doc.FirstSection.PageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
+
+        // Move the builder cursor to the even-page footer.
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
+
+        // Insert a PAGE field that will display the page number.
         builder.Write("Page ");
         builder.InsertField("PAGE", "");
 
-        // Add a few pages of content to see the footer on even pages.
-        builder.MoveToSection(0);
-        builder.Writeln("First page (odd).");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page (even).");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third page (odd).");
-
-        // Set the page number style to uppercase Roman numerals.
-        doc.FirstSection.PageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
-
-        // Update fields so the PAGE field shows the correct values.
-        doc.UpdateFields();
-
-        // Save the document.
-        doc.Save("EvenFooterRoman.docx");
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EvenFooterRoman.docx");
+        doc.Save(outputPath);
     }
 }

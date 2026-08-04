@@ -1,7 +1,9 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,27 +12,35 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Create a DocumentBuilder for convenient editing.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure left and right borders.
-        Border leftBorder = builder.ParagraphFormat.Borders.Left;
+        // Define a custom paragraph style.
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+
+        // Configure left border.
+        Border leftBorder = customStyle.ParagraphFormat.Borders.Left;
         leftBorder.LineStyle = LineStyle.Single;
         leftBorder.LineWidth = 1.0;
         leftBorder.Color = Color.Black;
 
-        Border rightBorder = builder.ParagraphFormat.Borders.Right;
+        // Configure right border.
+        Border rightBorder = customStyle.ParagraphFormat.Borders.Right;
         rightBorder.LineStyle = LineStyle.Single;
         rightBorder.LineWidth = 1.0;
         rightBorder.Color = Color.Black;
 
         // Set a light gray background shading.
-        builder.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightGray;
+        Shading shading = customStyle.ParagraphFormat.Shading;
+        shading.Texture = TextureIndex.TextureSolid;
+        shading.BackgroundPatternColor = Color.LightGray;
 
-        // Write the paragraph with the applied formatting.
-        builder.Writeln("This paragraph has left/right borders and a light gray background.");
+        // Apply the custom style to the next paragraph.
+        builder.ParagraphFormat.StyleName = customStyle.Name;
+        builder.Writeln("This paragraph has left and right borders and a light gray background.");
 
-        // Save the document to a file in the current directory.
-        doc.Save("CustomParagraphStyle.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomParagraphStyle.docx");
+        doc.Save(outputPath);
     }
 }

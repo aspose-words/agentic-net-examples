@@ -5,30 +5,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add a bookmark named "Draft"
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Paragraph before bookmark.");
+
+        // Add some content before the bookmark.
+        builder.Writeln("Paragraph before the bookmark.");
+
+        // Create a bookmark named "Draft" and put text inside it.
         builder.StartBookmark("Draft");
-        builder.Writeln("This is draft content that will be removed.");
+        builder.Writeln("This is the draft content that will be removed.");
         builder.EndBookmark("Draft");
-        builder.Writeln("Paragraph after bookmark.");
 
-        // Save the original document (optional, for verification)
-        doc.Save("Original.docx");
+        // Add some content after the bookmark.
+        builder.Writeln("Paragraph after the bookmark.");
 
-        // Locate the bookmark named "Draft"
-        Bookmark draftBookmark = doc.Range.Bookmarks["Draft"];
-        if (draftBookmark != null)
-        {
-            // Delete the content inside the bookmark
-            draftBookmark.Text = string.Empty;
+        // Remove the bookmark named "Draft" (the bookmark itself is removed; the text remains).
+        doc.Range.Bookmarks.Remove("Draft");
 
-            // Remove the bookmark from the collection using Document.Range.Bookmarks.Remove
-            doc.Range.Bookmarks.Remove(draftBookmark);
-        }
-
-        // Save the modified document
-        doc.Save("Modified.docx");
+        // Save the resulting document.
+        const string outputFile = "Result.docx";
+        doc.Save(outputFile);
     }
 }

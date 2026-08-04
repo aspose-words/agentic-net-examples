@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Lists;
+using Aspose.Words.Saving;
 
 public class Program
 {
@@ -15,10 +15,10 @@ public class Program
         // Add a simple numbered list.
         doc.Lists.Add(ListTemplate.NumberDefault);
         List list = doc.Lists[0];
-        // Enable advanced list setting: restart numbering at each section.
+        // Enable restarting the list at each new section (advanced list setting).
         list.IsRestartAtEachSection = true;
 
-        // Populate the list with a few items.
+        // Apply the list to a few paragraphs.
         builder.ListFormat.List = list;
         builder.Writeln("Item 1");
         builder.Writeln("Item 2");
@@ -33,13 +33,17 @@ public class Program
             Compliance = OoxmlCompliance.Iso29500_2008_Strict
         };
 
-        // Define output path.
+        // Determine an output path relative to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AdvancedListStrict.docx");
 
         // Save the document with the specified compliance level.
         doc.Save(outputPath, saveOptions);
 
-        // Indicate completion.
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Reload the document to verify that the list setting is preserved.
+        Document loadedDoc = new Document(outputPath);
+        bool isRestart = loadedDoc.Lists[0].IsRestartAtEachSection;
+
+        // Output the verification result.
+        Console.WriteLine($"List restart at each section preserved: {isRestart}");
     }
 }
