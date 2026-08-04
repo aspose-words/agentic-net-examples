@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -19,7 +19,7 @@
       "Aspose.Words.Settings",
       "Aspose.Words.Saving",
       "Aspose.Words.Tables",
-      "Aspose.Words.Layout",
+      "System.Collections.Generic",
       "System.Diagnostics",
       "Aspose.Words.Notes"
     ],
@@ -30,13 +30,13 @@
       "Font",
       "SaveFormat",
       "Path",
-      "NodeType",
-      "Paragraph",
-      "Cell",
-      "StyleIdentifier",
-      "ImageSaveOptions",
       "Directory",
-      "Run"
+      "StyleIdentifier",
+      "Paragraph",
+      "ImageSaveOptions",
+      "NodeType",
+      "Run",
+      "Style"
     ]
   },
   "stats": {
@@ -109,8 +109,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 3,
@@ -164,8 +164,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 8,
@@ -197,8 +197,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 11,
@@ -230,8 +230,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 14,
@@ -488,8 +488,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 37,
@@ -510,8 +510,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 39,

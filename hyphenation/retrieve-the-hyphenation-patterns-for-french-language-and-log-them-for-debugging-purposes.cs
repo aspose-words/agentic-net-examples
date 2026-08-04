@@ -7,52 +7,46 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the temporary French hyphenation dictionary.
+        // Create a simple French hyphenation dictionary locally.
         const string dictionaryPath = "hyph_fr_FR.dic";
-
-        // Minimal dictionary content: encoding header + a few word patterns.
-        string dictionaryContent =
+        const string dictionaryContent =
             "UTF-8\n" +
             "extraordinaire=ex-tra-or-di-nai-re\n" +
             "communication=com-mu-ni-ca-tion\n";
 
-        // Write the dictionary file to the local file system.
-        File.WriteAllText(dictionaryPath, dictionaryContent);
+        // Write the dictionary file if it does not already exist.
+        if (!File.Exists(dictionaryPath))
+            File.WriteAllText(dictionaryPath, dictionaryContent);
 
-        // Register the French hyphenation dictionary.
-        Hyphenation.RegisterDictionary("fr-FR", dictionaryPath);
+        // Register the dictionary with Aspose.Words.
+        Aspose.Words.Hyphenation.RegisterDictionary("fr-FR", dictionaryPath);
 
-        // Verify registration.
-        if (!Hyphenation.IsDictionaryRegistered("fr-FR"))
+        // Verify registration succeeded.
+        if (!Aspose.Words.Hyphenation.IsDictionaryRegistered("fr-FR"))
             throw new InvalidOperationException("Failed to register the French hyphenation dictionary.");
 
-        // Log the dictionary entries (skip the encoding header).
+        // Log the dictionary contents for debugging.
         Console.WriteLine("French hyphenation patterns loaded from dictionary:");
-        foreach (string line in File.ReadLines(dictionaryPath))
-        {
-            if (line.StartsWith("UTF-", StringComparison.OrdinalIgnoreCase))
-                continue;
+        Console.WriteLine(File.ReadAllText(dictionaryPath));
 
-            Console.WriteLine(line);
-        }
-
-        // Create a simple document containing French words.
+        // Build a sample document that uses the French locale.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Size = 24;
         builder.Font.LocaleId = new CultureInfo("fr-FR").LCID;
+
+        // Write words that have hyphenation points defined in the dictionary.
         builder.Writeln("extraordinaire communication");
 
-        // Enable automatic hyphenation so the dictionary is used.
+        // Enable automatic hyphenation so the patterns are applied during layout.
         doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Save the document.
-        const string outputPath = "FrenchHyphenated.docx";
+        // Save the document to PDF to trigger layout processing.
+        const string outputPath = "Hyphenated_fr.pdf";
         doc.Save(outputPath);
 
-        // Ensure the output file was created.
+        // Ensure the PDF was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
+            throw new InvalidOperationException("The output PDF was not created.");
 
         Console.WriteLine($"Document saved to '{outputPath}'.");
     }

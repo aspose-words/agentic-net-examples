@@ -6,40 +6,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a minimal hyphenation dictionary for English (US) that includes the word "hyphenation".
-        const string dictionaryPath = "hyph_en_US.dic";
-        File.WriteAllText(dictionaryPath, "UTF-8\nhyphenation=hy-phen-ation\n");
+        // Create a minimal hyphenation dictionary for English (US) that contains the word "hyphenation".
+        const string dictFileName = "hyph_en_US.dic";
+        File.WriteAllText(dictFileName,
+            "UTF-8\n" +
+            "hyphenation=hy-phen-a-tion\n");
 
-        // Register the dictionary with Aspose.Words.
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
+        // Register the dictionary for the "en-US" locale.
+        Hyphenation.RegisterDictionary("en-US", dictFileName);
 
-        // Verify that the dictionary was successfully registered.
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-            throw new InvalidOperationException("Failed to register the hyphenation dictionary.");
+        // Verify that the dictionary is registered.
+        bool isRegistered = Hyphenation.IsDictionaryRegistered("en-US");
+        if (!isRegistered)
+            throw new InvalidOperationException("Hyphenation dictionary was not registered.");
 
-        // Create a new document and enable automatic hyphenation.
+        // Create a document with narrow page width to force line wrapping.
         Document doc = new Document();
-        doc.HyphenationOptions.AutoHyphenation = true;
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("The word hyphenation may be split across lines when hyphenation is enabled.");
 
-        // Configure the page layout to force line wrapping, making hyphenation visible.
+        // Narrow the page to make hyphenation visible.
         doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Add the word "hyphenation" to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Size = 24;
-        builder.Writeln("hyphenation");
+        // Enable automatic hyphenation.
+        doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Save the document to trigger layout processing.
-        const string outputPath = "HyphenationCheck.pdf";
-        doc.Save(outputPath);
+        // Save the document as PDF.
+        const string outputFile = "HyphenationCheck.pdf";
+        doc.Save(outputFile, SaveFormat.Pdf);
 
-        // Ensure the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output PDF was not created.");
-
-        // Indicate successful execution.
-        Console.WriteLine("Hyphenation dictionary registered and document generated successfully.");
+        // Validate that the output file was created.
+        if (!File.Exists(outputFile))
+            throw new InvalidOperationException("Expected output file was not created.");
     }
 }

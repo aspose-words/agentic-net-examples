@@ -1,62 +1,49 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the dictionary and output files.
+        // Path for the custom hyphenation dictionary.
         const string dictionaryPath = "hyph_en_US_custom.dic";
-        const string outputPath = "HyphenatedCustom.pdf";
 
-        // Create a minimal Hunspell hyphenation dictionary with custom patterns.
-        // The first line must specify the encoding, e.g., UTF-8.
-        // Subsequent lines contain words with hyphenation points marked by hyphens.
-        string dictionaryContent =
+        // Create a minimal Hunspell dictionary with custom patterns for technical terms.
+        // The first line must specify the encoding.
+        // Each subsequent line maps a word to its hyphenation pattern (hyphens separate syllables).
+        File.WriteAllText(dictionaryPath,
             "UTF-8\n" +
-            "microprocessor=micro-pro-cessor\n" +
-            "hyperconvergence=hyper-con-ver-gence\n" +
-            "quantumcomputing=quan-tum-com-put-ing\n";
+            "hyperparameter=hy-per-pa-ra-me-ter\n" +
+            "multithreading=mul-ti-thread-ing\n" +
+            "asynchronouscommunication=as-ync-ro-nous-com-mu-ni-ca-tion\n");
 
-        File.WriteAllText(dictionaryPath, dictionaryContent);
-
-        // Register the custom dictionary for the "en-US" locale.
+        // Register the dictionary for the English (US) locale.
         Hyphenation.RegisterDictionary("en-US", dictionaryPath);
-
-        // Verify that the dictionary is registered.
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-            throw new InvalidOperationException("Failed to register the hyphenation dictionary.");
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Narrow the page width to increase the chance of line wrapping and hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.17 inches)
+        // Configure the page layout to force line wrapping (narrow width).
+        doc.FirstSection.PageSetup.PageWidth = 200;   // points
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Enable automatic hyphenation for the document.
-        doc.HyphenationOptions.AutoHyphenation = true;
-        // Set a very small hyphenation zone (must be > 0). Value is in 1/20 point.
-        doc.HyphenationOptions.HyphenationZone = 1;
-
-        // Write sample text containing the technical terms.
+        // Insert a paragraph containing technical terminology that can be hyphenated.
         builder.Font.Size = 12;
-        builder.Writeln("The development of microprocessor technology has accelerated.");
-        builder.Writeln("Recent advances in hyperconvergence are reshaping data centers.");
-        builder.Writeln("Researchers explore quantumcomputing to solve complex problems.");
+        builder.Writeln("hyperparameter multithreading asynchronouscommunication");
 
-        // Save the document to PDF, which will apply hyphenation during layout.
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Enable automatic hyphenation.
+        doc.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.HyphenationZone = 360; // default zone
 
-        // Validate that the output file was created.
+        // Save the document to PDF to visualize hyphenation.
+        const string outputPath = "HyphenatedOutput.pdf";
+        doc.Save(outputPath);
+
+        // Verify that the output file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The expected PDF output was not created.");
-
-        // Optional cleanup: unregister the dictionary if further processing is needed.
-        // Hyphenation.UnregisterDictionary("en-US");
     }
 }

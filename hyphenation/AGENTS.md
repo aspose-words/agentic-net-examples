@@ -48,7 +48,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Register an external LibreOffice dictionary from GitHub and apply it to documents written in Spanish.
   - Workflow: dictionary-registration
   - Outputs: doc
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `create-a-script-that-downloads-the-latest-libreoffice-hyphenation-dictionaries-and-registe.cs`
   - Task: Create a script that downloads the latest LibreOffice hyphenation dictionaries and registers them automatically.
   - Workflow: document-setup-and-validation
@@ -73,7 +73,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set hyphenation to respect word boundaries in Arabic script by loading appropriate right-to-left dictionary.
   - Workflow: dictionary-registration
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `configure-hyphenation-to-respect-compound-word-rules-of-microsoft-word-for-german-language.cs`
   - Task: Configure hyphenation to respect compound-word rules of Microsoft Word for German language documents.
   - Workflow: dictionary-registration
@@ -88,7 +88,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that hyphenation does not occur for words shorter than the configured minimum length.
   - Workflow: document-setup-and-validation
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `enable-hyphenation-globally-for-a-document-then-override-it-for-a-single-table-cell.cs`
   - Task: Enable hyphenation globally for a document, then override it for a single table cell.
   - Workflow: document-setup-and-validation
@@ -103,7 +103,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply hyphenation only to a selected range using DocumentBuilder and verify layout changes.
   - Workflow: document-setup-and-validation
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-hyphenation-to-a-specific-paragraph-by-disabling-it-for-the-surrounding-sections.cs`
   - Task: Apply hyphenation to a specific paragraph by disabling it for the surrounding sections.
   - Workflow: document-setup-and-validation
@@ -218,7 +218,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Implement error handling for loading incompatible hyphenation dictionaries and provide descriptive messages.
   - Workflow: document-setup-and-validation
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `integrate-hyphenation-dictionary-updates-into-a-ci-pipeline-to-keep-language-patterns-curr.cs`
   - Task: Integrate hyphenation dictionary updates into a CI pipeline to keep language patterns current.
   - Workflow: dictionary-registration
@@ -228,7 +228,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Test hyphenation impact on page count by generating a long report with and without hyphenation.
   - Workflow: document-setup-and-validation
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `load-a-docx-disable-hyphenation-for-footnotes-only-and-compare-footnote-layout-before-and.cs`
   - Task: Load a DOCX, disable hyphenation for footnotes only, and compare footnote layout before and after.
   - Workflow: document-setup-and-validation
@@ -261,7 +261,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -275,7 +275,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project
