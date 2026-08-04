@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -7,34 +8,33 @@ public class Program
 {
     public static void Main()
     {
-        // Define paths for the sample files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string docPath = Path.Combine(outputDir, "Document.docx");
-        string imagePath = Path.Combine(outputDir, "watermark.png");
-        string resultPath = Path.Combine(outputDir, "Watermarked.docx");
+        // Prepare output folder.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputFolder);
 
-        // Create a minimal PNG image (1x1 pixel) from a Base64 string.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        // Create a simple 1x1 PNG image (transparent) from a Base64 string.
+        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/lKXcAAAAAElFTkSuQmCC";
         byte[] imageBytes = Convert.FromBase64String(base64Png);
+        string imagePath = Path.Combine(outputFolder, "watermark.png");
         File.WriteAllBytes(imagePath, imageBytes);
 
-        // Create a blank document and add a simple paragraph.
+        // Create a new blank document and add some sample text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document with an image watermark.");
+        builder.Writeln("This document contains an image watermark.");
 
         // Configure image watermark options (optional).
         ImageWatermarkOptions watermarkOptions = new ImageWatermarkOptions
         {
-            Scale = 5,          // Scale factor for the watermark.
-            IsWashout = false   // Disable washout effect.
+            Scale = 0.5,          // Scale the image to 50% of its original size.
+            IsWashout = false    // Do not apply washout effect.
         };
 
         // Apply the image watermark using the file path.
         doc.Watermark.SetImage(imagePath, watermarkOptions);
 
         // Save the watermarked document as DOCX.
-        doc.Save(resultPath, SaveFormat.Docx);
+        string outputDocPath = Path.Combine(outputFolder, "Watermarked.docx");
+        doc.Save(outputDocPath, SaveFormat.Docx);
     }
 }

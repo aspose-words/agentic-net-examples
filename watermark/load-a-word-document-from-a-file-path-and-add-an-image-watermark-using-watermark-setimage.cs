@@ -7,48 +7,46 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths.
+        // Define file paths in the current directory.
         string baseDir = Directory.GetCurrentDirectory();
         string docPath = Path.Combine(baseDir, "sample.docx");
         string imagePath = Path.Combine(baseDir, "watermark.png");
-        string outputPath = Path.Combine(baseDir, "output.docx");
+        string outputPath = Path.Combine(baseDir, "sample_with_watermark.docx");
 
-        // -----------------------------------------------------------------
         // Create a simple Word document if it does not already exist.
-        // -----------------------------------------------------------------
         if (!File.Exists(docPath))
         {
-            Document blankDoc = new Document();
-            var builder = new DocumentBuilder(blankDoc);
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
             builder.Writeln("This is a sample document.");
-            blankDoc.Save(docPath);
+            doc.Save(docPath);
         }
 
-        // -----------------------------------------------------------------
-        // Create a tiny PNG image to use as a watermark.
-        // The image is a 1x1 transparent pixel encoded in base64.
-        // -----------------------------------------------------------------
+        // Create a tiny PNG image to be used as the watermark.
+        // The image is a 1x1 pixel transparent PNG encoded in Base64.
         if (!File.Exists(imagePath))
         {
-            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X3ZcAAAAASUVORK5CYII=";
             byte[] imageBytes = Convert.FromBase64String(base64Png);
             File.WriteAllBytes(imagePath, imageBytes);
         }
 
-        // -----------------------------------------------------------------
         // Load the existing document.
-        // -----------------------------------------------------------------
-        Document doc = new Document(docPath);
+        Document loadedDoc = new Document(docPath);
 
-        // -----------------------------------------------------------------
-        // Add the image watermark using the Document.Watermark API.
-        // -----------------------------------------------------------------
-        var imageWatermarkOptions = new ImageWatermarkOptions(); // default options
-        doc.Watermark.SetImage(imagePath, imageWatermarkOptions);
+        // Apply the image watermark using the overload that accepts a file path and options.
+        ImageWatermarkOptions options = new ImageWatermarkOptions
+        {
+            // Use default options; you can customize Scale or IsWashout here if needed.
+        };
+        loadedDoc.Watermark.SetImage(imagePath, options);
 
-        // -----------------------------------------------------------------
         // Save the document with the watermark applied.
-        // -----------------------------------------------------------------
-        doc.Save(outputPath);
+        loadedDoc.Save(outputPath);
+
+        // Simple validation – confirm that the output file exists.
+        Console.WriteLine(File.Exists(outputPath)
+            ? $"Watermark applied successfully. Output saved to: {outputPath}"
+            : "Failed to create the output document.");
     }
 }

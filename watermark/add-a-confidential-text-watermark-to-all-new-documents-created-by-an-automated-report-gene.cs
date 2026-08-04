@@ -8,29 +8,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Create an output folder for the generated reports.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputFolder);
 
-        // Add sample content to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Automated Report");
-        builder.Writeln("Generated on " + DateTime.Now);
-
-        // Define watermark appearance.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+        // Simulate generating several reports.
+        for (int i = 1; i <= 3; i++)
         {
-            FontFamily = "Arial",
-            FontSize = 48,
-            Color = Color.Red,
-            Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = false
-        };
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Apply the "CONFIDENTIAL" text watermark.
-        doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
+            // Add some sample content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Report #{i}");
+            builder.Writeln("This is an automatically generated report.");
 
-        // Save the watermarked document.
-        string outputFile = Path.Combine(Directory.GetCurrentDirectory(), "ConfidentialReport.docx");
-        doc.Save(outputFile);
+            // Define watermark appearance.
+            TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+            {
+                FontFamily = "Arial",
+                FontSize = 48,
+                Color = Color.Red,
+                Layout = WatermarkLayout.Diagonal,
+                IsSemitrasparent = false
+            };
+
+            // Apply the confidential text watermark.
+            doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
+
+            // Save the document.
+            string fileName = Path.Combine(outputFolder, $"Report_{i}.docx");
+            doc.Save(fileName);
+        }
     }
 }

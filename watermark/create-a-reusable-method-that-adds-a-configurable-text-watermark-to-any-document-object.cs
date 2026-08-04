@@ -4,66 +4,61 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace WatermarkExample
 {
-    // Reusable method that adds a configurable text watermark to any Document.
-    public static void AddTextWatermark(
-        Document doc,
-        string text,
-        string fontFamily = "Arial",
-        float fontSize = 36f,
-        Color? color = null,
-        WatermarkLayout layout = WatermarkLayout.Diagonal,
-        bool isSemitransparent = false)
+    public class Program
     {
-        // Prepare watermark options.
-        var options = new TextWatermarkOptions
+        // Adds a configurable text watermark to the provided Document.
+        public static void AddTextWatermark(
+            Document doc,
+            string text,
+            string fontFamily = "Arial",
+            float fontSize = 36f,
+            Color? color = null,
+            WatermarkLayout layout = WatermarkLayout.Diagonal,
+            bool isSemitransparent = false)
         {
-            FontFamily = fontFamily,
-            FontSize = fontSize,
-            Color = color ?? Color.Gray,
-            Layout = layout,
-            IsSemitrasparent = isSemitransparent
-        };
+            // Prepare watermark options.
+            var options = new TextWatermarkOptions
+            {
+                FontFamily = fontFamily,
+                FontSize = fontSize,
+                Color = color ?? Color.Black,
+                Layout = layout,
+                IsSemitrasparent = isSemitransparent
+            };
 
-        // Apply the watermark.
-        doc.Watermark.SetText(text, options);
-    }
-
-    public static void Main()
-    {
-        // Ensure output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a blank document and add some sample content.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
-        builder.Writeln("The text watermark will appear behind this text.");
-
-        // Add a configurable text watermark.
-        AddTextWatermark(
-            doc,
-            text: "CONFIDENTIAL",
-            fontFamily: "Calibri",
-            fontSize: 48f,
-            color: Color.Red,
-            layout: WatermarkLayout.Diagonal,
-            isSemitransparent: true);
-
-        // Save the watermarked document.
-        string outputPath = Path.Combine(outputDir, "Watermarked.docx");
-        doc.Save(outputPath);
-
-        // Simple validation that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Watermarked document saved to: {outputPath}");
+            // Apply the watermark.
+            doc.Watermark.SetText(text, options);
         }
-        else
+
+        public static void Main()
         {
-            Console.WriteLine("Failed to save the watermarked document.");
+            // Create a blank document.
+            var doc = new Document();
+
+            // Add some sample content so the watermark can be seen.
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample document.");
+            builder.Writeln("The text watermark will appear behind this text.");
+
+            // Apply a configurable text watermark.
+            AddTextWatermark(
+                doc,
+                text: "CONFIDENTIAL",
+                fontFamily: "Calibri",
+                fontSize: 48f,
+                color: Color.Red,
+                layout: WatermarkLayout.Diagonal,
+                isSemitransparent: true);
+
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // Save the document with the watermark.
+            string outputPath = Path.Combine(outputDir, "WatermarkedDocument.docx");
+            doc.Save(outputPath);
         }
     }
 }

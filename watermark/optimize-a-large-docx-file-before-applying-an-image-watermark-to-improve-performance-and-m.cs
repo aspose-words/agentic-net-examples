@@ -1,81 +1,57 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Prepare output folder
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a large sample DOCX document.
-        // -----------------------------------------------------------------
+        // Paths for intermediate and final files
         string largeDocPath = Path.Combine(outputDir, "LargeDocument.docx");
+        string optimizedDocPath = Path.Combine(outputDir, "OptimizedDocument.docx");
+        string finalDocPath = Path.Combine(outputDir, "WatermarkedDocument.docx");
+        string imagePath = Path.Combine(outputDir, "watermark.png");
+
+        // 1. Create a large sample document
         Document largeDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(largeDoc);
-
-        // Add many paragraphs to simulate a large file.
-        for (int i = 1; i <= 2000; i++)
+        for (int i = 0; i < 5000; i++)
         {
-            builder.Writeln($"This is line {i} of a large document used for performance testing.");
+            builder.Writeln($"Paragraph {i + 1}: The quick brown fox jumps over the lazy dog.");
         }
-
         largeDoc.Save(largeDocPath);
 
-        // -----------------------------------------------------------------
-        // 2. Optimize the document by saving it with memory optimization.
-        // -----------------------------------------------------------------
-        string optimizedDocPath = Path.Combine(outputDir, "OptimizedDocument.docx");
-        Document docToOptimize = new Document(largeDocPath);
+        // 2. Optimize the document by saving with memory optimization enabled
+        SaveOptions optOptions = SaveOptions.CreateSaveOptions(SaveFormat.Docx);
+        optOptions.MemoryOptimization = true;
+        largeDoc.Save(optimizedDocPath, optOptions);
 
-        // Create save options with memory optimization enabled.
-        SaveOptions opt = SaveOptions.CreateSaveOptions(SaveFormat.Docx);
-        opt.MemoryOptimization = true;
+        // 3. Load the optimized document
+        Document doc = new Document(optimizedDocPath);
 
-        docToOptimize.Save(optimizedDocPath, opt);
-
-        // -----------------------------------------------------------------
-        // 3. Create a simple PNG image to be used as a watermark.
-        // -----------------------------------------------------------------
-        string imagePath = Path.Combine(outputDir, "watermark.png");
-        // 1x1 pixel transparent PNG (base64 encoded).
-        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/lK6XAAAAAElFTkSuQmCC";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        // 4. Create a simple PNG image for the watermark (1x1 pixel)
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
         File.WriteAllBytes(imagePath, pngBytes);
 
-        // -----------------------------------------------------------------
-        // 4. Load the optimized document and apply the image watermark.
-        // -----------------------------------------------------------------
-        Document finalDoc = new Document(optimizedDocPath);
-
+        // 5. Apply the image watermark
         ImageWatermarkOptions imgOptions = new ImageWatermarkOptions
         {
-            Scale = 0.5,          // Scale the watermark to 50% of the page width.
-            IsWashout = false    // Keep the original colors.
+            Scale = 0.5,          // Scale to 50% of the page width/height
+            IsWashout = false    // Keep original colors
         };
+        doc.Watermark.SetImage(imagePath, imgOptions);
 
-        // Apply the watermark using the image file path.
-        finalDoc.Watermark.SetImage(imagePath, imgOptions);
+        // 6. Save the final document with the watermark
+        doc.Save(finalDocPath);
 
-        // -----------------------------------------------------------------
-        // 5. Save the final document with the watermark.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(outputDir, "WatermarkedDocument.docx");
-        finalDoc.Save(outputPath);
-
-        // Simple validation that the output file exists.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Watermark applied and document saved successfully:");
-            Console.WriteLine(outputPath);
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the watermarked document.");
-        }
+        // Simple validation output
+        Console.WriteLine($"Final document saved: {File.Exists(finalDocPath)}");
     }
 }

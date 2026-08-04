@@ -46,7 +46,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a Word document from a file path and add an image watermark using Watermark.SetImage.
   - Workflow: watermark-workflow
   - Outputs: doc
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `load-a-word-document-from-a-memory-stream-and-apply-a-text-watermark-without-writing-to-di.cs`
   - Task: Load a Word document from a memory stream and apply a text watermark without writing to disk.
   - Workflow: watermark-workflow
@@ -101,7 +101,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert an image watermark from a System.Drawing.Image object into a document after calling Optimize.
   - Workflow: watermark-api
   - Outputs: image
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `insert-an-image-watermark-from-a-file-path-into-a-word-document-after-optimizing-the-docum.cs`
   - Task: Insert an image watermark from a file path into a Word document after optimizing the document.
   - Workflow: watermark-workflow
@@ -166,7 +166,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch process a folder of DOC files to add the same image watermark to each document.
   - Workflow: watermark-workflow
   - Outputs: doc
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `batch-process-multiple-word-documents-in-a-directory-to-add-a-text-watermark-to-each-file.cs`
   - Task: Batch process multiple Word documents in a directory to add a text watermark to each file.
   - Workflow: watermark-workflow
@@ -225,7 +225,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -239,7 +239,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project
