@@ -87,7 +87,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Use Document.Range.Replace to update the data string of an existing DISPLAYBARCODE field before rendering.
   - Workflow: word-field-only
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `implement-error-handling-for-missing-barcode-data-in-displaybarcode-fields-to-avoid-docume.cs`
   - Task: Implement error handling for missing barcode data in DISPLAYBARCODE fields to avoid document save failures.
   - Workflow: custom-generator
@@ -97,12 +97,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Implement the IBarcodeGenerator interface to generate Code128 barcodes from field data.
   - Workflow: custom-generator
   - Outputs: pdf
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `integrate-the-aspose-barcode-library-to-enable-qr-code-generation-for-displaybarcode-field.cs`
   - Task: Integrate the Aspose.BarCode library to enable QR code generation for DISPLAYBARCODE fields.
   - Workflow: custom-generator
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `configure-the-custom-barcode-generator-to-cache-images-for-repeated-field-values-improving.cs`
   - Task: Configure the custom barcode generator to cache images for repeated field values, improving performance.
   - Workflow: custom-generator
@@ -152,7 +152,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Save a document with DISPLAYBARCODE fields as RTF, ensuring barcodes render as images in output.
   - Workflow: custom-generator
   - Outputs: rtf
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `validate-barcode-images-are-correctly-embedded-in-pdf-by-extracting-them-and-comparing-dim.cs`
   - Task: Validate barcode images are correctly embedded in PDF by extracting them and comparing dimensions.
   - Workflow: custom-generator
@@ -222,8 +222,8 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
-- Package: `Aspose.BarCode` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
+- Package: `Aspose.BarCode` `26.7.0`
 - Package: `Aspose.Drawing.Common` `25.11.0`
 
 ## Command reference
@@ -238,8 +238,8 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
-dotnet add package Aspose.BarCode --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
+dotnet add package Aspose.BarCode --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 ```
 

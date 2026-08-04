@@ -1,45 +1,38 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.BuildingBlocks;
 using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and insert a DISPLAYBARCODE field with a placeholder value.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the field using the typed API.
-        FieldDisplayBarcode placeholderField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        placeholderField.BarcodeType = "CODE39";
-        placeholderField.BarcodeValue = "PLACEHOLDER"; // placeholder text
-        placeholderField.AddStartStopChar = true;      // optional appearance setting
+        // Insert a DISPLAYBARCODE field with a placeholder value.
+        // Use the typed insertion method as required by the rules.
+        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        barcodeField.BarcodeType = "QR";               // QR code type.
+        barcodeField.BarcodeValue = "PLACEHOLDER";     // Placeholder that will be replaced later.
+        barcodeField.BackgroundColor = "0xF8BD69";     // Optional styling.
+        barcodeField.ForegroundColor = "0xB5413B";
+        barcodeField.ErrorCorrectionLevel = "3";
+        barcodeField.ScalingFactor = "250";
+        barcodeField.SymbolHeight = "1000";
+        barcodeField.SymbolRotation = "0";
+
+        // Add a line break after the field for readability.
         builder.Writeln();
 
-        // Save the document that contains the placeholder field.
-        doc.Save("Placeholder.docx");
+        // Replace the placeholder with the actual dynamic value.
+        barcodeField.BarcodeValue = "https://example.com";
 
-        // Load the document again to simulate a later processing step.
-        Document loadedDoc = new Document("Placeholder.docx");
+        // Update fields so the barcode image is generated with the new value.
+        doc.UpdateFields();
 
-        // Locate the DISPLAYBARCODE field and replace the placeholder with the actual value.
-        foreach (Field field in loadedDoc.Range.Fields)
-        {
-            if (field.Type == FieldType.FieldDisplayBarcode)
-            {
-                FieldDisplayBarcode displayBarcode = (FieldDisplayBarcode)field;
-                if (displayBarcode.BarcodeValue == "PLACEHOLDER")
-                {
-                    displayBarcode.BarcodeValue = "12345ABCDE"; // dynamic value
-                }
-            }
-        }
-
-        // Update fields so the barcode is generated with the new value.
-        loadedDoc.UpdateFields();
-
-        // Save the final document.
-        loadedDoc.Save("Result.docx");
+        // Save the document to disk.
+        doc.Save("DisplayBarcodeDynamic.docx");
     }
 }

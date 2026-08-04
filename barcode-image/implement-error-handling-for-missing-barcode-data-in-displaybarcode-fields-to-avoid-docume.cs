@@ -7,52 +7,44 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Simulate barcode data that might be missing.
-        string barcodeData = null; // Change to a non‑null value to see a valid barcode.
+        // Insert a DISPLAYBARCODE field without setting BarcodeValue (missing data).
+        FieldDisplayBarcode missingField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        missingField.BarcodeType = "QR";
+        // Intentionally leave BarcodeValue empty to simulate missing data.
+        missingField.BackgroundColor = "0xFFFFFF";
+        missingField.ForegroundColor = "0x000000";
 
-        // Insert a DISPLAYBARCODE field using the typed API.
-        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        // Insert another DISPLAYBARCODE field with valid data for comparison.
+        FieldDisplayBarcode validField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        validField.BarcodeType = "CODE39";
+        validField.BarcodeValue = "12345ABCDE";
+        validField.AddStartStopChar = true;
 
-        // Set common barcode properties.
-        barcodeField.BarcodeType = "QR";
+        // Ensure all fields are updated.
+        doc.UpdateFields();
 
-        // Apply error handling for missing barcode data.
-        if (string.IsNullOrWhiteSpace(barcodeData))
+        // Error handling: replace missing barcode values with a placeholder.
+        foreach (Field field in doc.Range.Fields)
         {
-            // If data is missing, set a placeholder value and lock the field to prevent update errors.
-            barcodeField.BarcodeValue = "N/A";
-            barcodeField.IsLocked = true;
-        }
-        else
-        {
-            barcodeField.BarcodeValue = barcodeData;
-        }
-
-        // Optional visual settings.
-        barcodeField.BackgroundColor = "0xFFFFFF";
-        barcodeField.ForegroundColor = "0x000000";
-        barcodeField.ErrorCorrectionLevel = "3";
-        barcodeField.ScalingFactor = "250";
-        barcodeField.SymbolHeight = "1000";
-        barcodeField.SymbolRotation = "0";
-
-        // Update fields safely.
-        try
-        {
-            doc.UpdateFields();
-        }
-        catch (Exception ex)
-        {
-            // Log the error and continue; the document will still be saved.
-            Console.WriteLine("Field update failed: " + ex.Message);
+            if (field is FieldDisplayBarcode barcodeField)
+            {
+                // If BarcodeValue is null, empty, or whitespace, set a default value.
+                if (string.IsNullOrWhiteSpace(barcodeField.BarcodeValue))
+                {
+                    barcodeField.BarcodeValue = "N/A";
+                }
+            }
         }
 
-        // Save the document to the output folder.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "BarcodeDocument.docx");
+        // Update fields again after fixing values.
+        doc.UpdateFields();
+
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BarCodeErrorHandling.docx");
         doc.Save(outputPath);
     }
 }

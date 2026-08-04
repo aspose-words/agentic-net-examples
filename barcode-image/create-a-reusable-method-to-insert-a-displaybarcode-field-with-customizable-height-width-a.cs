@@ -1,39 +1,48 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace BarcodeFieldExample
 {
-    // Inserts a DISPLAYBARCODE field with the specified parameters.
-    // height and scalingFactor are strings because the field properties expect string values.
-    public static void InsertDisplayBarcode(DocumentBuilder builder, string barcodeValue, string barcodeType, string symbolHeight, string scalingFactor)
+    public class Program
     {
-        // Insert a DISPLAYBARCODE field.
-        FieldDisplayBarcode field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        // Inserts a DISPLAYBARCODE field with the specified parameters.
+        // heightTwips – height of the barcode symbol in TWIPS (1/1440 inch).
+        // scalingFactor – scaling factor for the symbol (percentage, e.g., "250").
+        private static void InsertDisplayBarcode(DocumentBuilder builder, string value, string type, string heightTwips, string scalingFactor)
+        {
+            // Insert a typed DISPLAYBARCODE field.
+            var field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        // Set required properties.
-        field.BarcodeValue = barcodeValue;
-        field.BarcodeType = barcodeType;
-        field.SymbolHeight = symbolHeight;      // Height in TWIPS (1/1440 inch).
-        field.ScalingFactor = scalingFactor;    // Scaling factor as a percentage (e.g., "250").
+            // Set required properties.
+            field.BarcodeValue = value;
+            field.BarcodeType = type;
+            field.SymbolHeight = heightTwips;
+            field.ScalingFactor = scalingFactor;
 
-        // Update the document fields to reflect the changes.
-        builder.Document.UpdateFields();
-    }
+            // Move to the next line after the field.
+            builder.Writeln();
+        }
 
-    public static void Main()
-    {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new empty document.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        // Example: Insert a QR code with custom size.
-        InsertDisplayBarcode(builder, "ABC123", "QR", "1000", "250");
+            // Example usages of the reusable method.
+            InsertDisplayBarcode(builder, "ABC123", "QR", "1000", "250");          // QR code.
+            InsertDisplayBarcode(builder, "501234567890", "EAN13", "800", "200"); // EAN13 code.
+            InsertDisplayBarcode(builder, "12345ABCDE", "CODE39", "900", "150"); // CODE39 code.
+            InsertDisplayBarcode(builder, "09312345678907", "ITF14", "1100", "300"); // ITF14 code.
 
-        // Example: Insert an EAN13 barcode with default size.
-        InsertDisplayBarcode(builder, "501234567890", "EAN13", "800", "200");
+            // Update fields to ensure the results are calculated.
+            doc.UpdateFields();
 
-        // Save the document to the local file system.
-        doc.Save("DisplayBarcode.docx");
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Barcodes.docx");
+            doc.Save(outputPath);
+        }
     }
 }

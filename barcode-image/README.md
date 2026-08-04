@@ -1,6 +1,6 @@
 # BarCode Image Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the BarCode Image category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the BarCode Image category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the BarCode Image c
 - Slug: barcode-image
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Word Field Only examples: 5
 - Custom Generator examples: 25
 
@@ -22,8 +22,8 @@ This folder contains the live, publish-ready C# examples for the BarCode Image c
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
-- Aspose.BarCode 26.6.0
+- Aspose.Words 26.7.0
+- Aspose.BarCode 26.7.0
 - Aspose.Drawing.Common 25.11.0
 
 ## Running Examples
@@ -33,8 +33,8 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
-dotnet add package Aspose.BarCode --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
+dotnet add package Aspose.BarCode --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 
 # Copy one example from this folder into the project as Program.cs
@@ -56,8 +56,8 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
-dotnet add package Aspose.BarCode --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
+dotnet add package Aspose.BarCode --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 
 # PowerShell example
@@ -80,10 +80,10 @@ dotnet run --configuration Release --no-build
 | 7 | `set-barcode-orientation-to-vertical-via-field-switches-and-verify-correct-rendering-in-pdf.cs` | Set barcode orientation to vertical via field switches and verify correct rendering in PDF output. | custom-generator | pdf | existing_repo |
 | 8 | `apply-different-barcode-types-to-separate-displaybarcode-fields-in-the-same-document-and-v.cs` | Apply different barcode types to separate DISPLAYBARCODE fields in the same document and verify correct rendering. | custom-generator | pdf | existing_repo |
 | 9 | `replace-placeholder-text-in-a-displaybarcode-field-with-dynamic-values-prior-to-barcode-ge.cs` | Replace placeholder text in a DISPLAYBARCODE field with dynamic values prior to barcode generation. | word-field-only | docx | mcp |
-| 10 | `use-document-range-replace-to-update-the-data-string-of-an-existing-displaybarcode-field-b.cs` | Use Document.Range.Replace to update the data string of an existing DISPLAYBARCODE field before rendering. | word-field-only | docx | mcp |
+| 10 | `use-document-range-replace-to-update-the-data-string-of-an-existing-displaybarcode-field-b.cs` | Use Document.Range.Replace to update the data string of an existing DISPLAYBARCODE field before rendering. | word-field-only | docx | existing_repo |
 | 11 | `implement-error-handling-for-missing-barcode-data-in-displaybarcode-fields-to-avoid-docume.cs` | Implement error handling for missing barcode data in DISPLAYBARCODE fields to avoid document save failures. | custom-generator | docx | mcp |
-| 12 | `implement-the-ibarcodegenerator-interface-to-generate-code128-barcodes-from-field-data.cs` | Implement the IBarcodeGenerator interface to generate Code128 barcodes from field data. | custom-generator | pdf | llm |
-| 13 | `integrate-the-aspose-barcode-library-to-enable-qr-code-generation-for-displaybarcode-field.cs` | Integrate the Aspose.BarCode library to enable QR code generation for DISPLAYBARCODE fields. | custom-generator | docx | existing_repo |
+| 12 | `implement-the-ibarcodegenerator-interface-to-generate-code128-barcodes-from-field-data.cs` | Implement the IBarcodeGenerator interface to generate Code128 barcodes from field data. | custom-generator | pdf | existing_repo |
+| 13 | `integrate-the-aspose-barcode-library-to-enable-qr-code-generation-for-displaybarcode-field.cs` | Integrate the Aspose.BarCode library to enable QR code generation for DISPLAYBARCODE fields. | custom-generator | docx | mcp |
 | 14 | `configure-the-custom-barcode-generator-to-cache-images-for-repeated-field-values-improving.cs` | Configure the custom barcode generator to cache images for repeated field values, improving performance. | custom-generator | pdf | existing_repo |
 | 15 | `configure-the-barcode-generator-to-produce-high-resolution-images-suitable-for-large-forma.cs` | Configure the barcode generator to produce high-resolution images suitable for large-format PDF printing. | custom-generator | pdf | existing_repo |
 | 16 | `generate-barcode-images-on-the-fly-during-save-by-assigning-the-custom-generator-to-docume.cs` | Generate barcode images on the fly during save by assigning the custom generator to Document.BarcodeGenerator. | custom-generator | pdf | existing_repo |
@@ -93,7 +93,7 @@ dotnet run --configuration Release --no-build
 | 20 | `batch-process-a-folder-of-doc-files-render-barcodes-and-save-each-document-as-pdf.cs` | Batch process a folder of DOC files, render barcodes, and save each document as PDF. | custom-generator | pdf | existing_repo |
 | 21 | `process-multiple-docx-files-in-parallel-each-with-its-own-barcode-generator-and-output-pdf.cs` | Process multiple DOCX files in parallel, each with its own barcode generator, and output PDFs concurrently. | custom-generator | docx, pdf | existing_repo |
 | 22 | `create-a-console-application-that-accepts-a-directory-path-processes-supported-files-and-g.cs` | Create a console application that accepts a directory path, processes supported files, and generates PDFs with barcodes. | custom-generator | docx, pdf | existing_repo |
-| 23 | `save-a-document-with-displaybarcode-fields-as-rtf-ensuring-barcodes-render-as-images-in-ou.cs` | Save a document with DISPLAYBARCODE fields as RTF, ensuring barcodes render as images in output. | custom-generator | rtf | existing_repo |
+| 23 | `save-a-document-with-displaybarcode-fields-as-rtf-ensuring-barcodes-render-as-images-in-ou.cs` | Save a document with DISPLAYBARCODE fields as RTF, ensuring barcodes render as images in output. | custom-generator | rtf | mcp |
 | 24 | `validate-barcode-images-are-correctly-embedded-in-pdf-by-extracting-them-and-comparing-dim.cs` | Validate barcode images are correctly embedded in PDF by extracting them and comparing dimensions. | custom-generator | pdf | existing_repo |
 | 25 | `validate-that-barcode-images-maintain-correct-aspect-ratio-after-converting-a-document-fro.cs` | Validate that barcode images maintain correct aspect ratio after converting a document from DOC to PDF. | custom-generator | pdf | existing_repo |
 | 26 | `test-barcode-rendering-when-saving-a-document-to-pdf-a-format-ensuring-archival-compliance.cs` | Test barcode rendering when saving a document to PDF/A format, ensuring archival compliance. | custom-generator | pdf | existing_repo |
@@ -150,6 +150,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

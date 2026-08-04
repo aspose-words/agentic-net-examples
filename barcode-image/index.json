@@ -11,8 +11,8 @@
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0",
-      "Aspose.BarCode": "26.6.0",
+      "Aspose.Words": "26.7.0",
+      "Aspose.BarCode": "26.7.0",
       "Aspose.Drawing.Common": "25.11.0"
     },
     "required_namespaces": [
@@ -20,12 +20,13 @@
       "Aspose.Words",
       "Aspose.Words.Fields",
       "System.IO",
-      "Aspose.Words.Saving",
+      "Aspose.Drawing",
       "Aspose.Words.Drawing",
       "Aspose.Words.Replacing",
       "Aspose.BarCode.Generation",
-      "Aspose.Drawing",
       "Aspose.Drawing.Imaging",
+      "Aspose.Words.Saving",
+      "Aspose.Words.BuildingBlocks",
       "System.Collections.Generic",
       "Aspose.Drawing.Drawing2D",
       "Aspose.BarCode",
@@ -38,7 +39,6 @@
       "FieldDisplayBarcode",
       "Directory",
       "Path",
-      "SaveFormat",
       "NodeType",
       "MemoryStream",
       "Shape",
@@ -46,6 +46,7 @@
       "IBarcodeGenerator",
       "File",
       "Font",
+      "SaveFormat",
       "Range",
       "Field",
       "FindReplaceOptions",
@@ -246,8 +247,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 11,
@@ -268,8 +269,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 13,
@@ -279,8 +280,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 14,
@@ -392,8 +393,8 @@
       "outputs": [
         "rtf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 24,

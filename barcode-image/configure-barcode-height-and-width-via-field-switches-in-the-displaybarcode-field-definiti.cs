@@ -15,22 +15,22 @@ public class Program
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
         // Configure the barcode type and value.
-        barcodeField.BarcodeType = "CODE39";
-        barcodeField.BarcodeValue = "12345ABCDE";
+        barcodeField.BarcodeType = "QR";
+        barcodeField.BarcodeValue = "Aspose";
 
-        // Set the height of the barcode symbol (in twips; 1 inch = 1440 twips).
-        // Example: 2 inches high => 2 * 1440 = 2880 twips.
-        barcodeField.SymbolHeight = "2880";
+        // Set the height of the barcode symbol (in TWIPS; 1 inch = 1440 TWIPS).
+        // Example: 2 inches high.
+        barcodeField.SymbolHeight = (2 * 1440).ToString();
 
-        // Set the scaling factor for the barcode width (percentage).
-        // Example: 200% width.
-        barcodeField.ScalingFactor = "200";
+        // Set the scaling factor to control the width (percentage).
+        // Example: 150% scaling.
+        barcodeField.ScalingFactor = "150";
 
-        // Update fields so that the field code reflects the set properties.
+        // Update fields to apply the changes.
         doc.UpdateFields();
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BarcodeDisplay.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "DisplayBarcode.docx");
         doc.Save(outputPath);
     }
 }
