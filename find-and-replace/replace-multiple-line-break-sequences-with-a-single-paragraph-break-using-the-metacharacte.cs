@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -7,42 +8,46 @@ public class Program
 {
     public static void Main()
     {
-        // Local file names for the sample input and output documents.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
+        // Define file names in the current directory.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
-        // -------------------- Create a sample document --------------------
+        // -----------------------------------------------------------------
+        // 1. Create a sample document that contains multiple manual line breaks.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert text containing various line‑break characters.
-        builder.Writeln("First line.");                                   // Paragraph break.
-        builder.Write("Second line." + ControlChar.LineBreak);            // Manual line break (\v).
-        builder.Write("Third line." + ControlChar.LineFeed);              // Line feed (\n).
-        builder.Write("Fourth line." + ControlChar.CrLf);                 // CR+LF.
-        builder.Writeln();                                                // Empty paragraph.
-        builder.Writeln("Fifth line.");                                   // Paragraph break.
+        // Write text that includes several consecutive manual line‑break characters.
+        // Use ControlChar.LineBreak to insert a manual line break.
+        builder.Write("First line." + ControlChar.LineBreak + ControlChar.LineBreak + ControlChar.LineBreak +
+                      "Second line." + ControlChar.LineBreak + ControlChar.LineBreak +
+                      "Third line.");
 
         // Save the source document.
         doc.Save(inputPath);
 
-        // -------------------- Load the document and replace line breaks --------------------
+        // -----------------------------------------------------------------
+        // 2. Load the document and replace sequences of manual line‑breaks.
+        // -----------------------------------------------------------------
         Document loaded = new Document(inputPath);
 
-        // Regex that matches one or more consecutive line‑break characters,
-        // including manual line break (\v) used by Aspose.Words.
-        Regex lineBreakRegex = new Regex(@"(\r\n|\r|\n|\v)+");
+        // Regex that matches two or more consecutive manual line‑break characters.
+        // ControlChar.LineBreak is a string representing the line‑break character.
+        string lineBreak = ControlChar.LineBreak;
+        Regex multipleLineBreaks = new Regex($"{Regex.Escape(lineBreak)}{{2,}}");
 
-        // Replace each matched sequence with a single paragraph break.
-        // The meta‑character "&p" inserts a paragraph break.
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = loaded.Range.Replace(lineBreakRegex, "&p", options);
+        // Replace each match with a single paragraph break.
+        // Use the meta‑character "&p" which Aspose.Words interprets as a paragraph break.
+        int replacedCount = loaded.Range.Replace(multipleLineBreaks, "&p", new FindReplaceOptions());
 
-        // Validate that at least one replacement was performed.
+        // Ensure that at least one replacement was performed.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one line break replacement.");
+            throw new InvalidOperationException("Expected at least one line‑break replacement.");
 
-        // Save the modified document.
+        // -----------------------------------------------------------------
+        // 3. Save the modified document.
+        // -----------------------------------------------------------------
         loaded.Save(outputPath);
     }
 }

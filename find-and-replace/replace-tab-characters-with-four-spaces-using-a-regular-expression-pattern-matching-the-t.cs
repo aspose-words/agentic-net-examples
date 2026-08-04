@@ -3,49 +3,38 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json; // Required package reference (not used directly in this example)
 
 public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current working directory.
+        // Define file paths in the current directory.
         string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
-        // -----------------------------------------------------------------
-        // Create a sample document that contains tab characters.
-        // -----------------------------------------------------------------
-        Document doc = new Document();                     // Create a new blank document.
+        // Create a sample document containing tab characters.
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Column1\tColumn2\tColumn3");      // Write a line with tabs.
-        doc.Save(inputPath);                               // Save the source document.
+        builder.Writeln("Item\tQuantity\tPrice");
+        builder.Writeln("Apple\t10\t$1.00");
+        builder.Writeln("Banana\t5\t$0.50");
+        doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Load the document and replace each tab with four spaces.
-        // -----------------------------------------------------------------
-        Document loaded = new Document(inputPath);         // Load the previously saved document.
+        // Load the document from the file system.
+        Document loaded = new Document(inputPath);
 
-        // Regular expression that matches a tab character.
-        Regex tabRegex = new Regex(@"\t");
+        // Define a regex that matches a tab character.
+        Regex tabRegex = new Regex("\t");
 
-        // Replacement string: four space characters.
-        const string fourSpaces = "    ";
-
-        // FindReplaceOptions can be customized if needed.
+        // Replace each tab with four spaces.
         FindReplaceOptions options = new FindReplaceOptions();
+        int replacedCount = loaded.Range.Replace(tabRegex, "    ", options);
 
-        // Perform the replacement.
-        int replacedCount = loaded.Range.Replace(tabRegex, fourSpaces, options);
-
-        // Validate that at least one replacement occurred.
+        // Verify that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one tab character to be replaced.");
+            throw new InvalidOperationException("Expected at least one tab replacement.");
 
         // Save the modified document.
         loaded.Save(outputPath);
-
-        // Indicate success.
-        Console.WriteLine($"Replaced {replacedCount} tab character(s). Output saved to: {outputPath}");
     }
 }

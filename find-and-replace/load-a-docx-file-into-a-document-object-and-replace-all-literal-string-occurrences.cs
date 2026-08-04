@@ -1,33 +1,37 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing;
-using Newtonsoft.Json;
+using Aspose.Drawing;          // Required by the category rules
+using Newtonsoft.Json;        // Required by the category rules
 
 public class Program
 {
     public static void Main()
     {
         // Create a sample DOCX file with text that contains the target string.
-        var sampleDoc = new Document();
-        var builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("Hello old value.");
-        builder.Writeln("Another old line.");
-        const string inputFile = "input.docx";
-        sampleDoc.Save(inputFile);
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
+        const string searchText = "old";
+        const string replaceText = "new";
+
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln($"This is an {searchText} value.");
+        builder.Writeln($"Another {searchText} appears here.");
+        doc.Save(inputPath);
 
         // Load the document from the file system.
-        var doc = new Document(inputFile);
+        Document loaded = new Document(inputPath);
 
-        // Replace all occurrences of the literal string "old" with "new".
-        int replacementCount = doc.Range.Replace("old", "new", new FindReplaceOptions());
+        // Perform a literal string replace.
+        int replacedCount = loaded.Range.Replace(searchText, replaceText, new FindReplaceOptions());
 
-        // Verify that at least one replacement was made.
-        if (replacementCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        const string outputFile = "output.docx";
-        doc.Save(outputFile);
+        loaded.Save(outputPath);
     }
 }

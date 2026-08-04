@@ -11,26 +11,21 @@
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0",
+      "Aspose.Words": "26.7.0",
       "Aspose.Drawing.Common": "25.11.0"
     },
     "required_namespaces": [
       "System",
+      "System.IO",
       "Aspose.Words",
       "Aspose.Words.Replacing",
       "Aspose.Drawing",
       "Newtonsoft.Json",
-      "System.IO",
       "System.Text.RegularExpressions",
       "System.Collections.Generic",
-      "Aspose.Words.Saving",
       "System.Text",
-      "System.Linq",
-      "Newtonsoft.Json.Linq",
       "System.Globalization",
-      "Aspose.Words.Drawing",
       "Aspose.Words.Fields",
-      "System.Drawing",
       "Aspose.Words.Tables"
     ],
     "key_apis": [
@@ -38,21 +33,19 @@
       "DocumentBuilder",
       "Range",
       "FindReplaceOptions",
-      "Directory",
       "Path",
+      "Directory",
       "File",
-      "NodeType",
       "Paragraph",
       "SaveFormat",
       "MemoryStream",
-      "Field",
+      "NodeType",
       "Node",
       "StyleIdentifier",
-      "Run",
+      "Font",
       "FieldType",
       "Style",
-      "Font",
-      "CompositeNode",
+      "Run",
       "Table"
     ]
   },
@@ -243,8 +236,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 13,
@@ -309,8 +302,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 19,
@@ -716,8 +709,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 56,
@@ -804,8 +797,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     }
   ]
 }

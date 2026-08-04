@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -8,30 +7,27 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("First value || second value.");
+        builder.Writeln("Third value||fourth value.");
+        builder.Writeln("No delimiter here.");
 
-        // Add sample text containing the custom delimiter "||".
-        builder.Writeln("Alpha || Beta");
-        builder.Writeln("Gamma||Delta");
-        builder.Writeln("Epsilon   ||   Zeta");
-        builder.Writeln("NoDelimiterHere");
+        // Save the original for reference (optional).
+        doc.Save("input.docx");
 
-        // Define a regex that captures any whitespace before and after the delimiter.
-        // The delimiter is "||". The captured groups keep the surrounding whitespace.
-        Regex delimiterRegex = new Regex(@"(?<pre>\s*)\|\|(?<post>\s*)");
+        // Define a regex that matches the custom delimiter "||".
+        Regex delimiterRegex = new Regex(@"\|\|");
 
-        // Replace the delimiter with a comma, preserving the captured whitespace.
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = doc.Range.Replace(delimiterRegex, "${pre},${post}", options);
+        // Perform the replacement: replace "||" with a comma while leaving surrounding whitespace untouched.
+        int replacedCount = doc.Range.Replace(delimiterRegex, ",", new FindReplaceOptions());
 
-        // Ensure that at least one replacement occurred.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one delimiter replacement.");
 
-        // Save the modified document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-        doc.Save(outputPath);
+        // Save the modified document.
+        doc.Save("output.docx");
     }
 }

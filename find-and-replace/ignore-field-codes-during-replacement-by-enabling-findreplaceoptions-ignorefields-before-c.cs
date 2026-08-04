@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,39 +6,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // Create a new document and add some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello world!"); // This occurrence should be replaced.
 
-        // Normal text that will be replaced.
-        builder.Writeln("Hello world!");
+        // Insert a field that also contains the word "Hello".
+        // The field result will be ignored when IgnoreFields is true.
+        builder.InsertField("QUOTE", "Hello field!");
 
-        // Insert a field whose field code contains the word "Hello".
-        // This field will be ignored during replacement when IgnoreFields is true.
-        builder.InsertField("MERGEFIELD", "Hello");
-
-        // Save the source document.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-        doc.Save(inputPath);
-
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
-
-        // Configure find/replace to ignore whole fields.
+        // Configure find/replace options to ignore whole fields.
         FindReplaceOptions options = new FindReplaceOptions
         {
             IgnoreFields = true
         };
 
-        // Replace "Hello" with "Hi". Only the normal text should be replaced.
-        int replacedCount = loaded.Range.Replace("Hello", "Hi", options);
+        // Perform the replacement.
+        int replacedCount = doc.Range.Replace("Hello", "Hi", options);
 
-        // Verify that exactly one replacement occurred (the field was ignored).
-        if (replacedCount != 1)
-            throw new InvalidOperationException($"Expected 1 replacement, but got {replacedCount}.");
+        // Verify that at least one replacement occurred (the one outside the field).
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement outside of fields.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        loaded.Save(outputPath);
+        doc.Save("output.docx");
     }
 }

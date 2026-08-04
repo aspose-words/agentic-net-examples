@@ -1,43 +1,42 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required by Aspose.Words for drawing types
-using Newtonsoft.Json; // Included as per package requirement
 
-public class Program
+namespace AsposeWordsFindReplaceExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document with HTML tags embedded in the text.
-        const string inputPath = "sample.docx";
-        const string outputPath = "cleaned.docx";
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a paragraph with <b>bold</b> HTML tag.");
-        builder.Writeln("Another line with a <a href=\"https://example.com\">link</a>.");
-        builder.Writeln("Plain text without tags.");
-        doc.Save(inputPath);
+            // Insert sample text that contains HTML tags.
+            builder.Writeln("This is a sample paragraph with <b>bold</b> text,");
+            builder.Writeln("an <a href='https://example.com'>example link</a>,");
+            builder.Writeln("and an <img src='image.png' alt='image'/> tag.");
 
-        // Load the document we just created.
-        Document loaded = new Document(inputPath);
+            // Save the original document (optional, for inspection).
+            doc.Save("input.docx");
 
-        // Define a regular expression that matches any HTML tag.
-        Regex htmlTagRegex = new Regex(@"<[^>]+>", RegexOptions.Compiled);
+            // Define a regular expression that matches any HTML tag.
+            Regex htmlTagRegex = new Regex(@"<[^>]+>", RegexOptions.Compiled);
 
-        // Perform the replacement: remove all HTML tags.
-        int replacedCount = loaded.Range.Replace(htmlTagRegex, string.Empty, new FindReplaceOptions());
+            // Perform the replacement: remove all HTML tags.
+            FindReplaceOptions options = new FindReplaceOptions();
+            int replacedCount = doc.Range.Replace(htmlTagRegex, string.Empty, options);
 
-        // Validate that at least one replacement occurred.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("No HTML tags were found to replace.");
+            // Ensure that at least one replacement was made.
+            if (replacedCount == 0)
+                throw new InvalidOperationException("No HTML tags were found to replace.");
 
-        // Save the cleaned document.
-        loaded.Save(outputPath);
+            // Save the modified document.
+            doc.Save("output.docx");
 
-        // Optional: write a simple log to the console.
-        Console.WriteLine($"Replaced {replacedCount} HTML tag(s). Output saved to '{outputPath}'.");
+            // Write a simple confirmation to the console.
+            Console.WriteLine($"Replaced {replacedCount} HTML tag(s). Output saved to 'output.docx'.");
+        }
     }
 }

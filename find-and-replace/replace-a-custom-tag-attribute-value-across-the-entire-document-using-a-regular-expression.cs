@@ -8,59 +8,41 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current working directory.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample document that contains custom tags with an attribute.
-        // -----------------------------------------------------------------
+        // Create a blank document and add sample content containing the custom tag.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(@"Here is a tag: <customTag attr=""oldValue1"">Content</customTag>");
+        builder.Writeln(@"Another tag: <customTag attr=""oldValue2"">More content</customTag>");
+        builder.Writeln(@"A tag without the attribute should stay unchanged: <customTag>Nothing</customTag>");
 
-        builder.Writeln(@"Here is a custom tag: <customTag attr=""oldValue"">Content</customTag>");
-        builder.Writeln(@"Another line with the same attribute: <customTag attr=""oldValue"">More</customTag>");
-        builder.Writeln(@"A line without the tag should stay unchanged.");
+        // Define a regular expression that captures the attribute value.
+        // Group 1 = the part before the value, Group 2 = the closing quote.
+        Regex regex = new Regex(@"(<customTag\s+attr="")[^""]+("")", RegexOptions.IgnoreCase);
 
-        // Save the sample document so that the later load step works on a real file.
-        doc.Save(inputPath);
+        // Replacement uses the captured groups and inserts the new attribute value.
+        const string newValue = "newValue";
+        string replacement = $"$1{newValue}$2";
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and replace the attribute value using a regex.
-        // -----------------------------------------------------------------
-        Document loaded = new Document(inputPath);
+        // Enable substitution so that $1 and $2 are replaced with the captured groups.
+        FindReplaceOptions options = new FindReplaceOptions { UseSubstitutions = true };
 
-        // Regex matches the opening part of the attribute and captures the surrounding quotes.
-        // Group 1: <customTag ... attr="
-        // Group 2: closing quote (")
-        Regex regex = new Regex(@"(<customTag\s+[^>]*attr="")[^""]*("")", RegexOptions.IgnoreCase);
-
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            // Enable substitution groups ($1, $2) in the replacement string.
-            UseSubstitutions = true
-        };
-
-        // Replace the captured value with "newValue".
-        int replacedCount = loaded.Range.Replace(regex, "$1newValue$2", options);
+        // Perform the replacement across the whole document.
+        int replacedCount = doc.Range.Replace(regex, replacement, options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one attribute replacement, but none were made.");
+            throw new InvalidOperationException("No attribute values were replaced.");
 
-        // -----------------------------------------------------------------
-        // 3. Save the modified document.
-        // -----------------------------------------------------------------
-        loaded.Save(outputPath);
+        // Save the modified document.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
 
-        // Optional: Verify the replacement by reading back the text.
-        Document verify = new Document(outputPath);
-        string text = verify.GetText();
+        // Verify the result by reading the saved file.
+        Document resultDoc = new Document(outputPath);
+        string resultText = resultDoc.GetText();
 
-        // Simple sanity check – the new value should be present.
-        if (!text.Contains(@"attr=""newValue"""))
-            throw new InvalidOperationException("The attribute value was not replaced as expected.");
-
-        // The program finishes without requiring any user interaction.
+        // Simple check to ensure the new value appears.
+        if (!resultText.Contains(newValue))
+            throw new InvalidOperationException("Replacement verification failed.");
     }
 }

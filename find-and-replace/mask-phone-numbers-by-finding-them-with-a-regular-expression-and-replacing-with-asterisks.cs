@@ -8,43 +8,45 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-
-        // -----------------------------------------------------------------
-        // Create a sample document containing various phone number formats.
-        // -----------------------------------------------------------------
+        // Create a sample document with phone numbers.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Customer contacts:");
-        builder.Writeln("John Doe: 123-456-7890");
-        builder.Writeln("Jane Smith: (123) 456 7890");
-        builder.Writeln("Bob Johnson: 1234567890");
-        builder.Writeln("End of list.");
-        doc.Save(inputPath);
+        builder.Writeln("Contact: John Doe, phone: 123-456-7890.");
+        builder.Writeln("Support: +1 (800) 555-1234, alternate: 555.987.6543.");
+        doc.Save("input.docx");
 
-        // ---------------------------------------------------------------
-        // Load the document, mask phone numbers using a regular expression.
-        // ---------------------------------------------------------------
-        Document loaded = new Document(inputPath);
+        // Load the document for processing.
+        Document loaded = new Document("input.docx");
 
-        // Regex matches common US phone number patterns.
-        Regex phoneRegex = new Regex(@"\b(?:\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\(\d{3}\)\s?\d{3}[-.\s]?\d{4})\b");
+        // Regular expression to match common phone number formats.
+        Regex phoneRegex = new Regex(@"\+?\d{0,2}[\s\-\.\(]*\d{3}[\s\-\.\)]*\d{3}[\s\-\.\)]*\d{4}");
 
-        // Replace each match with ten asterisks (preserving length for privacy).
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = loaded.Range.Replace(phoneRegex, "**********", options);
+        // Callback that replaces each matched phone number with asterisks of equal length.
+        IReplacingCallback maskCallback = new PhoneMaskCallback();
 
-        // Ensure that at least one replacement occurred.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = maskCallback
+        };
+
+        // Perform the replacement. The replacement string is ignored because the callback sets it.
+        int replacedCount = loaded.Range.Replace(phoneRegex, string.Empty, options);
+
         if (replacedCount == 0)
             throw new InvalidOperationException("No phone numbers were found to mask.");
 
         // Save the masked document.
-        loaded.Save(outputPath);
+        loaded.Save("output.docx");
+    }
 
-        // Optional: write a brief confirmation to the console.
-        Console.WriteLine($"Phone numbers masked: {replacedCount}");
-        Console.WriteLine($"Output saved to: {outputPath}");
+    // Callback implementation for masking phone numbers.
+    private class PhoneMaskCallback : IReplacingCallback
+    {
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Replace each character of the matched phone number with '*'.
+            args.Replacement = new string('*', args.Match.Value.Length);
+            return ReplaceAction.Replace;
+        }
     }
 }

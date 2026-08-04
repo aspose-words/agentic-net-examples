@@ -1,97 +1,106 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing; // Required by Aspose.Words for font/color types
+using Newtonsoft.Json; // Included as a required package
 
-public class Program
+namespace FindAndReplaceProgressDemo
 {
-    public static void Main()
+    // Simple progress reporter that receives the replacement count after each Replace call.
+    public class ReplacementProgressReporter
     {
-        // Prepare temporary file paths.
-        string inputPath = Path.Combine(Path.GetTempPath(), "find_replace_input.docx");
-        string outputPath = Path.Combine(Path.GetTempPath(), "find_replace_output.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample document.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("alpha beta alpha gamma beta delta alpha.");
-        doc.Save(inputPath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the document for processing.
-        // -----------------------------------------------------------------
-        Document loaded = new Document(inputPath);
-
-        // -----------------------------------------------------------------
-        // 3. Set up a progress reporter.
-        // -----------------------------------------------------------------
-        var reporter = new ProgressReporter();
-
-        // -----------------------------------------------------------------
-        // 4. First replacement: "alpha" -> "ALPHA".
-        // -----------------------------------------------------------------
-        var logger1 = new ReplacementLogger();
-        var options1 = new FindReplaceOptions { ReplacingCallback = logger1 };
-        int replaced1 = loaded.Range.Replace("alpha", "ALPHA", options1);
-        reporter.Report(replaced1); // Report after first replace.
-
-        // -----------------------------------------------------------------
-        // 5. Second replacement: "beta" -> "BETA".
-        // -----------------------------------------------------------------
-        var logger2 = new ReplacementLogger();
-        var options2 = new FindReplaceOptions { ReplacingCallback = logger2 };
-        int replaced2 = loaded.Range.Replace("beta", "BETA", options2);
-        reporter.Report(replaced2); // Report after second replace.
-
-        // -----------------------------------------------------------------
-        // 6. Third replacement using a regex: "gamma|delta" -> "GAMMA_DELTA".
-        // -----------------------------------------------------------------
-        var logger3 = new ReplacementLogger();
-        var options3 = new FindReplaceOptions { ReplacingCallback = logger3 };
-        int replaced3 = loaded.Range.Replace(new System.Text.RegularExpressions.Regex(@"gamma|delta"), "GAMMA_DELTA", options3);
-        reporter.Report(replaced3); // Report after third replace.
-
-        // Validate that at least one replacement occurred overall.
-        if (replaced1 + replaced2 + replaced3 == 0)
-            throw new InvalidOperationException("No replacements were performed.");
-
-        // -----------------------------------------------------------------
-        // 7. Save the modified document.
-        // -----------------------------------------------------------------
-        loaded.Save(outputPath);
-
-        // -----------------------------------------------------------------
-        // 8. Output final verification (optional, not interactive).
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Processing complete. Output saved to: {outputPath}");
+        public void Report(int replacementCount)
+        {
+            Console.WriteLine($"Replacements performed in this step: {replacementCount}");
+        }
     }
-}
 
-// ---------------------------------------------------------------------
-// Helper class that logs each match found during a replace operation.
-// ---------------------------------------------------------------------
-public class ReplacementLogger : IReplacingCallback
-{
-    public List<string> Matches { get; } = new List<string>();
-
-    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+    // Callback that logs each match found during a replace operation.
+    public class MatchLogger : IReplacingCallback
     {
-        Matches.Add(args.Match.Value);
-        // Perform the default replacement.
-        return ReplaceAction.Replace;
+        public List<string> Matches { get; } = new List<string>();
+
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        {
+            Matches.Add(args.Match.Value);
+            // Perform the default replacement.
+            return ReplaceAction.Replace;
+        }
+
+        public string GetLog()
+        {
+            var sb = new StringBuilder();
+            foreach (var match in Matches)
+                sb.AppendLine($"Matched: \"{match}\"");
+            return sb.ToString();
+        }
     }
-}
 
-// ---------------------------------------------------------------------
-// Simple progress reporter that receives the replacement count.
-// ---------------------------------------------------------------------
-public class ProgressReporter
-{
-    public void Report(int replacementCount)
+    public class Program
     {
-        Console.WriteLine($"Replacements made in this step: {replacementCount}");
+        public static void Main()
+        {
+            // Prepare file paths in the current directory.
+            string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+
+            // -----------------------------------------------------------------
+            // 1. Create a sample document.
+            // -----------------------------------------------------------------
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello PLACEHOLDER.");
+            builder.Writeln("This is a PLACEHOLDER test.");
+            builder.Writeln("Another PLACEHOLDER appears here.");
+            doc.Save(inputPath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the document for processing.
+            // -----------------------------------------------------------------
+            var loadedDoc = new Document(inputPath);
+            var reporter = new ReplacementProgressReporter();
+
+            // -----------------------------------------------------------------
+            // 3. First replacement: PLACEHOLDER -> First
+            // -----------------------------------------------------------------
+            var logger1 = new MatchLogger();
+            var options1 = new FindReplaceOptions { ReplacingCallback = logger1 };
+            int count1 = loadedDoc.Range.Replace("PLACEHOLDER", "First", options1);
+            if (count1 == 0) throw new InvalidOperationException("Expected at least one replacement in step 1.");
+            reporter.Report(count1);
+            Console.WriteLine(logger1.GetLog());
+
+            // -----------------------------------------------------------------
+            // 4. Second replacement: First -> Second
+            // -----------------------------------------------------------------
+            var logger2 = new MatchLogger();
+            var options2 = new FindReplaceOptions { ReplacingCallback = logger2 };
+            int count2 = loadedDoc.Range.Replace("First", "Second", options2);
+            if (count2 == 0) throw new InvalidOperationException("Expected at least one replacement in step 2.");
+            reporter.Report(count2);
+            Console.WriteLine(logger2.GetLog());
+
+            // -----------------------------------------------------------------
+            // 5. Third replacement: Second -> Final
+            // -----------------------------------------------------------------
+            var logger3 = new MatchLogger();
+            var options3 = new FindReplaceOptions { ReplacingCallback = logger3 };
+            int count3 = loadedDoc.Range.Replace("Second", "Final", options3);
+            if (count3 == 0) throw new InvalidOperationException("Expected at least one replacement in step 3.");
+            reporter.Report(count3);
+            Console.WriteLine(logger3.GetLog());
+
+            // -----------------------------------------------------------------
+            // 6. Save the modified document.
+            // -----------------------------------------------------------------
+            loadedDoc.Save(outputPath);
+
+            // Verify that the output file was created.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not created.", outputPath);
+        }
     }
 }

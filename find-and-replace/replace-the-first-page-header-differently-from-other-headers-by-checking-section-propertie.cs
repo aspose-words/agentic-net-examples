@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -15,52 +16,55 @@ public class Program
 
         // First page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Write("First Header");
+        builder.Writeln("First Header");
 
-        // Primary header (used on all other pages).
+        // Primary header for all other pages.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Other Header");
+        builder.Writeln("Other Header");
 
-        // Add some body content spanning two pages.
+        // Return to the main body and add enough text to create three pages.
         builder.MoveToSection(0);
-        builder.Writeln("Content on page 1.");
+        builder.Writeln("Page 1");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content on page 2.");
+        builder.Writeln("Page 2");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 3");
 
-        // Set up a find‑replace operation that replaces the word "Header"
-        // with a different text depending on whether it is in the first‑page header.
-        FindReplaceOptions options = new FindReplaceOptions(new HeaderReplaceCallback());
+        // Define a callback that replaces header text based on the header type.
+        IReplacingCallback callback = new HeaderReplaceCallback();
+        FindReplaceOptions options = new FindReplaceOptions(callback);
 
-        int replaced = doc.Range.Replace("Header", string.Empty, options);
-        if (replaced == 0)
-            throw new InvalidOperationException("No header text was replaced.");
+        // Replace any occurrence of the word "Header" in the document.
+        int replacedCount = doc.Range.Replace(new Regex("Header"), "Header", options);
+
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No header replacements were performed.");
 
         // Save the modified document.
-        doc.Save("output.docx");
+        doc.Save("Result.docx");
     }
 
-    // Callback that decides the replacement text based on the header type.
+    // Callback that changes the replacement text depending on the header type.
     private class HeaderReplaceCallback : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
             // Find the HeaderFooter node that contains the match.
-            HeaderFooter headerFooter = args.MatchNode.GetAncestor(NodeType.HeaderFooter) as HeaderFooter;
-            if (headerFooter == null)
+            HeaderFooter header = args.MatchNode.GetAncestor(NodeType.HeaderFooter) as HeaderFooter;
+            if (header == null)
                 return ReplaceAction.Skip; // Not inside a header/footer.
 
             // Choose replacement based on the header type.
-            switch (headerFooter.HeaderFooterType)
+            switch (header.HeaderFooterType)
             {
                 case HeaderFooterType.HeaderFirst:
                     args.Replacement = "New First Header";
                     break;
                 case HeaderFooterType.HeaderPrimary:
-                    args.Replacement = "New Header";
+                    args.Replacement = "New Other Header";
                     break;
                 default:
-                    // For any other header/footer types, keep the original text.
-                    args.Replacement = args.Match.Value;
+                    // For any other header types, keep the original replacement.
                     break;
             }
 

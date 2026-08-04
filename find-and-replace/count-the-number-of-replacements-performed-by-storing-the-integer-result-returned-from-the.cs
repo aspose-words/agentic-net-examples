@@ -2,41 +2,52 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required package, not used directly
+using Aspose.Drawing; // Required by the category rules
+using Newtonsoft.Json; // Required by the category rules
 
-public class Program
+public class FindAndReplaceCountExample
 {
     public static void Main()
     {
-        // Paths for the input and output documents
-        const string inputPath = "sample.docx";
-        const string outputPath = "sample_replaced.docx";
+        // Prepare a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeFindReplaceDemo");
+        Directory.CreateDirectory(workFolder);
 
-        // Create a sample document if it does not already exist
-        if (!File.Exists(inputPath))
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("This is a sample document. Replace the word 'sample' with 'example'.");
-            builder.Writeln("Another sample line with the word sample multiple times: sample, sample.");
-            doc.Save(inputPath);
-        }
+        // Define file paths for the input and output documents.
+        string inputPath = Path.Combine(workFolder, "input.docx");
+        string outputPath = Path.Combine(workFolder, "output.docx");
 
-        // Load the document from disk
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with text that contains the target pattern.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is the old value.");
+        builder.Writeln("Another line with the old value.");
+        builder.Writeln("No match on this line.");
+        doc.Save(inputPath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the document from the file system.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(inputPath);
 
-        // Perform find-and-replace and capture the number of replacements
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacementCount = loadedDoc.Range.Replace("sample", "example", options);
+        // -----------------------------------------------------------------
+        // 3. Perform a find-and-replace operation and capture the replacement count.
+        // -----------------------------------------------------------------
+        FindReplaceOptions options = new FindReplaceOptions(); // default options
+        int replacementCount = loadedDoc.Range.Replace("old", "new", options);
 
-        // Ensure that at least one replacement was made
+        // Validate that at least one replacement occurred.
         if (replacementCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the modified document
+        // -----------------------------------------------------------------
+        // 4. Save the modified document.
+        // -----------------------------------------------------------------
         loadedDoc.Save(outputPath);
 
-        // Report the number of replacements performed
+        // Output the result count (no interactive prompts required).
         Console.WriteLine($"Number of replacements performed: {replacementCount}");
     }
 }

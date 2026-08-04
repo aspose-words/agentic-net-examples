@@ -1,6 +1,6 @@
 # Find and Replace Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Find and Replace category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Find and Replace category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Find and Replac
 - Slug: find-and-replace
 - Total examples: 63
 - Publish-ready successful examples: 63 / 63
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Plain Replace examples: 41
 - Formatting Aware Replace examples: 7
 - Regex Replace examples: 7
@@ -32,7 +32,7 @@ This folder contains the live, publish-ready C# examples for the Find and Replac
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 - Aspose.Drawing.Common 25.11.0
 - Newtonsoft.Json
 
@@ -43,7 +43,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 dotnet add package Newtonsoft.Json
 
@@ -66,7 +66,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 dotnet add package Newtonsoft.Json
 
@@ -92,13 +92,13 @@ dotnet run --configuration Release --no-build
 | 9 | `implement-a-custom-replaceevaluator-delegate-to-replace-only-words-longer-than-ten-charact.cs` | Implement a custom ReplaceEvaluator delegate to replace only words longer than ten characters. | plain-replace | docx | mcp |
 | 10 | `count-the-number-of-replacements-performed-by-storing-the-integer-result-returned-from-the.cs` | Count the number of replacements performed by storing the integer result returned from the Replace method. | plain-replace | docx | mcp |
 | 11 | `chain-multiple-replace-calls-to-sequentially-replace-email-addresses-phone-numbers-and-url.cs` | Chain multiple Replace calls to sequentially replace email addresses, phone numbers, and URLs in the document. | plain-replace | docx | mcp |
-| 12 | `combine-findreplaceoptions-with-documentbuilder-to-insert-dynamic-content-after-each-succe.cs` | Combine FindReplaceOptions with DocumentBuilder to insert dynamic content after each successful replacement. | plain-replace | docx | llm |
+| 12 | `combine-findreplaceoptions-with-documentbuilder-to-insert-dynamic-content-after-each-succe.cs` | Combine FindReplaceOptions with DocumentBuilder to insert dynamic content after each successful replacement. | plain-replace | docx | mcp |
 | 13 | `enable-regex-mode-by-setting-findreplaceoptions-useregularexpressions-to-true-for-pattern.cs` | Enable regex mode by setting FindReplaceOptions.UseRegularExpressions to true for pattern-based replacements. | regex-replace | docx | mcp |
 | 14 | `replace-tab-characters-with-four-spaces-using-a-regular-expression-pattern-matching-the-t.cs` | Replace tab characters with four spaces using a regular expression pattern matching the \t escape sequence. | regex-replace | docx | mcp |
 | 15 | `replace-placeholder-tokens-like-name-with-actual-values-using-a-dictionary-inside-a-replac.cs` | Replace placeholder tokens like {{Name}} with actual values using a dictionary inside a ReplaceEvaluator. | plain-replace | docx | mcp |
 | 16 | `execute-a-case-insensitive-replace-that-changes-all-instances-of-color-to-colour-throughou.cs` | Execute a case-insensitive replace that changes all instances of ‘color' to ‘colour' throughout the document. | formatting-aware-replace | docx | mcp |
 | 17 | `apply-whole-word-matching-to-avoid-partial-replacements-inside-longer-words-such-as-catalo.cs` | Apply whole-word matching to avoid partial replacements inside longer words such as ‘catalogue'. | callback-reporting | docx | mcp |
-| 18 | `replace-multiple-line-break-sequences-with-a-single-paragraph-break-using-the-metacharacte.cs` | Replace multiple line break sequences with a single paragraph break using the metacharacter \n in the replacement. | regex-replace | docx | existing_repo |
+| 18 | `replace-multiple-line-break-sequences-with-a-single-paragraph-break-using-the-metacharacte.cs` | Replace multiple line break sequences with a single paragraph break using the metacharacter \n in the replacement. | regex-replace | docx | mcp |
 | 19 | `perform-find-and-replace-on-a-document-loaded-from-a-memory-stream-without-writing-to-disk.cs` | Perform find and replace on a document loaded from a memory stream without writing to disk. | input-bootstrap | docx | mcp |
 | 20 | `configure-findreplaceoptions-replacingcallback-to-log-each-replacement-occurrence-to-a-cus.cs` | Configure FindReplaceOptions.ReplacingCallback to log each replacement occurrence to a custom logger. | callback-reporting | docx | mcp |
 | 21 | `use-a-regular-expression-to-locate-and-replace-all-html-tags-embedded-in-the-document-text.cs` | Use a regular expression to locate and replace all HTML tags embedded in the document text. | input-bootstrap | html | mcp |
@@ -135,7 +135,7 @@ dotnet run --configuration Release --no-build
 | 52 | `replace-the-copyright-symbol-with-the-unicode-character-using-a-regular-expression.cs` | Replace the copyright symbol with the Unicode © character using a regular expression. | plain-replace | docx | mcp |
 | 53 | `insert-a-page-number-field-after-each-replaced-heading-using-documentbuilder-for-automatic.cs` | Insert a page number field after each replaced heading using DocumentBuilder for automatic numbering. | plain-replace | docx | mcp |
 | 54 | `replace-numeric-formats-like-1-234-56-with-a-localized-format-using-a-regular-expression.cs` | Replace numeric formats like 1,234.56 with a localized format using a regular expression. | formatting-aware-replace | docx | mcp |
-| 55 | `add-a-hyperlink-to-each-replaced-email-address-using-documentbuilder-during-the-replacemen.cs` | Add a hyperlink to each replaced email address using DocumentBuilder during the replacement operation. | plain-replace | docx | mcp |
+| 55 | `add-a-hyperlink-to-each-replaced-email-address-using-documentbuilder-during-the-replacemen.cs` | Add a hyperlink to each replaced email address using DocumentBuilder during the replacement operation. | plain-replace | docx | existing_repo |
 | 56 | `ignore-case-and-match-whole-words-when-updating-product-names-across-the-document-using-fi.cs` | Ignore case and match whole words when updating product names across the document using FindReplaceOptions. | plain-replace | docx | mcp |
 | 57 | `replace-placeholders-surrounded-by-percent-signs-with-environment-variable-values-using-a.cs` | Replace placeholders surrounded by percent signs with environment variable values using a custom callback. | callback-reporting | docx | mcp |
 | 58 | `replace-multiple-consecutive-spaces-with-a-single-space-throughout-the-document-using-a-re.cs` | Replace multiple consecutive spaces with a single space throughout the document using a regular expression. | plain-replace | docx | mcp |
@@ -143,7 +143,7 @@ dotnet run --configuration Release --no-build
 | 60 | `standardize-date-range-patterns-to-a-unified-format-across-the-document-using-a-regular-ex.cs` | Standardize date range patterns to a unified format across the document using a regular expression. | regex-replace | docx | mcp |
 | 61 | `insert-a-table-of-figures-after-each-replaced-figure-caption-using-documentbuilder-for-aut.cs` | Insert a table of figures after each replaced figure caption using DocumentBuilder for automatic generation. | plain-replace | docx | mcp |
 | 62 | `use-a-custom-replaceevaluator-to-replace-only-the-first-occurrence-of-a-pattern-in-each-se.cs` | Use a custom ReplaceEvaluator to replace only the first occurrence of a pattern in each section. | regex-replace | docx | mcp |
-| 63 | `replace-a-placeholder-with-a-generated-qr-code-image-using-documentbuilder-during-the-repl.cs` | Replace a placeholder with a generated QR code image using DocumentBuilder during the replacement. | plain-replace | docx | mcp |
+| 63 | `replace-a-placeholder-with-a-generated-qr-code-image-using-documentbuilder-during-the-repl.cs` | Replace a placeholder with a generated QR code image using DocumentBuilder during the replacement. | plain-replace | docx | existing_repo |
 
 ## Common failure patterns seen during generation and how they were corrected
 
@@ -183,6 +183,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.
