@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -9,37 +10,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content (no revision yet).
-        builder.Writeln("Original paragraph.");
+        // Add some initial content that will later be modified.
+        builder.Write("Hello ");
+        builder.Write("World");
 
         // Start tracking revisions.
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        doc.StartTrackRevisions("Sample Author", DateTime.Now);
 
-        // ----- Insertion revision -----
-        builder.Writeln("Inserted paragraph.");
+        // Insert new text – this will be recorded as an insertion revision.
+        builder.Write("Inserted ");
 
-        // ----- Deletion revision -----
-        // Remove the first paragraph that was added before tracking started.
-        Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
-        firstParagraph.Remove();
+        // Apply a formatting change to the first run.
+        // (Aspose.Words currently does not record formatting changes as revisions,
+        // but we include this step to illustrate the intended workflow.)
+        Run firstRun = doc.FirstSection.Body.FirstParagraph.Runs[0];
+        firstRun.Font.Bold = true;
 
-        // ----- Formatting change (not recorded as a revision) -----
-        builder.Font.Bold = true;
-        builder.Writeln("Bold text.");
+        // Delete the original "World" text – this will be recorded as a deletion revision.
+        Run worldRun = doc.FirstSection.Body.FirstParagraph.Runs[2];
+        worldRun.Remove();
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
         // Reject only formatting revisions, leaving insertions and deletions untouched.
-        // Iterate backwards to safely modify the collection while iterating.
-        for (int i = doc.Revisions.Count - 1; i >= 0; i--)
+        foreach (Revision rev in doc.Revisions)
         {
-            Revision rev = doc.Revisions[i];
             if (rev.RevisionType == RevisionType.FormatChange)
+            {
                 rev.Reject();
+            }
         }
 
         // Save the resulting document.
-        doc.Save("Result.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RevisionsResult.docx");
+        doc.Save(outputPath);
+
+        // Output the final document text to the console for verification.
+        Console.WriteLine("Final document text:");
+        Console.WriteLine(doc.GetText());
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

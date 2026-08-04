@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 
 public class Program
@@ -10,27 +9,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial text that will not be tracked as a revision.
-        builder.Write("This will be deleted. ");
-        builder.Write("This stays unchanged. ");
+        // Write some initial text that will later be deleted.
+        builder.Write("This text will be deleted. ");
 
         // Start tracking revisions.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
+        doc.StartTrackRevisions("Sample Author", DateTime.Now);
 
         // Insert new text – this will be recorded as an insertion revision.
-        builder.Write("Inserted revision text. ");
+        builder.Write("This is an inserted sentence. ");
 
-        // Delete the first run (the text added before tracking) – this will be a deletion revision.
-        // The first run is at index 0 of the paragraph's Runs collection.
-        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
+        // Delete the first run (the text written before tracking started) – this creates a deletion revision.
+        Run firstRun = doc.FirstSection.Body.FirstParagraph.Runs[0];
+        firstRun.Remove();
 
         // Stop tracking further changes.
         doc.StopTrackRevisions();
 
-        // Save the document (optional, but complies with the rule to save when output is expected).
-        doc.Save("RevisionsSummary.docx");
+        // Save the document (optional, demonstrates that revisions are persisted).
+        doc.Save("RevisionsSample.docx");
 
-        // Count revisions by type.
+        // Iterate over all revisions and count insertions and deletions.
         int insertionCount = 0;
         int deletionCount = 0;
 
@@ -43,7 +41,7 @@ public class Program
         }
 
         // Output the summary.
-        Console.WriteLine($"Insertions: {insertionCount}");
-        Console.WriteLine($"Deletions: {deletionCount}");
+        Console.WriteLine($"Total insertion revisions: {insertionCount}");
+        Console.WriteLine($"Total deletion revisions: {deletionCount}");
     }
 }

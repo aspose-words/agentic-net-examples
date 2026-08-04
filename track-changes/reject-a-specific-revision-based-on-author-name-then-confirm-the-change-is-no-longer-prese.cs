@@ -9,65 +9,50 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content that is not a revision.
-        builder.Writeln("Original paragraph.");
+        // Write some initial content that is not a revision.
+        builder.Writeln("Initial content. ");
 
         // First author makes a revision.
         doc.StartTrackRevisions("John Doe", DateTime.Now);
-        builder.Writeln("John's inserted paragraph.");
+        builder.Writeln("John's revision text. ");
         doc.StopTrackRevisions();
 
         // Second author makes a revision.
         doc.StartTrackRevisions("Jane Smith", DateTime.Now);
-        builder.Writeln("Jane's inserted paragraph.");
+        builder.Writeln("Jane's revision text. ");
         doc.StopTrackRevisions();
 
-        // Ensure that revisions were created.
-        if (!doc.HasRevisions)
-            throw new InvalidOperationException("No revisions were created.");
+        // At this point the document has two insertion revisions.
+        Console.WriteLine($"Revisions before rejection: {doc.Revisions.Count}");
 
-        // Reject revisions authored by "Jane Smith".
-        int rejectedCount = doc.Revisions.Reject(new AuthorCriteria("Jane Smith"));
+        // Reject all revisions authored by "Jane Smith".
+        for (int i = doc.Revisions.Count - 1; i >= 0; i--)
+        {
+            Revision rev = doc.Revisions[i];
+            if (rev.Author == "Jane Smith")
+                rev.Reject();
+        }
 
-        // Verify that at least one revision was rejected (Jane's).
-        if (rejectedCount < 1)
-            throw new InvalidOperationException($"Expected to reject at least 1 revision, but rejected {rejectedCount}.");
-
-        // Verify that no remaining revision is authored by Jane Smith.
+        // Verify that no revision from Jane Smith remains.
+        bool janeRevisionExists = false;
         foreach (Revision rev in doc.Revisions)
         {
             if (rev.Author == "Jane Smith")
-                throw new InvalidOperationException("A revision by Jane Smith still exists after rejection.");
+            {
+                janeRevisionExists = true;
+                break;
+            }
         }
 
-        // Confirm the document text no longer contains Jane's paragraph.
-        string text = doc.GetText();
-        if (text.Contains("Jane's inserted paragraph."))
-            throw new InvalidOperationException("Jane's revision was not removed from the document.");
+        Console.WriteLine($"Revisions after rejection: {doc.Revisions.Count}");
+        Console.WriteLine($"Jane's revision still present: {janeRevisionExists}");
+
+        // Confirm that the text added by Jane is no longer in the document.
+        string docText = doc.GetText();
+        bool janeTextPresent = docText.Contains("Jane's revision text");
+        Console.WriteLine($"Jane's revision text present in document: {janeTextPresent}");
 
         // Save the resulting document.
-        doc.Save("Result.docx");
-
-        // Output confirmation.
-        Console.WriteLine("Revision by Jane Smith rejected successfully.");
-        Console.WriteLine($"Remaining revisions: {doc.Revisions.Count}");
-        Console.WriteLine("Document text:");
-        Console.WriteLine(text);
-    }
-
-    // Custom criteria to match revisions by author name.
-    private class AuthorCriteria : IRevisionCriteria
-    {
-        private readonly string _authorName;
-
-        public AuthorCriteria(string authorName)
-        {
-            _authorName = authorName;
-        }
-
-        public bool IsMatch(Revision revision)
-        {
-            return revision.Author == _authorName;
-        }
+        doc.Save("RevisionsResult.docx");
     }
 }

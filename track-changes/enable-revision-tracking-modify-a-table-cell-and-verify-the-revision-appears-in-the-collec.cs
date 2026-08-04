@@ -10,48 +10,50 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x2 table.
-        Table table = builder.StartTable();
+        // Insert a simple 2‑cell table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Original Cell 1");
         builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Original Cell 2");
         builder.EndTable();
 
         // Enable revision tracking.
-        doc.StartTrackRevisions("Alice", DateTime.Now);
+        string author = "Test Author";
+        DateTime revisionDate = DateTime.Now;
+        doc.StartTrackRevisions(author, revisionDate);
 
-        // Modify the text of the first cell – this change will be recorded as a revision.
-        Cell firstCell = table.FirstRow.FirstCell;
-        firstCell.RemoveAllChildren(); // clear existing content
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Updated Cell 1");
-        para.AppendChild(run);
-        firstCell.AppendChild(para);
+        // Modify the text of the first cell to generate a revision.
+        Table table = doc.FirstSection.Body.Tables[0];
+        Cell firstCell = table.Rows[0].Cells[0];
+        // Clear existing runs.
+        firstCell.FirstParagraph.Runs.Clear();
+        // Write new text – this will be recorded as an insertion revision.
+        builder.MoveTo(firstCell.FirstParagraph);
+        builder.Write("Modified Cell 1");
 
         // Stop tracking further changes.
         doc.StopTrackRevisions();
 
-        // Verify that a revision was created.
+        // Verify that at least one revision exists and that it is an insertion.
         if (!doc.HasRevisions || doc.Revisions.Count == 0)
-            throw new InvalidOperationException("No revisions were generated.");
+            throw new InvalidOperationException("No revisions were created.");
 
-        // Ensure the revision corresponds to the modified cell text.
-        bool revisionFound = false;
+        bool insertionFound = false;
         foreach (Revision rev in doc.Revisions)
         {
-            if (rev.ParentNode != null && rev.ParentNode.GetText().Contains("Updated Cell 1"))
+            if (rev.RevisionType == RevisionType.Insertion && rev.Author == author)
             {
-                revisionFound = true;
+                insertionFound = true;
                 break;
             }
         }
 
-        if (!revisionFound)
-            throw new InvalidOperationException("Expected revision for the table cell change was not found.");
+        if (!insertionFound)
+            throw new InvalidOperationException("Expected insertion revision not found.");
 
-        // Save the document.
-        doc.Save("RevisionsTable.docx");
+        // Save the document to verify the result.
+        doc.Save("RevisionsExample.docx");
     }
 }

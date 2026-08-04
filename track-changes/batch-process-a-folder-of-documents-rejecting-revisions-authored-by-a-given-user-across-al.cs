@@ -4,75 +4,57 @@ using Aspose.Words;
 
 public class Program
 {
-    // Criteria to match revisions authored by a specific user.
+    // Criteria that matches revisions authored by a specific user.
     private class RevisionAuthorCriteria : IRevisionCriteria
     {
         private readonly string _author;
-
-        public RevisionAuthorCriteria(string author)
-        {
-            _author = author;
-        }
-
-        public bool IsMatch(Revision revision)
-        {
-            return revision.Author == _author;
-        }
+        public RevisionAuthorCriteria(string author) => _author = author;
+        public bool IsMatch(Revision revision) => revision.Author == _author;
     }
 
     public static void Main()
     {
-        // Define input and output folders.
+        // Folder paths (relative to the executable directory).
         string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
         string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        string targetAuthor = "John Doe";
+
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Author whose revisions will be rejected.
-        string targetAuthor = "Bob";
+        // If the input folder is empty, create sample documents with revisions.
+        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
+        {
+            CreateSampleDocument(Path.Combine(inputFolder, "DocWithTargetAuthor.docx"), targetAuthor, "Text added by target author.");
+            CreateSampleDocument(Path.Combine(inputFolder, "DocWithOtherAuthor.docx"), "Jane Smith", "Text added by other author.");
+        }
 
-        // Create sample documents containing revisions from two authors.
-        CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docx"));
-        CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docx"));
-
-        // Process each document: reject revisions authored by the target author.
+        // Process each .docx file in the input folder.
         foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
             Document doc = new Document(filePath);
 
-            // Reject matching revisions; the method returns the number of rejected revisions.
+            // Reject all revisions authored by the target user.
             doc.Revisions.Reject(new RevisionAuthorCriteria(targetAuthor));
 
-            // Save the cleaned document.
+            // Save the processed document to the output folder, preserving the original file name.
             string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
             doc.Save(outputPath);
         }
     }
 
-    // Generates a document with revisions from "Alice" and "Bob".
-    private static void CreateSampleDocument(string filePath)
+    // Helper method to create a sample document with a single revision by the specified author.
+    private static void CreateSampleDocument(string filePath, string author, string text)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Normal text (no revision).
-        builder.Writeln("Initial content. ");
-
-        // Revisions by Alice.
-        doc.StartTrackRevisions("Alice", DateTime.Now);
-        builder.Writeln("Added by Alice. ");
+        // Start tracking revisions with the given author.
+        doc.StartTrackRevisions(author, DateTime.Now);
+        builder.Writeln(text);
         doc.StopTrackRevisions();
 
-        // Revisions by Bob.
-        doc.StartTrackRevisions("Bob", DateTime.Now);
-        builder.Writeln("Added by Bob. ");
-
-        // Delete a run to create a deletion revision by Bob.
-        if (doc.FirstSection.Body.FirstParagraph.Runs.Count > 0)
-            doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
-
-        doc.StopTrackRevisions();
-
+        // Save the sample document.
         doc.Save(filePath);
     }
 }

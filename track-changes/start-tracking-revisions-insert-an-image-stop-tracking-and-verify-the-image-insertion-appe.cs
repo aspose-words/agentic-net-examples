@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class ImageRevisionDemo
 {
     public static void Main()
     {
@@ -11,49 +11,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial text (not tracked).
-        builder.Writeln("Document before tracking changes.");
+        // Add some initial text.
+        builder.Writeln("Paragraph before the image.");
 
-        // Start tracking revisions with a specific author.
-        doc.StartTrackRevisions("Demo Author", DateTime.Now);
+        // Start tracking revisions.
+        doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
 
-        // Insert an image while tracking is enabled.
-        // The image is a 1x1 pixel PNG encoded in base64 to avoid external files.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK0cAAAAASUVORK5CYII=";
+        // Insert a simple 1x1 PNG image from a byte array.
+        // This avoids the need for System.Drawing types.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
         byte[] imageBytes = Convert.FromBase64String(base64Png);
-        using (MemoryStream imageStream = new MemoryStream(imageBytes))
-        {
-            builder.InsertImage(imageStream);
-        }
+        builder.InsertImage(imageBytes); // Insertion is recorded as a revision.
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (optional, demonstrates full lifecycle).
-        const string outputPath = "TrackChangesImage.docx";
-        doc.Save(outputPath);
+        // Add more text after the image.
+        builder.Writeln("Paragraph after the image.");
 
-        // Verify that the image insertion was recorded as a revision.
-        bool insertionFound = false;
+        // Verify that the image insertion appears as a revision.
+        bool imageRevisionFound = false;
         foreach (Revision rev in doc.Revisions)
         {
-            if (rev.RevisionType == RevisionType.Insertion && rev.ParentNode.NodeType == NodeType.Shape)
+            // Revisions for inserted shapes (including images) have a Shape as the parent node.
+            if (rev.RevisionType == RevisionType.Insertion && rev.ParentNode is Shape shape && shape.IsInsertRevision)
             {
-                // The inserted shape (image) should also report IsInsertRevision = true.
-                Shape insertedShape = (Shape)rev.ParentNode;
-                if (insertedShape.IsInsertRevision)
-                {
-                    insertionFound = true;
-                    break;
-                }
+                imageRevisionFound = true;
+                break;
             }
         }
 
-        if (!insertionFound)
-        {
-            throw new InvalidOperationException("The image insertion was not recorded as a revision.");
-        }
+        if (!imageRevisionFound)
+            throw new Exception("The inserted image was not recorded as a revision.");
 
-        // Program ends without waiting for user input.
+        // Save the document to disk.
+        const string outputPath = "ImageRevision.docx";
+        doc.Save(outputPath);
+
+        // Indicate success.
+        Console.WriteLine($"Image insertion revision verified. Document saved to '{outputPath}'.");
     }
 }

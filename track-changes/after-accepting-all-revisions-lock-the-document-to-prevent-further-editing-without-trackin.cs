@@ -5,37 +5,33 @@ public class Program
 {
     public static void Main()
     {
-        // Path where the resulting document will be saved.
-        const string outputPath = "LockedDocument.docx";
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add initial content (this will not be a revision).
+        // Write initial content (this will not be a revision).
         builder.Writeln("Original paragraph.");
 
         // Start tracking revisions with a specific author.
         doc.StartTrackRevisions("John Doe");
 
-        // Make some changes while tracking is active.
-        builder.Writeln("Added paragraph while tracking.");
+        // Make some changes that will be recorded as revisions.
+        builder.Writeln("Inserted paragraph while tracking.");
 
-        // Delete the original paragraph to generate a deletion revision.
-        Paragraph originalParagraph = doc.FirstSection.Body.Paragraphs[0];
-        originalParagraph.Remove();
+        // Delete the original paragraph to create a deletion revision.
+        doc.FirstSection.Body.FirstParagraph.Remove();
 
-        // Stop tracking further changes.
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Accept all revisions so the document becomes clean.
+        // Accept all revisions so the document contains no pending changes.
         doc.AcceptAllRevisions();
 
-        // Protect the document so that further editing is only possible when track changes is enabled.
-        // ProtectionType.AllowOnlyRevisions permits only revision marks.
-        doc.Protect(ProtectionType.AllowOnlyRevisions, "securePassword");
+        // Protect the document to make it read‑only. A password is required to unprotect.
+        const string password = "SecretPassword";
+        doc.Protect(ProtectionType.ReadOnly, password);
 
-        // Save the locked document.
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save("LockedDocument.docx");
     }
 }

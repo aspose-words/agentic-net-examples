@@ -1,53 +1,49 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 
-public class TrackChangesExample
+public class TrackChangesDemo
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
-        string trackedPath = Path.Combine(Directory.GetCurrentDirectory(), "Tracked.docx");
+        // Create a sample document.
+        string samplePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.docx");
+        Document sampleDoc = new Document();
+        DocumentBuilder sampleBuilder = new DocumentBuilder(sampleDoc);
+        sampleBuilder.Writeln("This is the original paragraph.");
+        sampleDoc.Save(samplePath);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a sample document and save it.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is the original paragraph.");
-        doc.Save(originalPath);
+        // Load the document.
+        Document doc = new Document(samplePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the document, start tracking revisions, apply changes.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(originalPath);
-        loadedDoc.StartTrackRevisions("Alice", DateTime.Now);
+        // Enable revision tracking.
+        doc.StartTrackRevisions("Alice", DateTime.Now);
 
-        // Apply a formatting change (bold) to the first run.
-        // Formatting changes are not recorded as revisions, but the operation is performed.
-        Paragraph firstParagraph = loadedDoc.FirstSection.Body.FirstParagraph;
+        // Apply a formatting change (won't be recorded as a revision, but performed while tracking).
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
         Run firstRun = (Run)firstParagraph.Runs[0];
         firstRun.Font.Bold = true;
+        // Correct property name for color.
+        firstRun.Font.Color = Color.Blue;
 
-        // Insert new text while tracking to generate an insertion revision.
-        DocumentBuilder trackingBuilder = new DocumentBuilder(loadedDoc);
-        trackingBuilder.Writeln("Inserted paragraph while tracking.");
+        // Insert new text to generate an insertion revision.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This line was added while tracking changes.");
 
-        // Stop tracking further changes.
-        loadedDoc.StopTrackRevisions();
+        // Stop tracking revisions.
+        doc.StopTrackRevisions();
 
-        // Save the document with revisions.
-        loadedDoc.Save(trackedPath);
+        // Save the revised document.
+        string revisedPath = Path.Combine(Directory.GetCurrentDirectory(), "revised.docx");
+        doc.Save(revisedPath);
 
-        // -----------------------------------------------------------------
-        // Step 3: List all revisions and their types.
-        // -----------------------------------------------------------------
+        // List resulting revision types.
         Console.WriteLine("Revisions found in the document:");
-        foreach (Revision rev in loadedDoc.Revisions)
+        foreach (Revision rev in doc.Revisions)
         {
-            string revText = rev.ParentNode?.GetText().Trim() ?? string.Empty;
-            Console.WriteLine($"- Type: {rev.RevisionType}, Author: {rev.Author}, Text: \"{revText}\"");
+            string text = rev.ParentNode?.GetText().Trim() ?? string.Empty;
+            Console.WriteLine($"- Type: {rev.RevisionType}, Author: {rev.Author}, Text: \"{text}\"");
         }
     }
 }

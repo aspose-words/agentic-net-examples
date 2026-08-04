@@ -2,96 +2,65 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-namespace RevisionComparisonExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Directory for generated files
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-            // Paths for the three contract versions
-            string v1Path = Path.Combine(outputDir, "ContractV1.docx");
-            string v2Path = Path.Combine(outputDir, "ContractV2.docx");
-            string v3Path = Path.Combine(outputDir, "ContractV3.docx");
+        // ---------- Create the original contract ----------
+        Document original = new Document();
+        DocumentBuilder builder = new DocumentBuilder(original);
+        builder.Writeln("Contract Agreement");
+        builder.Writeln("This contract is between Party A and Party B.");
+        builder.Writeln("Clause 1: The term is one year.");
+        builder.Writeln("Clause 2: Payment shall be made monthly.");
+        builder.Writeln("Clause 3: Confidentiality must be maintained.");
 
-            // -----------------------------------------------------------------
-            // Create Version 1 of the contract
-            // -----------------------------------------------------------------
-            Document docV1 = new Document();
-            DocumentBuilder builder = new DocumentBuilder(docV1);
-            builder.Writeln("Contract");
-            builder.Writeln("Party A: Alice");
-            builder.Writeln("Party B: Bob");
-            builder.Writeln("Amount: $1,000");
-            builder.Writeln("Effective Date: 2023-01-01");
-            docV1.Save(v1Path);
+        // ---------- Create Version 1 (modify clause 2 and add clause 4) ----------
+        Document version1 = (Document)original.Clone(true);
+        // Modify Clause 2.
+        Paragraph clause2V1 = version1.FirstSection.Body.Paragraphs[3]; // 0‑based index.
+        clause2V1.Runs[0].Text = "Clause 2: Payment shall be made quarterly.";
+        // Add Clause 4.
+        DocumentBuilder b1 = new DocumentBuilder(version1);
+        b1.MoveToDocumentEnd();
+        b1.Writeln("Clause 4: Termination requires 30 days notice.");
 
-            // -----------------------------------------------------------------
-            // Create Version 2 (modify amount and add a clause)
-            // -----------------------------------------------------------------
-            Document docV2 = new Document(v1Path);
-            builder = new DocumentBuilder(docV2);
-            // Change amount (add a new line for simplicity)
-            builder.MoveToDocumentEnd();
-            builder.Writeln("Amount: $1,500");
-            // Add new clause
-            builder.Writeln("Clause 1: Delivery shall be within 30 days.");
-            docV2.Save(v2Path);
+        // ---------- Create Version 2 (modify clause 1, delete clause 3, add clause 5) ----------
+        Document version2 = (Document)original.Clone(true);
+        // Delete Clause 3.
+        Paragraph clause3V2 = version2.FirstSection.Body.Paragraphs[4];
+        clause3V2.Remove();
+        // Modify Clause 1.
+        Paragraph clause1V2 = version2.FirstSection.Body.Paragraphs[2];
+        clause1V2.Runs[0].Text = "Clause 1: The term is two years.";
+        // Add Clause 5.
+        DocumentBuilder b2 = new DocumentBuilder(version2);
+        b2.MoveToDocumentEnd();
+        b2.Writeln("Clause 5: Governing law is XYZ.");
 
-            // -----------------------------------------------------------------
-            // Create Version 3 (change Party B and add another clause)
-            // -----------------------------------------------------------------
-            Document docV3 = new Document(v2Path);
-            builder = new DocumentBuilder(docV3);
-            // Change Party B (add a new line at the start)
-            builder.MoveToDocumentStart();
-            builder.Writeln("Party B: Charlie");
-            // Add another clause
-            builder.Writeln("Clause 2: Late delivery incurs a penalty of $100 per day.");
-            docV3.Save(v3Path);
+        // ---------- Comparison 1: Original vs Version 1 ----------
+        Document compare1 = (Document)original.Clone(true);
+        compare1.Compare(version1, "Reviewer1", DateTime.Now);
+        string file1 = Path.Combine(outputDir, "Original_vs_Version1.docx");
+        compare1.Save(file1);
+        Console.WriteLine($"Revisions after Original vs Version1: {compare1.Revisions.Count}");
 
-            // -----------------------------------------------------------------
-            // First comparison: V1 vs V2
-            // -----------------------------------------------------------------
-            Document original = new Document(v1Path);
-            Document editedV2 = new Document(v2Path);
+        // ---------- Comparison 2: Original vs Version 2 ----------
+        Document compare2 = (Document)original.Clone(true);
+        compare2.Compare(version2, "Reviewer2", DateTime.Now);
+        string file2 = Path.Combine(outputDir, "Original_vs_Version2.docx");
+        compare2.Save(file2);
+        Console.WriteLine($"Revisions after Original vs Version2: {compare2.Revisions.Count}");
 
-            // Ensure no revisions exist before comparison
-            if (original.Revisions.Count != 0 || editedV2.Revisions.Count != 0)
-                throw new InvalidOperationException("Documents must not contain revisions before comparison.");
-
-            // Compare to generate revisions
-            original.Compare(editedV2, "Reviewer", DateTime.Now);
-            string revV1V2Path = Path.Combine(outputDir, "Contract_V1_vs_V2.docx");
-            original.Save(revV1V2Path);
-            Console.WriteLine($"V1 vs V2 revisions: {original.Revisions.Count}");
-
-            // Accept revisions to transform original into V2
-            original.AcceptAllRevisions();
-
-            // -----------------------------------------------------------------
-            // Second comparison: (now V2) vs V3
-            // -----------------------------------------------------------------
-            Document editedV3 = new Document(v3Path);
-
-            // Ensure the document we are comparing from has no pending revisions
-            if (original.Revisions.Count != 0 || editedV3.Revisions.Count != 0)
-                throw new InvalidOperationException("Documents must not contain revisions before second comparison.");
-
-            // Compare to generate revisions for V2 -> V3
-            original.Compare(editedV3, "Reviewer", DateTime.Now);
-            string revV2V3Path = Path.Combine(outputDir, "Contract_V2_vs_V3.docx");
-            original.Save(revV2V3Path);
-            Console.WriteLine($"V2 vs V3 revisions: {original.Revisions.Count}");
-
-            // Final acceptance (optional)
-            original.AcceptAllRevisions();
-            string finalPath = Path.Combine(outputDir, "Contract_Final.docx");
-            original.Save(finalPath);
-            Console.WriteLine("Final contract saved.");
-        }
+        // ---------- Comparison 3: Version 1 vs Version 2 ----------
+        Document compare3 = (Document)version1.Clone(true);
+        compare3.Compare(version2, "Reviewer3", DateTime.Now);
+        string file3 = Path.Combine(outputDir, "Version1_vs_Version2.docx");
+        compare3.Save(file3);
+        Console.WriteLine($"Revisions after Version1 vs Version2: {compare3.Revisions.Count}");
     }
 }

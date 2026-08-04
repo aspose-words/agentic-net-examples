@@ -9,19 +9,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Normal editing before tracking does not create revisions.
-        builder.Writeln("Initial content. ");
+        // Enable tracking of revisions.
+        doc.StartTrackRevisions("Demo Author", DateTime.Now);
 
-        // Start tracking revisions with an author name and the current date.
-        doc.StartTrackRevisions("Sample Author", DateTime.Now);
+        // Insert a paragraph while tracking is active.
+        builder.Writeln("This paragraph is inserted as a revision.");
 
-        // Insert a paragraph while tracking is enabled – this will be recorded as a revision.
-        builder.Writeln("This paragraph is inserted while tracking changes.");
-
-        // Stop tracking revisions – further edits will not be recorded as revisions.
+        // Disable further tracking.
         doc.StopTrackRevisions();
 
-        // Save the document to a file.
-        doc.Save("TrackChangesExample.docx");
+        // Ensure that a revision was actually recorded.
+        if (!doc.HasRevisions || doc.Revisions.Count == 0)
+            throw new InvalidOperationException("No revisions were recorded.");
+
+        // Save the document.
+        doc.Save("TrackedRevisions.docx");
     }
 }

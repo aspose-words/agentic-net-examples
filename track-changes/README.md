@@ -1,6 +1,6 @@
 # Track Changes Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Track Changes category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Track Changes category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Track Changes c
 - Slug: track-changes
 - Total examples: 40
 - Publish-ready successful examples: 40 / 40
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Track Changes Workflow examples: 40
 
 ## Category rules that shaped these examples
@@ -22,7 +22,7 @@ This folder contains the live, publish-ready C# examples for the Track Changes c
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 
 ## Running Examples
 
@@ -31,7 +31,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -52,7 +52,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # PowerShell example
 Copy-Item ..\track-changes\load-a-document-from-a-stream-start-tracking-add-a-header-and-stop-tracking-before-saving.cs .\Program.cs
@@ -80,7 +80,7 @@ dotnet run --configuration Release --no-build
 | 13 | `iterate-through-all-revisions-in-the-document-and-log-each-revision-s-author-and-timestamp.cs` | Iterate through all revisions in the document and log each revision's author and timestamp. | track-changes-workflow | doc | mcp |
 | 14 | `iterate-over-revisions-group-them-by-type-and-output-a-summary-of-insertion-and-deletion-c.cs` | Iterate over revisions, group them by type, and output a summary of insertion and deletion counts. | track-changes-workflow | docx | mcp |
 | 15 | `group-sequential-insertions-using-revisiongroup-and-accept-the-entire-group-with-a-single.cs` | Group sequential insertions using RevisionGroup and accept the entire group with a single call. | track-changes-workflow | docx | mcp |
-| 16 | `use-revisiongroup-to-merge-consecutive-deletions-into-a-single-revision-before-accepting-i.cs` | Use RevisionGroup to merge consecutive deletions into a single revision before accepting it. | track-changes-workflow | docx | mcp |
+| 16 | `use-revisiongroup-to-merge-consecutive-deletions-into-a-single-revision-before-accepting-i.cs` | Use RevisionGroup to merge consecutive deletions into a single revision before accepting it. | track-changes-workflow | docx | existing_repo |
 | 17 | `accept-revisions-only-for-paragraphs-authored-by-a-specific-user-while-rejecting-others.cs` | Accept revisions only for paragraphs authored by a specific user while rejecting others. | track-changes-workflow | docx | mcp |
 | 18 | `reject-a-specific-revision-based-on-author-name-then-confirm-the-change-is-no-longer-prese.cs` | Reject a specific revision based on author name, then confirm the change is no longer present. | track-changes-workflow | docx | mcp |
 | 19 | `reject-all-formatting-revisions-but-keep-content-insertions-and-deletions-still-intact.cs` | Reject all formatting revisions but keep content insertions and deletions still intact. | track-changes-workflow | docx | mcp |
@@ -89,7 +89,7 @@ dotnet run --configuration Release --no-build
 | 22 | `accept-all-revisions-in-a-loaded-docx-file-and-save-the-cleaned-document-to-a-new-file.cs` | Accept all revisions in a loaded DOCX file and save the cleaned document to a new file. | track-changes-workflow | docx, doc | mcp |
 | 23 | `accept-all-revisions-in-a-document-then-re-enable-tracking-to-capture-subsequent-changes-s.cs` | Accept all revisions in a document, then re-enable tracking to capture subsequent changes separately. | track-changes-workflow | doc | mcp |
 | 24 | `after-accepting-all-revisions-lock-the-document-to-prevent-further-editing-without-trackin.cs` | After accepting all revisions, lock the document to prevent further editing without tracking. | track-changes-workflow | doc | mcp |
-| 25 | `reject-all-tracked-changes-in-a-document-then-verify-the-hasrevisions-property-returns-fal.cs` | Reject all tracked changes in a document, then verify the HasRevisions property returns false. | track-changes-workflow | doc | mcp |
+| 25 | `reject-all-tracked-changes-in-a-document-then-verify-the-hasrevisions-property-returns-fal.cs` | Reject all tracked changes in a document, then verify the HasRevisions property returns false. | track-changes-workflow | doc | existing_repo |
 | 26 | `compare-two-word-documents-to-generate-revision-differences-specifying-author-name-and-com.cs` | Compare two Word documents to generate revision differences, specifying author name and comparison date. | track-changes-workflow | doc | mcp |
 | 27 | `use-doc-compare-to-create-a-revision-document-that-highlights-differences-between-two-vers.cs` | Use doc.Compare to create a revision document that highlights differences between two versions. | track-changes-workflow | doc | mcp |
 | 28 | `programmatically-compare-a-document-against-its-previous-version-and-generate-a-revision-r.cs` | Programmatically compare a document against its previous version and generate a revision report in memory. | track-changes-workflow | doc | mcp |
@@ -102,7 +102,7 @@ dotnet run --configuration Release --no-build
 | 35 | `batch-process-a-folder-of-documents-rejecting-revisions-authored-by-a-given-user-across-al.cs` | Batch process a folder of documents, rejecting revisions authored by a given user across all files. | track-changes-workflow | doc | mcp |
 | 36 | `create-a-batch-process-that-opens-multiple-documents-accepts-all-revisions-and-saves-them.cs` | Create a batch process that opens multiple documents, accepts all revisions, and saves them in place. | track-changes-workflow | doc | mcp |
 | 37 | `accept-revisions-in-a-specific-section-of-the-document-while-leaving-other-sections-unchan.cs` | Accept revisions in a specific section of the document while leaving other sections unchanged. | track-changes-workflow | doc | mcp |
-| 38 | `after-rejecting-all-revisions-verify-that-the-document-s-original-content-matches-a-baseli.cs` | After rejecting all revisions, verify that the document's original content matches a baseline file. | track-changes-workflow | doc | existing_repo |
+| 38 | `after-rejecting-all-revisions-verify-that-the-document-s-original-content-matches-a-baseli.cs` | After rejecting all revisions, verify that the document's original content matches a baseline file. | track-changes-workflow | doc | llm |
 | 39 | `implement-error-handling-for-attempts-to-accept-a-revision-that-has-already-been-rejected.cs` | Implement error handling for attempts to accept a revision that has already been rejected. | track-changes-workflow | docx | mcp |
 | 40 | `create-a-script-that-toggles-tracking-on-and-off-based-on-user-input-during-runtime.cs` | Create a script that toggles tracking on and off based on user input during runtime. | track-changes-workflow | docx | mcp |
 
@@ -134,6 +134,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

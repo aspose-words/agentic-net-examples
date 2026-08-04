@@ -1,8 +1,9 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 
-public class Program
+public class BatchRevisionProcessor
 {
     public static void Main()
     {
@@ -10,42 +11,44 @@ public class Program
         string docsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
         Directory.CreateDirectory(docsFolder);
 
-        // Create a few sample documents with revisions.
-        string[] sampleFiles = { "Doc1.docx", "Doc2.docx", "Doc3.docx" };
-        foreach (string fileName in sampleFiles)
-        {
-            string filePath = Path.Combine(docsFolder, fileName);
-            CreateDocumentWithRevisions(filePath);
-        }
+        // Create sample documents with revisions.
+        CreateSampleDocuments(docsFolder, 3);
 
-        // Batch process: open each document, accept all revisions, and save in place.
-        foreach (string docPath in Directory.GetFiles(docsFolder, "*.docx"))
+        // Process each document: accept all revisions and save in place.
+        foreach (string filePath in Directory.GetFiles(docsFolder, "*.docx"))
         {
-            Document doc = new Document(docPath);
-            doc.AcceptAllRevisions(); // Accept all tracked changes.
-            doc.Save(docPath);        // Overwrite the original file.
+            Document doc = new Document(filePath);
+
+            if (doc.HasRevisions)
+            {
+                doc.AcceptAllRevisions();
+                doc.Save(filePath);
+            }
         }
     }
 
-    // Creates a document, adds some tracked changes, and saves it.
-    private static void CreateDocumentWithRevisions(string filePath)
+    private static void CreateSampleDocuments(string folderPath, int count)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        for (int i = 1; i <= count; i++)
+        {
+            string fileName = $"Sample{i}.docx";
+            string filePath = Path.Combine(folderPath, fileName);
 
-        // Initial content (no revisions).
-        builder.Writeln("This is the original paragraph.");
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("SampleAuthor", DateTime.Now);
+            // Start tracking revisions.
+            doc.StartTrackRevisions($"Author{i}", DateTime.Now);
 
-        // Add content that will be recorded as a revision.
-        builder.Writeln("This line is added as a revision.");
+            // Add some text that will be recorded as revisions.
+            builder.Writeln($"This is the first paragraph of document {i}.");
+            builder.Writeln($"Adding a second paragraph to document {i}.");
 
-        // Stop tracking revisions.
-        doc.StopTrackRevisions();
+            // Stop tracking revisions.
+            doc.StopTrackRevisions();
 
-        // Save the document.
-        doc.Save(filePath);
+            // Save the document.
+            doc.Save(filePath);
+        }
     }
 }

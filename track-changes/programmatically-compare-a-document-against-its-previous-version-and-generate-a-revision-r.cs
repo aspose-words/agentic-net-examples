@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Text;
 using Aspose.Words;
 
@@ -8,47 +7,41 @@ public class Program
     public static void Main()
     {
         // Create the original document.
-        Document originalDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(originalDoc);
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph.");
-        builder.Writeln("Third paragraph.");
+        Document original = new Document();
+        DocumentBuilder builder = new DocumentBuilder(original);
+        builder.Writeln("This is the original document.");
+        builder.Writeln("Second line of the original.");
 
-        // Clone the original to create an edited version and modify its content.
-        Document editedDoc = (Document)originalDoc.Clone(true);
-        DocumentBuilder editedBuilder = new DocumentBuilder(editedDoc);
+        // Clone the original to create an edited version.
+        Document edited = (Document)original.Clone(true);
+        DocumentBuilder editedBuilder = new DocumentBuilder(edited);
 
-        // Modify the second paragraph.
-        Paragraph secondParagraph = editedDoc.FirstSection.Body.Paragraphs[1];
-        editedBuilder.MoveTo(secondParagraph);
-        editedBuilder.Write(" (edited)");
+        // Modify the edited document: change existing text and add a new line.
+        edited.FirstSection.Body.Paragraphs[0].Runs[0].Text = "This is the edited document.";
+        editedBuilder.Writeln("An additional line added in the edited version.");
 
-        // Change the text of the third paragraph.
-        editedDoc.FirstSection.Body.Paragraphs[2].Runs[0].Text = "Third paragraph - updated.";
+        // Ensure both documents have no revisions before comparison.
+        if (original.HasRevisions || edited.HasRevisions)
+            throw new InvalidOperationException("Documents should not contain revisions before comparison.");
 
         // Compare the original document with the edited version.
-        // This adds revisions to the original document representing the differences.
-        originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
+        original.Compare(edited, "Comparer", DateTime.Now);
 
-        // Build an in‑memory revision report.
+        // Build a revision report in memory.
         StringBuilder report = new StringBuilder();
         report.AppendLine("Revision Report:");
         report.AppendLine("----------------");
 
-        foreach (Revision rev in originalDoc.Revisions)
+        foreach (Revision revision in original.Revisions)
         {
-            report.AppendLine($"Type   : {rev.RevisionType}");
-            report.AppendLine($"Author : {rev.Author}");
-            report.AppendLine($"Date   : {rev.DateTime}");
-
-            // For node‑based revisions, include the affected text.
-            if (rev.RevisionType != RevisionType.StyleDefinitionChange && rev.ParentNode != null)
-                report.AppendLine($"Text   : {rev.ParentNode.GetText().Trim()}");
-
+            report.AppendLine($"Author: {revision.Author}");
+            report.AppendLine($"Date: {revision.DateTime}");
+            report.AppendLine($"Type: {revision.RevisionType}");
+            report.AppendLine($"Changed Text: \"{revision.ParentNode.GetText().Trim()}\"");
             report.AppendLine();
         }
 
         // Output the report to the console.
-        Console.Write(report.ToString());
+        Console.WriteLine(report.ToString());
     }
 }

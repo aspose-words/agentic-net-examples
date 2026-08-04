@@ -9,18 +9,19 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
-      "Aspose.Words.Saving",
       "Aspose.Words.Tables",
       "Aspose.Words.Drawing",
       "Aspose.Words.Replacing",
       "System.Drawing",
       "System.Collections.Generic",
+      "System.Linq",
+      "Aspose.Words.Comparing",
       "System.Text"
     ],
     "key_apis": [
@@ -28,23 +29,23 @@
       "DocumentBuilder",
       "SaveFormat",
       "MemoryStream",
-      "Paragraph",
-      "Run",
+      "Path",
       "Table",
       "Cell",
       "StyleIdentifier",
-      "NodeType",
+      "Paragraph",
       "Shape",
-      "Path",
+      "NodeType",
       "Directory",
+      "Run",
       "Range",
       "FindReplaceOptions",
       "Font",
       "Watermark",
       "TextWatermarkOptions",
       "ProtectionType",
-      "File",
-      "Node"
+      "Node",
+      "File"
     ]
   },
   "stats": {
@@ -265,8 +266,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 17,
@@ -365,8 +366,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 26,
@@ -508,8 +509,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 39,

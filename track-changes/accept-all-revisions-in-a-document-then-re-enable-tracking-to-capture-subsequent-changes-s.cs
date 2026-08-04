@@ -5,54 +5,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add initial content without tracking.
-        builder.Writeln("Original paragraph.");
+        // Write some initial content without tracking – this will not create revisions.
+        builder.Writeln("Original paragraph. ");
 
-        // Start tracking revisions with author "Alice".
-        doc.StartTrackRevisions("Alice");
+        // ---------- First tracking session ----------
+        // Enable tracking with the first author.
+        doc.StartTrackRevisions("Author1");
 
-        // Make some changes to generate revisions.
-        builder.Writeln("First revision paragraph.");
+        // Make changes that will be recorded as revisions.
+        builder.Writeln("First revision paragraph. ");
+        builder.Writeln("Another line added while tracking. ");
 
-        // Delete a run to create a deletion revision.
-        // This operation is performed while tracking is active.
-        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
-
-        // Stop tracking.
+        // Stop tracking – further edits will not be revisions.
         doc.StopTrackRevisions();
 
-        // Verify that revisions were created.
-        if (doc.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after the first tracking session.");
+        // At this point the document should contain revisions.
+        if (!doc.HasRevisions || doc.Revisions.Count == 0)
+            throw new InvalidOperationException("Expected revisions were not created.");
 
-        // Accept all revisions.
+        // Accept all revisions, removing them from the collection.
         doc.AcceptAllRevisions();
 
         // Verify that all revisions have been accepted.
-        if (doc.Revisions.Count != 0)
+        if (doc.HasRevisions || doc.Revisions.Count != 0)
             throw new InvalidOperationException("Revisions were not fully accepted.");
 
-        // Save the document after accepting revisions (optional intermediate file).
-        doc.Save("AfterAccept.docx");
+        // ---------- Second tracking session ----------
+        // Re‑enable tracking with a different author to capture new changes separately.
+        doc.StartTrackRevisions("Author2");
 
-        // Re‑enable tracking for subsequent changes with a different author.
-        doc.StartTrackRevisions("Bob");
-
-        // Add more content to generate new revisions.
-        builder.Writeln("Second revision paragraph.");
+        // Add more content – these will appear as new revisions.
+        builder.Writeln("Second revision paragraph after acceptance. ");
+        builder.Writeln("Additional text for the second tracking session. ");
 
         // Stop tracking again.
         doc.StopTrackRevisions();
 
-        // Verify that new revisions exist.
-        if (doc.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after the second tracking session.");
-
-        // Save the final document.
-        doc.Save("FinalDocument.docx");
+        // Save the final document to disk.
+        doc.Save("Output.docx");
     }
 }

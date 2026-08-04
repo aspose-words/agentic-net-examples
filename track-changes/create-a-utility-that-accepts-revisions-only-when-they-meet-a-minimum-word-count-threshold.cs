@@ -1,58 +1,56 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 
-public class Program
+public class RevisionUtility
 {
     public static void Main()
     {
         // Minimum number of words a revision must contain to be accepted.
-        const int MinWordCount = 3;
+        const int MinWordCount = 5;
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial content that is not tracked as a revision.
-        builder.Writeln("Original content. ");
+        // Write some initial content that is not a revision.
+        builder.Writeln("Original paragraph without tracking.");
 
-        // Start tracking revisions with a specific author.
+        // Start tracking revisions.
         doc.StartTrackRevisions("UtilityAuthor", DateTime.Now);
 
-        // Insert revisions with varying word counts.
-        builder.Writeln("Short.");                     // 1 word
-        builder.Writeln("This is a longer revision."); // 5 words
-        builder.Writeln("Another short");               // 2 words
-        builder.Writeln("Accept this revision because it has enough words."); // 9 words
+        // Insert a short revision (less than the threshold).
+        builder.Writeln("Short rev.");
+
+        // Insert a longer revision (meets the threshold).
+        builder.Writeln("This is a longer revision that should be accepted.");
+
+        // Delete a short piece of text to create a deletion revision.
+        Paragraph paraToDelete = doc.FirstSection.Body.Paragraphs[1]; // "Short rev."
+        paraToDelete.Remove();
 
         // Stop tracking further changes.
         doc.StopTrackRevisions();
 
-        // Process revisions: accept only those meeting the minimum word count.
-        // Iterate backwards because accepting/rejecting modifies the collection.
-        for (int i = doc.Revisions.Count - 1; i >= 0; i--)
+        // Process revisions: accept only those with word count >= MinWordCount.
+        List<Revision> revisions = doc.Revisions.Cast<Revision>().ToList();
+        foreach (Revision rev in revisions)
         {
-            Revision rev = doc.Revisions[i];
+            // Get the text associated with the revision.
+            string revText = rev.ParentNode?.GetText() ?? string.Empty;
 
-            // Consider only insertion revisions (they contain the added text).
-            if (rev.RevisionType == RevisionType.Insertion)
-            {
-                string text = rev.ParentNode.GetText();
+            // Count words by splitting on whitespace.
+            int wordCount = revText.Split(new char[] { ' ', '\t', '\r', '\n' },
+                                          StringSplitOptions.RemoveEmptyEntries).Length;
 
-                // Count words by splitting on whitespace.
-                int wordCount = 0;
-                foreach (string word in text.Split(new char[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    wordCount++;
-                }
-
-                if (wordCount >= MinWordCount)
-                    rev.Accept(); // Accept revision meeting the threshold.
-                else
-                    rev.Reject(); // Reject revision that does not meet the threshold.
-            }
+            if (wordCount >= MinWordCount)
+                rev.Accept();
+            else
+                rev.Reject();
         }
 
         // Save the resulting document.
-        doc.Save("RevisionsFiltered.docx");
+        doc.Save("RevisionsProcessed.docx");
     }
 }

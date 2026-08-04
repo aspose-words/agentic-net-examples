@@ -115,7 +115,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Use RevisionGroup to merge consecutive deletions into a single revision before accepting it.
   - Workflow: track-changes-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `accept-revisions-only-for-paragraphs-authored-by-a-specific-user-while-rejecting-others.cs`
   - Task: Accept revisions only for paragraphs authored by a specific user while rejecting others.
   - Workflow: track-changes-workflow
@@ -160,7 +160,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Reject all tracked changes in a document, then verify the HasRevisions property returns false.
   - Workflow: track-changes-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `compare-two-word-documents-to-generate-revision-differences-specifying-author-name-and-com.cs`
   - Task: Compare two Word documents to generate revision differences, specifying author name and comparison date.
   - Workflow: track-changes-workflow
@@ -225,7 +225,7 @@ Use the simplest workflow that satisfies the task.
   - Task: After rejecting all revisions, verify that the document's original content matches a baseline file.
   - Workflow: track-changes-workflow
   - Outputs: doc
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `implement-error-handling-for-attempts-to-accept-a-revision-that-has-already-been-rejected.cs`
   - Task: Implement error handling for attempts to accept a revision that has already been rejected.
   - Workflow: track-changes-workflow
@@ -254,7 +254,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -268,7 +268,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project
