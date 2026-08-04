@@ -45,7 +45,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOCX file, extract content between two paragraphs, and save the result as a new DOCX.
   - Workflow: text-range-extraction
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `load-a-docm-file-extract-content-between-a-macro-enabled-field-and-a-paragraph-and-save-as.cs`
   - Task: Load a DOCM file, extract content between a macro-enabled field and a paragraph, and save as DOCX.
   - Workflow: targeted-node-extraction
@@ -65,7 +65,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract a mixed node range that starts with a table cell and ends with a paragraph, maintaining layout.
   - Workflow: table-structured-extraction
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `extract-a-range-of-nodes-that-includes-tables-images-and-fields-preserving-original-hierar.cs`
   - Task: Extract a range of nodes that includes tables, images, and fields, preserving original hierarchy in the output.
   - Workflow: table-structured-extraction
@@ -95,12 +95,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Use DocumentBuilder to insert extracted node collection into a new document at a custom bookmark location.
   - Workflow: targeted-node-extraction
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `duplicate-extracted-content-between-a-table-and-a-field-node-within-the-original-document.cs`
   - Task: Duplicate extracted content between a table and a field node within the original document without altering formatting.
   - Workflow: table-structured-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `save-extracted-content-as-a-docx-file-while-preserving-embedded-fields-and-their-evaluatio.cs`
   - Task: Save extracted content as a DOCX file while preserving embedded fields and their evaluation results.
   - Workflow: targeted-node-extraction
@@ -145,7 +145,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract content between two bookmark nodes and replace the original range with a placeholder paragraph.
   - Workflow: targeted-node-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `extract-content-between-a-paragraph-and-a-comment-node-then-log-the-extracted-text-to-a-mo.cs`
   - Task: Extract content between a paragraph and a comment node, then log the extracted text to a monitoring system.
   - Workflow: targeted-node-extraction
@@ -160,27 +160,27 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a command-line tool that accepts start and end node IDs and outputs the extracted segment as PDF.
   - Workflow: text-range-extraction
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-unit-test-that-verifies-extraction-of-content-between-two-specific-paragraphs-ret.cs`
   - Task: Create a unit test that verifies extraction of content between two specific paragraphs retains original text styling.
   - Workflow: text-range-extraction
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `develop-a-macro-that-calls-the-extraction-api-to-copy-selected-content-into-the-clipboard.cs`
   - Task: Develop a macro that calls the extraction API to copy selected content into the clipboard for pasting elsewhere.
   - Workflow: text-range-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `extract-a-range-that-starts-inside-a-shape-s-image-and-ends-at-a-field-preserving-both-ele.cs`
   - Task: Extract a range that starts inside a shape's image and ends at a field, preserving both elements.
   - Workflow: image-shape-extraction
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `extract-content-between-two-nodes-in-a-document-then-encrypt-the-resulting-file-using-a-pa.cs`
   - Task: Extract content between two nodes in a document, then encrypt the resulting file using a password.
   - Workflow: text-range-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `implement-parallel-processing-to-extract-node-ranges-from-multiple-documents-simultaneousl.cs`
   - Task: Implement parallel processing to extract node ranges from multiple documents simultaneously, improving performance.
   - Workflow: text-range-extraction
@@ -217,7 +217,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 - Package: `Newtonsoft.Json`
 
 ## Command reference
@@ -232,7 +232,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Newtonsoft.Json
 ```
 

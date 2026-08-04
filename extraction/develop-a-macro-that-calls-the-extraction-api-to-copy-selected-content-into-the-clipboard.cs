@@ -1,50 +1,42 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
 public class Program
 {
-    // Entry point of the console application.
-    [STAThread]
     public static void Main()
     {
-        // 1. Create a sample document with a bookmark that defines the content to copy.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("Paragraph before the copy range.");
-        builder.StartBookmark("CopyRange");
-        builder.Writeln("This text will be copied to the clipboard.");
-        builder.EndBookmark("CopyRange");
-        builder.Writeln("Paragraph after the copy range.");
+        // Create a sample document with multiple paragraphs.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph to copy.");
+        builder.Writeln("Third paragraph.");
 
-        const string samplePath = "sample.docx";
-        sampleDoc.Save(samplePath);
+        const string inputPath = "sample.docx";
+        doc.Save(inputPath);
 
-        // 2. Load the document we just created.
-        Document loadedDoc = new Document(samplePath);
+        // Load the document from the file.
+        Document loaded = new Document(inputPath);
 
-        // 3. Locate the bookmark that bounds the content we want to extract.
-        Bookmark copyBookmark = loadedDoc.Range.Bookmarks["CopyRange"];
-        if (copyBookmark == null)
-            throw new InvalidOperationException("Bookmark 'CopyRange' was not found in the document.");
+        // Extract the second paragraph (index 1).
+        Paragraph paragraph = loaded.FirstSection?.Body?.Paragraphs[1];
+        if (paragraph == null)
+            throw new InvalidOperationException("Target paragraph not found.");
 
-        // 4. Extract the text inside the bookmark.
-        string extractedText = copyBookmark.Text;
-        if (string.IsNullOrEmpty(extractedText))
-            throw new InvalidOperationException("No text was extracted from the bookmark.");
+        string extractedText = paragraph.GetText().TrimEnd('\r', '\n');
 
-        // 5. Write the extracted text to a file (simulating the clipboard operation).
-        const string outputPath = "clipboard.txt";
+        // Write the extracted text to a file for verification (simulating clipboard copy).
+        const string outputPath = "extracted.txt";
         File.WriteAllText(outputPath, extractedText);
 
-        // 6. Verify that the output file was created and contains the expected text.
+        // Validate that the output file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to write the extracted text to the output file.");
+            throw new InvalidOperationException("Extracted output file was not created.");
 
-        string fileContent = File.ReadAllText(outputPath);
-        if (fileContent != extractedText)
-            throw new InvalidOperationException("Verification failed: file content does not match extracted text.");
-
-        // Program completes without requiring user interaction.
+        // Indicate successful completion.
+        Console.WriteLine("Extraction completed and text written to '" + outputPath + "'.");
     }
 }

@@ -10,47 +10,47 @@
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Tables",
-      "Newtonsoft.Json",
       "Aspose.Words.Fields",
+      "System.Collections.Generic",
       "Aspose.Words.Drawing",
       "Aspose.Words.Saving",
-      "System.Collections.Generic",
       "System.Linq",
-      "System.Text",
       "System.IO.Compression",
+      "Newtonsoft.Json",
+      "System.Text",
       "Aspose.Words.Notes",
+      "System.Collections.Concurrent",
       "System.Threading.Tasks"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
+      "Node",
       "File",
       "Paragraph",
-      "Node",
-      "NodeType",
       "SaveFormat",
       "Range",
       "Field",
+      "NodeType",
       "Run",
       "Table",
-      "Row",
       "Cell",
       "MemoryStream",
-      "StyleIdentifier",
+      "Font",
       "CompositeNode",
+      "StyleIdentifier",
+      "Path",
       "FieldType",
       "Directory",
-      "Path",
       "Shape",
-      "ImageData",
-      "Font"
+      "ImageData"
     ]
   },
   "stats": {
@@ -119,8 +119,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
@@ -164,8 +164,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
@@ -230,8 +230,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 12,
@@ -241,8 +241,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 13,
@@ -340,8 +340,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 22,
@@ -373,8 +373,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 25,
@@ -384,8 +384,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 26,
@@ -395,8 +395,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 27,
@@ -406,8 +406,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
@@ -417,8 +417,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 29,

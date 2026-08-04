@@ -3,121 +3,94 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsExtractionExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a sample source document.
+        const string sourcePath = "source.docx";
+        CreateSourceDocument(sourcePath);
+
+        // Load the source document.
+        Document sourceDoc = new Document(sourcePath);
+
+        // Locate the start cell (first cell in the document).
+        Cell startCell = sourceDoc.GetChildNodes(NodeType.Cell, true)[0] as Cell;
+        if (startCell == null)
+            throw new InvalidOperationException("Start cell not found.");
+
+        // Locate the end paragraph (the first paragraph that follows the table).
+        Paragraph endParagraph = null;
+        NodeCollection allParagraphs = sourceDoc.GetChildNodes(NodeType.Paragraph, true);
+        foreach (Paragraph para in allParagraphs)
         {
-            // -------------------------------------------------
-            // 1. Create a sample source document.
-            // -------------------------------------------------
-            Document sourceDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-            // Intro paragraph before the table.
-            builder.Writeln("Intro paragraph before the table.");
-
-            // Build a 2x2 table.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1, Row 1");
-            builder.InsertCell();
-            builder.Write("Cell 2, Row 1");
-            builder.EndRow();
-
-            builder.InsertCell();
-            builder.Write("Cell 1, Row 2");
-            builder.InsertCell();
-            builder.Write("Cell 2, Row 2");
-            builder.EndRow();
-            builder.EndTable();
-
-            // Paragraph that will serve as the end boundary of the extraction.
-            builder.Writeln("Paragraph after the table – end of extraction range.");
-
-            // Save the source document (so we have a physical file to load later).
-            const string sourcePath = "source.docx";
-            sourceDoc.Save(sourcePath);
-
-            // -------------------------------------------------
-            // 2. Load the document back (demonstrates load workflow).
-            // -------------------------------------------------
-            Document loadedDoc = new Document(sourcePath);
-
-            // -------------------------------------------------
-            // 3. Locate the start node (first cell of the first table) 
-            //    and the end node (the paragraph after the table).
-            // -------------------------------------------------
-            Cell startCell = loadedDoc.GetChildNodes(NodeType.Cell, true)[0] as Cell;
-            if (startCell == null)
-                throw new InvalidOperationException("Start cell not found.");
-
-            Paragraph endParagraph = null;
-            foreach (Paragraph para in loadedDoc.GetChildNodes(NodeType.Paragraph, true))
+            // The paragraph whose previous sibling is a table is the first paragraph after the table.
+            if (para.PreviousSibling != null && para.PreviousSibling.NodeType == NodeType.Table)
             {
-                if (para.GetText().Contains("Paragraph after the table"))
-                {
-                    endParagraph = para;
-                    break;
-                }
+                endParagraph = para;
+                break;
             }
-            if (endParagraph == null)
-                throw new InvalidOperationException("End paragraph not found.");
-
-            // -------------------------------------------------
-            // 4. Prepare the destination document.
-            // -------------------------------------------------
-            Document extractedDoc = new Document();
-            extractedDoc.RemoveAllChildren();
-
-            Section section = new Section(extractedDoc);
-            extractedDoc.AppendChild(section);
-            Body body = new Body(extractedDoc);
-            section.AppendChild(body);
-
-            // -------------------------------------------------
-            // 5. Import nodes from the source document to the destination.
-            // -------------------------------------------------
-            // NodeImporter handles the required import (style, list, etc.) and creates nodes that belong to the destination document.
-            NodeImporter importer = new NodeImporter(loadedDoc, extractedDoc, ImportFormatMode.KeepSourceFormatting);
-
-            // Start traversal from the start cell.
-            Node currentNode = startCell;
-            while (currentNode != null)
-            {
-                // Skip Cell nodes – the table will be imported as a whole later.
-                if (currentNode.NodeType == NodeType.Cell)
-                {
-                    // Do nothing; the Table node will be processed later.
-                }
-                else if (currentNode.NodeType == NodeType.Paragraph || currentNode.NodeType == NodeType.Table)
-                {
-                    // Import the node into the destination document.
-                    Node importedNode = importer.ImportNode(currentNode, true);
-                    // Append block‑level nodes directly to the body.
-                    body.AppendChild(importedNode);
-                }
-
-                // Stop when we have processed the end paragraph.
-                if (currentNode == endParagraph)
-                    break;
-
-                // Move to the next node in document order.
-                currentNode = currentNode.NextPreOrder(loadedDoc);
-            }
-
-            // -------------------------------------------------
-            // 6. Save the extracted content.
-            // -------------------------------------------------
-            const string extractedPath = "extracted.docx";
-            extractedDoc.Save(extractedPath);
-
-            // Verify that the output file was created.
-            if (!File.Exists(extractedPath))
-                throw new InvalidOperationException("The extracted document was not created.");
-
-            Console.WriteLine($"Extraction completed. Output saved to '{extractedPath}'.");
         }
+
+        if (endParagraph == null)
+            throw new InvalidOperationException("End paragraph not found.");
+
+        // Build a new document that will contain the extracted range.
+        Document resultDoc = new Document();
+        resultDoc.RemoveAllChildren();
+
+        // Create a new section and body for the result document.
+        Section resultSection = new Section(resultDoc);
+        resultDoc.AppendChild(resultSection);
+        Body resultBody = new Body(resultDoc);
+        resultSection.AppendChild(resultBody);
+
+        // Import the table that contains the start cell.
+        Table containingTable = startCell.GetAncestor(NodeType.Table) as Table;
+        if (containingTable == null)
+            throw new InvalidOperationException("Containing table not found.");
+
+        NodeImporter importer = new NodeImporter(sourceDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedTable = importer.ImportNode(containingTable, true);
+        resultBody.AppendChild(importedTable);
+
+        // Import the end paragraph.
+        Node importedParagraph = importer.ImportNode(endParagraph, true);
+        resultBody.AppendChild(importedParagraph);
+
+        // Save the extracted content.
+        const string resultPath = "extracted.docx";
+        resultDoc.Save(resultPath);
+
+        // Verify that the output file was created.
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("Extraction output was not created.");
+    }
+
+    // Helper method to create a sample document with a table followed by paragraphs.
+    private static void CreateSourceDocument(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 2x2 table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
+        builder.InsertCell();
+        builder.Write("Cell 1,2");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Add paragraphs after the table.
+        builder.Writeln("Paragraph after table 1.");
+        builder.Writeln("Paragraph after table 2.");
+
+        doc.Save(filePath);
     }
 }
