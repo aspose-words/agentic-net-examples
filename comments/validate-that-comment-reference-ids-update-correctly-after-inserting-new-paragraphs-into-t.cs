@@ -11,52 +11,64 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add an initial paragraph that will contain the comment.
-        builder.Writeln("Paragraph before comment.");
+        // Add the original paragraph that will contain the comment.
+        builder.Writeln("First paragraph with comment.");
 
-        // Create a comment with author metadata.
+        // Create a comment anchored to the above paragraph.
         Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("This is a sample comment.");
+        comment.SetText("Initial comment.");
 
-        // Anchor the comment to a range of text inside the first paragraph.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
+        // Build the comment range: start, commented text, end, then the comment itself.
+        Paragraph? para = doc.FirstSection?.Body?.FirstParagraph;
+        if (para == null)
+        {
+            Console.WriteLine("Failed to locate the first paragraph.");
+            return;
+        }
+
         para.AppendChild(new CommentRangeStart(doc, comment.Id));
         para.AppendChild(new Run(doc, "Commented text."));
         para.AppendChild(new CommentRangeEnd(doc, comment.Id));
         para.AppendChild(comment);
 
-        // Insert a new paragraph before the existing paragraph.
-        DocumentBuilder insertBuilder = new DocumentBuilder(doc);
-        insertBuilder.MoveToDocumentStart();
-        insertBuilder.Writeln("Inserted paragraph before the commented paragraph.");
+        // Insert a new paragraph before the paragraph that holds the comment.
+        Paragraph newParagraph = new Paragraph(doc);
+        newParagraph.AppendChild(new Run(doc, "Inserted paragraph before comment."));
+        doc.FirstSection?.Body?.InsertBefore(newParagraph, para);
 
-        // Verify that each comment's Id matches its range start and end identifiers.
-        var comments = doc.GetChildNodes(NodeType.Comment, true)
-                          .OfType<Comment>()
-                          .ToList();
+        // Verify that the comment ID matches its range start and end IDs.
+        Comment? retrievedComment = doc.GetChildNodes(NodeType.Comment, true)
+                                        .OfType<Comment>()
+                                        .FirstOrDefault();
 
-        bool allMatch = true;
-        foreach (Comment c in comments)
+        if (retrievedComment == null)
         {
-            // The comment's previous sibling should be the CommentRangeEnd.
-            CommentRangeEnd? rangeEnd = c.PreviousSibling as CommentRangeEnd;
-            // The CommentRangeStart is three nodes before the comment.
-            CommentRangeStart? rangeStart = c.PreviousSibling?.PreviousSibling?.PreviousSibling as CommentRangeStart;
-
-            if (rangeStart == null || rangeEnd == null ||
-                rangeStart.Id != c.Id || rangeEnd.Id != c.Id)
-            {
-                allMatch = false;
-                break;
-            }
+            Console.WriteLine("No comment found in the document.");
+            return;
         }
 
-        Console.WriteLine(allMatch
-            ? "All comment reference IDs are consistent after insertion."
-            : "Comment reference IDs mismatch detected.");
+        int commentId = retrievedComment.Id;
 
-        // Save the document for visual inspection.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CommentIdsUpdated.docx");
+        var rangeStart = doc.GetChildNodes(NodeType.CommentRangeStart, true)
+                            .OfType<CommentRangeStart>()
+                            .FirstOrDefault(r => r.Id == commentId);
+
+        var rangeEnd = doc.GetChildNodes(NodeType.CommentRangeEnd, true)
+                          .OfType<CommentRangeEnd>()
+                          .FirstOrDefault(r => r.Id == commentId);
+
+        bool idsMatch = rangeStart != null && rangeEnd != null &&
+                        rangeStart.Id == commentId && rangeEnd.Id == commentId;
+
+        Console.WriteLine($"Comment ID: {commentId}");
+        Console.WriteLine($"Range Start ID: {(rangeStart != null ? rangeStart.Id.ToString() : "null")}");
+        Console.WriteLine($"Range End ID: {(rangeEnd != null ? rangeEnd.Id.ToString() : "null")}");
+        Console.WriteLine($"IDs consistent: {idsMatch}");
+
+        // Save the document to verify the result manually if needed.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "CommentIdUpdate.docx");
         doc.Save(outputPath);
     }
 }

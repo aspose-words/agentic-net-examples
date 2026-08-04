@@ -3,56 +3,60 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 
-public class Program
+namespace CommentAuthorUppercase
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare file names.
-        string inputPath = "input.docx";
-        string outputPath = "output.docx";
+        public static void Main()
+        {
+            // Input and output file names.
+            const string inputFile = "input.docx";
+            const string outputFile = "output.docx";
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a sample document with comments and save it.
-        // -----------------------------------------------------------------
-        Document createDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(createDoc);
+            // -------------------------------------------------
+            // Step 1: Create a sample document with a comment.
+            // -------------------------------------------------
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-        // Add a paragraph that will contain comments.
-        builder.Writeln("This is a sample paragraph with comments.");
+            // Add a paragraph that will contain the comment.
+            builder.Writeln("This is a sample paragraph with a comment.");
 
-        // First comment.
-        Comment comment1 = new Comment(createDoc, "John Doe", "JD", DateTime.Now);
-        comment1.SetText("First comment.");
-        builder.CurrentParagraph.AppendChild(comment1);
+            // Create a comment with a mixed‑case author name.
+            // The constructor (Document, author, initial, date) is the recommended way.
+            Comment comment = new Comment(sampleDoc, "John Doe", "JD", DateTime.Now);
+            // Set the comment text – this method creates a paragraph and a run inside the comment.
+            comment.SetText("Initial comment text.");
 
-        // Second comment.
-        Comment comment2 = new Comment(createDoc, "Jane Smith", "JS", DateTime.Now);
-        comment2.SetText("Second comment.");
-        builder.CurrentParagraph.AppendChild(comment2);
+            // Attach the comment to the current paragraph.
+            builder.CurrentParagraph.AppendChild(comment);
 
-        // Save the document that will be loaded later.
-        createDoc.Save(inputPath);
+            // Save the sample document to be loaded later.
+            sampleDoc.Save(inputFile);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the document, convert comment authors to uppercase.
-        // -----------------------------------------------------------------
-        Document loadDoc = new Document(inputPath);
+            // -------------------------------------------------
+            // Step 2: Load the document and convert comment authors to uppercase.
+            // -------------------------------------------------
+            Document doc = new Document(inputFile);
 
-        // Enumerate all comment nodes safely.
-        var comments = loadDoc.GetChildNodes(NodeType.Comment, true)
+            // Enumerate all comment nodes safely.
+            var comments = doc.GetChildNodes(NodeType.Comment, true)
                               .OfType<Comment>()
                               .ToList();
 
-        foreach (Comment c in comments)
-        {
-            // Transform the author name to uppercase.
-            if (!string.IsNullOrEmpty(c.Author))
-                c.Author = c.Author.ToUpperInvariant();
-        }
+            foreach (Comment c in comments)
+            {
+                // Guard against null (Author is never null, but we check for safety).
+                if (!string.IsNullOrEmpty(c.Author))
+                {
+                    c.Author = c.Author.ToUpperInvariant();
+                }
+            }
 
-        // -----------------------------------------------------------------
-        // Step 3: Save the updated document.
-        // -----------------------------------------------------------------
-        loadDoc.Save(outputPath);
+            // -------------------------------------------------
+            // Step 3: Save the modified document.
+            // -------------------------------------------------
+            doc.Save(outputFile);
+        }
     }
 }

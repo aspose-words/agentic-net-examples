@@ -2,58 +2,51 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to add content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add three paragraphs, each with a comment having a different date.
-        AddParagraphWithComment(builder, "First paragraph.", "Alice", "A", DateTime.Now.AddDays(-5));
-        AddParagraphWithComment(builder, "Second paragraph.", "Bob", "B", DateTime.Now.AddDays(-2));
-        AddParagraphWithComment(builder, "Third paragraph.", "Charlie", "C", DateTime.Now);
+        // Add a paragraph that will hold the comments.
+        builder.Writeln("Sample paragraph for comments.");
 
-        // Define the threshold: comments older than 3 days will be removed.
-        DateTime threshold = DateTime.Now.AddDays(-3);
+        // Create an old comment (10 days ago) – this should be removed.
+        DateTime oldDate = DateTime.Now.AddDays(-10);
+        Comment oldComment = new Comment(doc, "Old Author", "OA", oldDate);
+        oldComment.SetText("This comment is older than the threshold.");
+        builder.CurrentParagraph.AppendChild(oldComment);
 
-        // Collect all comment nodes safely into a list.
-        var comments = doc.GetChildNodes(NodeType.Comment, true)
-                          .OfType<Comment>()
-                          .ToList();
+        // Create a recent comment (today) – this should be kept.
+        DateTime recentDate = DateTime.Now;
+        Comment recentComment = new Comment(doc, "New Author", "NA", recentDate);
+        recentComment.SetText("This comment is within the threshold.");
+        builder.CurrentParagraph.AppendChild(recentComment);
+
+        // Define the date threshold: comments older than this will be removed.
+        DateTime threshold = DateTime.Now.AddDays(-5);
+
+        // Enumerate all comment nodes safely (make a copy to avoid modifying the collection while iterating).
+        var allComments = doc.GetChildNodes(NodeType.Comment, true)
+                             .OfType<Comment>()
+                             .ToList();
 
         // Remove comments whose DateTime is earlier than the threshold.
-        foreach (Comment comment in comments)
+        foreach (Comment comment in allComments)
         {
             if (comment.DateTime < threshold)
                 comment.Remove();
         }
 
         // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
         // Save the resulting document.
-        string outputPath = Path.Combine(outputDir, "CommentsFiltered.docx");
+        string outputPath = Path.Combine(outputDir, "comments_filtered.docx");
         doc.Save(outputPath);
-    }
-
-    // Helper method to add a paragraph with an attached comment.
-    private static void AddParagraphWithComment(DocumentBuilder builder, string paragraphText,
-                                                string author, string initial, DateTime commentDate)
-    {
-        // Write the paragraph text.
-        builder.Writeln(paragraphText);
-
-        // Create a new comment.
-        Comment comment = new Comment(builder.Document, author, initial, commentDate);
-        comment.SetText($"Comment by {author} on {commentDate:d}");
-
-        // Append the comment to the current paragraph.
-        builder.CurrentParagraph.AppendChild(comment);
     }
 }

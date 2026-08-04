@@ -1,66 +1,60 @@
 using System;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
 public class Program
 {
-    // Simple logger that writes messages to the console.
-    private static void Log(string message)
+    // Custom callback that logs comment insertions and removals.
+    private class CommentLogger : INodeChangingCallback
     {
-        Console.WriteLine($"[Log] {message}");
+        void INodeChangingCallback.NodeInserted(NodeChangingArgs args)
+        {
+            if (args.Node.NodeType == NodeType.Comment)
+            {
+                var comment = (Comment)args.Node;
+                Console.WriteLine($"[Log] Comment added – Author: {comment.Author}, Text: \"{comment.GetText().Trim()}\"");
+            }
+        }
+
+        void INodeChangingCallback.NodeInserting(NodeChangingArgs args) { }
+
+        void INodeChangingCallback.NodeRemoved(NodeChangingArgs args)
+        {
+            if (args.Node.NodeType == NodeType.Comment)
+            {
+                var comment = (Comment)args.Node;
+                Console.WriteLine($"[Log] Comment removed – Author: {comment.Author}, Text: \"{comment.GetText().Trim()}\"");
+            }
+        }
+
+        void INodeChangingCallback.NodeRemoving(NodeChangingArgs args) { }
     }
 
     public static void Main()
     {
-        // Ensure the Aspose.Words license is not required for this example.
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is the first paragraph of the document.");
 
-        // Write a paragraph that will contain a comment.
-        builder.Writeln("This is a sample paragraph for comment demonstration.");
+        // Attach the custom node‑changing callback.
+        doc.NodeChangingCallback = new CommentLogger();
 
-        // Create a comment and attach it to the paragraph.
-        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("Please review this paragraph.");
-        // Append the comment to the paragraph.
-        builder.CurrentParagraph.AppendChild(comment);
+        // Add first comment.
+        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
+        comment1.SetText("Please review this paragraph.");
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(comment1);
 
-        // Log the addition of the comment.
-        Log($"Comment added by '{comment.Author}' with text: \"{comment.GetText().Trim()}\"");
+        // Add second comment.
+        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
+        comment2.SetText("Consider rephrasing the sentence.");
+        firstParagraph.AppendChild(comment2);
 
-        // Save the document before removal to demonstrate both states.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-        string beforePath = Path.Combine(outputDir, "DocumentWithComment.docx");
-        doc.Save(beforePath);
-        Log($"Document saved with comment: {beforePath}");
+        // Remove the first comment to trigger the removal log.
+        comment1.Remove();
 
-        // Retrieve all comment nodes safely.
-        var comments = doc.GetChildNodes(NodeType.Comment, true)
-                          .OfType<Comment>()
-                          .ToList();
-
-        // Remove each comment while logging the removal.
-        foreach (Comment c in comments)
-        {
-            // Capture author before removal.
-            string author = c.Author;
-            string text = c.GetText().Trim();
-
-            // Remove the comment from the document.
-            c.Remove();
-
-            // Log the removal.
-            Log($"Comment removed by '{author}' with text: \"{text}\"");
-        }
-
-        // Save the document after removal.
-        string afterPath = Path.Combine(outputDir, "DocumentWithoutComment.docx");
-        doc.Save(afterPath);
-        Log($"Document saved after comment removal: {afterPath}");
+        // Save the document to verify that comments are persisted.
+        doc.Save("CommentEvents.docx");
     }
 }

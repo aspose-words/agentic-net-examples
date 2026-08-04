@@ -1,6 +1,6 @@
 # Comments Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Comments category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Comments category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Comments catego
 - Slug: comments
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Native Comment Api examples: 15
 - Export Report examples: 7
 - Rendered Output examples: 5
@@ -33,7 +33,7 @@ This folder contains the live, publish-ready C# examples for the Comments catego
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 
 ## Running Examples
 
@@ -42,7 +42,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -63,7 +63,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # PowerShell example
 Copy-Item ..\comments\load-a-docx-file-enumerate-all-comments-and-print-each-author-and-text-to-console.cs .\Program.cs
@@ -86,8 +86,8 @@ dotnet run --configuration Release --no-build
 | 8 | `filter-comments-by-author-and-export-only-those-comments-to-a-separate-word-document-for-r.cs` | Filter comments by author and export only those comments to a separate Word document for review. | export-report | docx | mcp |
 | 9 | `export-all-comments-from-a-docx-file-to-a-csv-file-with-author-date-and-text-columns.cs` | Export all comments from a DOCX file to a CSV file with author, date, and text columns. | export-report | docx, csv | mcp |
 | 10 | `import-comments-from-an-exported-xml-file-and-attach-them-to-appropriate-locations-in-a-ne.cs` | Import comments from an exported XML file and attach them to appropriate locations in a new document. | export-report | docx, xml | mcp |
-| 11 | `extract-comment-metadata-author-date-and-text-and-write-it-to-a-json-file.cs` | Extract comment metadata-author, date, and text-and write it to a JSON file. | export-report | docx, json | mcp |
-| 12 | `search-comments-containing-a-specific-keyword-and-highlight-the-corresponding-text-range-i.cs` | Search comments containing a specific keyword and highlight the corresponding text range in the document. | native-comment-api | docx | existing_repo |
+| 11 | `extract-comment-metadata-author-date-and-text-and-write-it-to-a-json-file.cs` | Extract comment metadata-author, date, and text-and write it to a JSON file. | export-report | docx, json | llm |
+| 12 | `search-comments-containing-a-specific-keyword-and-highlight-the-corresponding-text-range-i.cs` | Search comments containing a specific keyword and highlight the corresponding text range in the document. | native-comment-api | docx | mcp |
 | 13 | `load-multiple-word-documents-from-a-folder-aggregate-their-comments-and-generate-a-summary.cs` | Load multiple Word documents from a folder, aggregate their comments, and generate a summary report. | export-report | docx | mcp |
 | 14 | `generate-a-printable-report-listing-all-comments-with-page-numbers-and-associated-paragrap.cs` | Generate a printable report listing all comments with page numbers and associated paragraph text. | export-report | docx | mcp |
 | 15 | `apply-a-custom-style-to-all-comment-text-blocks-within-a-document-to-match-corporate-brand.cs` | Apply a custom style to all comment text blocks within a document to match corporate branding. | native-comment-api | docx | mcp |
@@ -95,7 +95,7 @@ dotnet run --configuration Release --no-build
 | 17 | `convert-a-doc-file-to-pdf-while-retaining-all-comment-annotations-visible-in-the-output.cs` | Convert a DOC file to PDF while retaining all comment annotations visible in the output. | rendered-output | docx, pdf, doc | mcp |
 | 18 | `convert-a-document-with-comments-to-xps-format-ensuring-comments-appear-as-markup-annotati.cs` | Convert a document with comments to XPS format, ensuring comments appear as markup annotations. | rendered-output | xps | mcp |
 | 19 | `add-a-comment-containing-a-hyperlink-to-an-external-resource-and-verify-the-link-functions.cs` | Add a comment containing a hyperlink to an external resource and verify the link functions in PDF. | rendered-output | pdf | mcp |
-| 20 | `validate-that-comment-reference-ids-update-correctly-after-inserting-new-paragraphs-into-t.cs` | Validate that comment reference IDs update correctly after inserting new paragraphs into the document. | native-comment-api | docx | existing_repo |
+| 20 | `validate-that-comment-reference-ids-update-correctly-after-inserting-new-paragraphs-into-t.cs` | Validate that comment reference IDs update correctly after inserting new paragraphs into the document. | native-comment-api | docx | mcp |
 | 21 | `synchronize-comment-positions-after-document-sections-are-reordered-to-maintain-accurate-c.cs` | Synchronize comment positions after document sections are reordered to maintain accurate comment anchoring. | native-comment-api | docx | mcp |
 | 22 | `use-comment-collection-events-to-trigger-custom-logging-whenever-a-comment-is-added-or-rem.cs` | Use comment collection events to trigger custom logging whenever a comment is added or removed. | native-comment-api | docx | mcp |
 | 23 | `programmatically-accept-or-reject-comments-based-on-author-name-and-generate-a-revised-doc.cs` | Programmatically accept or reject comments based on author name and generate a revised document version. | native-comment-api | docx | mcp |
@@ -145,6 +145,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

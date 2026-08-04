@@ -7,41 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string sourceFile = "SourceDocument.docx";
-        const string reportFile = "FilteredComments.docx";
+        // Define file names in the working directory.
+        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "source.docx");
+        string exportPath = Path.Combine(Directory.GetCurrentDirectory(), "filtered-comments.docx");
 
         // -----------------------------------------------------------------
-        // Step 1: Create a sample source document with comments.
+        // 1. Create a sample document with several comments from different authors.
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
         // First paragraph with a comment from Alice.
-        srcBuilder.Writeln("First paragraph with a comment.");
-        Comment aliceComment = new Comment(sourceDoc, "Alice", "A", DateTime.Now);
-        aliceComment.SetText("This is Alice's comment.");
-        srcBuilder.CurrentParagraph.AppendChild(aliceComment);
+        builder.Writeln("First paragraph.");
+        Comment commentAlice = new Comment(sourceDoc, "Alice", "A", DateTime.Now);
+        commentAlice.SetText("Review the first paragraph.");
+        builder.CurrentParagraph.AppendChild(commentAlice);
 
         // Second paragraph with a comment from Bob.
-        srcBuilder.Writeln("Second paragraph with a comment.");
-        Comment bobComment = new Comment(sourceDoc, "Bob", "B", DateTime.Now);
-        bobComment.SetText("Bob's remark goes here.");
-        srcBuilder.CurrentParagraph.AppendChild(bobComment);
+        builder.Writeln("Second paragraph.");
+        Comment commentBob = new Comment(sourceDoc, "Bob", "B", DateTime.Now.AddMinutes(-5));
+        commentBob.SetText("Check the data in this paragraph.");
+        builder.CurrentParagraph.AppendChild(commentBob);
 
         // Third paragraph with another comment from Alice.
-        srcBuilder.Writeln("Third paragraph, another comment.");
-        Comment aliceSecond = new Comment(sourceDoc, "Alice", "A", DateTime.Now);
-        aliceSecond.SetText("Alice adds a second comment.");
-        srcBuilder.CurrentParagraph.AppendChild(aliceSecond);
+        builder.Writeln("Third paragraph.");
+        Comment commentAlice2 = new Comment(sourceDoc, "Alice", "A", DateTime.Now.AddHours(-1));
+        commentAlice2.SetText("Consider rephrasing this sentence.");
+        builder.CurrentParagraph.AppendChild(commentAlice2);
 
         // Save the source document.
-        sourceDoc.Save(sourceFile);
+        sourceDoc.Save(sourcePath);
 
         // -----------------------------------------------------------------
-        // Step 2: Load the source document and filter comments by author.
+        // 2. Load the document and filter comments by author.
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourceFile);
+        Document loadedDoc = new Document(sourcePath);
+
         const string targetAuthor = "Alice";
 
         var filteredComments = loadedDoc
@@ -51,28 +52,23 @@ public class Program
             .ToList();
 
         // -----------------------------------------------------------------
-        // Step 3: Create a new document that will contain only the filtered comments.
+        // 3. Create a new document that will contain only the filtered comments.
         // -----------------------------------------------------------------
-        Document reportDoc = new Document();
-        DocumentBuilder reportBuilder = new DocumentBuilder(reportDoc);
+        Document exportDoc = new Document();
+        DocumentBuilder exportBuilder = new DocumentBuilder(exportDoc);
 
-        if (filteredComments.Count == 0)
+        exportBuilder.Writeln($"Comments authored by \"{targetAuthor}\":");
+        exportBuilder.Writeln();
+
+        foreach (Comment c in filteredComments)
         {
-            reportBuilder.Writeln($"No comments found for author \"{targetAuthor}\".");
-        }
-        else
-        {
-            foreach (Comment comment in filteredComments)
-            {
-                // Write comment metadata and text.
-                reportBuilder.Writeln($"Author: {comment.Author}");
-                reportBuilder.Writeln($"Date: {comment.DateTime:O}");
-                reportBuilder.Writeln($"Text: {comment.GetText().Trim()}");
-                reportBuilder.Writeln(); // Blank line between comments.
-            }
+            exportBuilder.Writeln($"Author : {c.Author}");
+            exportBuilder.Writeln($"Date   : {c.DateTime:yyyy-MM-dd HH:mm}");
+            exportBuilder.Writeln($"Text   : {c.GetText().Trim()}");
+            exportBuilder.Writeln(); // Blank line between comments.
         }
 
-        // Save the report document.
-        reportDoc.Save(reportFile);
+        // Save the filtered comments document.
+        exportDoc.Save(exportPath);
     }
 }
