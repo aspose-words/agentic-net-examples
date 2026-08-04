@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using Aspose.Words;
+using Aspose.Words.Fields;
 using Aspose.Words.MailMerging;
 
 public class Program
@@ -11,33 +12,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define a mail merge region named "MyRegion".
-        builder.InsertField(" MERGEFIELD TableStart:MyRegion");
+        // Insert a page break before the mail merge region so each record starts on a new page.
+        builder.InsertBreak(BreakType.PageBreak);
 
-        // Insert a PAGE_BREAK field that will be repeated for each record.
-        // This ensures each repeat starts on a new page.
-        builder.InsertField(" PAGEBREAK ");
+        // Begin a mail merge region named "Employees".
+        builder.InsertField(" MERGEFIELD TableStart:Employees");
 
-        // Add some content inside the region.
+        // Insert merge fields that will be populated from the data source.
         builder.Write("Name: ");
         builder.InsertField(" MERGEFIELD Name");
-        builder.InsertParagraph();
+        builder.Writeln();
 
-        // End the region.
-        builder.InsertField(" MERGEFIELD TableEnd:MyRegion");
+        builder.Write("Title: ");
+        builder.InsertField(" MERGEFIELD Title");
+        builder.Writeln();
 
-        // Prepare a data source with several rows.
-        DataTable table = new DataTable("MyRegion");
+        // End the mail merge region.
+        builder.InsertField(" MERGEFIELD TableEnd:Employees");
+
+        // Prepare a DataTable that matches the region name and field names.
+        DataTable table = new DataTable("Employees");
         table.Columns.Add("Name");
-        table.Rows.Add("Alice");
-        table.Rows.Add("Bob");
-        table.Rows.Add("Charlie");
+        table.Columns.Add("Title");
+        table.Rows.Add(new object[] { "John Doe", "Manager" });
+        table.Rows.Add(new object[] { "Jane Smith", "Developer" });
+        table.Rows.Add(new object[] { "Bob Johnson", "Designer" });
 
-        // Execute the mail merge with regions. Each row will be placed in the region,
-        // and the PAGE_BREAK field ensures each repeat starts on a new page.
+        // Execute the mail merge with regions. The page break ensures each employee record starts on a new page.
         doc.MailMerge.ExecuteWithRegions(table);
 
         // Save the resulting document.
-        doc.Save("MailMergeWithPageBreak.docx");
+        doc.Save("MailMergeWithPageBreakPerRegion.docx");
     }
 }

@@ -1,6 +1,6 @@
 # Mail Merge Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Mail Merge category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Mail Merge category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Mail Merge cate
 - Slug: mail-merge
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Simple Mail Merge examples: 17
 - Region Mail Merge examples: 7
 - Image Mail Merge examples: 4
@@ -31,7 +31,7 @@ This folder contains the live, publish-ready C# examples for the Mail Merge cate
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 
 ## Running Examples
 
@@ -40,7 +40,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -61,7 +61,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # PowerShell example
 Copy-Item ..\mail-merge\create-a-mail-merge-template-programmatically-using-documentbuilder-and-add-static-header.cs .\Program.cs
@@ -80,7 +80,7 @@ dotnet run --configuration Release --no-build
 | 4 | `insert-a-table-placeholder-and-define-a-mail-merge-region-for-table-rows-using-documentbui.cs` | Insert a table placeholder and define a mail merge region for table rows using DocumentBuilder. | region-mail-merge | docx | mcp |
 | 5 | `handle-the-imagefieldmerging-event-to-customize-image-insertion-using-imagefieldmergingarg.cs` | Handle the ImageFieldMerging event to customize image insertion using ImageFieldMergingArgs. | image-mail-merge | docx | mcp |
 | 6 | `insert-a-company-logo-into-each-merged-document-by-handling-imagefieldmerging-with-a-stati.cs` | Insert a company logo into each merged document by handling ImageFieldMerging with a static image path. | image-mail-merge | docx | mcp |
-| 7 | `apply-conditional-logic-in-imagefieldmerging-to-select-different-images-based-on-field-nam.cs` | Apply conditional logic in ImageFieldMerging to select different images based on field name. | image-mail-merge | docx | llm |
+| 7 | `apply-conditional-logic-in-imagefieldmerging-to-select-different-images-based-on-field-nam.cs` | Apply conditional logic in ImageFieldMerging to select different images based on field name. | image-mail-merge | docx | mcp |
 | 8 | `set-the-text-property-of-a-merge-field-to-apply-bold-formatting-to-inserted-names.cs` | Set the Text property of a merge field to apply bold formatting to inserted names. | simple-mail-merge | docx | mcp |
 | 9 | `set-the-text-property-to-insert-formatted-dates-using-a-specific-culture-format-in-merge-f.cs` | Set the Text property to insert formatted dates using a specific culture format in merge fields. | simple-mail-merge | docx | mcp |
 | 10 | `load-xml-data-into-a-dataset-using-the-readxml-method-for-mail-merge-source.cs` | Load XML data into a DataSet using the ReadXml method for mail merge source. | simple-mail-merge | xml | mcp |
@@ -93,7 +93,7 @@ dotnet run --configuration Release --no-build
 | 17 | `retrieve-mail-merge-region-metadata-using-mailmergeregioninfo-to-verify-start-and-end-posi.cs` | Retrieve mail merge region metadata using MailMergeRegionInfo to verify start and end positions. | region-mail-merge | docx | mcp |
 | 18 | `save-the-merged-document-as-pdf-using-document-save-with-saveformat-pdf-after-mail-merge.cs` | Save the merged document as PDF using Document.Save with SaveFormat.Pdf after mail merge. | simple-mail-merge | pdf | mcp |
 | 19 | `save-the-merged-document-as-docx-using-document-save-with-saveformat-docx-after-mail-merge.cs` | Save the merged document as DOCX using Document.Save with SaveFormat.Docx after mail merge. | simple-mail-merge | docx, doc | mcp |
-| 20 | `perform-mail-merge-using-xml-data-source-loaded-into-a-dataset-and-generate-docx-output.cs` | Perform mail merge using XML data source loaded into a DataSet and generate DOCX output. | simple-mail-merge | docx, xml | mcp |
+| 20 | `perform-mail-merge-using-xml-data-source-loaded-into-a-dataset-and-generate-docx-output.cs` | Perform mail merge using XML data source loaded into a DataSet and generate DOCX output. | simple-mail-merge | docx, xml | llm |
 | 21 | `add-static-footer-text-to-the-template-using-documentbuilder-before-executing-mail-merge.cs` | Add static footer text to the template using DocumentBuilder before executing mail merge. | simple-mail-merge | docx | mcp |
 | 22 | `insert-a-page-break-field-before-each-region-to-start-new-pages-for-each-repeat.cs` | Insert a PAGE_BREAK field before each region to start new pages for each repeat. | region-mail-merge | docx | mcp |
 | 23 | `handle-missingfieldevent-to-implement-error-handling-for-absent-merge-fields-before-execut.cs` | Handle MissingFieldEvent to implement error handling for absent merge fields before execution. | simple-mail-merge | docx | mcp |
@@ -138,6 +138,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

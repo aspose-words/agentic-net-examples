@@ -3,50 +3,56 @@ using System.Data;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+namespace AsposeWordsMailMergeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a simple mail‑merge template with a region named "Customer".
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Begin the region.
-        builder.InsertField(" MERGEFIELD TableStart:Customer");
-        builder.Writeln();
-
-        // Fields that will be filled from the XML data.
-        builder.InsertField(" MERGEFIELD FullName");
-        builder.Writeln();
-        builder.InsertField(" MERGEFIELD Address");
-        builder.Writeln();
-
-        // End the region.
-        builder.InsertField(" MERGEFIELD TableEnd:Customer");
-
-        // Load XML data into a DataSet using ReadXml.
-        const string xml = @"
-<Customers>
-    <Customer>
+        public static void Main()
+        {
+            // Prepare a simple XML file that will be used as the mail merge data source.
+            string xmlContent = @"
+<Root>
+    <Person>
         <FullName>Thomas Hardy</FullName>
         <Address>120 Hanover Sq., London</Address>
-    </Customer>
-    <Customer>
+    </Person>
+    <Person>
         <FullName>Paolo Accorti</FullName>
         <Address>Via Monte Bianco 34, Torino</Address>
-    </Customer>
-</Customers>";
+    </Person>
+</Root>";
+            string xmlPath = Path.Combine(Path.GetTempPath(), "people.xml");
+            File.WriteAllText(xmlPath, xmlContent);
 
-        DataSet dataSet = new DataSet();
-        using (StringReader sr = new StringReader(xml))
-        {
-            dataSet.ReadXml(sr);
+            // Load the XML data into a DataSet using ReadXml.
+            DataSet dataSet = new DataSet();
+            dataSet.ReadXml(xmlPath);
+
+            // Create a new blank document and add mail merge fields.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Define a mail merge region that matches the DataTable name ("Person").
+            builder.InsertField("MERGEFIELD TableStart:Person");
+            builder.Writeln(); // optional line break
+
+            // Insert the fields that will be populated from the XML data.
+            builder.InsertField("MERGEFIELD FullName");
+            builder.Write(" - ");
+            builder.InsertField("MERGEFIELD Address");
+            builder.Writeln(); // optional line break
+
+            // End of the mail merge region.
+            builder.InsertField("MERGEFIELD TableEnd:Person");
+
+            // Perform the mail merge using the DataSet as the source.
+            doc.MailMerge.ExecuteWithRegions(dataSet);
+
+            // Save the merged document.
+            string outputPath = Path.Combine(Path.GetTempPath(), "MergedDocument.docx");
+            doc.Save(outputPath);
+
+            // The example finishes without waiting for user input.
         }
-
-        // Perform mail merge using the DataSet (the table name must match the region name).
-        doc.MailMerge.ExecuteWithRegions(dataSet);
-
-        // Save the merged document.
-        doc.Save("MailMergeResult.docx");
     }
 }

@@ -3,19 +3,28 @@ using System.Data;
 using System.IO;
 using Aspose.Words;
 
-namespace MailMergeXmlExample
+public class MailMergeXmlExample
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Define file names for the XML schema and data.
-            const string schemaFile = "people.xsd";
-            const string dataFile = "people.xml";
-            const string outputFile = "MailMergeResult.docx";
+        // Create a simple mail merge template document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Write("Dear ");
+        builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName", "<LastName>");
+        builder.Writeln(":");
+        builder.InsertField("MERGEFIELD Message", "<Message>");
+        builder.Writeln();
 
-            // Write a simple XML Schema (XSD) that defines the structure of the XML data.
-            File.WriteAllText(schemaFile,
+        // Prepare temporary folder for XML files.
+        string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "MailMergeData");
+        Directory.CreateDirectory(dataFolder);
+
+        // XML schema defining the structure of the data.
+        string schemaPath = Path.Combine(dataFolder, "persons.xsd");
+        File.WriteAllText(schemaPath,
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <xs:schema xmlns:xs=""http://www.w3.org/2001/XMLSchema"">
   <xs:element name=""persons"">
@@ -24,8 +33,9 @@ namespace MailMergeXmlExample
         <xs:element name=""person"" maxOccurs=""unbounded"">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name=""Name"" type=""xs:string"" />
-              <xs:element name=""Age"" type=""xs:int"" />
+              <xs:element name=""FirstName"" type=""xs:string"" />
+              <xs:element name=""LastName"" type=""xs:string"" />
+              <xs:element name=""Message"" type=""xs:string"" />
             </xs:sequence>
           </xs:complexType>
         </xs:element>
@@ -34,50 +44,35 @@ namespace MailMergeXmlExample
   </xs:element>
 </xs:schema>");
 
-            // Write sample XML data that conforms to the above schema.
-            File.WriteAllText(dataFile,
+        // XML data matching the schema.
+        string dataPath = Path.Combine(dataFolder, "persons.xml");
+        File.WriteAllText(dataPath,
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <persons>
   <person>
-    <Name>John Doe</Name>
-    <Age>30</Age>
+    <FirstName>John</FirstName>
+    <LastName>Doe</LastName>
+    <Message>Hello, this is a merged message.</Message>
   </person>
   <person>
-    <Name>Jane Smith</Name>
-    <Age>25</Age>
-  </person>
-  <person>
-    <Name>Bob Johnson</Name>
-    <Age>40</Age>
+    <FirstName>Jane</FirstName>
+    <LastName>Smith</LastName>
+    <Message>Welcome to the mail merge example.</Message>
   </person>
 </persons>");
 
-            // Load the XML schema and data into a DataSet.
-            DataSet dataSet = new DataSet();
-            dataSet.ReadXmlSchema(schemaFile);
-            dataSet.ReadXml(dataFile);
+        // Load XML schema and data into a DataSet.
+        DataSet dataSet = new DataSet();
+        dataSet.ReadXmlSchema(schemaPath);
+        dataSet.ReadXml(dataPath);
 
-            // The DataTable that contains the rows we want to merge.
-            // The table name is taken from the XSD element name ("person").
-            DataTable peopleTable = dataSet.Tables["person"];
+        // Perform mail merge using the first table in the DataSet.
+        // The table name will be the root element name ("persons") or the first generated table.
+        // Using ExecuteWithRegions allows merging multiple records automatically.
+        doc.MailMerge.ExecuteWithRegions(dataSet);
 
-            // Create a simple Word document with merge fields that match the column names.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert a line that will be repeated for each record.
-            builder.InsertField("MERGEFIELD Name", "<Name>");
-            builder.Write(" is ");
-            builder.InsertField("MERGEFIELD Age", "<Age>");
-            builder.Writeln(" years old.");
-            // Add a page break after each record for clarity (optional).
-            builder.InsertBreak(BreakType.PageBreak);
-
-            // Perform the mail merge using the DataTable.
-            doc.MailMerge.Execute(peopleTable);
-
-            // Save the merged document.
-            doc.Save(outputFile);
-        }
+        // Save the merged document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedResult.docx");
+        doc.Save(outputPath);
     }
 }

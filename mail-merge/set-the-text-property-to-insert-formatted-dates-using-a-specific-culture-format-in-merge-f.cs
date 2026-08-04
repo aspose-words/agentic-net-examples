@@ -11,46 +11,50 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a MERGEFIELD that expects a date value and includes a date format switch.
-        // The format switch (\\@) will be ignored because we will supply the formatted text ourselves.
-        builder.InsertField("MERGEFIELD OrderDate \\@ \"dddd, d MMMM yyyy\"");
+        // Insert a MERGEFIELD that expects a DateTime value.
+        // The field includes a date format switch (\\@) which will be ignored because we set the Text property manually.
+        builder.InsertField("MERGEFIELD MyDate \\@ \"dddd, d MMMM yyyy\"");
 
-        // Register a field merging callback that formats DateTime values using a specific culture.
+        // Assign a custom field merging callback to format dates.
         doc.MailMerge.FieldMergingCallback = new DateFormattingCallback();
 
-        // Perform the mail merge with a single date value.
-        DateTime orderDate = new DateTime(2023, 12, 15);
-        doc.MailMerge.Execute(new[] { "OrderDate" }, new object[] { orderDate });
+        // Execute the mail merge with a single date value.
+        DateTime mergeDate = new DateTime(2023, 12, 25);
+        doc.MailMerge.Execute(new[] { "MyDate" }, new object[] { mergeDate });
 
-        // Save the result to a file.
-        doc.Save("FormattedDates.docx");
+        // Save the result to disk.
+        doc.Save("FormattedDateMerge.docx");
     }
 
-    // Implements IFieldMergingCallback to control the text inserted for merge fields.
+    // Custom callback that formats DateTime values using a specific culture and assigns the result to the Text property.
     private class DateFormattingCallback : IFieldMergingCallback
     {
-        // Called for each MERGEFIELD encountered during mail merge.
+        // This method is called for each merge field during the mail merge operation.
         void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // Check that the field value is a DateTime.
+            // Check if the field value is a DateTime.
             if (args.FieldValue is DateTime dateValue)
             {
-                // Define the culture you want to use for formatting (e.g., German).
+                // Define the culture you want to use for formatting (e.g., German - Germany).
                 CultureInfo culture = new CultureInfo("de-DE");
 
-                // Apply the same format string that was used in the field's \\@ switch.
-                // This ensures the output matches the expected pattern.
+                // Define the desired date format.
                 string format = "dddd, d MMMM yyyy";
 
                 // Format the date using the specified culture.
                 string formattedDate = dateValue.ToString(format, culture);
 
-                // Set the Text property to the formatted string.
+                // Set the Text property so that the formatted string is inserted into the document.
                 args.Text = formattedDate;
+            }
+            else
+            {
+                // For non‑date fields, let the default behavior occur.
+                args.Text = null;
             }
         }
 
-        // Required by the interface but not needed for this example.
+        // This method is required by the interface but is not needed for this example.
         void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args) { }
     }
 }

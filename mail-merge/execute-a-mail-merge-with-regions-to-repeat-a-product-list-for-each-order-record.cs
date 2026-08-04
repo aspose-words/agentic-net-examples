@@ -1,7 +1,6 @@
 using System;
 using System.Data;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
 
 public class MailMergeWithRegionsExample
 {
@@ -11,78 +10,66 @@ public class MailMergeWithRegionsExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ----- Define the outer mail merge region "Orders" -----
-        // This region will be repeated for each order record.
+        // ---------- Define mail merge regions ----------
+        // Outer region: Orders
         builder.InsertField(" MERGEFIELD TableStart:Orders");
-
-        // Fields inside the "Orders" region.
-        builder.Write("Order ID: ");
+        builder.Writeln("Order ID: ");
         builder.InsertField(" MERGEFIELD OrderID");
-        builder.Write("\nCustomer: ");
+        builder.Writeln();
+        builder.Writeln("Customer: ");
         builder.InsertField(" MERGEFIELD CustomerName");
-        builder.Writeln("\nProducts:");
-
-        // ----- Define the inner mail merge region "Products" -----
-        // This region will be repeated for each product belonging to the current order.
-        // We'll place it inside a table for nicer formatting.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Product Name");
-        builder.InsertCell();
-        builder.Write("Quantity");
-        builder.EndRow();
-
-        // Begin the "Products" region.
-        builder.InsertCell();
+        builder.Writeln();
+        builder.Writeln("Products:");
+        // Inner region: Products (related to the current order)
         builder.InsertField(" MERGEFIELD TableStart:Products");
+        builder.Write("\tProduct: ");
         builder.InsertField(" MERGEFIELD ProductName");
-        builder.InsertCell();
+        builder.Write(", Qty: ");
         builder.InsertField(" MERGEFIELD Quantity");
-        // End the "Products" region.
+        builder.Writeln();
         builder.InsertField(" MERGEFIELD TableEnd:Products");
-        builder.EndTable();
-
-        // End the outer "Orders" region.
+        // End of Orders region
         builder.InsertField(" MERGEFIELD TableEnd:Orders");
 
-        // ----- Prepare the data source -----
-        // Create a DataSet containing two related tables: Orders and Products.
-        DataSet data = CreateDataSet();
+        // ---------- Prepare data ----------
+        DataSet dataSet = CreateDataSet();
 
-        // Execute the mail merge with regions using the DataSet.
-        doc.MailMerge.ExecuteWithRegions(data);
+        // ---------- Perform mail merge with regions ----------
+        doc.MailMerge.ExecuteWithRegions(dataSet);
 
-        // Save the resulting document.
+        // ---------- Save the result ----------
         doc.Save("MailMergeWithRegionsOutput.docx");
     }
 
-    // Generates a DataSet with sample orders and their corresponding products.
+    // Creates a DataSet containing Orders and Products tables with a relation.
     private static DataSet CreateDataSet()
     {
-        // Orders table.
+        // Orders table (master)
         DataTable orders = new DataTable("Orders");
         orders.Columns.Add("OrderID", typeof(int));
         orders.Columns.Add("CustomerName", typeof(string));
         orders.Rows.Add(1, "John Doe");
         orders.Rows.Add(2, "Jane Smith");
 
-        // Products table.
+        // Products table (detail)
         DataTable products = new DataTable("Products");
         products.Columns.Add("OrderID", typeof(int));
         products.Columns.Add("ProductName", typeof(string));
         products.Columns.Add("Quantity", typeof(int));
-        products.Rows.Add(1, "Apple", 5);
-        products.Rows.Add(1, "Banana", 3);
-        products.Rows.Add(2, "Orange", 7);
-        products.Rows.Add(2, "Grapes", 2);
-        products.Rows.Add(2, "Mango", 4);
+        // Products for Order 1
+        products.Rows.Add(1, "Laptop", 1);
+        products.Rows.Add(1, "Mouse", 2);
+        // Products for Order 2
+        products.Rows.Add(2, "Desk", 1);
+        products.Rows.Add(2, "Chair", 4);
+        products.Rows.Add(2, "Lamp", 2);
 
-        // Create the DataSet and add the tables.
+        // Create DataSet and add tables.
         DataSet ds = new DataSet();
         ds.Tables.Add(orders);
         ds.Tables.Add(products);
 
-        // Define a relation between Orders and Products on OrderID.
+        // Define relation between Orders and Products on OrderID.
         ds.Relations.Add("Order_Products",
             orders.Columns["OrderID"],
             products.Columns["OrderID"]);

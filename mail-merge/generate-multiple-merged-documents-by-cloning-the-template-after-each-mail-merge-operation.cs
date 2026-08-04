@@ -1,6 +1,5 @@
 using System;
 using System.Data;
-using System.IO;
 using Aspose.Words;
 
 namespace MailMergeCloneExample
@@ -9,11 +8,7 @@ namespace MailMergeCloneExample
     {
         public static void Main()
         {
-            // Prepare output directory.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "MergedDocs");
-            Directory.CreateDirectory(outputDir);
-
-            // 1. Create a mail‑merge template document with three fields.
+            // Create a mail merge template document with three merge fields.
             Document template = new Document();
             DocumentBuilder builder = new DocumentBuilder(template);
             builder.Write("Dear ");
@@ -23,32 +18,30 @@ namespace MailMergeCloneExample
             builder.Writeln(":");
             builder.InsertField("MERGEFIELD Message", "<Message>");
 
-            // 2. Build a data source containing several records.
+            // Prepare a data source containing several records.
             DataTable data = new DataTable("Recipients");
             data.Columns.Add("FirstName");
             data.Columns.Add("LastName");
             data.Columns.Add("Message");
             data.Rows.Add("John", "Doe", "Hello! This is the first message.");
             data.Rows.Add("Jane", "Smith", "Greetings from the second recipient.");
-            data.Rows.Add("Bob", "Johnson", "A third message for you.");
+            data.Rows.Add("Bob", "Johnson", "Your third message is here.");
 
-            // 3. For each record clone the template, perform a mail merge, and save the result.
+            // Generate a separate merged document for each row by cloning the template.
             int index = 1;
             foreach (DataRow row in data.Rows)
             {
-                // Clone the original template so each merge starts from a clean document.
+                // Clone the template to obtain a fresh document for the current record.
                 Document mergedDoc = (Document)template.Clone(true);
 
-                // Execute mail merge for the current row only.
+                // Perform mail merge using the current DataRow.
                 mergedDoc.MailMerge.Execute(row);
 
-                // Save the merged document with a unique name.
-                string fileName = Path.Combine(outputDir, $"MergedDocument_{index}.docx");
+                // Save the merged document to a file.
+                string fileName = $"MergedDocument_{index}.docx";
                 mergedDoc.Save(fileName);
                 index++;
             }
-
-            // All merged documents are now stored in the "MergedDocs" folder.
         }
     }
 }

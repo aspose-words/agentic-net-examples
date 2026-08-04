@@ -1,55 +1,55 @@
 using System;
 using System.Data;
 using Aspose.Words;
+using Aspose.Words.Fields;
 using Aspose.Words.MailMerging;
 
-namespace MailMergeCustomText
+public class Program
 {
-    // Custom callback that formats the text inserted for each merge field.
-    public class CustomFieldMergingCallback : IFieldMergingCallback
+    public static void Main()
     {
-        // This method is called for every MERGEFIELD during the mail merge.
-        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
-        {
-            // Example formatting: "Value (Record #X)" where X is zero‑based record index.
-            string formatted = $"{args.FieldValue} (Record #{args.RecordIndex + 1})";
-            args.Text = formatted;
-        }
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Image merging is not required for this example.
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args) { }
+        // Insert MERGEFIELDs that will be populated during mail merge.
+        builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName", "<LastName>");
+        builder.Writeln();
+
+        // Prepare a simple data source.
+        DataTable table = new DataTable("Employees");
+        table.Columns.Add("FirstName");
+        table.Columns.Add("LastName");
+        table.Rows.Add("John", "Doe");
+        table.Rows.Add("Jane", "Smith");
+
+        // Assign a custom callback that formats the inserted text.
+        doc.MailMerge.FieldMergingCallback = new CustomFieldMergingCallback();
+
+        // Perform the mail merge.
+        doc.MailMerge.Execute(table);
+
+        // Save the merged document.
+        doc.Save("MergedDocument.docx");
     }
 
-    public class Program
+    // Custom callback that sets the Text property for each merge field.
+    private class CustomFieldMergingCallback : IFieldMergingCallback
     {
-        public static void Main()
+        // Called for each simple merge field.
+        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Example format: "FirstName = John"
+            string value = args.FieldValue?.ToString() ?? "<null>";
+            args.Text = $"{args.FieldName} = {value}";
+        }
 
-            // Insert two merge fields.
-            builder.Write("Dear ");
-            builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
-            builder.Write(" ");
-            builder.InsertField("MERGEFIELD LastName", "<LastName>");
-            builder.Writeln(".");
-
-            // Assign the custom field merging callback.
-            doc.MailMerge.FieldMergingCallback = new CustomFieldMergingCallback();
-
-            // Prepare a data source.
-            DataTable table = new DataTable("People");
-            table.Columns.Add("FirstName");
-            table.Columns.Add("LastName");
-            table.Rows.Add("John", "Doe");
-            table.Rows.Add("Jane", "Smith");
-
-            // Execute the mail merge using the DataTable.
-            doc.MailMerge.Execute(table);
-
-            // Save the result to a file in the current directory.
-            doc.Save("MergedResult.docx");
+        // Not handling image fields in this example.
+        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
+        {
+            // No custom image handling required.
         }
     }
 }

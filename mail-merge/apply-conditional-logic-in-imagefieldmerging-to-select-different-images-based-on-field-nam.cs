@@ -1,73 +1,81 @@
 using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Data;
+using Aspose.Words;
+using Aspose.Words.MailMerging;
+using SkiaSharp; // Used for image creation on .NET 5+ platforms
 
-public class MailMergeDemo
+public class Program
 {
     public static void Main()
     {
-        // Template with text and image placeholders
-        string template = @"
-Dear {{Name}},
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-Here is your logo: {{Image:Logo}}
-Your signature: {{Image:Signature}}
-Other image: {{Image:Other}}
+        // Insert two image merge fields with distinct names.
+        builder.InsertField("MERGEFIELD Image:Logo");
+        builder.Writeln();
+        builder.InsertField("MERGEFIELD Image:Signature");
 
-Best regards,
-Company";
+        // Prepare a minimal data source – the actual values are not used because the callback decides the image.
+        DataTable data = new DataTable("Images");
+        data.Columns.Add("Dummy");
+        data.Rows.Add("x"); // single record
 
-        // Text fields
-        var textFields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "Name", "John Doe" }
-        };
+        // Assign the custom callback that selects images based on the field name.
+        doc.MailMerge.FieldMergingCallback = new ConditionalImageCallback();
 
-        // Perform text field merging
-        string merged = MergeTextFields(template, textFields);
+        // Perform the mail merge.
+        doc.MailMerge.Execute(data);
 
-        // Perform image field merging with conditional logic
-        merged = MergeImageFields(merged);
-
-        // Output the final merged result
-        Console.WriteLine(merged);
+        // Save the merged document.
+        doc.Save("ConditionalImageMerge.docx");
     }
 
-    private static string MergeTextFields(string template, Dictionary<string, string> fields)
+    // Callback that provides different images depending on the merge field name.
+    private class ConditionalImageCallback : IFieldMergingCallback
     {
-        foreach (var kvp in fields)
+        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            string placeholder = $"{{{{{kvp.Key}}}}}";
-            template = template.Replace(placeholder, kvp.Value);
+            // No text merging required for this example.
         }
-        return template;
-    }
 
-    private static string MergeImageFields(string template)
-    {
-        // Regex to find {{Image:FieldName}} placeholders
-        var regex = new Regex(@"\{\{Image:(?<field>\w+)\}\}", RegexOptions.IgnoreCase);
-        return regex.Replace(template, match =>
+        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
         {
-            string fieldName = match.Groups["field"].Value;
-            string imagePath = GetImagePath(fieldName);
-            // In a real mail merge, you would embed the image.
-            // For this demo, we just return the image file name.
-            return imagePath;
-        });
-    }
+            // The full field name (e.g., "Image:Logo") is available via DocumentFieldName.
+            string fieldName = args.DocumentFieldName;
 
-    private static string GetImagePath(string fieldName)
-    {
-        // Conditional logic to select image based on field name
-        switch (fieldName.ToLowerInvariant())
+            SKBitmap bitmap;
+
+            if (fieldName.Contains("Logo"))
+            {
+                // Create a blue rectangle for the "Logo" field.
+                bitmap = CreateColoredBitmap(120, 60, SKColors.Blue);
+            }
+            else if (fieldName.Contains("Signature"))
+            {
+                // Create a green rectangle for the "Signature" field.
+                bitmap = CreateColoredBitmap(150, 50, SKColors.Green);
+            }
+            else
+            {
+                // Fallback gray rectangle.
+                bitmap = CreateColoredBitmap(80, 80, SKColors.Gray);
+            }
+
+            // Assign the generated image to the merge field.
+            args.Image = bitmap;
+        }
+
+        // Helper method to create a solid‑color bitmap using SkiaSharp.
+        private static SKBitmap CreateColoredBitmap(int width, int height, SKColor color)
         {
-            case "logo":
-                return "logo.png";
-            case "signature":
-                return "signature.png";
-            default:
-                return "default.png";
+            SKBitmap bmp = new SKBitmap(width, height);
+            using (SKCanvas canvas = new SKCanvas(bmp))
+            {
+                canvas.Clear(color);
+            }
+            return bmp;
         }
     }
 }
