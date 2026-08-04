@@ -1,34 +1,38 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace FormFieldSizeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new document and a builder to add content.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field with a default size (0 = automatic).
-        // Name the field so we can retrieve it later.
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
-        // Enable explicit size handling.
-        checkBox.IsCheckBoxExactSize = true;
-        // Set an initial visual size (e.g., 15 points).
-        checkBox.CheckBoxSize = 15.0;
+            // Insert a checkbox form field with automatic size (size = 0).
+            builder.Write("Sample checkbox: ");
+            FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
+            // Enable explicit size handling.
+            checkBox.IsCheckBoxExactSize = true;
 
-        // Retrieve the same checkbox from the form fields collection.
-        FormField? retrieved = doc.Range.FormFields["MyCheckBox"];
-        if (retrieved == null)
-            throw new InvalidOperationException("The expected checkbox form field was not found.");
+            // Optional: save the initial document.
+            doc.Save("InitialCheckBox.docx");
 
-        // Change the size to improve visual consistency (e.g., 30 points).
-        retrieved.CheckBoxSize = 30.0;
+            // Retrieve the checkbox by its name from the form fields collection.
+            FormField existingCheckBox = doc.Range.FormFields["MyCheckBox"];
+            if (existingCheckBox == null)
+                throw new InvalidOperationException("Checkbox form field not found.");
 
-        // Save the modified document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ModifiedCheckBox.docx");
-        doc.Save(outputPath);
+            // Change the size of the checkbox to 30 points.
+            existingCheckBox.CheckBoxSize = 30.0;
+            // Ensure the exact size flag remains true.
+            existingCheckBox.IsCheckBoxExactSize = true;
+
+            // Save the document with the updated checkbox size.
+            doc.Save("ModifiedCheckBox.docx");
+        }
     }
 }

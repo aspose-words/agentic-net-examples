@@ -10,22 +10,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field named "MyCheckBox" and set it to checked.
-        builder.Write("Check this box: ");
+        // Insert a check box form field named "MyCheckBox".
+        // The second argument sets the initial checked state (true = checked).
+        // The third argument specifies the size; 0 lets Word choose the size automatically.
         FormField checkBox = builder.InsertCheckBox("MyCheckBox", true, 0);
 
-        // Save the document (required by the rules).
-        doc.Save("FormFields.docx");
+        // Save the document so that the form field persists.
+        const string outputPath = "FormFields_CheckBox.docx";
+        doc.Save(outputPath);
 
-        // Retrieve the checkbox form field from the collection by its name.
-        FormField formField = doc.Range.FormFields["MyCheckBox"];
-        if (formField == null)
-            throw new InvalidOperationException("The expected form field was not found.");
+        // Retrieve the collection of form fields from the document.
+        FormFieldCollection formFields = doc.Range.FormFields;
 
-        // For a checkbox, use the Checked property to determine its state.
-        bool isChecked = formField.Checked;
+        // Locate the check box by its name. Throw if it cannot be found.
+        FormField field = formFields["MyCheckBox"];
+        if (field == null)
+            throw new InvalidOperationException("The expected check box form field was not found.");
 
-        // Output the result.
-        Console.WriteLine($"Checkbox '{formField.Name}' is {(isChecked ? "checked" : "unchecked")}.");
+        // Determine whether the check box is checked using the recommended Checked property.
+        bool isChecked = field.Checked;
+
+        // Output the result to the console.
+        Console.WriteLine($"Check box \"{field.Name}\" is {(isChecked ? "checked" : "unchecked")}.");
+
+        // (Optional) The Result property for a check box contains "1" for checked and "0" for unchecked.
+        // string result = field.Result;
+        // Console.WriteLine($"Result property value: {result}");
     }
 }

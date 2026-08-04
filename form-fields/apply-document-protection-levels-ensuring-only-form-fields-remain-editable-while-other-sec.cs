@@ -10,28 +10,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Section 1 – regular text. After protection this part will be read‑only.
-        builder.Writeln("Section 1: This text will be read‑only.");
-        // Insert a page break to start a new section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Add a paragraph of normal text – this will be read‑only after protection.
+        builder.Writeln("This part of the document is read‑only.");
 
-        // Section 2 – contains a form field that the user can edit.
-        builder.Writeln("Section 2: Please fill the form field below.");
-        builder.Write("Enter your name: ");
-        FormField nameField = builder.InsertTextInput(
-            "NameField",                     // field name
-            TextFormFieldType.Regular,       // field type
-            "",                              // default text (empty)
-            "Your name",                     // placeholder text
-            50);                             // maximum length
+        // Insert a text input form field.
+        FormField textField = builder.InsertTextInput(
+            "TextInput1",                     // field name
+            TextFormFieldType.Regular,        // field type
+            "",                               // default text (empty)
+            "Enter name",                     // placeholder text
+            0);                               // max length (0 = unlimited)
+        // Set an initial value for the text field.
+        textField.Result = "John Doe";
 
-        // Set an initial value for the form field (optional).
-        nameField.TextInputDefault = "John Doe";
+        // Insert a check box form field.
+        FormField checkBox = builder.InsertCheckBox(
+            "CheckBox1",   // field name
+            false,         // default unchecked
+            15);           // size in points
 
-        // Protect the whole document so that only form fields are editable.
+        // Insert a combo box (drop‑down) form field.
+        string[] items = { "Option A", "Option B", "Option C" };
+        FormField comboBox = builder.InsertComboBox(
+            "ComboBox1",   // field name
+            items,         // list items
+            0);            // initially selected index
+
+        // Validate that at least one form field exists.
+        if (doc.Range.FormFields.Count == 0)
+            throw new InvalidOperationException("No form fields were created.");
+
+        // Protect the document so that only form fields can be edited.
         doc.Protect(ProtectionType.AllowOnlyFormFields);
 
-        // Save the resulting document.
-        doc.Save("FormFieldsProtected.docx");
+        // Save the protected document to the current directory.
+        doc.Save("ProtectedFormFields.docx");
     }
 }

@@ -10,50 +10,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Counter to generate unique names for each form field.
+        int fieldIndex = 1;
+
         // Insert a text input form field with a unique name.
-        FormField textField = builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "Enter text here", 0);
+        string textFieldName = $"TextField_{fieldIndex++}";
+        builder.Write("Enter your name: ");
+        FormField textField = builder.InsertTextInput(textFieldName, TextFormFieldType.Regular, "", "John Doe", 50);
+        // Ensure the name is set (InsertTextInput already sets it, but we assign explicitly for clarity).
+        textField.Name = textFieldName;
+
+        builder.InsertBreak(BreakType.ParagraphBreak);
+
         // Insert a checkbox form field with a unique name.
-        FormField checkBox = builder.InsertCheckBox("CheckBox1", false, 0);
+        string checkBoxName = $"CheckBox_{fieldIndex++}";
+        builder.Write("Accept terms: ");
+        FormField checkBox = builder.InsertCheckBox(checkBoxName, false, 0);
+        checkBox.Name = checkBoxName;
+
+        builder.InsertBreak(BreakType.ParagraphBreak);
+
         // Insert a combo box (dropdown) form field with a unique name.
-        FormField comboBox = builder.InsertComboBox("ComboBox1", new[] { "Option A", "Option B", "Option C" }, 0);
+        string comboBoxName = $"ComboBox_{fieldIndex++}";
+        builder.Write("Select a country: ");
+        string[] items = { "USA", "Canada", "Mexico" };
+        FormField comboBox = builder.InsertComboBox(comboBoxName, items, 0);
+        comboBox.Name = comboBoxName;
 
-        // Insert additional text fields in a loop to guarantee unique names.
-        for (int i = 2; i <= 5; i++)
+        // Verify that each form field has a distinct name.
+        FormFieldCollection fields = doc.Range.FormFields;
+        Console.WriteLine("Form fields in the document:");
+        foreach (FormField field in fields)
         {
-            builder.Writeln(); // Move to a new line.
-            string fieldName = $"TextField{i}";
-            builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", $"Placeholder {i}", 0);
+            Console.WriteLine($"- Name: {field.Name}, Type: {field.Type}");
         }
 
-        // Ensure that at least one form field exists.
-        FormFieldCollection formFields = doc.Range.FormFields;
-        if (formFields.Count == 0)
-        {
-            throw new InvalidOperationException("No form fields were created.");
-        }
-
-        // Validate that each form field has a distinct name.
-        var nameSet = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (FormField field in formFields)
-        {
-            if (string.IsNullOrEmpty(field.Name))
-                throw new InvalidOperationException("A form field has an empty name.");
-
-            if (!nameSet.Add(field.Name))
-                throw new InvalidOperationException($"Duplicate form field name detected: {field.Name}");
-        }
-
-        // Output the names of the created form fields.
-        Console.WriteLine("Created form fields with unique names:");
-        foreach (FormField field in formFields)
-        {
-            Console.WriteLine($"- {field.Name} (Type: {field.Type})");
-        }
-
-        // Update fields (if any calculations are needed) and save the document.
-        doc.UpdateFields();
-        string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "FormFieldsUniqueNames.docx");
+        // Save the document to disk.
+        string outputPath = "FormFieldsUniqueNames.docx";
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

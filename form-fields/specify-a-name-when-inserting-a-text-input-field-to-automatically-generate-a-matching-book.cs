@@ -10,30 +10,21 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a prompt before the form field.
-        builder.Write("Please enter your name: ");
+        // Insert a text input form field and give it a name.
+        // A bookmark with the same name is automatically created.
+        string fieldName = "CustomerName";
+        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "Enter name", 0);
 
-        // Insert a text input form field with a specific name.
-        // The name "UserName" will also create a bookmark with the same name.
-        FormField textField = builder.InsertTextInput(
-            "UserName",                     // name of the form field (and bookmark)
-            TextFormFieldType.Regular,      // type of the text field
-            "",                             // format string (none)
-            "John Doe",                     // default placeholder text
-            0);                             // unlimited length
+        // Verify that the bookmark was created.
+        if (doc.Range.Bookmarks[fieldName] == null)
+            throw new InvalidOperationException($"Bookmark '{fieldName}' was not created.");
 
-        // Verify that the form field exists in the collection.
-        FormField? retrievedField = doc.Range.FormFields["UserName"];
-        if (retrievedField == null)
-            throw new InvalidOperationException("The form field 'UserName' was not found.");
+        // Access the form field by its name and set a default value.
+        FormField textField = doc.Range.FormFields[fieldName];
+        if (textField == null)
+            throw new InvalidOperationException($"Form field '{fieldName}' not found.");
 
-        // Verify that the automatically created bookmark exists.
-        Bookmark? bookmark = doc.Range.Bookmarks["UserName"];
-        if (bookmark == null)
-            throw new InvalidOperationException("The bookmark 'UserName' was not created.");
-
-        // Optionally set a new value for the text field.
-        retrievedField.Result = "Alice";
+        textField.Result = "John Doe";
 
         // Save the document to disk.
         doc.Save("FormFieldWithBookmark.docx");
