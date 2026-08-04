@@ -7,37 +7,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with various product name occurrences.
+        // Define file paths for the input and output documents.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+
+        // Clean up any previous runs.
+        if (File.Exists(inputPath)) File.Delete(inputPath);
+        if (File.Exists(outputPath)) File.Delete(outputPath);
+
+        // -------------------- Create sample document --------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Our new Widget is great.");
-        builder.Writeln("The widget works well.");
-        builder.Writeln("SuperWidget is not a widget.");
-        builder.Writeln("widget");
-        builder.Writeln("WIDGET");
-        // Save the source document.
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        builder.Writeln("Our catalog includes ProductA, productb, and PRODUCTC.");
+        builder.Writeln("Special offer: producta is now cheaper.");
+        doc.Save(inputPath); // Save the source document.
 
-        // Load the document for processing.
+        // -------------------- Load and replace --------------------
         Document loaded = new Document(inputPath);
 
-        // Configure find-and-replace options: ignore case and match whole words only.
+        // Configure find-replace to ignore case and match whole words only.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            MatchCase = false,          // Case‑insensitive search.
-            FindWholeWordsOnly = true   // Replace only whole word matches.
+            MatchCase = false,
+            FindWholeWordsOnly = true
         };
 
-        // Replace the product name "widget" with "Gadget".
-        int replacedCount = loaded.Range.Replace("widget", "Gadget", options);
+        // Perform replacements for each product name.
+        int replaced = loaded.Range.Replace("ProductA", "ItemX", options);
+        replaced += loaded.Range.Replace("productb", "ItemY", options);
+        replaced += loaded.Range.Replace("PRODUCTC", "ItemZ", options);
 
-        // Ensure that at least one replacement occurred.
-        if (replacedCount == 0)
+        // Validate that at least one replacement occurred.
+        if (replaced == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
         loaded.Save(outputPath);
     }
 }

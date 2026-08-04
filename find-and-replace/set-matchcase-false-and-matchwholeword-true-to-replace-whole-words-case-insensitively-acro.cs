@@ -1,43 +1,38 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required package, not used directly but ensures reference
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with varied casing of the word "hello".
+        // Create a sample document with words in different cases.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World. This is a test.");
-        builder.Writeln("hello world appears again.");
-        builder.Writeln("HELLO WORLD in uppercase.");
+        builder.Writeln("Apple apple APPLE banana");
+        builder.Writeln("Pineapple is not an apple.");
 
-        // Save the source document.
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        // Save the source document (demonstrates the create‑save workflow).
+        doc.Save("input.docx");
 
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        // Load the document from the file system (demonstrates the load workflow).
+        Document loaded = new Document("input.docx");
 
-        // Configure find‑replace options: case‑insensitive, whole‑word only.
+        // Configure find‑replace options: case‑insensitive and whole‑word only.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            MatchCase = false,          // Ignore case.
-            FindWholeWordsOnly = true   // Replace only whole words.
+            MatchCase = false,
+            FindWholeWordsOnly = true
         };
 
-        // Perform the replacement.
-        int replacedCount = loaded.Range.Replace("hello", "Hi", options);
+        // Replace all whole-word occurrences of "apple" with "orange".
+        int replacedCount = loaded.Range.Replace("apple", "orange", options);
 
-        // Validate that at least one replacement occurred.
+        // Ensure that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        loaded.Save("output.docx");
     }
 }

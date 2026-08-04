@@ -100,7 +100,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Combine FindReplaceOptions with DocumentBuilder to insert dynamic content after each successful replacement.
   - Workflow: plain-replace
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `enable-regex-mode-by-setting-findreplaceoptions-useregularexpressions-to-true-for-pattern.cs`
   - Task: Enable regex mode by setting FindReplaceOptions.UseRegularExpressions to true for pattern-based replacements.
   - Workflow: regex-replace
@@ -130,7 +130,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Replace multiple line break sequences with a single paragraph break using the metacharacter \n in the replacement.
   - Workflow: regex-replace
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `perform-find-and-replace-on-a-document-loaded-from-a-memory-stream-without-writing-to-disk.cs`
   - Task: Perform find and replace on a document loaded from a memory stream without writing to disk.
   - Workflow: input-bootstrap
@@ -315,7 +315,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a hyperlink to each replaced email address using DocumentBuilder during the replacement operation.
   - Workflow: plain-replace
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `ignore-case-and-match-whole-words-when-updating-product-names-across-the-document-using-fi.cs`
   - Task: Ignore case and match whole words when updating product names across the document using FindReplaceOptions.
   - Workflow: plain-replace
@@ -355,7 +355,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Replace a placeholder with a generated QR code image using DocumentBuilder during the replacement.
   - Workflow: plain-replace
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 
 ## Common failure patterns and preferred agent fixes
 
@@ -382,7 +382,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 - Package: `Aspose.Drawing.Common` `25.11.0`
 - Package: `Newtonsoft.Json`
 
@@ -398,7 +398,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 dotnet add package Newtonsoft.Json
 ```

@@ -1,44 +1,46 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing;      // Required package reference
+using Newtonsoft.Json;    // Required package reference
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for the sample files.
-        string workFolder = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workFolder);
+        // Define file names for the sample input and output documents.
+        const string inputFile = "input.docx";
+        const string outputFile = "output.docx";
 
-        // Create a sample document containing version numbers "1.0.0".
-        string inputPath = Path.Combine(workFolder, "input.docx");
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("Application version: 1.0.0");
+        // -----------------------------------------------------------------
+        // Create a sample document containing version numbers to replace.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Current release: 1.0.0");
         builder.Writeln("Previous release: 1.0.0");
-        sampleDoc.Save(inputPath);
+        builder.Writeln("No change needed for 2.1.3");
+        doc.Save(inputFile);
 
-        // Load the document we just created.
-        Document doc = new Document(inputPath);
+        // -----------------------------------------------------------------
+        // Load the document and perform a regex replace from 1.0.0 to 2.0.0.
+        // -----------------------------------------------------------------
+        Document loaded = new Document(inputFile);
 
-        // Define a regular expression that matches the exact version string "1.0.0".
-        Regex versionRegex = new Regex(@"\b1\.0\.0\b", RegexOptions.Compiled);
+        // Regex that matches the exact version string "1.0.0".
+        Regex versionPattern = new Regex(@"\b1\.0\.0\b");
 
-        // Perform the replacement using Range.Replace with a regex pattern.
+        // Use FindReplaceOptions as required by the API.
         FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = doc.Range.Replace(versionRegex, "2.0.0", options);
+
+        int replacedCount = loaded.Range.Replace(versionPattern, "2.0.0", options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No version numbers were replaced.");
+            throw new InvalidOperationException("Expected at least one version number replacement.");
 
-        // Save the updated document.
-        string outputPath = Path.Combine(workFolder, "output.docx");
-        doc.Save(outputPath);
-
-        // Optional: indicate success.
-        Console.WriteLine($"Replaced {replacedCount} occurrence(s). Output saved to: {outputPath}");
+        // Save the modified document.
+        loaded.Save(outputFile);
     }
 }

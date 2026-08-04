@@ -1,88 +1,68 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare file paths in the current directory.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "report.json");
-
-        // Create a sample document with placeholders.
+        // Create a sample document in memory.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First line with PLACEHOLDER.");
-        builder.Writeln("Second line without.");
-        builder.Writeln("Third line with another PLACEHOLDER.");
+        builder.Writeln("First placeholder text.");
+        builder.Writeln("Second placeholder appears here.");
+        builder.Writeln("No match on this line.");
+
+        // Save the sample document locally (optional, just for demonstration).
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document (could also continue using the same instance).
+        // Load the document that will be processed.
         Document loadedDoc = new Document(inputPath);
 
-        // Set up the replace callback.
-        var callback = new InsertAfterReplaceCallback();
-
+        // Configure find‑replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = callback
+            ReplacingCallback = new InsertDynamicContentCallback()
         };
 
-        // Perform the replacement.
-        int replacedCount = loadedDoc.Range.Replace("PLACEHOLDER", "REPLACED", options);
+        // Replace the word "placeholder" with "value".
+        int replacementCount = loadedDoc.Range.Replace("placeholder", "value", options);
 
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+        // Verify that at least one replacement was performed.
+        if (replacementCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement.");
 
         // Save the modified document.
+        const string outputPath = "output.docx";
         loadedDoc.Save(outputPath);
-
-        // Write a JSON report of all matches.
-        string json = JsonConvert.SerializeObject(callback.MatchedValues, Formatting.Indented);
-        File.WriteAllText(reportPath, json);
-
-        // Validate that the report file was created.
-        if (!File.Exists(reportPath))
-            throw new InvalidOperationException("Report file was not created.");
-
-        // Example completed successfully (no interactive output).
     }
 
-    // Callback that records matches and inserts dynamic content after each replacement.
-    private class InsertAfterReplaceCallback : IReplacingCallback
+    // Callback that inserts a new paragraph with dynamic content after each replacement.
+    private class InsertDynamicContentCallback : IReplacingCallback
     {
-        public List<string> MatchedValues { get; } = new List<string>();
-
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Record the matched text.
-            if (args.Match?.Value != null)
-                MatchedValues.Add(args.Match.Value);
+            // The node that contains the start of the match.
+            var matchNode = args.MatchNode;
 
-            // Insert dynamic content after the matched node.
-            if (args.MatchNode?.Document is Document doc && args.MatchNode != null)
-            {
-                // Find the paragraph that contains the match node.
-                Paragraph? paragraph = args.MatchNode.GetAncestor(NodeType.Paragraph) as Paragraph;
-                if (paragraph != null && paragraph.ParentNode != null)
-                {
-                    // Create a new paragraph with the dynamic content.
-                    Paragraph newParagraph = new Paragraph(doc);
-                    paragraph.ParentNode.InsertAfter(newParagraph, paragraph);
+            // Its parent paragraph.
+            var paragraph = (Paragraph)matchNode.ParentNode;
 
-                    // Write the dynamic content into the new paragraph.
-                    DocumentBuilder cb = new DocumentBuilder(doc);
-                    cb.MoveTo(newParagraph);
-                    cb.Writeln($"[Replaced at {DateTime.Now:O}]");
-                }
-            }
+            // Create a DocumentBuilder for the same document.
+            // The Document property returns DocumentBase, so cast to Document.
+            var builder = new DocumentBuilder((Document)matchNode.Document);
 
-            // Proceed with the standard replacement.
+            // Move the builder to the paragraph that contains the match.
+            builder.MoveTo(paragraph);
+
+            // Insert a new paragraph after the current one.
+            builder.InsertParagraph();
+
+            // Write dynamic content into the newly inserted paragraph.
+            builder.Writeln($"[Inserted after replacement at {DateTime.Now:HH:mm:ss}]");
+
+            // Continue with the normal replacement.
             return ReplaceAction.Replace;
         }
     }

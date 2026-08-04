@@ -7,24 +7,28 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare file paths in the current working directory.
+        // Define file names in the current directory.
         string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
+        // -------------------------------------------------
         // Create a sample document with several paragraphs.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First paragraph with ReplaceMe.");
-        builder.Writeln("Second paragraph without the keyword.");
-        builder.Writeln("Third paragraph with ReplaceMe again.");
+
+        builder.Writeln("First paragraph contains the token ReplaceMe.");
+        builder.Writeln("Second paragraph also contains ReplaceMe.");
+        builder.Writeln("Third paragraph does not have the token.");
 
         // Save the source document.
         doc.Save(inputPath);
 
-        // Load the document for processing.
+        // -------------------------------------------------
+        // Load the document and perform find-and-replace.
+        // The replacement string uses the meta‑character &p to insert a paragraph break.
+        // -------------------------------------------------
         Document loaded = new Document(inputPath);
-
-        // Replace the target text and insert a paragraph break after each replacement using the meta‑character &p.
         int replacedCount = loaded.Range.Replace("ReplaceMe", "ReplaceMe&p", new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
@@ -33,5 +37,9 @@ public class Program
 
         // Save the modified document.
         loaded.Save(outputPath);
+
+        // Optional: indicate success.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine($"Modified document saved to: {outputPath}");
     }
 }

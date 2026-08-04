@@ -1,79 +1,72 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with macro placeholders.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello {{FirstName}} {{LastName}}!");
+        builder.Writeln("Today is {{Day}}.");
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Write sample text containing macro placeholders.
-        builder.Writeln("The following macro will be expanded:");
-        builder.Writeln("[[HELLO_WORLD]]");
-        builder.Writeln("Another macro:");
-        builder.Writeln("[[CURRENT_DATE]]");
+        // Load the document for processing.
+        Document loadedDoc = new Document(inputPath);
 
         // Define macro expansions.
         var macroMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "HELLO_WORLD", "Console.WriteLine(\"Hello, World!\");" },
-            { "CURRENT_DATE", "Console.WriteLine(DateTime.Now.ToString(\"yyyy-MM-dd\"));" }
+            { "FirstName", "Alice" },
+            { "LastName", "Smith" },
+            { "Day", "Monday" }
         };
 
-        // Set up find-and-replace with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new MacroExpander(macroMap);
+        // Set up find/replace with a custom callback.
+        var options = new FindReplaceOptions(new MacroExpander(macroMap));
+        int replacedCount = loadedDoc.Range.Replace(new Regex(@"\{\{(\w+)\}\}"), string.Empty, options);
 
-        // Use a regular expression to locate macro placeholders like [[MACRO_NAME]].
-        Regex macroRegex = new Regex(@"\[\[(\w+)\]\]");
-
-        int replacedCount = doc.Range.Replace(macroRegex, string.Empty, options);
         if (replacedCount == 0)
-            throw new InvalidOperationException("No macro placeholders were replaced.");
+            throw new InvalidOperationException("Expected at least one macro expansion.");
 
-        // Save the modified document.
-        const string outputPath = "ExpandedMacros.docx";
-        doc.Save(outputPath);
+        // Save the expanded document.
+        const string outputPath = "output.docx";
+        loadedDoc.Save(outputPath);
 
-        // Output the resulting document text to the console for verification.
-        Console.WriteLine("Replacements performed: " + replacedCount);
-        Console.WriteLine("Document text after replacement:");
-        Console.WriteLine(doc.GetText());
+        // Write a simple JSON report of performed expansions.
+        var report = new
+        {
+            InputFile = Path.GetFullPath(inputPath),
+            OutputFile = Path.GetFullPath(outputPath),
+            Replacements = macroMap,
+            ReplacedCount = replacedCount
+        };
+        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText("report.json", json);
     }
 
-    // Implements IReplacingCallback to replace each macro with its full code.
+    // Custom callback that replaces macro placeholders with their full code.
     private class MacroExpander : IReplacingCallback
     {
         private readonly IDictionary<string, string> _macroMap;
-
-        public MacroExpander(IDictionary<string, string> macroMap)
-        {
-            _macroMap = macroMap ?? throw new ArgumentNullException(nameof(macroMap));
-        }
+        public MacroExpander(IDictionary<string, string> macroMap) => _macroMap = macroMap;
 
         ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            // args.Match.Value contains the full placeholder, e.g., [[HELLO_WORLD]].
-            // Extract the macro name without brackets.
-            string placeholder = args.Match.Value;
-            string macroName = placeholder.Trim('[', ']');
-
+            // The regex captures the macro name in group 1.
+            string macroName = args.Match.Groups[1].Value;
             if (_macroMap.TryGetValue(macroName, out string replacement))
-            {
-                // Set the replacement text.
                 args.Replacement = replacement;
-            }
             else
-            {
-                // If macro not found, keep original text.
-                args.Replacement = placeholder;
-            }
+                args.Replacement = args.Match.Value; // Leave unchanged if not found.
 
             return ReplaceAction.Replace;
         }

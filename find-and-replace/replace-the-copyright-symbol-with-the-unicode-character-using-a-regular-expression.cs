@@ -3,36 +3,38 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing the text "(c)".
+        // Prepare a temporary working directory.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
+
+        // Create a sample document containing the copyright placeholder "(c)".
+        string inputPath = Path.Combine(workDir, "input.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document. (c) 2023 Example Corp.");
-
-        // Save the sample document to a local file.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        builder.Writeln("This is a sample document.");
+        builder.Writeln("All rights reserved (c) 2023.");
         doc.Save(inputPath);
 
-        // Load the document we just created.
-        Document loadedDoc = new Document(inputPath);
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
-        // Define a regular expression that matches the copyright symbol written as "(c)" (case‑insensitive).
+        // Define a regular expression that matches the literal "(c)".
         Regex copyrightRegex = new Regex(@"\(c\)", RegexOptions.IgnoreCase);
 
-        // Replace all matches with the Unicode © character.
-        int replacementCount = loadedDoc.Range.Replace(copyrightRegex, "©", new FindReplaceOptions());
+        // Perform the replacement with the Unicode © character.
+        int replacedCount = loaded.Range.Replace(copyrightRegex, "©", new FindReplaceOptions());
 
-        // Ensure that at least one replacement was performed.
-        if (replacementCount == 0)
-            throw new InvalidOperationException("Expected at least one copyright symbol replacement.");
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one copyright replacement.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        loadedDoc.Save(outputPath);
+        string outputPath = Path.Combine(workDir, "output.docx");
+        loaded.Save(outputPath);
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -9,60 +8,72 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document and add sample text containing dates.
+        // Create a sample document with dates in the format "January 1, 2020".
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The conference starts on January 1, 2020 and ends on February 12, 2021.");
-        builder.Writeln("Another meeting is scheduled for March 5, 2022.");
+        builder.Writeln("The first meeting is on January 1, 2020.");
+        builder.Writeln("The second meeting is on February 12, 2021.");
+        builder.Writeln("Another date: March 5, 2022.");
 
-        // Regular expression to match dates in the format "MonthName d, yyyy".
-        Regex dateRegex = new Regex(@"\b(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4})\b");
+        // Define a regex that matches the full month name, day and year.
+        Regex dateRegex = new Regex(@"\b(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4})\b",
+                                    RegexOptions.IgnoreCase);
 
         // Set up find‑replace options with a custom callback that formats the date.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new DateReplacer()
-        };
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new DateReplacer();
 
-        // Perform the replacement. The replacement string is ignored because the callback supplies the value.
+        // Perform the replacement. The replacement string is ignored when a callback is used.
         int replacedCount = doc.Range.Replace(dateRegex, string.Empty, options);
 
         if (replacedCount == 0)
             throw new InvalidOperationException("No date strings were replaced.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        const string outputPath = "output.docx";
         doc.Save(outputPath);
 
-        // Output the resulting text to the console (no user interaction required).
-        Console.WriteLine("Replaced text:");
+        // Optional: write the resulting text to the console for verification.
+        Console.WriteLine("Replacements performed: " + replacedCount);
+        Console.WriteLine("Resulting document text:");
         Console.WriteLine(doc.GetText().Trim());
     }
-}
 
-// Callback that converts a matched date string to "MM/dd/yyyy".
-public class DateReplacer : IReplacingCallback
-{
-    private static readonly Dictionary<string, int> MonthMap = new()
+    // Callback that converts a matched date string to "MM/dd/yyyy".
+    private class DateReplacer : IReplacingCallback
     {
-        { "January", 1 }, { "February", 2 }, { "March", 3 }, { "April", 4 },
-        { "May", 5 }, { "June", 6 }, { "July", 7 }, { "August", 8 },
-        { "September", 9 }, { "October", 10 }, { "November", 11 }, { "December", 12 }
-    };
+        // Mapping from month name to its numeric representation.
+        private static readonly Dictionary<string, string> MonthMap = new()
+        {
+            { "January",   "01" }, { "February",  "02" }, { "March",     "03" },
+            { "April",     "04" }, { "May",       "05" }, { "June",      "06" },
+            { "July",      "07" }, { "August",    "08" }, { "September", "09" },
+            { "October",   "10" }, { "November",  "11" }, { "December",  "12" }
+        };
 
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        // Extract month name, day and year from the match groups.
-        string monthName = args.Match.Groups[1].Value;
-        string dayStr = args.Match.Groups[2].Value;
-        string yearStr = args.Match.Groups[3].Value;
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // args.Match.Value contains something like "January 1, 2020".
+            string[] parts = args.Match.Value.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 3)
+                return ReplaceAction.Skip; // Unexpected format.
 
-        if (!MonthMap.TryGetValue(monthName, out int monthNumber))
-            return ReplaceAction.Skip; // Unexpected month name.
+            string monthName = parts[0];
+            string day = parts[1];
+            string year = parts[2];
 
-        int day = int.Parse(dayStr);
-        // Build the replacement string in MM/dd/yyyy format.
-        args.Replacement = $"{monthNumber:D2}/{day:D2}/{yearStr}";
-        return ReplaceAction.Replace;
+            if (!MonthMap.TryGetValue(monthName, out string monthNumber))
+                return ReplaceAction.Skip; // Unknown month.
+
+            // Ensure day is two digits.
+            if (int.TryParse(day, out int dayInt))
+                day = dayInt.ToString("D2");
+            else
+                return ReplaceAction.Skip;
+
+            string formatted = $"{monthNumber}/{day}/{year}";
+            args.Replacement = formatted;
+            return ReplaceAction.Replace;
+        }
     }
 }

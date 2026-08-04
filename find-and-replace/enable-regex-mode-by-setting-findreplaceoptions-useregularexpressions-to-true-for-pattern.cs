@@ -11,30 +11,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Order 123 and Order 456");
+        doc.Save("input.docx");
 
-        // Save the source document (demonstrates the create/save lifecycle).
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        // Load the document we just created.
+        Document loaded = new Document("input.docx");
 
-        // Load the document from the file system (demonstrates the load lifecycle).
-        Document loaded = new Document(inputPath);
-
-        // Configure FindReplaceOptions (no need to enable regex explicitly;
-        // using the Regex overload of Replace automatically performs a regex replace).
+        // Prepare find‑replace options (no special flags are required for regex usage).
         FindReplaceOptions options = new FindReplaceOptions();
 
-        // Define the regex pattern to find.
-        Regex regex = new Regex(@"Order \d+");
+        // Replace all occurrences of the pattern "Order <number>" with "Order ###".
+        // Use the Regex overload of Range.Replace to enable regular‑expression matching.
+        int replacedCount = loaded.Range.Replace(new Regex(@"Order \d+"), "Order ###", options);
 
-        // Perform the regex‑based replacement.
-        int replacedCount = loaded.Range.Replace(regex, "Order ###", options);
-
-        // Ensure that at least one replacement was made.
+        // Verify that at least one replacement was performed.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        loaded.Save("output.docx");
+
+        // Indicate success (no interactive input required).
+        Console.WriteLine($"Replacements made: {replacedCount}");
     }
 }

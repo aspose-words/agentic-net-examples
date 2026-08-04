@@ -1,9 +1,7 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json; // Included as required package
 
 public class Program
 {
@@ -12,18 +10,14 @@ public class Program
         // Create a sample document with dates in MM-DD-YYYY format.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Meeting dates:");
-        builder.Writeln("12-31-2020");
-        builder.Writeln("01-01-2021");
-        builder.Writeln("Invalid date 13-40-2020 should stay unchanged.");
-        string inputPath = "input.docx";
-        doc.Save(inputPath);
+        builder.Writeln("Sample dates: 12-31-2020, 01-15-2021, 07-04-2022.");
+        doc.Save("input.docx");
 
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        // Load the document we just created.
+        Document loaded = new Document("input.docx");
 
-        // Define a regex that captures month, day, and year.
-        Regex datePattern = new Regex(@"\b(\d{2})-(\d{2})-(\d{4})\b");
+        // Define a regular expression that captures month, day and year.
+        Regex datePattern = new Regex(@"(\d{2})-(\d{2})-(\d{4})");
 
         // Configure replace options to enable substitution groups ($1, $2, $3).
         FindReplaceOptions options = new FindReplaceOptions
@@ -40,12 +34,10 @@ public class Program
             throw new InvalidOperationException("Expected at least one date replacement.");
 
         // Save the modified document.
-        string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        loaded.Save("output.docx");
 
-        // Optional: display the resulting text in the console.
-        Console.WriteLine("Replacements performed: " + replacedCount);
-        Console.WriteLine("Resulting document text:");
+        // Output the resulting text to the console (optional verification).
+        Console.WriteLine("Replaced text:");
         Console.WriteLine(loaded.GetText().Trim());
     }
 }

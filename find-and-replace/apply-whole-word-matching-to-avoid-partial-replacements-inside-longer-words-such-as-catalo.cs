@@ -7,14 +7,13 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with words that could be partially matched.
+        // Create a sample document with words that will be replaced.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The catalog contains many items.");
-        builder.Writeln("Please refer to the catalogue for details.");
-        builder.Writeln("Our catalog is updated yearly.");
-
-        // Save the original document.
+        builder.Writeln("The product catalogue is ready.");
+        builder.Writeln("Our catalogue2021 version includes new items.");
+        builder.Writeln("Please review the catalogue before purchase.");
+        // Save the source document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
@@ -27,20 +26,15 @@ public class Program
             FindWholeWordsOnly = true
         };
 
-        // Replace the whole word "catalog" with "list".
-        int replaced = loaded.Range.Replace("catalog", "list", options);
+        // Replace the word "catalogue" with "catalog".
+        int replacedCount = loaded.Range.Replace("catalogue", "catalog", options);
 
-        // Ensure that at least one replacement occurred.
-        if (replaced == 0)
+        // Ensure that at least one whole‑word replacement occurred.
+        if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one whole‑word replacement.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
         loaded.Save(outputPath);
-
-        // Output the result to the console (no user interaction required).
-        Console.WriteLine($"Replacements made: {replaced}");
-        Console.WriteLine("Resulting document text:");
-        Console.WriteLine(loaded.GetText().Trim());
     }
 }

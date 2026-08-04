@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -6,56 +7,61 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Paths for the sample input and output documents.
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // Create a sample document with several paragraphs.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample paragraphs.
-        builder.Writeln("foo is at the start of this paragraph.");
-        builder.Writeln("This foo is not at the start.");
-        builder.Writeln("foo");
-        builder.Writeln("Another line with foo at the start.");
+        builder.Writeln("foo is at the start of this paragraph.");          // Should be replaced.
+        builder.Writeln("This line contains foo but not at the start.");   // Should stay unchanged.
+        builder.Writeln("foo appears again at the beginning.");            // Should be replaced.
+        builder.Writeln("No occurrence here.");                            // No match.
 
-        // Set up find‑replace options with a custom callback.
+        // Save the document so that we can demonstrate loading it later.
+        doc.Save(inputPath);
+
+        // -----------------------------------------------------------------
+        // Load the document and perform a conditional replace.
+        // -----------------------------------------------------------------
+        Document loaded = new Document(inputPath);
+
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new StartOfParagraphCallback()
+            ReplacingCallback = new StartOfParagraphReplacer()
         };
 
-        // Perform the replace operation.
-        int replacedCount = doc.Range.Replace("foo", "bar", options);
+        // Replace the word "foo" with "bar" only when it is at the start of a paragraph.
+        int replacedCount = loaded.Range.Replace("foo", "bar", options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        doc.Save("output.docx");
+        loaded.Save(outputPath);
     }
 
-    // Callback that replaces only matches that appear at the start of a paragraph.
-    private class StartOfParagraphCallback : IReplacingCallback
+    // -----------------------------------------------------------------
+    // Callback that replaces a match only if it occurs at the start of a paragraph.
+    // -----------------------------------------------------------------
+    private class StartOfParagraphReplacer : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // The node that contains the beginning of the match.
-            Node matchNode = args.MatchNode;
-
-            // Its parent should be a paragraph.
-            if (matchNode?.ParentNode is not Paragraph paragraph)
-                return ReplaceAction.Skip;
-
-            // Determine if the match is at the very beginning of the paragraph.
-            bool isAtParagraphStart = args.MatchOffset == 0 && matchNode == paragraph.FirstChild;
-
-            if (isAtParagraphStart)
+            // The match is at the start of its containing node when the offset is zero.
+            // Additionally, ensure the match resides within a paragraph.
+            if (args.MatchOffset == 0 && args.MatchNode?.ParentNode is Paragraph)
             {
-                // Replace the word.
                 args.Replacement = "bar";
                 return ReplaceAction.Replace;
             }
 
-            // Otherwise, skip this match.
+            // Skip any matches that are not at the beginning of a paragraph.
             return ReplaceAction.Skip;
         }
     }
