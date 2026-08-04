@@ -7,68 +7,69 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
+        // Define output directory.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Helper method to create a sample document with some text.
-        Document CreateSampleDocument()
+        // -----------------------------------------------------------------
+        // Create a sample document with several pages of text using a TrueType font.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Font.Name = "Arial"; // Arial is a TrueType font available on most systems.
+        builder.Font.Size = 24;
+
+        // Add content for 5 pages.
+        for (int i = 1; i <= 5; i++)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Font.Name = "Arial";
-            builder.Font.Size = 24;
-            builder.Writeln("The quick brown fox jumps over the lazy dog. 0123456789");
-            builder.Writeln("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-            builder.Writeln("abcdefghijklmnopqrstuvwxyz");
-            return doc;
+            builder.Writeln($"This is page {i}. The quick brown fox jumps over the lazy dog.");
+            if (i < 5)
+                builder.InsertBreak(BreakType.PageBreak);
         }
 
         // -----------------------------------------------------------------
-        // Full‑font PDF (no subsetting)
+        // Render to PDF with full font embedding (no subsetting).
         // -----------------------------------------------------------------
-        Document docFull = CreateSampleDocument();
+        Document fullEmbeddingDoc = (Document)sourceDoc.Clone(true);
+        fullEmbeddingDoc.FontInfos.EmbedTrueTypeFonts = true;   // Enable embedding.
+        fullEmbeddingDoc.FontInfos.SaveSubsetFonts = false;    // Do NOT subset.
 
-        // Enable embedding of TrueType fonts and disable subsetting.
-        docFull.FontInfos.EmbedTrueTypeFonts = true;
-        docFull.FontInfos.SaveSubsetFonts = false; // embed the whole font
-
-        string pdfFullPath = Path.Combine(outputDir, "FullFont.pdf");
-        PdfSaveOptions fullOptions = new PdfSaveOptions
+        string fullPdfPath = Path.Combine(outputDir, "FullEmbedding.pdf");
+        PdfSaveOptions fullPdfOptions = new PdfSaveOptions
         {
-            // When EmbedFullFonts is true the whole font file is embedded.
+            // Embed the complete font (no subsetting).
             EmbedFullFonts = true
         };
-        docFull.Save(pdfFullPath, fullOptions);
+        fullEmbeddingDoc.Save(fullPdfPath, fullPdfOptions);
 
         // -----------------------------------------------------------------
-        // Subset‑font PDF (subsetting enabled)
+        // Render to PDF with font subsetting enabled.
         // -----------------------------------------------------------------
-        Document docSubset = CreateSampleDocument();
+        Document subsetEmbeddingDoc = (Document)sourceDoc.Clone(true);
+        subsetEmbeddingDoc.FontInfos.EmbedTrueTypeFonts = true; // Enable embedding.
+        subsetEmbeddingDoc.FontInfos.SaveSubsetFonts = true;    // Enable subsetting.
 
-        // Enable embedding of TrueType fonts and enable subsetting.
-        docSubset.FontInfos.EmbedTrueTypeFonts = true;
-        docSubset.FontInfos.SaveSubsetFonts = true; // embed only used glyphs
-
-        string pdfSubsetPath = Path.Combine(outputDir, "SubsetFont.pdf");
-        PdfSaveOptions subsetOptions = new PdfSaveOptions
+        string subsetPdfPath = Path.Combine(outputDir, "SubsetEmbedding.pdf");
+        PdfSaveOptions subsetPdfOptions = new PdfSaveOptions
         {
-            // When EmbedFullFonts is false the fonts are subsetted before embedding.
+            // Default behavior (EmbedFullFonts = false) will subset the fonts.
             EmbedFullFonts = false
         };
-        docSubset.Save(pdfSubsetPath, subsetOptions);
+        subsetEmbeddingDoc.Save(subsetPdfPath, subsetPdfOptions);
 
-        // Verify that both PDF files were created.
-        if (!File.Exists(pdfFullPath) || !File.Exists(pdfSubsetPath))
+        // -----------------------------------------------------------------
+        // Validate that both files were created and compare their sizes.
+        // -----------------------------------------------------------------
+        if (!File.Exists(fullPdfPath) || !File.Exists(subsetPdfPath))
             throw new FileNotFoundException("One of the PDF files was not created.");
 
-        // Compare file sizes.
-        long fullSize = new FileInfo(pdfFullPath).Length;
-        long subsetSize = new FileInfo(pdfSubsetPath).Length;
+        long fullSize = new FileInfo(fullPdfPath).Length;
+        long subsetSize = new FileInfo(subsetPdfPath).Length;
 
-        Console.WriteLine($"Full‑font PDF size   : {fullSize} bytes");
-        Console.WriteLine($"Subset‑font PDF size : {subsetSize} bytes");
+        Console.WriteLine($"Full embedding PDF size   : {fullSize} bytes");
+        Console.WriteLine($"Subset embedding PDF size : {subsetSize} bytes");
 
+        // Ensure that subsetting actually reduced the file size.
         if (subsetSize >= fullSize)
             throw new InvalidOperationException("Subsetting did not reduce the PDF file size as expected.");
     }

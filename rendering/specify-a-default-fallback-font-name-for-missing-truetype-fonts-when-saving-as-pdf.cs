@@ -8,34 +8,33 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Define output folder and file.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(outputDir);
+        string pdfPath = Path.Combine(outputDir, "DocumentWithFallback.pdf");
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use a font that does not exist on the system.
+        // Use a font that does not exist on the system to trigger fallback.
         builder.Font.Name = "NonExistentFont";
-        builder.Writeln("This text uses a missing font and will be substituted.");
+        builder.Writeln("This text uses a missing font and will be rendered with the fallback font.");
 
-        // Configure font substitution: set a default fallback font.
+        // Configure font settings to use a specific fallback font.
         FontSettings fontSettings = new FontSettings();
-        DefaultFontSubstitutionRule defaultSubstitution = fontSettings.SubstitutionSettings.DefaultFontSubstitution;
-        defaultSubstitution.DefaultFontName = "Courier New"; // fallback font
+        // The DefaultFontSubstitution rule defines the font used when the requested one is unavailable.
+        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Courier New";
         doc.FontSettings = fontSettings;
 
         // Save the document as PDF.
-        string pdfPath = Path.Combine(outputDir, "DocumentWithFallback.pdf");
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, pdfOptions);
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+            throw new FileNotFoundException("The PDF file was not created.", pdfPath);
 
-        // Optionally, you could inspect the PDF bytes for embedded font markers here.
-        // For this example we simply finish execution.
+        // Optional: output the path for confirmation (no interactive input required).
+        Console.WriteLine($"PDF saved to: {pdfPath}");
     }
 }

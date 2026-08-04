@@ -7,36 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create output directory.
-        string artifactsDir = "Artifacts";
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "Converted.tiff");
 
-        // Create a new blank document.
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document converted to a TIFF image with custom dithering.");
 
-        // Add some sample text.
-        builder.Writeln("Sample text for TIFF conversion.");
-
-        // Insert a tiny 1x1 black PNG image (base64 encoded).
-        byte[] png = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK7cAAAAASUVORK5CYII=");
-        builder.InsertImage(png);
-
-        // Configure ImageSaveOptions for TIFF with Floyd‑Steinberg dithering.
+        // Configure TIFF save options with Floyd‑Steinberg dithering and a threshold of 180.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Ccitt3,
             TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
-            ThresholdForFloydSteinbergDithering = 180 // Moderately dark threshold.
+            ThresholdForFloydSteinbergDithering = (byte)180
         };
 
         // Save the document as a TIFF image.
-        string outPath = Path.Combine(artifactsDir, "output.tiff");
-        doc.Save(outPath, options);
+        doc.Save(outputPath, options);
 
         // Verify that the file was created.
-        if (!File.Exists(outPath))
-            throw new Exception("TIFF file was not created.");
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("TIFF file was not created.");
+
+        Console.WriteLine($"TIFF image saved successfully to: {outputPath}");
     }
 }

@@ -22,24 +22,37 @@ public class Program
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Render the document to a TIFF using the default DPI (96).
-        string defaultTiffPath = Path.Combine(outputDir, "DefaultDpi.tiff");
-        ImageSaveOptions defaultOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // Save with default resolution (no explicit DesiredDpi).
+        string defaultTiffPath = Path.Combine(outputDir, "Sample_DefaultDpi.tiff");
+        ImageSaveOptions defaultOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            UseHighQualityRendering = true,
+            UseAntiAliasing = true
+        };
         doc.Save(defaultTiffPath, defaultOptions);
 
-        // Render the same document to a TIFF using a higher DPI (500) for archival quality.
-        string highDpiTiffPath = Path.Combine(outputDir, "DesiredDpi500.tiff");
-        ImageSaveOptions highDpiOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        // The DesiredDpi property does not exist; use the Resolution property instead.
-        highDpiOptions.Resolution = 500; // Sets both horizontal and vertical DPI.
+        // Save with archival‑quality DPI (500).
+        string highDpiTiffPath = Path.Combine(outputDir, "Sample_500Dpi.tiff");
+        ImageSaveOptions highDpiOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            Resolution = 500f,               // Desired DPI
+            UseHighQualityRendering = true,
+            UseAntiAliasing = true
+        };
         doc.Save(highDpiTiffPath, highDpiOptions);
 
-        // Assess file sizes.
+        // Verify that both files were created.
+        if (!File.Exists(defaultTiffPath) || !File.Exists(highDpiTiffPath))
+            throw new FileNotFoundException("One or more TIFF files were not created.");
+
+        // Compare file sizes.
         long defaultSize = new FileInfo(defaultTiffPath).Length;
         long highDpiSize = new FileInfo(highDpiTiffPath).Length;
+        long sizeDiff = highDpiSize - defaultSize;
+        double percentIncrease = defaultSize > 0 ? (double)sizeDiff / defaultSize * 100 : 0;
 
         Console.WriteLine($"Default DPI TIFF size: {defaultSize} bytes");
-        Console.WriteLine($"DesiredDpi 500 TIFF size: {highDpiSize} bytes");
-        Console.WriteLine($"Size increase: {highDpiSize - defaultSize} bytes ({(double)highDpiSize / defaultSize:P2} of original)");
+        Console.WriteLine($"500 DPI TIFF size:    {highDpiSize} bytes");
+        Console.WriteLine($"Size increase:       {sizeDiff} bytes ({percentIncrease:F2}%)");
     }
 }

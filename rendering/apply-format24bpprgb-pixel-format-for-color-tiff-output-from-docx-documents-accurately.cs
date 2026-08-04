@@ -7,33 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Define output folder and ensure it exists.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create a simple DOCX document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words! This document will be rendered as a 24‑bpp color TIFF.");
 
-        // Save the source DOCX (optional, just for reference).
-        string docPath = Path.Combine(artifactsDir, "Sample.docx");
-        doc.Save(docPath);
+        // Add some sample content.
+        builder.Writeln("This is a sample document rendered to a 24‑bpp color TIFF.");
+
+        // Prepare the output folder.
+        string artifactsDir = "Artifacts";
+        Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "Color24bpp.tiff");
 
         // Configure image save options for TIFF with 24‑bpp RGB pixel format.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            PixelFormat = ImagePixelFormat.Format24BppRgb
+            PixelFormat = ImagePixelFormat.Format24BppRgb,
+            // Optional: set compression to None to keep the file size predictable.
+            TiffCompression = TiffCompression.None
         };
 
-        // Render the document to a TIFF file.
-        string tiffPath = Path.Combine(artifactsDir, "Sample_24bpp.tiff");
-        doc.Save(tiffPath, tiffOptions);
+        // Save the document as a TIFF image using the configured options.
+        doc.Save(outputPath, options);
 
-        // Verify that the TIFF file was created.
-        if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("TIFF file was not created.");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
 
-        Console.WriteLine($"TIFF saved successfully: {tiffPath}");
+        // Optionally, report success (no interactive prompts required).
+        Console.WriteLine($"TIFF file saved successfully to: {outputPath}");
     }
 }

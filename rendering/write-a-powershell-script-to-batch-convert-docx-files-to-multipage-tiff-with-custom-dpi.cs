@@ -7,70 +7,52 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input DOCX files and output TIFF files.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputTiffs");
-
-        // Ensure clean environment.
-        if (Directory.Exists(inputFolder)) Directory.Delete(inputFolder, true);
-        if (Directory.Exists(outputFolder)) Directory.Delete(outputFolder, true);
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Prepare folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "Input");
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
         // Create sample DOCX files.
-        CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docx"), "First document", 2);
-        CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docx"), "Second document", 3);
-
-        // Set desired DPI for the TIFF output.
-        const float dpi = 300f;
-
-        // Prepare save options for multipage TIFF.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        for (int i = 1; i <= 3; i++)
         {
-            Resolution = dpi,
-            PageLayout = MultiPageLayout.TiffFrames()
-        };
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Process each DOCX file in the input folder.
-        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
+            builder.Writeln($"Document {i} - Page 1");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"Document {i} - Page 2");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"Document {i} - Page 3");
+
+            string docPath = Path.Combine(inputDir, $"Sample{i}.docx");
+            doc.Save(docPath, SaveFormat.Docx);
+        }
+
+        // Batch convert each DOCX to a multipage TIFF with custom DPI.
+        foreach (string docxPath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            // Load the DOCX document.
             Document doc = new Document(docxPath);
 
-            // Determine output TIFF file name.
-            string tiffFileName = Path.GetFileNameWithoutExtension(docxPath) + ".tiff";
-            string tiffPath = Path.Combine(outputFolder, tiffFileName);
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+            {
+                // Set desired DPI (e.g., 300).
+                Resolution = 300,
+                // Render all pages into a single multi‑frame TIFF.
+                PageLayout = MultiPageLayout.TiffFrames()
+            };
 
-            // Save the document as a multipage TIFF.
-            doc.Save(tiffPath, tiffOptions);
+            string tiffFileName = Path.GetFileNameWithoutExtension(docxPath) + ".tiff";
+            string tiffPath = Path.Combine(outputDir, tiffFileName);
+            doc.Save(tiffPath, options);
 
             // Verify that the TIFF file was created.
             if (!File.Exists(tiffPath))
                 throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
         }
 
-        // All conversions completed successfully.
-        Console.WriteLine("Batch conversion completed. TIFF files are located at:");
-        Console.WriteLine(outputFolder);
-    }
-
-    // Helper method to create a simple DOCX document with a given title and number of pages.
-    private static void CreateSampleDocument(string filePath, string title, int pageCount)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Font.Name = "Times New Roman";
-        builder.Font.Size = 24;
-        builder.Writeln(title);
-        builder.Writeln($"Generated on {DateTime.Now}");
-
-        for (int i = 1; i < pageCount; i++)
-        {
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Page {i + 1}");
-        }
-
-        doc.Save(filePath, SaveFormat.Docx);
+        // Indicate successful completion.
+        Console.WriteLine("Batch conversion completed successfully.");
     }
 }

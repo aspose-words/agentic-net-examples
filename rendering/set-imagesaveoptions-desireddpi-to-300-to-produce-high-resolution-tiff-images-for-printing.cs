@@ -7,31 +7,26 @@ public class Program
 {
     public static void Main()
     {
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HighResolution.tiff");
-
-        // Create a new blank document.
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add some content to the document.
-        builder.Writeln("This document will be saved as a high‑resolution TIFF image.");
+        builder.Writeln("This is a sample document rendered to a high‑resolution TIFF image.");
 
         // Configure image save options for TIFF with 300 dpi resolution.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Sets both horizontal and vertical DPI.
-            Resolution = 300
-        };
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
+        options.Resolution = 300; // Sets both horizontal and vertical DPI.
 
-        // Save the document as a TIFF image using the specified options.
-        doc.Save(outputPath, saveOptions);
+        // Define output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HighResolution.tiff");
+
+        // Save the document as a TIFF image.
+        doc.Save(outputPath, options);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF image was not created.");
+            throw new InvalidOperationException("Failed to create the TIFF image.");
 
-        // Optional: indicate success (no interactive input required).
-        Console.WriteLine("TIFF image saved successfully at: " + outputPath);
+        // Optional: indicate success.
+        Console.WriteLine($"TIFF image saved successfully at: {outputPath}");
     }
 }

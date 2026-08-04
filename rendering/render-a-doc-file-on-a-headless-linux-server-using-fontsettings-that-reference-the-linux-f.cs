@@ -2,37 +2,38 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Path to the Linux TrueType fonts folder (common location). Adjust if necessary.
-        const string linuxFontsFolder = "/usr/share/fonts/truetype";
+        // Paths used in the example.
+        string fontsFolder = "/usr/share/fonts/truetype"; // Linux system fonts folder.
+        string outputPdf = "RenderedOutput.pdf";
 
-        // Configure FontSettings to use the Linux fonts folder recursively.
-        FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(linuxFontsFolder, recursive: true);
-
-        // Create a simple document and apply a font that is expected to be present in the Linux fonts folder.
+        // Create a simple document with text that uses a font likely not installed by default.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "DejaVu Sans"; // Example font available on many Linux distributions.
-        builder.Writeln("Hello from Aspose.Words on a headless Linux server!");
-        builder.Writeln("This document uses fonts from the Linux font directory.");
+        builder.Font.Name = "DejaVu Sans";
+        builder.Writeln("This document is rendered using DejaVu Sans font on a headless Linux server.");
 
-        // Assign the configured FontSettings to the document.
+        // Configure FontSettings to look for fonts in the specified Linux fonts folder.
+        FontSettings fontSettings = new FontSettings();
+        fontSettings.SetFontsFolder(fontsFolder, recursive: true);
         doc.FontSettings = fontSettings;
 
         // Render the document to PDF.
-        const string outputFile = "RenderedDocument.pdf";
-        doc.Save(outputFile, SaveFormat.Pdf);
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        doc.Save(outputPdf, pdfOptions);
 
         // Verify that the PDF was created successfully.
-        if (!File.Exists(outputFile))
-            throw new InvalidOperationException($"Failed to create the output file: {outputFile}");
+        if (!File.Exists(outputPdf))
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPdf}");
+        }
 
-        // Optional: indicate success (no interactive prompts required).
-        Console.WriteLine($"Document rendered successfully to '{outputFile}'.");
+        // Optionally, inform that the process completed.
+        Console.WriteLine($"Document rendered and saved to '{outputPdf}'.");
     }
 }

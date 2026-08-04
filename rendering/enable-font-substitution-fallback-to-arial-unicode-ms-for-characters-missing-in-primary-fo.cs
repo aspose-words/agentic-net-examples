@@ -2,45 +2,43 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string pdfPath = Path.Combine(outputDir, "FallbackExample.pdf");
+        // Define folders for output.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text using a normal font.
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("This line uses a standard font.");
-
-        // Write text using a font that is unlikely to be available and contains characters
-        // that are not present in the primary font (e.g., Chinese characters).
-        builder.Font.Name = "Missing Font";
-        builder.Writeln("Missing Font line with Unicode characters: 漢字");
-
-        // Configure font settings to use Arial Unicode MS as the default substitution font.
+        // Configure font settings to use Arial Unicode MS as the default fallback font.
         FontSettings fontSettings = new FontSettings();
         DefaultFontSubstitutionRule defaultSubstitution = fontSettings.SubstitutionSettings.DefaultFontSubstitution;
-        defaultSubstitution.DefaultFontName = "Arial Unicode MS";
+        defaultSubstitution.DefaultFontName = "Arial Unicode MS"; // Fallback font.
+        // The rule is enabled by default, but we set it explicitly for clarity.
         defaultSubstitution.Enabled = true;
 
         // Assign the font settings to the document.
         doc.FontSettings = fontSettings;
 
-        // Save the document to PDF.
-        doc.Save(pdfPath);
+        // Build document content using a font that does not exist on the system.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "Missing Font";
+        builder.Writeln("This line uses a missing font. Characters: 漢字, 😊, 𝔘𝔫𝔦𝔠𝔬𝔡𝔢.");
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new Exception("Failed to create the PDF output.");
+        // Save the document to PDF. The missing font will be substituted with Arial Unicode MS.
+        string outputPath = Path.Combine(artifactsDir, "FontFallbackExample.pdf");
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Optionally, you could add further validation here (e.g., checking file size).
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Failed to create the PDF output file.");
+
+        // Optionally, inform that the process completed.
+        Console.WriteLine("Document saved successfully to: " + outputPath);
     }
 }

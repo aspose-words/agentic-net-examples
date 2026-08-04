@@ -111,7 +111,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load documents from a network share, configure custom font folders, and output TIFFs to a local directory.
   - Workflow: rendering-workflow
   - Outputs: doc, tiff
-  - Selected engine: llm
+  - Selected engine: mcp
 - `install-truetype-fonts-on-linux-by-copying-ttf-files-and-pointing-fontsettings-to-the-dire.cs`
   - Task: Install TrueType fonts on Linux by copying .TTF files and pointing FontSettings to the directory.
   - Workflow: rendering-workflow
@@ -361,17 +361,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a unit test that verifies TIFF output matches expected pixel format and compression.
   - Workflow: rendering-workflow
   - Outputs: tiff
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-unit-test-that-ensures-1-bit-tiff-files-contain-exactly-two-colors.cs`
   - Task: Create a unit test that ensures 1-bit TIFF files contain exactly two colors.
   - Workflow: rendering-workflow
   - Outputs: tiff
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `extract-embedded-truetype-fonts-from-a-pdf-to-verify-correct-subsetting-after-rendering.cs`
   - Task: Extract embedded TrueType fonts from a PDF to verify correct subsetting after rendering.
   - Workflow: rendering-workflow
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `render-a-docx-to-pdf-with-full-font-embedding-and-then-extract-fonts-to-confirm-subsetting.cs`
   - Task: Render a DOCX to PDF with full font embedding and then extract fonts to confirm subsetting disabled.
   - Workflow: rendering-workflow
@@ -405,7 +405,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 - Package: `Aspose.Drawing.Common` `25.11.0`
 
 ## Command reference
@@ -420,7 +420,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 ```
 

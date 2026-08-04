@@ -7,20 +7,21 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string outputPath = Path.Combine(artifactsDir, "output_1bpp.tiff");
-
-        // Create a simple document.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words!");
+        builder.Writeln("Hello World!");
 
-        // Configure image save options for 1‑bit black‑white TIFF.
+        // Prepare an output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "1bpp.tiff");
+
+        // Configure ImageSaveOptions for 1‑bit black‑white TIFF.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             PixelFormat = ImagePixelFormat.Format1bppIndexed,
+            // CCITT4 compression works well with 1‑bpp images.
             TiffCompression = TiffCompression.Ccitt4
         };
 
@@ -29,9 +30,8 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+            throw new InvalidOperationException("TIFF file was not created.");
 
-        // Optional: indicate success.
-        Console.WriteLine("TIFF file saved successfully to: " + outputPath);
+        Console.WriteLine($"TIFF saved to: {outputPath}");
     }
 }

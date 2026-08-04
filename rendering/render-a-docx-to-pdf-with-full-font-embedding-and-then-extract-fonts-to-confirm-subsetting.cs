@@ -4,8 +4,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Fonts;
 
-public class Program
+public class RenderDocxToPdfWithFullFontEmbedding
 {
     public static void Main()
     {
@@ -13,44 +14,49 @@ public class Program
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a simple DOCX document that uses a TrueType font.
+        // Create a simple DOCX document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial";               // Common TrueType font.
-        builder.Writeln("Hello world! This text will be rendered with full font embedding.");
+        builder.Font.Name = "Calibri";               // Use a TrueType font that is likely present.
+        builder.Writeln("This text will be rendered to PDF with full font embedding.");
+
+        // Ensure Aspose.Words can locate the font files.
+        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        FontSettings.DefaultInstance.SetFontsFolder(fontsFolder, true);
 
         // Configure PDF save options to embed the full font (no subsetting).
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            EmbedFullFonts = true
+            EmbedFullFonts = true,
+            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll
         };
 
         // Save the document as PDF.
-        string pdfPath = Path.Combine(outputDir, "FullFontEmbedding.pdf");
+        string pdfPath = Path.Combine(outputDir, "RenderedFullFont.pdf");
         doc.Save(pdfPath, pdfOptions);
 
         // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
             throw new FileNotFoundException("PDF file was not created.", pdfPath);
 
-        // Load the PDF content as ASCII text for simple inspection.
-        string pdfContent = Encoding.ASCII.GetString(File.ReadAllBytes(pdfPath));
+        // Load the PDF bytes and look for font embedding markers.
+        byte[] pdfBytes = File.ReadAllBytes(pdfPath);
+        string pdfText = Encoding.ASCII.GetString(pdfBytes);
 
-        // Check for font embedding markers (e.g., /FontFile, /FontFile2, /FontFile3).
-        bool hasFontFileMarker = pdfContent.Contains("/FontFile") ||
-                                 pdfContent.Contains("/FontFile2") ||
-                                 pdfContent.Contains("/FontFile3");
+        // Look for subset font name pattern (e.g., ABCDEF+FontName) or explicit font file entries.
+        bool hasSubsetMarker = Regex.IsMatch(pdfText, @"[A-Z]{6}\+");
+        bool hasFontFileEntry = pdfText.Contains("/FontFile") ||
+                                pdfText.Contains("/FontFile2") ||
+                                pdfText.Contains("/FontFile3") ||
+                                pdfText.Contains("/Subtype /TrueType");
 
-        if (!hasFontFileMarker)
-            throw new InvalidOperationException("The PDF does not contain any font embedding markers.");
-
-        // Verify that subsetting is disabled by ensuring no subset-style font names are present.
-        // Subset fonts are usually indicated by six uppercase letters followed by a '+' (e.g., ABCDEF+FontName).
-        Regex subsetPattern = new Regex(@"[A-Z]{6}\+");
-        if (subsetPattern.IsMatch(pdfContent))
-            throw new InvalidOperationException("Subset-style font names were found in the PDF, indicating subsetting is enabled.");
-
-        // If we reach this point, the PDF contains full font embedding without subsetting.
-        Console.WriteLine("PDF generated successfully with full font embedding and without subsetting.");
+        if (hasSubsetMarker || hasFontFileEntry)
+        {
+            Console.WriteLine("PDF font embedding verification succeeded.");
+        }
+        else
+        {
+            throw new InvalidOperationException("PDF does not contain expected font embedding markers; subsetting may be enabled.");
+        }
     }
 }

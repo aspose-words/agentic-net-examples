@@ -7,36 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input and output.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string tiffPath = Path.Combine(outputDir, "Grayscale.tiff");
 
-        // Create a simple Word document in memory.
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Aspose.Words rendering example.");
-        builder.Writeln("This document will be saved as a grayscale TIFF for archiving.");
+        builder.Writeln("This is a sample document for grayscale TIFF rendering.");
+        builder.Writeln("Second line of text.");
 
-        // Configure TIFF save options.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure TIFF save options for efficient grayscale output.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
             // Render the pages in grayscale.
             ImageColorMode = ImageColorMode.Grayscale,
-            // Use LZW compression to keep file size reasonable.
+            // Use a low‑bit pixel format to reduce file size.
+            PixelFormat = ImagePixelFormat.Format1bppIndexed,
+            // Apply LZW compression for further size reduction.
             TiffCompression = TiffCompression.Lzw,
-            // Set a typical archival resolution.
-            Resolution = 150
+            // Set a reasonable resolution for archiving.
+            Resolution = 300
         };
 
-        // Save the document as a TIFF file.
-        string outputPath = Path.Combine(artifactsDir, "Document.Grayscale.tiff");
-        doc.Save(outputPath, tiffOptions);
+        // Save the document as a grayscale TIFF.
+        doc.Save(tiffPath, saveOptions);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        if (!File.Exists(tiffPath))
             throw new InvalidOperationException("Failed to create the TIFF file.");
 
-        // Optionally, report success (no interactive prompts required).
-        Console.WriteLine("Grayscale TIFF saved to: " + outputPath);
+        // Optional: indicate success (no user interaction required).
+        Console.WriteLine($"Grayscale TIFF saved to: {tiffPath}");
     }
 }

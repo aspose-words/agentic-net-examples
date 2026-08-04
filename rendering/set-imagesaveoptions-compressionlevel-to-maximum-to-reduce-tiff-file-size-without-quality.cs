@@ -7,31 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        // Prepare output folder.
+        string artifactsDir = "Artifacts";
         Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "Compressed.tiff");
 
         // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document to be saved as a TIFF image.");
-        // Insert a sample image if available; otherwise just text is sufficient.
-        // (No external image files are required.)
+        builder.Writeln("This is a sample document to demonstrate TIFF compression.");
+        builder.Writeln("The file will be saved with maximum loss‑less compression.");
 
-        // Configure ImageSaveOptions for TIFF with maximum loss‑less compression.
+        // Configure ImageSaveOptions for TIFF with maximum loss‑less compression (LZW).
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.TiffCompression = TiffCompression.Lzw; // LZW provides lossless compression.
+        options.TiffCompression = TiffCompression.Lzw; // LZW provides strong loss‑less compression.
 
-        // Save the document as a TIFF file.
-        string tiffPath = Path.Combine(artifactsDir, "Sample.tiff");
-        doc.Save(tiffPath, options);
+        // Save the document as a TIFF image.
+        doc.Save(outputPath, options);
 
         // Verify that the file was created.
-        if (!File.Exists(tiffPath))
-            throw new FileNotFoundException("TIFF file was not created.", tiffPath);
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("TIFF file was not created.");
 
-        // Optionally, output the file size for reference.
-        long fileSize = new FileInfo(tiffPath).Length;
-        Console.WriteLine($"TIFF file saved successfully. Size: {fileSize} bytes.");
+        // Optionally, output the file size.
+        long fileSize = new FileInfo(outputPath).Length;
+        Console.WriteLine($"TIFF saved to '{outputPath}' (size: {fileSize} bytes).");
     }
 }

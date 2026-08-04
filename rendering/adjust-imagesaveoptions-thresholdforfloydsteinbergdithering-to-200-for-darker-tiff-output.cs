@@ -7,40 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Define output folder and file.
+        // Prepare output folder.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
-        string outputPath = Path.Combine(artifactsDir, "DarkerTiffOutput.tiff");
 
-        // Create a new blank document.
+        // Create a simple Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello world! This document will be saved as a TIFF image with a darker dithering threshold.");
 
-        // Add some content.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Sample Document");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This document is rendered to a TIFF image with a higher dithering threshold to produce a darker output.");
-
-        // Configure ImageSaveOptions for TIFF with Floyd‑Steinberg dithering.
+        // Configure TIFF save options:
+        // - Use CCITT3 compression (required for binarization).
+        // - Apply Floyd‑Steinberg dithering.
+        // - Set the threshold to 200 (darker output).
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Use CCITT3 compression which works with 1‑bpp images.
             TiffCompression = TiffCompression.Ccitt3,
-            // Apply Floyd‑Steinberg dithering.
             TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
-            // Increase the threshold to 200 (default is 128) for a darker result.
-            ThresholdForFloydSteinbergDithering = (byte)200
+            ThresholdForFloydSteinbergDithering = 200
         };
 
-        // Save the document as a TIFF image using the configured options.
+        // Save the document as a TIFF file.
+        string outputPath = Path.Combine(artifactsDir, "DarkerDithered.tiff");
         doc.Save(outputPath, options);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        // Optionally, output the file size for quick confirmation.
-        Console.WriteLine($"TIFF file saved successfully. Size: {new FileInfo(outputPath).Length} bytes");
+        // Optionally, output the file size for quick verification.
+        Console.WriteLine($"TIFF saved to: {outputPath}");
+        Console.WriteLine($"File size: {new FileInfo(outputPath).Length} bytes");
     }
 }

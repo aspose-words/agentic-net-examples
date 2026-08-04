@@ -2,45 +2,38 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define folders for output and custom fonts.
+        // Define an output directory for generated files.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        string fontsDir = Path.Combine(Directory.GetCurrentDirectory(), "MyFonts");
-
-        // Ensure the directories exist.
         Directory.CreateDirectory(outputDir);
-        Directory.CreateDirectory(fontsDir);
 
         // Create a new blank document.
         Document doc = new Document();
-
-        // Add some text using a font that may not be installed on the system.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Use a font name that is unlikely to be present on the system.
+        // This will demonstrate that the custom FontSettings are consulted during layout.
         builder.Font.Name = "NonExistentFont";
-        builder.Writeln("This text uses a custom font lookup via FontSettings.");
+        builder.Writeln("This paragraph uses a custom font lookup.");
 
-        // Create a FontSettings instance and point it to the custom fonts folder.
-        FontSettings fontSettings = new FontSettings();
-        // The folder may be empty; Aspose.Words will also fall back to system fonts.
-        fontSettings.SetFontsFolder(fontsDir, recursive: false);
-
-        // Assign the FontSettings instance to the document.
-        doc.FontSettings = fontSettings;
+        // Create a FontSettings instance and assign it to the document.
+        // No additional font sources are added; the instance can later be configured as needed.
+        FontSettings customFontSettings = new FontSettings();
+        doc.FontSettings = customFontSettings;
 
         // Save the document to PDF to trigger layout and font resolution.
         string pdfPath = Path.Combine(outputDir, "CustomFontLookup.pdf");
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        doc.Save(pdfPath);
 
-        // Verify that the file was created.
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
             throw new InvalidOperationException("Failed to create the PDF output file.");
 
-        // Optionally, indicate success (no interactive prompts required).
-        Console.WriteLine("Document saved successfully to: " + pdfPath);
+        // Optionally, inform that the process completed successfully.
+        Console.WriteLine($"Document saved successfully to: {pdfPath}");
     }
 }
