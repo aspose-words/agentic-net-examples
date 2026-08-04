@@ -1,8 +1,8 @@
 using System;
-using Aspose.Words;
-using Aspose.Words.Drawing;               // Needed for Shape
-using Aspose.Words.Drawing.Charts;
 using System.Drawing;
+using Aspose.Words;
+using Aspose.Words.Drawing;          // Required for the Shape class
+using Aspose.Words.Drawing.Charts;   // Chart‑related types
 
 public class Program
 {
@@ -14,19 +14,22 @@ public class Program
 
         // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+
+        // Verify that the inserted shape actually contains a chart.
+        if (!chartShape.HasChart)
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+
+        // Access the chart object.
         Chart chart = chartShape.Chart;
 
-        // Move the legend to the top right corner.
+        // Move the legend to the top‑right corner.
         ChartLegend legend = chart.Legend;
         legend.Position = LegendPosition.TopRight;
 
-        // Set the legend's background fill to light gray.
+        // Set the legend background fill to light gray.
         legend.Format.Fill.Solid(Color.LightGray);
 
-        // Allow other chart elements to overlap the legend if needed.
-        legend.Overlay = true;
-
-        // Save the resulting document.
-        doc.Save("ChartLegendPosition.docx");
+        // Save the document.
+        doc.Save("ChartLegendTopRight.docx");
     }
 }

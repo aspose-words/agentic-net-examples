@@ -3,6 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
 public class Program
 {
@@ -19,22 +20,30 @@ public class Program
         // Remove the demo data that Aspose.Words inserts by default.
         chart.Series.Clear();
 
-        // Add a simple data series.
+        // Add custom data for the chart.
         string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-        double[] values = { 120, 150, 180, 130 };
-        chart.Series.Add("Sales", categories, values);
+        chart.Series.Add("Sales", categories, new double[] { 15000, 21000, 18000, 24000 });
 
-        // NOTE:
-        // Aspose.Words for .NET does not expose a View3D property for charts,
-        // therefore a direct 3‑D rotation cannot be set via the API.
-        // The chart type (Column3D) already provides a three‑dimensional appearance.
-
-        // Optional: give the chart a title.
-        chart.Title.Text = "Quarterly Sales (3‑D)";
+        // Set a chart title.
+        chart.Title.Text = "Quarterly Sales";
         chart.Title.Show = true;
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "3d-rotation-chart.docx");
+        // Show and rotate the X‑axis title to give a perspective effect.
+        chart.AxisX.Title.Show = true;
+        chart.AxisX.Title.Text = "Quarter";
+        chart.AxisX.Title.Rotation = 45; // Rotate 45 degrees.
+
+        // Show and rotate the Y‑axis title.
+        chart.AxisY.Title.Show = true;
+        chart.AxisY.Title.Text = "Revenue (USD)";
+        chart.AxisY.Title.Rotation = -45; // Rotate -45 degrees.
+
+        // Rotate the tick labels on both axes for additional 3‑D visual effect.
+        chart.AxisX.TickLabels.Rotation = 30;
+        chart.AxisY.TickLabels.Rotation = -30;
+
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "3D_Rotation_ColumnChart.docx");
         doc.Save(outputPath);
     }
 }

@@ -3,29 +3,30 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-namespace ChartStyleExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a column chart with the predefined Blue style and specific size.
-            Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300, ChartStyle.Blue);
-            Chart chart = chartShape.Chart;
+        // Insert a column chart with a predefined style (ShadedPlot) to ensure consistent branding.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300, ChartStyle.ShadedPlot);
+        Chart chart = chartShape.Chart;
 
-            // Replace the demo data with custom series.
-            chart.Series.Clear();
+        // Remove the default demo series.
+        chart.Series.Clear();
 
-            string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-            chart.Series.Add("Revenue", categories, new double[] { 15000, 21000, 18000, 24000 });
-            chart.Series.Add("Expenses", categories, new double[] { 8000, 9500, 7000, 11000 });
+        // Add custom series data.
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        chart.Series.Add("Sales", categories, new double[] { 1500, 2000, 1800, 2200 });
 
-            // Save the document.
-            doc.Save("ChartWithStyle.docx");
-        }
+        // Set a visible title for the chart.
+        chart.Title.Text = "Quarterly Sales";
+        chart.Title.Show = true;
+
+        // Save the document to the working directory.
+        doc.Save("ChartWithStyle.docx");
     }
 }

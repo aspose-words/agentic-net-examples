@@ -1,14 +1,14 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -16,23 +16,21 @@ public class Program
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Clear default demo data and add custom series.
-        chart.Series.Clear();
-        chart.Series.Add("Sample Series",
-            new[] { "A", "B", "C", "D" },
-            new double[] { 10, 20, 30, 40 });
+        // Verify that the shape actually contains a chart.
+        if (!chartShape.HasChart)
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
 
-        // Access the primary X axis.
+        // Access the primary X‑axis.
         ChartAxis xAxis = chart.AxisX;
 
-        // Make major gridlines visible.
+        // Show major gridlines.
         xAxis.HasMajorGridlines = true;
 
-        // Customize gridline appearance: set line color and thickness.
-        xAxis.Format.Stroke.Color = Color.Blue;
-        xAxis.Format.Stroke.Weight = 2.0; // Thickness in points.
+        // Customize gridline appearance: color and thickness.
+        xAxis.Format.Stroke.Color = Color.DarkGray;
+        xAxis.Format.Stroke.Weight = 0.75; // Thickness in points.
 
         // Save the document.
-        doc.Save("ChartWithCustomGridlines.docx");
+        doc.Save("ChartMajorGridlines.docx");
     }
 }

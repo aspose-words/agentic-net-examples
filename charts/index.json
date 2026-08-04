@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -19,7 +19,6 @@
       "Aspose.Words.Drawing",
       "Aspose.Words.Drawing.Charts",
       "System.Drawing",
-      "Aspose.Words.Tables",
       "Aspose.Words.Saving"
     ],
     "key_apis": [
@@ -29,14 +28,16 @@
       "Shape",
       "Chart",
       "ChartType",
+      "Paragraph",
+      "Directory",
+      "Path",
       "CellFormat",
       "Node",
       "Font",
-      "Directory",
-      "Path",
       "ChartSeries",
       "SaveFormat",
-      "MemoryStream"
+      "MemoryStream",
+      "File"
     ]
   },
   "stats": {
@@ -511,8 +512,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 39,

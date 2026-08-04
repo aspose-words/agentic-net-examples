@@ -228,7 +228,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Implement error handling to catch exceptions when inserting a chart into a read-only document stream.
   - Workflow: existing-docx-and-export
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `batch-process-a-folder-of-word-files-adding-a-predefined-bar-chart-to-each-document-s-firs.cs`
   - Task: Batch process a folder of Word files, adding a predefined bar chart to each document's first page.
   - Workflow: stream-batch-io
@@ -260,7 +260,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -274,7 +274,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project
