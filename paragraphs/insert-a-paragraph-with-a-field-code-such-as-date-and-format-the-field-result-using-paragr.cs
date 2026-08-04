@@ -2,36 +2,32 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace AsposeWordsParagraphFieldExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // DocumentBuilder is used to add content to the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Configure paragraph formatting: center alignment and a space after the paragraph.
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.ParagraphFormat.SpaceAfter = 12; // points
 
-            // Write a heading for the paragraph.
-            builder.Writeln("Report generated on:");
+        // Write some introductory text.
+        builder.Write("Current date: ");
 
-            // Insert a DATE field with a custom format.
-            // The field code includes the \\@ switch that defines the date format.
-            Field dateField = builder.InsertField("DATE \\@ \"dddd, MMMM dd, yyyy\"");
+        // Insert a DATE field with a custom date format using the \\@ switch.
+        // The field result will be formatted as "Wednesday, March 27, 2024".
+        Field dateField = builder.InsertField("DATE \\@ \"dddd, MMMM dd, yyyy\"");
 
-            // Ensure all fields are up‑to‑date (optional, as InsertField updates the field immediately).
-            doc.UpdateFields();
+        // Finish the paragraph.
+        builder.Writeln();
 
-            // Apply paragraph formatting to the paragraph that now contains the DATE field.
-            Paragraph currentParagraph = builder.CurrentParagraph;
-            currentParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-            currentParagraph.ParagraphFormat.SpaceAfter = 12; // points
+        // Ensure all fields are up‑to‑date before saving.
+        doc.UpdateFields();
 
-            // Save the document.
-            string outputPath = "ParagraphWithDateField.docx";
-            doc.Save(outputPath);
-        }
+        // Save the document to the current directory.
+        doc.Save("ParagraphWithDateField.docx");
     }
 }

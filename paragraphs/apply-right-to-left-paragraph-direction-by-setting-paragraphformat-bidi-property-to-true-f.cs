@@ -14,11 +14,10 @@ public class Program
         // Set the paragraph direction to right‑to‑left.
         builder.ParagraphFormat.Bidi = true;
 
-        // Write Arabic text into the paragraph.
+        // Add Arabic text to the paragraph.
         builder.Writeln("مرحبا بالعالم!"); // "Hello world!" in Arabic
 
-        // Save the document to a file.
-        string outputPath = "ParagraphBidi.docx";
-        doc.Save(outputPath);
+        // Save the document to the file system.
+        doc.Save("RightToLeftParagraph.docx");
     }
 }

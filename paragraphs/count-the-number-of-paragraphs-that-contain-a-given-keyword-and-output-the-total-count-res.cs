@@ -1,41 +1,38 @@
 using System;
 using Aspose.Words;
 
-public class Program
+public class ParagraphKeywordCounter
 {
     public static void Main()
     {
-        // The keyword we want to search for in paragraphs.
-        const string keyword = "Aspose";
+        // Define the keyword to search for.
+        const string keyword = "keyword";
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample paragraphs – some contain the keyword, others do not.
-        builder.Writeln("This is the first paragraph.");
-        builder.Writeln("Aspose.Words is a powerful library for document processing.");
-        builder.Writeln("Another paragraph without the target word.");
-        builder.Writeln("Learning Aspose can improve productivity.");
-        builder.Writeln("Final paragraph.");
+        // Add sample paragraphs to the document.
+        builder.Writeln("This is the first paragraph without the special word.");
+        builder.Writeln("The second paragraph contains the Keyword we are looking for.");
+        builder.Writeln("Another line that does not match.");
+        builder.Writeln("Keyword appears again in this fourth paragraph.");
+        builder.Writeln("Final paragraph without it.");
 
         // Count paragraphs that contain the keyword (case‑insensitive).
-        int count = 0;
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph para in paragraphs)
+        int matchingParagraphs = 0;
+        NodeCollection allParagraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        foreach (Paragraph paragraph in allParagraphs)
         {
-            // GetText() returns the paragraph text including the end‑of‑paragraph mark.
-            // Trim it to avoid false negatives due to trailing whitespace.
-            string text = para.GetText().Trim();
-
+            string text = paragraph.GetText(); // Includes the paragraph break.
             if (text.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
-                count++;
+                matchingParagraphs++;
         }
 
         // Output the result.
-        Console.WriteLine($"Number of paragraphs containing \"{keyword}\": {count}");
+        Console.WriteLine($"Paragraphs containing \"{keyword}\": {matchingParagraphs}");
 
-        // Save the document so the example is self‑contained.
-        doc.Save("ParagraphKeywordCount.docx");
+        // Optional: save the document to verify its contents.
+        doc.Save("SampleDocument.docx");
     }
 }

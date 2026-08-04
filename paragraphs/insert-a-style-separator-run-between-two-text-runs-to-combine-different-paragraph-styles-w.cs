@@ -1,34 +1,32 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply a built‑in style to the first part of the paragraph.
+        // Apply a built‑in style to the first part of the text.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Write("This text is in a Heading style. ");
 
-        // Insert a style separator so that the next text can have a different paragraph style
-        // while staying on the same line.
+        // Insert a style separator so the next text can have a different paragraph style.
         builder.InsertStyleSeparator();
 
-        // Create a custom paragraph style.
-        Style customStyle = builder.Document.Styles.Add(StyleType.Paragraph, "MyParaStyle");
-        customStyle.Font.Bold = false;
+        // Define a custom paragraph style.
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyParaStyle");
         customStyle.Font.Size = 8;
         customStyle.Font.Name = "Arial";
+        customStyle.Font.Bold = false;
 
-        // Apply the custom style to the second part of the paragraph.
+        // Apply the custom style and write the second part of the text.
         builder.ParagraphFormat.StyleName = customStyle.Name;
         builder.Write("This text is in a custom style.");
 
-        // Save the document to a file.
-        doc.Save("StyleSeparatorExample.docx");
+        // Save the resulting document.
+        doc.Save("StyleSeparator.docx");
     }
 }

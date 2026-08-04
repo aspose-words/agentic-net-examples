@@ -7,7 +7,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a blank document.
         Document doc = new Document();
 
         // Add a primary header.
@@ -31,19 +31,20 @@ public class Program
         // Configure TXT save options to export headers and footers.
         TxtSaveOptions saveOptions = new TxtSaveOptions
         {
-            ExportHeadersFootersMode = TxtExportHeadersFootersMode.PrimaryOnly
+            ExportHeadersFootersMode = TxtExportHeadersFootersMode.PrimaryOnly,
+            ForcePageBreaks = true // Preserve page breaks in the plain‑text output.
         };
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(artifactsDir);
+        string txtPath = Path.Combine(artifactsDir, "DocumentWithHeadersFooters.txt");
 
-        // Save the document as plain text with headers and footers included.
-        string outputPath = Path.Combine(outputDir, "DocumentWithHeadersFooters.txt");
-        doc.Save(outputPath, saveOptions);
+        // Save the document as plain text with the specified options.
+        doc.Save(txtPath, saveOptions);
 
-        // Optionally, display the saved text content.
-        string savedText = File.ReadAllText(outputPath);
+        // Optional: display the saved text content.
+        string savedText = File.ReadAllText(txtPath);
         Console.WriteLine("Saved TXT content:");
         Console.WriteLine(savedText);
     }

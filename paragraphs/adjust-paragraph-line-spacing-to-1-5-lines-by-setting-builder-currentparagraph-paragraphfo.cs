@@ -1,30 +1,28 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a paragraph of text.
-        builder.Writeln("This paragraph will have 1.5 line spacing.");
+        // Insert a paragraph with some sample text.
+        builder.Writeln("This paragraph will have 1.5 line spacing applied to it.");
+        builder.Writeln("The second line of the same paragraph demonstrates the spacing.");
 
-        // Set the line spacing rule to Multiple (optional, ensures the value is treated as a multiple of the default line height).
+        // Set the line spacing rule to Multiple (number of lines) and apply 1.5 lines.
         builder.CurrentParagraph.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-
-        // Adjust the line spacing to 1.5 lines.
         builder.CurrentParagraph.ParagraphFormat.LineSpacing = 1.5;
 
-        // Define an output path for the generated document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ParagraphLineSpacing.docx");
-
-        // Save the document.
+        // Save the document to the output file.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ParagraphLineSpacing.docx");
         doc.Save(outputPath);
     }
 }
