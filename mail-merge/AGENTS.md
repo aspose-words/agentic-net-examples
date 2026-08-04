@@ -75,7 +75,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply conditional logic in ImageFieldMerging to select different images based on field name.
   - Workflow: image-mail-merge
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `set-the-text-property-of-a-merge-field-to-apply-bold-formatting-to-inserted-names.cs`
   - Task: Set the Text property of a merge field to apply bold formatting to inserted names.
   - Workflow: simple-mail-merge
@@ -140,7 +140,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Perform mail merge using XML data source loaded into a DataSet and generate DOCX output.
   - Workflow: simple-mail-merge
   - Outputs: docx, xml
-  - Selected engine: mcp
+  - Selected engine: llm
 - `add-static-footer-text-to-the-template-using-documentbuilder-before-executing-mail-merge.cs`
   - Task: Add static footer text to the template using DocumentBuilder before executing mail merge.
   - Workflow: simple-mail-merge
@@ -213,7 +213,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -227,7 +227,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

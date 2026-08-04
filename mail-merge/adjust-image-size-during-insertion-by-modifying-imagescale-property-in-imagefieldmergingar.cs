@@ -2,71 +2,73 @@ using System;
 using System.Data;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
 using Aspose.Words.Fields;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
+        // Prepare a temporary folder for the demo files.
+        string demoDir = Path.Combine(Path.GetTempPath(), "AsposeMailMergeDemo");
+        Directory.CreateDirectory(demoDir);
 
-        // Insert a MERGEFIELD that will accept an image during mail merge.
+        // Create a simple 1x1 PNG image using a hard‑coded byte array (avoids System.Drawing).
+        string imagePath = Path.Combine(demoDir, "SampleImage.png");
+        byte[] pngData = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/lK5XAAAAAElFTkSuQmCC");
+        File.WriteAllBytes(imagePath, pngData);
+
+        // Create a new document and insert an image merge field.
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        // The field name must start with "Image:" to be recognized as an image merge field.
         builder.InsertField("MERGEFIELD Image:Photo");
 
-        // Prepare a simple data source. The actual value is not used because the callback
-        // creates an in‑memory image, but the column must exist.
-        DataTable table = new DataTable("Images");
-        table.Columns.Add(new DataColumn("Photo"));
-        table.Rows.Add("ignored1");
-        table.Rows.Add("ignored2");
+        // Build a data source containing the path to the image file.
+        DataTable data = new DataTable("Images");
+        data.Columns.Add("Photo", typeof(string));
+        data.Rows.Add(imagePath);
 
-        // Set a callback that will insert a generated image and resize it to 150x150 points.
-        doc.MailMerge.FieldMergingCallback = new MergedImageResizer(150, 150, MergeFieldImageDimensionUnit.Point);
+        // Set up a callback that will adjust the image size during the merge.
+        doc.MailMerge.FieldMergingCallback = new ImageResizer(100, 100, MergeFieldImageDimensionUnit.Point);
 
         // Execute the mail merge.
-        doc.MailMerge.Execute(table);
-
-        // Update fields to reflect the merged content.
+        doc.MailMerge.Execute(data);
         doc.UpdateFields();
 
         // Save the resulting document.
-        doc.Save("MergedImages.docx");
+        string outputPath = Path.Combine(demoDir, "MergedResult.docx");
+        doc.Save(outputPath);
     }
 
-    // Callback that creates an image and resizes it during mail merge.
-    private class MergedImageResizer : IFieldMergingCallback
+    // Callback that sets the image file name and overrides its dimensions.
+    private class ImageResizer : IFieldMergingCallback
     {
         private readonly double _width;
         private readonly double _height;
         private readonly MergeFieldImageDimensionUnit _unit;
 
-        public MergedImageResizer(double width, double height, MergeFieldImageDimensionUnit unit)
+        public ImageResizer(double width, double height, MergeFieldImageDimensionUnit unit)
         {
             _width = width;
             _height = height;
             _unit = unit;
         }
 
-        // No custom processing required for text fields.
+        // Not used for text fields.
         public void FieldMerging(FieldMergingArgs args)
         {
-            // Intentionally left blank.
+            // No custom processing required for non‑image fields.
         }
 
         // Called for each image merge field.
         public void ImageFieldMerging(ImageFieldMergingArgs args)
         {
-            // A minimal 1x1 pixel PNG (transparent) encoded in base64.
-            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=";
-            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            // Provide the image file name from the data source.
+            args.ImageFileName = args.FieldValue.ToString();
 
-            // Provide the image via a stream. Aspose.Words will read the image from this stream.
-            args.ImageStream = new MemoryStream(pngBytes);
-
-            // Override the size of the inserted image.
+            // Override the image dimensions.
             args.ImageWidth = new MergeFieldImageDimension(_width, _unit);
             args.ImageHeight = new MergeFieldImageDimension(_height, _unit);
         }

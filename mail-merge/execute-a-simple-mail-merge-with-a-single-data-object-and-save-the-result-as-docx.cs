@@ -18,17 +18,19 @@ public class Program
         builder.Writeln(":");
         builder.InsertField("MERGEFIELD Message", "<Message>");
 
-        // Prepare data for a single record.
+        // Define field names and corresponding values for a single record.
         string[] fieldNames = { "FirstName", "LastName", "Message" };
         object[] fieldValues = { "John", "Doe", "Hello! This message was created with Aspose.Words mail merge." };
 
         // Execute the mail merge.
         doc.MailMerge.Execute(fieldNames, fieldValues);
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedResult.docx");
+        // Prepare output directory and file path.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "SimpleMailMerge.docx");
 
         // Save the merged document as DOCX.
-        doc.Save(outputPath, SaveFormat.Docx);
+        doc.Save(outputPath);
     }
 }

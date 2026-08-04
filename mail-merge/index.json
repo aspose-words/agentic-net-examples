@@ -9,33 +9,35 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
-      "System.IO",
       "Aspose.Words",
-      "Aspose.Words.MailMerging",
-      "System.Data",
-      "Aspose.Words.BuildingBlocks",
       "Aspose.Words.Tables",
-      "Aspose.Words.Fields",
+      "System.Data",
+      "System.IO",
+      "Aspose.Words.MailMerging",
       "System.Collections.Generic",
-      "System.Text.RegularExpressions",
+      "SkiaSharp",
+      "Aspose.Words.Fields",
       "System.Globalization",
+      "System.Collections",
       "Aspose.Words.Saving",
-      "System.Collections"
+      "System.IO.Compression",
+      "System.Text",
+      "Aspose.Words.BuildingBlocks"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "Directory",
       "Path",
-      "Font",
       "File",
+      "Font",
       "SaveFormat",
       "Field",
-      "MemoryStream",
+      "Cell",
       "StyleIdentifier",
       "Table"
     ]
@@ -166,8 +168,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 8,
@@ -312,8 +314,8 @@
         "docx",
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 21,

@@ -2,52 +2,70 @@ using System;
 using System.Data;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-public class Program
+namespace MailMergeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare the data source – a DataTable with several records.
-        DataTable table = new DataTable("Recipients");
-        table.Columns.Add("FirstName");
-        table.Columns.Add("LastName");
-        table.Columns.Add("Message");
-
-        table.Rows.Add(new object[] { "John", "Doe", "Hello John! This is your personalized message." });
-        table.Rows.Add(new object[] { "Jane", "Smith", "Hi Jane, welcome to our service." });
-        table.Rows.Add(new object[] { "Bob", "Johnson", "Dear Bob, thank you for your purchase." });
-
-        // Build the mail‑merge template document.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        builder.Write("Dear ");
-        builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
-        builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName", "<LastName>");
-        builder.Writeln(":");
-        builder.InsertField("MERGEFIELD Message", "<Message>");
-
-        // Ensure the output folder exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "MailMergeOutputs");
-        Directory.CreateDirectory(outputDir);
-
-        // For each record create a separate PDF file.
-        int index = 1;
-        foreach (DataRow row in table.Rows)
+        public static void Main()
         {
-            // Clone the template so each document starts from the same base.
-            Document doc = (Document)template.Clone();
+            // Create a template document that contains the merge fields.
+            Document template = CreateTemplate();
 
-            // Perform mail merge for the current row only.
-            doc.MailMerge.Execute(row);
+            // Build a data table with several records.
+            DataTable data = CreateDataTable();
 
-            // Save the result as a PDF file.
-            string outPath = Path.Combine(outputDir, $"MergedDocument_{index}.pdf");
-            doc.Save(outPath, SaveFormat.Pdf);
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-            index++;
+            // Iterate over each record, perform a mail merge, and save the result as a PDF.
+            int recordIndex = 1;
+            foreach (DataRow row in data.Rows)
+            {
+                // Clone the template for the current record.
+                Document doc = (Document)template.Clone();
+
+                // Merge the current row into the document.
+                doc.MailMerge.Execute(row);
+
+                // Save the merged document as a PDF file.
+                string pdfPath = Path.Combine(outputDir, $"MergedDocument_{recordIndex}.pdf");
+                doc.Save(pdfPath, SaveFormat.Pdf);
+
+                recordIndex++;
+            }
+        }
+
+        // Creates a simple Word document with MERGEFIELDs.
+        private static Document CreateTemplate()
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Dear ");
+            builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
+            builder.Write(" ");
+            builder.InsertField("MERGEFIELD LastName", "<LastName>");
+            builder.Writeln(":");
+            builder.InsertField("MERGEFIELD Message", "<Message>");
+
+            return doc;
+        }
+
+        // Generates a DataTable containing sample data for the mail merge.
+        private static DataTable CreateDataTable()
+        {
+            DataTable table = new DataTable("Recipients");
+            table.Columns.Add("FirstName");
+            table.Columns.Add("LastName");
+            table.Columns.Add("Message");
+
+            table.Rows.Add("John", "Doe", "Hello! This is the first message.");
+            table.Rows.Add("Jane", "Smith", "Greetings from Aspose.Words.");
+            table.Rows.Add("Bob", "Johnson", "Your order has been shipped.");
+
+            return table;
         }
     }
 }

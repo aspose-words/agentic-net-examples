@@ -8,40 +8,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder to add mail merge fields.
+        // Create a new document and a builder to add content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple mail merge region named "Region1" with two fields.
-        builder.InsertField(" MERGEFIELD TableStart:Region1");
-        builder.InsertField(" MERGEFIELD FieldA ");
+        // Insert a mail merge region named "MyRegion" with two fields.
+        builder.InsertField(" MERGEFIELD TableStart:MyRegion");
+        builder.InsertField(" MERGEFIELD Field1");
         builder.Write(", ");
-        builder.InsertField(" MERGEFIELD FieldB ");
-        builder.InsertField(" MERGEFIELD TableEnd:Region1");
+        builder.InsertField(" MERGEFIELD Field2");
+        builder.InsertField(" MERGEFIELD TableEnd:MyRegion");
 
-        // Retrieve the full hierarchy of mail merge regions.
+        // Retrieve the hierarchy of mail merge regions.
         MailMergeRegionInfo hierarchy = doc.MailMerge.GetRegionsHierarchy();
 
-        // The top-level regions are stored in the Regions collection.
+        // Get the top‑level regions from the hierarchy.
         IList<MailMergeRegionInfo> topRegions = hierarchy.Regions;
 
-        Console.WriteLine("Mail merge region metadata:");
-        foreach (MailMergeRegionInfo region in topRegions)
+        if (topRegions.Count > 0)
         {
-            // Output basic region information.
-            Console.WriteLine($"Region Name: {region.Name}");
-            Console.WriteLine($"Nesting Level: {region.Level}");
+            MailMergeRegionInfo region = topRegions[0];
 
-            // Start and end fields contain the MERGEFIELD names that mark the region.
+            // Access the start and end fields of the region.
             FieldMergeField startField = region.StartField;
             FieldMergeField endField = region.EndField;
 
-            Console.WriteLine($"Start Field Name: {startField?.FieldName ?? "None"}");
-            Console.WriteLine($"End Field Name: {endField?.FieldName ?? "None"}");
-            Console.WriteLine();
+            Console.WriteLine("Region name: " + region.Name);
+            Console.WriteLine("Start field name: " + startField.FieldName);
+            Console.WriteLine("End field name: " + endField.FieldName);
+        }
+        else
+        {
+            Console.WriteLine("No mail merge regions found.");
         }
 
-        // Optionally, save the document to verify the region layout (not required for metadata).
+        // Save the document (optional, demonstrates the save lifecycle).
         doc.Save("MailMergeRegionInfo.docx");
     }
 }

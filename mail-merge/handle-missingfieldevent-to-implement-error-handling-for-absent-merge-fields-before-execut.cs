@@ -1,64 +1,58 @@
 using System;
 using System.Data;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
-namespace MailMergeMissingFieldDemo
+public class Program
 {
-    // Implements custom handling for missing merge fields.
-    public class MissingFieldHandler : IFieldMergingCallback
+    public static void Main()
     {
-        // Called for each merge field encountered during mail merge.
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert three merge fields: FirstName, LastName and Email.
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Write(" - ");
+        builder.InsertField("MERGEFIELD Email");
+
+        // Register a callback that supplies a default value for missing fields.
+        doc.MailMerge.FieldMergingCallback = new MissingFieldHandler();
+
+        // Build a data table that deliberately omits the "Email" column.
+        DataTable table = new DataTable("Employees");
+        table.Columns.Add("FirstName");
+        table.Columns.Add("LastName");
+        table.Rows.Add("John", "Doe");
+        table.Rows.Add("Jane", "Smith");
+
+        // Execute the mail merge. The callback will be invoked for the Email field.
+        doc.MailMerge.Execute(table);
+
+        // Save the merged document.
+        doc.Save("MergedOutput.docx");
+    }
+
+    // Callback that handles missing fields during mail merge.
+    private class MissingFieldHandler : IFieldMergingCallback
+    {
+        // Called for each merge field encountered.
         void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // If the data source does not contain a value for this field,
-            // Aspose.Words supplies a null value. Replace it with a clear placeholder.
+            // If the data source does not contain a value for this field, provide a placeholder.
             if (args.FieldValue == null || args.FieldValue == DBNull.Value)
             {
-                // You could also log the missing field, throw an exception, etc.
-                args.Text = $"[Missing: {args.DocumentFieldName}]";
+                // Setting Text replaces the field content with the specified string.
+                args.Text = "[Missing]";
             }
         }
 
-        // No image handling required for this example.
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args) { }
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // No image handling needed for this example.
+        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
         {
-            // Create a simple document with three merge fields.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            builder.Write("First Name: ");
-            builder.InsertField("MERGEFIELD FirstName");
-            builder.Writeln();
-
-            builder.Write("Last Name: ");
-            builder.InsertField("MERGEFIELD LastName");
-            builder.Writeln();
-
-            builder.Write("Address: ");
-            builder.InsertField("MERGEFIELD Address");
-            builder.Writeln();
-
-            // Prepare a data source that intentionally lacks "LastName" and "Address".
-            DataTable table = new DataTable("Customers");
-            table.Columns.Add("FirstName");
-            table.Rows.Add("John");
-
-            // Attach the custom missing‑field handler.
-            doc.MailMerge.FieldMergingCallback = new MissingFieldHandler();
-
-            // Perform the mail merge.
-            doc.MailMerge.Execute(table);
-
-            // Save the result to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedResult.docx");
-            doc.Save(outputPath);
+            // Intentionally left blank.
         }
     }
 }

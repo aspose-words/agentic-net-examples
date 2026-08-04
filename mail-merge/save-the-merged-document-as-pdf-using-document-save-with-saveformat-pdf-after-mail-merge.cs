@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
@@ -11,17 +12,18 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert merge fields into the document.
-        builder.Write("Dear ");
-        builder.InsertField("MERGEFIELD FullName", "<FullName>");
-        builder.Write(",");
+        builder.InsertField("MERGEFIELD FullName");
         builder.Writeln();
-        builder.Write("Welcome to ");
-        builder.InsertField("MERGEFIELD Company", "<Company>");
-        builder.Writeln(".");
+        builder.InsertField("MERGEFIELD Company");
+        builder.Writeln();
+        builder.InsertField("MERGEFIELD Address");
+        builder.Writeln();
+        builder.InsertField("MERGEFIELD City");
+        builder.Writeln();
 
         // Prepare data for a single record mail merge.
-        string[] fieldNames = { "FullName", "Company" };
-        object[] fieldValues = { "John Doe", "Acme Corp" };
+        string[] fieldNames = { "FullName", "Company", "Address", "City" };
+        object[] fieldValues = { "James Bond", "MI5 Headquarters", "Milbank", "London" };
 
         // Execute the mail merge.
         doc.MailMerge.Execute(fieldNames, fieldValues);
