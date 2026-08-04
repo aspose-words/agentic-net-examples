@@ -8,72 +8,95 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic sample BMP image.
-        const string sampleBmpPath = "sample.bmp";
-        using (Bitmap bmp = new Bitmap(200, 200))
-        {
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                g.Clear(Color.LightBlue);
-            }
-            bmp.Save(sampleBmpPath);
-        }
+        // Step 1: Create sample BMP images.
+        string[] sampleImagePaths = { "sample1.bmp", "sample2.bmp" };
+        CreateSampleBmp(sampleImagePaths[0], 800, 600, Aspose.Drawing.Color.LightBlue);
+        CreateSampleBmp(sampleImagePaths[1], 1200, 900, Aspose.Drawing.Color.LightCoral);
 
-        // Step 2: Insert the BMP image into a Word document.
-        const string docPath = "sample.docx";
+        // Step 2: Insert images into a Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleBmpPath);
+        foreach (string imgPath in sampleImagePaths)
+        {
+            builder.InsertImage(imgPath);
+            builder.Writeln(); // separate images
+        }
+        string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Step 3: Reload the document and extract all images (including BMP).
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        // Step 3: Extract BMP images from the document and resize them.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        int extractedCount = 0;
+        int resizedCount = 0;
+        int index = 0;
 
-        foreach (Shape shape in shapeNodes)
+        foreach (Shape shape in shapes)
         {
-            if (!shape.HasImage)
-                continue;
+            if (!shape.HasImage) continue;
 
-            // Save the original image to a memory stream.
-            using (MemoryStream originalStream = new MemoryStream())
+            // Save extracted image directly to a BMP file.
+            string extractedPath = $"extracted-{index}.bmp";
+            shape.ImageData.Save(extractedPath);
+            if (!File.Exists(extractedPath))
+                throw new Exception($"Failed to save extracted image {extractedPath}.");
+
+            extractedCount++;
+
+            // Resize extracted BMP to width 1024 while preserving aspect ratio.
+            using (Bitmap originalBmp = new Bitmap(extractedPath))
             {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
+                int originalWidth = originalBmp.Width;
+                int originalHeight = originalBmp.Height;
+                int newWidth = 1024;
+                int newHeight = (int)Math.Round(originalHeight * (newWidth / (double)originalWidth));
 
-                // Load the image using Aspose.Drawing.Bitmap.
-                using (Bitmap originalBitmap = new Bitmap(originalStream))
+                using (Bitmap resizedBmp = new Bitmap(newWidth, newHeight))
                 {
-                    // Calculate new dimensions (fixed width 1024px, proportional height).
-                    int newWidth = 1024;
-                    int newHeight = (int)Math.Round((double)originalBitmap.Height * newWidth / originalBitmap.Width);
-
-                    // Resize the bitmap.
-                    using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
+                    using (Graphics g = Graphics.FromImage(resizedBmp))
                     {
-                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
-                        {
-                            graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
-                        }
-
-                        // Save the resized image as BMP.
-                        string resizedPath = $"resized-{imageIndex}.bmp";
-                        resizedBitmap.Save(resizedPath);
-                        Console.WriteLine($"Resized image saved to: {resizedPath}");
+                        g.Clear(Aspose.Drawing.Color.White);
+                        g.DrawImage(originalBmp, new Rectangle(0, 0, newWidth, newHeight));
                     }
+
+                    string resizedPath = $"resized-{index}.bmp";
+                    resizedBmp.Save(resizedPath);
+                    if (!File.Exists(resizedPath))
+                        throw new Exception($"Failed to save resized image {resizedPath}.");
+
+                    resizedCount++;
                 }
             }
 
-            imageIndex++;
+            index++;
         }
 
-        // Validation: ensure at least one image was processed.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No images were found and resized.");
+        // Validation.
+        if (extractedCount == 0)
+            throw new Exception("No images were extracted from the document.");
+        if (resizedCount == 0)
+            throw new Exception("No images were resized.");
 
-        // Optional cleanup (commented out to keep output files for verification).
-        // File.Delete(sampleBmpPath);
-        // File.Delete(docPath);
+        Console.WriteLine($"Extraction complete: {extractedCount} image(s) extracted.");
+        Console.WriteLine($"Resizing complete: {resizedCount} image(s) resized to width 1024.");
+    }
+
+    private static void CreateSampleBmp(string path, int width, int height, Aspose.Drawing.Color backColor)
+    {
+        using (Bitmap bmp = new Bitmap(width, height))
+        {
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(backColor);
+                // Draw a simple rectangle for visual distinction.
+                using (Pen pen = new Pen(Aspose.Drawing.Color.Black, 5))
+                {
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+            bmp.Save(path);
+        }
+
+        if (!File.Exists(path))
+            throw new Exception($"Failed to create sample image {path}.");
     }
 }

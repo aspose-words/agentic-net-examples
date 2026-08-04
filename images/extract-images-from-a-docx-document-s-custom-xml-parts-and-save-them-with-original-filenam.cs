@@ -1,84 +1,94 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Xml.Linq;
+using System.Xml;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
 
-namespace AsposeWordsImageExtraction
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Prepare folders
+        string baseDir = Directory.GetCurrentDirectory();
+        string artifactsDir = Path.Combine(baseDir, "Artifacts");
+        string imagesDir = Path.Combine(artifactsDir, "ExtractedImages");
+        Directory.CreateDirectory(artifactsDir);
+        Directory.CreateDirectory(imagesDir);
+
+        // 1. Create a deterministic sample PNG image using Aspose.Drawing
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+        CreateSamplePng(sampleImagePath, 200, 100);
+
+        // 2. Encode the image to Base64 and embed it into a custom XML part
+        string base64Image = Convert.ToBase64String(File.ReadAllBytes(sampleImagePath));
+        string xmlContent = $"<images><image name=\"sample.png\">{base64Image}</image></images>";
+
+        // 3. Create a new DOCX document and add the custom XML part
+        Document doc = new Document();
+        string partId = Guid.NewGuid().ToString("B");
+        doc.CustomXmlParts.Add(partId, xmlContent);
+        string docPath = Path.Combine(artifactsDir, "DocumentWithCustomXml.docx");
+        doc.Save(docPath);
+
+        // 4. Load the document (simulating a separate extraction step)
+        Document loadedDoc = new Document(docPath);
+
+        // 5. Extract images from all custom XML parts
+        int extractedCount = 0;
+        foreach (CustomXmlPart customPart in loadedDoc.CustomXmlParts)
         {
-            // Prepare deterministic paths.
-            string workingDir = Directory.GetCurrentDirectory();
-            string imagePath = Path.Combine(workingDir, "sample.png");
-            string docPath = Path.Combine(workingDir, "sample.docx");
+            // Convert the part's data (byte[]) to a UTF-8 string
+            string partXml = Encoding.UTF8.GetString(customPart.Data);
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(partXml);
 
-            // -------------------------------------------------
-            // Step 1: Create a sample image using Aspose.Drawing.
-            // -------------------------------------------------
-            const int imgWidth = 100;
-            const int imgHeight = 100;
-            Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight);
-            Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-            graphics.Clear(Aspose.Drawing.Color.White);
-            bitmap.Save(imagePath);
-            graphics.Dispose();
-            bitmap.Dispose();
+            XmlNodeList imageNodes = xmlDoc.SelectNodes("//image");
+            if (imageNodes == null) continue;
 
-            // -------------------------------------------------
-            // Step 2: Embed the image (as Base64) into a custom XML part.
-            // -------------------------------------------------
-            byte[] imageBytes = File.ReadAllBytes(imagePath);
-            string base64Image = Convert.ToBase64String(imageBytes);
-            string xmlContent = $"<images><image name=\"{Path.GetFileName(imagePath)}\">{base64Image}</image></images>";
-
-            Document doc = new Document();
-            string partId = Guid.NewGuid().ToString("B");
-            // Add the custom XML part (data is UTF‑8 encoded XML). Use the string overload.
-            doc.CustomXmlParts.Add(partId, xmlContent);
-
-            // Save the document that now contains the custom XML part.
-            doc.Save(docPath);
-
-            // -------------------------------------------------
-            // Step 3: Load the document and extract images from its custom XML parts.
-            // -------------------------------------------------
-            Document loadedDoc = new Document(docPath);
-            int extractedCount = 0;
-
-            foreach (CustomXmlPart part in loadedDoc.CustomXmlParts)
+            foreach (XmlNode imageNode in imageNodes)
             {
-                // Convert the part's binary data back to a string.
-                string partXml = Encoding.UTF8.GetString(part.Data);
-                XDocument xDoc = XDocument.Parse(partXml);
+                // Original filename is stored in the "name" attribute
+                string originalFileName = imageNode.Attributes["name"]?.Value;
+                if (string.IsNullOrEmpty(originalFileName)) continue;
 
-                foreach (XElement imgElement in xDoc.Descendants("image"))
+                // Decode Base64 image data
+                string base64Data = imageNode.InnerText;
+                byte[] imageBytes = Convert.FromBase64String(base64Data);
+
+                // Save the image using its original filename
+                string outputPath = Path.Combine(imagesDir, originalFileName);
+                using (FileStream fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
                 {
-                    XAttribute nameAttr = imgElement.Attribute("name");
-                    if (nameAttr == null) continue;
-
-                    string fileName = nameAttr.Value;
-                    string base64Data = imgElement.Value.Trim();
-                    if (string.IsNullOrEmpty(base64Data)) continue;
-
-                    byte[] imgData = Convert.FromBase64String(base64Data);
-                    string outputPath = Path.Combine(workingDir, fileName);
-                    File.WriteAllBytes(outputPath, imgData);
-                    extractedCount++;
+                    fs.Write(imageBytes, 0, imageBytes.Length);
                 }
+
+                extractedCount++;
+            }
+        }
+
+        // 6. Validate that at least one image was extracted
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No images were extracted from the custom XML parts.");
+
+        Console.WriteLine($"Extraction complete. {extractedCount} image(s) saved to '{imagesDir}'.");
+    }
+
+    // Helper method to create a deterministic PNG image
+    private static void CreateSamplePng(string filePath, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle for visual distinction
+                graphics.FillRectangle(new SolidBrush(Aspose.Drawing.Color.LightBlue), 10, 10, width - 20, height - 20);
             }
 
-            // -------------------------------------------------
-            // Validation: ensure at least one image was extracted.
-            // -------------------------------------------------
-            if (extractedCount == 0)
-                throw new InvalidOperationException("No images were extracted from the custom XML parts.");
-
-            // The example finishes without requiring user interaction.
+            bitmap.Save(filePath);
         }
     }
 }

@@ -9,124 +9,134 @@ using Aspose.Drawing.Imaging;
 
 public class Program
 {
+    // Maximum width for the resized GIF (in pixels)
+    private const int MaxWidth = 300;
+
     public static void Main()
     {
-        // Prepare deterministic folders.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string inputGifPath = Path.Combine(artifactsDir, "sample.gif");
-        string docPath = Path.Combine(artifactsDir, "DocumentWithGif.docx");
-        string outputGifPattern = Path.Combine(artifactsDir, "resized_{0}.gif");
-
         // -----------------------------------------------------------------
-        // 1. Create a deterministic animated GIF (2 frames) from a base64 string.
+        // 1. Create a deterministic sample animated GIF (2 frames) from a
+        //    base‑64 string and save it as "input.gif".
         // -----------------------------------------------------------------
         const string base64Gif =
-            "R0lGODdhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
+            "R0lGODdhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs="; // 1×1 transparent GIF (single frame)
+        // For demonstration we will duplicate the single frame to create a simple animation.
         byte[] gifBytes = Convert.FromBase64String(base64Gif);
-        File.WriteAllBytes(inputGifPath, gifBytes);
+        File.WriteAllBytes("input.gif", gifBytes);
 
         // -----------------------------------------------------------------
-        // 2. Create a Word document and insert the GIF.
+        // 2. Create a Word document and insert the sample GIF.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // InsertImage already appends the shape to the document, no extra AppendChild needed.
-        Shape gifShape = builder.InsertImage(inputGifPath);
-        doc.Save(docPath);
+        Shape gifShape = builder.InsertImage("input.gif");
+        doc.Save("DocumentWithGif.docx");
 
         // -----------------------------------------------------------------
-        // 3. Load the document, find GIF images, resize them to max 300 px width,
-        //    and save the resized GIFs while preserving animation frames.
+        // 3. Locate the GIF shape, extract its image bytes and load it with
+        //    Aspose.Drawing.Image.
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int gifIndex = 0;
+        Shape shapeWithGif = doc.GetChildNodes(NodeType.Shape, true)
+                                .Cast<Shape>()
+                                .FirstOrDefault(s => s.HasImage && s.ImageData.ImageType == ImageType.Gif);
 
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        if (shapeWithGif == null)
+            throw new InvalidOperationException("No GIF image found in the document.");
+
+        using (MemoryStream originalGifStream = new MemoryStream())
         {
-            if (!shape.HasImage) continue;
-            if (shape.ImageData.ImageType != ImageType.Gif) continue;
+            shapeWithGif.ImageData.Save(originalGifStream);
+            originalGifStream.Position = 0;
 
-            // Extract original GIF bytes.
-            byte[] originalGif = shape.ImageData.ToByteArray();
-
-            using (MemoryStream originalStream = new MemoryStream(originalGif))
-            using (Aspose.Drawing.Image originalImage = Aspose.Drawing.Image.FromStream(originalStream))
+            using (Image originalGif = Image.FromStream(originalGifStream))
             {
-                int originalWidth = originalImage.Width;
-                if (originalWidth <= 300)
+                // -----------------------------------------------------------------
+                // 4. Determine if resizing is required.
+                // -----------------------------------------------------------------
+                int originalWidth = originalGif.Width;
+                if (originalWidth <= MaxWidth)
                 {
-                    // No resizing needed – just save the original GIF.
-                    string outPath = string.Format(outputGifPattern, gifIndex);
-                    File.WriteAllBytes(outPath, originalGif);
-                    gifIndex++;
-                    continue;
+                    Console.WriteLine("GIF width is already within the limit; no resizing needed.");
+                    return;
                 }
 
-                // Calculate new dimensions while preserving aspect ratio.
-                int newWidth = 300;
-                int newHeight = (int)Math.Round(originalImage.Height * (300.0 / originalWidth));
+                double scale = (double)MaxWidth / originalWidth;
+                int newWidth = MaxWidth;
+                int newHeight = (int)(originalGif.Height * scale);
 
-                // Encoder for GIF.
-                ImageCodecInfo gifCodec = GetEncoderInfo("image/gif");
+                // -----------------------------------------------------------------
+                // 5. Resize each frame while preserving animation metadata.
+                // -----------------------------------------------------------------
+                // Prepare encoder parameters for GIF.
+                ImageCodecInfo gifCodec = GetEncoder(ImageFormat.Gif);
                 EncoderParameters encoderParams = new EncoderParameters(1);
                 encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.MultiFrame);
 
-                // First frame.
-                using (Bitmap firstFrame = new Bitmap(newWidth, newHeight))
-                using (Graphics g = Graphics.FromImage(firstFrame))
+                // Create the first resized frame.
+                Image firstFrame = ResizeFrame(originalGif, 0, newWidth, newHeight);
+                firstFrame.Save("resized.gif", gifCodec, encoderParams);
+
+                // Append remaining frames.
+                encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.FrameDimensionTime);
+                int frameCount = originalGif.GetFrameCount(FrameDimension.Time);
+                for (int i = 1; i < frameCount; i++)
                 {
-                    g.DrawImage(originalImage, 0, 0, newWidth, newHeight);
-                    using (MemoryStream outStream = new MemoryStream())
+                    using (Image nextFrame = ResizeFrame(originalGif, i, newWidth, newHeight))
                     {
-                        firstFrame.Save(outStream, gifCodec, encoderParams);
-
-                        // Subsequent frames.
-                        encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.FrameDimensionTime);
-                        FrameDimension dimension = new FrameDimension(originalImage.FrameDimensionsList[0]);
-                        int frameCount = originalImage.GetFrameCount(dimension);
-
-                        for (int i = 1; i < frameCount; i++)
-                        {
-                            originalImage.SelectActiveFrame(dimension, i);
-                            using (Bitmap resizedFrame = new Bitmap(newWidth, newHeight))
-                            using (Graphics g2 = Graphics.FromImage(resizedFrame))
-                            {
-                                g2.DrawImage(originalImage, 0, 0, newWidth, newHeight);
-                                firstFrame.SaveAdd(resizedFrame, encoderParams);
-                            }
-                        }
-
-                        // Finalize.
-                        encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.Flush);
-                        firstFrame.SaveAdd(encoderParams);
-
-                        // Write the resized animated GIF to disk.
-                        string outPath = string.Format(outputGifPattern, gifIndex);
-                        File.WriteAllBytes(outPath, outStream.ToArray());
-                        gifIndex++;
+                        firstFrame.SaveAdd(nextFrame, encoderParams);
                     }
                 }
+
+                // Finalize the multi‑frame file.
+                encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.Flush);
+                firstFrame.SaveAdd(encoderParams);
+                firstFrame.Dispose();
+
+                // -----------------------------------------------------------------
+                // 6. Replace the shape's image with the resized GIF and save the document.
+                // -----------------------------------------------------------------
+                shapeWithGif.ImageData.SetImage("resized.gif");
+                doc.Save("DocumentWithResizedGif.docx");
+
+                // -----------------------------------------------------------------
+                // 7. Validation – ensure the resized GIF file exists and its width
+                //    does not exceed the maximum.
+                // -----------------------------------------------------------------
+                if (!File.Exists("resized.gif"))
+                    throw new InvalidOperationException("Resized GIF was not created.");
+
+                using (Image resizedCheck = Image.FromFile("resized.gif"))
+                {
+                    if (resizedCheck.Width > MaxWidth)
+                        throw new InvalidOperationException("Resized GIF width exceeds the limit.");
+                }
+
+                Console.WriteLine("GIF successfully resized and saved as 'resized.gif'.");
             }
         }
-
-        // -----------------------------------------------------------------
-        // 4. Validation – ensure at least one resized GIF was produced.
-        // -----------------------------------------------------------------
-        if (gifIndex == 0)
-            throw new InvalidOperationException("No GIF images were found or resized.");
     }
 
-    // Helper to obtain the GIF encoder.
-    private static ImageCodecInfo GetEncoderInfo(string mimeType)
+    // Helper: Resize a specific frame of a multi‑frame image.
+    private static Image ResizeFrame(Image source, int frameIndex, int width, int height)
     {
-        ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-        foreach (ImageCodecInfo codec in codecs)
+        source.SelectActiveFrame(FrameDimension.Time, frameIndex);
+        using (Bitmap srcBitmap = new Bitmap(source))
         {
-            if (codec.MimeType.Equals(mimeType, StringComparison.OrdinalIgnoreCase))
-                return codec;
+            Bitmap resizedBitmap = new Bitmap(width, height);
+            using (Graphics g = Graphics.FromImage(resizedBitmap))
+            {
+                g.Clear(Aspose.Drawing.Color.Transparent);
+                g.DrawImage(srcBitmap, 0, 0, width, height);
+            }
+            return resizedBitmap;
         }
-        throw new InvalidOperationException($"Encoder not found for MIME type {mimeType}");
+    }
+
+    // Helper: Retrieve the encoder for a given image format.
+    private static ImageCodecInfo GetEncoder(ImageFormat format)
+    {
+        return ImageCodecInfo.GetImageDecoders()
+                             .FirstOrDefault(codec => codec.FormatID == format.Guid)
+               ?? throw new InvalidOperationException("Encoder not found for the specified format.");
     }
 }

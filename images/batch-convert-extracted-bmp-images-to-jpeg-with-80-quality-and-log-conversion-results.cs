@@ -8,68 +8,74 @@ public class BatchBmpToJpegConverter
 {
     public static void Main()
     {
-        // Prepare input and output folders.
-        string inputFolder = "InputImages";
-        string outputFolder = "OutputImages";
+        // Define folders for input BMPs and output JPEGs.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputImages");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputImages");
+
+        // Ensure folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample BMP images if none exist.
-        CreateSampleBmpImages(inputFolder, 3);
+        // Create sample BMP images.
+        CreateSampleBmp(Path.Combine(inputFolder, "sample1.bmp"), 200, 150, Aspose.Drawing.Color.LightBlue);
+        CreateSampleBmp(Path.Combine(inputFolder, "sample2.bmp"), 300, 200, Aspose.Drawing.Color.LightGreen);
+        CreateSampleBmp(Path.Combine(inputFolder, "sample3.bmp"), 250, 250, Aspose.Drawing.Color.LightCoral);
 
-        // Convert each BMP image to JPEG with 80% quality.
+        // Prepare conversion options: JPEG with 80% quality.
+        ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
+        {
+            JpegQuality = 80
+        };
+
         int convertedCount = 0;
+
+        // Process each BMP file in the input folder.
         foreach (string bmpPath in Directory.GetFiles(inputFolder, "*.bmp"))
         {
-            // Load the BMP into a new blank document and insert the image.
+            // Load the BMP into a new document and insert it as an image.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
             builder.InsertImage(bmpPath);
 
-            // Configure JPEG save options with the required quality.
-            ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
-            {
-                JpegQuality = 80
-            };
+            // Determine output JPEG path.
+            string outputFileName = Path.GetFileNameWithoutExtension(bmpPath) + ".jpg";
+            string jpegPath = Path.Combine(outputFolder, outputFileName);
 
-            // Determine output file name.
-            string jpegPath = Path.Combine(outputFolder,
-                Path.GetFileNameWithoutExtension(bmpPath) + ".jpg");
-
-            // Save the document page (containing only the image) as JPEG.
+            // Save the document page (containing the image) as a JPEG.
             doc.Save(jpegPath, jpegOptions);
 
-            Console.WriteLine($"Converted '{bmpPath}' to '{jpegPath}' with 80% quality.");
+            // Verify that the JPEG file was created.
+            if (!File.Exists(jpegPath))
+                throw new InvalidOperationException($"Failed to create JPEG file: {jpegPath}");
+
+            // Log the conversion result.
+            Console.WriteLine($"Converted '{Path.GetFileName(bmpPath)}' to '{outputFileName}' with JPEG quality {jpegOptions.JpegQuality}.");
             convertedCount++;
         }
 
-        // Validate that at least one image was processed.
-        if (convertedCount == 0)
-            throw new Exception("No BMP images were found for conversion.");
+        // Final summary.
+        Console.WriteLine($"Batch conversion completed. Total files converted: {convertedCount}.");
     }
 
-    // Generates a specified number of deterministic BMP files in the given folder.
-    private static void CreateSampleBmpImages(string folder, int count)
+    // Helper method to create a deterministic BMP image.
+    private static void CreateSampleBmp(string filePath, int width, int height, Aspose.Drawing.Color backgroundColor)
     {
-        for (int i = 1; i <= count; i++)
+        // Create a bitmap with the specified dimensions.
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            string filePath = Path.Combine(folder, $"sample{i}.bmp");
-            if (File.Exists(filePath))
-                continue; // Skip if already created.
-
-            // Create a 100x100 bitmap with a simple colored background.
-            using (Bitmap bitmap = new Bitmap(100, 100))
+            // Obtain a graphics object to draw on the bitmap.
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill with a distinct color for each image.
-                int red = (i * 50) % 256;
-                int green = (i * 80) % 256;
-                int blue = (i * 110) % 256;
-                graphics.Clear(Color.FromArgb(red, green, blue));
-
-                // Save as BMP.
-                bitmap.Save(filePath);
+                // Fill the bitmap with a solid background color.
+                graphics.Clear(backgroundColor);
             }
+
+            // Save the bitmap as a BMP file.
+            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Bmp);
         }
+
+        // Validate that the BMP file was created.
+        if (!File.Exists(filePath))
+            throw new InvalidOperationException($"Failed to create BMP file: {filePath}");
     }
 }

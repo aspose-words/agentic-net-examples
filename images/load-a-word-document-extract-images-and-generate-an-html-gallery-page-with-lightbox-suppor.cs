@@ -1,173 +1,139 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Collections.Generic;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
-    // Helper: creates a deterministic PNG image.
-    private static void CreateSamplePng(string filePath, int width, int height, Aspose.Drawing.Color backColor, string text)
-    {
-        // Create bitmap.
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height, Aspose.Drawing.Imaging.PixelFormat.Format32bppArgb))
-        {
-            // Fill background.
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(backColor);
-
-                // Draw centered text.
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24, Aspose.Drawing.FontStyle.Bold))
-                {
-                    // Measure text size.
-                    SizeF textSize = graphics.MeasureString(text, font);
-                    float x = (width - textSize.Width) / 2f;
-                    float y = (height - textSize.Height) / 2f;
-                    graphics.DrawString(text, font, Aspose.Drawing.Brushes.Black, x, y);
-                }
-            }
-
-            // Save as PNG.
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
-        }
-    }
-
     public static void Main()
     {
-        // Define folders.
-        string baseDir = Directory.GetCurrentDirectory();
-        string artifactsDir = Path.Combine(baseDir, "Artifacts");
-        string imagesInputDir = Path.Combine(artifactsDir, "InputImages");
-        string imagesExtractDir = Path.Combine(artifactsDir, "ExtractedImages");
-        string htmlOutputPath = Path.Combine(artifactsDir, "gallery.html");
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
+        // Base directory for all generated files.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(baseDir);
 
-        // Ensure clean environment.
-        if (Directory.Exists(artifactsDir))
-            Directory.Delete(artifactsDir, true);
-        Directory.CreateDirectory(artifactsDir);
-        Directory.CreateDirectory(imagesInputDir);
-        Directory.CreateDirectory(imagesExtractDir);
+        // -----------------------------------------------------------------
+        // 1. Create deterministic sample images using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        string image1Path = Path.Combine(baseDir, "sample1.png");
+        string image2Path = Path.Combine(baseDir, "sample2.png");
 
-        // -------------------------------------------------
-        // 1. Create deterministic sample images (PNG).
-        // -------------------------------------------------
-        string sampleImagePath1 = Path.Combine(imagesInputDir, "sample1.png");
-        CreateSamplePng(sampleImagePath1, 200, 200, Aspose.Drawing.Color.LightBlue, "Img1");
+        CreateSampleImage(image1Path, 200, 150, Aspose.Drawing.Color.LightBlue);
+        CreateSampleImage(image2Path, 150, 200, Aspose.Drawing.Color.LightCoral);
 
-        string sampleImagePath2 = Path.Combine(imagesInputDir, "sample2.png");
-        CreateSamplePng(sampleImagePath2, 200, 200, Aspose.Drawing.Color.LightCoral, "Img2");
-
-        // -------------------------------------------------
-        // 2. Create a Word document and insert the images.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 2. Build a Word document that contains the sample images.
+        // -----------------------------------------------------------------
+        string docPath = Path.Combine(baseDir, "sample.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Image Gallery Example");
-        builder.InsertParagraph();
-
-        // Insert first image.
-        builder.InsertImage(sampleImagePath1);
-        builder.InsertParagraph();
-
-        // Insert second image.
-        builder.InsertImage(sampleImagePath2);
-        builder.InsertParagraph();
-
-        // Save the document.
+        builder.InsertImage(image1Path);
+        builder.Writeln(); // separate the images with a line break
+        builder.InsertImage(image2Path);
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the document and extract images.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 3. Load the document and extract all embedded images.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
-        int imageIndex = 0;
-        List<string> extractedImageFiles = new List<string>();
+        string imagesFolder = Path.Combine(baseDir, "Images");
+        Directory.CreateDirectory(imagesFolder);
 
+        int extractedCount = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
             {
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string extractedFileName = $"image_{imageIndex}{extension}";
-                string extractedFullPath = Path.Combine(imagesExtractDir, extractedFileName);
-
-                shape.ImageData.Save(extractedFullPath);
-                extractedImageFiles.Add(extractedFileName);
-                imageIndex++;
+                string imageFileName = $"image{extractedCount}{extension}";
+                string imageFullPath = Path.Combine(imagesFolder, imageFileName);
+                shape.ImageData.Save(imageFullPath);
+                extractedCount++;
             }
         }
 
-        // Validation: ensure at least one image was extracted.
-        if (extractedImageFiles.Count == 0)
+        if (extractedCount == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
 
-        // -------------------------------------------------
-        // 4. Generate HTML gallery with simple lightbox effect.
-        // -------------------------------------------------
-        StringBuilder htmlBuilder = new StringBuilder();
+        // -----------------------------------------------------------------
+        // 4. Generate a simple HTML gallery with lightbox support.
+        // -----------------------------------------------------------------
+        string htmlPath = Path.Combine(baseDir, "gallery.html");
+        string htmlContent = BuildHtmlGallery(imagesFolder, extractedCount);
+        File.WriteAllText(htmlPath, htmlContent, Encoding.UTF8);
 
-        htmlBuilder.AppendLine("<!DOCTYPE html>");
-        htmlBuilder.AppendLine("<html lang=\"en\">");
-        htmlBuilder.AppendLine("<head>");
-        htmlBuilder.AppendLine("    <meta charset=\"UTF-8\">");
-        htmlBuilder.AppendLine("    <title>Image Gallery</title>");
-        htmlBuilder.AppendLine("    <style>");
-        htmlBuilder.AppendLine("        .gallery { display: flex; flex-wrap: wrap; gap: 10px; }");
-        htmlBuilder.AppendLine("        .gallery a { border: 1px solid #ccc; }");
-        htmlBuilder.AppendLine("        .gallery img { display: block; max-width: 200px; height: auto; }");
-        htmlBuilder.AppendLine("        .lightbox {");
-        htmlBuilder.AppendLine("            position: fixed; top: 0; left: 0; width: 100%; height: 100%;");
-        htmlBuilder.AppendLine("            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center;");
-        htmlBuilder.AppendLine("        }");
-        htmlBuilder.AppendLine("        .lightbox img { max-width: 90%; max-height: 90%; }");
-        htmlBuilder.AppendLine("    </style>");
-        htmlBuilder.AppendLine("</head>");
-        htmlBuilder.AppendLine("<body>");
-        htmlBuilder.AppendLine("    <h1>Extracted Images Gallery</h1>");
-        htmlBuilder.AppendLine("    <div class=\"gallery\">");
+        // Execution finished – all files are written to the Artifacts folder.
+    }
 
-        foreach (string fileName in extractedImageFiles)
+    // Creates a PNG image with a solid background colour.
+    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            string relativePath = Path.Combine("ExtractedImages", fileName).Replace("\\", "/");
-            htmlBuilder.AppendLine($"        <a href=\"{relativePath}\" onclick=\"showLightbox(event, '{relativePath}'); return false;\">");
-            htmlBuilder.AppendLine($"            <img src=\"{relativePath}\" alt=\"Image\" />");
-            htmlBuilder.AppendLine("        </a>");
+            graphics.Clear(backColor);
+            bitmap.Save(filePath);
+        }
+    }
+
+    // Builds the HTML string for the gallery page.
+    private static string BuildHtmlGallery(string imagesFolder, int imageCount)
+    {
+        // Relative path from the HTML file to the images folder.
+        string relativeImagesPath = "Images";
+
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("<!DOCTYPE html>");
+        sb.AppendLine("<html lang=\"en\">");
+        sb.AppendLine("<head>");
+        sb.AppendLine("    <meta charset=\"UTF-8\">");
+        sb.AppendLine("    <title>Image Gallery</title>");
+        sb.AppendLine("    <style>");
+        sb.AppendLine("        body { font-family: Arial, sans-serif; background:#f0f0f0; margin:0; padding:20px; }");
+        sb.AppendLine("        .gallery { display:flex; flex-wrap:wrap; gap:10px; }");
+        sb.AppendLine("        .thumb { width:150px; height:auto; cursor:pointer; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.3); }");
+        sb.AppendLine("        .lightbox { display:none; position:fixed; top:0; left:0; width:100%; height:100%;");
+        sb.AppendLine("                    background:rgba(0,0,0,0.8); align-items:center; justify-content:center; }");
+        sb.AppendLine("        .lightbox img { max-width:90%; max-height:90%; }");
+        sb.AppendLine("        .lightbox:target { display:flex; }");
+        sb.AppendLine("    </style>");
+        sb.AppendLine("</head>");
+        sb.AppendLine("<body>");
+        sb.AppendLine("    <h1>Image Gallery</h1>");
+        sb.AppendLine("    <div class=\"gallery\">");
+
+        for (int i = 0; i < imageCount; i++)
+        {
+            // Determine the file name with unknown extension – we will match any file that starts with image{i}
+            string pattern = $"image{i}";
+            string[] matchingFiles = Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), "Artifacts", "Images"))
+                                             .Where(f => Path.GetFileName(f).StartsWith(pattern, StringComparison.OrdinalIgnoreCase))
+                                             .ToArray();
+
+            if (matchingFiles.Length == 0)
+                continue; // safety check
+
+            string fileName = Path.GetFileName(matchingFiles[0]);
+            string thumbPath = $"{relativeImagesPath}/{fileName}";
+            string lightboxId = $"lightbox{i}";
+
+            sb.AppendLine($"        <a href=\"#{lightboxId}\"><img src=\"{thumbPath}\" class=\"thumb\" alt=\"Image {i}\"/></a>");
+            sb.AppendLine($"        <div id=\"{lightboxId}\" class=\"lightbox\">");
+            sb.AppendLine($"            <a href=\"#\" style=\"position:absolute;top:20px;right:30px;color:#fff;font-size:30px;text-decoration:none;\">&times;</a>");
+            sb.AppendLine($"            <img src=\"{thumbPath}\" alt=\"Image {i}\"/>");
+            sb.AppendLine("        </div>");
         }
 
-        htmlBuilder.AppendLine("    </div>");
-        htmlBuilder.AppendLine("    <div class=\"lightbox\" id=\"lightbox\" onclick=\"hideLightbox()\">");
-        htmlBuilder.AppendLine("        <img id=\"lightboxImg\" src=\"\" alt=\"\" />");
-        htmlBuilder.AppendLine("    </div>");
-        htmlBuilder.AppendLine("    <script>");
-        htmlBuilder.AppendLine("        function showLightbox(event, src) {");
-        htmlBuilder.AppendLine("            var lightbox = document.getElementById('lightbox');");
-        htmlBuilder.AppendLine("            var img = document.getElementById('lightboxImg');");
-        htmlBuilder.AppendLine("            img.src = src;");
-        htmlBuilder.AppendLine("            lightbox.style.display = 'flex';");
-        htmlBuilder.AppendLine("        }");
-        htmlBuilder.AppendLine("        function hideLightbox() {");
-        htmlBuilder.AppendLine("            var lightbox = document.getElementById('lightbox');");
-        htmlBuilder.AppendLine("            lightbox.style.display = 'none';");
-        htmlBuilder.AppendLine("        }");
-        htmlBuilder.AppendLine("    </script>");
-        htmlBuilder.AppendLine("</body>");
-        htmlBuilder.AppendLine("</html>");
+        sb.AppendLine("    </div>");
+        sb.AppendLine("</body>");
+        sb.AppendLine("</html>");
 
-        // Write HTML file.
-        File.WriteAllText(htmlOutputPath, htmlBuilder.ToString(), Encoding.UTF8);
-
-        // Final validation: ensure HTML file exists.
-        if (!File.Exists(htmlOutputPath))
-            throw new InvalidOperationException("Failed to create the HTML gallery page.");
+        return sb.ToString();
     }
 }

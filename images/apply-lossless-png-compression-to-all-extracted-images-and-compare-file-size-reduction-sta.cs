@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
@@ -11,75 +10,87 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Directories for artifacts
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample PNG image using Aspose.Drawing.
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(artifactsDir, "input.png");
+        // 1. Create a deterministic sample PNG image.
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
         using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        using (Graphics g = Graphics.FromImage(bitmap))
         {
-            graphics.Clear(Color.White);
-            using (Pen pen = new Pen(Color.Black, 2))
-            {
-                graphics.DrawRectangle(pen, 10, 10, 180, 180);
-            }
-            bitmap.Save(sampleImagePath, ImageFormat.Png);
+            g.Clear(Color.White);
+            // Draw a simple rectangle.
+            g.FillRectangle(new SolidBrush(Color.FromArgb(255, 0, 120, 215)), 20, 20, 160, 160);
+            bitmap.Save(sampleImagePath);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Build a Word document that contains the sample image twice.
-        // -----------------------------------------------------------------
+        // 2. Create a Word document and insert the sample image multiple times.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Images before compression:");
         builder.InsertImage(sampleImagePath);
         builder.InsertParagraph();
         builder.InsertImage(sampleImagePath);
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
-        doc.Save(docPath);
+        string originalDocPath = Path.Combine(artifactsDir, "Original.docx");
+        doc.Save(originalDocPath);
 
-        // -----------------------------------------------------------------
-        // 3. Extract all images from the document.
-        // -----------------------------------------------------------------
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        var imageShapes = shapeNodes.OfType<Shape>().Where(s => s.HasImage).ToList();
+        // 3. Load the document (demonstrating load usage).
+        Document loadedDoc = new Document(originalDocPath);
 
-        if (imageShapes.Count == 0)
-            throw new InvalidOperationException("No images were found in the document.");
-
+        // 4. Extract all images from the document.
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-        foreach (Shape shape in imageShapes)
-        {
-            // Save the original extracted image.
-            string originalPath = Path.Combine(artifactsDir, $"original_{imageIndex}.png");
-            shape.ImageData.Save(originalPath);
+        bool anyImageExtracted = false;
 
-            // -----------------------------------------------------------------
-            // 4. Re‑encode the image as lossless PNG (Aspose.Drawing does this by default).
-            // -----------------------------------------------------------------
-            string compressedPath = Path.Combine(artifactsDir, $"compressed_{imageIndex}.png");
-            using (Image img = Image.FromFile(originalPath))
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        {
+            if (!shape.HasImage)
+                continue;
+
+            anyImageExtracted = true;
+
+            // Original extracted image.
+            string originalImagePath = Path.Combine(artifactsDir, $"extracted_original_{imageIndex}.png");
+            shape.ImageData.Save(originalImagePath);
+
+            // 5. Apply lossless PNG compression.
+            // Load the original image using Aspose.Drawing, then re‑save it as PNG.
+            string compressedImagePath = Path.Combine(artifactsDir, $"compressed_{imageIndex}.png");
+            using (FileStream originalStream = File.OpenRead(originalImagePath))
+            using (MemoryStream ms = new MemoryStream())
             {
-                img.Save(compressedPath, ImageFormat.Png);
+                // Ensure the stream is at the beginning.
+                originalStream.Position = 0;
+                originalStream.CopyTo(ms);
+                ms.Position = 0;
+
+                using (Image img = Image.FromStream(ms))
+                {
+                    // Re‑save with PNG format (lossless compression).
+                    img.Save(compressedImagePath, ImageFormat.Png);
+                }
             }
 
-            // -----------------------------------------------------------------
-            // 5. Compare file sizes and output statistics.
-            // -----------------------------------------------------------------
-            long originalSize = new FileInfo(originalPath).Length;
-            long compressedSize = new FileInfo(compressedPath).Length;
-            double reductionPercent = originalSize == 0
-                ? 0
-                : (originalSize - compressedSize) * 100.0 / originalSize;
+            // 6. Compare file sizes.
+            long originalSize = new FileInfo(originalImagePath).Length;
+            long compressedSize = new FileInfo(compressedImagePath).Length;
+            double reduction = originalSize == 0 ? 0 : 100.0 * (originalSize - compressedSize) / originalSize;
 
-            Console.WriteLine($"Image {imageIndex}: Original = {originalSize} bytes, " +
-                              $"Compressed = {compressedSize} bytes, " +
-                              $"Reduction = {reductionPercent:0.##}%");
+            Console.WriteLine($"Image {imageIndex}:");
+            Console.WriteLine($"  Original size  : {originalSize} bytes");
+            Console.WriteLine($"  Compressed size: {compressedSize} bytes");
+            Console.WriteLine($"  Size reduction : {reduction:F2}%");
+            Console.WriteLine();
 
             imageIndex++;
         }
+
+        // Validation: ensure at least one image was processed.
+        if (!anyImageExtracted)
+            throw new InvalidOperationException("No images were extracted from the document.");
+
+        // 7. Optionally, save the document after processing (not required for this task).
+        // loadedDoc.Save(Path.Combine(artifactsDir, "Processed.docx"));
     }
 }

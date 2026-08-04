@@ -11,51 +11,66 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare directories.
+        string baseDir = Directory.GetCurrentDirectory();
+        string dataDir = Path.Combine(baseDir, "Data");
+        string outputDir = Path.Combine(baseDir, "ExtractedImages");
+        Directory.CreateDirectory(dataDir);
+        Directory.CreateDirectory(outputDir);
 
-        // ---------- Create sample images ----------
-        string imgPath1 = Path.Combine(artifactsDir, "sample1.png");
-        string imgPath2 = Path.Combine(artifactsDir, "sample2.png");
+        // Create sample PNG images using Aspose.Drawing.
+        string[] sampleImagePaths = new string[2];
+        for (int i = 0; i < 2; i++)
+        {
+            string imagePath = Path.Combine(dataDir, $"sample{i + 1}.png");
+            using (Bitmap bitmap = new Bitmap(100, 100))
+            {
+                using (Graphics g = Graphics.FromImage(bitmap))
+                {
+                    // Fill with a solid color (different for each image).
+                    Aspose.Drawing.Color fillColor = i == 0 ? Aspose.Drawing.Color.LightBlue : Aspose.Drawing.Color.LightGreen;
+                    g.Clear(fillColor);
+                }
+                bitmap.Save(imagePath);
+            }
+            sampleImagePaths[i] = imagePath;
+        }
 
-        CreateSampleImage(imgPath1, 100, 100, Aspose.Drawing.Color.LightBlue);
-        CreateSampleImage(imgPath2, 120, 80, Aspose.Drawing.Color.LightCoral);
-
-        // ---------- Build a DOCM with the images ----------
+        // Create a DOCM document and insert the sample images.
+        string docPath = Path.Combine(dataDir, "Sample.docm");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert first image and give the shape a name.
-        Shape shape1 = builder.InsertImage(imgPath1);
-        shape1.Name = "FirstImage";
+        for (int i = 0; i < sampleImagePaths.Length; i++)
+        {
+            // Insert image and obtain the Shape that represents it.
+            Shape shape = builder.InsertImage(sampleImagePaths[i]);
+            // Assign a deterministic name to the shape (used later for file naming).
+            shape.Name = $"Image{i + 1}";
+        }
 
-        // Insert second image and give the shape a name.
-        builder.InsertParagraph();
-        Shape shape2 = builder.InsertImage(imgPath2);
-        shape2.Name = "SecondImage";
-
-        // Save as DOCM.
-        string docPath = Path.Combine(artifactsDir, "Sample.docm");
+        // Save the document as a macro-enabled DOCM file.
         doc.Save(docPath, SaveFormat.Docm);
 
-        // ---------- Load the DOCM and extract images ----------
+        // Load the DOCM file.
         Document loadedDoc = new Document(docPath);
-        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                  .OfType<Shape>()
-                                  .Where(s => s.HasImage)
-                                  .ToList();
 
+        // Extract all embedded images, renaming each file using its original shape name.
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int extractedCount = 0;
-        foreach (var shape in shapeNodes)
-        {
-            // Determine a safe file name based on the shape's original name.
-            string baseName = string.IsNullOrWhiteSpace(shape.Name) ? $"shape_{extractedCount}" : shape.Name;
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string outFile = Path.Combine(artifactsDir, $"{baseName}{extension}");
 
-            // Save the image.
-            shape.ImageData.Save(outFile);
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        {
+            if (!shape.HasImage)
+                continue;
+
+            // Determine a file name based on the shape's name; fall back to an index if missing.
+            string baseFileName = !string.IsNullOrEmpty(shape.Name) ? shape.Name : $"Shape{extractedCount + 1}";
+            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+            string outputPath = Path.Combine(outputDir, $"{baseFileName}{extension}");
+
+            // Save the image data to the file system.
+            shape.ImageData.Save(outputPath);
             extractedCount++;
         }
 
@@ -63,20 +78,7 @@ public class Program
         if (extractedCount == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
 
-        // Optional: indicate completion.
-        Console.WriteLine($"Extracted {extractedCount} image(s) to \"{artifactsDir}\".");
-    }
-
-    // Helper to create a deterministic bitmap using Aspose.Drawing.
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
-    {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(fillColor);
-            }
-            bitmap.Save(filePath, ImageFormat.Png);
-        }
+        // Optional: indicate completion (no interactive input required).
+        Console.WriteLine($"Extraction complete. {extractedCount} image(s) saved to '{outputDir}'.");
     }
 }

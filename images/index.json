@@ -11,34 +11,37 @@
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0",
+      "Aspose.Words": "26.7.0",
       "Aspose.Drawing.Common": "25.11.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
+      "System.Linq",
       "Aspose.Words",
       "Aspose.Words.Drawing",
       "Aspose.Drawing",
-      "System.Linq",
-      "Aspose.Drawing.Imaging",
-      "Aspose.Words.Loading",
-      "System.Collections.Generic",
-      "System.IO.Compression",
       "Aspose.Words.Saving",
-      "Aspose.Words.Tables",
-      "Newtonsoft.Json",
-      "Aspose.Words.Notes",
-      "System.Text",
+      "Aspose.Drawing.Imaging",
       "Aspose.Drawing.Drawing2D",
-      "System.Xml.Linq",
+      "System.IO.Compression",
+      "System.Collections.Generic",
+      "Newtonsoft.Json",
+      "Aspose.Words.Tables",
+      "Aspose.Words.Notes",
+      "System.Globalization",
+      "Aspose.Words.Rendering",
+      "Aspose.Words.Loading",
+      "System.Text",
+      "System.Xml",
       "Aspose.Words.Markup",
       "Aspose.Words.Drawing.Charts",
-      "Aspose.Words.Rendering",
       "Aspose.Words.Math",
       "Aspose.Words.Properties",
-      "System.Security.Cryptography",
-      "Aspose.Words.Fields"
+      "System.Xml.Linq",
+      "System.Diagnostics",
+      "System.ComponentModel",
+      "System.Security.Cryptography"
     ],
     "key_apis": [
       "Document",
@@ -49,22 +52,21 @@
       "Shape",
       "ImageData",
       "MemoryStream",
+      "File",
       "Font",
       "SaveFormat",
-      "File",
       "ImageSaveOptions",
       "Paragraph",
+      "Node",
       "Table",
       "Row",
       "Cell",
-      "Run",
       "Chart",
       "ChartType",
       "PdfSaveOptions",
-      "LoadOptions",
       "StyleIdentifier",
-      "HtmlSaveOptions",
-      "Watermark"
+      "LoadOptions",
+      "HtmlSaveOptions"
     ]
   },
   "stats": {
@@ -240,8 +242,8 @@
         "docx",
         "bmp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 11,
@@ -333,8 +335,8 @@
         "docx",
         "csv"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 19,
@@ -356,8 +358,8 @@
         "pdf",
         "jpeg"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 21,
@@ -379,8 +381,8 @@
         "docx",
         "svg"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 23,
@@ -437,8 +439,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 28,
@@ -472,8 +474,8 @@
         "doc",
         "emf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 31,
@@ -610,8 +612,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 43,
@@ -622,8 +624,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 44,
@@ -668,8 +670,8 @@
         "docx",
         "jpeg"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 48,
@@ -748,8 +750,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 55,
@@ -770,8 +772,8 @@
       "outputs": [
         "gif"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 57,
@@ -908,8 +910,8 @@
         "docx",
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 69,
@@ -1058,8 +1060,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 82,
@@ -1218,8 +1220,8 @@
       "outputs": [
         "bmp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 96,
@@ -1322,8 +1324,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 105,
@@ -1459,8 +1461,8 @@
       "outputs": [
         "jpeg"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 117,

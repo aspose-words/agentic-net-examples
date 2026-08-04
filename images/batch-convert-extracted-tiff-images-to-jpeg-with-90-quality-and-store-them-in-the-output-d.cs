@@ -1,94 +1,83 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class BatchTiffToJpegConverter
 {
     public static void Main()
     {
-        // Prepare input and output directories
+        // Define input and output directories.
         string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputImages");
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputImages");
+
+        // Ensure directories exist.
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create deterministic sample TIFF images
-        CreateSampleTiff(Path.Combine(inputDir, "sample1.tif"), 200, 200, Color.LightBlue);
-        CreateSampleTiff(Path.Combine(inputDir, "sample2.tif"), 150, 150, Color.LightCoral);
+        // Create sample TIFF images.
+        CreateSampleTiffImages(inputDir, count: 3);
 
-        // Build a Word document that contains the sample TIFF images
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document with TIFF images:");
-        builder.InsertImage(Path.Combine(inputDir, "sample1.tif"));
-        builder.InsertParagraph();
-        builder.InsertImage(Path.Combine(inputDir, "sample2.tif"));
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "SampleDoc.docx");
-        doc.Save(docPath);
-
-        // Load the document and locate all shapes that contain images
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        var imageShapes = shapeNodes
-            .OfType<Shape>()
-            .Where(s => s.HasImage) // Process any image shape (TIFF images appear as Unknown type)
-            .ToList();
-
-        if (!imageShapes.Any())
-            throw new InvalidOperationException("No images were found for conversion.");
-
-        int index = 0;
-        foreach (Shape shape in imageShapes)
+        // Convert each TIFF image to JPEG with 90% quality.
+        int convertedCount = 0;
+        foreach (string tiffPath in Directory.GetFiles(inputDir, "*.tiff"))
         {
-            // Save the extracted image to a temporary file
-            string tempPath = Path.Combine(inputDir, $"extracted_{index}.tif");
-            using (FileStream tempStream = File.Create(tempPath))
-                shape.ImageData.Save(tempStream);
+            // Load a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a new document that contains only this image
-            Document singleImageDoc = new Document();
-            DocumentBuilder imgBuilder = new DocumentBuilder(singleImageDoc);
-            imgBuilder.InsertImage(tempPath);
+            // Insert the TIFF image into the document.
+            builder.InsertImage(tiffPath);
 
-            // Configure JPEG save options with 90% quality
+            // Configure JPEG save options with 90% quality.
             ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
             {
                 JpegQuality = 90
             };
 
-            // Save the image as JPEG
-            string outputJpegPath = Path.Combine(outputDir, $"converted_{index}.jpg");
-            singleImageDoc.Save(outputJpegPath, jpegOptions);
+            // Determine output JPEG file path.
+            string jpegFileName = Path.GetFileNameWithoutExtension(tiffPath) + ".jpg";
+            string jpegPath = Path.Combine(outputDir, jpegFileName);
 
-            // Verify that the JPEG file was created
-            if (!File.Exists(outputJpegPath))
-                throw new InvalidOperationException($"Failed to create JPEG file: {outputJpegPath}");
+            // Save the document page (containing the image) as JPEG.
+            doc.Save(jpegPath, jpegOptions);
 
-            index++;
+            // Validate that the JPEG file was created.
+            if (!File.Exists(jpegPath))
+                throw new InvalidOperationException($"Failed to create JPEG file: {jpegPath}");
+
+            convertedCount++;
         }
 
-        // Optional cleanup of temporary TIFF files
-        foreach (string tempFile in Directory.GetFiles(inputDir, "extracted_*.tif"))
-            File.Delete(tempFile);
+        // Ensure at least one image was converted.
+        if (convertedCount == 0)
+            throw new InvalidOperationException("No TIFF images were found for conversion.");
     }
 
-    // Helper method to create a deterministic TIFF image using Aspose.Drawing
-    private static void CreateSampleTiff(string filePath, int width, int height, Color backgroundColor)
+    // Helper method to create deterministic sample TIFF images.
+    private static void CreateSampleTiffImages(string folderPath, int count)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        for (int i = 1; i <= count; i++)
         {
-            graphics.Clear(backgroundColor);
-            using (Pen pen = new Pen(Color.Black, 3))
+            string filePath = Path.Combine(folderPath, $"sample{i}.tiff");
+
+            // Create a 200x200 bitmap.
+            using (Bitmap bitmap = new Bitmap(200, 200))
             {
-                graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                // Fill the bitmap with a solid color.
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.Clear(Color.FromArgb(255, 100 + i * 30, 150, 200));
+                }
+
+                // Save as TIFF.
+                bitmap.Save(filePath);
             }
-            bitmap.Save(filePath, ImageFormat.Tiff);
+
+            // Validate that the TIFF file was created.
+            if (!File.Exists(filePath))
+                throw new InvalidOperationException($"Failed to create sample TIFF image: {filePath}");
         }
     }
 }

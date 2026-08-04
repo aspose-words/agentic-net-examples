@@ -1,9 +1,8 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -11,45 +10,40 @@ public class Program
 {
     public static void Main()
     {
-        // Directories for input and output files
+        // Prepare output folder
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
-        string inputImagePath = Path.Combine(artifactsDir, "sample.tiff");
-        string docPath = Path.Combine(artifactsDir, "document.docx");
 
-        // -------------------------------------------------
-        // 1. Create a deterministic sample TIFF image
-        // -------------------------------------------------
-        int width = 200;
-        int height = 200;
-        using (Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb))
+        // 1. Create a sample TIFF image using Aspose.Drawing
+        string tiffPath = Path.Combine(artifactsDir, "sample.tif");
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                // Fill background with white
-                g.Clear(Color.White);
-                // Draw a simple red rectangle
-                using (Pen pen = new Pen(Color.Red, 5))
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
                 {
-                    g.DrawRectangle(pen, 20, 20, width - 40, height - 40);
+                    g.DrawRectangle(pen, 20, 20, 160, 160);
+                }
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                {
+                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red))
+                    {
+                        g.DrawString("TIFF", font, brush, new Aspose.Drawing.PointF(50, 80));
+                    }
                 }
             }
-            // Save as TIFF
-            bitmap.Save(inputImagePath, ImageFormat.Tiff);
+            bitmap.Save(tiffPath, Aspose.Drawing.Imaging.ImageFormat.Tiff);
         }
 
-        // -------------------------------------------------
-        // 2. Create a Word document and insert the TIFF image
-        // -------------------------------------------------
+        // 2. Insert the TIFF image into a Word document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
+        builder.InsertImage(tiffPath);
+        string docPath = Path.Combine(artifactsDir, "DocumentWithTiff.docx");
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the document and extract images,
-        //    convert each to grayscale JPEG, and save.
-        // -------------------------------------------------
+        // 3. Load the document and extract images
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
@@ -57,37 +51,38 @@ public class Program
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (!shape.HasImage)
-                continue;
+                continue; // Skip shapes without images
 
-            // Set the shape's image to display in grayscale (affects rendering)
-            shape.ImageData.GrayScale = true;
-
-            // Prepare output file name
-            string outputFilePath = Path.Combine(artifactsDir,
-                $"grayscale_image_{imageIndex}.jpg");
-
-            // Configure JPEG save options with grayscale color mode
-            ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
+            // Save the image to a memory stream
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                JpegQuality = 80,
-                ImageColorMode = ImageColorMode.Grayscale
-            };
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0;
 
-            // Save the shape via a temporary document to apply the rendering options
-            Document tempDoc = new Document();
-            DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-            Shape clonedShape = (Shape)tempDoc.ImportNode(shape, true);
-            tempBuilder.InsertNode(clonedShape);
-            tempDoc.Save(outputFilePath, jpegOptions);
+                // 4. Create a temporary document containing only this image
+                Document tempDoc = new Document();
+                DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
+                tempBuilder.InsertImage(imageStream);
 
-            // Validate that the file was created
-            if (!File.Exists(outputFilePath))
-                throw new InvalidOperationException($"Failed to create {outputFilePath}");
+                // 5. Save the temporary document as a grayscale JPEG
+                ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
+                {
+                    ImageColorMode = ImageColorMode.Grayscale,
+                    JpegQuality = 80
+                };
 
-            imageIndex++;
+                string jpegPath = Path.Combine(artifactsDir, $"Image_{imageIndex}_grayscale.jpg");
+                tempDoc.Save(jpegPath, jpegOptions);
+
+                // Validate that the JPEG file was created
+                if (!File.Exists(jpegPath))
+                    throw new InvalidOperationException($"Failed to create JPEG file: {jpegPath}");
+
+                imageIndex++;
+            }
         }
 
-        // If no images were processed, raise an error
+        // Ensure at least one image was processed
         if (imageIndex == 0)
             throw new InvalidOperationException("No images were found to convert.");
     }

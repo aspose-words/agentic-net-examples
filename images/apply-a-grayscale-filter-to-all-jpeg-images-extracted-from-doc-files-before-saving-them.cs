@@ -2,88 +2,85 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class Program
+public class GrayscaleImageExtractor
 {
     public static void Main()
     {
-        // Directories for artifacts
+        // Prepare output folder.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a sample JPEG image.
+        // 1. Create a deterministic JPEG image.
         string sampleJpegPath = Path.Combine(artifactsDir, "sample.jpg");
-        CreateSampleJpeg(sampleJpegPath);
+        CreateSampleJpeg(sampleJpegPath, 200, 100);
 
-        // 2. Create a DOCX document and insert the JPEG image.
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
-        CreateDocumentWithImage(docPath, sampleJpegPath);
+        // 2. Build a DOCX that contains several copies of the JPEG image.
+        string sourceDocPath = Path.Combine(artifactsDir, "source.docx");
+        CreateDocumentWithImages(sourceDocPath, sampleJpegPath, 3);
 
-        // 3. Load the document and process JPEG images.
-        Document doc = new Document(docPath);
+        // 3. Load the document and extract JPEG images, applying a grayscale filter.
+        Document doc = new Document(sourceDocPath);
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int jpegIndex = 0;
 
-        int jpegCount = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (!shape.HasImage)
-                continue;
+            if (!shape.HasImage) continue;
+            if (shape.ImageData.ImageType != ImageType.Jpeg) continue;
 
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
+            // Apply grayscale rendering flag.
+            shape.ImageData.GrayScale = true;
 
-            // Extract image bytes.
-            byte[] imageBytes = shape.ImageData.ToByteArray();
+            // Determine file name with proper extension.
+            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+            string grayImagePath = Path.Combine(artifactsDir, $"extracted_{jpegIndex}_gray{extension}");
 
-            // Convert to grayscale using Aspose.Drawing.
-            using (MemoryStream ms = new MemoryStream(imageBytes))
-            using (Bitmap original = new Bitmap(ms))
-            using (Bitmap grayBitmap = new Bitmap(original.Width, original.Height))
-            {
-                for (int y = 0; y < original.Height; y++)
-                {
-                    for (int x = 0; x < original.Width; x++)
-                    {
-                        Color pixel = original.GetPixel(x, y);
-                        int gray = (pixel.R + pixel.G + pixel.B) / 3;
-                        Color grayColor = Color.FromArgb(pixel.A, gray, gray, gray);
-                        grayBitmap.SetPixel(x, y, grayColor);
-                    }
-                }
-
-                string outputImagePath = Path.Combine(artifactsDir, $"Extracted_Gray_{jpegCount}.jpg");
-                grayBitmap.Save(outputImagePath, ImageFormat.Jpeg);
-                jpegCount++;
-            }
+            // Save the grayscale image.
+            shape.ImageData.Save(grayImagePath);
+            jpegIndex++;
         }
 
-        // Validation: ensure at least one JPEG image was processed.
-        if (jpegCount == 0)
-            throw new InvalidOperationException("No JPEG images were found in the document.");
+        // Validation.
+        if (jpegIndex == 0)
+            throw new InvalidOperationException("No JPEG images were found and processed.");
 
-        // Optional: clean up temporary files (commented out to keep artifacts for inspection).
-        // File.Delete(sampleJpegPath);
-        // File.Delete(docPath);
+        Console.WriteLine($"Processed {jpegIndex} JPEG image(s). Grayscale files are located in: {artifactsDir}");
     }
 
-    private static void CreateSampleJpeg(string filePath)
+    // Creates a deterministic JPEG image using Aspose.Drawing.
+    private static void CreateSampleJpeg(string filePath, int width, int height)
     {
-        // Create a 200x200 bitmap, fill with a solid color, and save as JPEG.
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            graphics.Clear(Color.CornflowerBlue);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                using (SolidBrush brush = new SolidBrush(Color.Blue))
+                {
+                    g.FillRectangle(brush, 10, 10, width - 20, height - 20);
+                }
+            }
+            // Explicitly save as JPEG.
             bitmap.Save(filePath, ImageFormat.Jpeg);
         }
     }
 
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    // Creates a DOCX file and inserts the specified image multiple times.
+    private static void CreateDocumentWithImages(string docPath, string imagePath, int repeatCount)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
+
+        for (int i = 0; i < repeatCount; i++)
+        {
+            builder.InsertParagraph();
+            builder.InsertImage(imagePath);
+        }
+
         doc.Save(docPath);
     }
 }

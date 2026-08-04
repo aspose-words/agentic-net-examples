@@ -1,114 +1,100 @@
 using System;
 using System.IO;
-using System.IO.Compression;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;   // For ImageFormat
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
         // Prepare folders.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(baseDir);
-        string imagesDir = Path.Combine(baseDir, "Images");
-        Directory.CreateDirectory(imagesDir);
-        string archivePath = Path.Combine(baseDir, "GrayscaleImages.zip");
+        string artifactsDir = "Artifacts";
+        string archiveDir = Path.Combine(artifactsDir, "Archive");
+        Directory.CreateDirectory(artifactsDir);
+        Directory.CreateDirectory(archiveDir);
 
-        // 1. Create a sample JPEG image.
-        string jpegPath = Path.Combine(imagesDir, "sample.jpg");
-        CreateSampleJpeg(jpegPath, 200, 200);
-
-        // 2. Create a Word document and insert the JPEG image.
-        string docPath = Path.Combine(baseDir, "Document.docx");
-        CreateDocumentWithImage(docPath, jpegPath);
-
-        // 3. Load the document and extract JPEG images, convert them to grayscale BMP.
-        string[] bmpFiles = ExtractAndConvertImages(docPath, imagesDir);
-
-        // 4. Validate that at least one BMP file was created.
-        if (bmpFiles.Length == 0)
-            throw new InvalidOperationException("No JPEG images were found to convert.");
-
-        // 5. Store the BMP files in a zip archive (secure archive).
-        CreateZipArchive(bmpFiles, archivePath);
-
-        // 6. Validate archive creation.
-        if (!File.Exists(archivePath) || new FileInfo(archivePath).Length == 0)
-            throw new InvalidOperationException("Failed to create the archive.");
-
-        // Example completed.
-    }
-
-    private static void CreateSampleJpeg(string filePath, int width, int height)
-    {
-        // Create a deterministic JPEG image using Aspose.Drawing.
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics g = Graphics.FromImage(bitmap))
+        // -----------------------------------------------------------------
+        // 1. Create a sample JPEG image using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        string jpegPath = Path.Combine(artifactsDir, "sample.jpg");
+        using (Bitmap bitmap = new Bitmap(200, 200))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            g.Clear(Color.LightBlue);
-            // Draw a simple rectangle.
-            g.FillRectangle(new SolidBrush(Color.Crimson), 20, 20, width - 40, height - 40);
-            // Save as JPEG using Aspose.Drawing.Imaging.ImageFormat.
-            bitmap.Save(filePath, ImageFormat.Jpeg);
+            // Fill with a solid color and draw a simple shape.
+            graphics.Clear(Color.Blue);
+            graphics.FillEllipse(new SolidBrush(Color.Yellow), 50, 50, 100, 100);
+            // Save as JPEG – format is explicitly specified.
+            bitmap.Save(jpegPath, ImageFormat.Jpeg);
         }
-    }
 
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
-    {
+        // -----------------------------------------------------------------
+        // 2. Insert the JPEG image into a Word document.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
+        builder.InsertImage(jpegPath);
+        string docPath = Path.Combine(artifactsDir, "DocumentWithJpeg.docx");
         doc.Save(docPath);
-    }
 
-    private static string[] ExtractAndConvertImages(string docPath, string outputDir)
-    {
-        Document doc = new Document(docPath);
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        var bmpList = new System.Collections.Generic.List<string>();
-        int imageIndex = 0;
+        // -----------------------------------------------------------------
+        // 3. Reload the document and extract JPEG images.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        var jpegShapes = shapeNodes
+            .OfType<Shape>()
+            .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Jpeg)
+            .ToList();
 
-        foreach (Shape shape in shapes.OfType<Shape>())
+        if (!jpegShapes.Any())
+            throw new InvalidOperationException("No JPEG images were found in the document.");
+
+        int index = 0;
+        foreach (Shape shape in jpegShapes)
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Process only JPEG images.
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
-
-            // Set grayscale rendering for the shape's image data.
-            shape.ImageData.GrayScale = true;
-
-            // Determine output BMP file name.
-            string bmpPath = Path.Combine(outputDir, $"image_{imageIndex}.bmp");
-
-            // Save the image as BMP.
-            shape.ImageData.Save(bmpPath);
-            bmpList.Add(bmpPath);
-            imageIndex++;
-        }
-
-        return bmpList.ToArray();
-    }
-
-    private static void CreateZipArchive(string[] files, string zipPath)
-    {
-        // Ensure any existing archive is removed.
-        if (File.Exists(zipPath))
-            File.Delete(zipPath);
-
-        using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
-        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
-        {
-            foreach (string file in files)
+            // -----------------------------------------------------------------
+            // 4. Convert the image to grayscale and save as BMP.
+            // -----------------------------------------------------------------
+            using (MemoryStream imgStream = new MemoryStream())
             {
-                string entryName = Path.GetFileName(file);
-                archive.CreateEntryFromFile(file, entryName);
+                // Save the original image bytes to a stream.
+                shape.ImageData.Save(imgStream);
+                imgStream.Position = 0;
+
+                // Load the image into a bitmap.
+                using (Bitmap srcBmp = new Bitmap(imgStream))
+                using (Bitmap grayBmp = new Bitmap(srcBmp.Width, srcBmp.Height))
+                using (Graphics g = Graphics.FromImage(grayBmp))
+                {
+                    // Convert each pixel to grayscale.
+                    for (int y = 0; y < srcBmp.Height; y++)
+                    {
+                        for (int x = 0; x < srcBmp.Width; x++)
+                        {
+                            Color pixel = srcBmp.GetPixel(x, y);
+                            int gray = (int)(pixel.R * 0.3 + pixel.G * 0.59 + pixel.B * 0.11);
+                            Color grayColor = Color.FromArgb(gray, gray, gray);
+                            grayBmp.SetPixel(x, y, grayColor);
+                        }
+                    }
+
+                    // Save the grayscale bitmap as BMP.
+                    string bmpFileName = Path.Combine(archiveDir, $"image_{index}.bmp");
+                    grayBmp.Save(bmpFileName, ImageFormat.Bmp);
+
+                    if (!File.Exists(bmpFileName))
+                        throw new InvalidOperationException($"Failed to create BMP file: {bmpFileName}");
+                }
             }
+
+            index++;
         }
+
+        // -----------------------------------------------------------------
+        // 5. Indicate successful completion.
+        // -----------------------------------------------------------------
+        Console.WriteLine($"Extracted and converted {index} image(s) to grayscale BMP files in '{archiveDir}'.");
     }
 }

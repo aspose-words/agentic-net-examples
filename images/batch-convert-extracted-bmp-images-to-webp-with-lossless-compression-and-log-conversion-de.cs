@@ -1,64 +1,103 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Aspose.Drawing provides Bitmap, Graphics, Color, Pen
+using Aspose.Words.Drawing;
+using Aspose.Drawing;
 
-public class BatchBmpToWebp
+public class Program
 {
     public static void Main()
     {
-        // Prepare deterministic folders for input and output images.
-        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string inputDir = Path.Combine(baseDir, "InputImages");
-        string outputDir = Path.Combine(baseDir, "OutputImages");
+        // Directories for input BMPs and output WebP files.
+        string inputDir = "InputImages";
+        string outputDir = "OutputWebP";
+
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create sample BMP images that will be used as the batch source.
-        CreateSampleBmp(Path.Combine(inputDir, "sample1.bmp"), 200, 150, Color.LightBlue);
-        CreateSampleBmp(Path.Combine(inputDir, "sample2.bmp"), 300, 200, Color.LightGreen);
-        CreateSampleBmp(Path.Combine(inputDir, "sample3.bmp"), 250, 250, Color.LightCoral);
+        // Create deterministic BMP sample images.
+        CreateSampleBmp(Path.Combine(inputDir, "red.bmp"), 100, 100, Aspose.Drawing.Color.Red);
+        CreateSampleBmp(Path.Combine(inputDir, "green.bmp"), 100, 100, Aspose.Drawing.Color.Green);
+        CreateSampleBmp(Path.Combine(inputDir, "blue.bmp"), 100, 100, Aspose.Drawing.Color.Blue);
 
-        // Process each BMP file in the input folder.
+        // Build a source document that contains the BMP images.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
         foreach (string bmpPath in Directory.GetFiles(inputDir, "*.bmp"))
         {
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(bmpPath);
-            string webpPath = Path.Combine(outputDir, fileNameWithoutExt + ".webp");
-
-            // Load the BMP into a temporary document and insert the image.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertParagraph();
+            // Insert the BMP image; Aspose.Words keeps the original format.
             builder.InsertImage(bmpPath);
-
-            // Save the single‑page document as a WebP image (lossless is default for WebP).
-            ImageSaveOptions webpOptions = new ImageSaveOptions(SaveFormat.WebP);
-            doc.Save(webpPath, webpOptions);
-
-            // Log conversion details.
-            FileInfo originalInfo = new FileInfo(bmpPath);
-            FileInfo convertedInfo = new FileInfo(webpPath);
-            Console.WriteLine($"Converted '{originalInfo.Name}' ({originalInfo.Length} bytes) to '{convertedInfo.Name}' ({convertedInfo.Length} bytes).");
         }
 
-        // Verify that at least one WebP file was created.
-        if (Directory.GetFiles(outputDir, "*.webp").Length == 0)
-            throw new InvalidOperationException("No WebP files were created during conversion.");
+        string sourceDocPath = "SourceDocument.docx";
+        sourceDoc.Save(sourceDocPath);
+
+        // Load the document and extract image shapes.
+        Document loadedDoc = new Document(sourceDocPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
+        var conversionLog = new List<string>();
+        int imageIndex = 0;
+
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        {
+            // Ensure the shape actually contains an image.
+            if (!shape.HasImage)
+                continue;
+
+            // The sample images are BMPs, but to be safe we process all image shapes.
+            // Save the original BMP size (if the image is BMP; otherwise size of the stored image).
+            long originalSize = shape.ImageData.ImageBytes?.LongLength ?? 0;
+
+            // Export the image to a memory stream.
+            using (MemoryStream bmpStream = new MemoryStream())
+            {
+                shape.ImageData.Save(bmpStream);
+                bmpStream.Position = 0;
+
+                // Create a temporary document that holds the image.
+                Document tempDoc = new Document();
+                DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
+                tempBuilder.InsertImage(bmpStream);
+
+                // Define the output WebP file name.
+                string webpPath = Path.Combine(outputDir, $"image_{imageIndex}.webp");
+
+                // Save the temporary document as a WebP image (lossless by default).
+                ImageSaveOptions webpOptions = new ImageSaveOptions(SaveFormat.WebP);
+                tempDoc.Save(webpPath, webpOptions);
+
+                // Log conversion details.
+                long webpSize = new FileInfo(webpPath).Length;
+                conversionLog.Add(
+                    $"Image {imageIndex}: original size = {originalSize} bytes, WebP size = {webpSize} bytes, saved to '{webpPath}'.");
+                imageIndex++;
+            }
+        }
+
+        // Output the conversion log.
+        Console.WriteLine("Batch BMP to WebP conversion completed.");
+        foreach (string logEntry in conversionLog)
+        {
+            Console.WriteLine(logEntry);
+        }
+
+        // Validate that at least one image was converted.
+        if (conversionLog.Count == 0)
+            throw new InvalidOperationException("No images were found for conversion.");
     }
 
-    // Creates a deterministic BMP file using Aspose.Drawing.
-    private static void CreateSampleBmp(string filePath, int width, int height, Color backgroundColor)
+    // Helper method to create a deterministic BMP image.
+    private static void CreateSampleBmp(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
     {
-        Bitmap bitmap = new Bitmap(width, height);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(backgroundColor);
-
-        // Draw a simple rectangle for visual distinction.
-        using (Pen pen = new Pen(Color.Black, 3))
-        {
-            graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-        }
-
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        graphics.Clear(fillColor);
         bitmap.Save(filePath);
         graphics.Dispose();
         bitmap.Dispose();

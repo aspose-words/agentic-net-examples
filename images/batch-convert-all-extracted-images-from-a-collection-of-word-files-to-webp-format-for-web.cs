@@ -5,70 +5,85 @@ using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
-public class Program
+public class BatchImageConversion
 {
     public static void Main()
     {
-        // Prepare folders
+        // Define folders for sample documents and output images.
         string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputImages");
-        Directory.CreateDirectory(inputDir);
+        string docsDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "WebPImages");
+
+        // Ensure clean environment.
+        if (Directory.Exists(docsDir)) Directory.Delete(docsDir, true);
+        if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true);
+        Directory.CreateDirectory(docsDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create sample image to be inserted into documents
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
-        CreateSamplePng(sampleImagePath, 200, 200);
+        // -----------------------------------------------------------------
+        // 1. Create sample images (PNG and JPEG) using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        string pngPath = Path.Combine(baseDir, "sample.png");
+        string jpegPath = Path.Combine(baseDir, "sample.jpg");
 
-        // Create a few sample Word documents containing the image
-        for (int docIdx = 0; docIdx < 2; docIdx++)
+        CreateSampleImage(pngPath, 200, 200, Aspose.Drawing.Color.Blue);
+        CreateSampleImage(jpegPath, 200, 200, Aspose.Drawing.Color.Green);
+
+        // -----------------------------------------------------------------
+        // 2. Create sample Word documents that contain the images.
+        // -----------------------------------------------------------------
+        for (int docIndex = 1; docIndex <= 2; docIndex++)
         {
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Document {docIdx + 1}");
-            builder.InsertImage(sampleImagePath);
-            string docPath = Path.Combine(inputDir, $"Doc{docIdx + 1}.docx");
+
+            builder.Writeln($"Document {docIndex}");
+            builder.InsertImage(pngPath);
+            builder.InsertParagraph();
+            builder.InsertImage(jpegPath);
+
+            string docPath = Path.Combine(docsDir, $"SampleDoc{docIndex}.docx");
             doc.Save(docPath);
         }
 
-        // Batch process: extract images and convert each to WebP
+        // -----------------------------------------------------------------
+        // 3. Batch process each Word file: extract images and convert to WebP.
+        // -----------------------------------------------------------------
         int totalConverted = 0;
-        var docFiles = Directory.GetFiles(inputDir, "*.docx");
-        foreach (var docFile in docFiles)
+        foreach (string docFile in Directory.GetFiles(docsDir, "*.docx"))
         {
-            Document doc = new Document(docFile);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            Document srcDoc = new Document(docFile);
+            NodeCollection shapeNodes = srcDoc.GetChildNodes(NodeType.Shape, true);
+
             int imageIndex = 0;
             foreach (Shape shape in shapeNodes.OfType<Shape>())
             {
                 if (!shape.HasImage) continue;
 
-                // Save the shape's image to a memory stream
+                // Extract image bytes.
                 using (MemoryStream imgStream = new MemoryStream())
                 {
                     shape.ImageData.Save(imgStream);
                     imgStream.Position = 0;
 
-                    // Create a temporary document that contains only this image
+                    // Insert the extracted image into a temporary document.
                     Document tempDoc = new Document();
                     DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
                     tempBuilder.InsertImage(imgStream);
 
-                    // Define WebP save options
-                    ImageSaveOptions webpOptions = new ImageSaveOptions(SaveFormat.WebP)
-                    {
-                        // Optional: set resolution or other options if needed
-                        Resolution = 96
-                    };
+                    // Prepare WebP output path.
+                    string webpFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}.webp";
+                    string webpPath = Path.Combine(outputDir, webpFileName);
 
-                    // Build output file name
-                    string outFileName = $"converted_{Path.GetFileNameWithoutExtension(docFile)}_{imageIndex}.webp";
-                    string outPath = Path.Combine(outputDir, outFileName);
+                    // Save the temporary document as a WebP image.
+                    ImageSaveOptions webpOptions = new ImageSaveOptions(SaveFormat.WebP);
+                    tempDoc.Save(webpPath, webpOptions);
 
-                    // Render the temporary document (single page) to WebP
-                    tempDoc.Save(outPath, webpOptions);
+                    // Validate that the WebP file was created.
+                    if (!File.Exists(webpPath))
+                        throw new InvalidOperationException($"Failed to create WebP file: {webpPath}");
+
                     totalConverted++;
                 }
 
@@ -76,30 +91,23 @@ public class Program
             }
         }
 
-        // Validation: ensure at least one image was converted
+        // Ensure at least one image was converted.
         if (totalConverted == 0)
             throw new InvalidOperationException("No images were found and converted.");
 
-        // Cleanup sample image file
-        if (File.Exists(sampleImagePath))
-            File.Delete(sampleImagePath);
+        Console.WriteLine($"Converted {totalConverted} images to WebP format in folder: {outputDir}");
     }
 
-    // Creates a deterministic PNG image using Aspose.Drawing
-    private static void CreateSamplePng(string filePath, int width, int height)
+    // Helper method to create a deterministic bitmap and save it to a file.
+    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
-                // Draw a simple rectangle
-                using (Pen pen = new Pen(Color.Blue, 5))
-                {
-                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-                }
+                graphics.Clear(fillColor);
             }
-            bitmap.Save(filePath, ImageFormat.Png);
+            bitmap.Save(filePath);
         }
     }
 }

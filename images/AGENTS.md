@@ -91,7 +91,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a memory stream containing a BMP image extracted from a DOCX and pass it to the API.
   - Workflow: image-extraction
   - Outputs: docx, bmp
-  - Selected engine: mcp
+  - Selected engine: llm
 - `generate-a-thumbnail-png-for-each-image-extracted-from-an-html-document-while-maintaining.cs`
   - Task: Generate a thumbnail PNG for each image extracted from an HTML document while maintaining aspect ratio.
   - Workflow: image-extraction
@@ -131,7 +131,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch process multiple DOCX files, extracting images and generating a CSV report of image metadata.
   - Workflow: image-extraction
   - Outputs: docx, csv
-  - Selected engine: mcp
+  - Selected engine: llm
 - `resize-extracted-png-images-to-a-fixed-height-of-600-pixels-while-preserving-width-proport.cs`
   - Task: Resize extracted PNG images to a fixed height of 600 pixels while preserving width proportionally.
   - Workflow: image-extraction
@@ -141,7 +141,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply EXIF orientation correction to JPEG images extracted from scanned PDF documents before saving.
   - Workflow: image-extraction
   - Outputs: pdf, jpeg
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `load-a-docx-template-replace-placeholder-images-with-dynamically-generated-charts-and-save.cs`
   - Task: Load a DOCX template, replace placeholder images with dynamically generated charts, and save the document.
   - Workflow: general-image-workflow
@@ -151,7 +151,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from SmartArt shapes in a Word document and convert them to SVG format.
   - Workflow: image-extraction
   - Outputs: docx, svg
-  - Selected engine: llm
+  - Selected engine: mcp
 - `batch-extract-images-from-a-set-of-odt-files-and-organize-them-by-original-document-name.cs`
   - Task: Batch extract images from a set of ODT files and organize them by original document name.
   - Workflow: image-extraction
@@ -176,7 +176,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a watermark text overlay to all PNG images extracted from a collection of Word documents.
   - Workflow: image-extraction
   - Outputs: docx, png
-  - Selected engine: mcp
+  - Selected engine: llm
 - `extract-images-from-comments-in-a-docx-file-and-save-them-using-the-comment-identifier-as.cs`
   - Task: Extract images from comments in a DOCX file and save them using the comment identifier as filename.
   - Workflow: image-extraction
@@ -191,7 +191,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOC file, extract all embedded vector images, and convert them to EMF format.
   - Workflow: image-extraction
   - Outputs: doc, emf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `resize-extracted-bmp-images-to-a-maximum-file-size-of-200-kilobytes-using-quality-scaling.cs`
   - Task: Resize extracted BMP images to a maximum file size of 200 kilobytes using quality scaling.
   - Workflow: image-extraction
@@ -251,12 +251,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOCX file, extract images, and generate an Excel spreadsheet listing image metadata.
   - Workflow: image-extraction
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `extract-images-from-a-word-document-s-equation-objects-and-save-them-as-png-for-external-u.cs`
   - Task: Extract images from a Word document's equation objects and save them as PNG for external use.
   - Workflow: image-extraction
   - Outputs: docx, png
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-lossless-png-compression-to-all-extracted-images-and-compare-file-size-reduction-sta.cs`
   - Task: Apply lossless PNG compression to all extracted images and compare file size reduction statistics.
   - Workflow: image-extraction
@@ -276,7 +276,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOCX document, replace all images larger than 2 MB with compressed JPEG equivalents.
   - Workflow: image-conversion-and-manipulation
   - Outputs: docx, jpeg
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `extract-images-from-a-word-document-s-embedded-ole-objects-and-save-them-using-the-ole-ide.cs`
   - Task: Extract images from a Word document's embedded OLE objects and save them using the OLE identifier.
   - Workflow: image-extraction
@@ -311,7 +311,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a Word document, extract images, and embed them into a PowerPoint presentation automatically.
   - Workflow: image-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `extract-images-from-a-docx-file-s-content-controls-and-rename-files-using-control-identifi.cs`
   - Task: Extract images from a DOCX file's content controls and rename files using control identifiers.
   - Workflow: image-extraction
@@ -321,7 +321,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Resize extracted GIF images to a maximum width of 300 pixels while preserving animation frames.
   - Workflow: image-extraction
   - Outputs: gif
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `apply-a-contrast-enhancement-filter-to-all-extracted-png-images-before-saving-them-to-disk.cs`
   - Task: Apply a contrast enhancement filter to all extracted PNG images before saving them to disk.
   - Workflow: image-extraction
@@ -381,7 +381,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a DOCX file's custom XML schema and map them to external resource IDs.
   - Workflow: image-extraction
   - Outputs: docx, xml
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `resize-extracted-bmp-images-to-a-fixed-1024-pixel-width-adjusting-height-proportionally.cs`
   - Task: Resize extracted BMP images to a fixed 1024 pixel width, adjusting height proportionally.
   - Workflow: image-extraction
@@ -446,7 +446,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a DOCX file's embedded map objects and save them as high-resolution PNG.
   - Workflow: image-extraction
   - Outputs: docx, png
-  - Selected engine: llm
+  - Selected engine: mcp
 - `resize-extracted-jpeg-images-to-a-maximum-file-size-of-500kb-using-adaptive-quality.cs`
   - Task: Resize extracted JPEG images to a maximum file size of 500KB using adaptive quality.
   - Workflow: image-extraction
@@ -516,7 +516,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Resize extracted BMP images to 640x480 resolution for use in legacy applications.
   - Workflow: image-extraction
   - Outputs: bmp
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-hue-rotation-of-180-degrees-to-all-extracted-png-images-for-color-testing.cs`
   - Task: Apply a hue rotation of 180 degrees to all extracted PNG images for color testing.
   - Workflow: image-extraction
@@ -561,7 +561,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a DOCX file's embedded spreadsheet charts and save them as PNG files.
   - Workflow: image-extraction
   - Outputs: docx, png
-  - Selected engine: llm
+  - Selected engine: mcp
 - `batch-convert-extracted-bmp-images-to-lossless-png-and-generate-a-checksum-file-for-verifi.cs`
   - Task: Batch convert extracted BMP images to lossless PNG and generate a checksum file for verification.
   - Workflow: image-extraction
@@ -621,7 +621,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a saturation increase of 20% to all extracted JPEG images before re-saving them.
   - Workflow: image-extraction
   - Outputs: jpeg
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `extract-images-from-a-docx-file-s-embedded-audio-waveform-visualizations-and-save-as-png.cs`
   - Task: Extract images from a DOCX file's embedded audio waveform visualizations and save as PNG.
   - Workflow: image-extraction
@@ -668,7 +668,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 - Package: `Aspose.Drawing.Common` `25.11.0`
 - Package: `Newtonsoft.Json`
 
@@ -684,7 +684,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 dotnet add package Newtonsoft.Json
 ```

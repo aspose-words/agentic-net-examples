@@ -2,10 +2,9 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using Aspose.Words.Saving;
-using Aspose.Words.Rendering;
 
 public class ExtractChartImages
 {
@@ -18,45 +17,53 @@ public class ExtractChartImages
         // -----------------------------------------------------------------
         // 1. Create a sample DOCX containing a chart.
         // -----------------------------------------------------------------
+        string docPath = Path.Combine(artifactsDir, "ChartDocument.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a simple column chart.
-        builder.InsertChart(ChartType.Column, 400, 300);
-        doc.Save(Path.Combine(artifactsDir, "ChartDocument.docx"));
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        Chart chart = chartShape.Chart;
+
+        // Populate the chart with sample data.
+        chart.Series.Clear();
+        chart.Series.Add("Series 1", new[] { "A", "B", "C" }, new[] { 10.0, 20.0, 30.0 });
+        chart.Series.Add("Series 2", new[] { "A", "B", "C" }, new[] { 15.0, 25.0, 35.0 });
+
+        // Save the document.
+        doc.Save(docPath);
+        // -----------------------------------------------------------------
 
         // -----------------------------------------------------------------
-        // 2. Load the document and locate chart shapes.
+        // 2. Load the document and extract chart shapes.
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(Path.Combine(artifactsDir, "ChartDocument.docx"));
+        Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
-        int chartCount = 0;
-
+        int chartIndex = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Chart objects are represented by shapes that contain a Chart.
+            // Chart shapes expose a non‑null Chart property.
             if (shape.Chart != null)
             {
-                // -----------------------------------------------------------------
-                // 3. Render each chart shape to a high‑resolution PNG.
-                // -----------------------------------------------------------------
-                ShapeRenderer renderer = shape.GetShapeRenderer();
-
-                ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
+                // Render the chart shape to a high‑resolution PNG.
+                ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
                 {
-                    // 300 DPI yields a high‑resolution image.
-                    Resolution = 300
+                    // Set a high DPI for better quality.
+                    Resolution = 300f
                 };
 
-                string imagePath = Path.Combine(artifactsDir, $"ChartImage.{chartCount}.png");
-                renderer.Save(imagePath, saveOptions);
-                chartCount++;
+                string imagePath = Path.Combine(artifactsDir, $"ChartImage_{chartIndex}.png");
+                shape.GetShapeRenderer().Save(imagePath, options);
+                chartIndex++;
             }
         }
+        // -----------------------------------------------------------------
 
-        // Validate that at least one chart image was extracted.
-        if (chartCount == 0)
-            throw new InvalidOperationException("No chart objects were found in the document.");
+        // Validate that at least one image was extracted.
+        if (chartIndex == 0)
+            throw new InvalidOperationException("No chart images were extracted from the document.");
+
+        Console.WriteLine($"Extracted {chartIndex} chart image(s) to folder: {artifactsDir}");
     }
 }

@@ -1,13 +1,14 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class Program
+public class BatchImageExtractor
 {
     public static void Main()
     {
@@ -15,109 +16,123 @@ public class Program
         string baseDir = Directory.GetCurrentDirectory();
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string imagesDir = Path.Combine(baseDir, "ExtractedImages");
-        string htmlPath = Path.Combine(baseDir, "ImageIndex.html");
+        string outputDir = Path.Combine(baseDir, "Output");
 
-        // Ensure clean environment.
-        if (Directory.Exists(inputDir)) Directory.Delete(inputDir, true);
-        if (Directory.Exists(imagesDir)) Directory.Delete(imagesDir, true);
+        // Ensure folders exist.
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(imagesDir);
+        Directory.CreateDirectory(outputDir);
 
-        // ------------------------------------------------------------
-        // 1. Create sample images that will be inserted into the documents.
-        // ------------------------------------------------------------
+        // Create a deterministic sample image that will be inserted into the sample documents.
         string sampleImagePath = Path.Combine(baseDir, "sample.png");
-        CreateSamplePng(sampleImagePath, 200, 150, Color.LightBlue);
+        CreateSampleImage(sampleImagePath, 200, 200);
 
-        // ------------------------------------------------------------
-        // 2. Create a few sample DOCX files, each containing the sample image.
-        // ------------------------------------------------------------
-        for (int docIndex = 1; docIndex <= 3; docIndex++)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a few sample DOCX files containing the sample image.
+        CreateSampleDocuments(inputDir, sampleImagePath, 3);
 
-            builder.Writeln($"Document {docIndex}");
-            // Insert the same image twice to have multiple images per document.
-            builder.InsertImage(sampleImagePath);
-            builder.InsertParagraph();
-            builder.InsertImage(sampleImagePath);
-
-            string docPath = Path.Combine(inputDir, $"SampleDoc{docIndex}.docx");
-            doc.Save(docPath);
-        }
-
-        // ------------------------------------------------------------
-        // 3. Batch process all DOCX files: extract images and build HTML.
-        // ------------------------------------------------------------
-        StringBuilder htmlBuilder = new StringBuilder();
-        htmlBuilder.AppendLine("<!DOCTYPE html>");
-        htmlBuilder.AppendLine("<html><head><meta charset=\"UTF-8\"><title>Extracted Images Index</title></head><body>");
-        htmlBuilder.AppendLine("<h1>Extracted Images</h1>");
+        // Dictionary to hold extracted image file names per document.
+        var docImagesMap = new Dictionary<string, List<string>>();
 
         int totalExtracted = 0;
 
-        foreach (string docFile in Directory.GetFiles(inputDir, "*.docx"))
+        // Process each DOCX file in the input directory.
+        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            Document doc = new Document(docFile);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
-            int imageIndex = 0;
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            var extractedImages = ExtractImagesFromDocument(docPath, imagesDir);
+            if (extractedImages.Count > 0)
             {
-                if (!shape.HasImage) continue;
-
-                // Determine file extension based on the image type.
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}{extension}";
-                string imageFullPath = Path.Combine(imagesDir, imageFileName);
-
-                // Save the image to the output folder.
-                shape.ImageData.Save(imageFullPath);
-                imageIndex++;
-                totalExtracted++;
-
-                // Add entry to HTML.
-                htmlBuilder.AppendLine("<div style=\"margin-bottom:20px;\">");
-                htmlBuilder.AppendLine($"<p>Document: {Path.GetFileName(docFile)}</p>");
-                htmlBuilder.AppendLine($"<img src=\"{Path.GetFileName(imageFullPath)}\" alt=\"{imageFileName}\" style=\"max-width:600px;\"/>");
-                htmlBuilder.AppendLine("</div>");
+                docImagesMap[Path.GetFileName(docPath)] = extractedImages;
+                totalExtracted += extractedImages.Count;
             }
         }
 
         // Validate that at least one image was extracted.
         if (totalExtracted == 0)
-            throw new InvalidOperationException("No images were extracted from the DOCX files.");
+            throw new InvalidOperationException("No images were extracted from the documents.");
 
-        htmlBuilder.AppendLine("</body></html>");
-
-        // Save the HTML index file (images are referenced relative to the HTML file location).
-        File.WriteAllText(htmlPath, htmlBuilder.ToString());
-
-        // ------------------------------------------------------------
-        // 4. Clean up temporary sample image.
-        // ------------------------------------------------------------
-        if (File.Exists(sampleImagePath))
-            File.Delete(sampleImagePath);
+        // Generate an HTML index page linking to the extracted images.
+        string htmlPath = Path.Combine(outputDir, "index.html");
+        GenerateHtmlIndex(htmlPath, docImagesMap, imagesDir);
     }
 
-    // Creates a deterministic PNG image using Aspose.Drawing.
-    private static void CreateSamplePng(string filePath, int width, int height, Color backgroundColor)
+    // Creates a simple white PNG image with a black rectangle.
+    private static void CreateSampleImage(string filePath, int width, int height)
     {
         using (Bitmap bitmap = new Bitmap(width, height))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(backgroundColor);
-                // Simple drawing: a diagonal line.
-                using (Pen pen = new Pen(Color.DarkBlue, 5))
-                {
-                    graphics.DrawLine(pen, 0, 0, width, height);
-                }
+                graphics.Clear(Color.White);
+                // Draw a simple black rectangle for visual distinction.
+                graphics.DrawRectangle(new Pen(Color.Black, 5), 10, 10, width - 20, height - 20);
             }
-
-            // Save the bitmap as PNG.
-            bitmap.Save(filePath, ImageFormat.Png);
+            bitmap.Save(filePath);
         }
+    }
+
+    // Generates a number of DOCX files each containing the sample image.
+    private static void CreateSampleDocuments(string folder, string imagePath, int count)
+    {
+        for (int i = 1; i <= count; i++)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Sample document {i}");
+            // Insert the deterministic image.
+            builder.InsertImage(imagePath);
+            string docPath = Path.Combine(folder, $"Document{i}.docx");
+            doc.Save(docPath);
+        }
+    }
+
+    // Extracts all images from a single document and saves them to the target folder.
+    private static List<string> ExtractImagesFromDocument(string docPath, string targetFolder)
+    {
+        var savedFiles = new List<string>();
+        Document doc = new Document(docPath);
+
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int imageIndex = 0;
+
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        {
+            if (shape.HasImage)
+            {
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_Image{imageIndex}{extension}";
+                string fullPath = Path.Combine(targetFolder, imageFileName);
+                shape.ImageData.Save(fullPath);
+                savedFiles.Add(imageFileName);
+                imageIndex++;
+            }
+        }
+
+        return savedFiles;
+    }
+
+    // Builds a simple HTML file that lists each document and its extracted images.
+    private static void GenerateHtmlIndex(string htmlFilePath, Dictionary<string, List<string>> docImagesMap, string imagesFolder)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("<!DOCTYPE html>");
+        sb.AppendLine("<html lang=\"en\">");
+        sb.AppendLine("<head><meta charset=\"UTF-8\"><title>Extracted Images Index</title></head>");
+        sb.AppendLine("<body>");
+        sb.AppendLine("<h1>Extracted Images Index</h1>");
+
+        foreach (var entry in docImagesMap)
+        {
+            sb.AppendLine($"<h2>{entry.Key}</h2>");
+            foreach (string imageFile in entry.Value)
+            {
+                string relativePath = Path.Combine("..", "ExtractedImages", imageFile).Replace('\\', '/');
+                sb.AppendLine($"<img src=\"{relativePath}\" alt=\"{imageFile}\" style=\"margin:5px;max-width:300px;\"/>");
+            }
+        }
+
+        sb.AppendLine("</body>");
+        sb.AppendLine("</html>");
+
+        File.WriteAllText(htmlFilePath, sb.ToString());
     }
 }

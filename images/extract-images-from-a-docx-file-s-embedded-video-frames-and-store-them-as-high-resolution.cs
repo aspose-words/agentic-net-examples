@@ -3,87 +3,81 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Words.Loading;
-using Aspose.Drawing;               // Aspose.Drawing for bitmap creation
-using Aspose.Drawing.Imaging;      // For ImageFormat
-using Newtonsoft.Json;             // Required package as per specification
+using Aspose.Drawing; // Aspose.Drawing.Common namespace
 
 public class ExtractVideoFrameImages
 {
     public static void Main()
     {
         // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string artifactsDir = Path.Combine(baseDir, "Artifacts");
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample image that will act as a video frame thumbnail
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(artifactsDir, "video_frame.png");
-        const int imgWidth = 200;
-        const int imgHeight = 200;
+        // 1. Create a sample high‑resolution image that will act as a video frame.
+        string sampleImagePath = Path.Combine(artifactsDir, "frame.png");
+        CreateSampleImage(sampleImagePath, 1920, 1080); // 1080p PNG
 
-        // Use fully‑qualified Aspose.Drawing types to avoid ambiguity
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
-        using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(Aspose.Drawing.Color.LightBlue);
-            using (var pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 5))
-            {
-                graphics.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
-            }
-            using (var font = new Aspose.Drawing.Font("Arial", 20))
-            using (var brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
-            {
-                graphics.DrawString("Video Frame", font, brush, new Aspose.Drawing.PointF(20, imgHeight / 2 - 15));
-            }
-            bitmap.Save(sampleImagePath);
-        }
-
-        // ---------------------------------------------------------------
-        // 2. Create a DOCX document and insert the sample image (as a placeholder for a video frame)
-        // ---------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
+        // 2. Build a DOCX document and insert the sample image.
         string docPath = Path.Combine(artifactsDir, "sample.docx");
-        doc.Save(docPath);
+        CreateDocumentWithImage(docPath, sampleImagePath);
 
-        // ---------------------------------------------------------------
-        // 3. Load the document (simulating a real DOCX with embedded video frames)
-        // ---------------------------------------------------------------
-        LoadOptions loadOptions = new LoadOptions();
-        Document loadedDoc = new Document(docPath, loadOptions);
+        // 3. Load the document and extract all images (including video frame images).
+        Document doc = new Document(docPath);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
-        // ---------------------------------------------------------------
-        // 4. Extract all images from shapes (including video frame thumbnails) and save as high‑resolution PNG
-        // ---------------------------------------------------------------
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int extractedCount = 0;
-
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (!shape.HasImage)
                 continue;
 
-            // Determine a suitable file name with the correct extension
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            // Force PNG output for high‑resolution requirement
-            if (!extension.Equals(".png", StringComparison.OrdinalIgnoreCase))
-                extension = ".png";
+            // Determine a PNG file name for the extracted image.
+            string outFileName = $"extracted_{extractedCount}.png";
+            string outPath = Path.Combine(artifactsDir, outFileName);
 
-            string outFile = Path.Combine(artifactsDir, $"extracted_{extractedCount}{extension}");
-
-            // Save the image data directly; this preserves the original image bytes.
-            shape.ImageData.Save(outFile);
+            // Save the image data. If the original format is not PNG, Aspose.Words will
+            // convert it to PNG because we specify the .png extension.
+            shape.ImageData.Save(outPath);
             extractedCount++;
         }
 
-        // ---------------------------------------------------------------
-        // 5. Validation – ensure at least one image was extracted
-        // ---------------------------------------------------------------
+        // Validate that at least one image was extracted.
         if (extractedCount == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
+
+        Console.WriteLine($"Extracted {extractedCount} image(s) to folder: {artifactsDir}");
+    }
+
+    // Creates a deterministic PNG image using Aspose.Drawing.
+    private static void CreateSampleImage(string filePath, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                // Fill background with white.
+                graphics.Clear(Color.White);
+                // Optionally draw a simple rectangle to make the image visible.
+                graphics.DrawRectangle(new Pen(Color.Black, 5), 10, 10, width - 20, height - 20);
+            }
+
+            // Save as PNG.
+            bitmap.Save(filePath);
+        }
+    }
+
+    // Creates a DOCX file and inserts the provided image.
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert the image as an inline shape.
+        builder.InsertImage(imagePath);
+
+        // Save the document.
+        doc.Save(docPath);
     }
 }

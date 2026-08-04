@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -10,90 +9,98 @@ public class Program
 {
     public static void Main()
     {
-        // Directories for artifacts.
+        // Prepare output folder.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a deterministic sample JPEG image.
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.jpg");
-        CreateSampleJpeg(sampleImagePath, 200, 200, Aspose.Drawing.Color.Red);
+        // Create two sample JPEG images.
+        string img1Path = Path.Combine(artifactsDir, "sample1.jpg");
+        string img2Path = Path.Combine(artifactsDir, "sample2.jpg");
+        CreateSampleJpeg(img1Path, Color.Red);
+        CreateSampleJpeg(img2Path, Color.Blue);
 
-        // 2. Build a document that contains the sample JPEG image.
+        // Build a document that contains the sample images.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
+        builder.InsertImage(img1Path);
+        builder.InsertParagraph();
+        builder.InsertImage(img2Path);
         string originalDocPath = Path.Combine(artifactsDir, "original.docx");
         doc.Save(originalDocPath);
 
-        // 3. Load the document and process each JPEG image.
+        // Load the document and apply a motion‑blur effect to every JPEG image.
         Document loadedDoc = new Document(originalDocPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Process only JPEG images.
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
-
-            // Extract the original image bytes.
-            byte[] originalBytes = shape.ImageData.ImageBytes;
-            using (MemoryStream inputStream = new MemoryStream(originalBytes))
-            using (Aspose.Drawing.Image originalImage = Aspose.Drawing.Image.FromStream(inputStream))
-            {
-                // Apply a simple motion‑blur effect by drawing several shifted copies.
-                using (Bitmap blurredBitmap = new Bitmap(originalImage.Width, originalImage.Height))
-                using (Graphics graphics = Graphics.FromImage(blurredBitmap))
-                {
-                    // Clear background.
-                    graphics.Clear(Aspose.Drawing.Color.Transparent);
-
-                    // Number of steps and offset per step.
-                    int steps = 5;
-                    int offsetX = 2;
-
-                    // Draw the image multiple times with incremental offset.
-                    for (int i = 0; i < steps; i++)
-                    {
-                        int dx = i * offsetX;
-                        graphics.DrawImage(originalImage, dx, 0, originalImage.Width, originalImage.Height);
-                    }
-
-                    // Save the blurred image to a stream.
-                    using (MemoryStream outputStream = new MemoryStream())
-                    {
-                        blurredBitmap.Save(outputStream, ImageFormat.Jpeg);
-                        outputStream.Position = 0;
-
-                        // Replace the shape's image with the blurred version.
-                        shape.ImageData.SetImage(outputStream);
-                    }
-                }
-            }
+            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Jpeg)
+                ApplyMotionBlur(shape);
         }
 
-        // 4. Save the modified document.
-        string modifiedDocPath = Path.Combine(artifactsDir, "modified.docx");
-        loadedDoc.Save(modifiedDocPath);
+        // Save the modified document.
+        string blurredDocPath = Path.Combine(artifactsDir, "blurred.docx");
+        loadedDoc.Save(blurredDocPath);
 
-        // 5. Validate that the output file exists.
-        if (!File.Exists(modifiedDocPath))
-            throw new InvalidOperationException("The modified document was not saved correctly.");
-
-        // Clean up temporary image file.
-        if (File.Exists(sampleImagePath))
-            File.Delete(sampleImagePath);
+        // Simple validation.
+        if (!File.Exists(blurredDocPath))
+            throw new Exception("The blurred document was not saved.");
     }
 
-    // Helper method to create a deterministic JPEG image.
-    private static void CreateSampleJpeg(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
+    // Creates a deterministic JPEG image with a solid colored ellipse.
+    private static void CreateSampleJpeg(string filePath, Color fillColor)
     {
+        const int width = 200;
+        const int height = 200;
+
         using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        using (Graphics g = Graphics.FromImage(bitmap))
         {
-            graphics.Clear(fillColor);
+            g.Clear(Color.White);
+            using (SolidBrush brush = new SolidBrush(fillColor))
+            {
+                g.FillEllipse(brush, 20, 20, width - 40, height - 40);
+            }
             bitmap.Save(filePath, ImageFormat.Jpeg);
+        }
+    }
+
+    // Applies a simple horizontal motion‑blur by drawing several shifted copies of the image.
+    private static void ApplyMotionBlur(Shape shape)
+    {
+        // Retrieve the original image bytes.
+        byte[] originalBytes = shape.ImageData.ToByteArray();
+
+        using (MemoryStream srcStream = new MemoryStream(originalBytes))
+        using (Bitmap srcBitmap = new Bitmap(srcStream))
+        {
+            int w = srcBitmap.Width;
+            int h = srcBitmap.Height;
+
+            using (Bitmap dstBitmap = new Bitmap(w, h))
+            using (Graphics g = Graphics.FromImage(dstBitmap))
+            {
+                // Transparent background.
+                g.Clear(Color.Transparent);
+
+                // Number of shifted copies – larger value = stronger blur.
+                const int blurLength = 10;
+
+                // Draw the source image multiple times, each shifted one pixel to the right.
+                for (int i = 0; i < blurLength; i++)
+                {
+                    g.DrawImage(srcBitmap, i, 0, w, h);
+                }
+
+                // Save the blurred image to a memory stream.
+                using (MemoryStream outStream = new MemoryStream())
+                {
+                    dstBitmap.Save(outStream, ImageFormat.Jpeg);
+                    outStream.Position = 0;
+
+                    // Replace the shape's image with the blurred version.
+                    shape.ImageData.SetImage(outStream);
+                }
+            }
         }
     }
 }

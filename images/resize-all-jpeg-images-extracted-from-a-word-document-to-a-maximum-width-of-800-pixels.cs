@@ -1,128 +1,125 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
+using Aspose.Drawing;               // Aspose.Drawing.Common namespace
 using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;    // For InterpolationMode
 
 public class Program
 {
     public static void Main()
     {
-        // Directories for artifacts
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic sample JPEG image (1200x900).
+        // -----------------------------------------------------------------
+        const string sampleImagePath = "sample.jpg";
+        const int sampleWidth = 1200;
+        const int sampleHeight = 900;
 
-        // 1. Create a sample JPEG image.
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.jpg");
-        CreateSampleJpeg(sampleImagePath, 1200, 800); // 1200x800 pixels
+        // Create bitmap and fill with white background.
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(sampleWidth, sampleHeight))
+        using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+        {
+            graphics.Clear(Aspose.Drawing.Color.White);
+            // Draw simple text.
+            graphics.DrawString(
+                "Sample JPEG",
+                new Aspose.Drawing.Font("Arial", 48),
+                Aspose.Drawing.Brushes.Black,
+                new Aspose.Drawing.PointF(100, 400));
 
-        // 2. Build a Word document that contains the JPEG image multiple times.
-        string inputDocPath = Path.Combine(artifactsDir, "input.docx");
-        CreateDocumentWithImages(inputDocPath, sampleImagePath);
+            // Save as JPEG.
+            bitmap.Save(sampleImagePath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+        }
 
-        // 3. Load the document and process JPEG images.
-        Document doc = new Document(inputDocPath);
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        // -----------------------------------------------------------------
+        // 2. Build a Word document and insert the sample JPEG several times.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert the image three times to have multiple JPEG shapes.
+        for (int i = 0; i < 3; i++)
+        {
+            builder.InsertImage(sampleImagePath);
+            builder.Writeln(); // add a line break between images.
+        }
+
+        const string originalDocPath = "Original.docx";
+        doc.Save(originalDocPath);
+
+        // -----------------------------------------------------------------
+        // 3. Load the document and process all JPEG images.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(originalDocPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
         int jpegCount = 0;
         int resizedCount = 0;
+
+        // Ensure output directory exists.
+        const string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (!shape.HasImage)
                 continue;
 
+            // Process only JPEG images.
             if (shape.ImageData.ImageType != ImageType.Jpeg)
                 continue;
 
             jpegCount++;
 
-            // Extract image bytes.
-            byte[] imageBytes = shape.ImageData.ToByteArray();
-
-            // Load image into Aspose.Drawing.Bitmap.
-            using (MemoryStream ms = new MemoryStream(imageBytes))
+            // Save the original image to a memory stream.
+            using (MemoryStream originalStream = new MemoryStream())
             {
-                ms.Position = 0;
-                using (Bitmap originalBitmap = new Bitmap(ms))
+                shape.ImageData.Save(originalStream);
+                originalStream.Position = 0; // reset before reading.
+
+                // Load the image using Aspose.Drawing.
+                using (Aspose.Drawing.Image originalImage = Aspose.Drawing.Image.FromStream(originalStream))
                 {
-                    int originalWidth = originalBitmap.Width;
-                    int originalHeight = originalBitmap.Height;
-
-                    // If width exceeds 800 pixels, resize while preserving aspect ratio.
-                    if (originalWidth > 800)
+                    // If width already <= 800, just save the original.
+                    if (originalImage.Width <= 800)
                     {
-                        double scale = 800.0 / originalWidth;
-                        int newWidth = 800;
-                        int newHeight = (int)Math.Round(originalHeight * scale);
+                        string outPath = Path.Combine(outputDir, $"Image_{jpegCount}_original.jpg");
+                        originalImage.Save(outPath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+                        continue;
+                    }
 
-                        using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
-                        {
-                            using (Graphics graphics = Graphics.FromImage(resizedBitmap))
-                            {
-                                graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
-                            }
+                    // Calculate new dimensions preserving aspect ratio.
+                    int newWidth = 800;
+                    int newHeight = (int)(originalImage.Height * (800.0 / originalImage.Width));
 
-                            // Save resized image to file.
-                            string resizedImagePath = Path.Combine(artifactsDir, $"resized_{jpegCount}.jpg");
-                            resizedBitmap.Save(resizedImagePath, ImageFormat.Jpeg);
-                            resizedCount++;
+                    // Create a new bitmap with the target size.
+                    using (Aspose.Drawing.Bitmap resizedBitmap = new Aspose.Drawing.Bitmap(newWidth, newHeight))
+                    using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(resizedBitmap))
+                    {
+                        // High quality resizing.
+                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        g.DrawImage(originalImage, 0, 0, newWidth, newHeight);
 
-                            // Replace the image in the document with the resized version.
-                            using (MemoryStream resizedStream = new MemoryStream())
-                            {
-                                resizedBitmap.Save(resizedStream, ImageFormat.Jpeg);
-                                resizedStream.Position = 0;
-                                shape.ImageData.SetImage(resizedStream);
-                            }
-                        }
+                        // Save the resized image.
+                        string resizedPath = Path.Combine(outputDir, $"Image_{jpegCount}_resized.jpg");
+                        resizedBitmap.Save(resizedPath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+                        resizedCount++;
                     }
                 }
             }
         }
 
-        // Validate that at least one JPEG image was processed.
+        // -----------------------------------------------------------------
+        // 4. Validation.
+        // -----------------------------------------------------------------
         if (jpegCount == 0)
             throw new InvalidOperationException("No JPEG images were found in the document.");
 
-        // Validate that at least one image was resized.
-        if (resizedCount == 0)
-            throw new InvalidOperationException("No JPEG images required resizing.");
-
-        // Save the modified document.
-        string outputDocPath = Path.Combine(artifactsDir, "output.docx");
-        doc.Save(outputDocPath);
-    }
-
-    // Creates a deterministic JPEG image using Aspose.Drawing.
-    private static void CreateSampleJpeg(string filePath, int width, int height)
-    {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.LightBlue);
-                // Draw a simple rectangle for visual distinction.
-                graphics.FillRectangle(new SolidBrush(Color.Coral), width / 4, height / 4, width / 2, height / 2);
-            }
-
-            bitmap.Save(filePath, ImageFormat.Jpeg);
-        }
-    }
-
-    // Creates a Word document and inserts the specified image multiple times.
-    private static void CreateDocumentWithImages(string docPath, string imagePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the image three times.
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertParagraph();
-            builder.InsertImage(imagePath);
-        }
-
-        doc.Save(docPath);
+        Console.WriteLine($"Total JPEG images found: {jpegCount}");
+        Console.WriteLine($"Images resized and saved: {resizedCount}");
+        Console.WriteLine($"All output files are located in the \"{outputDir}\" folder.");
     }
 }

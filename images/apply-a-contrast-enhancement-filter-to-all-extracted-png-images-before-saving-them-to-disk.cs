@@ -4,87 +4,82 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
+using Aspose.Drawing; // Provides Bitmap, Graphics, Color
 
 public class Program
 {
     public static void Main()
     {
         // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        string artifactsDir = "Artifacts";
         Directory.CreateDirectory(artifactsDir);
 
-        // ---------- Create sample PNG image ----------
-        string pngPath = Path.Combine(artifactsDir, "sample.png");
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic sample PNG image using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        // Fill background with a light gray color.
+        graphics.Clear(Aspose.Drawing.Color.LightGray);
+        // Draw a simple red ellipse to have visible content.
+        using (var pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Red, 5))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.White);
-                // Draw a simple red rectangle.
-                g.FillRectangle(new SolidBrush(Color.Red), 20, 20, 160, 160);
-            }
-            bitmap.Save(pngPath);
+            graphics.DrawEllipse(pen, 20, 20, 160, 160);
         }
+        // Save the bitmap as PNG.
+        bitmap.Save(sampleImagePath);
+        // Clean up drawing resources.
+        graphics.Dispose();
+        bitmap.Dispose();
 
-        // ---------- Create sample JPEG image (optional) ----------
-        string jpgPath = Path.Combine(artifactsDir, "sample.jpg");
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.White);
-                g.FillEllipse(new SolidBrush(Color.Blue), 20, 20, 160, 160);
-            }
-            bitmap.Save(jpgPath);
-        }
-
-        // ---------- Build a document containing the images ----------
+        // -----------------------------------------------------------------
+        // 2. Build a Word document and insert the sample PNG image twice.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(sampleImagePath);
+        builder.Writeln(); // Add a line break between images.
+        builder.InsertImage(sampleImagePath);
 
-        // Insert PNG image.
-        builder.InsertImage(pngPath);
-        builder.Writeln(); // separate
-
-        // Insert JPEG image.
-        builder.InsertImage(jpgPath);
-        builder.Writeln();
-
-        // Save the document.
-        string docPath = Path.Combine(artifactsDir, "DocWithImages.docx");
-        doc.Save(docPath);
-
-        // ---------- Load the document and process PNG images ----------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-
+        // -----------------------------------------------------------------
+        // 3. Extract all PNG images, enhance contrast, and save them.
+        // -----------------------------------------------------------------
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         int extractedCount = 0;
-        int imageIndex = 0;
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
+            // Ensure the shape actually contains an image.
             if (!shape.HasImage)
                 continue;
 
             // Process only PNG images.
-            if (shape.ImageData.ImageType == ImageType.Png)
-            {
-                // Enhance contrast (range 0.0 – 1.0). 1.0 = maximum contrast.
-                shape.ImageData.Contrast = 1.0;
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
 
-                // Save the enhanced image.
-                string outFile = Path.Combine(artifactsDir, $"Extracted_{imageIndex}.png");
-                shape.ImageData.Save(outFile);
-                extractedCount++;
-                imageIndex++;
-            }
+            // Apply maximum contrast (value range 0.0 to 1.0).
+            shape.ImageData.Contrast = 1.0;
+
+            // Save the enhanced image to a deterministic file name.
+            string outFile = Path.Combine(artifactsDir, $"extracted_{extractedCount}.png");
+            shape.ImageData.Save(outFile);
+
+            // Verify that the file was created.
+            if (!File.Exists(outFile))
+                throw new InvalidOperationException($"Failed to save image '{outFile}'.");
+
+            extractedCount++;
         }
 
-        // Validate that at least one PNG image was extracted and saved.
+        // -----------------------------------------------------------------
+        // 4. Validate that at least one PNG image was processed.
+        // -----------------------------------------------------------------
         if (extractedCount == 0)
             throw new InvalidOperationException("No PNG images were extracted from the document.");
 
-        // Program ends automatically.
+        // Optional: Save the document (not required for the task but demonstrates full workflow).
+        string docPath = Path.Combine(artifactsDir, "DocumentWithImages.docx");
+        doc.Save(docPath);
     }
 }

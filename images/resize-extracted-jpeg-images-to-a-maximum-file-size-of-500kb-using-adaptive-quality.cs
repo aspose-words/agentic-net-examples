@@ -2,126 +2,111 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
 public class Program
 {
-    // Maximum allowed file size for the resized JPEG images (500 KB).
-    private const long MaxFileSizeBytes = 500 * 1024;
+    // Maximum allowed file size in bytes (500 KB)
+    private const long MaxFileSize = 500 * 1024;
 
     public static void Main()
     {
-        // Directories for temporary artifacts.
+        // Prepare directories
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
+        string inputImagePath = Path.Combine(artifactsDir, "sample.jpg");
+        string docPath = Path.Combine(artifactsDir, "document.docx");
 
-        // 1. Create a sample JPEG image using Aspose.Drawing.
-        string sampleJpegPath = Path.Combine(artifactsDir, "sample.jpg");
-        CreateSampleJpeg(sampleJpegPath, 1200, 800);
+        // 1. Create a sample JPEG image using Aspose.Drawing
+        CreateSampleJpeg(inputImagePath, 800, 800);
 
-        // 2. Create a Word document and insert the sample JPEG image.
+        // 2. Insert the image into a Word document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleJpegPath);
-        string docPath = Path.Combine(artifactsDir, "input.docx");
+        builder.InsertImage(inputImagePath);
         doc.Save(docPath);
 
-        // 3. Load the document (demonstrating load rule usage).
+        // 3. Load the document and extract JPEG images
         Document loadedDoc = new Document(docPath);
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                              .Cast<Shape>()
+                              .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Jpeg)
+                              .ToList();
 
-        // 4. Extract JPEG images, resize adaptively to meet the size constraint.
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        if (!shapes.Any())
+            throw new InvalidOperationException("No JPEG images were found in the document.");
+
         int imageIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        foreach (var shape in shapes)
         {
-            if (!shape.HasImage) continue;
-            if (shape.ImageData.ImageType != ImageType.Jpeg) continue;
+            // Extract original image bytes
+            byte[] originalBytes = shape.ImageData.ToByteArray();
 
-            // Save original image to a memory stream.
-            using (MemoryStream originalStream = new MemoryStream())
-            {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
+            // Resize adaptively to meet the size constraint
+            byte[] resizedBytes = ResizeJpegAdaptive(originalBytes, MaxFileSize);
 
-                // If already within size limit, just write it out.
-                if (originalStream.Length <= MaxFileSizeBytes)
-                {
-                    string outPath = Path.Combine(artifactsDir, $"extracted_{imageIndex}.jpg");
-                    File.WriteAllBytes(outPath, originalStream.ToArray());
-                    imageIndex++;
-                    continue;
-                }
+            // Save the resized image
+            string outputPath = Path.Combine(artifactsDir, $"resized_{imageIndex}.jpg");
+            File.WriteAllBytes(outputPath, resizedBytes);
 
-                // Adaptive quality reduction loop.
-                int quality = 100;
-                bool saved = false;
-                while (quality >= 10 && !saved)
-                {
-                    // Create a temporary document containing the image.
-                    Document tempDoc = new Document();
-                    DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-                    originalStream.Position = 0;
-                    tempBuilder.InsertImage(originalStream);
+            // Validate output
+            FileInfo info = new FileInfo(outputPath);
+            if (info.Length > MaxFileSize)
+                throw new InvalidOperationException($"Resized image {outputPath} exceeds the maximum allowed size.");
 
-                    // Prepare JPEG save options with the current quality.
-                    ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
-                    {
-                        JpegQuality = quality
-                    };
-
-                    // Save to a temporary stream to check size.
-                    using (MemoryStream resizedStream = new MemoryStream())
-                    {
-                        tempDoc.Save(resizedStream, jpegOptions);
-                        if (resizedStream.Length <= MaxFileSizeBytes)
-                        {
-                            // Write the resized image to disk.
-                            string outPath = Path.Combine(artifactsDir, $"resized_{imageIndex}.jpg");
-                            File.WriteAllBytes(outPath, resizedStream.ToArray());
-                            saved = true;
-                        }
-                        else
-                        {
-                            // Reduce quality and try again.
-                            quality -= 10;
-                        }
-                    }
-                }
-
-                // If unable to meet size constraint, save the original image as fallback.
-                if (!saved)
-                {
-                    string outPath = Path.Combine(artifactsDir, $"fallback_{imageIndex}.jpg");
-                    File.WriteAllBytes(outPath, originalStream.ToArray());
-                }
-
-                imageIndex++;
-            }
+            imageIndex++;
         }
 
-        // Validation: ensure at least one image file was written.
-        string[] outputFiles = Directory.GetFiles(artifactsDir, "*.jpg");
-        if (outputFiles.Length == 0)
-            throw new InvalidOperationException("No JPEG images were extracted or resized.");
+        // All done – the resized images are stored in the Artifacts folder.
     }
 
-    // Helper method to create a deterministic JPEG image using Aspose.Drawing.
+    // Creates a deterministic JPEG image with a solid color background.
     private static void CreateSampleJpeg(string filePath, int width, int height)
     {
         using (Bitmap bitmap = new Bitmap(width, height))
         using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            graphics.Clear(Color.White);
-            // Draw a simple rectangle for visual content.
-            using (SolidBrush brush = new SolidBrush(Color.FromArgb(180, 70, 130, 180)))
-            {
-                graphics.FillRectangle(brush, 100, 100, width - 200, height - 200);
-            }
-            // Save as JPEG with default quality.
+            graphics.Clear(Aspose.Drawing.Color.FromArgb(255, 70, 130, 180)); // SteelBlue background
             bitmap.Save(filePath, ImageFormat.Jpeg);
+        }
+    }
+
+    // Performs adaptive quality reduction to fit the image within the target size.
+    private static byte[] ResizeJpegAdaptive(byte[] sourceBytes, long maxSize)
+    {
+        // Load the source image into Aspose.Drawing.Image
+        using (MemoryStream sourceStream = new MemoryStream(sourceBytes))
+        using (Image image = Image.FromStream(sourceStream))
+        {
+            // Find the JPEG encoder
+            ImageCodecInfo jpegCodec = ImageCodecInfo.GetImageEncoders()
+                                                     .FirstOrDefault(c => c.FormatID == ImageFormat.Jpeg.Guid);
+            if (jpegCodec == null)
+                throw new InvalidOperationException("JPEG encoder not found.");
+
+            // Start with high quality and decrease until size constraint is met
+            for (int quality = 100; quality >= 10; quality -= 10)
+            {
+                using (EncoderParameters encoderParams = new EncoderParameters(1))
+                using (MemoryStream outputStream = new MemoryStream())
+                {
+                    encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, quality);
+                    image.Save(outputStream, jpegCodec, encoderParams);
+                    if (outputStream.Length <= maxSize)
+                        return outputStream.ToArray();
+                }
+            }
+
+            // If none of the quality levels satisfy the constraint, return the lowest quality version
+            using (EncoderParameters encoderParams = new EncoderParameters(1))
+            using (MemoryStream outputStream = new MemoryStream())
+            {
+                encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 10L);
+                image.Save(outputStream, jpegCodec, encoderParams);
+                return outputStream.ToArray();
+            }
         }
     }
 }
