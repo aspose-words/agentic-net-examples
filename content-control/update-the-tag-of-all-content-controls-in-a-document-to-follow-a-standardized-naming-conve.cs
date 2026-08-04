@@ -1,89 +1,84 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Newtonsoft.Json;
+using Newtonsoft.Json; // Included as per required packages
 
-public class Program
+namespace ContentControlTagUpdater
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document with a few content controls.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("Sample document with content controls:");
-
-        // Plain text inline content control.
-        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(sampleDoc, SdtType.PlainText, MarkupLevel.Inline)
+        public static void Main()
         {
-            Title = "Name",
-            Tag = "name"
-        };
-        plainTextSdt.RemoveAllChildren();
-        plainTextSdt.AppendChild(new Run(sampleDoc, "John Doe"));
-        builder.InsertNode(plainTextSdt);
-        builder.Writeln();
+            // Paths for the sample input and output documents.
+            const string inputPath = "input.docx";
+            const string outputPath = "output.docx";
 
-        // Rich text block content control.
-        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(sampleDoc, SdtType.RichText, MarkupLevel.Block)
-        {
-            Title = "Address",
-            Tag = "address"
-        };
-        Paragraph addressParagraph = new Paragraph(sampleDoc);
-        addressParagraph.AppendChild(new Run(sampleDoc, "123 Main St"));
-        richTextSdt.AppendChild(addressParagraph);
-        sampleDoc.FirstSection.Body.AppendChild(richTextSdt);
-        builder.Writeln();
+            // -----------------------------------------------------------------
+            // Step 1: Create a sample document with several content controls.
+            // -----------------------------------------------------------------
+            Document seedDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(seedDoc);
 
-        // Checkbox inline content control.
-        StructuredDocumentTag checkboxSdt = new StructuredDocumentTag(sampleDoc, SdtType.Checkbox, MarkupLevel.Inline)
-        {
-            Title = "Agree",
-            Tag = "agree",
-            Checked = false
-        };
-        builder.InsertNode(checkboxSdt);
-        builder.Writeln();
+            // Plain‑text content control.
+            StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(seedDoc, SdtType.PlainText, MarkupLevel.Inline)
+            {
+                Title = "CustomerName",
+                Tag = "old-tag-plain"
+            };
+            plainTextSdt.RemoveAllChildren();
+            plainTextSdt.AppendChild(new Run(seedDoc, "Alice"));
+            builder.InsertNode(plainTextSdt);
+            builder.Writeln(); // Move to next line.
 
-        // Save the initial document.
-        const string inputPath = "input.docx";
-        sampleDoc.Save(inputPath);
+            // Rich‑text (block‑level) content control.
+            StructuredDocumentTag richTextSdt = new StructuredDocumentTag(seedDoc, SdtType.RichText, MarkupLevel.Block)
+            {
+                Title = "AddressBlock",
+                Tag = "old-tag-rich"
+            };
+            Paragraph para = new Paragraph(seedDoc);
+            para.AppendChild(new Run(seedDoc, "123 Main St, Springfield"));
+            richTextSdt.AppendChild(para);
+            seedDoc.FirstSection.Body.AppendChild(richTextSdt);
+            builder.Writeln(); // Ensure separation.
 
-        // Load the document for processing.
-        Document doc = new Document(inputPath);
+            // Checkbox content control.
+            StructuredDocumentTag checkboxSdt = new StructuredDocumentTag(seedDoc, SdtType.Checkbox, MarkupLevel.Inline)
+            {
+                Title = "Subscribe",
+                Tag = "old-tag-checkbox",
+                Checked = false
+            };
+            builder.InsertNode(checkboxSdt);
+            builder.Writeln();
 
-        // Prepare a list to hold old and new tag mappings for optional JSON output.
-        var tagMappings = new List<object>();
+            // Save the seed document.
+            seedDoc.Save(inputPath);
 
-        // Enumerate all StructuredDocumentTag nodes and update their Tag property.
-        var sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                          .OfType<StructuredDocumentTag>()
-                          .ToList();
+            // -----------------------------------------------------------------
+            // Step 2: Load the document and update all content control tags.
+            // -----------------------------------------------------------------
+            Document doc = new Document(inputPath);
 
-        for (int i = 0; i < sdtNodes.Count; i++)
-        {
-            StructuredDocumentTag sdt = sdtNodes[i];
-            string oldTag = sdt.Tag ?? string.Empty;
-            string newTag = $"Tag_{i + 1}";
-            sdt.Tag = newTag;
+            // Retrieve all StructuredDocumentTag nodes in the document.
+            var sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+                              .OfType<StructuredDocumentTag>()
+                              .ToList();
 
-            tagMappings.Add(new { Index = i + 1, OldTag = oldTag, NewTag = newTag });
+            // Apply a standardized naming convention: "Tag_1", "Tag_2", ...
+            int index = 1;
+            foreach (var sdt in sdtNodes)
+            {
+                sdt.Tag = $"Tag_{index}";
+                index++;
+            }
+
+            // -----------------------------------------------------------------
+            // Step 3: Save the updated document.
+            // -----------------------------------------------------------------
+            doc.Save(outputPath);
         }
-
-        // Save the updated document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
-
-        // Write the tag mapping information to a JSON file.
-        string jsonPath = "tag-mapping.json";
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(tagMappings, Formatting.Indented));
-
-        // Optional console output to indicate completion.
-        Console.WriteLine($"Processed {sdtNodes.Count} content controls.");
-        Console.WriteLine($"Updated document saved as '{outputPath}'.");
-        Console.WriteLine($"Tag mapping JSON saved as '{jsonPath}'.");
     }
 }

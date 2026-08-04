@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
@@ -7,44 +8,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample DOCX document with a plain‑text content control that has a placeholder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a description paragraph.
-        builder.Writeln("Below is a plain‑text content control with a placeholder:");
+        // Write some introductory text.
+        builder.Writeln("Please fill in the following field:");
 
-        // Create an inline plain‑text content control (SDT).
+        // Insert an inline plain‑text StructuredDocumentTag (content control).
         StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
             Title = "CustomerName",
             Tag = "customer-name",
-            IsShowingPlaceholderText = true
+            // Show placeholder text when the control is empty.
+            IsShowingPlaceholderText = true,
+            // Lock the control so it becomes a PDF form field.
+            LockContents = false
         };
 
-        // Define the placeholder text that will be shown when the control is empty.
-        sdt.RemoveAllChildren();
-        sdt.AppendChild(new Run(doc, "Enter name here"));
-
-        // Insert the content control into the document.
+        // The control is left empty; Word will display the placeholder.
+        // Insert the SDT into the current paragraph.
         builder.InsertNode(sdt);
-        builder.Writeln(); // End the paragraph.
 
-        // Save the source DOCX file.
-        const string docxPath = "sample.docx";
+        // Add a line break after the control.
+        builder.Writeln();
+
+        // Save the DOCX to a local file.
+        const string docxPath = "input.docx";
         doc.Save(docxPath);
 
-        // Load the DOCX file (simulating an existing document with content controls).
+        // Load the DOCX document.
         Document loadedDoc = new Document(docxPath);
 
-        // Configure PDF save options to preserve form fields and use the SDT tag as the field name.
+        // Configure PDF save options to preserve form fields (content controls) as PDF form fields.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             PreserveFormFields = true,
+            // Use the Tag property of the SDT as the name of the PDF form field.
             UseSdtTagAsFormFieldName = true
         };
 
-        // Convert the document to PDF while preserving the content control placeholder.
+        // Save the document as PDF. The placeholder text will be visible in the PDF form field.
         const string pdfPath = "output.pdf";
         loadedDoc.Save(pdfPath, pdfOptions);
     }

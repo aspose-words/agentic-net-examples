@@ -3,7 +3,6 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
-using Newtonsoft.Json;
 
 public class Program
 {
@@ -13,7 +12,14 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Plain‑text content control ----------
+        // Add an introductory paragraph.
+        builder.Writeln("Document with various content controls:");
+
+        // -----------------------------------------------------------------
+        // Inline plain‑text content control.
+        // -----------------------------------------------------------------
+        Paragraph inlineParagraph = doc.FirstSection.Body.FirstParagraph;
+
         StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
             Title = "CustomerName",
@@ -21,49 +27,71 @@ public class Program
         };
         plainTextSdt.RemoveAllChildren();
         plainTextSdt.AppendChild(new Run(doc, "John Doe"));
-        // Insert the SDT into the current paragraph.
-        builder.InsertNode(plainTextSdt);
-        builder.Writeln(); // Move to a new paragraph.
+        inlineParagraph.AppendChild(new Run(doc, " Name: "));
+        inlineParagraph.AppendChild(plainTextSdt);
 
-        // ---------- Checkbox content control ----------
+        // -----------------------------------------------------------------
+        // Inline checkbox content control.
+        // -----------------------------------------------------------------
         StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
         {
             Title = "Agree",
             Tag = "agree",
-            Checked = false
+            Checked = true
         };
-        builder.InsertNode(checkBoxSdt);
-        builder.Writeln();
+        inlineParagraph.AppendChild(new Run(doc, " "));
+        inlineParagraph.AppendChild(checkBoxSdt);
+        inlineParagraph.AppendChild(new Run(doc, " I agree"));
 
-        // ---------- Drop‑down list content control ----------
+        // -----------------------------------------------------------------
+        // Inline drop‑down list content control.
+        // -----------------------------------------------------------------
         StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
         {
             Title = "Country",
             Tag = "country"
         };
-        dropDownSdt.ListItems.Add(new SdtListItem("USA", "US"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Mexico", "MX"));
-        builder.InsertNode(dropDownSdt);
-        builder.Writeln();
+        dropDownSdt.ListItems.Add(new SdtListItem("USA", "USA"));
+        dropDownSdt.ListItems.Add(new SdtListItem("Canada", "Canada"));
+        dropDownSdt.ListItems.Add(new SdtListItem("Mexico", "Mexico"));
+        dropDownSdt.RemoveAllChildren();
+        dropDownSdt.AppendChild(new Run(doc, "USA"));
+        inlineParagraph.AppendChild(new Run(doc, " "));
+        inlineParagraph.AppendChild(dropDownSdt);
+        inlineParagraph.AppendChild(new Run(doc, " (Select country)"));
 
-        // Save the DOCX to a local file.
-        const string docxPath = "sample.docx";
-        doc.Save(docxPath);
+        // -----------------------------------------------------------------
+        // Block‑level rich‑text content control.
+        // -----------------------------------------------------------------
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "Comments",
+            Tag = "comments"
+        };
+        Paragraph innerParagraph = new Paragraph(doc);
+        innerParagraph.AppendChild(new Run(doc, "This is a sample comment inside a rich‑text content control."));
+        richTextSdt.AppendChild(innerParagraph);
+        doc.FirstSection.Body.AppendChild(richTextSdt);
 
-        // Load the saved document (demonstrates a realistic workflow where the source file already exists).
-        Document loadedDoc = new Document(docxPath);
+        // Save the source DOCX (optional, demonstrates that the file exists).
+        const string docxPath = "ContentControls.docx";
+        doc.Save(docxPath, SaveFormat.Docx);
 
-        // Configure HTML save options.
-        // The property ExportContentControlsAsDataAttributes is not available in the current Aspose.Words version,
-        // so we rely on the default behavior which already includes content‑control metadata as data‑attributes.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
+        // -----------------------------------------------------------------
+        // Convert the document to HTML while preserving content‑control attributes.
+        // -----------------------------------------------------------------
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
+        {
+            // The default behavior exports content controls as <span> elements
+            // with data‑attributes that retain Title, Tag, Id, etc.
+            // No additional configuration is required for this scenario.
+        };
 
-        // Save the document as HTML.
-        const string htmlPath = "sample.html";
-        loadedDoc.Save(htmlPath, htmlOptions);
+        const string htmlPath = "ContentControls.html";
+        doc.Save(htmlPath, htmlOptions);
 
-        // Confirmation output.
-        Console.WriteLine($"Document converted to HTML: {Path.GetFullPath(htmlPath)}");
+        // Inform the user (console output is allowed as it does not require input).
+        Console.WriteLine($"DOCX saved to: {Path.GetFullPath(docxPath)}");
+        Console.WriteLine($"HTML saved to: {Path.GetFullPath(htmlPath)}");
     }
 }

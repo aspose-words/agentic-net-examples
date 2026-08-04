@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
@@ -8,83 +9,62 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample document and the CSV output.
-        const string docPath = "sample.docx";
-        const string csvPath = "checkboxes.csv";
-
-        // -------------------------------------------------
-        // Create a sample DOCX containing several checkbox content controls.
-        // -------------------------------------------------
+        // Create a sample document with several checkbox content controls.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Inline checkbox 1.
-        StructuredDocumentTag checkBox1 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+        for (int i = 1; i <= 3; i++)
         {
-            Title = "AgreeTerms",
-            Tag = "agree",
-            Checked = true
-        };
-        builder.InsertNode(checkBox1);
-        builder.Writeln();
+            // Write a label before the checkbox.
+            builder.Writeln($"Item {i}:");
 
-        // Inline checkbox 2.
-        StructuredDocumentTag checkBox2 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
-        {
-            Title = "SubscribeNewsletter",
-            Tag = "subscribe",
-            Checked = false
-        };
-        builder.InsertNode(checkBox2);
-        builder.Writeln();
-
-        // Block-level checkbox.
-        StructuredDocumentTag checkBox3 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Block)
-        {
-            Title = "AcceptPolicy",
-            Tag = "policy",
-            Checked = true
-        };
-        // Block-level SDTs must contain at least one paragraph.
-        Paragraph placeholderParagraph = new Paragraph(doc);
-        placeholderParagraph.AppendChild(new Run(doc, " "));
-        checkBox3.AppendChild(placeholderParagraph);
-        doc.FirstSection.Body.AppendChild(checkBox3);
-
-        // Save the sample document.
-        doc.Save(docPath);
-
-        // -------------------------------------------------
-        // Load the document and export checkbox data to CSV.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-
-        var checkboxData = loadedDoc
-            .GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .OfType<StructuredDocumentTag>()
-            .Where(sdt => sdt.SdtType == SdtType.Checkbox)
-            .Select(sdt => new
+            // Create an inline checkbox StructuredDocumentTag.
+            StructuredDocumentTag checkBox = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
             {
-                Title = sdt.Title ?? string.Empty,
-                Tag = sdt.Tag ?? string.Empty,
-                Checked = sdt.Checked
-            })
-            .ToList();
+                Title = $"Option{i}",
+                Tag = $"opt{i}",
+                Checked = i % 2 == 0 // Even items are checked.
+            };
 
-        using (StreamWriter writer = new StreamWriter(csvPath, false))
-        {
-            writer.WriteLine("Title,Tag,Checked");
-            foreach (var item in checkboxData)
-            {
-                writer.WriteLine($"{EscapeCsv(item.Title)},{EscapeCsv(item.Tag)},{item.Checked}");
-            }
+            // Insert the checkbox into the document.
+            builder.InsertNode(checkBox);
+            builder.Writeln(); // Move to the next line.
         }
 
-        // Inform the user (no interactive input required).
-        Console.WriteLine($"Exported {checkboxData.Count} checkbox(es) to \"{csvPath}\".");
+        // Save the sample document.
+        const string samplePath = "sample.docx";
+        doc.Save(samplePath);
+
+        // Load the document (simulating processing an existing file).
+        Document loadedDoc = new Document(samplePath);
+
+        // Find all checkbox content controls.
+        List<StructuredDocumentTag> checkBoxTags = loadedDoc
+            .GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .Where(tag => tag.SdtType == SdtType.Checkbox)
+            .ToList();
+
+        // Prepare CSV lines.
+        List<string> csvLines = new List<string>
+        {
+            "Title,Tag,Checked"
+        };
+
+        foreach (StructuredDocumentTag tag in checkBoxTags)
+        {
+            string title = tag.Title ?? string.Empty;
+            string tagValue = tag.Tag ?? string.Empty;
+            string checkedState = tag.Checked.ToString();
+            csvLines.Add($"{EscapeCsv(title)},{EscapeCsv(tagValue)},{checkedState}");
+        }
+
+        // Write the CSV file.
+        const string csvPath = "checkboxes.csv";
+        File.WriteAllLines(csvPath, csvLines);
     }
 
-    // Simple CSV field escaper.
+    // Simple CSV escaping for values that may contain commas or quotes.
     private static string EscapeCsv(string value)
     {
         if (value.Contains(',') || value.Contains('\"') || value.Contains('\n') || value.Contains('\r'))

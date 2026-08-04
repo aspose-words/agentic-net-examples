@@ -9,74 +9,74 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure output directory exists (current working directory)
-        string outputDir = Directory.GetCurrentDirectory();
+        // Create two sample source documents that contain a single plain‑text content control.
+        Document sourceDoc1 = CreateSampleDocument("FirstDocument", "FirstTag", "First value");
+        Document sourceDoc2 = CreateSampleDocument("SecondDocument", "SecondTag", "Second value");
 
-        // -------------------------------------------------
-        // Create first sample document with a plain‑text content control
-        // -------------------------------------------------
-        Document doc1 = new Document();
-        Paragraph para1 = doc1.FirstSection.Body.FirstParagraph;
+        // Save the source documents to the local file system (required for the load step).
+        sourceDoc1.Save("Source1.docx");
+        sourceDoc2.Save("Source2.docx");
 
-        StructuredDocumentTag sdtPlain = new StructuredDocumentTag(doc1, SdtType.PlainText, MarkupLevel.Inline);
-        sdtPlain.Title = "FirstName";
-        sdtPlain.Tag = "first-name";
-        sdtPlain.RemoveAllChildren();
-        sdtPlain.AppendChild(new Run(doc1, "John"));
-        para1.AppendChild(sdtPlain);
+        // Load the source documents (simulating a real‑world scenario where files already exist).
+        Document src1 = new Document("Source1.docx");
+        Document src2 = new Document("Source2.docx");
 
-        doc1.Save(Path.Combine(outputDir, "doc1.docx"));
+        // Create the destination document that will receive the merged content.
+        Document destination = new Document();
 
-        // -------------------------------------------------
-        // Create second sample document with a rich‑text content control
-        // -------------------------------------------------
-        Document doc2 = new Document();
-        Paragraph para2 = doc2.FirstSection.Body.FirstParagraph;
+        // Append the source documents while keeping their original formatting.
+        destination.AppendDocument(src1, ImportFormatMode.KeepSourceFormatting);
+        destination.AppendDocument(src2, ImportFormatMode.KeepSourceFormatting);
 
-        StructuredDocumentTag sdtRich = new StructuredDocumentTag(doc2, SdtType.RichText, MarkupLevel.Block);
-        sdtRich.Title = "Address";
-        sdtRich.Tag = "address";
-
-        Paragraph innerPara = new Paragraph(doc2);
-        innerPara.AppendChild(new Run(doc2, "123 Main St, Anytown"));
-        sdtRich.AppendChild(innerPara);
-
-        doc2.FirstSection.Body.AppendChild(sdtRich);
-        doc2.Save(Path.Combine(outputDir, "doc2.docx"));
-
-        // -------------------------------------------------
-        // Load the documents for merging
-        // -------------------------------------------------
-        Document mainDoc = new Document(Path.Combine(outputDir, "doc1.docx"));
-        Document otherDoc = new Document(Path.Combine(outputDir, "doc2.docx"));
-
-        // Append the second document to the first one
-        mainDoc.AppendDocument(otherDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // -------------------------------------------------
-        // Gather all content controls (StructuredDocumentTag nodes)
-        // -------------------------------------------------
-        var allSdt = mainDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                            .OfType<StructuredDocumentTag>()
-                            .ToList();
-
-        // -------------------------------------------------
-        // Serialize content‑control metadata to JSON
-        // -------------------------------------------------
-        var metadata = allSdt.Select(s => new
+        // Update the custom IDs of all content controls in the merged document.
+        NodeCollection sdtNodes = destination.GetChildNodes(NodeType.StructuredDocumentTag, true);
+        int idCounter = 1;
+        foreach (StructuredDocumentTag sdt in sdtNodes)
         {
-            Title = s.Title,
-            Tag = s.Tag,
-            Id = s.Id,               // Id is read‑only and already unique
-            Text = s.GetText().Trim()
-        }).ToList();
+            // In Aspose.Words v2 the CustomNodeId property is an integer.
+            sdt.CustomNodeId = idCounter++;
+        }
 
-        string json = JsonConvert.SerializeObject(metadata, Formatting.Indented);
-        File.WriteAllText(Path.Combine(outputDir, "contentControls.json"), json);
+        // Export information about the content controls to a JSON file (optional reporting).
+        var controlInfo = destination.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .Select(s => new
+            {
+                Title = s.Title,
+                Tag = s.Tag,
+                CustomNodeId = s.CustomNodeId
+            })
+            .ToList();
 
-        // -------------------------------------------------
-        // Save the merged document
-        // -------------------------------------------------
-        mainDoc.Save(Path.Combine(outputDir, "Merged.docx"));
+        string json = JsonConvert.SerializeObject(controlInfo, Formatting.Indented);
+        File.WriteAllText("ContentControlsInfo.json", json);
+
+        // Save the merged document.
+        destination.Save("MergedDocument.docx");
+    }
+
+    // Helper method that creates a document containing a single plain‑text content control.
+    private static Document CreateSampleDocument(string title, string tag, string text)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add a heading so each source document is identifiable.
+        builder.Writeln($"--- {title} ---");
+
+        // Create an inline plain‑text StructuredDocumentTag (content control).
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = title,
+            Tag = tag
+        };
+        sdt.RemoveAllChildren();
+        sdt.AppendChild(new Run(doc, text));
+
+        // Insert the content control into the current paragraph.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        paragraph.AppendChild(sdt);
+
+        return doc;
     }
 }

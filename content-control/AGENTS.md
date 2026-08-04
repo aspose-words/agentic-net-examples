@@ -52,7 +52,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch process a folder of Word files, inserting a header content control with document metadata.
   - Workflow: input-bootstrap
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `load-a-doc-file-add-a-date-picker-content-control-and-save-the-result-as-docx.cs`
   - Task: Load a DOC file, add a date picker content control, and save the result as DOCX.
   - Workflow: native-sdt-api
@@ -67,12 +67,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Use a content control to embed a hyperlink and verify its target URL after document conversion.
   - Workflow: native-sdt-api
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-repeating-section-content-control-that-repeats-a-table-row-for-each-item-in-a-col.cs`
   - Task: Create a repeating section content control that repeats a table row for each item in a collection.
   - Workflow: native-sdt-api
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-content-control-that-repeats-a-paragraph-for-each-entry-in-a-json-array-during-im.cs`
   - Task: Create a content control that repeats a paragraph for each entry in a JSON array during import.
   - Workflow: xml-json-export
@@ -122,7 +122,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the placeholder text color inside a content control to match the document theme.
   - Workflow: native-sdt-api
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `replace-placeholder-text-in-a-content-control-with-values-from-a-dictionary-of-user-inputs.cs`
   - Task: Replace placeholder text in a content control with values from a dictionary of user inputs.
   - Workflow: native-sdt-api
@@ -197,7 +197,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Merge multiple Word documents, preserving existing content controls and updating their IDs.
   - Workflow: native-sdt-api
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `extract-all-repeating-section-content-controls-from-a-word-file-and-serialize-each-instanc.cs`
   - Task: Extract all repeating section content controls from a Word file and serialize each instance to JSON.
   - Workflow: xml-json-export
@@ -239,7 +239,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 - Package: `Newtonsoft.Json`
 
 ## Command reference
@@ -254,7 +254,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Newtonsoft.Json
 ```
 

@@ -3,59 +3,61 @@ using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
 
-namespace ContentControlExport
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Use DocumentBuilder for convenient paragraph handling.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Document with content controls:");
+
+        // ----- Inline plain‑text content control -----
+        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            Title = "CustomerName",
+            Tag = "customer-name"
+        };
+        plainTextSdt.RemoveAllChildren();
+        plainTextSdt.AppendChild(new Run(doc, "John Doe"));
+        // Insert the inline SDT at the current cursor position.
+        builder.InsertNode(plainTextSdt);
 
-            // Use DocumentBuilder to add content.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // ----- Inline checkbox content control -----
+        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+        {
+            Title = "AgreeTerms",
+            Tag = "agree-terms",
+            Checked = true
+        };
+        builder.InsertNode(checkBoxSdt);
 
-            // Insert a heading – this will appear in the XPS outline.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Document with Content Controls");
+        // Add a blank line for readability.
+        builder.Writeln();
 
-            // Insert a block‑level RichText content control.
-            StructuredDocumentTag blockSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-            {
-                Title = "BlockContent",
-                Tag = "block-content"
-            };
-            // Add a paragraph inside the block content control.
-            Paragraph blockParagraph = new Paragraph(doc);
-            blockParagraph.AppendChild(new Run(doc, "This is text inside a block‑level content control."));
-            blockSdt.AppendChild(blockParagraph);
-            // Append the block content control to the document body.
-            doc.FirstSection.Body.AppendChild(blockSdt);
+        // ----- Block‑level rich‑text content control -----
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "Notes",
+            Tag = "notes"
+        };
+        Paragraph richParagraph = new Paragraph(doc);
+        richParagraph.AppendChild(new Run(doc, "This is a rich text content control."));
+        richTextSdt.AppendChild(richParagraph);
+        // Append the block‑level SDT directly to the document body.
+        doc.FirstSection.Body.AppendChild(richTextSdt);
 
-            // Insert a blank line.
-            builder.Writeln();
-
-            // Insert an inline PlainText content control.
-            StructuredDocumentTag inlineSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-            {
-                Title = "CustomerName",
-                Tag = "customer-name"
-            };
-            inlineSdt.RemoveAllChildren();
-            inlineSdt.AppendChild(new Run(doc, "John Doe"));
-            // Append the inline content control to the current paragraph.
-            builder.CurrentParagraph.AppendChild(inlineSdt);
-            builder.Writeln(); // Move to a new paragraph after the inline control.
-
-            // Save the document as DOCX (optional, for verification).
-            doc.Save("ContentControls.docx");
-
-            // Export the document to XPS while preserving content control boundaries.
-            XpsSaveOptions xpsOptions = new XpsSaveOptions();
-            // Example: limit outline to heading levels 2 (optional).
-            xpsOptions.OutlineOptions.HeadingsOutlineLevels = 2;
-
-            doc.Save("ContentControls.xps", xpsOptions);
+        // Optional: display each content control's minimal WordOpenXML to verify boundaries.
+        foreach (StructuredDocumentTag sdt in doc.GetChildNodes(NodeType.StructuredDocumentTag, true))
+        {
+            Console.WriteLine($"SDT Title: {sdt.Title}");
+            Console.WriteLine(sdt.WordOpenXMLMinimal);
         }
+
+        // Save the document to XPS format, preserving content control boundaries.
+        XpsSaveOptions xpsOptions = new XpsSaveOptions();
+        doc.Save("ContentControls.xps", xpsOptions);
     }
 }

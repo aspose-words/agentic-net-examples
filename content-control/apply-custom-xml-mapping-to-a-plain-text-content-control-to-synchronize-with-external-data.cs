@@ -8,29 +8,46 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define custom XML data that will be used for mapping.
-        string xml = "<root><Customer><Name>Contoso Ltd.</Name><Address>123 Main St.</Address></Customer></root>";
+        // Add a heading.
+        builder.Writeln("Customer Information:");
 
-        // Add the custom XML part to the document. Use a GUID as the part identifier.
-        string partId = Guid.NewGuid().ToString("B");
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(partId, xml);
-
-        // Create an inline plain‑text content control (SDT).
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Insert the first plain‑text content control for the customer name.
+        builder.Write("Name: ");
+        StructuredDocumentTag nameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
             Title = "CustomerName",
             Tag = "customer-name"
         };
+        builder.InsertNode(nameSdt);
+        builder.Writeln(); // Move to the next line.
 
-        // Map the content control to the <Name> element inside the custom XML part.
-        sdt.XmlMapping.SetMapping(xmlPart, "/root[1]/Customer[1]/Name[1]", string.Empty);
+        // Insert the second plain‑text content control for the order ID.
+        builder.Write("Order ID: ");
+        StructuredDocumentTag orderSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "OrderId",
+            Tag = "order-id"
+        };
+        builder.InsertNode(orderSdt);
+        builder.Writeln();
 
-        // Insert the content control into the first paragraph of the document.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        firstParagraph.AppendChild(sdt);
+        // Create a custom XML part that holds the external data.
+        string xml = @"
+<root>
+    <customer>
+        <name>Contoso Ltd.</name>
+        <orderId>12345</orderId>
+    </customer>
+</root>";
+        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(Guid.NewGuid().ToString("B"), xml);
+
+        // Map each content control to the corresponding XML node.
+        nameSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/customer[1]/name[1]", string.Empty);
+        orderSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/customer[1]/orderId[1]", string.Empty);
 
         // Save the resulting document.
-        doc.Save("XmlMappedPlainTextSdt.docx");
+        doc.Save("MappedContentControl.docx");
     }
 }

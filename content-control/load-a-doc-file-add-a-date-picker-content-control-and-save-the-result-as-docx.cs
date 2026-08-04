@@ -2,46 +2,57 @@ using System;
 using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Newtonsoft.Json;
+using Newtonsoft.Json; // Included as required package
 
-public class Program
+namespace AsposeWordsDatePickerExample
 {
-    public static void Main()
+    public class Program
     {
-        // Step 1: Create a simple source DOC file if it does not exist.
-        const string sourcePath = "input.doc";
-        if (!System.IO.File.Exists(sourcePath))
+        public static void Main()
         {
-            Document seed = new Document();
-            DocumentBuilder seedBuilder = new DocumentBuilder(seed);
-            seedBuilder.Writeln("Sample document for adding a date picker content control.");
-            seed.Save(sourcePath);
+            // Define file names
+            const string inputPath = "input.doc";
+            const string outputPath = "output.docx";
+
+            // -----------------------------------------------------------------
+            // Step 1: Create a simple source DOC file if it does not already exist.
+            // -----------------------------------------------------------------
+            if (!System.IO.File.Exists(inputPath))
+            {
+                Document seedDoc = new Document();
+                DocumentBuilder seedBuilder = new DocumentBuilder(seedDoc);
+                seedBuilder.Writeln("This is a sample document.");
+                seedDoc.Save(inputPath);
+            }
+
+            // -----------------------------------------------------------------
+            // Step 2: Load the existing DOC file.
+            // -----------------------------------------------------------------
+            Document doc = new Document(inputPath);
+
+            // -----------------------------------------------------------------
+            // Step 3: Create a Date Picker content control (date SDT).
+            // -----------------------------------------------------------------
+            StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.Date, MarkupLevel.Inline)
+            {
+                Title = "AppointmentDate",
+                Tag = "appointment-date",
+                DateDisplayFormat = "dd MMMM, yyyy",
+                DateStorageFormat = SdtDateStorageFormat.DateTime,
+                FullDate = DateTime.Today
+            };
+
+            // -----------------------------------------------------------------
+            // Step 4: Insert the date picker into the document.
+            // -----------------------------------------------------------------
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.MoveToDocumentEnd(); // Position cursor at the end of the document.
+            builder.InsertNode(dateSdt); // Insert the content control.
+
+            // -----------------------------------------------------------------
+            // Step 5: Save the modified document as DOCX.
+            // -----------------------------------------------------------------
+            doc.Save(outputPath);
         }
-
-        // Step 2: Load the existing DOC file.
-        Document doc = new Document(sourcePath);
-
-        // Step 3: Create a date picker content control (StructuredDocumentTag of type Date).
-        StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.Date, MarkupLevel.Inline)
-        {
-            Title = "AppointmentDate",
-            Tag = "appointment-date"
-        };
-
-        // Optional: configure display format, locale, and a default date.
-        dateSdt.DateDisplayLocale = CultureInfo.GetCultureInfo("en-US").LCID;
-        dateSdt.DateDisplayFormat = "dd MMMM, yyyy";
-        dateSdt.DateStorageFormat = SdtDateStorageFormat.DateTime;
-        dateSdt.FullDate = DateTime.Today;
-
-        // Step 4: Insert the content control into the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(); // Ensure we are on a new paragraph.
-        builder.Write("Select a date: ");
-        builder.InsertNode(dateSdt);
-
-        // Step 5: Save the modified document as DOCX.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
     }
 }

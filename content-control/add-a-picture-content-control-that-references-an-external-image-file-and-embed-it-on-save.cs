@@ -7,33 +7,32 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a simple 1x1 PNG image file in the working directory.
-        const string imageFileName = "sample.png";
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcVYAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(imageFileName, imageBytes);
-
-        // Create a new blank document.
+        // Create a blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a picture content control (inline level).
-        StructuredDocumentTag pictureSdt = new StructuredDocumentTag(doc, SdtType.Picture, MarkupLevel.Inline)
+        // Write a paragraph before the picture content control.
+        builder.Writeln("Below is a picture content control with an embedded image:");
+
+        // Insert a picture content control at the current cursor position.
+        StructuredDocumentTag pictureSdt = builder.InsertStructuredDocumentTag(SdtType.Picture);
+        pictureSdt.Title = "SamplePicture";
+        pictureSdt.Tag = "sample-pic";
+
+        // Ensure a sample image file exists in the working directory.
+        const string imageFileName = "sample.png";
+        if (!File.Exists(imageFileName))
         {
-            Title = "PictureControl",
-            Tag = "pic-1"
-        };
+            // A 1x1 pixel transparent PNG (base64 encoded).
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            File.WriteAllBytes(imageFileName, pngBytes);
+        }
 
-        // Insert the content control into the document.
-        builder.InsertNode(pictureSdt);
-
-        // Move the builder inside the newly inserted content control.
-        builder.MoveTo(pictureSdt);
-
-        // Insert the image. The image is embedded into the document.
+        // Insert the image inside the picture content control.
         builder.InsertImage(imageFileName);
 
-        // Save the resulting document.
+        // Save the document; the image is embedded automatically.
         doc.Save("PictureContentControl.docx");
     }
 }
