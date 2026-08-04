@@ -2,6 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
 public class Program
 {
@@ -18,23 +19,28 @@ public class Program
         // Clear the default demo series.
         chart.Series.Clear();
 
-        // Add a primary series.
+        // Add a primary series (optional, just to have data).
         string[] categories = { "Category 1", "Category 2", "Category 3" };
         chart.Series.Add("Primary Series", categories, new double[] { 10, 20, 30 });
 
-        // Create a secondary series group.
+        // Create a secondary series group and assign it to the secondary axis group.
         ChartSeriesGroup secondaryGroup = chart.SeriesGroups.Add(ChartSeriesType.Line);
-        secondaryGroup.AxisGroup = AxisGroup.Secondary; // Use secondary axes.
+        secondaryGroup.AxisGroup = AxisGroup.Secondary;
 
         // Configure the secondary X axis.
         ChartAxis secondaryXAxis = secondaryGroup.AxisX;
-        secondaryXAxis.DisplayUnit.Unit = AxisBuiltInUnit.Thousands; // Display units in thousands.
-        secondaryXAxis.NumberFormat.FormatCode = "#,##0"; // Custom number format.
 
-        // Add a series to the secondary group.
-        secondaryGroup.Series.Add("Secondary Series", categories, new double[] { 1000, 2000, 3000 });
+        // Set display units to thousands.
+        secondaryXAxis.DisplayUnit.Unit = AxisBuiltInUnit.Thousands;
+
+        // Apply a custom number format to the axis labels.
+        secondaryXAxis.NumberFormat.FormatCode = "#,##0";
+        secondaryXAxis.NumberFormat.IsLinkedToSource = false;
+
+        // (Optional) Add a series to the secondary group.
+        secondaryGroup.Series.Add("Secondary Series", categories, new double[] { 15, 25, 35 });
 
         // Save the document.
-        doc.Save("SecondaryAxisDisplayUnits.docx");
+        doc.Save("SecondaryXAxisDisplayUnits.docx");
     }
 }

@@ -2,7 +2,6 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -12,40 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a chart with automatic scaling (width and height set to 0 request 100% scale).
+        // Insert a chart that will automatically scale to the shape size.
+        // Width and height set to 0 request 100 % scaling (fills the container).
         Shape chartShape = builder.InsertChart(ChartType.Column, 0, 0);
-        if (!chartShape.HasChart)
-            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+        // Ensure the chart shape is positioned relative to the page margins.
+        chartShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
+        chartShape.RelativeVerticalPosition   = RelativeVerticalPosition.Margin;
+        chartShape.Left   = 0;   // align to left margin
+        chartShape.Top    = 0;   // align to top margin
+        chartShape.Width  = 0;   // 100 % of the container width
+        chartShape.Height = 0;   // 100 % of the container height
 
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data that Aspose.Words adds by default.
+        // Add a simple series to make the chart visible.
         chart.Series.Clear();
-
-        // Add a simple data series.
-        chart.Series.Add(
-            "Sales",
+        chart.Series.Add("Sales",
             new[] { "Q1", "Q2", "Q3", "Q4" },
-            new[] { 150.0, 200.0, 250.0, 300.0 });
+            new[] { 150.0, 200.0, 180.0, 220.0 });
 
-        // Add a visible title.
+        // Set a title for clarity.
         chart.Title.Text = "Quarterly Sales";
         chart.Title.Show = true;
 
-        // Save the initial document.
-        doc.Save("chart-auto-scale.docx");
+        // Change the page size after the chart has been inserted.
+        // The chart will resize automatically because its dimensions are set to 100 % of the page width/height.
+        builder.PageSetup.PaperSize   = PaperSize.A3;      // Larger page size.
+        builder.PageSetup.Orientation = Orientation.Portrait;
 
-        // Change the page size of the first section (e.g., to A4) and adjust margins.
-        builder.PageSetup.PaperSize = PaperSize.A4;
-        builder.PageSetup.TopMargin = ConvertUtil.InchToPoint(1);
-        builder.PageSetup.BottomMargin = ConvertUtil.InchToPoint(1);
-        builder.PageSetup.LeftMargin = ConvertUtil.InchToPoint(1);
-        builder.PageSetup.RightMargin = ConvertUtil.InchToPoint(1);
-
-        // Rebuild the layout so the chart rescales to fit the new page dimensions.
+        // Rebuild the layout so that the new page size is taken into account.
         doc.UpdatePageLayout();
 
-        // Save the document after the page size change.
-        doc.Save("chart-auto-scale-updated.docx");
+        // Save the document.
+        doc.Save("ChartAutoResize.docx");
     }
 }

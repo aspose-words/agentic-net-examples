@@ -1,10 +1,9 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Drawing;               // Needed for the Shape class
+using Aspose.Words.Drawing.Charts;        // Chart‑related APIs
 
-public class Program
+public class RemoveChartSeriesExample
 {
     public static void Main()
     {
@@ -12,24 +11,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart. The chart comes with three demo series by default.
+        // Insert a column chart. The default chart contains three demo series.
         Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
         Chart chart = chartShape.Chart;
 
-        // Determine the index of the series to remove.
-        // For this example we will remove the second series (zero‑based index 1) if it exists.
-        int indexToRemove = 1;
-        if (indexToRemove >= 0 && indexToRemove < chart.Series.Count)
-        {
-            chart.Series.RemoveAt(indexToRemove);
-        }
-        else
-        {
-            throw new InvalidOperationException($"Series index {indexToRemove} is out of range.");
-        }
+        // Verify that the inserted shape actually contains a chart.
+        if (!chartShape.HasChart)
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
 
-        // Save the document to the working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RemoveSeries.docx");
-        doc.Save(outputPath);
+        // Access the series collection of the chart.
+        ChartSeriesCollection series = chart.Series;
+
+        // Define the zero‑based index of the series we want to remove.
+        int indexToRemove = 2; // Removes the third demo series.
+
+        // Validate the index before attempting removal.
+        if (indexToRemove < 0 || indexToRemove >= series.Count)
+            throw new ArgumentOutOfRangeException(nameof(indexToRemove), "Series index is out of range.");
+
+        // Remove the series at the specified index.
+        series.RemoveAt(indexToRemove);
+
+        // Save the modified document.
+        doc.Save("RemoveSeries.docx");
     }
 }

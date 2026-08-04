@@ -1,43 +1,37 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // User preferences (could be loaded from a config file or passed as arguments)
-        string desiredTitle = "Quarterly Sales Overview";
+        // User preferences
+        string desiredTitle = "Sales Overview";
         bool showLegend = false; // Set to true to display the legend
 
-        // Create a new document and a builder.
+        // Create a new document and insert a chart
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
 
-        // Insert a column chart into the document.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        // Ensure the shape actually contains a chart
         if (!chartShape.HasChart)
             throw new InvalidOperationException("The inserted shape does not contain a chart.");
 
-        // Access the chart object.
         Chart chart = chartShape.Chart;
 
-        // Update the chart title.
+        // Update the chart title
         ChartTitle title = chart.Title;
         title.Text = desiredTitle;
-        title.Show = true; // Ensure the title is visible.
+        title.Show = true; // Make sure the title is visible
 
-        // Toggle legend visibility based on the user preference.
+        // Toggle legend visibility based on the preference
         ChartLegend legend = chart.Legend;
         legend.Position = showLegend ? LegendPosition.Right : LegendPosition.None;
 
-        // Save the document to the output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "updated-chart.docx");
-        doc.Save(outputPath);
+        // Save the document
+        doc.Save("UpdatedChart.docx");
     }
 }

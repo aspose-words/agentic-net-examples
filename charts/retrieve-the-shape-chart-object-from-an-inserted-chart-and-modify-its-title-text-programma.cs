@@ -1,35 +1,34 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart into the document.
+        // Width = 432 points, Height = 252 points.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
 
-        // Verify that the inserted shape actually contains a chart.
-        if (!chartShape.HasChart)
-            throw new InvalidOperationException("The inserted shape does not contain a chart.");
-
-        // Retrieve the Chart object from the shape.
+        // Retrieve the Chart object from the inserted shape.
         Chart chart = chartShape.Chart;
 
         // Modify the chart title.
         ChartTitle title = chart.Title;
-        title.Text = "Sales Overview";
-        title.Show = true;               // Ensure the title is visible.
-        title.Font.Size = 16;            // Set title font size.
-        title.Font.Color = Color.DarkBlue; // Set title font color.
+        title.Text = "Sales Overview 2024";
+        title.Font.Size = 16;
+        title.Font.Color = System.Drawing.Color.DarkBlue;
+        title.Show = true;      // Ensure the title is visible.
+        title.Overlay = false;  // Keep other elements from overlapping the title.
 
-        // Save the document with the modified chart.
-        doc.Save("ChartWithTitle.docx");
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ModifiedChart.docx");
+        doc.Save(outputPath);
     }
 }

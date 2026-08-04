@@ -11,11 +11,12 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart with default demo data.
+        // Insert a column chart with the default demo data.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        Chart chart = chartShape.Chart; // Optional: access the chart object.
+        // Access the chart object (optional, shown for completeness).
+        Chart chart = chartShape.Chart;
 
-        // Save the document to the working directory.
+        // Save the document to the current working directory.
         doc.Save("insert-chart.docx");
     }
 }

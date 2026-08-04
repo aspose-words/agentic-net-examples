@@ -1,39 +1,43 @@
 using System;
-using System.IO;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Drawing;               // Required for the Shape class
+using Aspose.Words.Drawing.Charts;        // Chart related classes
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and insert a column chart.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a column chart with default demo data.
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Retrieve the first two series from the chart.
-        ChartSeries series1 = chart.Series[0];
-        ChartSeries series2 = chart.Series[1];
+        // Retrieve the collection of series in the chart.
+        ChartSeriesCollection seriesCollection = chart.Series;
 
-        // Remove the first data point from each series.
-        series1.Remove(0);
-        series2.Remove(0);
+        // Iterate through each series and modify its data points.
+        foreach (ChartSeries series in seriesCollection)
+        {
+            // Preserve the original number of data points (categories).
+            int originalPointCount = series.XValues.Count;
 
-        // Add a new data point with a custom category and value to each series.
-        ChartXValue newCategory = ChartXValue.FromString("New Category");
-        series1.Add(newCategory, ChartYValue.FromDouble(15.0));
-        series2.Add(newCategory, ChartYValue.FromDouble(8.5));
+            // Remove existing values while keeping any formatting.
+            series.ClearValues();
 
-        // Change the fill color of the newly added point in the first series.
-        int newIndex = series1.DataPoints.Count - 1;
-        series1.DataPoints[newIndex].Format.Fill.Color = Color.Green;
+            // Add new data points. Here we use simple string categories and incremental values.
+            for (int i = 0; i < originalPointCount; i++)
+            {
+                string category = $"Category {i + 1}";
+                double newValue = (i + 1) * 10; // Example new Y value.
 
-        // Save the document with the modified chart.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ModifiedChart.docx");
-        doc.Save(outputPath);
+                series.Add(ChartXValue.FromString(category), ChartYValue.FromDouble(newValue));
+            }
+        }
+
+        // Save the modified document. The chart will reflect the updated data when opened.
+        doc.Save("ModifiedChart.docx");
     }
 }

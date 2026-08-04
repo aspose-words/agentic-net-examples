@@ -12,18 +12,18 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart.
+        // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Aspose.Words does not expose a dedicated PlotArea object.
-        // The closest available formatting is the chart's overall format.
-        // Here we set a dashed red border with a width of 2 points for the chart area.
-        chart.Format.Stroke.DashStyle = DashStyle.Dash;
+        // Apply a dashed red border with a width of 2 points to the chart area.
+        // Aspose.Words does not expose a PlotArea object directly, so we format the
+        // overall chart area instead, which includes the plot area.
+        chart.Format.Stroke.DashStyle = DashStyle.ShortDash;
         chart.Format.Stroke.Color = Color.Red;
-        chart.Format.Stroke.Weight = 2.0; // Width in points.
+        chart.Format.Stroke.Weight = 2.0;
 
-        // Save the document.
-        doc.Save("PlotAreaBorder.docx");
+        // Save the document to the working directory.
+        doc.Save("ChartPlotAreaBorder.docx");
     }
 }

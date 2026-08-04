@@ -1,7 +1,7 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;          // Needed for the Shape class
-using Aspose.Words.Drawing.Charts;   // Chart‑related types
+using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
 
 public class Program
 {
@@ -11,23 +11,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart with a defined size.
+        // Insert a column chart.
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series to start with a clean chart.
+        // Remove the demo data that comes with the chart.
         chart.Series.Clear();
 
-        // Define custom category labels for the X‑axis.
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        // Add a new series with placeholder categories and values.
+        // These placeholders will be replaced with the actual data later.
+        string[] placeholderCategories = { "Cat1", "Cat2", "Cat3" };
+        double[] placeholderValues = { 0, 0, 0 };
+        chart.Series.Add("Quarterly Sales", placeholderCategories, placeholderValues);
 
-        // Define the numeric values for the series.
-        double[] values = { 1500, 2300, 1800, 2100 };
+        // Retrieve the newly added series.
+        ChartSeries series = chart.Series[0];
 
-        // Add a new series using the categories and values.
-        chart.Series.Add("Fiscal Year 2023", categories, values);
+        // Clear existing values while preserving formatting.
+        series.ClearValues();
 
-        // Save the document to the working directory.
-        doc.Save("ChartSeriesValues.docx");
+        // Set the actual numeric values with custom category labels.
+        series.Add(ChartXValue.FromString("Q1 2023"), ChartYValue.FromDouble(15000));
+        series.Add(ChartXValue.FromString("Q2 2023"), ChartYValue.FromDouble(23000));
+        series.Add(ChartXValue.FromString("Q3 2023"), ChartYValue.FromDouble(18000));
+
+        // Save the document with the modified chart.
+        doc.Save("ChartSeriesExample.docx");
     }
 }
