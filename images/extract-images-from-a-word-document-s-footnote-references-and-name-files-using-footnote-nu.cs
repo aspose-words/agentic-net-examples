@@ -3,90 +3,96 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Notes;
-using Aspose.Drawing;
+using Aspose.Words.Saving;
+using Aspose.Drawing; // Aspose.Drawing.Common namespace
 
-public class ExtractFootnoteImages
+public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(baseDir);
-        string imageDir = Path.Combine(baseDir, "Images");
-        Directory.CreateDirectory(imageDir);
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic sample image (100x100 PNG) using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        const string sampleImagePath = "sample.png";
 
-        // Create a deterministic sample image (100x100 white PNG).
-        string sampleImagePath = Path.Combine(imageDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 100, 100);
+        // Create bitmap and draw a simple red rectangle on a white background.
+        using (Bitmap bitmap = new Bitmap(100, 100))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+                using (Pen pen = new Pen(Color.Red))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, 80, 80);
+                }
+            }
 
-        // Build a document that contains footnotes with images.
-        string docPath = Path.Combine(baseDir, "FootnoteImages.docx");
-        BuildDocumentWithFootnoteImages(docPath, sampleImagePath);
+            // Save the bitmap to a local file that will be used later.
+            bitmap.Save(sampleImagePath);
+        }
 
-        // Extract images from footnotes and name them using footnote numbers.
-        ExtractImagesFromFootnotes(docPath, baseDir);
-    }
-
-    private static void CreateSampleImage(string filePath, int width, int height)
-    {
-        // Use Aspose.Drawing to create a bitmap and fill it with white.
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.White);
-        bitmap.Save(filePath);
-        graphics.Dispose();
-        bitmap.Dispose();
-    }
-
-    private static void BuildDocumentWithFootnoteImages(string docPath, string imagePath)
-    {
+        // -----------------------------------------------------------------
+        // 2. Build a Word document that contains a footnote with the image.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First footnote with an image.
-        builder.Writeln("This is some text with a footnote reference.");
-        Footnote footnote1 = builder.InsertFootnote(FootnoteType.Footnote, string.Empty);
-        builder.MoveTo(footnote1.FirstParagraph);
-        builder.InsertImage(imagePath);
-        builder.MoveToDocumentEnd(); // Return to main text.
+        // Main paragraph text.
+        builder.Writeln("This paragraph contains a footnote reference.");
 
-        // Second footnote with another image.
-        builder.Writeln("More text with a second footnote.");
-        Footnote footnote2 = builder.InsertFootnote(FootnoteType.Footnote, string.Empty);
-        builder.MoveTo(footnote2.FirstParagraph);
-        builder.InsertImage(imagePath);
-        builder.MoveToDocumentEnd(); // Return to main text.
+        // Insert a footnote and move the builder into its first paragraph.
+        Footnote footnote = builder.InsertFootnote(FootnoteType.Footnote, "Footnote text.");
+        builder.MoveTo(footnote.FirstParagraph);
+
+        // Insert the previously created image into the footnote.
+        builder.InsertImage(sampleImagePath);
 
         // Save the document.
+        const string docPath = "FootnoteImages.docx";
         doc.Save(docPath);
-    }
 
-    private static void ExtractImagesFromFootnotes(string docPath, string outputDir)
-    {
-        Document doc = new Document(docPath);
+        // -----------------------------------------------------------------
+        // 3. Load the document and extract images that reside inside footnotes.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
 
-        NodeCollection footnotes = doc.GetChildNodes(NodeType.Footnote, true);
-        int extractedCount = 0;
+        // Get all footnote nodes in the document.
+        NodeCollection footnoteNodes = loadedDoc.GetChildNodes(NodeType.Footnote, true);
 
-        for (int i = 0; i < footnotes.Count; i++)
+        int extractedImages = 0;
+        int footnoteIndex = 0; // Used for deterministic file naming.
+
+        foreach (Footnote fn in footnoteNodes)
         {
-            Footnote footnote = (Footnote)footnotes[i];
-            int footnoteNumber = i + 1; // Footnote numbers are 1‑based.
+            // Find all Shape nodes (potential images) inside the current footnote.
+            NodeCollection shapeNodes = fn.GetChildNodes(NodeType.Shape, true);
+            int shapeIndex = 0;
 
-            NodeCollection shapes = footnote.GetChildNodes(NodeType.Shape, true);
-            foreach (Shape shape in shapes.OfType<Shape>())
+            foreach (Shape shape in shapeNodes)
             {
                 if (shape.HasImage)
                 {
+                    // Determine file extension based on the image type stored in the shape.
                     string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    string outFile = Path.Combine(outputDir, $"footnote-{footnoteNumber}{extension}");
-                    shape.ImageData.Save(outFile);
-                    extractedCount++;
+
+                    // Build a deterministic file name: footnote-{footnoteIndex}-{shapeIndex}{extension}
+                    string outputFileName = $"footnote-{footnoteIndex}-{shapeIndex}{extension}";
+
+                    // Save the image to the file system.
+                    shape.ImageData.Save(outputFileName);
+
+                    extractedImages++;
+                    shapeIndex++;
                 }
             }
+
+            footnoteIndex++;
         }
 
-        if (extractedCount == 0)
+        // -----------------------------------------------------------------
+        // 4. Validate that at least one image was extracted.
+        // -----------------------------------------------------------------
+        if (extractedImages == 0)
             throw new InvalidOperationException("No images were extracted from footnotes.");
     }
 }

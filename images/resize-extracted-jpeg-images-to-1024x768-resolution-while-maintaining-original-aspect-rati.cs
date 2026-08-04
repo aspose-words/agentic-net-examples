@@ -3,86 +3,95 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample JPEG image (2000x1500) to be inserted into the document.
-        const int sampleWidth = 2000;
-        const int sampleHeight = 1500;
+        // Create a sample JPEG image (2000x1500) using Aspose.Drawing.
         const string sampleImagePath = "sample.jpg";
-
-        // Use Aspose.Drawing to create the bitmap and fill it with a solid background.
-        using (Bitmap bitmap = new Bitmap(sampleWidth, sampleHeight))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        using (Bitmap bitmap = new Bitmap(2000, 1500))
         {
-            graphics.Clear(Aspose.Drawing.Color.LightBlue);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                // Draw a simple rectangle to have some content.
+                using (Pen pen = new Pen(Color.Blue, 5))
+                {
+                    g.DrawRectangle(pen, 100, 100, 1800, 1300);
+                }
+            }
             bitmap.Save(sampleImagePath, ImageFormat.Jpeg);
         }
 
-        // Create a new document and insert the sample image.
+        // Create a new Word document and insert the sample image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleImagePath);
-        const string docPath = "DocumentWithImage.docx";
+        const string docPath = "document.docx";
         doc.Save(docPath);
 
-        // Define the maximum dimensions for the resized images.
-        const int maxWidth = 1024;
-        const int maxHeight = 768;
-        int imageIndex = 0;
+        // Reload the document to simulate extraction scenario.
+        Document loadedDoc = new Document(docPath);
+        var imageShapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                                   .Cast<Shape>()
+                                   .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Jpeg)
+                                   .ToList();
 
-        // Iterate over all Shape nodes that may contain images.
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        if (!imageShapes.Any())
+            throw new InvalidOperationException("No JPEG images were found in the document.");
+
+        int index = 0;
+        foreach (var shape in imageShapes)
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Process only JPEG images.
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
-
-            // Retrieve the original image bytes and load them into an Aspose.Drawing.Bitmap.
-            byte[] imageBytes = shape.ImageData.ImageBytes;
-            using (MemoryStream ms = new MemoryStream(imageBytes))
-            using (Bitmap originalBitmap = new Bitmap(ms))
+            // Extract the image bytes into a memory stream.
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                int originalWidth = originalBitmap.Width;
-                int originalHeight = originalBitmap.Height;
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0; // Reset before reading.
 
-                // Compute scaling factor to fit within the target dimensions while preserving aspect ratio.
-                double widthRatio = (double)maxWidth / originalWidth;
-                double heightRatio = (double)maxHeight / originalHeight;
-                double scale = Math.Min(widthRatio, heightRatio);
-                if (scale > 1.0) // Do not upscale smaller images.
-                    scale = 1.0;
-
-                int newWidth = (int)Math.Round(originalWidth * scale);
-                int newHeight = (int)Math.Round(originalHeight * scale);
-
-                // Resize the image using Aspose.Drawing.
-                using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
-                using (Graphics g = Graphics.FromImage(resizedBitmap))
+                // Load the image using Aspose.Drawing.
+                using (Image originalImage = Image.FromStream(imageStream))
                 {
-                    g.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
-                    string resizedPath = $"resized_{imageIndex}.jpg";
-                    resizedBitmap.Save(resizedPath, ImageFormat.Jpeg);
+                    // Determine scaling factor to fit within 1024x768 while preserving aspect ratio.
+                    double maxWidth = 1024.0;
+                    double maxHeight = 768.0;
+                    double widthRatio = maxWidth / originalImage.Width;
+                    double heightRatio = maxHeight / originalImage.Height;
+                    double scale = Math.Min(widthRatio, heightRatio);
+                    // If the image is already smaller than the target size, keep original dimensions.
+                    if (scale > 1.0) scale = 1.0;
+
+                    int newWidth = (int)(originalImage.Width * scale);
+                    int newHeight = (int)(originalImage.Height * scale);
+
+                    // Resize the image.
+                    using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
+                    {
+                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
+                        {
+                            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                            graphics.DrawImage(originalImage, 0, 0, newWidth, newHeight);
+                        }
+
+                        // Save the resized JPEG image.
+                        string outputPath = $"resized_{index}.jpg";
+                        resizedBitmap.Save(outputPath, ImageFormat.Jpeg);
+                    }
                 }
             }
 
-            imageIndex++;
+            index++;
         }
 
-        // Validate that at least one JPEG image was processed.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No JPEG images were found to resize.");
+        // Validate that at least one resized image file was created.
+        if (index == 0)
+            throw new InvalidOperationException("No resized images were saved.");
 
-        // Optional cleanup (commented out).
+        // Cleanup temporary files (optional).
         // File.Delete(sampleImagePath);
         // File.Delete(docPath);
     }

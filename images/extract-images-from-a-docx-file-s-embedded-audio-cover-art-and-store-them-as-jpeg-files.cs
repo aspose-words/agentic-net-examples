@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -11,68 +11,80 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for all generated files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample cover‑art image (200×200 white background).
-        // -----------------------------------------------------------------
-        string coverPath = Path.Combine(workDir, "cover.png");
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics g = Graphics.FromImage(bitmap))
-        {
-            g.Clear(Color.White);
-            // Draw a simple red ellipse to make the image recognizable.
-            using (Pen pen = new Pen(Color.Red, 5))
-            {
-                g.DrawEllipse(pen, 20, 20, 160, 160);
-            }
-            bitmap.Save(coverPath);
-        }
+        // Paths for the sample cover image and the DOCX file.
+        string coverImagePath = Path.Combine(artifactsDir, "cover.png");
+        string docPath = Path.Combine(artifactsDir, "sample.docx");
 
-        // -----------------------------------------------------------------
-        // 2. Create a DOCX file and insert the image as if it were audio cover art.
-        // -----------------------------------------------------------------
-        string docPath = Path.Combine(workDir, "sample.docx");
+        // 1. Create a deterministic sample image that will act as audio cover art.
+        CreateSampleCoverImage(coverImagePath);
+
+        // 2. Create a DOCX document and insert the cover image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert the image inline; in a real scenario this would be the audio cover art.
-        builder.InsertImage(coverPath);
+        Shape imageShape = builder.InsertImage(coverImagePath);
+        imageShape.Width = 200;   // set explicit size
+        imageShape.Height = 200;
         doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document and extract all images from shapes.
-        // -----------------------------------------------------------------
+        // 3. Load the document and extract all images (cover art) as JPEG files.
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        int extractedCount = 0;
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Obtain the raw image bytes from the shape.
-            byte[] imageBytes = shape.ImageData.ToByteArray();
-
-            // Load the bytes into an Aspose.Drawing.Image.
-            using (MemoryStream ms = new MemoryStream(imageBytes))
-            using (Image img = Image.FromStream(ms))
+            if (shape.HasImage)
             {
-                // Save the image as JPEG regardless of its original format.
-                string outFile = Path.Combine(workDir, $"extracted_{imageIndex}.jpg");
-                img.Save(outFile, ImageFormat.Jpeg);
-                imageIndex++;
+                // Save the image data to a memory stream.
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    shape.ImageData.Save(ms);
+                    ms.Position = 0;
+
+                    // Load the image with Aspose.Drawing and re‑save it as JPEG.
+                    using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(ms))
+                    {
+                        string outFile = Path.Combine(artifactsDir, $"CoverArt_{extractedCount}.jpg");
+                        img.Save(outFile, ImageFormat.Jpeg);
+                        extractedCount++;
+                    }
+                }
             }
         }
 
-        // -----------------------------------------------------------------
-        // 4. Validate that at least one image was extracted.
-        // -----------------------------------------------------------------
-        if (imageIndex == 0)
+        // Validate that at least one image was extracted.
+        if (extractedCount == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
+    }
 
-        // The program finishes automatically; all files are written to the Work folder.
+    // Creates a simple 200×200 PNG image with deterministic content.
+    private static void CreateSampleCoverImage(string filePath)
+    {
+        int width = 200;
+        int height = 200;
+
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        {
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Aspose.Drawing.Color.LightBlue);
+
+                // Draw deterministic text.
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
+                {
+                    graphics.DrawString(
+                        "Cover",
+                        font,
+                        Aspose.Drawing.Brushes.Black,
+                        new Aspose.Drawing.PointF(20, 80));
+                }
+            }
+
+            bitmap.Save(filePath);
+        }
     }
 }

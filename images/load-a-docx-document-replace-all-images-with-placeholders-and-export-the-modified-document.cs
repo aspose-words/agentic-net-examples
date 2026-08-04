@@ -1,9 +1,7 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -11,65 +9,66 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define file names
+        const string sampleImagePath = "sample.png";
+        const string placeholderImagePath = "placeholder.png";
+        const string originalDocPath = "original.docx";
+        const string modifiedDocPath = "modified.docx";
 
-        // Paths for sample images and documents
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        string placeholderImagePath = Path.Combine(artifactsDir, "placeholder.png");
-        string inputDocPath = Path.Combine(artifactsDir, "input.docx");
-        string outputDocPath = Path.Combine(artifactsDir, "output.docx");
+        // Create a sample image to be used in the document
+        CreateSampleImage(sampleImagePath, 200, 100, Aspose.Drawing.Color.LightBlue);
 
-        // Create a sample image (used as original content)
-        CreateSampleImage(sampleImagePath, 100, 100, Aspose.Drawing.Color.LightGray);
-
-        // Create a placeholder image (will replace original images)
-        CreateSampleImage(placeholderImagePath, 100, 100, Aspose.Drawing.Color.DarkGray);
+        // Create a placeholder image that will replace existing images
+        CreateSampleImage(placeholderImagePath, 200, 100, Aspose.Drawing.Color.LightGray);
 
         // Build a document that contains a few images
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Document with images:");
         builder.InsertImage(sampleImagePath);
-        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln();
         builder.InsertImage(sampleImagePath);
-        doc.Save(inputDocPath);
+        builder.Writeln();
+        builder.InsertImage(sampleImagePath);
+        doc.Save(originalDocPath);
 
         // Load the document we just created
-        Document loadedDoc = new Document(inputDocPath);
+        var loadedDoc = new Document(originalDocPath);
 
-        // Replace every image with the placeholder image
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // Replace each image with the placeholder image
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes.OfType<Shape>())
         {
             if (shape.HasImage)
             {
-                // Ensure the shape actually contains an image before replacement
+                // Replace the image data
                 shape.ImageData.SetImage(placeholderImagePath);
             }
         }
 
         // Save the modified document
-        loadedDoc.Save(outputDocPath);
+        loadedDoc.Save(modifiedDocPath);
 
-        // Validate that the output file was created
-        if (!File.Exists(outputDocPath))
-            throw new Exception("The output document was not created.");
+        // Simple validation
+        if (!File.Exists(modifiedDocPath))
+            throw new InvalidOperationException("Modified document was not saved.");
 
-        // Optional: indicate success (no interactive prompts)
-        Console.WriteLine("Document processing completed successfully.");
+        // Clean up generated files (optional)
+        // File.Delete(sampleImagePath);
+        // File.Delete(placeholderImagePath);
+        // File.Delete(originalDocPath);
+        // File.Delete(modifiedDocPath);
     }
 
-    // Helper method to create a deterministic bitmap and save it to a file
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
+    // Helper method to create a solid‑color bitmap and save it to a file
+    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color color)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
+        using (var bitmap = new Bitmap(width, height))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (var graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(fillColor);
+                graphics.Clear(color);
             }
-            // Save as PNG to ensure compatibility
             bitmap.Save(filePath, ImageFormat.Png);
         }
     }

@@ -3,91 +3,118 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure output directories exist
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare output folder.
+        string artifactsDir = "Artifacts";
+        Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a deterministic sample PNG image using Aspose.Drawing
-        string sampleImagePath = Path.Combine(outputDir, "sample.png");
-        CreateSamplePng(sampleImagePath, 200, 200);
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic sample PNG image.
+        // -----------------------------------------------------------------
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+        const int imgWidth = 100;
+        const int imgHeight = 100;
 
-        // 2. Insert the sample image into a new Word document
+        // Create a blue square with a red diagonal line.
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight, PixelFormat.Format32bppArgb))
+        using (Graphics g = Graphics.FromImage(bitmap))
+        {
+            g.Clear(Color.Blue);
+            using (Pen pen = new Pen(Color.Red, 3))
+            {
+                g.DrawLine(pen, 0, 0, imgWidth - 1, imgHeight - 1);
+            }
+
+            bitmap.Save(sampleImagePath);
+        }
+
+        // -----------------------------------------------------------------
+        // 2. Build a Word document and insert the sample PNG several times.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        string docPath = Path.Combine(outputDir, "sample.docx");
+
+        // Insert the image three times to have multiple PNG shapes.
+        for (int i = 0; i < 3; i++)
+        {
+            builder.InsertImage(sampleImagePath);
+            builder.Writeln(); // separate images with a line break.
+        }
+
+        // Save the document (required by the lifecycle rule).
+        string docPath = Path.Combine(artifactsDir, "sample.docx");
         doc.Save(docPath);
 
-        // 3. Extract all images from the document
+        // -----------------------------------------------------------------
+        // 3. Extract all PNG images, apply a color‑inversion filter, and save them.
+        // -----------------------------------------------------------------
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        int pngCount = 0;
+        int outputIndex = 0;
+
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (!shape.HasImage)
                 continue;
 
-            // Determine file extension based on image type
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string extractedPath = Path.Combine(outputDir, $"extracted{imageIndex}{extension}");
+            // Process only PNG images.
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
 
-            // Save the extracted image
-            shape.ImageData.Save(extractedPath);
+            // Obtain raw image bytes.
+            byte[] imageBytes = shape.ImageData.ToByteArray();
 
-            // 4. If the image is a PNG, apply a color inversion filter
-            if (shape.ImageData.ImageType == ImageType.Png)
+            // Load the bytes into an Aspose.Drawing.Bitmap.
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                string invertedPath = Path.Combine(outputDir, $"inverted{imageIndex}{extension}");
-                InvertPngColors(extractedPath, invertedPath);
-                if (!File.Exists(invertedPath))
-                    throw new InvalidOperationException($"Inverted image was not created: {invertedPath}");
-            }
-
-            imageIndex++;
-        }
-
-        // Validation: at least one PNG image should have been processed
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        // Example completed successfully
-        Console.WriteLine("Image extraction and inversion completed.");
-    }
-
-    // Creates a simple PNG with a solid colored rectangle
-    private static void CreateSamplePng(string filePath, int width, int height)
-    {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(Color.White);
-            // Draw a red rectangle
-            graphics.FillRectangle(new SolidBrush(Color.Red), 20, 20, width - 40, height - 40);
-            bitmap.Save(filePath);
-        }
-    }
-
-    // Inverts colors of a PNG image and saves the result
-    private static void InvertPngColors(string sourcePath, string destinationPath)
-    {
-        using (Bitmap bitmap = new Bitmap(sourcePath))
-        {
-            for (int y = 0; y < bitmap.Height; y++)
-            {
-                for (int x = 0; x < bitmap.Width; x++)
+                ms.Position = 0;
+                using (Bitmap originalBitmap = new Bitmap(ms))
                 {
-                    Color original = bitmap.GetPixel(x, y);
-                    Color inverted = Color.FromArgb(255 - original.R, 255 - original.G, 255 - original.B);
-                    bitmap.SetPixel(x, y, inverted);
+                    // Ensure we work with a non‑indexed pixel format.
+                    using (Bitmap bitmap = new Bitmap(originalBitmap.Width, originalBitmap.Height, PixelFormat.Format32bppArgb))
+                    using (Graphics g = Graphics.FromImage(bitmap))
+                    {
+                        g.DrawImage(originalBitmap, 0, 0, originalBitmap.Width, originalBitmap.Height);
+
+                        // Invert colors pixel by pixel.
+                        for (int y = 0; y < bitmap.Height; y++)
+                        {
+                            for (int x = 0; x < bitmap.Width; x++)
+                            {
+                                Color original = bitmap.GetPixel(x, y);
+                                Color inverted = Color.FromArgb(
+                                    255 - original.R,
+                                    255 - original.G,
+                                    255 - original.B);
+                                bitmap.SetPixel(x, y, inverted);
+                            }
+                        }
+
+                        // Save the inverted image.
+                        string outFile = Path.Combine(artifactsDir, $"inverted_{outputIndex}.png");
+                        bitmap.Save(outFile);
+                        outputIndex++;
+                    }
                 }
             }
-            bitmap.Save(destinationPath);
+
+            pngCount++;
         }
+
+        // -----------------------------------------------------------------
+        // 4. Validation – ensure at least one PNG was processed.
+        // -----------------------------------------------------------------
+        if (pngCount == 0)
+            throw new InvalidOperationException("No PNG images were found in the document.");
+
+        // Optional: verify that at least one output file exists.
+        if (!Directory.GetFiles(artifactsDir, "inverted_*.png").Any())
+            throw new InvalidOperationException("Inverted images were not saved correctly.");
     }
 }

@@ -1,105 +1,125 @@
 using System;
 using System.IO;
-using System.Text;
-using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
+using Aspose.Words.Saving;
+using Aspose.Drawing; // Aspose.Drawing.Common namespace
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
+        // Prepare output folder.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // File paths
-        string imagePath = Path.Combine(artifactsDir, "input.png");
+        // -----------------------------------------------------------------
+        // Step 1: Create a deterministic sample image (sample.png).
+        // -----------------------------------------------------------------
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+
+        // Create bitmap and fill with a solid color.
+        Bitmap bitmap = new Bitmap(imgWidth, imgHeight);
+        Graphics graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(Color.LightBlue);
+        // Dispose drawing objects.
+        graphics.Dispose();
+        bitmap.Save(sampleImagePath);
+        bitmap.Dispose();
+
+        // -----------------------------------------------------------------
+        // Step 2: Create a DOCX document and insert the sample image.
+        // -----------------------------------------------------------------
         string docPath = Path.Combine(artifactsDir, "sample.docx");
-        string htmlPath = Path.Combine(artifactsDir, "output.html");
-
-        // 1. Create a deterministic sample image
-        CreateSampleImage(imagePath);
-
-        // 2. Create a DOCX and insert the image
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
+        builder.InsertImage(sampleImagePath);
         doc.Save(docPath);
 
-        // 3. Load the DOCX
+        // -----------------------------------------------------------------
+        // Step 3: Load the DOCX document.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
 
-        // 4. Extract images and embed them as Base64 in HTML
-        StringBuilder html = new StringBuilder();
-        html.AppendLine("<!DOCTYPE html>");
-        html.AppendLine("<html><head><meta charset=\"UTF-8\"><title>Extracted Images</title></head><body>");
-
+        // -----------------------------------------------------------------
+        // Step 4: Extract images from the document.
+        // -----------------------------------------------------------------
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageCount = 0;
-
+        List<string> base64Images = new List<string>();
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (!shape.HasImage) continue;
+            if (!shape.HasImage)
+                continue;
 
-            // Get raw image bytes
-            byte[] imageBytes = shape.ImageData.ToByteArray();
+            // Get raw image bytes.
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            if (imageBytes == null || imageBytes.Length == 0)
+                continue;
 
-            // Determine MIME type from image extension
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType).ToLowerInvariant();
-            string mime = GetMimeType(extension);
+            // Determine MIME type from image extension.
+            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType).ToLowerInvariant(); // e.g., ".png"
+            string mime;
+            switch (extension)
+            {
+                case ".png":
+                    mime = "image/png";
+                    break;
+                case ".jpeg":
+                case ".jpg":
+                    mime = "image/jpeg";
+                    break;
+                case ".gif":
+                    mime = "image/gif";
+                    break;
+                case ".bmp":
+                    mime = "image/bmp";
+                    break;
+                case ".webp":
+                    mime = "image/webp";
+                    break;
+                case ".tiff":
+                case ".tif":
+                    mime = "image/tiff";
+                    break;
+                default:
+                    mime = "application/octet-stream";
+                    break;
+            }
 
-            // Convert to Base64 and write <img> tag
+            // Convert to Base64 and build data URI.
             string base64 = Convert.ToBase64String(imageBytes);
-            html.AppendLine($"<img src=\"data:{mime};base64,{base64}\" alt=\"Image{imageCount}\"/>");
-            imageCount++;
+            string dataUri = $"data:{mime};base64,{base64}";
+            base64Images.Add(dataUri);
         }
 
-        html.AppendLine("</body></html>");
-
-        // Validate that at least one image was extracted
-        if (imageCount == 0)
+        // Validate that at least one image was extracted.
+        if (base64Images.Count == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
 
-        // 5. Save the HTML file
-        File.WriteAllText(htmlPath, html.ToString());
-    }
-
-    // Creates a simple PNG image using Aspose.Drawing
-    private static void CreateSampleImage(string filePath)
-    {
-        int width = 200;
-        int height = 100;
-
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        // -----------------------------------------------------------------
+        // Step 5: Generate HTML with embedded Base64 images.
+        // -----------------------------------------------------------------
+        string htmlPath = Path.Combine(artifactsDir, "output.html");
+        using (StreamWriter writer = new StreamWriter(htmlPath, false))
         {
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+            writer.WriteLine("<!DOCTYPE html>");
+            writer.WriteLine("<html>");
+            writer.WriteLine("<head><meta charset=\"UTF-8\"><title>Extracted Images</title></head>");
+            writer.WriteLine("<body>");
+            foreach (string dataUri in base64Images)
             {
-                graphics.Clear(Aspose.Drawing.Color.White);
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 3))
-                {
-                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-                }
+                writer.WriteLine($"<img src=\"{dataUri}\" alt=\"Embedded Image\" style=\"margin:10px;\" />");
             }
-            bitmap.Save(filePath);
+            writer.WriteLine("</body>");
+            writer.WriteLine("</html>");
         }
-    }
 
-    // Maps file extensions to MIME types
-    private static string GetMimeType(string extension)
-    {
-        switch (extension)
-        {
-            case ".png":  return "image/png";
-            case ".jpg":
-            case ".jpeg": return "image/jpeg";
-            case ".gif":  return "image/gif";
-            case ".bmp":  return "image/bmp";
-            case ".webp": return "image/webp";
-            case ".tif":
-            case ".tiff": return "image/tiff";
-            default:      return "application/octet-stream";
-        }
+        // -----------------------------------------------------------------
+        // Completion message (optional, not required for non‑interactive run).
+        // -----------------------------------------------------------------
+        Console.WriteLine($"HTML file with embedded images created at: {htmlPath}");
     }
 }

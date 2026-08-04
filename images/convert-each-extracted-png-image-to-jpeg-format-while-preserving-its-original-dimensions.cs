@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,52 +10,59 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PNG image.
-        string pngPath = "sample.png";
-        using (var bitmap = new Aspose.Drawing.Bitmap(200, 100))
+        // Create a deterministic PNG sample image.
+        const string pngPath = "sample.png";
+        const int imgWidth = 200;
+        const int imgHeight = 100;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        using (Graphics g = Graphics.FromImage(bitmap))
         {
-            using (var graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Aspose.Drawing.Color.LightBlue);
-                var font = new Aspose.Drawing.Font("Arial", 20);
-                var brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black);
-                graphics.DrawString("Sample", font, brush, new Aspose.Drawing.PointF(10, 40));
-            }
-            bitmap.Save(pngPath, Aspose.Drawing.Imaging.ImageFormat.Png);
+            g.Clear(Color.LightBlue);
+            bitmap.Save(pngPath, ImageFormat.Png);
         }
 
-        // Insert the PNG image into a new document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Build a document that contains the PNG image twice.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(pngPath);
-        string docPath = "DocumentWithPng.docx";
+        builder.Writeln(); // separate the images
+        builder.InsertImage(pngPath);
+        const string docPath = "DocWithImages.docx";
         doc.Save(docPath);
 
-        // Load the document and extract PNG images.
-        var loadedDoc = new Document(docPath);
-        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        // Reload the document (optional, demonstrates load usage).
+        Document loadedDoc = new Document(docPath);
 
-        foreach (Shape shape in shapes.OfType<Shape>())
+        // Extract each PNG image, convert to JPEG while preserving dimensions.
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int jpegIndex = 0;
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Png)
-            {
-                using (var ms = new MemoryStream())
-                {
-                    shape.ImageData.Save(ms);
-                    ms.Position = 0; // Reset stream before reading.
+            if (!shape.HasImage) continue;
+            if (shape.ImageData.ImageType != ImageType.Png) continue;
 
-                    using (var bitmap = new Aspose.Drawing.Bitmap(ms))
-                    {
-                        string jpegPath = $"extracted_{imageIndex}.jpg";
-                        bitmap.Save(jpegPath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
-                        imageIndex++;
-                    }
+            // Save the PNG image to a memory stream.
+            using (MemoryStream pngStream = new MemoryStream())
+            {
+                shape.ImageData.Save(pngStream);
+                pngStream.Position = 0;
+
+                // Load the PNG into a bitmap and save as JPEG.
+                using (Bitmap bitmap = new Bitmap(pngStream))
+                {
+                    string jpegPath = $"extracted_{jpegIndex}.jpg";
+                    bitmap.Save(jpegPath, ImageFormat.Jpeg);
+                    jpegIndex++;
                 }
             }
         }
 
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No PNG images were extracted.");
+        // Validation: ensure at least one JPEG was created.
+        if (jpegIndex == 0)
+            throw new InvalidOperationException("No PNG images were found to convert.");
+
+        // Cleanup sample files (optional).
+        // File.Delete(pngPath);
+        // File.Delete(docPath);
     }
 }

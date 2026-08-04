@@ -1,48 +1,43 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;               // Aspose.Drawing namespace
-using Aspose.Drawing.Imaging;      // For image formats if needed
+using Aspose.Words.Saving;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create a deterministic PNG image to be used as input.
+        const int width = 200;
+        const int height = 200;
+        const string inputImagePath = "input.png";
 
-        // 1. Create a deterministic PNG image (red square) using Aspose.Drawing
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        const int imgWidth = 200;
-        const int imgHeight = 200;
-
-        using (Aspose.Drawing.Bitmap bmp = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
+        using (var bitmap = new Bitmap(width, height))
+        using (var graphics = Graphics.FromImage(bitmap))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bmp))
-            {
-                g.Clear(Aspose.Drawing.Color.Red);
-            }
-            bmp.Save(sampleImagePath);
+            graphics.Clear(Color.White);
+            // Draw a simple red rectangle.
+            graphics.FillRectangle(new SolidBrush(Color.Red), 0, 0, width, height);
+            bitmap.Save(inputImagePath);
         }
 
-        // 2. Insert the PNG image into a Word document
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
+        // Create a Word document and insert the PNG image.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.InsertImage(inputImagePath);
+        const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // 3. Load the document (reuse the saved file)
-        Document loadedDoc = new Document(docPath);
+        // Reload the document (optional, demonstrates load usage).
+        var loadedDoc = new Document(docPath);
 
-        // 4. Extract PNG images, rotate hue by 180°, and save the transformed images
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
-
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // Extract all PNG images, apply a hue rotation of 180°, and save them.
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int imageIndex = 0;
+        foreach (Shape shape in shapes)
         {
             if (!shape.HasImage)
                 continue;
@@ -50,33 +45,31 @@ public class Program
             if (shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Get raw image bytes from the shape
-            byte[] imageBytes = shape.ImageData.ToByteArray();
-
-            // Load bytes into Aspose.Drawing.Bitmap
-            using (MemoryStream ms = new MemoryStream(imageBytes))
+            // Get the image bytes and load them into an Aspose.Drawing.Bitmap.
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            using (var ms = new MemoryStream(imageBytes))
             {
                 ms.Position = 0;
-                using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(ms))
+                using (var bitmap = new Bitmap(ms))
                 {
-                    // Apply hue rotation
-                    RotateHue180(bitmap);
+                    // Apply hue rotation.
+                    ApplyHueRotation(bitmap, 180.0);
 
-                    // Save the transformed image
-                    string outPath = Path.Combine(artifactsDir, $"extracted_{extractedCount}_rotated.png");
-                    bitmap.Save(outPath);
-                    extractedCount++;
+                    // Save the modified image.
+                    string outputPath = $"extracted_{imageIndex}_rotated.png";
+                    bitmap.Save(outputPath);
+                    imageIndex++;
                 }
             }
         }
 
-        // 5. Validation – ensure at least one image was processed
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No PNG images were extracted and processed.");
+        // Validate that at least one image was processed.
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No PNG images were found to process.");
     }
 
-    // Rotates the hue of the given bitmap by 180 degrees.
-    private static void RotateHue180(Aspose.Drawing.Bitmap bitmap)
+    // Rotates the hue of every pixel in the bitmap by the specified degrees.
+    private static void ApplyHueRotation(Bitmap bitmap, double rotationDegrees)
     {
         int width = bitmap.Width;
         int height = bitmap.Height;
@@ -85,73 +78,95 @@ public class Program
         {
             for (int x = 0; x < width; x++)
             {
-                Aspose.Drawing.Color original = bitmap.GetPixel(x, y);
-
-                // Convert RGB to HSV
-                float r = original.R / 255f;
-                float g = original.G / 255f;
-                float b = original.B / 255f;
-
-                float max = Math.Max(r, Math.Max(g, b));
-                float min = Math.Min(r, Math.Min(g, b));
-                float delta = max - min;
-
-                float hue = 0f;
-                if (delta != 0)
-                {
-                    if (max == r)
-                        hue = 60f * (((g - b) / delta) % 6);
-                    else if (max == g)
-                        hue = 60f * (((b - r) / delta) + 2);
-                    else // max == b
-                        hue = 60f * (((r - g) / delta) + 4);
-                }
-                if (hue < 0) hue += 360f;
-
-                float saturation = (max == 0) ? 0f : delta / max;
-                float value = max;
-
-                // Rotate hue by 180 degrees
-                hue = (hue + 180f) % 360f;
-
-                // Convert HSV back to RGB
-                float c = value * saturation;
-                float xComponent = c * (1 - Math.Abs(((hue / 60f) % 2) - 1));
-                float m = value - c;
-
-                float r1, g1, b1;
-                if (hue < 60)
-                {
-                    r1 = c; g1 = xComponent; b1 = 0;
-                }
-                else if (hue < 120)
-                {
-                    r1 = xComponent; g1 = c; b1 = 0;
-                }
-                else if (hue < 180)
-                {
-                    r1 = 0; g1 = c; b1 = xComponent;
-                }
-                else if (hue < 240)
-                {
-                    r1 = 0; g1 = xComponent; b1 = c;
-                }
-                else if (hue < 300)
-                {
-                    r1 = xComponent; g1 = 0; b1 = c;
-                }
-                else
-                {
-                    r1 = c; g1 = 0; b1 = xComponent;
-                }
-
-                int newR = (int)Math.Round((r1 + m) * 255);
-                int newG = (int)Math.Round((g1 + m) * 255);
-                int newB = (int)Math.Round((b1 + m) * 255);
-
-                Aspose.Drawing.Color transformed = Aspose.Drawing.Color.FromArgb(original.A, newR, newG, newB);
-                bitmap.SetPixel(x, y, transformed);
+                Color original = bitmap.GetPixel(x, y);
+                // Convert RGB to HSL.
+                RgbToHsl(original.R, original.G, original.B, out double h, out double s, out double l);
+                // Rotate hue.
+                h = (h + rotationDegrees) % 360.0;
+                // Convert back to RGB.
+                Color rotated = HslToRgb(h, s, l, original.A);
+                bitmap.SetPixel(x, y, rotated);
             }
         }
+    }
+
+    // Converts RGB components (0‑255) to HSL (h in 0‑360, s and l in 0‑1).
+    private static void RgbToHsl(byte rByte, byte gByte, byte bByte, out double h, out double s, out double l)
+    {
+        double r = rByte / 255.0;
+        double g = gByte / 255.0;
+        double b = bByte / 255.0;
+
+        double max = Math.Max(r, Math.Max(g, b));
+        double min = Math.Min(r, Math.Min(g, b));
+
+        l = (max + min) / 2.0;
+
+        if (Math.Abs(max - min) < 0.00001)
+        {
+            h = 0.0;
+            s = 0.0;
+            return;
+        }
+
+        double d = max - min;
+        s = l > 0.5 ? d / (2.0 - max - min) : d / (max + min);
+
+        if (Math.Abs(max - r) < 0.00001)
+            h = (g - b) / d + (g < b ? 6.0 : 0.0);
+        else if (Math.Abs(max - g) < 0.00001)
+            h = (b - r) / d + 2.0;
+        else
+            h = (r - g) / d + 4.0;
+
+        h *= 60.0;
+        if (h < 0)
+            h += 360.0;
+    }
+
+    // Converts HSL (h in 0‑360, s and l in 0‑1) back to an ARGB Color.
+    private static Color HslToRgb(double h, double s, double l, byte alpha)
+    {
+        double r, g, b;
+
+        if (Math.Abs(s) < 0.00001)
+        {
+            r = g = b = l; // Achromatic
+        }
+        else
+        {
+            double q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
+            double p = 2.0 * l - q;
+            double hk = h / 360.0;
+
+            double[] t = { hk + 1.0 / 3.0, hk, hk - 1.0 / 3.0 };
+            double[] rgb = new double[3];
+
+            for (int i = 0; i < 3; i++)
+            {
+                double tc = t[i];
+                if (tc < 0) tc += 1;
+                if (tc > 1) tc -= 1;
+
+                if (tc < 1.0 / 6.0)
+                    rgb[i] = p + (q - p) * 6.0 * tc;
+                else if (tc < 0.5)
+                    rgb[i] = q;
+                else if (tc < 2.0 / 3.0)
+                    rgb[i] = p + (q - p) * (2.0 / 3.0 - tc) * 6.0;
+                else
+                    rgb[i] = p;
+            }
+
+            r = rgb[0];
+            g = rgb[1];
+            b = rgb[2];
+        }
+
+        byte rByte = (byte)Math.Round(r * 255);
+        byte gByte = (byte)Math.Round(g * 255);
+        byte bByte = (byte)Math.Round(b * 255);
+
+        return Color.FromArgb(alpha, rByte, gByte, bByte);
     }
 }

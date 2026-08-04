@@ -1,105 +1,141 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Collections.Generic;
-using System.Xml.Linq;
+using System.IO;
+using System.Xml;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Newtonsoft.Json;
 
-public class Program
+namespace ExtractImagesFromCustomXml
 {
+    // Simple record to simulate a database entry.
     public class ImageRecord
     {
         public int Id { get; set; }
         public string ImagePath { get; set; }
     }
 
-    public static void Main()
+    public class Program
     {
-        // Directories for artifacts
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Deterministic file names.
+        private const string SampleImagePath = "sample.png";
+        private const string DocumentPath = "CustomXmlImages.docx";
 
-        // 1. Create a deterministic sample image (sample.png)
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 100, 100);
-
-        // 2. Encode the image to Base64 and embed it into custom XML
-        byte[] imageBytes = File.ReadAllBytes(sampleImagePath);
-        string base64Image = Convert.ToBase64String(imageBytes);
-        string xmlContent = $"<root><image>{base64Image}</image></root>";
-
-        // 3. Create a DOCX document and add the custom XML part
-        Document doc = new Document();
-        string xmlPartId = Guid.NewGuid().ToString("B");
-        doc.CustomXmlParts.Add(xmlPartId, xmlContent);
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
-        doc.Save(docPath);
-
-        // 4. Load the document (simulating a real scenario)
-        Document loadedDoc = new Document(docPath);
-
-        // 5. Extract images from custom XML parts and map them to records
-        List<ImageRecord> records = new List<ImageRecord>();
-        int imageIndex = 0;
-
-        foreach (CustomXmlPart part in loadedDoc.CustomXmlParts)
+        public static void Main()
         {
-            // Convert the part data (byte[]) to a UTF-8 string
-            string partXml = Encoding.UTF8.GetString(part.Data);
-            XDocument xDoc = XDocument.Parse(partXml);
+            // 1. Create a sample image file.
+            CreateSampleImage();
 
-            foreach (XElement imgElement in xDoc.Descendants("image"))
-            {
-                string base64 = imgElement.Value.Trim();
-                if (string.IsNullOrEmpty(base64))
-                    continue;
+            // 2. Embed the image (as Base64) into a custom XML part and save the document.
+            CreateDocumentWithCustomXml();
 
-                byte[] imgData = Convert.FromBase64String(base64);
-                string extractedPath = Path.Combine(artifactsDir, $"extracted_{imageIndex}.png");
+            // 3. Load the document and extract images from its custom XML parts.
+            List<ImageRecord> records = ExtractImagesAndMapToRecords();
 
-                // Ensure the stream position is at the beginning before writing
-                using (MemoryStream ms = new MemoryStream(imgData))
-                {
-                    ms.Position = 0;
-                    using (FileStream fs = new FileStream(extractedPath, FileMode.Create, FileAccess.Write))
-                    {
-                        ms.CopyTo(fs);
-                    }
-                }
+            // 4. Validate that at least one image was extracted.
+            if (records.Count == 0)
+                throw new InvalidOperationException("No images were extracted from the custom XML data.");
 
-                records.Add(new ImageRecord
-                {
-                    Id = ++imageIndex,
-                    ImagePath = extractedPath
-                });
-            }
+            // 5. Output the mapping (simulating database insertion).
+            foreach (var rec in records)
+                Console.WriteLine($"Record Id={rec.Id}, ImagePath={rec.ImagePath}");
         }
 
-        // Validation: at least one image must be extracted
-        if (records.Count == 0)
-            throw new InvalidOperationException("No images were extracted from the custom XML data.");
-
-        // 6. Output the mapping as JSON (simulating a database insert)
-        string json = JsonConvert.SerializeObject(records, Formatting.Indented);
-        Console.WriteLine(json);
-    }
-
-    private static void CreateSampleImage(string filePath, int width, int height)
-    {
-        // Create a bitmap and fill it with a solid color
-        using (Bitmap bitmap = new Bitmap(width, height))
+        private static void CreateSampleImage()
         {
+            // Create a 100x100 white bitmap.
+            using (Bitmap bitmap = new Bitmap(100, 100))
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.Red);
+                graphics.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle for visual distinction.
+                graphics.DrawRectangle(new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 2), 10, 10, 80, 80);
+                bitmap.Save(SampleImagePath);
             }
 
-            // Save the bitmap to the specified file in PNG format
-            bitmap.Save(filePath, ImageFormat.Png);
+            // Ensure the file exists.
+            if (!File.Exists(SampleImagePath))
+                throw new FileNotFoundException("Failed to create the sample image.", SampleImagePath);
+        }
+
+        private static void CreateDocumentWithCustomXml()
+        {
+            // Load the sample image bytes.
+            byte[] imageBytes = File.ReadAllBytes(SampleImagePath);
+            string base64Image = Convert.ToBase64String(imageBytes);
+
+            // Build a simple XML containing the image data.
+            string xmlContent = $"<root><image>{base64Image}</image></root>";
+
+            // Create a new empty document.
+            Document doc = new Document();
+
+            // Add the custom XML part.
+            string partId = Guid.NewGuid().ToString("B");
+            CustomXmlPart xmlPart = doc.CustomXmlParts.Add(partId, xmlContent);
+
+            // Save the document.
+            doc.Save(DocumentPath);
+
+            // Verify the document was saved.
+            if (!File.Exists(DocumentPath))
+                throw new FileNotFoundException("Failed to save the document with custom XML.", DocumentPath);
+        }
+
+        private static List<ImageRecord> ExtractImagesAndMapToRecords()
+        {
+            // Load the document that contains the custom XML part.
+            Document doc = new Document(DocumentPath);
+
+            List<ImageRecord> records = new List<ImageRecord>();
+            int imageIndex = 0;
+
+            // Iterate over all custom XML parts.
+            foreach (CustomXmlPart part in doc.CustomXmlParts)
+            {
+                // Parse the XML content.
+                XmlDocument xmlDoc = new XmlDocument();
+                using (MemoryStream ms = new MemoryStream(part.Data))
+                {
+                    ms.Position = 0;
+                    xmlDoc.Load(ms);
+                }
+
+                // Select all <image> nodes.
+                XmlNodeList imageNodes = xmlDoc.GetElementsByTagName("image");
+                foreach (XmlNode node in imageNodes)
+                {
+                    string base64 = node.InnerText.Trim();
+                    if (string.IsNullOrEmpty(base64))
+                        continue;
+
+                    byte[] imgBytes = Convert.FromBase64String(base64);
+                    string extractedPath = $"extracted_{imageIndex}.png";
+
+                    // Save the extracted image.
+                    using (MemoryStream imgStream = new MemoryStream(imgBytes))
+                    using (FileStream fileStream = new FileStream(extractedPath, FileMode.Create, FileAccess.Write))
+                    {
+                        imgStream.Position = 0;
+                        imgStream.CopyTo(fileStream);
+                    }
+
+                    // Verify the image file was created.
+                    if (!File.Exists(extractedPath))
+                        throw new FileNotFoundException("Failed to write extracted image file.", extractedPath);
+
+                    // Simulate a database record.
+                    records.Add(new ImageRecord
+                    {
+                        Id = imageIndex + 1,
+                        ImagePath = Path.GetFullPath(extractedPath)
+                    });
+
+                    imageIndex++;
+                }
+            }
+
+            return records;
         }
     }
 }

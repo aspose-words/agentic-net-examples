@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
@@ -11,122 +10,163 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for all generated files.
-        string workDir = Directory.GetCurrentDirectory();
+        // Directories for artifacts
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
         // 1. Create sample JPEG images.
-        // -----------------------------------------------------------------
-        string[] sampleImagePaths = new string[2];
-        for (int i = 0; i < sampleImagePaths.Length; i++)
+        string[] sampleImagePaths = CreateSampleJpegImages(artifactsDir);
+
+        // 2. Build a source document that contains the sample images.
+        string sourceDocPath = Path.Combine(artifactsDir, "Source.docx");
+        BuildSourceDocument(sampleImagePaths, sourceDocPath);
+
+        // 3. Load the source document and apply Gaussian blur to each JPEG image.
+        string outputDocPath = Path.Combine(artifactsDir, "Output.docx");
+        ApplyGaussianBlurToJpegImages(sourceDocPath, outputDocPath);
+
+        // 4. Validate that the output document was created.
+        if (!File.Exists(outputDocPath))
+            throw new InvalidOperationException("The output document was not created.");
+
+        // (Optional) Clean up temporary blurred images.
+        CleanupTemporaryFiles(artifactsDir);
+    }
+
+    // Creates a few deterministic JPEG images and returns their file paths.
+    private static string[] CreateSampleJpegImages(string folder)
+    {
+        string[] paths = new string[2];
+
+        for (int i = 0; i < paths.Length; i++)
         {
-            string imgPath = Path.Combine(workDir, $"sample{i + 1}.jpg");
-            CreateSampleJpeg(imgPath, i);
-            sampleImagePaths[i] = imgPath;
-        }
-
-        // -----------------------------------------------------------------
-        // 2. Build a source document that contains the sample JPEG images.
-        // -----------------------------------------------------------------
-        string sourceDocPath = Path.Combine(workDir, "Source.docx");
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        foreach (string imgPath in sampleImagePaths)
-        {
-            srcBuilder.InsertImage(imgPath);
-            srcBuilder.Writeln(); // separate images with a line break
-        }
-        sourceDoc.Save(sourceDocPath);
-
-        // -----------------------------------------------------------------
-        // 3. Load the source document and extract JPEG images.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourceDocPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int jpegCount = 0;
-
-        // Prepare the result document once.
-        Document resultDoc = new Document();
-        DocumentBuilder resBuilder = new DocumentBuilder(resultDoc);
-
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
-        {
-            if (!shape.HasImage) continue;
-            if (shape.ImageData.ImageType != ImageType.Jpeg) continue;
-
-            // Extract original JPEG bytes.
-            byte[] originalBytes = shape.ImageData.ImageBytes;
-            using (MemoryStream ms = new MemoryStream(originalBytes))
+            int width = 200;
+            int height = 200;
+            using (Bitmap bitmap = new Bitmap(width, height))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                ms.Position = 0;
-                // Load into Aspose.Drawing.Bitmap.
-                using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(ms))
+                // Fill background.
+                g.Clear(Color.White);
+
+                // Draw a colored rectangle.
+                Color rectColor = i == 0 ? Color.Red : Color.Blue;
+                using (Brush brush = new SolidBrush(rectColor))
                 {
-                    // Apply Gaussian blur (placeholder implementation).
-                    using (Aspose.Drawing.Bitmap blurred = ApplyGaussianBlur(bitmap))
-                    {
-                        // Save blurred image to a deterministic file.
-                        string blurredPath = Path.Combine(workDir, $"blurred_{jpegCount + 1}.jpg");
-                        blurred.Save(blurredPath, ImageFormat.Jpeg);
+                    g.FillRectangle(brush, 20, 20, width - 40, height - 40);
+                }
 
-                        // Validate that the file was created.
-                        if (!File.Exists(blurredPath))
-                            throw new InvalidOperationException($"Blurred image not created: {blurredPath}");
+                // Save as JPEG.
+                string filePath = Path.Combine(folder, $"Sample{i + 1}.jpg");
+                bitmap.Save(filePath, ImageFormat.Jpeg);
+                paths[i] = filePath;
+            }
+        }
 
-                        // Insert the blurred image into the result document.
-                        if (jpegCount > 0)
-                            resBuilder.InsertParagraph(); // separate images
+        return paths;
+    }
 
-                        resBuilder.InsertImage(blurredPath);
-                        jpegCount++;
-                    }
+    // Inserts the provided images into a new document.
+    private static void BuildSourceDocument(string[] imagePaths, string outputPath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        foreach (string imgPath in imagePaths)
+        {
+            builder.InsertParagraph();
+            builder.InsertImage(imgPath);
+        }
+
+        doc.Save(outputPath);
+    }
+
+    // Loads a document, blurs each JPEG image, and saves the result.
+    private static void ApplyGaussianBlurToJpegImages(string inputPath, string outputPath)
+    {
+        Document doc = new Document(inputPath);
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+        int imageIndex = 0;
+        foreach (Shape shape in shapes.OfType<Shape>())
+        {
+            if (!shape.HasImage)
+                continue;
+
+            if (shape.ImageData.ImageType != ImageType.Jpeg)
+                continue;
+
+            // Extract image bytes.
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            using (Bitmap bitmap = new Bitmap(ms))
+            {
+                // Apply a simple blur (average of 3x3 neighbourhood).
+                ApplySimpleBlur(bitmap);
+
+                // Save blurred image to a temporary stream.
+                using (MemoryStream blurredStream = new MemoryStream())
+                {
+                    bitmap.Save(blurredStream, ImageFormat.Jpeg);
+                    blurredStream.Position = 0;
+
+                    // Replace the shape's image with the blurred version.
+                    shape.ImageData.SetImage(blurredStream);
                 }
             }
+
+            imageIndex++;
         }
 
-        // Save the result document if at least one image was processed.
-        if (jpegCount == 0)
-            throw new InvalidOperationException("No JPEG images were found in the source document.");
-
-        string resultDocPath = Path.Combine(workDir, "Result.docx");
-        resultDoc.Save(resultDocPath);
+        doc.Save(outputPath);
     }
 
-    // Creates a simple deterministic JPEG image using Aspose.Drawing.
-    private static void CreateSampleJpeg(string filePath, int index)
+    // Simple 3x3 average blur (approximates Gaussian blur for demonstration).
+    private static void ApplySimpleBlur(Bitmap source)
     {
-        int width = 200;
-        int height = 150;
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
-        using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+        int width = source.Width;
+        int height = source.Height;
+        Bitmap temp = new Bitmap(width, height);
+
+        for (int y = 1; y < height - 1; y++)
         {
-            // Fill background.
-            g.Clear(Aspose.Drawing.Color.White);
-
-            // Draw a colored rectangle that varies with the index.
-            Aspose.Drawing.Color rectColor = (index % 2 == 0) ? Aspose.Drawing.Color.LightBlue : Aspose.Drawing.Color.LightCoral;
-            using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(rectColor))
+            for (int x = 1; x < width - 1; x++)
             {
-                g.FillRectangle(brush, 20, 20, width - 40, height - 40);
+                int r = 0, g = 0, b = 0;
+                for (int ky = -1; ky <= 1; ky++)
+                {
+                    for (int kx = -1; kx <= 1; kx++)
+                    {
+                        Color c = source.GetPixel(x + kx, y + ky);
+                        r += c.R;
+                        g += c.G;
+                        b += c.B;
+                    }
+                }
+                r /= 9;
+                g /= 9;
+                b /= 9;
+                temp.SetPixel(x, y, Color.FromArgb(r, g, b));
             }
-
-            // Draw index text.
-            using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-            using (Aspose.Drawing.SolidBrush textBrush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
-            {
-                g.DrawString($"Img {index + 1}", font, textBrush, new Aspose.Drawing.PointF(30, 60));
-            }
-
-            // Save as JPEG.
-            bitmap.Save(filePath, ImageFormat.Jpeg);
         }
+
+        // Copy blurred pixels back to the original bitmap.
+        for (int y = 1; y < height - 1; y++)
+        {
+            for (int x = 1; x < width - 1; x++)
+            {
+                source.SetPixel(x, y, temp.GetPixel(x, y));
+            }
+        }
+
+        temp.Dispose();
     }
 
-    // Placeholder for Gaussian blur – returns a cloned bitmap.
-    private static Aspose.Drawing.Bitmap ApplyGaussianBlur(Aspose.Drawing.Bitmap source)
+    // Removes any temporary blurred image files that might have been created.
+    private static void CleanupTemporaryFiles(string folder)
     {
-        // In a real scenario, apply a Gaussian blur filter here.
-        // For this example, simply clone the bitmap to keep the code simple and safe.
-        return (Aspose.Drawing.Bitmap)source.Clone();
+        foreach (string file in Directory.GetFiles(folder, "blurred_*.jpg"))
+        {
+            try { File.Delete(file); } catch { /* ignore */ }
+        }
     }
 }

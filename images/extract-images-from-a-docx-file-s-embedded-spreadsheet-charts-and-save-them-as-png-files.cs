@@ -1,68 +1,66 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Newtonsoft.Json;
+using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Saving;
 
-public class Program
+public class ExtractChartImages
 {
     public static void Main()
     {
-        // Create a deterministic sample chart image (PNG)
-        const string chartImagePath = "chart.png";
-        const int chartWidth = 400;
-        const int chartHeight = 300;
+        // Prepare working folders.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        string outputDir = Path.Combine(workDir, "ExtractedImages");
+        Directory.CreateDirectory(workDir);
+        Directory.CreateDirectory(outputDir);
 
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(chartWidth, chartHeight))
-        {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                g.Clear(Aspose.Drawing.Color.White);
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 3))
-                {
-                    g.DrawRectangle(pen, 50, 50, 300, 200);
-                }
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24, Aspose.Drawing.FontStyle.Bold))
-                {
-                    g.DrawString("Sample Chart", font, new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black), new Aspose.Drawing.PointF(80, 130));
-                }
-            }
-            bitmap.Save(chartImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
-        }
-
-        // Create a DOCX document and embed the chart image
-        const string docPath = "sample.docx";
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOCX that contains an embedded chart.
+        // -----------------------------------------------------------------
+        string docPath = Path.Combine(workDir, "SampleWithChart.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document with an embedded chart image:");
-        builder.InsertImage(chartImagePath);
+
+        // Insert a simple column chart. The chart is stored as a Shape.
+        builder.InsertChart(ChartType.Column, 400, 300);
         doc.Save(docPath);
 
-        // Load the document and extract images from shapes
+        // -----------------------------------------------------------------
+        // 2. Load the document and extract images from chart shapes.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
 
-        foreach (Shape shape in shapeNodes)
+        int imageIndex = 0;
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
+            // If the shape already contains an image (e.g., a picture), save it directly.
             if (shape.HasImage)
             {
-                string outputImagePath = $"extracted-{extractedCount + 1}.png";
-                shape.ImageData.Save(outputImagePath);
-                extractedCount++;
+                string outFile = Path.Combine(outputDir,
+                    $"ChartImage_{imageIndex}{FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType)}");
+                shape.ImageData.Save(outFile);
+                imageIndex++;
+                continue;
+            }
+
+            // If the shape is a chart, render it to a PNG image.
+            // In Aspose.Words the presence of a chart can be checked via HasChart.
+            if (shape.HasChart)
+            {
+                string outFile = Path.Combine(outputDir, $"ChartImage_{imageIndex}.png");
+                ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
+                shape.GetShapeRenderer().Save(outFile, options);
+                imageIndex++;
             }
         }
 
-        // Validate that at least one image was extracted
-        if (extractedCount == 0)
-        {
-            throw new InvalidOperationException("No images were extracted from the document.");
-        }
-
-        // Optional cleanup (commented out)
-        // File.Delete(chartImagePath);
-        // File.Delete(docPath);
+        // -----------------------------------------------------------------
+        // 3. Validate that at least one image was extracted.
+        // -----------------------------------------------------------------
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No chart images were extracted from the document.");
     }
 }

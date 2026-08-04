@@ -1,92 +1,100 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
+using Aspose.Drawing; // Provides Bitmap, Graphics, Color
 
-public class Program
+public class ResizeExtractedPngImages
 {
     public static void Main()
     {
-        // Paths for temporary files
+        // Define deterministic file names.
         const string inputImagePath = "input.png";
-        const string docPath = "DocumentWithImages.docx";
+        const string documentPath = "DocumentWithImage.docx";
 
         // -------------------------------------------------
-        // 1. Create a sample PNG image (800x400) using Aspose.Drawing
+        // Step 1: Create a sample PNG image (800x400).
         // -------------------------------------------------
-        Bitmap sampleBitmap = new Bitmap(800, 400);
-        Graphics sampleGraphics = Graphics.FromImage(sampleBitmap);
-        sampleGraphics.Clear(Color.White);
-        // Draw a simple rectangle to make the image visible
-        sampleGraphics.FillRectangle(
-            new SolidBrush(Color.Blue),
-            100, 100, 600, 200);
-        sampleGraphics.Dispose();
-        sampleBitmap.Save(inputImagePath, ImageFormat.Png);
-        sampleBitmap.Dispose();
+        int originalWidth = 800;
+        int originalHeight = 400;
+        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
+        {
+            // Fill background with a solid color.
+            graphics.Clear(Color.LightBlue);
+
+            // Save the bitmap as a PNG file.
+            bitmap.Save(inputImagePath);
+        }
 
         // -------------------------------------------------
-        // 2. Create a Word document and insert the sample image twice
+        // Step 2: Create a Word document and insert the image.
         // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
-        builder.InsertParagraph(); // separate the images
-        builder.InsertImage(inputImagePath);
-        doc.Save(docPath);
+        Shape imageShape = builder.InsertImage(inputImagePath);
+        // Save the document (required by the lifecycle rule).
+        doc.Save(documentPath);
 
         // -------------------------------------------------
-        // 3. Load the document and extract PNG images, resizing each to 600px height
+        // Step 3: Load the document and extract PNG images.
         // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
+        Document loadedDoc = new Document(documentPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-        int resizedCount = 0;
 
+        int imageIndex = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only PNG images
+            // Process only PNG images.
             if (shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Save the image data to a memory stream
-            using (MemoryStream imageStream = new MemoryStream())
+            // Retrieve the image bytes.
+            byte[] imageBytes = shape.ImageData.ToByteArray();
+
+            // Load the image into Aspose.Drawing.Bitmap.
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0; // reset before reading
-
-                // Load the original bitmap
-                using (Bitmap originalBitmap = new Bitmap(imageStream))
+                ms.Position = 0; // Ensure the stream is at the beginning.
+                using (Bitmap originalBitmap = new Bitmap(ms))
                 {
-                    // Calculate new dimensions preserving aspect ratio (height = 600px)
+                    // -------------------------------------------------
+                    // Step 4: Compute new dimensions (height = 600px, preserve aspect ratio).
+                    // -------------------------------------------------
                     const int targetHeight = 600;
-                    double scaleFactor = (double)targetHeight / originalBitmap.Height;
-                    int targetWidth = (int)Math.Round(originalBitmap.Width * scaleFactor);
+                    int originalImgHeight = originalBitmap.Height;
+                    int originalImgWidth = originalBitmap.Width;
 
-                    // Create a new bitmap with the target size
+                    // Guard against zero height to avoid division by zero.
+                    if (originalImgHeight == 0)
+                        throw new InvalidOperationException("Original image height is zero.");
+
+                    double scaleFactor = (double)targetHeight / originalImgHeight;
+                    int targetWidth = (int)Math.Round(originalImgWidth * scaleFactor);
+
+                    // -------------------------------------------------
+                    // Step 5: Create a new bitmap with the target size and draw the scaled image.
+                    // -------------------------------------------------
                     using (Bitmap resizedBitmap = new Bitmap(targetWidth, targetHeight))
+                    using (Graphics g = Graphics.FromImage(resizedBitmap))
                     {
-                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
-                        {
-                            // High quality resizing
-                            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                            graphics.DrawImage(originalBitmap, 0, 0, targetWidth, targetHeight);
-                        }
+                        // Draw the original bitmap onto the new bitmap, scaling it.
+                        g.DrawImage(originalBitmap, 0, 0, targetWidth, targetHeight);
 
-                        // Save the resized image to a deterministic file name
-                        string resizedPath = $"resized_{imageIndex}.png";
-                        resizedBitmap.Save(resizedPath, ImageFormat.Png);
-                        if (!File.Exists(resizedPath))
-                            throw new InvalidOperationException($"Failed to create resized image file: {resizedPath}");
+                        // -------------------------------------------------
+                        // Step 6: Save the resized image to a deterministic file name.
+                        // -------------------------------------------------
+                        string resizedImagePath = $"ResizedImage_{imageIndex}.png";
+                        resizedBitmap.Save(resizedImagePath);
 
-                        resizedCount++;
+                        // Validate that the file was created.
+                        if (!File.Exists(resizedImagePath))
+                            throw new FileNotFoundException($"Failed to create resized image file: {resizedImagePath}");
+
+                        Console.WriteLine($"Resized image saved: {resizedImagePath} (Width={targetWidth}, Height={targetHeight})");
                     }
                 }
             }
@@ -94,12 +102,8 @@ public class Program
             imageIndex++;
         }
 
-        // Validation: ensure at least one image was resized
-        if (resizedCount == 0)
-            throw new InvalidOperationException("No PNG images were found and resized.");
-
-        // Cleanup temporary files (optional)
-        // File.Delete(inputImagePath);
-        // File.Delete(docPath);
+        // If no PNG images were processed, indicate the situation.
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No PNG images were found to resize.");
     }
 }

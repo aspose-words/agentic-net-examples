@@ -5,76 +5,87 @@ using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class Program
+public class ConvertTiffToPdf
 {
     public static void Main()
     {
-        // Define file names for the sample TIFF images and the output PDF.
-        string[] tiffFiles = { "sample1.tiff", "sample2.tiff" };
-        string pdfFile = "ConvertedImages.pdf";
+        // Define file names
+        string tiff1Path = "sample1.tif";
+        string tiff2Path = "sample2.tif";
+        string pdfPath = "ConvertedImages.pdf";
 
-        // Create deterministic sample TIFF images.
-        CreateSampleTiff(tiffFiles[0], 200, 200, Aspose.Drawing.Color.LightBlue, "Image 1");
-        CreateSampleTiff(tiffFiles[1], 300, 150, Aspose.Drawing.Color.LightGreen, "Image 2");
+        // -------------------------------------------------
+        // 1. Create sample TIFF images (deterministic local files)
+        // -------------------------------------------------
+        CreateSampleTiff(tiff1Path, Aspose.Drawing.Color.LightCoral, "Image 1");
+        CreateSampleTiff(tiff2Path, Aspose.Drawing.Color.LightGreen, "Image 2");
 
-        // Create a new Word document and a builder to insert content.
+        // Verify that the TIFF files were created
+        if (!File.Exists(tiff1Path) || !File.Exists(tiff2Path))
+            throw new FileNotFoundException("Failed to create sample TIFF images.");
+
+        // -------------------------------------------------
+        // 2. Create a new Word document and insert each TIFF on a separate page
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert each TIFF on its own page.
-        for (int i = 0; i < tiffFiles.Length; i++)
-        {
-            builder.InsertImage(tiffFiles[i]);
+        // Insert first image
+        builder.InsertImage(tiff1Path);
+        // Add a page break before the next image (if any)
+        builder.InsertBreak(BreakType.PageBreak);
 
-            // Add a page break after each image except the last one.
-            if (i < tiffFiles.Length - 1)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
+        // Insert second image
+        builder.InsertImage(tiff2Path);
 
-        // Embed built‑in metadata.
-        doc.BuiltInDocumentProperties.Title = "Converted PDF from TIFF images";
+        // -------------------------------------------------
+        // 3. Embed metadata into the document
+        // -------------------------------------------------
+        doc.BuiltInDocumentProperties.Title = "Converted TIFF Images to PDF";
         doc.BuiltInDocumentProperties.Author = "Aspose.Words Example";
-        doc.BuiltInDocumentProperties.Subject = "TIFF to PDF conversion";
+        doc.BuiltInDocumentProperties.Keywords = "TIFF, PDF, conversion, Aspose.Words";
 
-        // Add a custom document property.
-        doc.CustomDocumentProperties.Add("Source", "Generated sample TIFF images");
-
-        // Save the document as PDF.
-        doc.Save(pdfFile, SaveFormat.Pdf);
-
-        // Validate that the PDF was created.
-        if (!File.Exists(pdfFile))
-            throw new InvalidOperationException($"Failed to create PDF file: {pdfFile}");
-
-        // Clean up temporary TIFF files.
-        foreach (string file in tiffFiles)
+        // -------------------------------------------------
+        // 4. Save the document as PDF
+        // -------------------------------------------------
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            if (File.Exists(file))
-                File.Delete(file);
-        }
+            // Ensure metadata is written to the PDF
+            ExportDocumentStructure = true
+        };
+        doc.Save(pdfPath, pdfOptions);
+
+        // Verify that the PDF was created
+        if (!File.Exists(pdfPath))
+            throw new FileNotFoundException("PDF conversion failed.");
+
+        // Cleanup temporary TIFF files (optional)
+        File.Delete(tiff1Path);
+        File.Delete(tiff2Path);
     }
 
-    // Helper method to create a deterministic TIFF image.
-    private static void CreateSampleTiff(string fileName, int width, int height, Aspose.Drawing.Color backColor, string text)
+    private static void CreateSampleTiff(string filePath, Aspose.Drawing.Color backgroundColor, string text)
     {
-        // Create a bitmap with the requested dimensions.
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        // Create a bitmap and draw deterministic content
+        int width = 400;
+        int height = 300;
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        graphics.Clear(backgroundColor);
+
+        // Simple text drawing (optional, uses default font)
+        // Use fully qualified Aspose.Drawing.Font to avoid ambiguity
+        using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+        using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
         {
-            // Obtain a graphics object for drawing.
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                // Fill the background.
-                graphics.Clear(backColor);
-
-                // Draw simple text.
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
-                {
-                    graphics.DrawString(text, font, Aspose.Drawing.Brushes.Black, new Aspose.Drawing.PointF(10, height / 2 - 10));
-                }
-            }
-
-            // Save the bitmap as a TIFF file.
-            bitmap.Save(fileName, ImageFormat.Tiff);
+            graphics.DrawString(text, font, brush, new Aspose.Drawing.PointF(10, height / 2 - 12));
         }
+
+        // Save as TIFF
+        bitmap.Save(filePath, ImageFormat.Tiff);
+
+        // Release resources
+        graphics.Dispose();
+        bitmap.Dispose();
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -13,137 +12,106 @@ public class Program
 
     public static void Main()
     {
-        // Prepare deterministic folders
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create a sample BMP image.
+        const string inputBmpPath = "sample.bmp";
+        CreateSampleBmp(inputBmpPath, 800, 600); // 800x600 pixels
 
-        // 1. Create a sample BMP image (800x600) and save it locally
-        string sampleBmpPath = Path.Combine(artifactsDir, "sample.bmp");
-        CreateSampleBmp(sampleBmpPath, 800, 600);
+        // Create a Word document and insert the BMP image.
+        const string docPath = "DocumentWithBmp.docx";
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(inputBmpPath);
+        doc.Save(docPath);
 
-        // 2. Create a Word document and insert the BMP image
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
-        CreateDocumentWithImage(docPath, sampleBmpPath);
-
-        // 3. Load the document and extract images
-        Document doc = new Document(docPath);
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        // Load the document and process each BMP image.
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (!shape.HasImage) continue; // Ensure shape actually contains image data
+            if (!shape.HasImage) continue;
 
-            // Extract original image into a memory stream
-            using (MemoryStream originalStream = new MemoryStream())
+            // Process only BMP images.
+            if (shape.ImageData.ImageType != ImageType.Bmp) continue;
+
+            // Obtain the original image bytes.
+            byte[] originalBytes = shape.ImageData.ToByteArray();
+
+            // If the image already satisfies the size requirement, just save it.
+            if (originalBytes.Length <= MaxFileSize)
             {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
+                string outPath = $"ExtractedImage_{imageIndex}.bmp";
+                shape.ImageData.Save(outPath);
+                ValidateFile(outPath);
+                imageIndex++;
+                continue;
+            }
 
-                // Resize/compress until the size is <= 200 KB
-                using (MemoryStream resizedStream = ResizeBmpToTargetSize(originalStream, MaxFileSize))
+            // Load the BMP into Aspose.Drawing.Bitmap.
+            using (MemoryStream ms = new MemoryStream(originalBytes))
+            using (Bitmap bitmap = new Bitmap(ms))
+            {
+                // Encode the bitmap as JPEG with a quality setting.
+                // Start with high quality and decrease until the size constraint is met.
+                int quality = 100;
+                byte[] jpegBytes;
+
+                do
                 {
-                    // Save the final BMP to a deterministic file name
-                    string outputPath = Path.Combine(artifactsDir, $"output_{imageIndex}.bmp");
-                    File.WriteAllBytes(outputPath, resizedStream.ToArray());
+                    using (MemoryStream jpegStream = new MemoryStream())
+                    {
+                        // Set JPEG encoder parameters.
+                        EncoderParameters encoderParams = new EncoderParameters(1);
+                        encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, quality);
+                        ImageCodecInfo jpegCodec = GetEncoder(ImageFormat.Jpeg);
+                        bitmap.Save(jpegStream, jpegCodec, encoderParams);
+                        jpegBytes = jpegStream.ToArray();
+                    }
 
-                    // Validation
-                    FileInfo info = new FileInfo(outputPath);
-                    if (info.Length > MaxFileSize)
-                        throw new InvalidOperationException($"Resized image exceeds target size: {info.Length} bytes.");
-
-                    imageIndex++;
+                    // Reduce quality stepwise if still too large.
+                    quality -= 10;
                 }
+                while (jpegBytes.Length > MaxFileSize && quality > 0);
+
+                // Save the resulting image.
+                string outputPath = $"ResizedImage_{imageIndex}.jpg";
+                File.WriteAllBytes(outputPath, jpegBytes);
+                ValidateFile(outputPath);
+                imageIndex++;
             }
         }
 
-        // Ensure at least one image was processed
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
+        Console.WriteLine("Processing completed.");
     }
 
-    // Creates a simple BMP file with a solid color background using Aspose.Drawing
+    // Creates a deterministic BMP file with a solid background.
     private static void CreateSampleBmp(string filePath, int width, int height)
     {
         using (Bitmap bitmap = new Bitmap(width, height))
         using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            graphics.Clear(Aspose.Drawing.Color.LightBlue);
+            graphics.Clear(Color.LightBlue);
             bitmap.Save(filePath, ImageFormat.Bmp);
         }
     }
 
-    // Inserts the provided image file into a new Word document
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    // Retrieves the encoder for a specific image format.
+    private static ImageCodecInfo GetEncoder(ImageFormat format)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
-        doc.Save(docPath);
+        ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
+        foreach (ImageCodecInfo codec in codecs)
+        {
+            if (codec.FormatID == format.Guid)
+                return codec;
+        }
+        throw new InvalidOperationException("Encoder not found for the specified format.");
     }
 
-    // Resizes the image by scaling down until it fits within the target size.
-    // The method always returns a BMP image stream.
-    private static MemoryStream ResizeBmpToTargetSize(Stream sourceStream, long targetSize)
+    // Validates that a file exists and is non‑empty.
+    private static void ValidateFile(string path)
     {
-        // Load the original bitmap from the source stream
-        using (Bitmap original = new Bitmap(sourceStream))
-        {
-            // If the original already satisfies the size requirement, return it as‑is (as BMP)
-            using (MemoryStream testStream = new MemoryStream())
-            {
-                original.Save(testStream, ImageFormat.Bmp);
-                if (testStream.Length <= targetSize)
-                {
-                    testStream.Position = 0;
-                    MemoryStream result = new MemoryStream();
-                    testStream.CopyTo(result);
-                    result.Position = 0;
-                    return result;
-                }
-            }
-
-            // Iteratively scale down by 90% until the size constraint is met
-            Bitmap current = (Bitmap)original.Clone();
-            try
-            {
-                while (true)
-                {
-                    int newWidth = Math.Max(1, (int)(current.Width * 0.9));
-                    int newHeight = Math.Max(1, (int)(current.Height * 0.9));
-
-                    using (Bitmap scaled = new Bitmap(newWidth, newHeight))
-                    using (Graphics g = Graphics.FromImage(scaled))
-                    {
-                        g.DrawImage(current, 0, 0, newWidth, newHeight);
-                        using (MemoryStream ms = new MemoryStream())
-                        {
-                            scaled.Save(ms, ImageFormat.Bmp);
-                            if (ms.Length <= targetSize)
-                            {
-                                ms.Position = 0;
-                                MemoryStream finalStream = new MemoryStream();
-                                ms.CopyTo(finalStream);
-                                finalStream.Position = 0;
-                                return finalStream;
-                            }
-                        }
-                    }
-
-                    // Prepare for next iteration
-                    Bitmap next = new Bitmap(newWidth, newHeight);
-                    using (Graphics g = Graphics.FromImage(next))
-                    {
-                        g.DrawImage(current, 0, 0, newWidth, newHeight);
-                    }
-                    current.Dispose();
-                    current = next;
-                }
-            }
-            finally
-            {
-                current.Dispose();
-            }
-        }
+        if (!File.Exists(path) || new FileInfo(path).Length == 0)
+            throw new InvalidOperationException($"Failed to create output file: {path}");
     }
 }

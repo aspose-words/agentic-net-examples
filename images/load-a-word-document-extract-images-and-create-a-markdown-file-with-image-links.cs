@@ -1,111 +1,104 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
+using Aspose.Words.Loading;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-namespace AsposeWordsImageExtraction
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Prepare output folders.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string imagesDir = Path.Combine(artifactsDir, "Images");
+        Directory.CreateDirectory(imagesDir);
+
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic sample image (sample.png).
+        // -----------------------------------------------------------------
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            // Prepare output folder.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // -----------------------------------------------------------------
-            // 1. Create a deterministic sample image (input.png).
-            // -----------------------------------------------------------------
-            string sampleImagePath = Path.Combine(outputDir, "input.png");
-            CreateSampleImage(sampleImagePath);
-
-            // -----------------------------------------------------------------
-            // 2. Create a Word document and insert the sample image.
-            // -----------------------------------------------------------------
-            string docPath = Path.Combine(outputDir, "sample.docx");
-            CreateDocumentWithImage(docPath, sampleImagePath);
-
-            // -----------------------------------------------------------------
-            // 3. Load the document and extract all images to separate files.
-            // -----------------------------------------------------------------
-            Document doc = new Document(docPath);
-            List<string> extractedImageFiles = ExtractImages(doc, outputDir);
-
-            // Validate that at least one image was extracted.
-            if (extractedImageFiles.Count == 0)
-                throw new InvalidOperationException("No images were extracted from the document.");
-
-            // -----------------------------------------------------------------
-            // 4. Generate a Markdown file that references the extracted images.
-            // -----------------------------------------------------------------
-            string markdownPath = Path.Combine(outputDir, "Images.md");
-            GenerateMarkdownFile(markdownPath, extractedImageFiles);
-        }
-
-        // Creates a simple 100x100 PNG image with a solid background.
-        private static void CreateSampleImage(string filePath)
-        {
-            const int width = 100;
-            const int height = 100;
-
-            // Use Aspose.Drawing to create a bitmap and fill it with a color.
-            Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-            Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-            graphics.Clear(Aspose.Drawing.Color.LightBlue);
-
-            // Save the bitmap to the specified file.
-            bitmap.Save(filePath);
-            graphics.Dispose();
-            bitmap.Dispose();
-        }
-
-        // Creates a blank document and inserts the image located at imagePath.
-        private static void CreateDocumentWithImage(string docPath, string imagePath)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.InsertImage(imagePath);
-            doc.Save(docPath);
-        }
-
-        // Extracts all images from the provided document into the output directory.
-        // Returns a list of file names (relative to the output directory) of the saved images.
-        private static List<string> ExtractImages(Document doc, string outputDir)
-        {
-            List<string> savedFiles = new List<string>();
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 0;
-
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                if (shape.HasImage)
+                g.Clear(Color.LightBlue);
+                // Simple drawing – a red ellipse.
+                using (Pen pen = new Pen(Color.Red, 5))
                 {
-                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    string fileName = $"image{imageIndex}{extension}";
-                    string fullPath = Path.Combine(outputDir, fileName);
-                    shape.ImageData.Save(fullPath);
-                    savedFiles.Add(fileName);
-                    imageIndex++;
+                    g.DrawEllipse(pen, 10, 10, imgWidth - 20, imgHeight - 20);
                 }
             }
-
-            return savedFiles;
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
         }
 
-        // Writes a Markdown file where each line contains an image link to the provided files.
-        private static void GenerateMarkdownFile(string markdownPath, List<string> imageFiles)
+        // -----------------------------------------------------------------
+        // 2. Create a Word document and insert the sample image.
+        // -----------------------------------------------------------------
+        string docPath = Path.Combine(artifactsDir, "SampleDocument.docx");
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Below is a sample image inserted into the document:");
+        builder.InsertImage(sampleImagePath);
+        doc.Save(docPath);
+
+        // -----------------------------------------------------------------
+        // 3. Load the document (demonstrating load via file name).
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+
+        // -----------------------------------------------------------------
+        // 4. Extract all images from the document.
+        // -----------------------------------------------------------------
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        var extractedImageFiles = new List<string>();
+        int imageIndex = 0;
+
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (string img in imageFiles)
+            if (shape.HasImage)
             {
-                sb.AppendLine($"![]({img})");
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string imageFileName = $"image_{imageIndex}{extension}";
+                string imageFullPath = Path.Combine(imagesDir, imageFileName);
+                shape.ImageData.Save(imageFullPath);
+                extractedImageFiles.Add(imageFileName);
+                imageIndex++;
             }
-
-            File.WriteAllText(markdownPath, sb.ToString(), Encoding.UTF8);
         }
+
+        // Validate that at least one image was extracted.
+        if (extractedImageFiles.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
+
+        // -----------------------------------------------------------------
+        // 5. Generate a Markdown file with links to the extracted images.
+        // -----------------------------------------------------------------
+        string markdownPath = Path.Combine(artifactsDir, "DocumentImages.md");
+        using (StreamWriter writer = new StreamWriter(markdownPath, false))
+        {
+            writer.WriteLine("# Extracted Images");
+            writer.WriteLine();
+
+            foreach (string imgFile in extractedImageFiles)
+            {
+                // Use a relative path to the Images folder.
+                string relativePath = Path.Combine("Images", imgFile).Replace('\\', '/');
+                writer.WriteLine($"![]({relativePath})");
+                writer.WriteLine();
+            }
+        }
+
+        // -----------------------------------------------------------------
+        // 6. Simple verification that the Markdown file was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(markdownPath))
+            throw new FileNotFoundException("Markdown file was not created.", markdownPath);
     }
 }

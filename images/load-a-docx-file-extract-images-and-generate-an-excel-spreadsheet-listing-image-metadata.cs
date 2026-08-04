@@ -1,130 +1,127 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
+using Aspose.Words.Loading;
+using Aspose.Drawing; // Aspose.Drawing.Common namespace
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Define folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string outputDir = Path.Combine(baseDir, "Output");
+        // Prepare folders
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
+        string imagesDir = Path.Combine(workDir, "Images");
+        Directory.CreateDirectory(imagesDir);
+        string outputDir = Path.Combine(workDir, "Output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic sample image (sample.png)
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(outputDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 200, 200);
+        // 1. Create a sample image (PNG) using Aspose.Drawing
+        string sampleImagePath = Path.Combine(imagesDir, "sample.png");
+        CreateSampleImage(sampleImagePath, 200, 150);
 
-        // -----------------------------------------------------------------
-        // 2. Build a DOCX document and insert the sample image twice
-        // -----------------------------------------------------------------
-        string docPath = Path.Combine(outputDir, "sample.docx");
-        CreateDocumentWithImages(docPath, sampleImagePath);
+        // 2. Create a DOCX document and insert the sample image
+        string docPath = Path.Combine(workDir, "SampleDocument.docx");
+        CreateDocumentWithImage(docPath, sampleImagePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the DOCX, extract all images and collect metadata
-        // -----------------------------------------------------------------
-        var imageInfos = new List<ImageInfo>();
+        // 3. Load the DOCX document
         Document doc = new Document(docPath);
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
 
+        // 4. Extract images and collect metadata
+        var metadataList = new List<ImageMeta>();
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-        foreach (Shape shape in shapes.OfType<Shape>())
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (!shape.HasImage) continue;
-
-            // Determine file extension based on image type
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string imageFileName = $"Image_{imageIndex}{extension}";
-            string imageFilePath = Path.Combine(outputDir, imageFileName);
-
-            // Save the image to disk
-            shape.ImageData.Save(imageFilePath);
-
-            // Gather metadata
-            var size = shape.ImageData.ImageSize;
-            imageInfos.Add(new ImageInfo
+            if (shape.HasImage)
             {
-                Index = imageIndex,
-                FileName = imageFileName,
-                ImageType = shape.ImageData.ImageType.ToString(),
-                WidthPixels = size.WidthPixels,
-                HeightPixels = size.HeightPixels,
-                HorizontalResolution = size.HorizontalResolution,
-                VerticalResolution = size.VerticalResolution
-            });
+                // Determine file extension based on image type
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string extractedFileName = $"Image_{imageIndex}{extension}";
+                string extractedPath = Path.Combine(outputDir, extractedFileName);
 
-            imageIndex++;
+                // Save the image to disk
+                shape.ImageData.Save(extractedPath);
+
+                // Gather metadata
+                var size = shape.ImageData.ImageSize;
+                var meta = new ImageMeta
+                {
+                    Index = imageIndex,
+                    FileName = extractedFileName,
+                    ImageType = shape.ImageData.ImageType.ToString(),
+                    WidthPixels = size.WidthPixels,
+                    HeightPixels = size.HeightPixels,
+                    HorizontalResolution = size.HorizontalResolution,
+                    VerticalResolution = size.VerticalResolution
+                };
+                metadataList.Add(meta);
+                imageIndex++;
+            }
         }
 
         // Validate that at least one image was extracted
-        if (imageInfos.Count == 0)
+        if (metadataList.Count == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
 
-        // -----------------------------------------------------------------
-        // 4. Generate a CSV file that can be opened by Excel
-        // -----------------------------------------------------------------
+        // 5. Generate a CSV file that can be opened by Excel
         string csvPath = Path.Combine(outputDir, "ImageMetadata.csv");
-        WriteCsv(csvPath, imageInfos);
+        WriteCsv(csvPath, metadataList);
 
-        // -----------------------------------------------------------------
-        // 5. Informative output (no interactive prompts)
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Document created: {docPath}");
-        Console.WriteLine($"Extracted {imageInfos.Count} image(s) to folder: {outputDir}");
-        Console.WriteLine($"Metadata CSV generated: {csvPath}");
+        // Optional: also write metadata as JSON (demonstrates Newtonsoft.Json usage)
+        string jsonPath = Path.Combine(outputDir, "ImageMetadata.json");
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(metadataList, Formatting.Indented));
+
+        // Indicate completion (no interactive prompts)
+        Console.WriteLine($"Extraction complete. Images and metadata saved to: {outputDir}");
     }
 
-    // Creates a simple white bitmap and saves it to the specified path
+    // Creates a deterministic PNG image using Aspose.Drawing
     private static void CreateSampleImage(string filePath, int width, int height)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(Aspose.Drawing.Color.White);
-            // Additional deterministic drawing can be added here if desired
-            bitmap.Save(filePath);
-        }
+        var bitmap = new Bitmap(width, height);
+        var graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(Color.White);
+        // Draw a simple rectangle
+        var pen = new Pen(Color.Blue, 5);
+        graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+        // Save and clean up
+        bitmap.Save(filePath);
+        graphics.Dispose();
+        bitmap.Dispose();
     }
 
-    // Builds a DOCX file and inserts the provided image file twice
-    private static void CreateDocumentWithImages(string docPath, string imagePath)
+    // Creates a DOCX document and inserts the specified image
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Sample document with images:");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Document with sample image:");
         builder.InsertImage(imagePath);
-        builder.Writeln(); // add a line break
-        builder.InsertImage(imagePath);
-
         doc.Save(docPath);
     }
 
-    // Writes image metadata to a CSV file
-    private static void WriteCsv(string csvPath, List<ImageInfo> infos)
+    // Writes metadata to a CSV file
+    private static void WriteCsv(string csvPath, List<ImageMeta> items)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("Index,FileName,ImageType,WidthPixels,HeightPixels,HorizontalResolution,VerticalResolution");
-
-        foreach (var info in infos)
+        using (var writer = new StreamWriter(csvPath, false))
         {
-            sb.AppendLine($"{info.Index},{info.FileName},{info.ImageType},{info.WidthPixels},{info.HeightPixels},{info.HorizontalResolution},{info.VerticalResolution}");
+            // Header
+            writer.WriteLine("Index,FileName,ImageType,WidthPixels,HeightPixels,HorizontalResolution,VerticalResolution");
+            // Rows
+            foreach (var item in items)
+            {
+                writer.WriteLine($"{item.Index},{item.FileName},{item.ImageType},{item.WidthPixels},{item.HeightPixels},{item.HorizontalResolution},{item.VerticalResolution}");
+            }
         }
-
-        File.WriteAllText(csvPath, sb.ToString());
     }
 
     // Simple DTO for image metadata
-    private class ImageInfo
+    private class ImageMeta
     {
         public int Index { get; set; }
         public string FileName { get; set; }
