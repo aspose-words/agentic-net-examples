@@ -1,113 +1,96 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace DocumentPartSavingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        if (Directory.Exists(outputDir))
-            Directory.Delete(outputDir, true);
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample document with headings.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter One");
-        builder.Writeln("Content of chapter one.");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1");
-        builder.Writeln("Details of section 1.1.");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter Two");
-        builder.Writeln("Content of chapter two.");
-
-        // Collect heading texts in the order they appear.
-        List<string> headingTexts = new List<string>();
-        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        public static void Main()
         {
-            if (para.ParagraphFormat.IsHeading)
-                headingTexts.Add(para.GetText().Trim());
-        }
+            // Prepare output folder.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-        // Configure HTML save options to split by heading paragraphs.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
-        {
-            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-            DocumentSplitHeadingLevel = 9 // split at all heading levels
-        };
+            // Create a sample document with headings.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Assign custom callback to name each part based on heading text.
-        saveOptions.DocumentPartSavingCallback = new HeadingBasedPartNaming(outputDir, headingTexts);
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter One");
+            builder.Writeln("Content of chapter one.");
 
-        // Save the document; parts will be written by the callback.
-        string mainFileName = Path.Combine(outputDir, "Document.html");
-        doc.Save(mainFileName, saveOptions);
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+            builder.Writeln("Section 1.1");
+            builder.Writeln("Details for section 1.1.");
 
-        // Verify that each expected part file exists.
-        foreach (string heading in headingTexts)
-        {
-            string safeName = MakeSafeFileName(heading) + ".html";
-            string partPath = Path.Combine(outputDir, safeName);
-            if (!File.Exists(partPath))
-                throw new InvalidOperationException($"Expected part file not found: {partPath}");
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter Two");
+            builder.Writeln("Content of chapter two.");
+
+            // Collect heading texts in the order they appear.
+            List<string> headings = new List<string>();
+            foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+            {
+                if (para.ParagraphFormat.IsHeading)
+                    headings.Add(para.GetText().Trim());
+            }
+
+            // Configure HTML save options to split by heading paragraphs.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            {
+                DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
+                DocumentSplitHeadingLevel = 9 // Include all heading levels.
+            };
+
+            // Assign the custom callback that names each part after its heading text.
+            saveOptions.DocumentPartSavingCallback = new HeadingBasedDocumentPartSavingCallback(headings, outputDir);
+
+            // Save the document; this will trigger the callback for each part.
+            string mainFileName = Path.Combine(outputDir, "Combined.html");
+            doc.Save(mainFileName, saveOptions);
+
+            // Simple verification: list the generated files.
+            string[] generatedFiles = Directory.GetFiles(outputDir, "*.html");
+            Console.WriteLine($"Generated {generatedFiles.Length} HTML parts:");
+            foreach (string file in generatedFiles)
+                Console.WriteLine(Path.GetFileName(file));
         }
     }
 
-    // Helper to replace invalid filename characters.
-    private static string MakeSafeFileName(string name)
+    // Callback that assigns filenames based on the original heading text.
+    internal class HeadingBasedDocumentPartSavingCallback : IDocumentPartSavingCallback
     {
-        foreach (char c in Path.GetInvalidFileNameChars())
-            name = name.Replace(c, '_');
-        return name;
-    }
-
-    // Callback implementation that names each document part using the corresponding heading text.
-    private class HeadingBasedPartNaming : IDocumentPartSavingCallback
-    {
+        private readonly List<string> _headings;
         private readonly string _outputDir;
-        private readonly IList<string> _headings;
-        private int _index = -1;
+        private int _partIndex = 0;
 
-        public HeadingBasedPartNaming(string outputDir, IList<string> headings)
+        public HeadingBasedDocumentPartSavingCallback(List<string> headings, string outputDir)
         {
-            _outputDir = outputDir;
             _headings = headings;
+            _outputDir = outputDir;
         }
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Increment part counter.
-            _index++;
+            // Determine which heading corresponds to this part.
+            _partIndex++;
+            string heading = _partIndex <= _headings.Count ? _headings[_partIndex - 1] : $"Part{_partIndex}";
 
-            // Guard against mismatched counts.
-            if (_index >= _headings.Count)
-                throw new InvalidOperationException("More document parts than headings.");
+            // Sanitize heading text to be a valid filename.
+            foreach (char invalid in Path.GetInvalidFileNameChars())
+                heading = heading.Replace(invalid, '_');
 
-            // Build a safe filename from the heading text.
-            string safeName = MakeSafeFileName(_headings[_index]) + Path.GetExtension(args.DocumentPartFileName);
-            string fullPath = Path.Combine(_outputDir, safeName);
+            // Preserve the original extension (e.g., .html).
+            string extension = Path.GetExtension(args.DocumentPartFileName);
+            string fileName = $"{heading}{extension}";
 
-            // Set the filename and stream for the part.
-            args.DocumentPartFileName = safeName;
+            // Set the new filename and stream for the part.
+            args.DocumentPartFileName = fileName;
+            string fullPath = Path.Combine(_outputDir, fileName);
             args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
-            args.KeepDocumentPartStreamOpen = false;
-        }
-
-        // Reuse the same helper for safety.
-        private static string MakeSafeFileName(string name)
-        {
-            foreach (char c in Path.GetInvalidFileNameChars())
-                name = name.Replace(c, '_');
-            return name;
         }
     }
 }

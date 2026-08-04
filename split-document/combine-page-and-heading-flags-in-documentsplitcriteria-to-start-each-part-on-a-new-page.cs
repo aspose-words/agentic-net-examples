@@ -8,63 +8,61 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare an output folder.
+        // Define an output folder relative to the current directory.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Build a sample document containing headings and explicit page breaks.
+        // Base file name for the HTML output.
+        string baseFileName = Path.Combine(outputDir, "SplitDocument.html");
+
+        // Create a sample document with headings and explicit page breaks.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Heading 1.
+        // First heading (level 1) and some content.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-        // Normal paragraph.
+        builder.Writeln("Heading 1");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the first chapter.");
+        builder.Writeln("Content under heading 1.");
 
-        // First page break.
+        // Insert a page break.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Heading 2.
+        // Second heading (level 2) and some content.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1");
+        builder.Writeln("Heading 2");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Details of section 1.1.");
+        builder.Writeln("Content under heading 2.");
 
-        // Second page break.
+        // Insert another page break.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Another Heading 1.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
+        // Third heading (level 3) and some content.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+        builder.Writeln("Heading 3");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of the second chapter.");
+        builder.Writeln("Content under heading 3.");
 
-        // Configure HtmlSaveOptions to split on both page breaks and heading paragraphs.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+        // Configure HTML save options to split on both page breaks and heading paragraphs.
+        HtmlSaveOptions options = new HtmlSaveOptions
         {
             DocumentSplitCriteria = DocumentSplitCriteria.PageBreak | DocumentSplitCriteria.HeadingParagraph,
-            DocumentSplitHeadingLevel = 2 // Split at Heading 1 and Heading 2.
+            DocumentSplitHeadingLevel = 2 // Split at heading levels 1 and 2.
         };
 
-        // Save the document; Aspose.Words will generate several HTML files.
-        string mainFilePath = Path.Combine(outputDir, "SplitDocument.html");
-        doc.Save(mainFilePath, saveOptions);
+        // Save the document; Aspose.Words will create multiple HTML files.
+        doc.Save(baseFileName, options);
 
-        // Verify that split parts were created.
-        var splitFiles = Directory.GetFiles(outputDir, "SplitDocument-*.html");
-        if (!splitFiles.Any())
-        {
-            throw new InvalidOperationException("No split HTML files were generated.");
-        }
+        // Verify that multiple split files were created.
+        string[] splitFiles = Directory.GetFiles(outputDir, "SplitDocument*.html")
+                                       .OrderBy(f => f)
+                                       .ToArray();
 
-        // List generated files (optional).
-        Console.WriteLine("Generated files:");
-        Console.WriteLine(mainFilePath);
+        if (splitFiles.Length < 2)
+            throw new Exception("Expected multiple split HTML files, but only one was found.");
+
+        // Output the list of generated files.
         foreach (string file in splitFiles)
-        {
-            Console.WriteLine(file);
-        }
+            Console.WriteLine("Created: " + file);
     }
 }

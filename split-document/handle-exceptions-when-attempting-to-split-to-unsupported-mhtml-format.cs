@@ -7,35 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with two sections.
+        // Set up directories for input and output.
+        string baseDir = Directory.GetCurrentDirectory();
+        string artifactsDir = Path.Combine(baseDir, "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a simple source document with two sections.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First section content.");
+        builder.Writeln("First section.");
+        // Insert a section break (new page) to separate sections.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Second section content.");
+        builder.Writeln("Second section.");
 
-        // Prepare an output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "SplitMhtml.mhtml");
-
-        // Configure HtmlSaveOptions for MHTML with a split criterion.
+        // Configure HtmlSaveOptions for MHTML format and request splitting by section break.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
             DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
         };
 
+        string outputPath = Path.Combine(artifactsDir, "SplitDocument.mhtml");
+
         try
         {
-            // Attempt to save the document with splitting enabled.
             // This operation is not supported for MHTML and should throw an exception.
             doc.Save(outputPath, saveOptions);
             Console.WriteLine("Document saved successfully (unexpected).");
         }
         catch (Exception ex)
         {
-            // Expected: an exception indicating that splitting is not supported for MHTML.
-            Console.WriteLine($"Caught expected exception: {ex.GetType().Name} - {ex.Message}");
+            // Expected exception handling.
+            Console.WriteLine("Caught exception while attempting to split to MHTML:");
+            Console.WriteLine(ex.Message);
+        }
+
+        // Verify that no output file was created.
+        if (!File.Exists(outputPath))
+        {
+            Console.WriteLine("No output file was created, as expected for unsupported split.");
+        }
+        else
+        {
+            Console.WriteLine("Output file was created unexpectedly.");
         }
     }
 }

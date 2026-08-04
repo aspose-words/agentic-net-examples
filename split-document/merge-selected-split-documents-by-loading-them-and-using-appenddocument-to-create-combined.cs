@@ -2,61 +2,57 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class MergeSplitDocuments
 {
     public static void Main()
     {
-        // Define a folder for all generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Define a folder for the sample and output files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "MergedDocs");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create sample split documents that we will later merge.
-        // -----------------------------------------------------------------
+        // Paths for the split documents.
         string part1Path = Path.Combine(outputDir, "Part1.docx");
         string part2Path = Path.Combine(outputDir, "Part2.docx");
-
-        // Document 1
-        Document part1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(part1);
-        builder1.Writeln("This is the first split document.");
-        part1.Save(part1Path);
-
-        // Document 2
-        Document part2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(part2);
-        builder2.Writeln("This is the second split document.");
-        part2.Save(part2Path);
+        string mergedPath = Path.Combine(outputDir, "Merged.docx");
 
         // -----------------------------------------------------------------
-        // 2. Load the split documents.
+        // Create sample split documents.
         // -----------------------------------------------------------------
-        Document srcDoc1 = new Document(part1Path);
-        Document srcDoc2 = new Document(part2Path);
+        CreateSampleDocument(part1Path, "This is the content of the first split document.");
+        CreateSampleDocument(part2Path, "This is the content of the second split document.");
 
         // -----------------------------------------------------------------
-        // 3. Merge them using AppendDocument.
+        // Load the split documents.
         // -----------------------------------------------------------------
-        Document mergedDoc = new Document(); // starts with a single empty section
-        mergedDoc.AppendDocument(srcDoc1, ImportFormatMode.KeepSourceFormatting);
-        mergedDoc.AppendDocument(srcDoc2, ImportFormatMode.KeepSourceFormatting);
+        Document part1 = new Document(part1Path);
+        Document part2 = new Document(part2Path);
+
+        // -----------------------------------------------------------------
+        // Merge the loaded documents using AppendDocument.
+        // -----------------------------------------------------------------
+        Document merged = new Document(); // Starts with a single empty section.
+        merged.AppendDocument(part1, ImportFormatMode.KeepSourceFormatting);
+        merged.AppendDocument(part2, ImportFormatMode.KeepSourceFormatting);
 
         // Save the combined document.
-        string mergedPath = Path.Combine(outputDir, "Combined.docx");
-        mergedDoc.Save(mergedPath);
+        merged.Save(mergedPath);
 
-        // -----------------------------------------------------------------
-        // 4. Simple validation – ensure the combined file exists and contains both texts.
-        // -----------------------------------------------------------------
+        // Simple validation to ensure the merged file was created.
         if (!File.Exists(mergedPath))
             throw new InvalidOperationException("Merged document was not created.");
 
-        Document verifyDoc = new Document(mergedPath);
-        string mergedText = verifyDoc.GetText();
-
+        // Optional: verify that the merged document contains text from both parts.
+        string mergedText = merged.GetText();
         if (!mergedText.Contains("first split document") || !mergedText.Contains("second split document"))
             throw new InvalidOperationException("Merged document does not contain expected content.");
+    }
 
-        // All done – the program will exit automatically.
+    // Helper method to create a simple document with a single paragraph of text.
+    private static void CreateSampleDocument(string filePath, string paragraphText)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(paragraphText);
+        doc.Save(filePath);
     }
 }
