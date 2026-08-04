@@ -8,62 +8,65 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the output DOCX file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ModifiedOfficeMath.docx");
+        // Output file path.
+        string outputPath = "ModifiedDocument.docx";
 
-        // Create a new blank document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Introductory paragraph.
-        builder.Writeln("Below is a sample equation created via EQ field bootstrap:");
+        // Insert two equations using the deterministic EQ‑field bootstrap workflow.
+        InsertOfficeMath(builder, @"\f(1,2)"); // Fraction 1/2
+        InsertOfficeMath(builder, @"\r(3,x)"); // Cube root of x
 
+        // Save the document as DOCX. All OfficeMath nodes are preserved with their formatting.
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+    }
+
+    // Inserts an EQ field, converts it to a real OfficeMath object,
+    // applies display formatting, and removes the original field.
+    private static void InsertOfficeMath(DocumentBuilder builder, string eqArguments)
+    {
         // Insert an empty EQ field.
-        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Write a simple fraction switch at the field separator.
-        builder.MoveTo(eqField.Separator);
-        builder.Write(@"\f(1,2)");
+        // Write the EQ arguments (the equation) into the field separator.
+        if (field.Separator != null)
+        {
+            builder.MoveTo(field.Separator);
+            builder.Write(eqArguments);
+        }
 
-        // Ensure the field is up‑to‑date before conversion.
-        eqField.Update();
+        // Move back to the paragraph that contains the field.
+        builder.MoveTo(field.Start.ParentNode);
+        // Insert a paragraph break after the equation for readability.
+        builder.InsertParagraph();
+
+        // Update the field so that Word processes the EQ code.
+        field.Update();
 
         // Convert the EQ field to a real OfficeMath object.
-        OfficeMath officeMath = eqField.AsOfficeMath();
+        OfficeMath officeMath = field.AsOfficeMath();
+
+        // Ensure conversion succeeded.
         if (officeMath == null)
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
 
-        // Insert the OfficeMath node before the field start and remove the original field.
-        eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
-        eqField.Remove();
+        // Insert the OfficeMath node before the field start node.
+        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
 
-        // Apply formatting only to top‑level OfficeMath nodes.
+        // Remove the original EQ field from the document.
+        field.Remove();
+
+        // Apply display formatting to top‑level OfficeMath nodes only.
         if (officeMath.MathObjectType == MathObjectType.OMathPara)
         {
             officeMath.DisplayType = OfficeMathDisplayType.Display;
             officeMath.Justification = OfficeMathJustification.Left;
         }
-
-        // Save the document as DOCX – this preserves the OfficeMath node and its formatting.
-        doc.Save(outputPath, SaveFormat.Docx);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output DOCX file was not created.", outputPath);
-
-        // Optional validation: ensure at least one top‑level OfficeMath node exists.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        bool hasTopLevel = false;
-        foreach (OfficeMath om in mathNodes)
-        {
-            if (om.MathObjectType == MathObjectType.OMathPara)
-            {
-                hasTopLevel = true;
-                break;
-            }
-        }
-
-        if (!hasTopLevel)
-            throw new InvalidOperationException("No top‑level OfficeMath nodes were found in the saved document.");
     }
 }

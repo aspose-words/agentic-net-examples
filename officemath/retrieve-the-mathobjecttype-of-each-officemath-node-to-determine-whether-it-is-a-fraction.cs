@@ -1,70 +1,73 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        const string filePath = "OfficeMathTypes.docx";
-
-        // Create a new document and insert sample equations.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Fraction: 1/2
-        InsertEquation(builder, @"\f(1,2)");
+        // Insert a fraction equation: 1/2
+        InsertOfficeMath(builder, @"\f(1,2)");
 
-        // Radical: cube root of x
-        InsertEquation(builder, @"\r(3,x)");
+        // Insert a radical equation: cube root of x
+        InsertOfficeMath(builder, @"\r(3,x)");
 
-        // Save the document.
-        doc.Save(filePath);
+        // Save the document to disk.
+        string outputPath = "OfficeMathTypes.docx";
+        doc.Save(outputPath);
 
-        // Reload the document to demonstrate loading.
-        Document loadedDoc = new Document(filePath);
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
 
-        // Retrieve all OfficeMath nodes.
-        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-
-        // Output the MathObjectType of each node.
-        for (int i = 0; i < mathNodes.Count; i++)
+        // Enumerate all OfficeMath nodes in the document.
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        foreach (OfficeMath om in mathNodes)
         {
-            OfficeMath om = (OfficeMath)mathNodes[i];
-            string description = om.MathObjectType switch
-            {
-                MathObjectType.Fraction => "Fraction",
-                MathObjectType.Radical => "Radical",
-                _ => om.MathObjectType.ToString()
-            };
-            Console.WriteLine($"Node {i}: {description}");
+            // Retrieve the MathObjectType of the node.
+            MathObjectType type = om.MathObjectType;
+            Console.WriteLine($"OfficeMath node: MathObjectType = {type}");
+
+            // Determine whether the node is a fraction or a radical.
+            if (type == MathObjectType.Fraction)
+                Console.WriteLine("-> This node represents a fraction.");
+            else if (type == MathObjectType.Radical)
+                Console.WriteLine("-> This node represents a radical.");
+            else
+                Console.WriteLine("-> This node is of another type.");
         }
     }
 
-    // Helper that inserts an EQ field, converts it to OfficeMath, and moves to a new paragraph.
-    private static void InsertEquation(DocumentBuilder builder, string eqArgs)
+    // Helper method that creates a real OfficeMath node from an EQ field using the deterministic bootstrap workflow.
+    private static void InsertOfficeMath(DocumentBuilder builder, string eqArguments)
     {
-        // Insert an EQ field.
+        // Insert an EQ field placeholder.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Write the equation arguments into the field separator.
+        // Write the EQ arguments (e.g., "\f(1,2)" or "\r(3,x)").
         builder.MoveTo(field.Separator);
-        builder.Write(eqArgs);
+        builder.Write(eqArguments);
 
-        // Return to the paragraph containing the field.
+        // Return the builder to the paragraph containing the field.
         builder.MoveTo(field.Start.ParentNode);
 
-        // Convert the field to a real OfficeMath object.
+        // Convert the EQ field to a real OfficeMath object.
         OfficeMath officeMath = field.AsOfficeMath();
+
+        // If conversion succeeded, replace the field with the OfficeMath node.
         if (officeMath != null)
         {
-            // Insert the OfficeMath before the field and remove the field.
             field.Start.ParentNode.InsertBefore(officeMath, field.Start);
             field.Remove();
         }
 
-        // Start a new paragraph for the next equation.
+        // Add a new paragraph after the equation for readability.
         builder.InsertParagraph();
     }
 }

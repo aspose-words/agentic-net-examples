@@ -4,61 +4,65 @@ using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class OfficeMathInsertExample
+public class InsertOfficeMathFromMathML
 {
     public static void Main()
     {
-        // MathML source string (metadata only – not directly parsed by Aspose.Words)
-        // Example MathML: <math><mi>x</mi><mo>=</mo><mfrac><mi>-b</mi><mi>2a</mi></mfrac></math>
-        string mathMl = "<math><mi>x</mi><mo>=</mo><mfrac><mi>-b</mi><mi>2a</mi></mfrac></math>";
+        // The original MathML is kept as a comment because Aspose.Words does not parse it directly.
+        // This string is provided for reference only.
+        string mathMl = @"<math xmlns=""http://www.w3.org/1998/Math/MathML""><mfrac><mi>a</mi><mi>b</mi></mfrac></math>";
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a paragraph that will contain the equation.
-        builder.Writeln("Paragraph before the equation:");
+        builder.Writeln("Equation inserted from MathML:");
 
-        // Insert a deterministic EQ field as a bootstrap for OfficeMath.
-        Field field = builder.InsertField(FieldType.FieldEquation, true);
-        FieldEQ fieldEq = field as FieldEQ;
-        if (fieldEq == null)
-            throw new InvalidOperationException("Failed to create FieldEQ.");
+        // Insert an EQ field that represents a simple fraction a/b.
+        // The "\f" switch creates a fraction; the arguments are the numerator and denominator.
+        FieldEQ eqField = InsertFieldEQ(builder, @"\f(a,b)");
 
-        // Move the builder to the field separator and write a simple EQ argument.
-        builder.MoveTo(fieldEq.Separator);
-        // Simple safe equation that Aspose.Words can convert to OfficeMath.
-        builder.Write(@"\f(1,2)");
+        // Ensure the field is up‑to‑date before converting it.
+        eqField.Update();
 
-        // Update the field so that the EQ argument is processed.
-        fieldEq.Update();
+        // Convert the EQ field to a real OfficeMath object.
+        OfficeMath officeMath = eqField.AsOfficeMath();
 
-        // Convert the EQ field to a real OfficeMath node.
-        OfficeMath officeMath = fieldEq.AsOfficeMath();
         if (officeMath == null)
-            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
 
-        // Insert the OfficeMath node before the field start node.
-        Node fieldStart = field.Start;
-        fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
+        // Insert the OfficeMath node before the field start and remove the original field.
+        eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
+        eqField.Remove();
 
-        // Remove the original EQ field, leaving only the real OfficeMath node.
-        field.Remove();
+        // Set display formatting for the top‑level equation.
+        officeMath.DisplayType = OfficeMathDisplayType.Display;
+        officeMath.Justification = OfficeMathJustification.Left;
 
         // Save the document.
-        string outputPath = "Result.docx";
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "OfficeMathFromMathML.docx");
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
             throw new FileNotFoundException("The output document was not created.", outputPath);
+    }
 
-        // Validate that the document contains at least one top‑level OfficeMath node.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        if (mathNodes.Count == 0)
-            throw new InvalidOperationException("No OfficeMath nodes were found in the saved document.");
+    // Helper that follows the deterministic EQ‑field bootstrap pattern.
+    private static FieldEQ InsertFieldEQ(DocumentBuilder builder, string args)
+    {
+        // Insert an empty EQ field.
+        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Output a simple confirmation to the console.
-        Console.WriteLine($"Document saved to '{Path.GetFullPath(outputPath)}' with {mathNodes.Count} OfficeMath node(s).");
+        // Move to the field separator and write the EQ argument string.
+        builder.MoveTo(field.Separator);
+        builder.Write(args);
+
+        // Return the builder to the field's paragraph and start a new paragraph for subsequent content.
+        builder.MoveTo(field.Start.ParentNode);
+        builder.InsertParagraph();
+
+        return field;
     }
 }

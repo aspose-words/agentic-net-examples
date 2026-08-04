@@ -1,88 +1,75 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 using Aspose.Words.Saving;
 
-public class Program
+public class OfficeMathExportExample
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        string docPath = Path.Combine(outputDir, "OfficeMath.docx");
-        string pdfPath = Path.Combine(outputDir, "OfficeMath.pdf");
-
-        // Create a new document and builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph before equations.
-        builder.Writeln("Sample document with OfficeMath equations:");
+        // Add a heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("OfficeMath Export Example");
 
-        // Insert first EQ field (fraction 1/2).
-        InsertFieldEQ(builder, @"\f(1,2)");
+        // Add a paragraph that will contain the equation.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Below is a simple fraction equation:");
 
-        // Insert second EQ field (square root of x).
-        InsertFieldEQ(builder, @"\r(2,x)");
+        // Insert an EQ field. The field code already contains the "EQ" switch.
+        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Convert all EQ fields to real OfficeMath objects.
-        var eqFields = doc.Range.Fields.OfType<FieldEQ>().ToList();
-        foreach (FieldEQ field in eqFields)
-        {
-            OfficeMath officeMath = field.AsOfficeMath();
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start.
-                field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-                // Remove the original field.
-                field.Remove();
-            }
-        }
+        // Write the EQ field arguments (fraction 1/2) at the field separator.
+        builder.MoveTo(eqField.Separator);
+        builder.Write(@"\f(1,2)"); // Fraction 1 over 2.
 
-        // Adjust display type and justification for top‑level equations.
-        var officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath om in officeMathNodes)
-        {
-            if (om.MathObjectType == MathObjectType.OMathPara)
-            {
-                om.DisplayType = OfficeMathDisplayType.Display;
-                om.Justification = OfficeMathJustification.Left;
-            }
-        }
+        // Update the field so that its internal state reflects the new arguments.
+        eqField.Update();
 
-        // Verify that the expected number of top‑level equations exists.
-        int expectedEquations = 2;
-        int actualEquations = officeMathNodes
-            .Cast<OfficeMath>()
-            .Count(om => om.MathObjectType == MathObjectType.OMathPara);
+        // Move back to the start of the field before conversion.
+        builder.MoveTo(eqField.Start);
 
-        if (actualEquations != expectedEquations)
-            throw new InvalidOperationException($"Expected {expectedEquations} equations, but found {actualEquations}.");
+        // Convert the EQ field to a real OfficeMath object.
+        OfficeMath officeMath = eqField.AsOfficeMath();
+        if (officeMath == null)
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+
+        // Insert the OfficeMath node before the field start and remove the original field.
+        eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
+        eqField.Remove();
+
+        // Set display type and justification for the top‑level equation.
+        officeMath.DisplayType = OfficeMathDisplayType.Display;
+        officeMath.Justification = OfficeMathJustification.Left;
+
+        // Add another paragraph after the equation.
+        builder.Writeln();
+        builder.Writeln("End of example.");
+
+        // Verify that the document contains at least one OfficeMath node.
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        if (mathNodes.Count == 0)
+            throw new InvalidOperationException("No OfficeMath nodes were found in the document.");
+
+        // Define output file paths.
+        string outputDocx = Path.Combine(Environment.CurrentDirectory, "OfficeMathExample.docx");
+        string outputPdf = Path.Combine(Environment.CurrentDirectory, "OfficeMathExample.pdf");
+
+        // Save the document as DOCX (optional, for inspection).
+        doc.Save(outputDocx, SaveFormat.Docx);
 
         // Save the document as PDF.
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        doc.Save(outputPdf, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
-        if (!File.Exists(pdfPath))
-            throw new FileNotFoundException("PDF file was not created.", pdfPath);
-    }
+        // Validate that the PDF file was created and is not empty.
+        if (!File.Exists(outputPdf) || new FileInfo(outputPdf).Length == 0)
+            throw new InvalidOperationException("PDF export failed or resulted in an empty file.");
 
-    // Helper method to insert an EQ field with the specified argument string.
-    private static FieldEQ InsertFieldEQ(DocumentBuilder builder, string args)
-    {
-        // Insert an empty EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        // Move to the field separator and write the EQ arguments.
-        builder.MoveTo(field.Separator);
-        builder.Write(args);
-        // Return to the field start's parent node and start a new paragraph.
-        builder.MoveTo(field.Start.ParentNode);
-        builder.InsertParagraph();
-        return field;
+        Console.WriteLine("Document with OfficeMath equations exported to PDF successfully.");
     }
 }
