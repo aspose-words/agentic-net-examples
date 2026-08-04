@@ -3,58 +3,61 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class Program
+public class ComparisonExample
 {
     public static void Main()
     {
-        // Create the original documentation file.
+        // Prepare a temporary folder for the example files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonExample");
+        Directory.CreateDirectory(workDir);
+
+        // Create the original documentation file with extra whitespace.
         Document originalDoc = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(originalDoc);
         builderOriginal.Writeln("public class Sample");
         builderOriginal.Writeln("{");
-        builderOriginal.Writeln("    // This method adds two numbers");
-        builderOriginal.Writeln("    public int Add(int a, int b)");
+        builderOriginal.Writeln("    // This method does something");
+        builderOriginal.Writeln("    public void DoWork( )   ");
         builderOriginal.Writeln("    {");
-        builderOriginal.Writeln("        return a + b;");
+        builderOriginal.Writeln("        // TODO: implement");
         builderOriginal.Writeln("    }");
         builderOriginal.Writeln("}");
+        string originalPath = Path.Combine(workDir, "Original.docx");
+        originalDoc.Save(originalPath);
 
-        // Create the revised documentation file with different whitespace.
+        // Create the revised documentation file with trimmed whitespace.
         Document revisedDoc = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revisedDoc);
         builderRevised.Writeln("public class Sample");
         builderRevised.Writeln("{");
-        builderRevised.Writeln("");
-        builderRevised.Writeln("    // This method adds two numbers");
-        builderRevised.Writeln("    public int Add( int a , int b )");
-        builderRevised.Writeln("    {");
-        builderRevised.Writeln("        return a + b ;");
-        builderRevised.Writeln("    }");
+        builderRevised.Writeln("// This method does something");
+        builderRevised.Writeln("public void DoWork()");
+        builderRevised.Writeln("{");
+        builderRevised.Writeln("// TODO: implement");
         builderRevised.Writeln("}");
+        builderRevised.Writeln("}");
+        string revisedPath = Path.Combine(workDir, "Revised.docx");
+        revisedDoc.Save(revisedPath);
 
-        // Configure comparison options to ignore formatting (including whitespace changes).
-        CompareOptions compareOptions = new CompareOptions
+        // Load the documents back (simulating real file usage).
+        Document doc1 = new Document(originalPath);
+        Document doc2 = new Document(revisedPath);
+
+        // Configure compare options to ignore whitespace/formatting changes.
+        CompareOptions options = new CompareOptions
         {
-            IgnoreFormatting = true,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-            CompareMoves = false,
-            Target = ComparisonTargetType.New
+            IgnoreFormatting = true
         };
 
         // Perform the comparison.
-        originalDoc.Compare(revisedDoc, "DocComparer", DateTime.Now, compareOptions);
+        doc1.Compare(doc2, "Comparer", DateTime.Now, options);
+
+        // Verify that whitespace changes were ignored (no revisions expected).
+        int revisionCount = doc1.Revisions.Count;
+        Console.WriteLine($"Revisions count after comparison (ignoring whitespace): {revisionCount}");
 
         // Save the comparison result.
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
-        originalDoc.Save(resultPath);
-
-        // Output the number of revisions detected (should be zero when whitespace is ignored).
-        Console.WriteLine($"Revisions count after ignoring whitespace: {originalDoc.Revisions.Count}");
+        string resultPath = Path.Combine(workDir, "ComparisonResult.docx");
+        doc1.Save(resultPath);
     }
 }

@@ -1,6 +1,6 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class Program
 {
@@ -9,24 +9,26 @@ public class Program
         // Create the original document.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");                     // Line that will be changed.
-        builderOriginal.Writeln("This line will stay the same.");   // Unchanged line.
+        builderOriginal.Writeln("Hello world.");
 
-        // Create the revised document with intentional differences.
+        // Create the revised document with a deliberate change.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello revised world.");             // Modified line.
-        builderRevised.Writeln("This line will stay the same.");   // Same as original.
-        builderRevised.Writeln("An extra line added.");            // New line.
+        builderRevised.Writeln("Hello revised world.");
 
-        // Compare the documents. Revisions are added to the original document.
-        original.Compare(revised, "Comparer", DateTime.Now);
+        // Perform the comparison. The original document will now contain revision metadata.
+        original.Compare(revised, "John Doe", DateTime.Now);
 
-        // Ensure that at least one revision was generated.
+        // Verify that at least one revision was generated.
         if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after comparison.");
+        {
+            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
+        }
 
-        // Save the compared document as DOCX, preserving all revision metadata.
-        original.Save("ComparedDocument.docx");
+        // Define the output path in the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparedDocument.docx");
+
+        // Save the compared document preserving all revision information.
+        original.Save(outputPath);
     }
 }

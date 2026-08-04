@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -10,23 +9,27 @@ public class Program
         Document doc1 = new Document();
         DocumentBuilder builder1 = new DocumentBuilder(doc1);
         builder1.Writeln("This is a sample paragraph for comparison.");
-        builder1.Writeln("Another line with the same text.");
 
-        // Create the second document with identical content.
+        // Create the second document with exactly the same content.
         Document doc2 = new Document();
         DocumentBuilder builder2 = new DocumentBuilder(doc2);
         builder2.Writeln("This is a sample paragraph for comparison.");
-        builder2.Writeln("Another line with the same text.");
 
-        // Perform the comparison. No revisions should be generated because the documents are identical.
-        doc1.Compare(doc2, "Comparer", DateTime.Now);
+        // Ensure both documents have no revisions before comparison.
+        if (doc1.Revisions.Count != 0 || doc2.Revisions.Count != 0)
+            throw new InvalidOperationException("Documents should not contain revisions before comparison.");
 
-        // Verify that the revisions count is zero, indicating identical documents.
+        // Compare the two identical documents.
+        doc1.Compare(doc2, "Author", DateTime.Now);
+
+        // Verify that the comparison produced zero revisions, meaning the documents are identical.
         if (doc1.Revisions.Count != 0)
-            throw new InvalidOperationException("Documents differ: revisions were detected.");
+            throw new InvalidOperationException("Expected zero revisions after comparing identical documents.");
 
-        // Save the (unchanged) document to demonstrate that an output artifact is produced.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "IdenticalComparisonResult.docx");
-        doc1.Save(outputPath);
+        // Save the result (optional, demonstrates that the API works end‑to‑end).
+        doc1.Save("identical_compare.docx");
+
+        // Inform the user that the documents are identical.
+        Console.WriteLine("Documents are identical; no revisions were created.");
     }
 }

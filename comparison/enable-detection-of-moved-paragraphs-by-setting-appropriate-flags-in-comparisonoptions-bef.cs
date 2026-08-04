@@ -7,59 +7,54 @@ public class DetectMovedParagraphs
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create the original document with three paragraphs.
+        // Create the original document with two paragraphs.
         Document original = new Document();
         DocumentBuilder builder = new DocumentBuilder(original);
-        builder.Writeln("Paragraph 1.");
-        builder.Writeln("Paragraph 2."); // This paragraph will be moved.
-        builder.Writeln("Paragraph 3.");
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph.");
 
-        // Clone the original to create the revised version.
+        // Clone the original to create the revised document.
         Document revised = (Document)original.Clone(true);
 
-        // Move the second paragraph to the end (after paragraph 3).
-        Paragraph paragraphToMove = revised.FirstSection.Body.Paragraphs[1]; // Index 1 = "Paragraph 2."
-        Node referenceNode = revised.FirstSection.Body.Paragraphs[2]; // "Paragraph 3."
-        revised.FirstSection.Body.InsertAfter(paragraphToMove, referenceNode);
+        // Move the second paragraph before the first paragraph in the revised document.
+        // This will generate a move revision when compared with CompareMoves enabled.
+        Node firstParagraph = revised.FirstSection.Body.Paragraphs[0];
+        Node secondParagraph = revised.FirstSection.Body.Paragraphs[1];
+        revised.FirstSection.Body.InsertBefore(secondParagraph, firstParagraph);
 
-        // Configure comparison options to detect moved paragraphs.
+        // Set comparison options to detect moved paragraphs.
         CompareOptions compareOptions = new CompareOptions
         {
-            CompareMoves = true,                     // Enable move detection.
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-            Target = ComparisonTargetType.New      // Use the revised document as the target.
+            CompareMoves = true,               // Enable move detection.
+            Target = ComparisonTargetType.New // Use the revised document as the target.
         };
 
         // Perform the comparison.
         original.Compare(revised, "DemoAuthor", DateTime.Now, compareOptions);
 
         // Save the comparison result.
-        string resultPath = Path.Combine(outputDir, "ComparisonResult.docx");
-        original.Save(resultPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MovedParagraphs.docx");
+        original.Save(outputPath);
 
-        // Inspect revisions to find moved paragraphs.
-        int moveFromCount = 0;
-        int moveToCount = 0;
-        foreach (Paragraph para in original.FirstSection.Body.Paragraphs)
+        // Count and display move revisions.
+        int moveRevisions = 0;
+        foreach (Revision rev in original.Revisions)
         {
-            if (para.IsMoveFromRevision) moveFromCount++;
-            if (para.IsMoveToRevision) moveToCount++;
+            if (rev.RevisionType == RevisionType.Moving)
+                moveRevisions++;
         }
 
-        // Output detection summary.
-        Console.WriteLine($"Moved paragraph 'from' revisions detected: {moveFromCount}");
-        Console.WriteLine($"Moved paragraph 'to' revisions detected: {moveToCount}");
-        Console.WriteLine($"Comparison result saved to: {resultPath}");
+        Console.WriteLine($"Total move revisions detected: {moveRevisions}");
+
+        // Identify which paragraphs are part of a move revision.
+        ParagraphCollection paragraphs = original.FirstSection.Body.Paragraphs;
+        for (int i = 0; i < paragraphs.Count; i++)
+        {
+            Paragraph para = paragraphs[i];
+            if (para.IsMoveFromRevision)
+                Console.WriteLine($"Paragraph {i + 1} is a 'Move From' revision: \"{para.GetText().Trim()}\"");
+            else if (para.IsMoveToRevision)
+                Console.WriteLine($"Paragraph {i + 1} is a 'Move To' revision: \"{para.GetText().Trim()}\"");
+        }
     }
 }

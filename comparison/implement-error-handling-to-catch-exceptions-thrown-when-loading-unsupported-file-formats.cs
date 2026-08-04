@@ -7,74 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for all generated files.
+        // Prepare a folder for all generated files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // -------------------------
-        // 1. Create two sample DOCX files with a real difference.
-        // -------------------------
-        Document doc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(doc1);
-        builder1.Writeln("Original content.");
-        string doc1Path = Path.Combine(artifactsDir, "doc1.docx");
-        doc1.Save(doc1Path);
+        // Create the original document.
+        Document originalDoc = new Document();
+        DocumentBuilder builderOriginal = new DocumentBuilder(originalDoc);
+        builderOriginal.Writeln("Original content.");
+        string originalPath = Path.Combine(artifactsDir, "original.docx");
+        originalDoc.Save(originalPath);
 
-        Document doc2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(doc2);
-        builder2.Writeln("Revised content.");
-        string doc2Path = Path.Combine(artifactsDir, "doc2.docx");
-        doc2.Save(doc2Path);
+        // Create the revised document with a deliberate difference.
+        Document revisedDoc = new Document();
+        DocumentBuilder builderRevised = new DocumentBuilder(revisedDoc);
+        builderRevised.Writeln("Revised content.");
+        string revisedPath = Path.Combine(artifactsDir, "revised.docx");
+        revisedDoc.Save(revisedPath);
 
-        // -------------------------
-        // 2. Create a dummy file with an unsupported format (plain text).
-        // -------------------------
-        string unsupportedPath = Path.Combine(artifactsDir, "unsupported.txt");
-        File.WriteAllText(unsupportedPath, "Just some text.");
+        // Create a file that Aspose.Words cannot recognise as a supported format.
+        string unsupportedPath = Path.Combine(artifactsDir, "unsupported.bin");
+        File.WriteAllBytes(unsupportedPath, new byte[] { 0x00, 0x01, 0x02, 0x03 });
 
-        // -------------------------
-        // 3. Attempt to load the unsupported file and handle the exception.
-        // -------------------------
+        // Attempt to load the unsupported file and handle the expected exception.
         try
         {
-            // This line throws UnsupportedFileFormatException because .txt is not a Word format.
+            // This constructor call should throw UnsupportedFileFormatException.
             Document unsupportedDoc = new Document(unsupportedPath);
-
-            // If, for any reason, loading succeeded, try a comparison (won't be reached).
-            doc1.Compare(unsupportedDoc, "Author", DateTime.Now);
         }
         catch (UnsupportedFileFormatException ex)
         {
-            Console.WriteLine($"Caught UnsupportedFileFormatException: {ex.Message}");
+            // Log the exception message – the program continues after handling.
+            Console.WriteLine($"Caught unsupported format exception: {ex.Message}");
         }
-        catch (Exception ex)
+
+        // Load the valid documents for comparison.
+        Document original = new Document(originalPath);
+        Document revised = new Document(revisedPath);
+
+        // Perform the comparison; revisions will be added to the original document.
+        original.Compare(revised, "DemoAuthor", DateTime.Now);
+
+        // Verify that at least one revision was produced.
+        if (original.Revisions.Count == 0)
         {
-            // Catch any other unexpected exceptions.
-            Console.WriteLine($"Caught unexpected exception: {ex.Message}");
+            throw new InvalidOperationException("Expected revisions after comparison.");
         }
 
-        // -------------------------
-        // 4. Load the supported documents and perform a normal comparison.
-        // -------------------------
-        Document loadedDoc1 = new Document(doc1Path);
-        Document loadedDoc2 = new Document(doc2Path);
-
-        loadedDoc1.Compare(loadedDoc2, "Comparer", DateTime.Now);
-
-        // Verify that revisions were created.
-        if (loadedDoc1.Revisions.Count > 0)
-        {
-            Console.WriteLine($"Comparison produced {loadedDoc1.Revisions.Count} revision(s).");
-        }
-        else
-        {
-            Console.WriteLine("No revisions were produced by the comparison.");
-        }
-
-        // -------------------------
-        // 5. Save the comparison result.
-        // -------------------------
+        // Save the comparison result.
         string resultPath = Path.Combine(artifactsDir, "comparisonResult.docx");
-        loadedDoc1.Save(resultPath);
+        original.Save(resultPath);
     }
 }

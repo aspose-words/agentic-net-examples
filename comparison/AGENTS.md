@@ -77,7 +77,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Configure ComparisonOptions to ignore whitespace changes when comparing source code documentation files.
   - Workflow: native-comparison-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `enable-detection-of-moved-paragraphs-by-setting-appropriate-flags-in-comparisonoptions-bef.cs`
   - Task: Enable detection of moved paragraphs by setting appropriate flags in ComparisonOptions before comparison.
   - Workflow: native-comparison-api
@@ -112,7 +112,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Compare documents containing embedded charts and ensure that chart data changes are captured as revisions.
   - Workflow: revision-processing
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `compare-a-document-against-itself-to-confirm-that-no-revisions-are-generated.cs`
   - Task: Compare a document against itself to confirm that no revisions are generated.
   - Workflow: revision-processing
@@ -214,7 +214,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -228,7 +228,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project
