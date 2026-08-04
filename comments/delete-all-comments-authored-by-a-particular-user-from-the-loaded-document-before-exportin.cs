@@ -2,60 +2,74 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class Program
+public class DeleteCommentsByAuthor
 {
     public static void Main()
     {
-        // Define file names for the sample and the result.
-        string originalPath = "original.docx";
-        string resultPath = "result.docx";
+        // Define the author whose comments will be removed.
+        const string targetAuthor = "John Doe";
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a sample document with comments from different authors.
-        // -----------------------------------------------------------------
+        // Create a sample document with comments from different authors.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph with a comment from Alice.
-        builder.Writeln("First paragraph.");
-        Comment aliceComment = new Comment(doc, "Alice", "A", DateTime.Now);
-        aliceComment.SetText("Comment authored by Alice.");
-        // Append the comment to the current paragraph.
-        builder.CurrentParagraph.AppendChild(aliceComment);
+        // First paragraph.
+        builder.Writeln("This is the first paragraph.");
 
-        // Second paragraph with a comment from Bob.
-        builder.Writeln("Second paragraph.");
-        Comment bobComment = new Comment(doc, "Bob", "B", DateTime.Now);
-        bobComment.SetText("Comment authored by Bob.");
-        builder.CurrentParagraph.AppendChild(bobComment);
+        // Add a comment authored by John Doe.
+        AddComment(builder.CurrentParagraph, doc, "John Doe", "JD", "Comment from John.");
 
-        // Save the sample document.
+        // Add a second paragraph.
+        builder.Writeln("This is the second paragraph.");
+
+        // Add a comment authored by Jane Smith.
+        AddComment(builder.CurrentParagraph, doc, "Jane Smith", "JS", "Comment from Jane.");
+
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the original document.
+        string originalPath = Path.Combine(outputDir, "original.docx");
         doc.Save(originalPath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the document and delete all comments authored by Alice.
-        // -----------------------------------------------------------------
+        // Load the document (simulating a separate processing step).
         Document loadedDoc = new Document(originalPath);
-        string targetAuthor = "Alice";
 
-        // Enumerate all comment nodes, filter by author, and collect to a list to avoid
-        // modifying the collection while iterating.
-        var commentsToDelete = loadedDoc
-            .GetChildNodes(NodeType.Comment, true)
-            .OfType<Comment>()
-            .Where(c => string.Equals(c.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        // Find all comments authored by the target author.
+        var commentsToRemove = loadedDoc.GetChildNodes(NodeType.Comment, true)
+                                        .OfType<Comment>()
+                                        .Where(c => string.Equals(c.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
+                                        .ToList();
 
-        // Remove each matching comment from the document.
-        foreach (Comment comment in commentsToDelete)
+        // Remove each matching comment.
+        foreach (Comment comment in commentsToRemove)
         {
             comment.Remove();
         }
 
-        // -----------------------------------------------------------------
-        // Step 3: Save the modified document.
-        // -----------------------------------------------------------------
-        loadedDoc.Save(resultPath);
+        // Save the cleaned document.
+        string cleanedPath = Path.Combine(outputDir, "cleaned.docx");
+        loadedDoc.Save(cleanedPath);
+    }
+
+    // Helper method to add a comment anchored to a paragraph.
+    private static void AddComment(Paragraph paragraph, Document doc, string author, string initial, string commentText)
+    {
+        // Create a new comment.
+        Comment comment = new Comment(doc, author, initial, DateTime.Now);
+        comment.SetText(commentText);
+
+        // Insert the comment range start, the commented text, the range end, and the comment node.
+        CommentRangeStart rangeStart = new CommentRangeStart(doc, comment.Id);
+        CommentRangeEnd rangeEnd = new CommentRangeEnd(doc, comment.Id);
+        Run commentedRun = new Run(doc, "Commented text.");
+
+        paragraph.AppendChild(rangeStart);
+        paragraph.AppendChild(commentedRun);
+        paragraph.AppendChild(rangeEnd);
+        paragraph.AppendChild(comment);
     }
 }

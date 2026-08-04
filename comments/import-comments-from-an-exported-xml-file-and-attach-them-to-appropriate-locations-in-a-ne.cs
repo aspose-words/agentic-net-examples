@@ -3,112 +3,97 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Aspose.Words;
-using Aspose.Words.Tables;
+
+#nullable enable
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // 1. Create a sample XML file that contains exported comment data.
+        const string xmlFileName = "comments.xml";
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample XML file that represents exported comments.
-        // -----------------------------------------------------------------
-        string xmlContent =
+        var xmlContent =
 @"<Comments>
     <Comment>
-        <Author>Alice</Author>
-        <Initial>AL</Initial>
-        <DateTime>2023-01-15T10:30:00</DateTime>
-        <Text>This is a comment for the first paragraph.</Text>
         <ParagraphIndex>0</ParagraphIndex>
+        <Author>John Doe</Author>
+        <Initial>JD</Initial>
+        <Date>2023-01-01T10:00:00</Date>
+        <Text>This is a comment for the first paragraph.</Text>
     </Comment>
     <Comment>
-        <Author>Bob</Author>
-        <Initial>BO</Initial>
-        <DateTime>2023-01-16T14:45:00</DateTime>
-        <Text>Second paragraph needs review.</Text>
-        <ParagraphIndex>1</ParagraphIndex>
-    </Comment>
-    <Comment>
-        <Author>Charlie</Author>
-        <Initial>CH</Initial>
-        <DateTime>2023-01-17T09:15:00</DateTime>
-        <Text>Final thoughts here.</Text>
         <ParagraphIndex>2</ParagraphIndex>
+        <Author>Jane Smith</Author>
+        <Initial>JS</Initial>
+        <Date>2023-02-15T14:30:00</Date>
+        <Text>Second comment, attached to the third paragraph.</Text>
     </Comment>
 </Comments>";
-        string xmlPath = Path.Combine(outputDir, "comments.xml");
-        File.WriteAllText(xmlPath, xmlContent);
 
-        // -----------------------------------------------------------------
-        // 2. Load the XML file.
-        // -----------------------------------------------------------------
-        XDocument xDoc = XDocument.Load(xmlPath);
+        File.WriteAllText(xmlFileName, xmlContent);
 
-        // -----------------------------------------------------------------
-        // 3. Create a new Word document with three paragraphs.
-        // -----------------------------------------------------------------
+        // 2. Load the XML file and parse comment information.
+        XDocument xDoc = XDocument.Load(xmlFileName);
+        var commentElements = xDoc.Root?.Elements("Comment") ?? Enumerable.Empty<XElement>();
+
+        // 3. Create a new Word document with a few paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Paragraph 1: Introduction.");
-        builder.Writeln("Paragraph 2: Body content.");
-        builder.Writeln("Paragraph 3: Conclusion.");
+        builder.Writeln("Paragraph 1: Lorem ipsum dolor sit amet.");
+        builder.Writeln("Paragraph 2: Consectetur adipiscing elit.");
+        builder.Writeln("Paragraph 3: Sed do eiusmod tempor incididunt.");
 
-        // Retrieve all paragraphs in the document (in document order).
-        var paragraphs = doc.GetChildNodes(NodeType.Paragraph, true)
-                            .OfType<Paragraph>()
-                            .ToList();
-
-        // -----------------------------------------------------------------
-        // 4. Import comments from XML and attach them to the appropriate paragraph.
-        // -----------------------------------------------------------------
-        foreach (XElement commentElement in xDoc.Root.Elements("Comment"))
+        // 4. Attach comments from the XML to the appropriate paragraphs.
+        foreach (var elem in commentElements)
         {
-            // Extract comment data safely.
-            string author = (string?)commentElement.Element("Author") ?? "Unknown";
-            string initial = (string?)commentElement.Element("Initial") ?? "";
-            string text = (string?)commentElement.Element("Text") ?? "";
-            string dateTimeStr = (string?)commentElement.Element("DateTime") ?? "";
-            string paraIdxStr = (string?)commentElement.Element("ParagraphIndex") ?? "0";
+            // Parse required fields with safety checks.
+            int? paragraphIndex = (int?)elem.Element("ParagraphIndex");
+            string? author = (string?)elem.Element("Author");
+            string? initial = (string?)elem.Element("Initial");
+            string? dateString = (string?)elem.Element("Date");
+            string? text = (string?)elem.Element("Text");
 
-            // Parse DateTime; fallback to DateTime.Now if parsing fails.
-            DateTime dateTime = DateTime.TryParse(dateTimeStr, out DateTime dt) ? dt : DateTime.Now;
+            // Validate mandatory data.
+            if (paragraphIndex == null || author == null || initial == null || dateString == null || text == null)
+                continue; // Skip malformed entries.
 
-            // Parse paragraph index; ensure it is within range.
-            int paraIdx = int.TryParse(paraIdxStr, out int idx) ? idx : 0;
-            if (paraIdx < 0 || paraIdx >= paragraphs.Count)
-                continue; // Skip invalid indices.
+            // Ensure the paragraph index is within the document range.
+            ParagraphCollection? paragraphs = doc.FirstSection?.Body?.Paragraphs;
+            if (paragraphs == null || paragraphIndex.Value < 0 || paragraphIndex.Value >= paragraphs.Count)
+                continue; // No such paragraph; skip.
 
-            Paragraph targetParagraph = paragraphs[paraIdx];
+            Paragraph targetParagraph = paragraphs[paragraphIndex.Value];
 
-            // Create a new comment and set its properties.
-            Comment comment = new Comment(doc, author, initial, dateTime);
+            // Parse the date.
+            if (!DateTime.TryParse(dateString, out DateTime commentDate))
+                commentDate = DateTime.Now;
+
+            // Create the comment node with metadata.
+            Comment comment = new Comment(doc, author, initial, commentDate);
             comment.SetText(text);
 
-            // Attach the comment to the target paragraph.
+            // Append the comment to the target paragraph.
             targetParagraph.AppendChild(comment);
         }
 
-        // -----------------------------------------------------------------
         // 5. Save the resulting document.
-        // -----------------------------------------------------------------
-        string resultPath = Path.Combine(outputDir, "DocumentWithComments.docx");
-        doc.Save(resultPath);
+        const string outputDoc = "DocumentWithComments.docx";
+        doc.Save(outputDoc);
 
-        // -----------------------------------------------------------------
-        // 6. Optional: Enumerate and display the imported comments.
-        // -----------------------------------------------------------------
-        var importedComments = doc.GetChildNodes(NodeType.Comment, true)
-                                 .OfType<Comment>()
-                                 .ToList();
+        // 6. Enumerate and display comment information to the console.
+        var comments = doc.GetChildNodes(NodeType.Comment, true)
+                          .OfType<Comment>()
+                          .ToList();
 
-        foreach (Comment c in importedComments)
+        foreach (Comment c in comments)
         {
             Console.WriteLine($"Author: {c.Author}, Date: {c.DateTime:u}, Text: {c.GetText().Trim()}");
         }
+
+        // Clean up the temporary XML file (optional).
+        if (File.Exists(xmlFileName))
+            File.Delete(xmlFileName);
     }
 }

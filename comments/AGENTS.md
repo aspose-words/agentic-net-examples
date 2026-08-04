@@ -95,12 +95,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract comment metadata-author, date, and text-and write it to a JSON file.
   - Workflow: export-report
   - Outputs: docx, json
-  - Selected engine: mcp
+  - Selected engine: llm
 - `search-comments-containing-a-specific-keyword-and-highlight-the-corresponding-text-range-i.cs`
   - Task: Search comments containing a specific keyword and highlight the corresponding text range in the document.
   - Workflow: native-comment-api
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `load-multiple-word-documents-from-a-folder-aggregate-their-comments-and-generate-a-summary.cs`
   - Task: Load multiple Word documents from a folder, aggregate their comments, and generate a summary report.
   - Workflow: export-report
@@ -140,7 +140,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that comment reference IDs update correctly after inserting new paragraphs into the document.
   - Workflow: native-comment-api
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `synchronize-comment-positions-after-document-sections-are-reordered-to-maintain-accurate-c.cs`
   - Task: Synchronize comment positions after document sections are reordered to maintain accurate comment anchoring.
   - Workflow: native-comment-api
@@ -217,7 +217,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -231,7 +231,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

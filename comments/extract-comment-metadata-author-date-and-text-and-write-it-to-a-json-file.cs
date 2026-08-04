@@ -4,73 +4,70 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a couple of comments.
+        // Create a sample document with comments.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph and its comment.
+        // First paragraph.
         builder.Writeln("First paragraph.");
-        Paragraph firstPara = doc.FirstSection.Body.FirstParagraph;
-        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now.AddDays(-1));
-        comment1.SetText("Review this paragraph.");
-        firstPara.AppendChild(new CommentRangeStart(doc, comment1.Id));
-        firstPara.AppendChild(new Run(doc, "Commented text."));
-        firstPara.AppendChild(new CommentRangeEnd(doc, comment1.Id));
-        firstPara.AppendChild(comment1);
 
-        // Second paragraph and its comment.
+        // Comment for the first paragraph.
+        Comment comment1 = new Comment(doc)
+        {
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now.AddDays(-1)
+        };
+        Paragraph commentPara1 = new Paragraph(doc);
+        commentPara1.AppendChild(new Run(doc, "Please review this paragraph."));
+        comment1.AppendChild(commentPara1);
+        doc.FirstSection.Body.FirstParagraph?.AppendChild(comment1);
+
+        // Second paragraph.
         builder.Writeln("Second paragraph.");
-        Paragraph secondPara = doc.FirstSection.Body.LastParagraph;
-        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
-        comment2.SetText("Check spelling.");
-        secondPara.AppendChild(new CommentRangeStart(doc, comment2.Id));
-        secondPara.AppendChild(new Run(doc, "Another commented text."));
-        secondPara.AppendChild(new CommentRangeEnd(doc, comment2.Id));
-        secondPara.AppendChild(comment2);
 
-        // Save the sample document (optional, for verification).
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.docx");
-        doc.Save(docPath);
+        // Comment for the second paragraph.
+        Comment comment2 = new Comment(doc)
+        {
+            Author = "Bob",
+            Initial = "B",
+            DateTime = DateTime.Now
+        };
+        Paragraph commentPara2 = new Paragraph(doc);
+        commentPara2.AppendChild(new Run(doc, "Check the data here."));
+        comment2.AppendChild(commentPara2);
+        Paragraph? secondParagraph = doc.FirstSection.Body.LastParagraph;
+        secondParagraph?.AppendChild(comment2);
+
+        // Save the sample document (optional, just for reference).
+        doc.Save("sample.docx");
 
         // Extract comment metadata.
-        List<CommentInfo> commentInfos = doc
-            .GetChildNodes(NodeType.Comment, true)
+        List<Comment> commentNodes = doc.GetChildNodes(NodeType.Comment, true)
             .OfType<Comment>()
-            .Select(c => new CommentInfo
-            {
-                Author = c.Author,
-                Date = c.DateTime,
-                Text = c.GetText().Trim()
-            })
             .ToList();
 
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Serialize to JSON with indentation.
-        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+        List<CommentInfo> commentInfos = new List<CommentInfo>();
+        foreach (Comment c in commentNodes)
         {
-            WriteIndented = true
-        };
+            string author = c.Author ?? string.Empty;
+            string date = c.DateTime.ToString("o");
+            string text = c.GetText()?.Trim() ?? string.Empty;
+            commentInfos.Add(new CommentInfo(author, date, text));
+        }
+
+        // Serialize metadata to JSON.
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions { WriteIndented = true };
         string json = JsonSerializer.Serialize(commentInfos, jsonOptions);
 
         // Write JSON to file.
-        string jsonPath = Path.Combine(outputDir, "comments.json");
-        File.WriteAllText(jsonPath, json);
+        File.WriteAllText("comments.json", json);
     }
 
-    // Simple DTO for JSON serialization.
-    private class CommentInfo
-    {
-        public string Author { get; set; } = string.Empty;
-        public DateTime Date { get; set; }
-        public string Text { get; set; } = string.Empty;
-    }
+    private record CommentInfo(string Author, string DateTime, string Text);
 }

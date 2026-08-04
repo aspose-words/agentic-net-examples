@@ -1,8 +1,9 @@
 using System;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 
-public class CommentReplyExample
+public class Program
 {
     public static void Main()
     {
@@ -10,7 +11,7 @@ public class CommentReplyExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will hold the comment.
+        // Add a paragraph that will host the comment.
         builder.Writeln("This is a paragraph that will have a comment.");
 
         // Create a top‑level comment.
@@ -21,21 +22,22 @@ public class CommentReplyExample
         builder.CurrentParagraph.AppendChild(topComment);
 
         // Add a reply to the top‑level comment.
-        topComment.AddReply("Bob", "B", DateTime.Now, "Reviewed, looks good.");
+        topComment.AddReply("Bob", "B", DateTime.Now, "I have reviewed it, looks good.");
 
-        // Enumerate all comments (including replies) to demonstrate nesting.
-        var allComments = doc.GetChildNodes(NodeType.Comment, true)
-                             .OfType<Comment>()
-                             .ToList();
+        // Enumerate all comments to demonstrate the nesting (reply appears under its parent).
+        var comments = doc.GetChildNodes(NodeType.Comment, true)
+                          .OfType<Comment>()
+                          .ToList();
 
-        Console.WriteLine($"Total comment nodes (including replies): {allComments.Count}");
-        foreach (Comment c in allComments)
+        foreach (Comment c in comments)
         {
-            string level = c.Ancestor == null ? "Top‑level" : "Reply";
-            Console.WriteLine($"{level} comment by {c.Author}: {c.GetText().Trim()}");
+            // Replies have a non‑null Ancestor; indent them for clarity.
+            string indent = c.Ancestor == null ? "" : "  ";
+            Console.WriteLine($"{indent}Comment by {c.Author}: {c.GetText().Trim()}");
         }
 
-        // Save the document to the working directory.
-        doc.Save("CommentReplyExample.docx");
+        // Save the document to the current working directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "CommentWithReply.docx");
+        doc.Save(outputPath);
     }
 }
