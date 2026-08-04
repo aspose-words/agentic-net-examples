@@ -8,7 +8,7 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare input and output folders.
+        // Prepare folders.
         string baseDir = Directory.GetCurrentDirectory();
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string outputDir = Path.Combine(baseDir, "OutputPdfs");
@@ -23,59 +23,55 @@ public class Program
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary.
+        // Register the dictionary once – it will be used for all documents.
         Hyphenation.RegisterDictionary("en-US", dictPath);
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-            throw new InvalidOperationException("Failed to register hyphenation dictionary.");
 
         // Create sample source documents.
-        CreateSampleDocument(Path.Combine(inputDir, "sample1.docx"));
-        CreateSampleDocument(Path.Combine(inputDir, "sample2.docx"));
+        CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"),
+            "extraordinarycharacteristically internationalization communication");
+        CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"),
+            "communication communication communication communication communication");
 
-        // Process each document: enable hyphenation and save as PDF.
-        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
+        // Process each document in the input folder.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            Document doc = new Document(docPath);
+            // Load the document.
+            Document doc = new Document(filePath);
 
             // Enable automatic hyphenation.
             doc.HyphenationOptions.AutoHyphenation = true;
-            // Use a valid hyphenation zone (default is 360 = 0.25 inch).
-            doc.HyphenationOptions.HyphenationZone = 360;
-            doc.HyphenationOptions.HyphenateCaps = true;
-            doc.HyphenationOptions.ConsecutiveHyphenLimit = 0; // No limit.
 
-            // Narrow page width to force line breaks where hyphenation can occur.
-            doc.FirstSection.PageSetup.PageWidth = 200;
+            // Optional: adjust page setup to increase chance of hyphenation.
+            doc.FirstSection.PageSetup.PageWidth = 200; // points
             doc.FirstSection.PageSetup.LeftMargin = 20;
             doc.FirstSection.PageSetup.RightMargin = 20;
 
-            string pdfFileName = Path.GetFileNameWithoutExtension(docPath) + ".pdf";
-            string pdfPath = Path.Combine(outputDir, pdfFileName);
-            doc.Save(pdfPath, SaveFormat.Pdf);
+            // Save as PDF.
+            string outputFile = Path.Combine(outputDir,
+                Path.GetFileNameWithoutExtension(filePath) + ".pdf");
+            doc.Save(outputFile, SaveFormat.Pdf);
 
-            if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"PDF was not created: {pdfPath}");
+            // Validate that the PDF was created.
+            if (!File.Exists(outputFile))
+                throw new InvalidOperationException($"Failed to create PDF: {outputFile}");
         }
     }
 
-    // Helper to create a simple document with long words that can be hyphenated.
-    private static void CreateSampleDocument(string filePath)
+    // Helper method to create a simple DOCX with given text.
+    private static void CreateSampleDocument(string fileName, string text)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Font.Size = 24;
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
+        // Set language to English (US) so the registered dictionary applies.
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        builder.Writeln(text);
 
-        // Use the same narrow page setup as in processing to keep layout consistent.
-        doc.FirstSection.PageSetup.PageWidth = 200;
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
+        // Save the document.
+        doc.Save(fileName, SaveFormat.Docx);
 
-        doc.Save(filePath, SaveFormat.Docx);
-
-        if (!File.Exists(filePath))
-            throw new InvalidOperationException($"Failed to create source document: {filePath}");
+        // Verify creation.
+        if (!File.Exists(fileName))
+            throw new InvalidOperationException($"Failed to create source document: {fileName}");
     }
 }

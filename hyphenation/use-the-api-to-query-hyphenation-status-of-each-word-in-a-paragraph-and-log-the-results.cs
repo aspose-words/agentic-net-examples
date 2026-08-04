@@ -1,66 +1,62 @@
 using System;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Layout;
+using Aspose.Words.Settings;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Narrow page width to force line breaks and hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 300;
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
-
-        // Write a paragraph containing long words.
-        builder.Font.Size = 12;
-        builder.Writeln("extraordinarycharacteristically internationalization communication demonstration");
-
-        // Enable automatic hyphenation.
-        doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 360;
-
-        // Create a minimal hyphenation dictionary for en-US.
-        const string dictPath = "hyph_en_US.dic";
-        File.WriteAllText(dictPath,
+        // Create a minimal hyphenation dictionary for English (US).
+        const string dictionaryPath = "hyph_en_US.dic";
+        File.WriteAllText(dictionaryPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n" +
-            "demonstration=dem-on-stra-tion\n");
+            "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary.
-        Hyphenation.RegisterDictionary("en-US", dictPath);
+        // Register the dictionary so that Aspose.Words can hyphenate words for the "en-US" locale.
+        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
-        // Save the document to trigger layout processing.
-        const string docPath = "HyphenationStatus.docx";
-        doc.Save(docPath);
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException("Document was not saved.");
+        // Verify that the dictionary was registered successfully.
+        if (!Hyphenation.IsDictionaryRegistered("en-US"))
+            throw new InvalidOperationException("Failed to register the hyphenation dictionary.");
 
-        // Load the saved document (layout is already built).
-        Document loaded = new Document(docPath);
+        // Create a new document and add a paragraph with words that can be hyphenated.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Get the first paragraph.
-        Paragraph paragraph = loaded.FirstSection.Body.FirstParagraph;
+        // Set the locale for the paragraph to English (US) and enable automatic hyphenation.
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Split the paragraph text into words (excluding whitespace and line breaks).
-        string[] words = paragraph.GetText()
-            .Split(new[] { ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        // Write sample text.
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        Console.WriteLine("Hyphenation status of words in the paragraph:");
+        // Save the document (required by the lifecycle rules).
+        const string outputPath = "HyphenationStatus.docx";
+        doc.Save(outputPath);
 
-        // Since Aspose.Words does not expose a direct API to query per‑word hyphenation status,
-        // we will simply report that hyphenation was enabled for the document.
-        // In a real scenario you could inspect the layout or render the document to see hyphens.
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not created.");
+
+        // Retrieve the paragraph text (trim the trailing paragraph mark).
+        string paragraphText = doc.FirstSection.Body.FirstParagraph.GetText().TrimEnd('\r', '\a');
+
+        // Split the paragraph into individual words.
+        string[] words = paragraphText.Split(
+            new[] { ' ', '\t', '\r', '\n' },
+            StringSplitOptions.RemoveEmptyEntries);
+
+        // Log the hyphenation status for each word.
+        bool hyphenationEnabled = doc.HyphenationOptions.AutoHyphenation &&
+                                  Hyphenation.IsDictionaryRegistered("en-US");
+
         foreach (string word in words)
         {
-            Console.WriteLine($"{word} - Hyphenation enabled (status not directly queryable)");
+            Console.WriteLine($"Word: \"{word}\", HyphenationEnabled: {hyphenationEnabled}");
         }
     }
 }

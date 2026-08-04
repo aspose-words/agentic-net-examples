@@ -9,18 +9,13 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add some long text that could be hyphenated.
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Use a narrow page width to force line wrapping where hyphenation can occur.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.17 inches)
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
-
-        // Add a paragraph with long words that can be hyphenated.
-        builder.Font.Size = 12;
-        builder.Writeln("extraordinarycharacteristically internationalization communication " +
-                        "hyperresponsibility misunderstanding incomprehensibilities " +
-                        "characteristically uncharacteristically");
+        builder.Font.Size = 24;
+        builder.Writeln(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
+            "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.");
 
         // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
@@ -35,6 +30,6 @@ public class Program
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"The file '{outputPath}' was not created.");
+            throw new InvalidOperationException($"The expected output file '{outputPath}' was not created.");
     }
 }

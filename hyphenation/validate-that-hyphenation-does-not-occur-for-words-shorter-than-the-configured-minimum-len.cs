@@ -1,50 +1,53 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
-public class HyphenationMinimumLengthDemo
+public class HyphenationMinLengthExample
 {
     public static void Main()
     {
-        // Create a simple document.
+        // Create a minimal hyphenation dictionary for English (US).
+        const string dictFileName = "hyph_en_US.dic";
+        File.WriteAllText(dictFileName,
+            "UTF-8\n" +
+            "extraordinarycharacteristically=ex-tra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "cat=cat\n"); // Short word "cat" has no hyphenation points.
+
+        // Register the dictionary.
+        Hyphenation.RegisterDictionary("en-US", dictFileName);
+        if (!Hyphenation.IsDictionaryRegistered("en-US"))
+            throw new InvalidOperationException("Failed to register the hyphenation dictionary.");
+
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph with a long word (eligible for hyphenation) and a short word (should not hyphenate).
-        builder.Writeln("extraordinarycharacteristically cat");
-
-        // Narrow the page width to force line wrapping and potential hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 200; // points
+        // Narrow the page to force line wrapping.
+        doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
         // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Create a minimal hyphenation dictionary for English (US).
-        const string dictFileName = "hyph_en_US.dic";
-        File.WriteAllText(dictFileName,
-            "UTF-8\n" +
-            "extraordinarycharacteristically=ex-tra-or-di-nary-char-ac-ter-is-ti-cal-ly\n");
+        // Write a long word (should be hyphenated) and a short word (should not be hyphenated).
+        builder.Font.Size = 24;
+        builder.Writeln("extraordinarycharacteristically cat");
 
-        // Register the dictionary.
-        Hyphenation.RegisterDictionary("en-US", dictFileName);
+        // Save the document as PDF.
+        const string outputFile = "HyphenationMinLength.pdf";
+        doc.Save(outputFile, SaveFormat.Pdf);
 
-        // Verify that the dictionary is registered.
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-            throw new InvalidOperationException("Hyphenation dictionary was not registered.");
+        // Validate that the output file was created.
+        if (!File.Exists(outputFile))
+            throw new InvalidOperationException("The expected PDF output was not created.");
 
-        // Save the document to PDF.
-        const string outputPdf = "HyphenationDemo.pdf";
-        doc.Save(outputPdf, SaveFormat.Pdf);
+        // Simple validation: ensure the short word "cat" has no hyphenation points in the dictionary.
+        string dictContent = File.ReadAllText(dictFileName);
+        if (dictContent.Contains("cat=") && dictContent.Contains("cat-"))
+            throw new InvalidOperationException("Short word 'cat' should not contain hyphenation points.");
 
-        // Validate that the PDF was created.
-        if (!File.Exists(outputPdf))
-            throw new InvalidOperationException("Expected PDF output was not created.");
-
-        // Clean up temporary files (optional).
-        // File.Delete(dictFileName);
-        // File.Delete(outputPdf);
+        // Clean up temporary files.
+        File.Delete(dictFileName);
     }
 }
