@@ -2,39 +2,39 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class RemoveBookmarksAndFormFields
+namespace AsposeWordsRangeCleanup
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some content with bookmarks.
-        builder.StartBookmark("Bookmark1");
-        builder.Write("This is the first bookmark.");
-        builder.EndBookmark("Bookmark1");
-        builder.Writeln();
+            // Insert a bookmark with some text.
+            builder.StartBookmark("SampleBookmark");
+            builder.Write("This text is inside a bookmark.");
+            builder.EndBookmark("SampleBookmark");
+            builder.Writeln();
 
-        builder.StartBookmark("Bookmark2");
-        builder.Write("This is the second bookmark.");
-        builder.EndBookmark("Bookmark2");
-        builder.Writeln();
+            // Insert a check box form field.
+            builder.InsertCheckBox("CheckBoxField", false, 50);
+            builder.Writeln();
 
-        // Insert a couple of form fields.
-        builder.InsertCheckBox("CheckBox1", false, 50);
-        builder.Writeln();
-        builder.InsertComboBox("ComboBox1", new[] { "OptionA", "OptionB", "OptionC" }, 0);
-        builder.Writeln();
+            // Insert a combo box form field.
+            builder.InsertComboBox("ComboBoxField", new[] { "Option1", "Option2", "Option3" }, 0);
+            builder.Writeln();
 
-        // At this point the document contains bookmarks and form fields.
-        // Remove all bookmarks from the whole document range.
-        doc.Range.Bookmarks.Clear();
+            // At this point the document contains bookmarks and form fields.
+            // Remove all bookmarks from the whole document range.
+            doc.Range.Bookmarks.Clear();
 
-        // Remove all form fields from the whole document range.
-        doc.Range.FormFields.Clear();
+            // Remove all form fields from the whole document range.
+            doc.Range.FormFields.Clear();
 
-        // Save the cleaned document.
-        doc.Save("CleanedDocument.docx");
+            // Save the cleaned document.
+            doc.Save("CleanedDocument.docx");
+        }
     }
 }

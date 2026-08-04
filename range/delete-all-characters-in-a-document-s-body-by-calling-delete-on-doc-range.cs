@@ -8,20 +8,17 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add some sample text to the document body.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is the first line.");
-        builder.Writeln("This is the second line.");
 
-        // At this point the document contains text.
-        // Delete all characters in the whole document by calling Delete on its Range.
+        // Add some sample text to the document body.
+        builder.Writeln("Hello world!");
+        builder.Writeln("This text will be removed.");
+
+        // Delete all characters in the document's range.
         doc.Range.Delete();
 
-        // Define an output path for the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedContent.docx");
-
-        // Save the modified (now empty) document.
+        // Save the resulting (empty) document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedBody.docx");
         doc.Save(outputPath);
     }
 }

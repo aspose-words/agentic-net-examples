@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -12,35 +11,21 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a combo box form field.
-        builder.Write("Choose a value: ");
-        FormField comboBox = builder.InsertComboBox("MyComboBox", new[] { "One", "Two", "Three" }, 0);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        builder.InsertComboBox("MyComboBox", new[] { "One", "Two", "Three" }, 0);
 
         // Insert a check box form field.
-        builder.Write("Check this box: ");
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 50);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        builder.InsertCheckBox("MyCheckBox", false, 50);
 
         // Insert a text input form field.
-        builder.Write("Enter text: ");
-        FormField textInput = builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Placeholder", 50);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Placeholder text", 50);
 
-        // Retrieve the collection of form fields in the whole document range.
-        FormFieldCollection formFields = doc.Range.FormFields;
-
-        // Get the count of form fields.
-        int count = formFields.Count;
+        // Retrieve the count of form fields in the document's range.
+        int formFieldCount = doc.Range.FormFields.Count;
 
         // Output the count to the console.
-        Console.WriteLine($"Form fields count: {count}");
+        Console.WriteLine($"Number of form fields in the document: {formFieldCount}");
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document (optional, but fulfills the save requirement).
-        string outputPath = Path.Combine(outputDir, "FormFieldsCount.docx");
-        doc.Save(outputPath);
+        // Save the document (optional, demonstrates that the document was created).
+        doc.Save("FormFields.docx");
     }
 }

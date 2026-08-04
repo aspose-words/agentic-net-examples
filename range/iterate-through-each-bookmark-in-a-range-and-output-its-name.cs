@@ -9,20 +9,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a few bookmarks with some text inside each.
+        // Insert a few bookmarks into the document.
         for (int i = 1; i <= 3; i++)
         {
-            string bookmarkName = $"Bookmark_{i}";
+            string bookmarkName = $"MyBookmark_{i}";
             builder.StartBookmark(bookmarkName);
             builder.Write($"Text inside {bookmarkName}.");
             builder.EndBookmark(bookmarkName);
-            builder.Writeln(); // Move to a new line after each bookmark.
+            builder.Writeln(); // Add a line break after each bookmark.
         }
 
         // Retrieve the collection of bookmarks from the document's range.
         BookmarkCollection bookmarks = doc.Range.Bookmarks;
 
-        // Iterate through each bookmark and output its name.
+        // Iterate through each bookmark and print its name to the console.
         foreach (Bookmark bookmark in bookmarks)
         {
             Console.WriteLine(bookmark.Name);

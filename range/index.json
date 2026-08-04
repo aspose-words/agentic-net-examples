@@ -9,30 +9,31 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
-      "System.IO",
       "Aspose.Words",
+      "System.IO",
+      "Aspose.Words.Saving",
       "System.Text",
       "Aspose.Words.Fields",
       "Aspose.Words.Replacing",
       "System.Collections.Generic",
-      "System.Data",
-      "Aspose.Words.Saving"
+      "System.Data"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
+      "Range",
       "Directory",
       "Path",
-      "Range",
-      "File",
-      "Node",
+      "SaveFormat",
       "NodeType",
       "Paragraph",
-      "FindReplaceOptions"
+      "FindReplaceOptions",
+      "Run",
+      "File"
     ]
   },
   "stats": {

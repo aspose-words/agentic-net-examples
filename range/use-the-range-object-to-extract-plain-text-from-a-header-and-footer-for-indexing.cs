@@ -1,38 +1,70 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-public class Program
+namespace HeaderFooterRangeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Define file paths.
+            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+            Directory.CreateDirectory(outputDir);
+            string docPath = Path.Combine(outputDir, "SampleDocument.docx");
+            string indexPath = Path.Combine(outputDir, "HeaderFooterIndex.txt");
 
-        // Add some body text.
-        builder.Writeln("Body content.");
+            // -----------------------------------------------------------------
+            // 1. Create a new document and add header, footer, and body text.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a primary header and add text.
-        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        doc.FirstSection.HeadersFooters.Add(header);
-        header.AppendParagraph("Header for indexing.");
+            // Add a primary header.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            builder.Write("Header text for indexing");
 
-        // Create a primary footer and add text.
-        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
-        doc.FirstSection.HeadersFooters.Add(footer);
-        footer.AppendParagraph("Footer for indexing.");
+            // Add a primary footer.
+            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            builder.Write("Footer text for indexing");
 
-        // Save the document.
-        doc.Save("HeaderFooterSample.docx");
+            // Return to the main body and add some content.
+            builder.MoveToDocumentEnd();
+            builder.Writeln("This is the body of the document.");
 
-        // Extract plain text from header and footer using their Range objects.
-        string headerText = header.Range.Text.Trim();
-        string footerText = footer.Range.Text.Trim();
+            // Save the document.
+            doc.Save(docPath);
 
-        // Combine the extracted texts for indexing purposes.
-        string indexableText = $"{headerText} {footerText}";
+            // -----------------------------------------------------------------
+            // 2. Extract plain text from the header and footer using Range.
+            // -----------------------------------------------------------------
+            // Load the document (demonstrates loading workflow).
+            Document loadedDoc = new Document(docPath);
 
-        // Output the combined text.
-        Console.WriteLine(indexableText);
+            // Retrieve the primary header and footer.
+            HeaderFooter header = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
+            HeaderFooter footer = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary];
+
+            // Use the Range.Text property to get plain text.
+            string headerText = header?.Range?.Text?.Trim() ?? string.Empty;
+            string footerText = footer?.Range?.Text?.Trim() ?? string.Empty;
+
+            // -----------------------------------------------------------------
+            // 3. Write the extracted texts to a plain‑text file for indexing.
+            // -----------------------------------------------------------------
+            using (StreamWriter writer = new StreamWriter(indexPath))
+            {
+                writer.WriteLine("Header:");
+                writer.WriteLine(headerText);
+                writer.WriteLine();
+                writer.WriteLine("Footer:");
+                writer.WriteLine(footerText);
+            }
+
+            // Output the extracted texts to the console (non‑interactive).
+            Console.WriteLine("Extracted Header Text: " + headerText);
+            Console.WriteLine("Extracted Footer Text: " + footerText);
+        }
     }
 }

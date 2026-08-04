@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 
 public class Program
 {
@@ -10,14 +9,11 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert sample text into the document.
-        builder.Writeln("Hello world! This is a sample document.");
+        // Add some initial text.
+        builder.Writeln("Hello World! This is a sample text.");
 
-        // Replace the word "Hello" with "Hi" using the document's range.
-        int replacementsMade = doc.Range.Replace("Hello", "Hi");
-
-        // (Optional) Verify that a replacement occurred.
-        // Console.WriteLine($"Replacements made: {replacementsMade}");
+        // Replace the word "sample" with "example" using the document's range.
+        doc.Range.Replace("sample", "example");
 
         // Save the modified document to the local file system.
         doc.Save("Output.docx");

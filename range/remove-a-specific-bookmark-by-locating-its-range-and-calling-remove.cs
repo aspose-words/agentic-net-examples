@@ -5,39 +5,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three bookmarks with some text.
-        for (int i = 1; i <= 3; i++)
+        // Insert several bookmarks with some text inside each.
+        for (int i = 1; i <= 5; i++)
         {
-            string bookmarkName = $"Bookmark_{i}";
+            string bookmarkName = $"MyBookmark_{i}";
             builder.StartBookmark(bookmarkName);
             builder.Write($"Text inside {bookmarkName}.");
             builder.EndBookmark(bookmarkName);
-            builder.Writeln(); // Add a line break.
+            builder.InsertBreak(BreakType.ParagraphBreak);
         }
 
-        // Save the original document (optional, shows the state before removal).
-        doc.Save("Original.docx");
-
-        // Locate the specific bookmark to remove.
-        Bookmark bookmarkToRemove = doc.Range.Bookmarks["Bookmark_2"];
+        // Locate the bookmark named "MyBookmark_3".
+        Bookmark bookmarkToRemove = doc.Range.Bookmarks["MyBookmark_3"];
         if (bookmarkToRemove != null)
         {
-            // Remove the bookmark. The text inside the bookmark remains in the document.
+            // Remove the bookmark from the document (the text remains).
             bookmarkToRemove.Remove();
         }
 
-        // Save the modified document.
-        doc.Save("Modified.docx");
-
-        // Output the names of the remaining bookmarks to verify removal.
-        Console.WriteLine("Remaining bookmarks:");
-        foreach (Bookmark bm in doc.Range.Bookmarks)
-        {
-            Console.WriteLine(bm.Name);
-        }
+        // Save the resulting document.
+        string outputPath = "RemovedBookmark.docx";
+        doc.Save(outputPath);
     }
 }

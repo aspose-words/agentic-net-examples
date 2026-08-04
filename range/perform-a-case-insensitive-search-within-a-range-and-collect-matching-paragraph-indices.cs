@@ -7,67 +7,68 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with several paragraphs.
+        // Create a new document and add sample paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("This is the first paragraph containing Aspose.Words.");
+        builder.Writeln("This is the first paragraph containing Aspose.");
         builder.Writeln("Second paragraph without the keyword.");
-        builder.Writeln("Third paragraph mentions aspose in lower case.");
-        builder.Writeln("Another line with the word ASPose in mixed case.");
-        builder.Writeln("Final paragraph without it.");
+        builder.Writeln("Third paragraph with the word aspose in lower case.");
+        builder.Writeln("Fourth paragraph with ASPose in upper case.");
+        builder.Writeln("Fifth paragraph with no match.");
 
-        // The term to search for (case‑insensitive).
-        string searchTerm = "aspose";
-
-        // List to collect zero‑based paragraph indices where matches are found.
-        List<int> matchingParagraphIndices = new List<int>();
+        // Prepare a collection to store unique paragraph indices where matches are found.
+        HashSet<int> matchingIndices = new HashSet<int>();
 
         // Set up find/replace options for a case‑insensitive search.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            MatchCase = false // ignore case
+            MatchCase = false, // Ignore case.
+            ReplacingCallback = new MatchRecorder(matchingIndices, doc)
         };
-        options.ReplacingCallback = new SearchCallback(matchingParagraphIndices, doc);
 
         // Perform a replace where the replacement text is identical to the pattern.
-        // The callback records matches and skips actual replacement.
-        doc.Range.Replace(searchTerm, searchTerm, options);
+        // The callback will record matches and skip actual replacement.
+        doc.Range.Replace("Aspose", "Aspose", options);
 
         // Output the collected paragraph indices.
-        Console.WriteLine("Paragraph indices containing the term \"{0}\":", searchTerm);
-        foreach (int index in matchingParagraphIndices)
+        Console.WriteLine("Paragraph indices containing the term \"Aspose\" (case‑insensitive):");
+        foreach (int index in matchingIndices)
         {
             Console.WriteLine(index);
         }
+
+        // Save the (unchanged) document to demonstrate the lifecycle rule.
+        doc.Save("Output.docx");
     }
 
-    // Callback that records the paragraph index of each match and skips replacement.
-    private class SearchCallback : IReplacingCallback
+    // Callback that records the index of the paragraph containing each match.
+    private class MatchRecorder : IReplacingCallback
     {
-        private readonly List<int> _indices;
+        private readonly HashSet<int> _indices;
         private readonly Document _document;
 
-        public SearchCallback(List<int> indices, Document document)
+        public MatchRecorder(HashSet<int> indices, Document document)
         {
             _indices = indices;
             _document = document;
         }
 
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Find the paragraph that contains the matched run.
-            Node matchNode = args.MatchNode;
-            Paragraph paragraph = (Paragraph)matchNode.GetAncestor(NodeType.Paragraph);
+            // Find the paragraph that contains the match.
+            Paragraph paragraph = (Paragraph)args.MatchNode.GetAncestor(NodeType.Paragraph);
+            if (paragraph != null)
+            {
+                // Determine the paragraph's index within the body.
+                int index = _document.FirstSection.Body.Paragraphs.IndexOf(paragraph);
+                if (index >= 0)
+                {
+                    _indices.Add(index);
+                }
+            }
 
-            // Determine the paragraph's index within the body.
-            int paragraphIndex = _document.FirstSection.Body.Paragraphs.IndexOf(paragraph);
-
-            // Record the index if it hasn't been recorded yet (multiple matches in same paragraph).
-            if (!_indices.Contains(paragraphIndex))
-                _indices.Add(paragraphIndex);
-
-            // Skip actual replacement to keep the document unchanged.
+            // Skip replacement to keep the document unchanged.
             return ReplaceAction.Skip;
         }
     }
