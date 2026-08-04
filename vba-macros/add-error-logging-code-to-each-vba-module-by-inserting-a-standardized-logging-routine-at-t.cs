@@ -14,55 +14,40 @@ public class Program
         project.Name = "SampleProject";
         doc.VbaProject = project;
 
-        // Add a sample procedural module with some dummy code.
-        VbaModule sampleModule = new VbaModule();
-        sampleModule.Name = "SampleModule";
-        sampleModule.Type = VbaModuleType.ProceduralModule;
-        sampleModule.SourceCode = @"
-Sub TestMacro()
-    MsgBox ""Hello from VBA!""
-End Sub
-";
-        doc.VbaProject.Modules.Add(sampleModule);
+        // Add a sample procedural module.
+        VbaModule module1 = new VbaModule();
+        module1.Name = "Module1";
+        module1.Type = VbaModuleType.ProceduralModule;
+        module1.SourceCode = "Sub TestMacro()\n    MsgBox \"Hello from Module1\"\nEnd Sub";
+        doc.VbaProject.Modules.Add(module1);
 
-        // Add another module to demonstrate handling multiple modules.
-        VbaModule anotherModule = new VbaModule();
-        anotherModule.Name = "AnotherModule";
-        anotherModule.Type = VbaModuleType.ProceduralModule;
-        anotherModule.SourceCode = @"
-Function AddNumbers(a As Integer, b As Integer) As Integer
-    AddNumbers = a + b
-End Function
-";
-        doc.VbaProject.Modules.Add(anotherModule);
+        // Add a sample class module.
+        VbaModule module2 = new VbaModule();
+        module2.Name = "Class1";
+        module2.Type = VbaModuleType.ClassModule;
+        module2.SourceCode = "Public Sub ClassMethod()\n    MsgBox \"Hello from Class1\"\nEnd Sub";
+        doc.VbaProject.Modules.Add(module2);
 
-        // Define the standardized logging routine to be inserted.
-        string loggingRoutine = @"
-Sub LogError(errMsg As String)
-    ' Simple logging routine – writes to the Immediate Window.
-    Debug.Print ""Error: "" & errMsg
-End Sub
+        // Define the standardized logging routine to prepend.
+        string loggingRoutine = 
+            "Sub LogError(errMsg As String)\n" +
+            "    ' Simple logging routine\n" +
+            "    Debug.Print \"Error: \" & errMsg\n" +
+            "End Sub\n\n";
 
-";
-
-        // Insert the logging routine at the beginning of each VBA module.
+        // Insert the logging routine at the beginning of each module.
         foreach (VbaModule module in doc.VbaProject.Modules)
         {
             // Guard against null source code.
             string originalSource = module.SourceCode ?? string.Empty;
-
-            // If the logging routine already exists, skip insertion to avoid duplication.
-            if (!originalSource.Contains("Sub LogError"))
-            {
-                module.SourceCode = loggingRoutine + originalSource;
-            }
+            module.SourceCode = loggingRoutine + originalSource;
         }
 
-        // Save the document in a macro‑enabled format.
-        const string outputPath = "Output.docm";
+        // Save the document as a macro-enabled file.
+        string outputPath = "Output.docm";
         doc.Save(outputPath);
 
         // Indicate completion.
-        Console.WriteLine($"Document saved to '{outputPath}' with logging routines added to VBA modules.");
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

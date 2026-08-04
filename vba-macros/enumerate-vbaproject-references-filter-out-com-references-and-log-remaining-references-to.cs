@@ -2,63 +2,52 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-namespace VbaReferenceEnumerator
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Create a new VBA project and assign it to the document.
+        VbaProject vbaProject = new VbaProject
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            Name = "SampleProject"
+        };
+        doc.VbaProject = vbaProject;
 
-            // Create a new VBA project and assign it to the document.
-            VbaProject project = new VbaProject
+        // Add a simple procedural module with a basic macro.
+        VbaModule module = new VbaModule
+        {
+            Name = "Module1",
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub"
+        };
+        doc.VbaProject.Modules.Add(module);
+
+        // Save the document as a macro‑enabled file.
+        const string filePath = "Sample.docm";
+        doc.Save(filePath);
+
+        // Reload the document to work with the saved VBA project.
+        Document loadedDoc = new Document(filePath);
+
+        // Get the collection of VBA references.
+        VbaReferenceCollection references = loadedDoc.VbaProject.References;
+
+        // Enumerate references, filter out COM references, and log the rest.
+        foreach (VbaReference reference in references)
+        {
+            // COM references are of types Registered, Original, or Control.
+            if (reference.Type == VbaReferenceType.Registered ||
+                reference.Type == VbaReferenceType.Original ||
+                reference.Type == VbaReferenceType.Control)
             {
-                Name = "SampleProject"
-            };
-            doc.VbaProject = project;
-
-            // Add a simple procedural module so the document is macro-enabled.
-            VbaModule module = new VbaModule
-            {
-                Name = "SampleModule",
-                Type = VbaModuleType.ProceduralModule,
-                SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub"
-            };
-            project.Modules.Add(module);
-
-            // Save the document in a macro‑enabled format.
-            const string filePath = "SampleDocument.docm";
-            doc.Save(filePath);
-
-            // Reload the document (optional, demonstrates loading).
-            Document loadedDoc = new Document(filePath);
-
-            // Ensure the document actually contains a VBA project.
-            if (!loadedDoc.HasMacros || loadedDoc.VbaProject == null)
-            {
-                Console.WriteLine("The document does not contain a VBA project.");
-                return;
+                continue; // Skip COM references.
             }
 
-            // Enumerate the VBA references, filter out COM references, and log the rest.
-            VbaReferenceCollection references = loadedDoc.VbaProject.References;
-
-            Console.WriteLine($"Total references: {references.Count}");
-            foreach (VbaReference reference in references)
-            {
-                // COM references are of types Registered, Original, and Control.
-                if (reference.Type == VbaReferenceType.Registered ||
-                    reference.Type == VbaReferenceType.Original ||
-                    reference.Type == VbaReferenceType.Control)
-                {
-                    // Skip COM references.
-                    continue;
-                }
-
-                // Remaining references (e.g., Project type) are logged.
-                Console.WriteLine($"Reference Type: {reference.Type}, LibId: {reference.LibId}");
-            }
+            // Log remaining reference details (e.g., project references).
+            Console.WriteLine($"Reference Type: {reference.Type}, LibId: {reference.LibId}");
         }
     }
 }

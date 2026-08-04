@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -7,40 +6,61 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Paths for the original and updated macro-enabled documents.
+        const string originalPath = "MacroDocument.docm";
+        const string updatedPath = "MacroDocumentUpdated.docm";
+
+        // 1. Create a blank document.
         Document doc = new Document();
 
-        // Ensure the document has a VBA project.
-        if (doc.VbaProject == null)
-        {
-            VbaProject vbaProject = new VbaProject();
-            vbaProject.Name = "SampleProject";
-            doc.VbaProject = vbaProject;
-        }
+        // 2. Create a new VBA project and assign it to the document.
+        VbaProject vbaProject = new VbaProject();
+        vbaProject.Name = "SampleProject";
+        doc.VbaProject = vbaProject;
 
-        // Create a new procedural module with a simple macro.
+        // 3. Create a VBA module with sample macro code.
         VbaModule module = new VbaModule();
         module.Name = "SampleModule";
         module.Type = VbaModuleType.ProceduralModule;
-        module.SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub";
+        module.SourceCode = @"
+Sub SampleMacro()
+    Dim x As Integer
+    x = 1 / 0   ' This will cause a division by zero error
+    MsgBox ""Result: "" & x
+End Sub";
 
-        // Add the module to the VBA project.
+        // 4. Add the module to the VBA project.
         doc.VbaProject.Modules.Add(module);
 
-        // Update the source code to include error handling.
-        VbaModule targetModule = doc.VbaProject.Modules["SampleModule"];
-        string source = targetModule.SourceCode ?? string.Empty;
+        // 5. Save the document as a macro‑enabled file.
+        doc.Save(originalPath);
 
-        // Prepend "On Error Resume Next" if it's not already present.
-        if (!source.Contains("On Error Resume Next"))
+        // 6. Load the saved document (could also continue with the same instance).
+        Document loadedDoc = new Document(originalPath);
+
+        // 7. Verify the document contains macros before attempting an update.
+        if (loadedDoc.HasMacros && loadedDoc.VbaProject != null)
         {
-            source = "On Error Resume Next\r\n" + source;
+            // Retrieve the module by name.
+            VbaModule targetModule = loadedDoc.VbaProject.Modules["SampleModule"];
+            if (targetModule != null)
+            {
+                // Guard against null source code.
+                string source = targetModule.SourceCode ?? string.Empty;
+
+                // Define the error‑handling statement.
+                const string errorHandler = "On Error Resume Next";
+
+                // Prepend the error handler if it is not already present.
+                if (!source.Contains(errorHandler))
+                {
+                    source = errorHandler + Environment.NewLine + source;
+                    targetModule.SourceCode = source;
+                }
+            }
         }
 
-        targetModule.SourceCode = source;
-
-        // Save the document as a macro-enabled file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UpdatedVbaModule.docm");
-        doc.Save(outputPath);
+        // 8. Save the updated document.
+        loadedDoc.Save(updatedPath);
     }
 }
