@@ -7,80 +7,87 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "ProtectedForm.docx");
-        string reopenedPath = Path.Combine(Directory.GetCurrentDirectory(), "ReopenedForm.docx");
-
-        // ---------- Create a document with form fields ----------
+        // Create a new document and a builder to insert form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Text input field.
+        // Insert a text input form field.
+        builder.Write("Enter name: ");
         FormField textField = builder.InsertTextInput(
-            "TextField",                     // name
-            TextFormFieldType.Regular,       // type
+            "NameField",                     // field name
+            TextFormFieldType.Regular,       // field type
             "",                              // default text (unused for Regular)
-            "Enter text here",               // placeholder
+            "John Doe",                      // placeholder text
             50);                             // max length
 
-        // Check box field.
+        // Insert a checkbox form field.
+        builder.Writeln();
+        builder.Write("Accept terms: ");
         FormField checkBox = builder.InsertCheckBox(
-            "CheckBox",                      // name
-            false,                           // checked value
-            50);                             // size in points
+            "AcceptCheck",   // field name
+            false,           // default checked state
+            50);             // size in points
 
-        // Combo box (drop‑down) field.
+        // Insert a combo box (drop‑down) form field.
+        builder.Writeln();
+        builder.Write("Select country: ");
+        string[] countries = { "USA", "Canada", "UK" };
         FormField comboBox = builder.InsertComboBox(
-            "ComboBox",                      // name
-            new[] { "Option1", "Option2", "Option3" }, // items
-            0);                              // selected index
+            "CountryBox",    // field name
+            countries,       // items
+            0);              // initially selected index
 
         // Protect the document so that only form fields can be edited.
         doc.Protect(ProtectionType.AllowOnlyFormFields);
 
         // Save the protected document.
-        doc.Save(originalPath);
+        string filePath = Path.Combine(Environment.CurrentDirectory, "ProtectedFormFields.docx");
+        doc.Save(filePath);
 
-        // ---------- Load the saved document ----------
-        Document loadedDoc = new Document(originalPath);
+        // Load the saved document.
+        Document loadedDoc = new Document(filePath);
 
-        // Access the form fields collection.
-        FormFieldCollection fields = loadedDoc.Range.FormFields;
-
-        // Verify that at least three form fields exist.
-        if (fields == null || fields.Count < 3)
-            throw new InvalidOperationException("Expected at least three form fields in the document.");
-
-        // ---------- Verify that fields are still editable ----------
-        // Text input field.
-        FormField loadedText = fields["TextField"];
+        // ----- Verify and edit the text input field -----
+        FormField loadedText = loadedDoc.Range.FormFields["NameField"];
         if (loadedText == null)
-            throw new InvalidOperationException("Text field not found.");
+            throw new Exception("Text input field 'NameField' not found.");
         if (!loadedText.Enabled)
-            throw new InvalidOperationException("Text field is not enabled for editing.");
-        loadedText.Result = "Updated text";
+            throw new Exception("Text input field is not enabled.");
 
-        // Check box field.
-        FormField loadedCheck = fields["CheckBox"];
+        // Change the field's result and validate.
+        loadedText.Result = "Jane Smith";
+        if (loadedText.Result != "Jane Smith")
+            throw new Exception("Failed to update text input field.");
+
+        // ----- Verify and edit the checkbox field -----
+        FormField loadedCheck = loadedDoc.Range.FormFields["AcceptCheck"];
         if (loadedCheck == null)
-            throw new InvalidOperationException("Check box not found.");
+            throw new Exception("Checkbox field 'AcceptCheck' not found.");
         if (!loadedCheck.Enabled)
-            throw new InvalidOperationException("Check box is not enabled for editing.");
-        loadedCheck.Checked = true; // set the box to checked
+            throw new Exception("Checkbox field is not enabled.");
 
-        // Combo box field.
-        FormField loadedCombo = fields["ComboBox"];
+        // Set the checkbox as checked and validate.
+        loadedCheck.Checked = true;
+        if (!loadedCheck.Checked)
+            throw new Exception("Failed to check the checkbox field.");
+
+        // ----- Verify and edit the combo box field -----
+        FormField loadedCombo = loadedDoc.Range.FormFields["CountryBox"];
         if (loadedCombo == null)
-            throw new InvalidOperationException("Combo box not found.");
+            throw new Exception("Combo box field 'CountryBox' not found.");
         if (!loadedCombo.Enabled)
-            throw new InvalidOperationException("Combo box is not enabled for editing.");
-        // Change the selected index to the second item.
-        loadedCombo.DropDownSelectedIndex = 1;
+            throw new Exception("Combo box field is not enabled.");
 
-        // Save the document after modifications.
-        loadedDoc.Save(reopenedPath);
+        // Change the selected item by setting the result string.
+        loadedCombo.Result = "Canada";
+        if (loadedCombo.Result != "Canada")
+            throw new Exception("Failed to update combo box field.");
 
-        // Output confirmation.
+        // Save the edited document to confirm changes persist.
+        string editedPath = Path.Combine(Environment.CurrentDirectory, "EditedProtectedFormFields.docx");
+        loadedDoc.Save(editedPath);
+
+        // Indicate successful verification.
         Console.WriteLine("Form fields remain editable after protection, save, and reload.");
     }
 }

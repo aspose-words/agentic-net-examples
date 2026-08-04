@@ -11,30 +11,36 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field with a default placeholder.
-        builder.Write("Enter your name: ");
+        builder.Write("Enter name: ");
         FormField textField = builder.InsertTextInput(
-            "MyTextInput",                     // field name
-            TextFormFieldType.Regular,         // field type
-            "",                                // default text (empty)
-            "John Doe",                        // placeholder text
-            50);                               // maximum length
+            "NameField",                     // field name
+            TextFormFieldType.Regular,       // field type
+            "",                              // default text (none)
+            "John Doe",                      // placeholder text
+            50);                             // maximum length
 
-        // Access the form field by index from the FormFields collection.
-        FormFieldCollection formFields = doc.Range.FormFields;
+        // Save the initial document (optional, shows the file before modification).
+        doc.Save("FormFields.docx");
+
+        // Access the form fields collection.
+        FormFieldCollection fields = doc.Range.FormFields;
 
         // Validate that at least one form field exists.
-        if (formFields.Count == 0)
-            throw new InvalidOperationException("No form fields were found in the document.");
+        if (fields.Count == 0)
+            throw new InvalidOperationException("The document does not contain any form fields.");
 
-        // Retrieve the first form field (index 0) and ensure it is not null.
-        FormField fieldByIndex = formFields[0];
+        // Retrieve the first form field by index (zero‑based).
+        FormField fieldByIndex = fields[0];
         if (fieldByIndex == null)
             throw new InvalidOperationException("Form field at index 0 could not be retrieved.");
 
         // Modify the Result property of the text input field.
-        fieldByIndex.Result = "Jane Smith";
+        fieldByIndex.Result = "Alice Smith";
 
-        // Save the modified document.
-        doc.Save("FormFieldResultUpdated.docx");
+        // Output the updated result to the console (no user interaction required).
+        Console.WriteLine($"Updated field \"{fieldByIndex.Name}\" result: {fieldByIndex.Result}");
+
+        // Save the document after modification.
+        doc.Save("FormFields_Updated.docx");
     }
 }

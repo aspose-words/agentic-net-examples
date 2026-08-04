@@ -8,21 +8,23 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content and a form field.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Please fill in the form field below:");
-        // Insert a text input form field named "UserName".
-        builder.InsertTextInput("UserName", TextFormFieldType.Regular, "", "Enter your name", 0);
+
+        // Add a prompt and a text input form field.
+        builder.Writeln("Please fill in the form below:");
+        builder.Write("Name: ");
+        FormField nameField = builder.InsertTextInput(
+            "NameField",                     // Field name
+            TextFormFieldType.Regular,       // Field type
+            "",                              // No specific format
+            "Enter name here",               // Placeholder text
+            0);                              // No length limit
 
         // Protect the document so that only form fields can be edited.
         doc.Protect(ProtectionType.AllowOnlyFormFields);
 
         // Save the protected document.
-        const string outputPath = "ProtectedFormFields.docx";
+        const string outputPath = "ProtectedForm.docx";
         doc.Save(outputPath);
-
-        // Inform that the file has been created.
-        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

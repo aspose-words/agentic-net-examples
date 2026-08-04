@@ -1,6 +1,6 @@
 # Form Fields Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Form Fields category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Form Fields category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Form Fields cat
 - Slug: form-fields
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Text Form Field examples: 7
 - General Form Field examples: 17
 - Dropdown Form Field examples: 4
@@ -31,7 +31,7 @@ This folder contains the live, publish-ready C# examples for the Form Fields cat
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 
 ## Running Examples
 
@@ -40,7 +40,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -61,7 +61,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # PowerShell example
 Copy-Item ..\form-fields\insert-a-text-input-form-field-with-placeholder-text-using-documentbuilder-in-a-new-docume.cs .\Program.cs
@@ -100,7 +100,7 @@ dotnet run --configuration Release --no-build
 | 24 | `protect-a-word-document-with-allowonlyformfields-option-allowing-only-form-fields-to-be-ed.cs` | Protect a Word document with AllowOnlyFormFields option, allowing only form fields to be edited. | general-form-field | docx | mcp |
 | 25 | `apply-document-protection-levels-ensuring-only-form-fields-remain-editable-while-other-sec.cs` | Apply document protection levels ensuring only form fields remain editable while other sections are read-only. | general-form-field | docx | mcp |
 | 26 | `verify-that-protected-document-still-permits-editing-of-form-fields-after-saving-and-reope.cs` | Verify that protected document still permits editing of form fields after saving and reopening. | general-form-field | docx | mcp |
-| 27 | `after-inserting-fields-protect-the-document-and-then-verify-that-non-field-content-cannot.cs` | After inserting fields, protect the document and then verify that non-field content cannot be edited. | general-form-field | docx | llm |
+| 27 | `after-inserting-fields-protect-the-document-and-then-verify-that-non-field-content-cannot.cs` | After inserting fields, protect the document and then verify that non-field content cannot be edited. | general-form-field | docx | mcp |
 | 28 | `disable-all-check-box-form-fields-programmatically-when-a-specific-document-condition-is-m.cs` | Disable all check box form fields programmatically when a specific document condition is met. | general-form-field | docx | mcp |
 | 29 | `implement-error-handling-for-attempts-to-insert-a-form-field-with-an-empty-name-logging-a.cs` | Implement error handling for attempts to insert a form field with an empty name, logging a warning. | general-form-field | docx | mcp |
 | 30 | `build-a-console-application-that-reads-a-csv-file-and-populates-corresponding-text-input-f.cs` | Build a console application that reads a CSV file and populates corresponding text input fields in a template. | text-form-field | csv | mcp |
@@ -138,6 +138,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

@@ -7,51 +7,58 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and insert several form fields.
+        // Create a new document and a builder to insert form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Text input form field.
+        // Insert a text input form field.
         builder.Write("Enter your name: ");
-        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
-        builder.Writeln();
+        FormField textField = builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
+        textField.CalculateOnExit = true;
 
-        // Checkbox form field.
+        builder.InsertBreak(BreakType.ParagraphBreak);
+
+        // Insert a checkbox form field.
         builder.Write("Accept terms: ");
-        builder.InsertCheckBox("AcceptCheck", false, 50);
-        builder.Writeln();
+        FormField checkBox = builder.InsertCheckBox("AcceptTerms", false, 50);
+        checkBox.CalculateOnExit = true;
 
-        // Dropdown (combo box) form field.
-        builder.Write("Select country: ");
-        string[] countries = { "USA", "Canada", "Mexico" };
-        builder.InsertComboBox("CountryCombo", countries, 0);
-        builder.Writeln();
+        builder.InsertBreak(BreakType.ParagraphBreak);
 
-        // Save the document with the created form fields.
-        const string filePath = "FormFields.docx";
-        doc.Save(filePath);
+        // Insert a combo box (dropdown) form field.
+        builder.Write("Select a fruit: ");
+        string[] fruits = { "Apple", "Banana", "Cherry" };
+        FormField comboBox = builder.InsertComboBox("FruitChoice", fruits, 0);
+        comboBox.CalculateOnExit = true;
 
-        // Load the document and extract automatically generated bookmark names.
-        Document loadedDoc = new Document(filePath);
-        FormFieldCollection formFields = loadedDoc.Range.FormFields;
+        // Save the document containing the form fields.
+        const string outputPath = "FormFields.docx";
+        doc.Save(outputPath);
 
-        // Dictionary to map bookmark name (same as form field name) to the form field.
-        Dictionary<string, FormField> bookmarkLookup = new Dictionary<string, FormField>(StringComparer.OrdinalIgnoreCase);
+        // Extract automatically generated bookmark names for all form fields.
+        FormFieldCollection formFields = doc.Range.FormFields;
+        if (formFields == null || formFields.Count == 0)
+            throw new InvalidOperationException("The document does not contain any form fields.");
+
+        // Dictionary to hold bookmark name -> form field mapping.
+        var bookmarkLookup = new Dictionary<string, FormField>(StringComparer.OrdinalIgnoreCase);
 
         foreach (FormField field in formFields)
         {
-            // The bookmark name is automatically created with the same name as the form field.
-            if (!string.IsNullOrEmpty(field.Name))
-            {
-                bookmarkLookup[field.Name] = field;
-            }
+            // Each form field automatically creates a bookmark with the same name.
+            string bookmarkName = field.Name;
+            if (!string.IsNullOrEmpty(bookmarkName))
+                bookmarkLookup[bookmarkName] = field;
         }
 
-        // Output the collected bookmark names and their field types.
-        Console.WriteLine($"Found {bookmarkLookup.Count} form fields with automatically generated bookmarks:");
-        foreach (KeyValuePair<string, FormField> entry in bookmarkLookup)
+        // Output the collected bookmark names.
+        Console.WriteLine("Extracted bookmark names for form fields:");
+        foreach (var kvp in bookmarkLookup)
         {
-            Console.WriteLine($"Bookmark: \"{entry.Key}\", Field Type: {entry.Value.Type}");
+            Console.WriteLine($"Bookmark: \"{kvp.Key}\", Field Type: {kvp.Value.Type}");
         }
+
+        // No further modifications are required, but ensure the document is saved again.
+        doc.Save(outputPath);
     }
 }

@@ -13,30 +13,40 @@ public class Program
         // Insert a checkbox form field with a known name.
         const string checkBoxName = "MyCheckBox";
         builder.Write("Toggle this check box: ");
-        FormField checkBox = builder.InsertCheckBox(checkBoxName, false, 0);
-        builder.InsertParagraph();
+        FormField insertedCheckBox = builder.InsertCheckBox(checkBoxName, false, 0);
+        if (insertedCheckBox == null)
+            throw new InvalidOperationException("Failed to create the checkbox form field.");
 
-        // Read external configuration (environment variable) that determines the desired state.
-        // Expected values: "true" or "false". Default to false if not set or invalid.
-        string configValue = Environment.GetEnvironmentVariable("CHECKBOX_STATE");
-        bool desiredState = false;
-        if (!string.IsNullOrWhiteSpace(configValue) && bool.TryParse(configValue, out bool parsed))
+        // Read external configuration (environment variable "CHECKBOX_STATE").
+        // Expected values: "true" or "false". Default is false if not set or invalid.
+        string envValue = Environment.GetEnvironmentVariable("CHECKBOX_STATE");
+        bool shouldBeChecked = false;
+        if (!string.IsNullOrEmpty(envValue) && bool.TryParse(envValue, out bool parsed))
+            shouldBeChecked = parsed;
+
+        // Locate the checkbox by name in the document's form fields collection.
+        FormField targetField = null;
+        foreach (FormField field in doc.Range.FormFields)
         {
-            desiredState = parsed;
+            if (field.Name == checkBoxName)
+            {
+                targetField = field;
+                break;
+            }
         }
 
-        // Locate the checkbox form field by name and validate its existence.
-        FormField? targetField = doc.Range.FormFields[checkBoxName];
         if (targetField == null)
-        {
-            throw new InvalidOperationException($"Form field '{checkBoxName}' was not found in the document.");
-        }
+            throw new InvalidOperationException($"Form field '{checkBoxName}' not found.");
 
-        // Toggle the checked state according to the external configuration.
-        targetField.Checked = desiredState;
+        // Toggle the checked state based on the external configuration.
+        targetField.Checked = shouldBeChecked;
+
+        // Validate that the state was applied.
+        if (targetField.Checked != shouldBeChecked)
+            throw new InvalidOperationException("Failed to set the checkbox state.");
 
         // Save the modified document.
-        const string outputPath = "Output.docx";
+        const string outputPath = "ToggleCheckbox.docx";
         doc.Save(outputPath);
     }
 }

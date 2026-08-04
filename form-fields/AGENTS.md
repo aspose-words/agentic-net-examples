@@ -174,7 +174,7 @@ Use the simplest workflow that satisfies the task.
   - Task: After inserting fields, protect the document and then verify that non-field content cannot be edited.
   - Workflow: general-form-field
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `disable-all-check-box-form-fields-programmatically-when-a-specific-document-condition-is-m.cs`
   - Task: Disable all check box form fields programmatically when a specific document condition is met.
   - Workflow: general-form-field
@@ -212,7 +212,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -226,7 +226,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

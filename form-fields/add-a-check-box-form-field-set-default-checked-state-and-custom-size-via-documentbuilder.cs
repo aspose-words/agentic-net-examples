@@ -6,24 +6,25 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some explanatory text.
-        builder.Writeln("Please tick the box if you agree:");
+        // Write some introductory text.
+        builder.Writeln("Document with a custom checkbox form field:");
 
         // Insert a checkbox form field.
-        // Name: "AgreeCheckBox"
-        // defaultValue: true (checked by default when the document is opened)
-        // checkedValue: true (current state)
-        // size: 30 points.
-        FormField checkBox = builder.InsertCheckBox("AgreeCheckBox", true, true, 30);
+        // Parameters: name, defaultValue (checked by default), checkedValue (current state), size in points.
+        FormField checkBox = builder.InsertCheckBox("MyCheckBox", true, true, 30);
 
-        // Apply the exact size specified above.
+        // Ensure the custom size is applied.
         checkBox.IsCheckBoxExactSize = true;
+        checkBox.CheckBoxSize = 30; // size in points
 
-        // Save the document to disk.
-        doc.Save("CheckboxFormField.docx");
+        // Add a line break after the checkbox.
+        builder.Writeln();
+
+        // Save the document to the local file system.
+        doc.Save("CheckBoxFormField.docx");
     }
 }

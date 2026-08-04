@@ -9,28 +9,31 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
       "Aspose.Words",
       "Aspose.Words.Fields",
       "System.IO",
+      "System.Text.Json",
       "System.Collections.Generic",
-      "System.Text.Json"
+      "Aspose.Words.Tables"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Path",
       "Range",
       "Directory",
+      "Path",
+      "Font",
       "FieldType",
-      "File",
       "Field",
+      "NodeType",
       "Paragraph",
       "ProtectionType",
-      "Run"
+      "Run",
+      "File"
     ]
   },
   "stats": {
@@ -379,8 +382,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using Aspose.Words;
@@ -9,10 +8,11 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and insert several checkbox form fields.
+        // Create a new document and a builder to insert form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Insert three check box form fields with distinct names.
         builder.Write("Option A: ");
         builder.InsertCheckBox("CheckBox1", false, 0);
         builder.InsertParagraph();
@@ -32,22 +32,26 @@ public class Program
             ""CheckBox3"": true
         }";
 
-        // Parse the JSON into a dictionary.
-        Dictionary<string, bool> config = JsonSerializer.Deserialize<Dictionary<string, bool>>(jsonConfig);
+        // Parse the JSON configuration.
+        using JsonDocument jsonDoc = JsonDocument.Parse(jsonConfig);
+        JsonElement root = jsonDoc.RootElement;
 
-        // Update each checkbox according to the configuration.
-        foreach (KeyValuePair<string, bool> entry in config)
+        // Update each checkbox according to the JSON data.
+        foreach (JsonProperty property in root.EnumerateObject())
         {
-            // Retrieve the form field by its name.
-            FormField field = doc.Range.FormFields[entry.Key];
-            if (field == null)
-                throw new InvalidOperationException($"Form field '{entry.Key}' not found.");
+            string fieldName = property.Name;
+            bool shouldBeChecked = property.Value.GetBoolean();
+
+            // Retrieve the form field by name; throw if it does not exist.
+            FormField formField = doc.Range.FormFields[fieldName];
+            if (formField == null)
+                throw new InvalidOperationException($"Form field '{fieldName}' not found.");
 
             // Ensure the field is a checkbox before setting the Checked property.
-            if (field.Type != FieldType.FieldFormCheckBox)
-                throw new InvalidOperationException($"Form field '{entry.Key}' is not a checkbox.");
+            if (formField.Type != FieldType.FieldFormCheckBox)
+                throw new InvalidOperationException($"Form field '{fieldName}' is not a checkbox.");
 
-            field.Checked = entry.Value;
+            formField.Checked = shouldBeChecked;
         }
 
         // Update fields (not strictly required for checkboxes but follows best practice) and save the document.
