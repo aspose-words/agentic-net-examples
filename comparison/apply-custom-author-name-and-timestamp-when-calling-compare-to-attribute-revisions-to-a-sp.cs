@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class Program
 {
@@ -11,20 +10,17 @@ public class Program
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
         builderOriginal.Writeln("This is the original paragraph.");
-        builderOriginal.Writeln("It contains some sample text.");
 
-        // Create the revised document with modifications.
+        // Create the revised document with a modification.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the edited paragraph."); // Changed text.
-        builderRevised.Writeln("It contains some sample text."); // Same as original.
-        builderRevised.Writeln("An additional line was added.");   // New line.
+        builderRevised.Writeln("This is the edited paragraph with changes.");
 
         // Define custom author name and timestamp for the comparison.
         string customAuthor = "CustomUser";
-        DateTime customDate = new DateTime(2023, 12, 31, 23, 59, 59, DateTimeKind.Utc);
+        DateTime customDate = new DateTime(2023, 1, 1, 12, 0, 0);
 
-        // Perform the comparison. Revisions will be attributed to the custom author and timestamp.
+        // Perform the comparison. Revisions will be attributed to the custom author and date.
         original.Compare(revised, customAuthor, customDate);
 
         // Verify that revisions were created.
@@ -34,16 +30,13 @@ public class Program
         }
 
         // Output revision details to the console.
-        Console.WriteLine($"Total revisions: {original.Revisions.Count}");
         foreach (Revision rev in original.Revisions)
         {
-            Console.WriteLine($"- Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime:u}");
-            Console.WriteLine($"  Affected text: \"{rev.ParentNode.GetText().Trim()}\"");
+            Console.WriteLine($"Revision by '{rev.Author}' on {rev.DateTime:u}: {rev.RevisionType}");
         }
 
-        // Save the compared document with revisions.
+        // Save the document that now contains the revisions.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.docx");
         original.Save(outputPath);
-        Console.WriteLine($"Compared document saved to: {outputPath}");
     }
 }

@@ -1,144 +1,90 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Comparing;
 
-public class RevisionSummaryExample
+public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create the original document with a few paragraphs.
+        // Create the original document with three paragraphs.
         Document original = new Document();
         DocumentBuilder builder = new DocumentBuilder(original);
-        builder.Writeln("Paragraph 1: The quick brown fox.");
-        builder.Writeln("Paragraph 2: Jumps over the lazy dog.");
-        builder.Writeln("Paragraph 3: Lorem ipsum dolor sit amet.");
-        builder.Writeln("Paragraph 4: Original content to be deleted.");
-        string originalPath = Path.Combine(outputDir, "Original.docx");
+        builder.Writeln("Paragraph 1");
+        builder.Writeln("Paragraph 2");
+        builder.Writeln("Paragraph 3");
+
+        // Save the original document (optional, just for reference).
+        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
         original.Save(originalPath);
 
-        // Create the revised document with some changes:
-        // - Delete paragraph 4.
-        // - Modify paragraph 2.
-        // - Add a new paragraph 5.
-        Document revised = new Document();
+        // Clone the original to create the revised version.
+        Document revised = (Document)original.Clone(true);
+
+        // Modify the text of the second paragraph.
+        Paragraph para2 = revised.FirstSection.Body.Paragraphs[1];
+        if (para2.Runs.Count > 0)
+            para2.Runs[0].Text = "Paragraph 2 - modified";
+
+        // Apply a format change to the first paragraph (e.g., change style to Heading1).
+        Paragraph para1 = revised.FirstSection.Body.Paragraphs[0];
+        para1.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+
+        // Delete the third paragraph.
+        Paragraph para3 = revised.FirstSection.Body.Paragraphs[2];
+        para3.Remove();
+
+        // Add a new fourth paragraph.
         DocumentBuilder revBuilder = new DocumentBuilder(revised);
-        revBuilder.Writeln("Paragraph 1: The quick brown fox."); // unchanged
-        revBuilder.Writeln("Paragraph 2: Jumps over the energetic cat."); // modified
-        revBuilder.Writeln("Paragraph 3: Lorem ipsum dolor sit amet."); // unchanged
-        revBuilder.Writeln("Paragraph 5: This is a newly added paragraph."); // added
-        string revisedPath = Path.Combine(outputDir, "Revised.docx");
+        revBuilder.Writeln("Paragraph 4");
+
+        // Save the revised document (optional).
+        string revisedPath = Path.Combine(Directory.GetCurrentDirectory(), "Revised.docx");
         revised.Save(revisedPath);
 
-        // Compare the documents. The original document will contain the revisions.
-        original.Compare(revised, "Author", DateTime.Now);
-        string comparedPath = Path.Combine(outputDir, "Compared.docx");
-        original.Save(comparedPath);
+        // Compare the documents. Revisions will be stored in the original document.
+        original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Prepare collections for the summary.
-        List<string> addedParagraphs = new();
-        List<string> deletedParagraphs = new();
-        List<string> modifiedParagraphs = new();
-
-        // Build dictionaries of insertion and deletion revisions.
-        Dictionary<string, string> deletionMap = new();
-        Dictionary<string, string> insertionMap = new();
+        // Count added, deleted, and modified (format change) paragraph revisions.
+        int added = 0;
+        int deleted = 0;
+        int modified = 0;
 
         foreach (Revision rev in original.Revisions)
         {
-            if (rev.ParentNode?.NodeType != NodeType.Paragraph)
-                continue;
-
-            string text = rev.ParentNode.GetText().Trim();
-
-            if (rev.RevisionType == RevisionType.Insertion)
-                insertionMap[text] = text;
-            else if (rev.RevisionType == RevisionType.Deletion)
-                deletionMap[text] = text;
-        }
-
-        // Detect modifications by matching first words of deleted and inserted paragraphs.
-        foreach (var del in deletionMap.Keys)
-        {
-            bool matched = false;
-            foreach (var ins in insertionMap.Keys)
+            // Ensure the revision is related to a paragraph node.
+            if (rev.ParentNode?.NodeType == NodeType.Paragraph)
             {
-                string[] delWords = del.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                string[] insWords = ins.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (delWords.Length > 0 && insWords.Length > 0 && delWords[0] == insWords[0])
+                switch (rev.RevisionType)
                 {
-                    modifiedParagraphs.Add($"Original: \"{del}\" => Revised: \"{ins}\"");
-                    matched = true;
-                    break;
+                    case RevisionType.Insertion:
+                        added++;
+                        break;
+                    case RevisionType.Deletion:
+                        deleted++;
+                        break;
+                    case RevisionType.FormatChange:
+                        modified++;
+                        break;
                 }
             }
-            if (!matched)
-                deletedParagraphs.Add(del);
         }
 
-        // Add remaining insertions that were not part of a modification.
-        foreach (var ins in insertionMap.Keys)
-        {
-            bool alreadyHandled = false;
-            foreach (var mod in modifiedParagraphs)
-            {
-                if (mod.Contains(ins))
-                {
-                    alreadyHandled = true;
-                    break;
-                }
-            }
-            if (!alreadyHandled)
-                addedParagraphs.Add(ins);
-        }
+        // Build a simple text report.
+        string report = $"Revision Summary:{Environment.NewLine}" +
+                        $"Added paragraphs: {added}{Environment.NewLine}" +
+                        $"Deleted paragraphs: {deleted}{Environment.NewLine}" +
+                        $"Modified paragraphs (format changes): {modified}{Environment.NewLine}";
 
-        // Build the summary report.
-        var reportLines = new List<string>
-        {
-            "Revision Summary Report",
-            "=======================",
-            "",
-            $"Total Added Paragraphs   : {addedParagraphs.Count}",
-            $"Total Deleted Paragraphs : {deletedParagraphs.Count}",
-            $"Total Modified Paragraphs: {modifiedParagraphs.Count}",
-            ""
-        };
+        // Output the report to the console.
+        Console.WriteLine(report);
 
-        if (addedParagraphs.Count > 0)
-        {
-            reportLines.Add("Added Paragraphs:");
-            foreach (string p in addedParagraphs)
-                reportLines.Add("- " + p);
-            reportLines.Add("");
-        }
+        // Save the report to a local text file.
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "RevisionSummary.txt");
+        File.WriteAllText(reportPath, report);
 
-        if (deletedParagraphs.Count > 0)
-        {
-            reportLines.Add("Deleted Paragraphs:");
-            foreach (string p in deletedParagraphs)
-                reportLines.Add("- " + p);
-            reportLines.Add("");
-        }
-
-        if (modifiedParagraphs.Count > 0)
-        {
-            reportLines.Add("Modified Paragraphs:");
-            foreach (string p in modifiedParagraphs)
-                reportLines.Add("- " + p);
-            reportLines.Add("");
-        }
-
-        string reportPath = Path.Combine(outputDir, "RevisionSummary.txt");
-        File.WriteAllLines(reportPath, reportLines);
-
-        // Output locations for verification.
-        Console.WriteLine("Original document saved to: " + originalPath);
-        Console.WriteLine("Revised document saved to: " + revisedPath);
-        Console.WriteLine("Compared document with revisions saved to: " + comparedPath);
-        Console.WriteLine("Revision summary report saved to: " + reportPath);
+        // Save the compared document that contains the revision markup.
+        string comparedPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.docx");
+        original.Save(comparedPath);
     }
 }

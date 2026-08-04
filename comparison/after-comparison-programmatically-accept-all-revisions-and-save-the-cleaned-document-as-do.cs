@@ -1,36 +1,37 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the original document.
+        // Create the original document with some text.
         Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");
+        DocumentBuilder builder1 = new DocumentBuilder(original);
+        builder1.Writeln("Hello world.");
+        builder1.Writeln("This line will stay the same.");
 
-        // Create the revised document with a difference.
+        // Create the revised document that contains a change.
         Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello revised world.");
+        DocumentBuilder builder2 = new DocumentBuilder(revised);
+        builder2.Writeln("Hello changed world."); // Modified line.
+        builder2.Writeln("This line will stay the same."); // Unchanged line.
 
-        // Compare the documents – revisions will be added to the original document.
+        // Compare the documents. Revisions are added to the original document.
         original.Compare(revised, "Author", DateTime.Now);
 
-        // Ensure that at least one revision was created.
+        // Ensure that the comparison produced at least one revision.
         if (original.Revisions.Count == 0)
             throw new InvalidOperationException("Expected revisions after comparison.");
 
         // Accept all revisions, turning the original into the revised version.
-        original.AcceptAllRevisions();
+        original.Revisions.AcceptAll();
 
-        // Verify that all revisions have been cleared.
+        // Verify that all revisions have been accepted.
         if (original.Revisions.Count != 0)
-            throw new InvalidOperationException("Revisions were not fully accepted.");
+            throw new InvalidOperationException("All revisions should be accepted.");
 
-        // Save the cleaned document.
-        original.Save("cleaned.docx");
+        // Save the cleaned (revision‑free) document.
+        original.Save("CleanedDocument.docx");
     }
 }

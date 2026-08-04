@@ -1,47 +1,50 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the original document with some formatted text.
+        // Create the original document.
         Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
-        builder.Writeln("This is a sample paragraph.");
-        builder.Font.Bold = true; // Apply bold formatting.
-        builder.Writeln("Bold text line.");
+        DocumentBuilder builderOriginal = new DocumentBuilder(original);
+        builderOriginal.Writeln("Hello world.");                     // Plain text.
+        builderOriginal.Font.Bold = true;
+        builderOriginal.Writeln("Bold text.");                       // Bold formatting.
 
-        // Create the revised document that changes formatting and adds content.
+        // Create the revised document with both content and formatting changes.
         Document revised = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(revised);
-        builder2.Writeln("This is a sample paragraph."); // Same text.
-        builder2.Font.Italic = true; // Change formatting (italic instead of bold).
-        builder2.Writeln("Bold text line."); // Same text, different formatting.
-        builder2.Writeln("Additional content line."); // New content.
+        DocumentBuilder builderRevised = new DocumentBuilder(revised);
+        builderRevised.Writeln("Hello world changed.");              // Content change.
+        builderRevised.Font.Bold = false;                            // Formatting change (remove bold).
+        builderRevised.Writeln("Bold text.");                        // Same text, different formatting.
+        builderRevised.Writeln("Additional paragraph.");             // Insertion.
 
-        // Compare the documents. Revisions are added to the original document.
+        // Perform the comparison. The original document will receive revisions.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Accept only formatting revisions; reject all other types (insertions, deletions, etc.).
-        var revisions = original.Revisions.Cast<Revision>().ToList();
+        // Ensure that revisions were generated.
+        if (original.Revisions.Count == 0)
+            throw new InvalidOperationException("No revisions were created during comparison.");
+
+        // Accept only formatting revisions; reject all other types.
+        // Iterate over a copy because accepting/rejecting modifies the collection.
+        List<Revision> revisions = original.Revisions.Cast<Revision>().ToList();
         foreach (Revision rev in revisions)
         {
             if (rev.RevisionType == RevisionType.FormatChange)
-                rev.Accept();
+                rev.Accept();   // Keep formatting changes.
             else
-                rev.Reject();
+                rev.Reject();   // Discard other changes.
         }
 
-        // Verify that no revisions remain after processing.
+        // After processing, there should be no remaining revisions.
         if (original.Revisions.Count != 0)
-            throw new InvalidOperationException("Unexpected revisions remain after processing.");
+            throw new InvalidOperationException("Some revisions were not processed correctly.");
 
         // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
-        original.Save(outputPath);
+        original.Save("Result.docx");
     }
 }

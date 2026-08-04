@@ -1,31 +1,39 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
-public class Program
+public class RevisionLogger
 {
     public static void Main()
     {
-        // Create the original document with some text.
-        Document original = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(original);
-        builder1.Writeln("Hello world.");
+        // Create the original document with some content.
+        Document doc1 = new Document();
+        DocumentBuilder builder1 = new DocumentBuilder(doc1);
+        builder1.Writeln("Hello world!");
+        builder1.Writeln("This is the original document.");
 
-        // Create the revised document with a slight change.
-        Document revised = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(revised);
-        builder2.Writeln("Hello revised world.");
+        // Create the revised document with modifications.
+        Document doc2 = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(doc2);
+        builder2.Writeln("Hello brave new world!"); // changed line
+        builder2.Writeln("This is the original document."); // unchanged line
+        builder2.Writeln("An extra line added."); // insertion
 
-        // Compare the documents; revisions are added to the original document.
-        original.Compare(revised, "Author", DateTime.Now);
+        // Perform comparison – revisions will be added to doc1.
+        doc1.Compare(doc2, "Comparer", DateTime.Now);
 
-        // Iterate through the revisions and log their type and affected text.
-        foreach (Revision rev in original.Revisions)
+        // Verify that revisions were created.
+        if (doc1.Revisions.Count == 0)
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
+
+        // Log each revision's type and the affected text.
+        foreach (Revision rev in doc1.Revisions)
         {
-            string text = rev.ParentNode?.GetText().Trim() ?? string.Empty;
-            Console.WriteLine($"Revision type: {rev.RevisionType}, text: \"{text}\"");
+            string affectedText = rev.ParentNode != null ? rev.ParentNode.GetText().Trim() : "[No node]";
+            Console.WriteLine($"Revision type: {rev.RevisionType}, affected text: \"{affectedText}\"");
         }
 
-        // Save the resulting document with revisions.
-        original.Save("Compared.docx");
+        // Save the compared document (optional artifact).
+        doc1.Save("Compared.docx");
     }
 }

@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -17,13 +17,14 @@
       "Aspose.Words",
       "Aspose.Words.Comparing",
       "Aspose.Words.Saving",
-      "Aspose.Words.Tables",
+      "System.Linq",
+      "Aspose.Words.Layout",
       "Aspose.Words.Drawing",
       "Aspose.Words.Drawing.Charts",
+      "Aspose.Words.Replacing",
       "System.Drawing",
-      "System.Collections.Generic",
-      "System.Linq",
-      "Aspose.Words.Replacing"
+      "Aspose.Words.Tables",
+      "System.Collections.Generic"
     ],
     "key_apis": [
       "Document",
@@ -38,13 +39,14 @@
       "Node",
       "Paragraph",
       "NodeType",
-      "Table",
-      "Row",
       "Cell",
+      "Table",
       "Shape",
       "Chart",
       "ChartType",
-      "CellFormat"
+      "Row",
+      "CellFormat",
+      "StyleIdentifier"
     ]
   },
   "stats": {
@@ -187,8 +189,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 9,
@@ -265,8 +267,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 16,

@@ -3,47 +3,49 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class ComparisonExample
+public class Program
 {
     public static void Main()
     {
-        // Create the original legal contract document.
-        Document originalContract = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(originalContract);
+        // Create the original contract document.
+        Document original = new Document();
+        DocumentBuilder builderOriginal = new DocumentBuilder(original);
         builderOriginal.Writeln("CONFIDENTIAL AGREEMENT");
-        builderOriginal.Font.Size = 12;
-        builderOriginal.Font.Bold = true; // Formatting that will be ignored.
+        builderOriginal.Font.Bold = true;
         builderOriginal.Writeln("This agreement is made between Party A and Party B.");
         builderOriginal.Font.Bold = false;
-        builderOriginal.Writeln("Terms and conditions apply.");
+        builderOriginal.Font.Italic = true;
+        builderOriginal.Writeln("The term of this agreement shall be five (5) years.");
+        builderOriginal.Font.Italic = false;
 
-        // Create the revised legal contract document with formatting changes.
-        Document revisedContract = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revisedContract);
+        // Create the revised contract document with the same text but different formatting.
+        Document revised = new Document();
+        DocumentBuilder builderRevised = new DocumentBuilder(revised);
         builderRevised.Writeln("CONFIDENTIAL AGREEMENT");
-        builderRevised.Font.Size = 12;
-        builderRevised.Font.Italic = true; // Different formatting.
+        builderRevised.Font.Bold = false; // different formatting
         builderRevised.Writeln("This agreement is made between Party A and Party B.");
-        builderRevised.Font.Italic = false;
-        builderRevised.Writeln("Terms and conditions apply.");
+        builderRevised.Font.Bold = true;
+        builderRevised.Font.Italic = false; // different formatting
+        builderRevised.Writeln("The term of this agreement shall be five (5) years.");
+        builderRevised.Font.Italic = true;
 
         // Configure comparison options to ignore formatting changes.
-        CompareOptions compareOptions = new CompareOptions
+        CompareOptions options = new CompareOptions
         {
-            IgnoreFormatting = true,
-            // Other flags remain at their defaults (false).
+            IgnoreFormatting = true
         };
 
-        // Perform the comparison. The original document will receive revisions.
-        originalContract.Compare(revisedContract, "LegalTeam", DateTime.Now, compareOptions);
+        // Perform the comparison.
+        original.Compare(revised, "LegalTeam", DateTime.Now, options);
 
-        // Verify that revisions exist (text differences are none, only formatting ignored).
-        int revisionCount = originalContract.Revisions.Count;
-        Console.WriteLine($"Number of revisions after comparison (should be 0 if only formatting differed): {revisionCount}");
+        // Verify that no revisions were generated because only formatting differences exist.
+        if (original.Revisions.Count != 0)
+        {
+            throw new InvalidOperationException($"Expected zero revisions, but found {original.Revisions.Count}.");
+        }
 
         // Save the comparison result.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
-        originalContract.Save(outputPath);
-        Console.WriteLine($"Comparison result saved to: {outputPath}");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ContractComparisonResult.docx");
+        original.Save(outputPath);
     }
 }
