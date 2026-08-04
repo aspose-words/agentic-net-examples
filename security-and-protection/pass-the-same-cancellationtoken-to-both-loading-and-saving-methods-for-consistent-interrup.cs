@@ -2,91 +2,59 @@ using System;
 using System.IO;
 using System.Threading;
 using Aspose.Words;
-using Aspose.Words.Loading;      // Needed for LoadOptions
-using Aspose.Words.Saving;      // Needed for OoxmlSaveOptions and IDocumentSavingCallback
+using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a single CancellationTokenSource to be used for both load and save operations.
-        using var cts = new CancellationTokenSource();
+        // Create a cancellation token source and obtain the token.
+        var cts = new CancellationTokenSource();
         CancellationToken token = cts.Token;
 
-        // Define file paths in the current working directory.
-        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
-        string destinationPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        // Prepare output directory and file paths.
+        string outputDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        Directory.CreateDirectory(outputDir);
+        string filePath = Path.Combine(outputDir, "Sample.docx");
+        string copyPath = Path.Combine(outputDir, "SampleCopy.docx");
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple document and save it (initial creation, no token needed).
-        // -----------------------------------------------------------------
+        // Create a simple document.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
         builder.Writeln("Hello Aspose.Words with a shared CancellationToken.");
-        doc.Save(sourcePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document while respecting the same CancellationToken.
-        // -----------------------------------------------------------------
-        Document loadedDoc = LoadDocumentWithCancellation(sourcePath, token);
+        // Configure save options with a progress callback that respects the token.
+        var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
+        saveOptions.ProgressCallback = new TokenProgressCallback(token);
 
-        // -----------------------------------------------------------------
-        // 3. Save the loaded document while also respecting the same token.
-        // -----------------------------------------------------------------
-        SaveDocumentWithCancellation(loadedDoc, destinationPath, token);
+        // Save the document using the same token.
+        doc.Save(filePath, saveOptions);
 
-        // -----------------------------------------------------------------
-        // 4. Validate that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(destinationPath))
-            throw new InvalidOperationException("The output document was not saved.");
+        // Before loading, check the token for cancellation.
+        if (token.IsCancellationRequested)
+            throw new OperationCanceledException(token);
 
-        // Indicate successful completion.
-        Console.WriteLine("Document processed successfully.");
+        // Load the document (no direct token support, but we can abort beforehand).
+        var loadOptions = new LoadOptions(); // No password needed for this example.
+        var loadedDoc = new Document(filePath, loadOptions);
+
+        // Optional verification of content.
+        string loadedText = loadedDoc.GetText().Trim();
+
+        // Save the loaded document again using the same token and save options.
+        loadedDoc.Save(copyPath, saveOptions);
     }
 
-    private static Document LoadDocumentWithCancellation(string path, CancellationToken token)
+    // Progress callback that throws if the shared CancellationToken is cancelled.
+    private class TokenProgressCallback : IDocumentSavingCallback
     {
-        // Abort early if cancellation was requested before loading.
-        token.ThrowIfCancellationRequested();
-
-        // LoadOptions can be used for passwords or other settings; not needed here.
-        var loadOptions = new LoadOptions();
-
-        // Load the document from file using the same token for consistency.
-        return new Document(path, loadOptions);
-    }
-
-    private static void SaveDocumentWithCancellation(Document doc, string path, CancellationToken token)
-    {
-        // Abort early if cancellation was requested before saving.
-        token.ThrowIfCancellationRequested();
-
-        // Configure save options; using OoxmlSaveOptions to allow a progress callback.
-        var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            // The callback checks the same token during the save operation.
-            ProgressCallback = new CancelSavingCallback(token)
-        };
-
-        // Save the document using the configured options.
-        doc.Save(path, saveOptions);
-    }
-
-    // Implementation of IDocumentSavingCallback that throws if the token signals cancellation.
-    private class CancelSavingCallback : IDocumentSavingCallback
-    {
-        private readonly CancellationToken _cancellationToken;
-
-        public CancelSavingCallback(CancellationToken cancellationToken)
-        {
-            _cancellationToken = cancellationToken;
-        }
-
+        private readonly CancellationToken _token;
+        public TokenProgressCallback(CancellationToken token) => _token = token;
         public void Notify(DocumentSavingArgs args)
         {
-            if (_cancellationToken.IsCancellationRequested)
-                throw new OperationCanceledException("Document saving was cancelled via CancellationToken.");
+            if (_token.IsCancellationRequested)
+                throw new OperationCanceledException(_token);
         }
     }
 }

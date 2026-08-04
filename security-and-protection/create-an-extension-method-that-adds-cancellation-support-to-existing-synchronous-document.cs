@@ -1,69 +1,70 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-namespace AsposeWordsCancellationDemo
+namespace AsposeWordsCancellationExample
 {
-    // Extension method that adds cancellation support to Document.Save.
+    // Extension methods for Aspose.Words.Document
     public static class DocumentExtensions
     {
-        public static void Save(this Document doc, string fileName, CancellationToken cancellationToken)
+        /// <summary>
+        /// Saves the document to the specified file path with support for cancellation.
+        /// The method checks the cancellation token before starting the save operation.
+        /// If the token is cancelled during the save, an OperationCanceledException is thrown.
+        /// </summary>
+        public static void SaveWithCancellation(this Document document, string filePath, CancellationToken cancellationToken)
         {
-            // Throw immediately if cancellation was already requested.
-            if (cancellationToken.IsCancellationRequested)
-                throw new OperationCanceledException(cancellationToken);
+            // Throw if cancellation was already requested.
+            cancellationToken.ThrowIfCancellationRequested();
 
-            // Use OoxmlSaveOptions so we can attach a progress callback.
-            var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+            // Run the synchronous Save method on a background thread.
+            // This allows the cancellation token to be observed while the operation is pending.
+            Task saveTask = Task.Run(() => document.Save(filePath), cancellationToken);
+
+            try
             {
-                ProgressCallback = new SavingCancellationCallback(cancellationToken)
-            };
-
-            // Perform the synchronous save; the callback will abort if the token is cancelled.
-            doc.Save(fileName, saveOptions);
+                // Wait for the save to complete, propagating cancellation if it occurs.
+                saveTask.Wait(cancellationToken);
+            }
+            catch (AggregateException ae)
+            {
+                // Unwrap the inner exception if it is a cancellation.
+                if (ae.InnerException is OperationCanceledException)
+                    throw ae.InnerException;
+                throw;
+            }
         }
     }
 
-    // Callback that checks the cancellation token and aborts the save operation.
-    internal class SavingCancellationCallback : IDocumentSavingCallback
+    public class Program
     {
-        private readonly CancellationToken _token;
-
-        public SavingCancellationCallback(CancellationToken token) => _token = token;
-
-        public void Notify(DocumentSavingArgs args)
+        public static void Main()
         {
-            if (_token.IsCancellationRequested)
-                throw new OperationCanceledException(_token);
-        }
-    }
-
-    class Program
-    {
-        static void Main()
-        {
-            // Prepare a simple document.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // Create a simple document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
             builder.Writeln("Hello, Aspose.Words with cancellation support!");
 
-            // Define output path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+            // Define the output path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CancelledSaveExample.docx");
 
-            // Use a non‑cancelled token for this demo.
-            var cancellationToken = CancellationToken.None;
+            // Create a cancellation token source (not cancelled in this example).
+            using (CancellationTokenSource cts = new CancellationTokenSource())
+            {
+                // Save the document using the extension method.
+                doc.SaveWithCancellation(outputPath, cts.Token);
+            }
 
-            // Save the document using the extension method.
-            doc.Save(outputPath, cancellationToken);
-
-            // Verify that the file was created.
+            // Validate that the file was created.
             if (!File.Exists(outputPath))
                 throw new InvalidOperationException("The document was not saved as expected.");
 
-            // Optionally, clean up the file after verification.
-            File.Delete(outputPath);
+            // Optionally, load the saved document to ensure it is readable.
+            Document loadedDoc = new Document(outputPath);
+            Console.WriteLine("Document saved and loaded successfully. Text content:");
+            Console.WriteLine(loadedDoc.GetText().Trim());
         }
     }
 }

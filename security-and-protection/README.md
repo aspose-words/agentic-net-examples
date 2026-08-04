@@ -1,14 +1,14 @@
-# security-and-protection Examples for Aspose.Words for .NET
+# Security and Protection Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the security-and-protection category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Security and Protection category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
-- Category: security-and-protection
+- Category: Security and Protection
 - Slug: security-and-protection
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Security Workflow examples: 30
 
 ## Category rules that shaped these examples
@@ -22,7 +22,7 @@ This folder contains the live, publish-ready C# examples for the security-and-pr
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 
 ## Running Examples
 
@@ -31,7 +31,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -52,7 +52,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # PowerShell example
 Copy-Item ..\security-and-protection\create-a-cancellationtokensource-and-pass-its-token-to-document-load-to-enable-interruptio.cs .\Program.cs
@@ -74,7 +74,7 @@ dotnet run --configuration Release --no-build
 | 7 | `handle-operationcanceledexception-after-a-cancelled-document-load-to-perform-necessary-cle.cs` | Handle OperationCanceledException after a cancelled Document.Load to perform necessary cleanup properly. | security-workflow | doc | mcp |
 | 8 | `log-cancellation-events-with-timestamps-to-an-audit-file-for-compliance-tracking.cs` | Log cancellation events with timestamps to an audit file for compliance tracking. | security-workflow | docx | mcp |
 | 9 | `pass-the-same-cancellationtoken-to-both-loading-and-saving-methods-for-consistent-interrup.cs` | Pass the same CancellationToken to both loading and saving methods for consistent interruption control. | security-workflow | docx | mcp |
-| 10 | `use-token-iscancellationrequested-in-a-custom-linq-reporting-engine-query-to-abort-large-r.cs` | Use token.IsCancellationRequested in a custom LINQ Reporting Engine query to abort large reports. | security-workflow | docx | llm |
+| 10 | `use-token-iscancellationrequested-in-a-custom-linq-reporting-engine-query-to-abort-large-r.cs` | Use token.IsCancellationRequested in a custom LINQ Reporting Engine query to abort large reports. | security-workflow | docx | mcp |
 | 11 | `wrap-a-batch-of-document-load-calls-in-a-foreach-loop-that-checks-token-cancellation-befor.cs` | Wrap a batch of Document.Load calls in a foreach loop that checks token cancellation before each load. | security-workflow | doc | mcp |
 | 12 | `configure-documentloadingargs-to-invoke-a-user-defined-method-when-cancellation-is-request.cs` | Configure DocumentLoadingArgs to invoke a user-defined method when cancellation is requested during loading. | security-workflow | doc | mcp |
 | 13 | `integrate-cancellationtoken-into-a-background-worker-that-processes-documents-without-bloc.cs` | Integrate CancellationToken into a background worker that processes documents without blocking the UI. | security-workflow | doc | mcp |
@@ -84,7 +84,7 @@ dotnet run --configuration Release --no-build
 | 17 | `use-token-throwifcancellationrequested-inside-a-custom-image-extraction-routine-to-stop-ea.cs` | Use token.ThrowIfCancellationRequested inside a custom image extraction routine to stop early if needed. | security-workflow | docx | mcp |
 | 18 | `combine-token-monitoring-with-progress-reporting-to-inform-users-when-cancellation-occurs.cs` | Combine token monitoring with progress reporting to inform users when cancellation occurs during processing. | security-workflow | docx | mcp |
 | 19 | `implement-a-timeout-mechanism-that-triggers-cancellationtokensource-cancel-after-a-predefi.cs` | Implement a timeout mechanism that triggers CancellationTokenSource.Cancel after a predefined duration automatically. | security-workflow | docx | mcp |
-| 20 | `pass-the-token-to-documentbuilder-operations-to-allow-interruption-while-constructing-comp.cs` | Pass the token to DocumentBuilder operations to allow interruption while constructing complex documents. | security-workflow | doc | llm |
+| 20 | `pass-the-token-to-documentbuilder-operations-to-allow-interruption-while-constructing-comp.cs` | Pass the token to DocumentBuilder operations to allow interruption while constructing complex documents. | security-workflow | doc | mcp |
 | 21 | `test-cancellation-behavior-by-simulating-user-aborts-during-document-layout-generation-in.cs` | Test cancellation behavior by simulating user aborts during document layout generation in unit tests. | security-workflow | doc | mcp |
 | 22 | `document-the-required-net-version-for-cancellationtoken-support-in-the-project-s-readme-fi.cs` | Document the required .NET version for CancellationToken support in the project's README file. | security-workflow | doc | mcp |
 | 23 | `use-token-iscancellationrequested-within-a-while-loop-processing-document-nodes-to-enable.cs` | Use token.IsCancellationRequested within a while loop processing document nodes to enable graceful exit. | security-workflow | doc | mcp |
@@ -124,6 +124,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

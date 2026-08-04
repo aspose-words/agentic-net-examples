@@ -1,6 +1,6 @@
 {
   "category": {
-    "name": "security-and-protection",
+    "name": "Security and Protection",
     "slug": "security-and-protection",
     "product": "Aspose.Words",
     "language": "csharp",
@@ -9,45 +9,45 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "System.Threading",
-      "System.Threading.Tasks",
       "Aspose.Words",
       "Aspose.Words.Loading",
       "Aspose.Words.Fields",
+      "System.Threading.Tasks",
       "Aspose.Words.Saving",
       "Aspose.Words.Layout",
-      "System.Linq",
-      "System.Text",
+      "System.Collections",
       "System.Collections.Generic",
+      "System.Linq",
+      "Aspose.Words.Reporting",
       "Aspose.Words.Drawing",
-      "System.Timers"
+      "System.Diagnostics",
+      "System.Net.Http"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "Directory",
       "Path",
-      "Run",
       "LoadOptions",
       "File",
       "Range",
       "Field",
       "FieldType",
+      "Run",
       "SaveFormat",
       "Paragraph",
+      "ReportingEngine",
       "ProtectionType",
       "NodeType",
       "MemoryStream",
       "Shape",
-      "ImageData",
-      "StyleIdentifier",
-      "Node",
-      "PdfSaveOptions"
+      "ImageData"
     ]
   },
   "stats": {
@@ -202,8 +202,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 11,
@@ -312,8 +312,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 21,

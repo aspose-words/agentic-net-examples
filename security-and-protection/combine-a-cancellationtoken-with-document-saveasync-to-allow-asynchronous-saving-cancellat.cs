@@ -5,51 +5,72 @@ using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeWordsCancellationDemo
 {
-    public static async Task Main()
+    // Callback that checks the cancellation token and aborts the save operation.
+    public class SavingProgressCallback : IDocumentSavingCallback
     {
-        // Create a simple document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document will be saved asynchronously with cancellation support.");
+        private readonly CancellationToken _cancellationToken;
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AsyncCancelled.docx");
-
-        // Prepare a cancellation token that will be cancelled after a short delay.
-        using var cts = new CancellationTokenSource();
-        cts.CancelAfter(100); // Cancel after 100 ms to simulate a quick abort.
-        CancellationToken token = cts.Token;
-
-        try
+        public SavingProgressCallback(CancellationToken cancellationToken)
         {
-            // Perform the save operation on a background thread and observe the token.
-            await Task.Run(() =>
+            _cancellationToken = cancellationToken;
+        }
+
+        public void Notify(DocumentSavingArgs args)
+        {
+            if (_cancellationToken.IsCancellationRequested)
+                throw new OperationCanceledException("Document saving was canceled via token.");
+        }
+    }
+
+    public class Program
+    {
+        public static async Task Main()
+        {
+            // Prepare output directory.
+            string outputDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+            Directory.CreateDirectory(outputDir);
+            string outputPath = Path.Combine(outputDir, "LargeDocument.docx");
+
+            // Create a large document to make the save operation take noticeable time.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            for (int i = 0; i < 5000; i++)
             {
-                // Throw if cancellation was already requested.
-                token.ThrowIfCancellationRequested();
+                builder.Writeln($"Paragraph {i + 1}");
+            }
 
-                // Save the document using normal synchronous API.
-                // The token is not directly passed because Aspose.Words does not expose SaveAsync.
-                doc.Save(outputPath, new OoxmlSaveOptions(SaveFormat.Docx));
-            }, token);
+            // Set up a cancellation token that will be triggered after a short delay.
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(200);
+                cts.Cancel();
+            });
 
-            Console.WriteLine($"Document saved successfully to: {outputPath}");
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("Document saving was cancelled.");
-        }
+            // Configure save options with a progress callback that respects the token.
+            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+            {
+                ProgressCallback = new SavingProgressCallback(cts.Token)
+            };
 
-        // Verify whether the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Output file exists.");
-        }
-        else
-        {
-            Console.WriteLine("Output file does not exist.");
+            try
+            {
+                // Perform the save operation on a background thread so it can be cancelled.
+                await Task.Run(() => doc.Save(outputPath, saveOptions), cts.Token);
+                Console.WriteLine("Document saved successfully.");
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("Document saving was canceled.");
+            }
+
+            // Verify whether the file was created.
+            if (File.Exists(outputPath))
+                Console.WriteLine($"Output file exists at: {outputPath}");
+            else
+                Console.WriteLine("Output file was not created.");
         }
     }
 }

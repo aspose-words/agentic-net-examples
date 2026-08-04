@@ -1,63 +1,62 @@
 using System;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Timers;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
 public class Program
 {
-    public static async Task Main()
+    public static void Main()
     {
-        // Prepare a folder for output files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string docPath = Path.Combine(artifactsDir, "Sample.docx");
-
-        // Create a simple Word document and save it locally.
+        // Create a simple document and save it locally.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
-        doc.Save(docPath);
+        builder.Writeln("This is a sample document used to demonstrate a timeout.");
+        string filePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
+        doc.Save(filePath);
 
-        // Set up a cancellation token that will be cancelled after 2 seconds.
+        // Set up a cancellation token that will be triggered after 1 second.
         using var cts = new CancellationTokenSource();
-        var timer = new System.Timers.Timer(2000) { AutoReset = false };
-        timer.Elapsed += (s, e) => cts.Cancel();
-        timer.Start();
+        cts.CancelAfter(TimeSpan.FromSeconds(1));
+
+        // LoadOptions with a progress callback that checks the cancellation token.
+        LoadOptions loadOptions = new LoadOptions
+        {
+            ProgressCallback = new LoadingProgressCallback(cts.Token)
+        };
 
         try
         {
-            // Attempt to load the document with a simulated long‑running operation.
-            await LoadDocumentWithTimeoutAsync(docPath, cts.Token);
-            Console.WriteLine("Document loaded successfully before timeout.");
+            // Attempt to load the document. The callback will abort the load when the token is cancelled.
+            Document loadedDoc = new Document(filePath, loadOptions);
+            Console.WriteLine("Document loaded successfully (no timeout).");
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            Console.WriteLine("Loading was cancelled due to timeout.");
+            // Expected when the timeout occurs.
+            Console.WriteLine($"Loading cancelled due to timeout: {ex.Message}");
         }
-        finally
+        catch (Exception ex)
         {
-            timer.Dispose();
+            // Any other unexpected errors.
+            Console.WriteLine($"Unexpected error: {ex.Message}");
         }
     }
 
-    private static async Task LoadDocumentWithTimeoutAsync(string path, CancellationToken token)
+    // Implements the Aspose.Words loading callback and aborts loading when cancellation is requested.
+    private class LoadingProgressCallback : IDocumentLoadingCallback
     {
-        // Simulate a lengthy operation that periodically checks the cancellation token.
-        await Task.Run(() =>
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                token.ThrowIfCancellationRequested();
-                // Simulate work (e.g., processing a large document).
-                Thread.Sleep(500);
-            }
+        private readonly CancellationToken _token;
 
-            // Actual document loading (fast for this small sample).
-            var loadOptions = new LoadOptions(); // No password required.
-            Document loaded = new Document(path, loadOptions);
-        }, token);
+        public LoadingProgressCallback(CancellationToken token)
+        {
+            _token = token;
+        }
+
+        public void Notify(DocumentLoadingArgs args)
+        {
+            if (_token.IsCancellationRequested)
+                throw new OperationCanceledException($"EstimatedProgress = {args.EstimatedProgress}");
+        }
     }
 }

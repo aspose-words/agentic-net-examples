@@ -3,56 +3,68 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
-public class LoadingCallback : IDocumentLoadingCallback
+namespace AsposeLoadingCallbackDemo
 {
-    // This method is called repeatedly while the document is being loaded.
-    public void Notify(DocumentLoadingArgs args)
+    // Callback that aborts loading if the operation takes longer than the allowed duration.
+    class LoadingCallback : IDocumentLoadingCallback
     {
-        // The DocumentLoadingArgs class does not provide a ThrowIfCancellationRequested method.
-        // To cancel loading, simply throw an OperationCanceledException based on the progress information.
-        // In this demo we abort the loading as soon as the first callback is invoked.
-        throw new OperationCanceledException(
-            $"Loading cancelled at {args.EstimatedProgress}% progress.");
+        private readonly DateTime _loadingStartedAt;
+        private const double MaxDurationSeconds = 0.5; // Cancel after half a second.
+
+        public LoadingCallback()
+        {
+            _loadingStartedAt = DateTime.Now;
+        }
+
+        public void Notify(DocumentLoadingArgs args)
+        {
+            // Determine how long loading has been running.
+            double elapsed = (DateTime.Now - _loadingStartedAt).TotalSeconds;
+            if (elapsed > MaxDurationSeconds)
+            {
+                // Abort loading by throwing an OperationCanceledException.
+                // Include progress information for diagnostic purposes.
+                throw new OperationCanceledException(
+                    $"EstimatedProgress = {args.EstimatedProgress}; CanceledAt = {DateTime.Now}");
+            }
+        }
     }
-}
 
-public class Program
-{
-    public static void Main()
+    public class Program
     {
-        // Prepare a folder for temporary files.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
+        public static void Main()
+        {
+            // Prepare a temporary folder for the sample files.
+            string artifactsDir = Path.Combine(Path.GetTempPath(), "AsposeLoadingCallbackDemo");
+            Directory.CreateDirectory(artifactsDir);
 
-        // Create a simple document and save it.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words!");
-        string filePath = Path.Combine(outputDir, "Sample.docx");
-        doc.Save(filePath);
+            // Create a simple document and save it.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello world! This document will be loaded with a cancellation callback.");
+            string filePath = Path.Combine(artifactsDir, "Sample.docx");
+            doc.Save(filePath);
 
-        // Set up load options with the custom progress callback.
-        LoadOptions loadOptions = new LoadOptions
-        {
-            ProgressCallback = new LoadingCallback()
-        };
+            // Set up load options with the custom progress callback.
+            LoadOptions loadOptions = new LoadOptions
+            {
+                ProgressCallback = new LoadingCallback()
+            };
 
-        // Attempt to load the document; the callback will cancel the operation.
-        try
-        {
-            Document loadedDoc = new Document(filePath, loadOptions);
-            // If loading succeeds (which it shouldn't), write a message.
-            Console.WriteLine("Document loaded successfully (unexpected).");
-        }
-        catch (OperationCanceledException ex)
-        {
-            // Expected path: the callback aborts loading.
-            Console.WriteLine($"Loading was cancelled as intended: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            // Any other exception is reported.
-            Console.WriteLine($"An unexpected error occurred: {ex.Message}");
+            // Attempt to load the document; expect an OperationCanceledException if cancelled.
+            try
+            {
+                Document loadedDoc = new Document(filePath, loadOptions);
+                Console.WriteLine("Document loaded successfully.");
+            }
+            catch (OperationCanceledException ex)
+            {
+                Console.WriteLine($"Loading was cancelled: {ex.Message}");
+            }
+
+            // Clean up the temporary file.
+            if (File.Exists(filePath))
+                File.Delete(filePath);
         }
     }
 }

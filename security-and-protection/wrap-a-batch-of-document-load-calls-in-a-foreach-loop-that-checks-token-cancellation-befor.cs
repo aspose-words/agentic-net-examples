@@ -6,54 +6,47 @@ using Aspose.Words;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
         // Prepare a temporary folder for sample documents.
-        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
-        Directory.CreateDirectory(tempDir);
+        string artifactsDir = Path.Combine(Path.GetTempPath(), "AsposeWordsDemo");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a few sample documents.
-        var sampleFiles = new List<string>();
+        // Create a batch of sample documents.
+        var filePaths = new List<string>();
         for (int i = 1; i <= 3; i++)
         {
-            string filePath = Path.Combine(tempDir, $"Sample{i}.docx");
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
             builder.Writeln($"This is sample document #{i}.");
+            string filePath = Path.Combine(artifactsDir, $"Doc{i}.docx");
             doc.Save(filePath);
-            sampleFiles.Add(filePath);
+            filePaths.Add(filePath);
         }
 
-        // Set up a cancellation token source.
-        var cts = new CancellationTokenSource();
-        CancellationToken token = cts.Token;
+        // Set up a cancellation token (not cancelled in this example).
+        using CancellationTokenSource cts = new CancellationTokenSource();
 
-        // Load each document, checking for cancellation before each load.
-        foreach (string file in sampleFiles)
+        // Iterate over the batch, checking cancellation before each load.
+        foreach (string path in filePaths)
         {
-            if (token.IsCancellationRequested)
+            if (cts.Token.IsCancellationRequested)
             {
-                Console.WriteLine("Cancellation requested. Stopping further loads.");
+                Console.WriteLine("Loading operation was cancelled.");
                 break;
             }
 
             // Load the document.
-            var loadedDoc = new Document(file);
-            Console.WriteLine($"Loaded '{Path.GetFileName(file)}' with text: {loadedDoc.GetText().Trim()}");
-
-            // For demonstration, cancel after the first document is loaded.
-            if (file.EndsWith("Sample1.docx"))
-            {
-                cts.Cancel();
-            }
+            Document loadedDoc = new Document(path);
+            Console.WriteLine($"Loaded '{Path.GetFileName(path)}' with text: {loadedDoc.GetText().Trim()}");
         }
 
-        // Clean up temporary files.
-        foreach (string file in sampleFiles)
+        // Clean up temporary files (optional).
+        foreach (string path in filePaths)
         {
-            if (File.Exists(file))
-                File.Delete(file);
+            if (File.Exists(path))
+                File.Delete(path);
         }
-        Directory.Delete(tempDir, true);
+        Directory.Delete(artifactsDir, true);
     }
 }
