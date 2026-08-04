@@ -3,44 +3,59 @@ using Aspose.Words;
 
 public class Program
 {
+    // Criteria that matches revisions belonging to a specific RevisionGroup.
+    private class RevisionGroupCriteria : IRevisionCriteria
+    {
+        private readonly RevisionGroup _targetGroup;
+
+        public RevisionGroupCriteria(RevisionGroup targetGroup)
+        {
+            _targetGroup = targetGroup;
+        }
+
+        public bool IsMatch(Revision revision)
+        {
+            // Revisions that are part of the target group have their Group property set.
+            return revision.Group == _targetGroup;
+        }
+    }
+
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial content that will NOT be a revision.
+        // Write some initial content that will NOT be tracked.
         builder.Writeln("Original paragraph. ");
 
-        // Start tracking revisions. All subsequent changes will be recorded.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
+        // Start tracking revisions with a specific author.
+        doc.StartTrackRevisions("Alice", DateTime.Now);
 
-        // Insert several paragraphs sequentially. These insertions will be grouped together.
-        builder.Writeln("First inserted paragraph.");
-        builder.Writeln("Second inserted paragraph.");
-        builder.Writeln("Third inserted paragraph.");
+        // Insert several sequential pieces of text – these will form one RevisionGroup.
+        builder.Writeln("First inserted line.");
+        builder.Writeln("Second inserted line.");
+        builder.Writeln("Third inserted line.");
 
-        // Stop tracking revisions.
+        // Stop tracking so further edits are not recorded as revisions.
         doc.StopTrackRevisions();
 
-        // At this point the document contains a single revision group for the sequential insertions.
-        Console.WriteLine($"Revision groups count: {doc.Revisions.Groups.Count}");
-        if (doc.Revisions.Groups.Count > 0)
-        {
-            RevisionGroup group = doc.Revisions.Groups[0];
-            Console.WriteLine($"Group author: {group.Author}");
-            Console.WriteLine($"Group type: {group.RevisionType}");
-            Console.WriteLine($"Group text: {group.Text.Trim()}");
-        }
+        // Ensure that revisions were created.
+        if (!doc.HasRevisions)
+            throw new InvalidOperationException("No revisions were generated.");
 
-        // Accept the entire group of revisions with a single call.
-        // Since the group is the only set of revisions, AcceptAll() suffices.
-        doc.Revisions.AcceptAll();
+        // The sequential insertions are grouped; retrieve the first group.
+        RevisionGroup firstGroup = doc.Revisions.Groups[0];
 
-        // Verify that revisions have been accepted.
-        Console.WriteLine($"Revisions after accept: {doc.Revisions.Count}");
+        // Accept the entire group with a single call using custom criteria.
+        int acceptedCount = doc.Revisions.Accept(new RevisionGroupCriteria(firstGroup));
+
+        // Output information about the operation.
+        Console.WriteLine($"Revisions before acceptance: {doc.Revisions.Count + acceptedCount}");
+        Console.WriteLine($"Revisions accepted in the group: {acceptedCount}");
+        Console.WriteLine($"Revisions remaining after acceptance: {doc.Revisions.Count}");
 
         // Save the resulting document.
-        doc.Save("RevisionGroupAccepted.docx");
+        doc.Save("Output.docx");
     }
 }

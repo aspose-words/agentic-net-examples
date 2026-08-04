@@ -3,39 +3,49 @@ using Aspose.Words;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Determine whether to enable tracking based on the first command‑line argument.
-        bool enableTracking = args.Length > 0 && args[0].Equals("on", StringComparison.OrdinalIgnoreCase);
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content (not tracked).
-        builder.Writeln("Initial content.");
+        // Write some initial text without tracking.
+        builder.Writeln("Paragraph before tracking.");
 
+        // Simulated user input: first toggle = true (enable tracking).
+        bool enableTracking = true;
         if (enableTracking)
         {
-            // Start tracking revisions.
-            doc.StartTrackRevisions("User", DateTime.Now);
-            builder.Writeln("This text is added while tracking is ON.");
+            // Start tracking revisions with a specific author.
+            doc.StartTrackRevisions("Alice", DateTime.Now);
+        }
+
+        // Add text while tracking is enabled – this will create a revision.
+        builder.Writeln("Paragraph added while tracking is ON.");
+
+        // Simulated user input: second toggle = false (disable tracking).
+        bool disableTracking = true;
+        if (disableTracking)
+        {
             // Stop tracking revisions.
             doc.StopTrackRevisions();
         }
-        else
+
+        // Add more text after tracking is stopped – this will NOT create a revision.
+        builder.Writeln("Paragraph added after tracking is OFF.");
+
+        // Inspect the revisions collection.
+        int revisionCount = doc.Revisions.Count;
+        Console.WriteLine($"Total revisions in the document: {revisionCount}");
+
+        // Output details of each revision.
+        for (int i = 0; i < revisionCount; i++)
         {
-            // Add content without tracking.
-            builder.Writeln("This text is added while tracking is OFF.");
+            Revision rev = doc.Revisions[i];
+            Console.WriteLine($"Revision {i + 1}: Type={rev.RevisionType}, Author={rev.Author}, Text=\"{rev.ParentNode.GetText().Trim()}\"");
         }
 
-        // Add final content after the toggle.
-        builder.Writeln("Final content.");
-
-        // Save the document to disk.
-        doc.Save("ToggleTracking.docx");
-
-        // Output the number of revisions created (non‑interactive).
-        Console.WriteLine($"Revisions count: {doc.Revisions.Count}");
+        // Save the document to verify the changes.
+        doc.Save("TrackChangesDemo.docx");
     }
 }

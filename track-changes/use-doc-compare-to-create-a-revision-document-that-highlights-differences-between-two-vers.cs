@@ -1,7 +1,8 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Comparing;
 
-public class CompareDocumentsExample
+public class RevisionComparisonExample
 {
     public static void Main()
     {
@@ -9,41 +10,34 @@ public class CompareDocumentsExample
         Document original = new Document();
         DocumentBuilder builder = new DocumentBuilder(original);
         builder.Writeln("This is the original document.");
-        builder.Writeln("It has two paragraphs.");
-        original.Save("Original.docx");
+        builder.Writeln("It contains a few lines of text.");
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
 
-        // Create the edited document.
+        // Create the edited document with some changes.
         Document edited = new Document();
-        builder = new DocumentBuilder(edited);
-        builder.Writeln("This is the edited document.");
-        builder.Writeln("It has three paragraphs now.");
-        builder.Writeln("Additional line added.");
-        edited.Save("Edited.docx");
+        DocumentBuilder builderEdited = new DocumentBuilder(edited);
+        builderEdited.Writeln("This is the edited document."); // changed line
+        builderEdited.Writeln("It contains a few lines of text."); // unchanged
+        builderEdited.Writeln("The quick brown fox jumps over the lazy cat."); // changed word
 
-        // Compare the documents. The original document will receive revisions.
+        // Ensure both documents have no revisions before comparison.
+        if (original.Revisions.Count != 0 || edited.Revisions.Count != 0)
+            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
+
+        // Compare the documents. The original document will now contain revisions that represent the differences.
         original.Compare(edited, "Comparer", DateTime.Now);
 
-        // Output revision details.
+        // Output revision details to the console.
         Console.WriteLine("Revisions found after comparison:");
         foreach (Revision rev in original.Revisions)
         {
-            Console.WriteLine($"- Type: {rev.RevisionType}, Text: \"{rev.ParentNode.GetText().Trim()}\"");
+            Console.WriteLine($"- Type: {rev.RevisionType}, Author: {rev.Author}");
+            Console.WriteLine($"  Changed text: \"{rev.ParentNode.GetText().Trim()}\"");
         }
 
-        // Accept all revisions so the original becomes identical to the edited version.
-        original.Revisions.AcceptAll();
-
-        // Verify that the texts now match.
-        if (original.GetText() == edited.GetText())
-        {
-            Console.WriteLine("All revisions accepted. Documents are now identical.");
-        }
-        else
-        {
-            Console.WriteLine("Documents differ after accepting revisions.");
-        }
-
-        // Save the revised document.
-        original.Save("Revised.docx");
+        // Save the original document (which now includes revision markup) to a file.
+        string outputPath = "OriginalWithRevisions.docx";
+        original.Save(outputPath);
+        Console.WriteLine($"Revision document saved to: {outputPath}");
     }
 }

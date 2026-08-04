@@ -1,8 +1,9 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 
-public class Program
+public class RevisionExportUtility
 {
     public static void Main()
     {
@@ -11,57 +12,53 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add some initial content that will not be a revision.
-        builder.Writeln("Original paragraph.");
+        builder.Writeln("Original content.");
 
-        // Start tracking revisions with a specific author and timestamp.
+        // Enable tracking of revisions with a specific author and timestamp.
         doc.StartTrackRevisions("Alice", DateTime.Now);
 
-        // Insert new text – this will be recorded as an insertion revision.
-        builder.Writeln("Inserted paragraph.");
+        // Perform edits that will be recorded as revisions.
+        builder.Writeln("Added line 1.");
+        builder.Writeln("Added line 2.");
 
-        // Delete the first run of the original paragraph – this creates a deletion revision.
-        if (doc.FirstSection.Body.Paragraphs.Count > 0 && doc.FirstSection.Body.Paragraphs[0].Runs.Count > 0)
-        {
-            doc.FirstSection.Body.Paragraphs[0].Runs[0].Remove();
-        }
+        // Create a deletion revision by removing the first run.
+        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
 
         // Stop tracking further changes.
         doc.StopTrackRevisions();
 
-        // Save the document (optional, demonstrates that revisions are persisted).
-        string docPath = "RevisionsDemo.docx";
-        doc.Save(docPath);
+        // Save the document (optional, demonstrates lifecycle usage).
+        doc.Save("RevisionsDemo.docx");
 
         // Export revision metadata to a CSV file.
-        string csvPath = "RevisionsMetadata.csv";
-        using (StreamWriter writer = new StreamWriter(csvPath))
-        {
-            // Write CSV header.
-            writer.WriteLine("Index,Author,DateTime,RevisionType,Text");
-
-            int index = 0;
-            foreach (Revision rev in doc.Revisions)
-            {
-                // Retrieve the text associated with the revision, handling possible nulls.
-                string text = rev.ParentNode != null
-                    ? rev.ParentNode.GetText().Replace("\r", " ").Replace("\n", " ").Trim()
-                    : string.Empty;
-
-                // Write a CSV line with proper escaping.
-                writer.WriteLine($"{index},{EscapeCsv(rev.Author)},{rev.DateTime:o},{rev.RevisionType},{EscapeCsv(text)}");
-                index++;
-            }
-        }
+        ExportRevisionsToCsv(doc, "RevisionsMetadata.csv");
     }
 
-    // Helper method to escape CSV fields that contain commas, quotes, or line breaks.
-    private static string EscapeCsv(string value)
+    private static void ExportRevisionsToCsv(Document doc, string csvPath)
     {
-        if (value.Contains(",") || value.Contains("\"") || value.Contains("\r") || value.Contains("\n"))
+        var sb = new StringBuilder();
+
+        // CSV header.
+        sb.AppendLine("Index,RevisionType,Author,DateTime,Text");
+
+        int index = 0;
+        foreach (Revision rev in doc.Revisions)
         {
-            string escaped = value.Replace("\"", "\"\"");
-            return $"\"{escaped}\"";
+            // Retrieve the text associated with the revision, handling possible nulls.
+            string text = rev.ParentNode != null
+                ? rev.ParentNode.GetText().Replace("\r", " ").Replace("\n", " ").Trim()
+                : string.Empty;
+
+            // Escape commas in the text field.
+            if (text.Contains(","))
+                text = $"\"{text}\"";
+
+            // Append a CSV line with ISO 8601 date format for consistency.
+            sb.AppendLine($"{index},{rev.RevisionType},{rev.Author},{rev.DateTime:o},{text}");
+            index++;
         }
-        return value;
+
+        // Write the CSV content to the specified file.
+        File.WriteAllText(csvPath, sb.ToString());
     }
 }

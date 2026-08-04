@@ -1,37 +1,39 @@
 using System;
 using Aspose.Words;
 
-namespace RevisionInfoExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Write some initial text (not tracked).
+        builder.Writeln("Original paragraph.");
+
+        // Start tracking revisions with the first author.
+        doc.StartTrackRevisions("Alice", DateTime.Now);
+        builder.Writeln("Added paragraph by Alice.");
+        // Stop tracking so subsequent changes are not recorded as revisions for Alice.
+        doc.StopTrackRevisions();
+
+        // Start tracking revisions with a second author.
+        doc.StartTrackRevisions("Bob", DateTime.Now);
+        // Delete the first paragraph to create a deletion revision.
+        doc.FirstSection.Body.Paragraphs[0].Remove();
+        // Add another paragraph.
+        builder.Writeln("Added paragraph by Bob.");
+        // Stop tracking.
+        doc.StopTrackRevisions();
+
+        // Save the document so the revisions are persisted.
+        doc.Save("RevisionsDemo.docx");
+
+        // Iterate through all revisions and log author and timestamp.
+        foreach (Revision revision in doc.Revisions)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // First revision – author "Alice".
-            doc.StartTrackRevisions("Alice", DateTime.Now);
-            builder.Writeln("First revision text.");
-            doc.StopTrackRevisions();
-
-            // Second revision – author "Bob".
-            doc.StartTrackRevisions("Bob", DateTime.Now.AddMinutes(5));
-            builder.Writeln("Second revision text.");
-
-            // Create a deletion revision by removing the first run (the text added by Alice).
-            doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
-            doc.StopTrackRevisions();
-
-            // Save the document (optional, demonstrates the save lifecycle).
-            doc.Save("RevisionsDemo.docx");
-
-            // Iterate through all revisions and log each revision's author and timestamp.
-            foreach (Revision rev in doc.Revisions)
-            {
-                Console.WriteLine($"Author: {rev.Author}, DateTime: {rev.DateTime}");
-            }
+            Console.WriteLine($"Author: {revision.Author}, Timestamp: {revision.DateTime}");
         }
     }
 }

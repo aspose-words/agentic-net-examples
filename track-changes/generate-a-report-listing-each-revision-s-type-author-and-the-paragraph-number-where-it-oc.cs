@@ -12,19 +12,19 @@ namespace RevisionReportExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add some initial content that will NOT be a revision.
-            builder.Writeln("Original paragraph 1.");
-            builder.Writeln("Original paragraph 2.");
+            // Add some initial content that will NOT be tracked as revisions.
+            builder.Writeln("Paragraph 1: Original text.");
+            builder.Writeln("Paragraph 2: Original text.");
+            builder.Writeln("Paragraph 3: Original text.");
 
             // Start tracking revisions with a specific author.
             doc.StartTrackRevisions("Alice", DateTime.Now);
 
-            // Insert new paragraphs – these will be insertion revisions.
-            builder.Writeln("Inserted paragraph A.");
-            builder.Writeln("Inserted paragraph B.");
+            // Insert a new paragraph – this will be an insertion revision.
+            builder.Writeln("Paragraph 4: Inserted while tracking.");
 
-            // Modify an existing paragraph to create a deletion revision.
-            // Remove the first run of the first original paragraph.
+            // Delete a run from the first paragraph – this will create a deletion revision.
+            // Find the first paragraph and remove its first run.
             Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
             if (firstParagraph.Runs.Count > 0)
                 firstParagraph.Runs[0].Remove();
@@ -32,28 +32,30 @@ namespace RevisionReportExample
             // Stop tracking further changes.
             doc.StopTrackRevisions();
 
-            // Save the document (optional, just to have a file with revisions).
-            doc.Save("RevisionsReport.docx");
+            // Save the document so you can inspect it manually if needed.
+            const string outputPath = "RevisionReport.docx";
+            doc.Save(outputPath);
 
             // Generate a report of each revision: type, author, and paragraph number.
             Console.WriteLine("Revision Report:");
             Console.WriteLine("----------------");
 
-            RevisionCollection revisions = doc.Revisions;
-            for (int i = 0; i < revisions.Count; i++)
+            // Iterate through all revisions in the document.
+            foreach (Revision rev in doc.Revisions)
             {
-                Revision rev = revisions[i];
-                // Determine the paragraph that contains the revision.
-                Paragraph revParagraph = rev.ParentNode?.GetAncestor(NodeType.Paragraph) as Paragraph;
-                int paragraphNumber = revParagraph != null
-                    ? doc.FirstSection.Body.Paragraphs.IndexOf(revParagraph) + 1
-                    : -1; // -1 indicates the revision is not attached to a paragraph.
+                // Determine the paragraph that contains the revision's parent node.
+                Node parent = rev.ParentNode;
+                Paragraph revParagraph = (Paragraph)parent.GetAncestor(NodeType.Paragraph);
 
-                Console.WriteLine($"Revision {i + 1}:");
-                Console.WriteLine($"  Type   : {rev.RevisionType}");
-                Console.WriteLine($"  Author : {rev.Author}");
-                Console.WriteLine($"  Paragraph #: {paragraphNumber}");
-                Console.WriteLine();
+                // If the revision is not attached to a paragraph (unlikely for insert/delete), skip it.
+                if (revParagraph == null)
+                    continue;
+
+                // Find the paragraph's index within the body (0‑based) and convert to 1‑based for reporting.
+                int paragraphIndex = doc.FirstSection.Body.Paragraphs.IndexOf(revParagraph) + 1;
+
+                // Output the revision details.
+                Console.WriteLine($"Paragraph {paragraphIndex}: Type = {rev.RevisionType}, Author = {rev.Author}");
             }
         }
     }

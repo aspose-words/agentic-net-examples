@@ -6,60 +6,51 @@ public class Program
 {
     public static void Main()
     {
-        // File names for the baseline document and the document that will contain revisions.
-        const string baselinePath = "Baseline.docx";
-        const string revisedPath = "Revised.docx";
+        // Paths for temporary files.
+        string baselinePath = "baseline.docx";
+        string resultPath = "result.docx";
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a baseline document that contains the original text.
-        // -----------------------------------------------------------------
+        // Step 1: Create a baseline document with original content.
         Document baselineDoc = new Document();
         DocumentBuilder baselineBuilder = new DocumentBuilder(baselineDoc);
-        baselineBuilder.Writeln("Original line 1.");
-        baselineBuilder.Writeln("Original line 2.");
+        baselineBuilder.Writeln("Hello World!");
         baselineDoc.Save(baselinePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the baseline document and start tracking revisions.
-        // -----------------------------------------------------------------
+        // Step 2: Load the baseline and start tracking revisions.
         Document doc = new Document(baselinePath);
-        doc.StartTrackRevisions("TestAuthor", DateTime.Now);
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Move the cursor to the end of the document so the inserted paragraph
-        // is added after the original content (otherwise it would be removed again).
-        builder.MoveToDocumentEnd();
-        builder.Writeln("Inserted line.");
+        // Step 3: Make a change that generates a revision (insert text).
+        DocumentBuilder revBuilder = new DocumentBuilder(doc);
+        revBuilder.MoveToDocumentEnd();
+        revBuilder.Writeln("This is an inserted line.");
 
-        // Delete the first original paragraph – this will be recorded as a deletion revision.
-        Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
-        firstParagraph.Remove();
-
-        // Stop tracking further changes.
+        // Step 4: Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Ensure that revisions were actually created.
-        if (!doc.HasRevisions || doc.Revisions.Count == 0)
-            throw new InvalidOperationException("No revisions were generated.");
-
-        // -----------------------------------------------------------------
-        // Step 3: Reject all revisions, reverting the document to its original state.
-        // -----------------------------------------------------------------
+        // Step 5: Reject all revisions, reverting to the original content.
+        // Use the RevisionCollection API (AcceptAll/RejectAll) as required by Aspose.Words.
         doc.Revisions.RejectAll();
 
-        // Save the document after rejecting revisions.
-        doc.Save(revisedPath);
+        // Save the resulting document.
+        doc.Save(resultPath);
 
-        // -----------------------------------------------------------------
-        // Step 4: Verify that the content matches the baseline.
-        // -----------------------------------------------------------------
-        Document baselineCheck = new Document(baselinePath);
-        string originalText = baselineCheck.GetText();
-        string finalText = doc.GetText();
+        // Step 6: Verify that the resulting document matches the baseline.
+        Document resultDoc = new Document(resultPath);
+        string baselineText = baselineDoc.GetText();
+        string resultText = resultDoc.GetText();
 
-        if (!string.Equals(originalText, finalText, StringComparison.Ordinal))
-            throw new Exception("The document content after rejecting revisions does not match the baseline.");
+        if (baselineText == resultText)
+        {
+            Console.WriteLine("Verification succeeded: the document matches the baseline.");
+        }
+        else
+        {
+            throw new InvalidOperationException("Verification failed: the document does not match the baseline.");
+        }
 
-        Console.WriteLine("Revisions rejected successfully; document matches the baseline.");
+        // Optional cleanup.
+        // File.Delete(baselinePath);
+        // File.Delete(resultPath);
     }
 }

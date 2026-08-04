@@ -1,78 +1,84 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 
-public class RevisionLogger
+namespace RevisionLoggerExample
 {
-    private readonly List<string> _entries = new List<string>();
-
-    public void Log(Revision revision)
+    // Simple logger that records revision metadata.
+    public class RevisionLogger
     {
-        string text = revision.ParentNode?.GetText()?.Trim() ?? string.Empty;
-        string entry = $"Author: {revision.Author}, " +
-                       $"Date: {revision.DateTime:u}, " +
-                       $"Type: {revision.RevisionType}, " +
-                       $"Text: \"{text}\"";
-        _entries.Add(entry);
-    }
-
-    public void Save(string filePath)
-    {
-        File.WriteAllLines(filePath, _entries);
-    }
-
-    public void Print()
-    {
-        foreach (var entry in _entries)
-            Console.WriteLine(entry);
-    }
-}
-
-public class Program
-{
-    public static void Main()
-    {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Initial content (not tracked).
-        builder.Writeln("Original paragraph. ");
-
-        // Start tracking revisions with a specific author and timestamp.
-        string author = "Alice";
-        DateTime revisionDate = DateTime.Now;
-        doc.StartTrackRevisions(author, revisionDate);
-
-        // Make some changes that will be recorded as revisions.
-        builder.Writeln("Inserted paragraph by Alice. ");
-        // Delete a run to create a deletion revision.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        if (firstParagraph.Runs.Count > 0)
-            firstParagraph.Runs[0].Remove();
-
-        // Change formatting (will not be tracked as a revision by Aspose.Words, but included for completeness).
-        builder.Font.Bold = true;
-        builder.Writeln("Bold paragraph added. ");
-
-        // Stop tracking further changes.
-        doc.StopTrackRevisions();
-
-        // Create a logger and capture all revision metadata.
-        RevisionLogger logger = new RevisionLogger();
-        foreach (Revision rev in doc.Revisions)
+        // Logs a single revision to the console.
+        public void LogRevision(Revision revision)
         {
-            logger.Log(rev);
+            // Capture basic metadata.
+            string author = revision.Author;
+            DateTime date = revision.DateTime;
+            RevisionType type = revision.RevisionType;
+
+            // For insertions and deletions the affected text is in ParentNode.
+            string text = revision.ParentNode != null ? revision.ParentNode.GetText().Trim() : "<no text>";
+
+            Console.WriteLine($"Revision - Author: {author}, Date: {date}, Type: {type}, Text: \"{text}\"");
         }
 
-        // Output log to console.
-        logger.Print();
+        // Logs all revisions in a document.
+        public void LogAllRevisions(Document doc)
+        {
+            foreach (Revision rev in doc.Revisions)
+            {
+                LogRevision(rev);
+            }
+        }
+    }
 
-        // Save the document and the revision log.
-        string outputDoc = "TrackedDocument.docx";
-        string logFile = "RevisionLog.txt";
-        doc.Save(outputDoc);
-        logger.Save(logFile);
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Write initial content (not tracked).
+            builder.Writeln("Paragraph 1: Original content.");
+            builder.Writeln("Paragraph 2: Original content.");
+
+            // Start tracking revisions with a specific author.
+            string author = "Alice";
+            DateTime revisionStart = DateTime.Now;
+            doc.StartTrackRevisions(author, revisionStart);
+
+            // Insert new text (creates an insertion revision).
+            builder.Writeln("Paragraph 3: Added while tracking.");
+
+            // Delete a run from the first paragraph (creates a deletion revision).
+            // Remove the word "Original" from the first paragraph.
+            Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+            Run runToRemove = null;
+
+            // Find the run containing the word "Original".
+            foreach (Run run in firstParagraph.Runs)
+            {
+                if (run.Text.Contains("Original"))
+                {
+                    runToRemove = run;
+                    break;
+                }
+            }
+
+            // If found, remove it to generate a deletion revision.
+            runToRemove?.Remove();
+
+            // Stop tracking further changes.
+            doc.StopTrackRevisions();
+
+            // Save the document with revisions.
+            string outputPath = "TrackedDocument.docx";
+            doc.Save(outputPath);
+
+            // Log revision metadata.
+            RevisionLogger logger = new RevisionLogger();
+            Console.WriteLine("=== Revision Log ===");
+            logger.LogAllRevisions(doc);
+        }
     }
 }

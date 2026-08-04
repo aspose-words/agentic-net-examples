@@ -4,14 +4,12 @@ using Aspose.Words;
 
 public class Program
 {
-    // Returns true if any revision in the document was made by an author in the provided list.
-    public static bool HasRevisionFromAuthors(Document doc, IEnumerable<string> authors)
+    // Checks if any revision in the document was made by an author in the provided list.
+    public static bool HasRevisionFromAuthors(Document doc, List<string> authors)
     {
-        // Use a HashSet for fast lookup.
-        var authorSet = new HashSet<string>(authors);
         foreach (Revision rev in doc.Revisions)
         {
-            if (authorSet.Contains(rev.Author))
+            if (authors.Contains(rev.Author))
                 return true;
         }
         return false;
@@ -23,29 +21,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial text (not a revision).
-        builder.Writeln("Initial content. ");
+        // Add some initial content (this will not be a revision).
+        builder.Writeln("Original text.");
 
-        // First set of revisions by Alice.
+        // Track changes made by Alice.
         doc.StartTrackRevisions("Alice", DateTime.Now);
-        builder.Writeln("Added by Alice. ");
+        builder.Writeln("Alice's addition.");
         doc.StopTrackRevisions();
 
-        // Second set of revisions by Charlie.
-        doc.StartTrackRevisions("Charlie", DateTime.Now);
-        builder.Writeln("Added by Charlie. ");
+        // Track changes made by Bob.
+        doc.StartTrackRevisions("Bob", DateTime.Now);
+        builder.Writeln("Bob's addition.");
+
+        // Create a deletion revision by removing the first paragraph.
+        doc.FirstSection.Body.Paragraphs[0].Remove();
         doc.StopTrackRevisions();
 
         // Save the document (optional, demonstrates file output).
-        doc.Save("Sample.docx");
+        doc.Save("RevisionsDemo.docx");
 
-        // Define authors to check.
-        var authorsToCheck = new List<string> { "Bob", "Charlie" };
+        // List of authors we want to check for.
+        var authorsToCheck = new List<string> { "Charlie", "Bob" };
 
-        // Evaluate whether any revision matches the specified authors.
+        // Use the helper function to determine if any matching revision exists.
         bool hasMatch = HasRevisionFromAuthors(doc, authorsToCheck);
 
         // Output the result.
-        Console.WriteLine($"Document contains revision from specified authors: {hasMatch}");
+        Console.WriteLine($"Has revision from specified authors: {hasMatch}");
     }
 }

@@ -11,37 +11,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content that is not a revision.
-        builder.Writeln("This is the original content.");
+        // Write some initial content that is not a revision.
+        builder.Writeln("Original content. ");
 
         // Start tracking revisions.
-        doc.StartTrackRevisions("Reviewer", DateTime.Now);
+        doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Make changes that will be recorded as revisions.
-        builder.Writeln("This line was added while tracking changes.");
-        builder.Writeln("Another revision line.");
+        // Make a change that will be recorded as a revision.
+        builder.Writeln("This line is added while tracking changes.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // If the document contains any revisions, add a watermark indicating pending changes.
+        // If the document contains any revisions, add a watermark.
         if (doc.HasRevisions)
         {
-            // Create watermark options for a semi‑transparent diagonal text.
+            // Configure watermark options.
             TextWatermarkOptions options = new TextWatermarkOptions
             {
                 FontFamily = "Arial",
                 FontSize = 36,
-                Color = Color.Gray,
+                Color = Color.LightGray,
                 Layout = WatermarkLayout.Diagonal,
-                IsSemitrasparent = true
+                IsSemitrasparent = false
             };
 
-            // Apply the watermark to the document.
+            // Apply the text watermark to the document.
             doc.Watermark.SetText("PENDING CHANGES", options);
         }
 
-        // Save the resulting document.
+        // Save the document to a file.
         doc.Save("Output.docx");
     }
 }

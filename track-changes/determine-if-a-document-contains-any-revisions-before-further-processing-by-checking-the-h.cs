@@ -9,27 +9,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial content. This does NOT count as a revision.
-        builder.Writeln("Original text.");
+        // Write some initial text. This does NOT count as a revision.
+        builder.Writeln("Initial content without tracking.");
 
-        // Verify that the document has no revisions at this point.
+        // Verify that the document currently has no revisions.
         bool hasRevisionsBefore = doc.HasRevisions;
-        Console.WriteLine($"Has revisions before tracking: {hasRevisionsBefore}");
+        Console.WriteLine($"Has revisions before tracking? {hasRevisionsBefore}");
 
-        // Enable tracking of changes.
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        // Start tracking revisions with a specific author and timestamp.
+        doc.StartTrackRevisions("Jane Doe", DateTime.Now);
 
-        // Add new content while tracking is enabled – this will be recorded as a revision.
-        builder.Writeln("Added revision text.");
+        // Add text while tracking is enabled – this will be recorded as a revision.
+        builder.Writeln("This text is added as a revision.");
 
-        // Stop tracking further changes (optional, but demonstrates lifecycle usage).
+        // Stop tracking to avoid further changes being recorded.
         doc.StopTrackRevisions();
 
-        // Verify that the document now reports having revisions.
+        // Check the HasRevisions property after making tracked changes.
         bool hasRevisionsAfter = doc.HasRevisions;
-        Console.WriteLine($"Has revisions after tracking: {hasRevisionsAfter}");
+        Console.WriteLine($"Has revisions after tracking? {hasRevisionsAfter}");
 
-        // Save the document to disk (demonstrates the required save step).
-        doc.Save("RevisionsDemo.docx");
+        // Optionally, save the document to verify the revisions visually in Word.
+        doc.Save("TrackedRevisions.docx");
     }
 }

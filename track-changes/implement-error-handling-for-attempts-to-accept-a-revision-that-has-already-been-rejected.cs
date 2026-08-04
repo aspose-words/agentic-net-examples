@@ -1,7 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
-public class Program
+public class TrackChangesErrorHandling
 {
     public static void Main()
     {
@@ -10,48 +11,44 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Write initial text (no revision yet).
-        builder.Write("Original text. ");
+        builder.Writeln("Original paragraph.");
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        // Start tracking revisions with a specific author.
+        doc.StartTrackRevisions("Alice", DateTime.Now);
 
-        // Insert new text – this will be an insertion revision.
-        builder.Write("Inserted revision. ");
+        // Insert a new paragraph – this will be an insertion revision.
+        builder.Writeln("Inserted paragraph.");
 
-        // Delete the first run to create a deletion revision.
-        // The first run contains "Original text. ".
-        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
+        // Delete the first paragraph to create a deletion revision.
+        Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+        firstParagraph.Remove();
+
+        // At this point we have two revisions: one insertion and one deletion.
+        // Capture the deletion revision reference (it is at index 0 after the removal).
+        Revision deletionRevision = doc.Revisions[0];
+
+        // Reject the deletion revision – the paragraph will be restored.
+        deletionRevision.Reject();
+
+        // Attempt to accept the same revision again.
+        // Since the revision has already been rejected, it no longer exists in the collection.
+        // This operation will throw an exception, which we handle gracefully.
+        try
+        {
+            deletionRevision.Accept();
+            Console.WriteLine("Revision accepted successfully (unexpected).");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: Attempted to accept a revision that was already rejected. Message: {ex.Message}");
+        }
 
         // Stop tracking further changes.
         doc.StopTrackRevisions();
 
-        // At this point we have two revisions:
-        // 0 – Deletion of the original run, 1 – Insertion of the new text.
-        if (doc.Revisions.Count < 2)
-            throw new InvalidOperationException("Expected revisions were not created.");
-
-        // Get the deletion revision (index 0) and reject it.
-        Revision deletionRevision = doc.Revisions[0];
-        deletionRevision.Reject();
-
-        // Attempt to accept the same revision again – it has already been rejected.
-        try
-        {
-            // This will throw because the revision no longer exists in the collection.
-            deletionRevision.Accept();
-        }
-        catch (Exception ex)
-        {
-            // Handle the error gracefully.
-            Console.WriteLine("Error while accepting a rejected revision: " + ex.Message);
-        }
-
-        // Accept the remaining insertion revision to finalize the document.
-        doc.Revisions[0].Accept();
-
-        // Save the document to verify the final state.
-        string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "TrackedChangesResult.docx");
+        // Save the resulting document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TrackChangesErrorHandling.docx");
         doc.Save(outputPath);
-        Console.WriteLine("Document saved to: " + outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }
