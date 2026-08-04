@@ -11,49 +11,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert some introductory text.
-        builder.Writeln("Document with a bookmark where a table will be inserted.");
+        // Insert a bookmark that will mark the position where the table will be placed.
+        builder.StartBookmark("MyTableBookmark");
+        builder.Writeln("Text before the table.");
+        builder.EndBookmark("MyTableBookmark");
 
-        // Insert a bookmark named "InsertHere".
-        builder.StartBookmark("InsertHere");
-        builder.Writeln("This paragraph is inside the bookmark.");
-        builder.EndBookmark("InsertHere");
+        // Move the builder's cursor to the start of the bookmark (inside it) so that the table is inserted there.
+        // Parameters: bookmark name, isStart = true (move to start), isAfter = true (position after the start tag).
+        builder.MoveToBookmark("MyTableBookmark", true, true);
 
-        // Move the builder to the bookmark location.
-        builder.MoveToBookmark("InsertHere");
-
-        // Insert a table at the bookmark location.
-        builder.StartTable();
+        // Build the table at the current cursor position.
+        Table table = builder.StartTable();
 
         // First row.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Row 1, Cell 1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
         // Second row.
         builder.InsertCell();
-        builder.Write("Cell A1");
+        builder.Write("Row 2, Cell 1");
         builder.InsertCell();
-        builder.Write("Cell A2");
+        builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document.
-        string outputPath = "Output.docx";
+        // Add some text after the table to demonstrate normal flow.
+        builder.Writeln();
+        builder.Writeln("Text after the table.");
+
+        // Save the document to a file in the current directory.
+        string outputPath = "TableAtBookmark.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
-
-        // Optionally, you could load the document again to ensure it is readable.
-        Document loadedDoc = new Document(outputPath);
-        // No further actions; program ends here.
+            throw new Exception("The output document was not saved correctly.");
     }
 }

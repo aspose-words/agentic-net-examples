@@ -1,65 +1,52 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableCellShadingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple 3x4 table.
-        Table table = builder.StartTable();
-
-        int rows = 3;
-        int columns = 4;
-
-        for (int r = 0; r < rows; r++)
+        public static void Main()
         {
-            for (int c = 0; c < columns; c++)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start a table and keep a reference to it.
+            Table table = builder.StartTable();
+
+            // Build a sample 3x4 table.
+            for (int row = 1; row <= 3; row++)
             {
-                builder.InsertCell();
-                builder.Write($"R{r + 1}C{c + 1}");
+                for (int col = 1; col <= 4; col++)
+                {
+                    builder.InsertCell();
+                    builder.Write($"R{row}C{col}");
+                }
+                builder.EndRow();
             }
-            builder.EndRow();
-        }
 
-        builder.EndTable();
+            // Finish the table.
+            builder.EndTable();
 
-        // Apply different background colors based on column index.
-        // Define a set of colors to use for each column.
-        Color[] columnColors = new Color[]
-        {
-            Color.LightBlue,
-            Color.LightGreen,
-            Color.LightYellow,
-            Color.LightCoral
-        };
-
-        // Iterate through each cell and set its shading.
-        foreach (Row row in table.Rows)
-        {
-            for (int colIndex = 0; colIndex < row.Cells.Count; colIndex++)
+            // Iterate through all cells and apply background colors based on column index.
+            foreach (Row row in table.Rows)
             {
-                Cell cell = row.Cells[colIndex];
-                // Choose color based on column index (wrap if more columns than colors).
-                Color bgColor = columnColors[colIndex % columnColors.Length];
-                cell.CellFormat.Shading.BackgroundPatternColor = bgColor;
+                for (int colIndex = 0; colIndex < row.Cells.Count; colIndex++)
+                {
+                    Cell cell = row.Cells[colIndex];
+
+                    // Example: even columns get LightBlue, odd columns get LightGray.
+                    if (colIndex % 2 == 0)
+                        cell.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
+                    else
+                        cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+                }
             }
-        }
 
-        // Save the document to a file.
-        string outputPath = "TableCellShading.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            // Save the document.
+            doc.Save("ColoredTable.docx");
         }
     }
 }

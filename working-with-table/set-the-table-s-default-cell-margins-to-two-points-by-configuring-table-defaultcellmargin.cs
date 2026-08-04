@@ -3,42 +3,56 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableMarginExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
+            // Start a new table.
+            Table table = builder.StartTable();
 
-        // Ensure the table has at least one row/cell so that padding properties can be set.
-        table.EnsureMinimum();
+            // Insert the first cell – this creates the first row and makes the table non‑empty.
+            builder.InsertCell();
 
-        // Set the default cell margins (padding) for the entire table (2 points on each side).
-        table.TopPadding = 2;
-        table.BottomPadding = 2;
-        table.LeftPadding = 2;
-        table.RightPadding = 2;
+            // Set the default cell margins (padding) for the whole table.
+            // These values will be applied to every cell that is created afterwards
+            // unless a specific cell overrides them.
+            table.LeftPadding = 2.0;
+            table.RightPadding = 2.0;
+            table.TopPadding = 2.0;
+            table.BottomPadding = 2.0;
 
-        // Add a simple row with two cells.
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
+            // Fill the first cell.
+            builder.Write("Cell 1,1");
 
-        // Finish the table.
-        builder.EndTable();
+            // Build the rest of the 2×2 table.
+            builder.InsertCell();
+            builder.Write("Cell 1,2");
+            builder.EndRow();
 
-        // Save the document.
-        string outputPath = "Table.DefaultCellMargin.docx";
-        doc.Save(outputPath);
+            builder.InsertCell();
+            builder.Write("Cell 2,1");
+            builder.InsertCell();
+            builder.Write("Cell 2,2");
+            builder.EndRow();
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "Table.DefaultCellMargin.docx");
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not created.");
+
+            Console.WriteLine("Document saved to: " + outputPath);
+        }
     }
 }

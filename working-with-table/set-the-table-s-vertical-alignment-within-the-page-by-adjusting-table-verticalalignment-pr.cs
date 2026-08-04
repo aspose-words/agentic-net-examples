@@ -1,8 +1,7 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;   // Required for the VerticalAlignment enum
+using Aspose.Words.Drawing;   // Needed for VerticalAlignment enum
 
 public class Program
 {
@@ -19,16 +18,12 @@ public class Program
         builder.EndRow();
         builder.EndTable();
 
-        // Set the table's vertical alignment on the page to the middle (center).
-        // For floating tables the alignment is controlled by RelativeVerticalAlignment.
+        // Set the table's vertical alignment on the page to the middle.
+        // Use RelativeVerticalAlignment for floating tables.
         table.RelativeVerticalAlignment = VerticalAlignment.Center;
 
         // Save the document.
-        string outputPath = "TableVerticalAlignment.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+        const string outputFile = "TableVerticalAlignment.docx";
+        doc.Save(outputFile);
     }
 }

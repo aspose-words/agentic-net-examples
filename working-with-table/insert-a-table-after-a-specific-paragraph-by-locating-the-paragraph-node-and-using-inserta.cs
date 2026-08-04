@@ -13,16 +13,17 @@ namespace AsposeWordsTableInsertExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add some paragraphs to the document.
-            builder.Writeln("Paragraph 1");
-            builder.Writeln("Paragraph 2 - target"); // This paragraph will be the insertion point.
-            builder.Writeln("Paragraph 3");
+            // Add three paragraphs. The second one will be the reference paragraph.
+            builder.Writeln("First paragraph.");
+            builder.Writeln("Target paragraph."); // Table will be inserted after this paragraph.
+            builder.Writeln("Third paragraph.");
 
-            // Locate the paragraph node that contains the target text.
+            // Locate the paragraph that contains the exact text "Target paragraph."
             Paragraph targetParagraph = null;
-            foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            foreach (Paragraph para in paragraphs)
             {
-                if (para.GetText().Trim() == "Paragraph 2 - target")
+                if (para.GetText().Trim() == "Target paragraph.")
                 {
                     targetParagraph = para;
                     break;
@@ -32,46 +33,49 @@ namespace AsposeWordsTableInsertExample
             if (targetParagraph == null)
                 throw new InvalidOperationException("Target paragraph not found.");
 
-            // Build a simple 2x2 table using the Table, Row, and Cell classes.
+            // Create a new table (2 rows x 2 columns) manually.
             Table table = new Table(doc);
+            // Ensure the table has at least one row and one cell.
+            table.EnsureMinimum();
 
-            // First row.
-            Row row1 = new Row(doc);
-            Cell cell11 = new Cell(doc);
-            cell11.AppendChild(new Paragraph(doc));
-            cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
-            row1.AppendChild(cell11);
+            // Fill first cell (row 0, column 0).
+            table.FirstRow.FirstCell.FirstParagraph.AppendChild(new Run(doc, "Cell 1,1"));
 
+            // Add second cell to the first row.
             Cell cell12 = new Cell(doc);
             cell12.AppendChild(new Paragraph(doc));
-            cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
-            row1.AppendChild(cell12);
-            table.AppendChild(row1);
+            cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 1,2"));
+            table.FirstRow.AppendChild(cell12);
 
-            // Second row.
+            // Add second row.
             Row row2 = new Row(doc);
-            Cell cell21 = new Cell(doc);
-            cell21.AppendChild(new Paragraph(doc));
-            cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 3"));
-            row2.AppendChild(cell21);
-
-            Cell cell22 = new Cell(doc);
-            cell22.AppendChild(new Paragraph(doc));
-            cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 4"));
-            row2.AppendChild(cell22);
             table.AppendChild(row2);
 
-            // Insert the table after the located paragraph.
-            // The InsertAfter method is called on the parent node of the reference paragraph.
+            // First cell of second row.
+            Cell cell21 = new Cell(doc);
+            cell21.AppendChild(new Paragraph(doc));
+            cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 2,1"));
+            row2.AppendChild(cell21);
+
+            // Second cell of second row.
+            Cell cell22 = new Cell(doc);
+            cell22.AppendChild(new Paragraph(doc));
+            cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 2,2"));
+            row2.AppendChild(cell22);
+
+            // Insert the table after the target paragraph.
+            // The parent of the paragraph is the Body node; use it to perform InsertAfter.
             targetParagraph.ParentNode.InsertAfter(table, targetParagraph);
 
-            // Save the document to a file.
-            string outputPath = "TableInsertedAfterParagraph.docx";
+            // Save the document.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputTableAfterParagraph.docx");
             doc.Save(outputPath);
 
-            // Verify that the file was created.
+            // Simple validation to ensure the file was created.
             if (!File.Exists(outputPath))
-                throw new IOException($"Failed to create the output file: {outputPath}");
+                throw new IOException("Failed to save the output document.");
+
+            // The program ends automatically.
         }
     }
 }

@@ -4,59 +4,55 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableShading
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and a builder for it.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a table.
+        Table table = builder.StartTable();
+
+        // ----- Header row -----
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.InsertCell();
+        builder.Write("Header 3");
+        builder.EndRow();
+
+        // ----- Data rows -----
+        for (int i = 1; i <= 3; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table.
-            Table table = builder.StartTable();
-
-            // ----- Header row -----
-            // First header cell.
             builder.InsertCell();
-            builder.Write("Header 1");
-            // Second header cell.
+            builder.Write($"Row {i} Col 1");
             builder.InsertCell();
-            builder.Write("Header 2");
-            // End the header row.
+            builder.Write($"Row {i} Col 2");
+            builder.InsertCell();
+            builder.Write($"Row {i} Col 3");
             builder.EndRow();
+        }
 
-            // Apply light gray shading to each cell in the header row.
-            foreach (Cell headerCell in table.FirstRow.Cells)
-            {
-                headerCell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-            }
+        // Finish the table.
+        builder.EndTable();
 
-            // ----- Data rows -----
-            // First data row.
-            builder.InsertCell();
-            builder.Write("Row 1, Col 1");
-            builder.InsertCell();
-            builder.Write("Row 1, Col 2");
-            builder.EndRow();
+        // Apply light gray shading to each cell in the header row.
+        foreach (Cell cell in table.FirstRow.Cells)
+        {
+            cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+        }
 
-            // Second data row.
-            builder.InsertCell();
-            builder.Write("Row 2, Col 1");
-            builder.InsertCell();
-            builder.Write("Row 2, Col 2");
-            builder.EndRow();
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderRowShading.docx");
+        doc.Save(outputPath);
 
-            // Finish the table.
-            builder.EndTable();
-
-            // Define output path and ensure the directory exists.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderRowShading.docx");
-            Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
-
-            // Save the document.
-            doc.Save(outputPath);
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception("The document was not saved correctly.");
         }
     }
 }

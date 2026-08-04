@@ -3,47 +3,62 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building the table.
-        Table table = builder.StartTable();
+            // Start a new table.
+            Table table = builder.StartTable();
 
-        // First row – set fixed column widths.
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-        builder.Writeln("Header 1");
+            // First row, first cell – set a fixed width.
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+            builder.Writeln("Fixed width 100pt");
 
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-        builder.Writeln("Header 2");
-        builder.EndRow();
+            // First row, second cell – set a different fixed width.
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
+            builder.Writeln("Fixed width 200pt");
 
-        // Second row – add long content that would normally trigger auto‑fit.
-        builder.InsertCell();
-        builder.Writeln("This is a very long piece of text that would normally cause the first column to expand if auto‑fit were enabled.");
-        builder.InsertCell();
-        builder.Writeln("Another long piece of text that would normally cause the second column to expand.");
-        builder.EndRow();
+            // End the first row.
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            // Second row, first cell – reuse the same width as the first column.
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+            builder.Writeln("Another 100pt cell");
 
-        // Disable automatic resizing and enforce fixed column widths.
-        table.AllowAutoFit = false;
-        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+            // Second row, second cell – reuse the same width as the second column.
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
+            builder.Writeln("Another 200pt cell");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableFixedWidth.docx");
-        doc.Save(outputPath);
+            // End the second row and the table.
+            builder.EndRow();
+            builder.EndTable();
 
-        // Simple verification that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+            // Disable automatic resizing (AutoFit) and keep the column widths fixed.
+            table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+            // Alternatively, you could set: table.AllowAutoFit = false;
+
+            // Define the output file path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputTable.docx");
+
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The document was not saved correctly.");
+
+            // Optionally, inform that the process completed.
+            Console.WriteLine($"Document saved to: {outputPath}");
+        }
     }
 }

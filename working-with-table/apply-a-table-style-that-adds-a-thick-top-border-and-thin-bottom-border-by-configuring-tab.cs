@@ -4,35 +4,39 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableBordersExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple 2‑cell table.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Apply a thick top border (3 points) and a thin bottom border (0.5 points).
-        table.SetBorder(BorderType.Top, LineStyle.Single, 3.0, Color.Black, true);
-        table.SetBorder(BorderType.Bottom, LineStyle.Single, 0.5, Color.Black, true);
-
-        // Save the document to the local file system.
-        string outputPath = "TableBorders.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        public static void Main()
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start a table and add a single row with two cells.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Write("Cell with thick top border");
+            builder.InsertCell();
+            builder.Write("Cell with thin bottom border");
+            builder.EndRow();
+
+            // Apply a thick top border (4 points) and a thin bottom border (1 point).
+            // The 'true' flag overrides any existing cell borders.
+            table.SetBorder(BorderType.Top, LineStyle.Single, 4.0, Color.Black, true);
+            table.SetBorder(BorderType.Bottom, LineStyle.Single, 1.0, Color.Black, true);
+
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document to a file.
+            string outputPath = "TableBorders.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
     }
 }

@@ -12,41 +12,37 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Start a table and keep a reference to it.
         Table table = builder.StartTable();
 
-        // First row.
+        // First row with two cells.
         builder.InsertCell();
-        builder.Write("Cell 1,1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 1,2");
+        builder.Write("Cell 2");
         builder.EndRow();
 
-        // Second row.
+        // Second row with two cells.
         builder.InsertCell();
-        builder.Write("Cell 2,1");
+        builder.Write("Cell 3");
         builder.InsertCell();
-        builder.Write("Cell 2,2");
-        builder.EndTable(); // Ends the table and returns the Table node.
+        builder.Write("Cell 4");
+        builder.EndRow();
 
-        // Apply a solid light‑blue shading to the whole table.
-        // TextureSolid = solid fill, foreground color not used (set to Empty),
-        // background color set to LightBlue.
+        // Finish building the table.
+        builder.EndTable();
+
+        // Apply a solid light‑blue shading to the entire table.
         table.SetShading(TextureIndex.TextureSolid, Color.Empty, Color.LightBlue);
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithLightBlueShading.docx");
-
-        // Save the document.
+        // Save the document to the local file system.
+        string outputPath = "TableShading.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
+            throw new Exception("The output document was not created.");
         }
-
-        // Optionally, inform that the process completed (no console input required).
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

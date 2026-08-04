@@ -6,154 +6,100 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-namespace AsposeWordsTableFromJson
+public class Program
 {
-    // Represents the whole table structure.
-    public class TableData
+    // Classes that match the JSON structure.
+    public class TableJson
     {
-        public List<RowData> Rows { get; set; }
+        public List<RowJson> Rows { get; set; }
     }
 
-    // Represents a single row.
-    public class RowData
+    public class RowJson
     {
-        public List<CellData> Cells { get; set; }
+        public List<CellJson> Cells { get; set; }
     }
 
-    // Represents a single cell with optional formatting.
-    public class CellData
+    public class CellJson
     {
         public string Text { get; set; }
-
-        // Optional width in points.
-        public double? Width { get; set; }
-
-        // Optional padding values in points.
-        public double? LeftPadding { get; set; }
-        public double? RightPadding { get; set; }
-        public double? TopPadding { get; set; }
-        public double? BottomPadding { get; set; }
-
-        // Optional background color in hex format, e.g. "#FFCC00".
+        // Optional background color in HTML hex format, e.g. "#FFCC00".
         public string BackgroundColor { get; set; }
-
-        // Optional vertical alignment: "Top", "Center", "Bottom".
-        public string VerticalAlignment { get; set; }
     }
 
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Sample JSON representing a table with formatting.
+        string json = @"
         {
-            // Sample JSON describing a table with two rows and two columns.
-            string json = @"
-{
-  ""Rows"": [
-    {
-      ""Cells"": [
-        {
-          ""Text"": ""Header 1"",
-          ""BackgroundColor"": ""#D9E1F2"",
-          ""VerticalAlignment"": ""Center"",
-          ""Width"": 150,
-          ""LeftPadding"": 5,
-          ""RightPadding"": 5,
-          ""TopPadding"": 2,
-          ""BottomPadding"": 2
-        },
-        {
-          ""Text"": ""Header 2"",
-          ""BackgroundColor"": ""#D9E1F2"",
-          ""VerticalAlignment"": ""Center"",
-          ""Width"": 150,
-          ""LeftPadding"": 5,
-          ""RightPadding"": 5,
-          ""TopPadding"": 2,
-          ""BottomPadding"": 2
-        }
-      ]
-    },
-    {
-      ""Cells"": [
-        {
-          ""Text"": ""Row 1, Cell 1"",
-          ""BackgroundColor"": ""#FFFFFF"",
-          ""VerticalAlignment"": ""Top""
-        },
-        {
-          ""Text"": ""Row 1, Cell 2"",
-          ""BackgroundColor"": ""#FFFFFF"",
-          ""VerticalAlignment"": ""Top""
-        }
-      ]
-    }
-  ]
-}";
-            // Deserialize JSON into TableData object.
-            TableData tableData = JsonConvert.DeserializeObject<TableData>(json);
-            if (tableData == null || tableData.Rows == null)
-                throw new InvalidOperationException("Failed to deserialize table data.");
-
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start building the table.
-            Table table = builder.StartTable();
-
-            foreach (RowData rowData in tableData.Rows)
-            {
-                if (rowData?.Cells == null)
-                    continue;
-
-                foreach (CellData cellData in rowData.Cells)
+            ""Rows"": [
                 {
-                    // Insert a new cell.
-                    builder.InsertCell();
+                    ""Cells"": [
+                        { ""Text"": ""Item"", ""BackgroundColor"": ""#D9E1F2"" },
+                        { ""Text"": ""Quantity"", ""BackgroundColor"": ""#D9E1F2"" }
+                    ]
+                },
+                {
+                    ""Cells"": [
+                        { ""Text"": ""Apples"", ""BackgroundColor"": ""#FFFFFF"" },
+                        { ""Text"": ""10"", ""BackgroundColor"": ""#FFFFFF"" }
+                    ]
+                },
+                {
+                    ""Cells"": [
+                        { ""Text"": ""Bananas"", ""BackgroundColor"": ""#FFFFFF"" },
+                        { ""Text"": ""20"", ""BackgroundColor"": ""#FFFFFF"" }
+                    ]
+                }
+            ]
+        }";
 
-                    // Apply optional formatting.
-                    if (cellData.Width.HasValue)
-                        builder.CellFormat.Width = cellData.Width.Value;
+        // Deserialize the JSON into objects.
+        TableJson tableData = JsonConvert.DeserializeObject<TableJson>(json);
 
-                    if (cellData.LeftPadding.HasValue)
-                        builder.CellFormat.LeftPadding = cellData.LeftPadding.Value;
-                    if (cellData.RightPadding.HasValue)
-                        builder.CellFormat.RightPadding = cellData.RightPadding.Value;
-                    if (cellData.TopPadding.HasValue)
-                        builder.CellFormat.TopPadding = cellData.TopPadding.Value;
-                    if (cellData.BottomPadding.HasValue)
-                        builder.CellFormat.BottomPadding = cellData.BottomPadding.Value;
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-                    if (!string.IsNullOrEmpty(cellData.BackgroundColor))
-                    {
-                        Color bg = ColorTranslator.FromHtml(cellData.BackgroundColor);
-                        builder.CellFormat.Shading.BackgroundPatternColor = bg;
-                    }
+        // Start building the table.
+        Table table = builder.StartTable();
 
-                    if (!string.IsNullOrEmpty(cellData.VerticalAlignment))
-                    {
-                        if (Enum.TryParse(cellData.VerticalAlignment, out CellVerticalAlignment vAlign))
-                            builder.CellFormat.VerticalAlignment = vAlign;
-                    }
+        // Iterate over rows and cells, applying stored formatting.
+        foreach (RowJson rowJson in tableData.Rows)
+        {
+            foreach (CellJson cellJson in rowJson.Cells)
+            {
+                // Insert a new cell.
+                builder.InsertCell();
 
-                    // Write the cell text.
-                    builder.Write(cellData.Text ?? string.Empty);
+                // Reset any previous cell formatting.
+                builder.CellFormat.ClearFormatting();
+
+                // Apply background shading if a color is provided.
+                if (!string.IsNullOrEmpty(cellJson.BackgroundColor))
+                {
+                    Color bg = ColorTranslator.FromHtml(cellJson.BackgroundColor);
+                    builder.CellFormat.Shading.BackgroundPatternColor = bg;
                 }
 
-                // End the current row.
-                builder.EndRow();
+                // Write the cell text.
+                builder.Write(cellJson.Text ?? string.Empty);
             }
 
-            // Finish the table.
-            builder.EndTable();
+            // End the current row.
+            builder.EndRow();
+        }
 
-            // Save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputTable.docx");
-            doc.Save(outputPath);
+        // Finish the table.
+        builder.EndTable();
 
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new FileNotFoundException("The output document was not saved.", outputPath);
+        // Save the document to a local file.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeserializedTable.docx");
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception("Failed to create the output Word document.");
         }
     }
 }

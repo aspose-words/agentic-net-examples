@@ -1,42 +1,56 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Begin a table.
-        Table table = builder.StartTable();
-
-        int rows = 3;
-        int columns = 2;
-
-        // Build the table rows and cells.
-        for (int r = 0; r < rows; r++)
+        public static void Main()
         {
-            for (int c = 0; c < columns; c++)
-            {
-                // Set vertical alignment to Bottom for each new cell.
-                builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Bottom;
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-                // Insert the cell and add some sample text.
-                builder.InsertCell();
-                builder.Write($"Row {r + 1}, Col {c + 1}");
+            // Start a table.
+            Table table = builder.StartTable();
+
+            // Build a 2x2 table where each cell's text is aligned to the bottom.
+            for (int row = 0; row < 2; row++)
+            {
+                for (int col = 0; col < 2; col++)
+                {
+                    // Insert a new cell.
+                    builder.InsertCell();
+
+                    // Set vertical alignment for the current cell.
+                    builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Bottom;
+
+                    // Write some sample text.
+                    builder.Write($"Row {row + 1}, Cell {col + 1}");
+                }
+
+                // End the current row.
+                builder.EndRow();
             }
 
-            // End the current row.
-            builder.EndRow();
+            // End the table.
+            builder.EndTable();
+
+            // Verify that every cell has the Bottom vertical alignment.
+            foreach (Row r in table.Rows)
+            {
+                foreach (Cell c in r.Cells)
+                {
+                    if (c.CellFormat.VerticalAlignment != CellVerticalAlignment.Bottom)
+                        throw new InvalidOperationException("A cell does not have Bottom vertical alignment.");
+                }
+            }
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CellVerticalAlignmentBottom.docx");
+            doc.Save(outputPath);
         }
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document to a file.
-        doc.Save("CellVerticalAlignmentBottom.docx");
     }
 }

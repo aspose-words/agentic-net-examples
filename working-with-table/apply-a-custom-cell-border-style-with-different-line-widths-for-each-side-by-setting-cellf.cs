@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -17,53 +16,49 @@ namespace AsposeWordsTableBordersExample
             // Start a table.
             Table table = builder.StartTable();
 
-            // Insert the first cell where we will apply custom borders.
+            // Insert the first cell.
             builder.InsertCell();
 
-            // Clear any previous cell formatting to start from defaults.
-            builder.CellFormat.ClearFormatting();
+            // Retrieve the cell that was just created.
+            Cell firstCell = builder.CurrentParagraph.ParentNode as Cell;
+            if (firstCell == null)
+                throw new InvalidOperationException("Unable to obtain the first cell.");
 
-            // Set different line widths, styles, and colors for each side of the cell border.
-            builder.CellFormat.Borders.Left.LineStyle = LineStyle.Single;
-            builder.CellFormat.Borders.Left.LineWidth = 2.0; // points
-            builder.CellFormat.Borders.Left.Color = Color.Red;
+            // Apply custom borders with different line widths to each side of the cell.
+            // Left border: 2 points, solid black.
+            firstCell.CellFormat.Borders.Left.LineStyle = LineStyle.Single;
+            firstCell.CellFormat.Borders.Left.LineWidth = 2.0;
+            firstCell.CellFormat.Borders.Left.Color = Color.Black;
 
-            builder.CellFormat.Borders.Right.LineStyle = LineStyle.Single;
-            builder.CellFormat.Borders.Right.LineWidth = 4.0;
-            builder.CellFormat.Borders.Right.Color = Color.Green;
+            // Right border: 4 points, solid black.
+            firstCell.CellFormat.Borders.Right.LineStyle = LineStyle.Single;
+            firstCell.CellFormat.Borders.Right.LineWidth = 4.0;
+            firstCell.CellFormat.Borders.Right.Color = Color.Black;
 
-            builder.CellFormat.Borders.Top.LineStyle = LineStyle.Single;
-            builder.CellFormat.Borders.Top.LineWidth = 6.0;
-            builder.CellFormat.Borders.Top.Color = Color.Blue;
+            // Top border: 1 point, solid black.
+            firstCell.CellFormat.Borders.Top.LineStyle = LineStyle.Single;
+            firstCell.CellFormat.Borders.Top.LineWidth = 1.0;
+            firstCell.CellFormat.Borders.Top.Color = Color.Black;
 
-            builder.CellFormat.Borders.Bottom.LineStyle = LineStyle.Single;
-            builder.CellFormat.Borders.Bottom.LineWidth = 8.0;
-            builder.CellFormat.Borders.Bottom.Color = Color.Purple;
+            // Bottom border: 3 points, solid black.
+            firstCell.CellFormat.Borders.Bottom.LineStyle = LineStyle.Single;
+            firstCell.CellFormat.Borders.Bottom.LineWidth = 3.0;
+            firstCell.CellFormat.Borders.Bottom.Color = Color.Black;
 
-            // Add some text to the customized cell.
+            // Add some text to the first cell.
             builder.Writeln("Cell with custom borders");
 
-            // Insert a second cell with default formatting for comparison.
+            // Insert a second cell with default borders for comparison.
             builder.InsertCell();
-            builder.Writeln("Normal cell");
+            builder.Writeln("Cell with default borders");
 
-            // End the first row.
+            // End the row and the table.
             builder.EndRow();
-
-            // End the table.
             builder.EndTable();
 
-            // Define the output path.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "CustomCellBorders.docx");
-
-            // Save the document.
+            // Save the document to a file.
+            string outputPath = "CustomCellBorders.docx";
             doc.Save(outputPath);
-
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-
-            // The program finishes here without waiting for user input.
         }
     }
 }

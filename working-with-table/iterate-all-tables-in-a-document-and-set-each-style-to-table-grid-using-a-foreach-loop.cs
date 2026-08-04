@@ -11,34 +11,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build first sample table.
+        // Build the first sample table.
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("Table 1 - Cell 1");
+        builder.Write("A1");
         builder.InsertCell();
-        builder.Write("Table 1 - Cell 2");
+        builder.Write("B1");
         builder.EndRow();
+        builder.InsertCell();
+        builder.Write("A2");
+        builder.InsertCell();
+        builder.Write("B2");
         builder.EndTable();
 
-        // Build second sample table.
+        // Build the second sample table.
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("Table 2 - Cell 1");
+        builder.Write("C1");
         builder.InsertCell();
-        builder.Write("Table 2 - Cell 2");
+        builder.Write("D1");
         builder.EndRow();
+        builder.InsertCell();
+        builder.Write("C2");
+        builder.InsertCell();
+        builder.Write("D2");
         builder.EndTable();
 
-        // Iterate over all tables in the document and apply the "Table Grid" style.
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        foreach (Table table in tables)
+        // Iterate all tables in the document and set each style to "Table Grid".
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
-            // Apply built‑in style "Table Grid".
             table.StyleIdentifier = StyleIdentifier.TableGrid;
         }
 
-        // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        // Save the resulting document.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "TablesWithGridStyle.docx");
         doc.Save(outputPath);
     }
 }

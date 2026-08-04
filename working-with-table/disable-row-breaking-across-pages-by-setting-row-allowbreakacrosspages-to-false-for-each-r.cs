@@ -10,22 +10,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with several rows.
+        // Build a simple 3‑row, 2‑column table.
         Table table = builder.StartTable();
 
-        for (int i = 1; i <= 5; i++)
-        {
-            // First cell of the row.
-            builder.InsertCell();
-            builder.Write($"Row {i}, Cell 1. This is some sample text to make the row relatively long.");
+        // Row 1
+        builder.InsertCell();
+        builder.Write("R1C1");
+        builder.InsertCell();
+        builder.Write("R1C2");
+        builder.EndRow();
 
-            // Second cell of the row.
-            builder.InsertCell();
-            builder.Write($"Row {i}, Cell 2. Additional content to increase the row height.");
+        // Row 2
+        builder.InsertCell();
+        builder.Write("R2C1");
+        builder.InsertCell();
+        builder.Write("R2C2");
+        builder.EndRow();
 
-            // End the current row.
-            builder.EndRow();
-        }
+        // Row 3
+        builder.InsertCell();
+        builder.Write("R3C1");
+        builder.InsertCell();
+        builder.Write("R3C2");
+        builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
@@ -36,7 +43,7 @@ public class Program
             row.RowFormat.AllowBreakAcrossPages = false;
         }
 
-        // Save the document to disk.
-        doc.Save("TableAllowBreakAcrossPages.docx");
+        // Save the document.
+        doc.Save("Table.AllowBreakAcrossPages.docx");
     }
 }

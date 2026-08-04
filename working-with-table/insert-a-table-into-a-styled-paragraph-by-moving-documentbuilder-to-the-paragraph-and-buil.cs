@@ -3,45 +3,57 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document and a builder attached to it.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Add a paragraph and apply a built‑in style (Heading1).
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Styled Paragraph");
+            // Initialize a DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Keep a reference to the paragraph we just created.
-        Paragraph styledParagraph = builder.CurrentParagraph;
+            // Add a styled paragraph (Heading1) that will contain the table.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Styled Paragraph");
 
-        // Move the builder's cursor to the styled paragraph.
-        builder.MoveTo(styledParagraph);
+            // Retrieve the paragraph we just added.
+            Paragraph styledParagraph = doc.FirstSection.Body.LastParagraph;
 
-        // Build a 2x2 table at the current position.
-        Table table = builder.StartTable();
+            // Move the builder's cursor to the styled paragraph.
+            builder.MoveTo(styledParagraph);
 
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
+            // Start building a table at the current cursor position.
+            Table table = builder.StartTable();
 
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndTable();
+            // First row.
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
 
-        // Save the document to a file in the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableInStyledParagraph.docx");
-        doc.Save(outputPath);
+            // Second row.
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved successfully.");
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document to a file.
+            string outputPath = "TableInStyledParagraph.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("Failed to create the output document.");
+
+            // The program ends automatically; no user interaction required.
+        }
     }
 }

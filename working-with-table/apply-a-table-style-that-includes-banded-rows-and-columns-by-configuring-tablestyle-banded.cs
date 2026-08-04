@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Drawing;
 
 public class Program
 {
@@ -11,53 +12,48 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a few rows/columns.
+        // Start a table. The first call to InsertCell creates the first row.
         Table table = builder.StartTable();
+        builder.InsertCell(); // first cell of the first row
 
-        // First row (header).
+        // Apply a built‑in table style that supports banding.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Enable both row banding and column banding.
+        table.StyleOptions = TableStyleOptions.RowBands | TableStyleOptions.ColumnBands;
+
+        // Let the table size itself to its contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Fill the first row (header).
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Product");
+        builder.Writeln("Header 2");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Writeln("Header 3");
         builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Apples");
-        builder.InsertCell();
-        builder.Write("10");
-        builder.EndRow();
-
-        // Third row.
-        builder.InsertCell();
-        builder.Write("Bananas");
-        builder.InsertCell();
-        builder.Write("20");
-        builder.EndRow();
+        // Add two more rows with sample data.
+        for (int row = 2; row <= 3; row++)
+        {
+            builder.InsertCell();
+            builder.Writeln($"R{row}C1");
+            builder.InsertCell();
+            builder.Writeln($"R{row}C2");
+            builder.InsertCell();
+            builder.Writeln($"R{row}C3");
+            builder.EndRow();
+        }
 
         // Finish the table.
         builder.EndTable();
 
-        // Apply a built‑in table style.
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
-
-        // Enable banded rows and banded columns.
-        table.StyleOptions = TableStyleOptions.RowBands | TableStyleOptions.ColumnBands;
-
-        // Auto‑fit the table to its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Define the output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithBandedRowsAndColumns.docx");
-
         // Save the document.
+        string outputPath = "TableWithBandedRowsAndColumns.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        // Optionally inform that the process completed.
-        Console.WriteLine("Document saved to: " + outputPath);
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

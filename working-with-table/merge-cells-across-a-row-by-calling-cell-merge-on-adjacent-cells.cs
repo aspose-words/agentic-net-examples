@@ -3,47 +3,50 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableMergeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table.
-            builder.StartTable();
+        // Start a table.
+        Table table = builder.StartTable();
 
-            // Insert the first cell and mark it as the first cell in a merged range.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.First;
-            builder.Write("First part of merged cell.");
+        // First cell – mark it as the first cell in a horizontally merged range.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Write("Merged across three cells");
 
-            // Insert the second cell and mark it as merged with the previous cell.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            builder.Write("Second part of merged cell.");
+        // Second cell – merge it with the previous cell.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-            // Insert a third, independent cell.
-            builder.CellFormat.HorizontalMerge = CellMerge.None; // Reset merge flag for new cells.
-            builder.InsertCell();
-            builder.Write("Separate cell.");
+        // Third cell – also merge it with the previous cell.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-            // End the row and the table.
-            builder.EndRow();
-            builder.EndTable();
+        // Fourth cell – normal, not merged.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.Write("Normal cell");
 
-            // Define the output file path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedCells.docx");
+        // End the row and the table.
+        builder.EndRow();
+        builder.EndTable();
 
-            // Save the document.
-            doc.Save(outputPath);
+        // Define output path (relative to the executable directory).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedCells.docx");
 
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-        }
+        // Save the document.
+        doc.Save(outputPath);
+
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not created.");
+
+        // Inform the user (optional, no interactive wait).
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

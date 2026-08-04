@@ -56,7 +56,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a table at a bookmark location by moving the DocumentBuilder cursor to the bookmark and calling InsertTable.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `insert-a-table-into-a-header-by-moving-documentbuilder-to-the-header-and-inserting-the-tab.cs`
   - Task: Insert a table into a header by moving DocumentBuilder to the header and inserting the table.
   - Workflow: table-workflow
@@ -116,7 +116,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a table from an HTML string using DocumentBuilder.InsertHtml while preserving cell formatting.
   - Workflow: table-workflow
   - Outputs: html
-  - Selected engine: mcp
+  - Selected engine: llm
 - `set-table-autofit-to-autofitbehavior-autofittowindow-to-automatically-adjust-column-widths.cs`
   - Task: Set Table.AutoFit to AutoFitBehavior.AutoFitToWindow to automatically adjust column widths to page margins.
   - Workflow: table-workflow
@@ -376,7 +376,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a table with a merged cell spanning the entire first row by merging all first-row cells horizontally.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-a-table-with-a-cell-spanning-two-rows-and-three-columns-by-setting-mergehorizontal.cs`
   - Task: Insert a table with a cell spanning two rows and three columns by setting MergeHorizontal and MergeVertical.
   - Workflow: table-workflow
@@ -396,7 +396,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Split a table into three parts by calling Table.Split twice at specified row indices for custom pagination.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `join-adjacent-tables-by-inserting-an-empty-paragraph-between-them.cs`
   - Task: Join adjacent tables by inserting an empty paragraph between them.
   - Workflow: table-workflow
@@ -641,7 +641,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a caption above a table using DocumentBuilder.InsertCaption with appropriate label and numbering.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `update-all-table-captions-after-adding-new-tables-by-iterating-tables-and-refreshing-capti.cs`
   - Task: Update all table captions after adding new tables by iterating tables and refreshing caption numbers.
   - Workflow: table-workflow
@@ -776,7 +776,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a watermark behind a table by inserting a Shape with text and positioning it behind table nodes.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `set-table-text-wrapping-style-to-square-by-configuring-table-textwrapping-property-accordi.cs`
   - Task: Set table text wrapping style to square by configuring Table.TextWrapping property accordingly.
   - Workflow: table-workflow
@@ -786,7 +786,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Enable table overlapping with other floating objects by setting Table.AllowOverlap to true.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `add-a-comment-to-a-specific-table-cell-by-locating-the-cell-and-using-documentbuilder-inse.cs`
   - Task: Add a comment to a specific table cell by locating the cell and using DocumentBuilder.InsertComment.
   - Workflow: table-workflow
@@ -1045,7 +1045,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 - Package: `Newtonsoft.Json`
 
 ## Command reference
@@ -1060,7 +1060,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Newtonsoft.Json
 ```
 

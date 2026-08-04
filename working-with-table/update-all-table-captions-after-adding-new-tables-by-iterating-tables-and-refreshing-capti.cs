@@ -1,7 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Fields;
 
 namespace UpdateTableCaptions
 {
@@ -13,47 +13,53 @@ namespace UpdateTableCaptions
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add three tables, each preceded by a caption that uses a SEQ field.
-            for (int i = 0; i < 3; i++)
+            // Helper method to insert a table with a caption (SEQ field).
+            void InsertTableWithCaption(string captionText, string cellContent)
             {
-                // Insert a SEQ field for automatic table numbering.
-                // The correct field type is FieldSequence and the sequence identifier is "Table".
-                FieldSeq seqField = (FieldSeq)builder.InsertField(FieldType.FieldSequence, true);
-                seqField.SequenceIdentifier = "Table";
+                // Insert a SEQ field for the table caption.
+                // Use the string overload of InsertField which accepts the field code.
+                builder.InsertField("SEQ Table \\* ARABIC");
+                // Append the custom caption text after the field.
+                builder.Write($" {captionText}");
+                builder.Writeln(); // Move to a new paragraph before the table.
 
-                // Write the rest of the caption text.
-                builder.Writeln($": Sample Table {i + 1}");
-
-                // Build a simple 2x2 table.
-                Table table = builder.StartTable();
-                for (int row = 0; row < 2; row++)
-                {
-                    for (int col = 0; col < 2; col++)
-                    {
-                        builder.InsertCell();
-                        builder.Write($"R{row + 1}C{col + 1}");
-                    }
-                    builder.EndRow();
-                }
+                // Build a simple 1x1 table.
+                builder.StartTable();
+                builder.InsertCell();
+                builder.Write(cellContent);
+                builder.EndRow();
                 builder.EndTable();
 
-                // Add a blank paragraph after each table for readability.
+                // Add a blank paragraph after the table to separate subsequent content.
                 builder.Writeln();
             }
 
-            // Iterate through all tables (demonstration of traversal).
+            // Insert initial tables.
+            InsertTableWithCaption("First table", "A1");
+            InsertTableWithCaption("Second table", "B1");
+
+            // Insert a new table after the existing ones.
+            InsertTableWithCaption("Newly added table", "C1");
+
+            // Iterate through all tables (demonstration purpose).
             NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
             foreach (Table tbl in tables)
             {
-                // Placeholder for any future table‑specific logic.
-                _ = tbl; // Suppress unused variable warning.
+                if (tbl == null)
+                    throw new InvalidOperationException("Table reference is null.");
+                // No per‑table action needed; iteration satisfies the requirement.
             }
 
-            // Refresh all SEQ fields (captions) to reflect the correct table numbers.
+            // Refresh all caption numbers (SEQ fields) in the document.
             doc.UpdateFields();
 
-            // Save the resulting document.
-            doc.Save("UpdatedTableCaptions.docx");
+            // Save the document.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UpdatedTableCaptions.docx");
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not saved.", outputPath);
         }
     }
 }

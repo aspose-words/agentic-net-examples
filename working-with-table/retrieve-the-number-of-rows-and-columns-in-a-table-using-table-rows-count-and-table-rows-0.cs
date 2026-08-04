@@ -8,35 +8,34 @@ namespace AsposeWordsTableInfo
     {
         public static void Main()
         {
-            // Create a new blank document.
+            // Create a new empty document.
             Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a 3x4 table.
+            // Build a 3x4 table using DocumentBuilder.
+            DocumentBuilder builder = new DocumentBuilder(doc);
             Table table = builder.StartTable();
 
-            for (int row = 1; row <= 3; row++)
+            for (int row = 0; row < 3; row++)
             {
-                for (int col = 1; col <= 4; col++)
+                for (int col = 0; col < 4; col++)
                 {
                     builder.InsertCell();
-                    builder.Write($"R{row}C{col}");
+                    builder.Write($"R{row + 1}C{col + 1}");
                 }
                 builder.EndRow();
             }
 
             builder.EndTable();
 
-            // Save the document (required by the workflow rules).
-            const string outputPath = "TableInfo.docx";
-            doc.Save(outputPath);
-
             // Retrieve the number of rows and columns.
             int rowCount = table.Rows.Count;
-            int columnCount = table.Rows.Count > 0 ? table.Rows[0].Cells.Count : 0;
+            int columnCount = rowCount > 0 ? table.Rows[0].Cells.Count : 0;
 
-            // Output the results.
+            // Output the counts.
             Console.WriteLine($"Table has {rowCount} rows and {columnCount} columns.");
+
+            // Save the document.
+            doc.Save("TableInfo.docx");
         }
     }
 }

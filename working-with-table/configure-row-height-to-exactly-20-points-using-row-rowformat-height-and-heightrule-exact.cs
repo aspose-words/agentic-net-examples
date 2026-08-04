@@ -17,20 +17,20 @@ namespace AsposeWordsTableRowHeight
 
             // First row – default height.
             builder.InsertCell();
-            builder.Write("First row, cell 1");
+            builder.Write("First row, cell 1.");
             builder.InsertCell();
-            builder.Write("First row, cell 2");
+            builder.Write("First row, cell 2.");
             builder.EndRow();
 
             // Configure the next row to have an exact height of 20 points.
-            builder.RowFormat.Height = 20;
+            builder.RowFormat.Height = 20.0;
             builder.RowFormat.HeightRule = HeightRule.Exactly;
 
-            // Second row – will use the exact height defined above.
+            // Second row – will use the exact height set above.
             builder.InsertCell();
-            builder.Write("Second row, cell 1");
+            builder.Write("Second row, cell 1.");
             builder.InsertCell();
-            builder.Write("Second row, cell 2");
+            builder.Write("Second row, cell 2.");
             builder.EndRow();
 
             // Finish the table.

@@ -3,55 +3,65 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableFixedLayout
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+            // Start a new table.
+            Table table = builder.StartTable();
 
-        // First row – set explicit widths for each column.
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-        builder.Write("Header 1");
+            // First row, first cell – set explicit width.
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+            builder.Writeln("Column 1");
 
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-        builder.Write("Header 2");
+            // First row, second cell – set explicit width.
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
+            builder.Writeln("Column 2");
 
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-        builder.Write("Header 3");
+            // First row, third cell – set explicit width.
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
+            builder.Writeln("Column 3");
 
-        builder.EndRow();
+            // End the first row.
+            builder.EndRow();
 
-        // Second row – repeat the same column widths.
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-        builder.Write("Row 1, Col 1");
+            // Add a second row with the same column widths.
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+            builder.Writeln("Data 1");
 
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-        builder.Write("Row 1, Col 2");
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
+            builder.Writeln("Data 2");
 
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-        builder.Write("Row 1, Col 3");
+            builder.InsertCell();
+            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
+            builder.Writeln("Data 3");
 
-        builder.EndRow();
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            // Finish the table.
+            builder.EndTable();
 
-        // Disable AutoFit to enforce the fixed column widths.
-        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+            // Disable AutoFit to enforce fixed column widths.
+            table.AutoFit(AutoFitBehavior.FixedColumnWidths);
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FixedLayoutTable.docx");
-        doc.Save(outputPath);
+            // Save the document.
+            string outputPath = "FixedLayoutTable.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

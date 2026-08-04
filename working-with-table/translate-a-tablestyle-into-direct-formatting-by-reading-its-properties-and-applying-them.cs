@@ -1,68 +1,58 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Drawing;
 
-namespace TableStyleToDirectFormattingDemo
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new empty document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table.
-            Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
 
-            // First row.
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndTable();
 
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndTable();
+        // Create a custom table style and set its properties.
+        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomStyle");
+        customStyle.CellSpacing = 5;
+        customStyle.BottomPadding = 10;
+        customStyle.LeftPadding = 5;
+        customStyle.RightPadding = 5;
+        customStyle.TopPadding = 10;
+        customStyle.Shading.BackgroundPatternColor = Color.AntiqueWhite;
+        customStyle.Borders.Color = Color.Blue;
+        customStyle.Borders.LineStyle = LineStyle.DotDash;
+        customStyle.VerticalAlignment = CellVerticalAlignment.Center;
 
-            // Create a custom table style.
-            TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
-            tableStyle.CellSpacing = 5; // Space between cells.
-            tableStyle.Shading.BackgroundPatternColor = Color.AntiqueWhite; // Table background.
-            tableStyle.Borders.Color = Color.Blue; // Border color.
-            tableStyle.Borders.LineStyle = LineStyle.DotDash; // Border style.
-            tableStyle.RowStripe = 2; // Example of row banding (odd/even rows).
+        // Apply the custom style to the table.
+        table.Style = customStyle;
 
-            // Apply the style to the table.
-            table.Style = tableStyle;
+        // Expand the style into direct formatting on the table, rows, and cells.
+        doc.ExpandTableStylesToDirectFormatting();
 
-            // Convert the style formatting into direct formatting on the table elements.
-            doc.ExpandTableStylesToDirectFormatting();
+        // Save the resulting document.
+        string fileName = "TableStyleToDirectFormatting.docx";
+        doc.Save(fileName);
 
-            // ----- Validation (optional) -----
-            // After expansion, the style properties should be reflected directly on the table and its cells.
-            Console.WriteLine("Table CellSpacing (direct): " + table.CellSpacing);
-            Console.WriteLine("First cell background color (direct): " +
-                table.FirstRow.FirstCell.CellFormat.Shading.BackgroundPatternColor.Name);
-            Console.WriteLine("First cell left border color (direct): " +
-                table.FirstRow.FirstCell.CellFormat.Borders[BorderType.Left].Color.Name);
+        // Verify that the file was saved successfully.
+        if (!File.Exists(fileName))
+            throw new Exception("Document was not saved correctly.");
 
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // Save the resulting document.
-            string outputPath = Path.Combine(outputDir, "TableStyleExpanded.docx");
-            doc.Save(outputPath);
-
-            // Indicate completion.
-            Console.WriteLine("Document saved to: " + outputPath);
-        }
+        // Inform the user where the file was saved.
+        Console.WriteLine($"Document saved to: {Path.GetFullPath(fileName)}");
     }
 }

@@ -1,52 +1,48 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTablePagination
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start building a table.
+        Table table = builder.StartTable();
+
+        // Define the size of the large table.
+        int rowCount = 50;   // Number of rows.
+        int colCount = 5;    // Number of columns.
+
+        // Populate the table.
+        for (int i = 0; i < rowCount; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a new table.
-            Table table = builder.StartTable();
-
-            // Build a large table (e.g., 50 rows, 2 columns).
-            for (int i = 1; i <= 50; i++)
+            // Insert cells for the current row.
+            for (int j = 0; j < colCount; j++)
             {
-                // Set row height to a reasonable value and allow it to grow if needed.
-                builder.RowFormat.Height = 20;               // Height in points.
-                builder.RowFormat.HeightRule = HeightRule.AtLeast;
-
-                // First cell.
                 builder.InsertCell();
-                builder.Write($"Row {i}, Cell 1");
-
-                // Second cell.
-                builder.InsertCell();
-                builder.Write($"Row {i}, Cell 2");
-
-                // End the current row.
-                builder.EndRow();
+                builder.Write($"Row {i + 1}, Col {j + 1}");
             }
 
-            // Finish the table.
-            builder.EndTable();
+            // End the current row and obtain the Row object.
+            Row row = builder.EndRow();
 
-            // Enable breaking rows across pages for pagination.
-            foreach (Row row in table.Rows)
-            {
-                row.RowFormat.AllowBreakAcrossPages = true;
-            }
+            // Allow the row to break across pages.
+            row.RowFormat.AllowBreakAcrossPages = true;
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LargeTablePagination.docx");
-            doc.Save(outputPath);
+            // Set a minimum height for the row to ensure consistent layout.
+            row.RowFormat.Height = 20;               // Height in points.
+            row.RowFormat.HeightRule = HeightRule.AtLeast;
         }
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the document to a file.
+        string outputPath = "LargeTablePagination.docx";
+        doc.Save(outputPath);
     }
 }

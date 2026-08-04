@@ -14,57 +14,42 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // First row - first cell.
-        builder.InsertCell();
-        // Set cell margins (padding) to 5 points on all sides.
-        builder.CellFormat.TopPadding = 5;
-        builder.CellFormat.BottomPadding = 5;
-        builder.CellFormat.LeftPadding = 5;
-        builder.CellFormat.RightPadding = 5;
-        builder.Write("Cell 1, Row 1");
+        // ---- First Row ----
+        // First cell.
+        Cell cell1 = builder.InsertCell();
+        // Set padding (margin) of 5 points on all sides.
+        cell1.CellFormat.SetPaddings(5, 5, 5, 5);
+        builder.Write("Cell 1");
 
-        // First row - second cell.
-        builder.InsertCell();
-        builder.CellFormat.TopPadding = 5;
-        builder.CellFormat.BottomPadding = 5;
-        builder.CellFormat.LeftPadding = 5;
-        builder.CellFormat.RightPadding = 5;
-        builder.Write("Cell 2, Row 1");
+        // Second cell.
+        Cell cell2 = builder.InsertCell();
+        cell2.CellFormat.SetPaddings(5, 5, 5, 5);
+        builder.Write("Cell 2");
 
-        // End the first row.
+        // End first row.
         builder.EndRow();
 
-        // Second row - first cell.
-        builder.InsertCell();
-        builder.CellFormat.TopPadding = 5;
-        builder.CellFormat.BottomPadding = 5;
-        builder.CellFormat.LeftPadding = 5;
-        builder.CellFormat.RightPadding = 5;
-        builder.Write("Cell 1, Row 2");
+        // ---- Second Row ----
+        // First cell.
+        Cell cell3 = builder.InsertCell();
+        cell3.CellFormat.SetPaddings(5, 5, 5, 5);
+        builder.Write("Cell 3");
 
-        // Second row - second cell.
-        builder.InsertCell();
-        builder.CellFormat.TopPadding = 5;
-        builder.CellFormat.BottomPadding = 5;
-        builder.CellFormat.LeftPadding = 5;
-        builder.CellFormat.RightPadding = 5;
-        builder.Write("Cell 2, Row 2");
+        // Second cell.
+        Cell cell4 = builder.InsertCell();
+        cell4.CellFormat.SetPaddings(5, 5, 5, 5);
+        builder.Write("Cell 4");
 
-        // End the second row and the table.
+        // End second row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Define output path.
+        // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CellMargins.docx");
-
-        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
-
-        // Optionally, inform that the process completed (no interactive input required).
-        Console.WriteLine("Document saved to: " + outputPath);
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

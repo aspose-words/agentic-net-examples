@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,31 +11,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a simple 2x1 table.
         Table table = builder.StartTable();
 
-        // First row – two cells with sample text.
+        // First row.
         builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("First row, first cell.");
         builder.EndRow();
 
-        // Second row – two cells with sample text.
+        // Second row.
         builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Write("Second row, first cell.");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Set the height rule of the second row to Auto (no explicit Height value).
-        Row secondRow = table.Rows[1];
-        secondRow.RowFormat.HeightRule = HeightRule.Auto;
+        // Set the height rule of the first row to Auto (no explicit height).
+        // This demonstrates the required operation.
+        Row firstRow = table.Rows[0];
+        firstRow.RowFormat.HeightRule = HeightRule.Auto;
 
-        // Save the document to the local file system.
-        doc.Save("RowHeightAuto.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableRowHeightAuto.docx");
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("The output document was not saved correctly.");
+        }
     }
 }

@@ -1,69 +1,85 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeTablesReport
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First table – Light Shading Accent 1 style.
-        BuildSampleTable(builder, StyleIdentifier.LightShadingAccent1, "Table 1");
+            // Define a consistent spacing after each table (12 points).
+            const double spaceAfterTable = 12.0;
 
-        // Add a blank paragraph to create consistent spacing between tables.
-        builder.Writeln();
+            // Create three tables, each with a distinct built‑in style.
+            for (int tableIndex = 0; tableIndex < 3; tableIndex++)
+            {
+                // Apply spacing after the table.
+                builder.ParagraphFormat.SpaceAfter = spaceAfterTable;
 
-        // Second table – Medium Shading 1 Accent 2 style.
-        BuildSampleTable(builder, StyleIdentifier.MediumShading1Accent2, "Table 2");
+                // Start the table.
+                Table table = builder.StartTable();
 
-        // Add spacing.
-        builder.Writeln();
+                // ----- Header row -----
+                builder.InsertCell();
+                builder.Write($"Table {tableIndex + 1} Header 1");
+                builder.InsertCell();
+                builder.Write($"Table {tableIndex + 1} Header 2");
+                builder.EndRow();
 
-        // Third table – Medium Shading 2 Accent 3 style.
-        BuildSampleTable(builder, StyleIdentifier.MediumShading2Accent3, "Table 3");
+                // ----- Data rows -----
+                for (int row = 1; row <= 3; row++)
+                {
+                    builder.InsertCell();
+                    builder.Write($"Row {row} Col 1");
+                    builder.InsertCell();
+                    builder.Write($"Row {row} Col 2");
+                    builder.EndRow();
+                }
 
-        // Save the document.
-        doc.Save("ReportWithMultipleTables.docx");
-    }
+                // Finish the table.
+                table = builder.EndTable();
 
-    // Helper method that builds a simple 3‑row table and applies the specified style.
-    private static void BuildSampleTable(DocumentBuilder builder, StyleIdentifier styleId, string title)
-    {
-        // Start the table.
-        Table table = builder.StartTable();
+                // Apply a distinct built‑in style to each table.
+                switch (tableIndex)
+                {
+                    case 0:
+                        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
+                        break;
+                    case 1:
+                        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+                        break;
+                    case 2:
+                        table.StyleIdentifier = StyleIdentifier.TableGrid;
+                        break;
+                }
 
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln($"{title} Header 1");
-        builder.InsertCell();
-        builder.Writeln($"{title} Header 2");
-        builder.EndRow();
+                // Apply style options (first row as header, row banding).
+                table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
-        // First data row.
-        builder.InsertCell();
-        builder.Writeln($"{title} Row 1, Col 1");
-        builder.InsertCell();
-        builder.Writeln($"{title} Row 1, Col 2");
-        builder.EndRow();
+                // Ensure consistent cell spacing inside the table.
+                table.AllowCellSpacing = true;
+                table.CellSpacing = 5.0;
 
-        // Second data row.
-        builder.InsertCell();
-        builder.Writeln($"{title} Row 2, Col 1");
-        builder.InsertCell();
-        builder.Writeln($"{title} Row 2, Col 2");
-        builder.EndRow();
+                // Reset paragraph spacing so it does not affect following content.
+                builder.ParagraphFormat.SpaceAfter = 0;
+            }
 
-        // Apply the requested style to the table.
-        table.StyleIdentifier = styleId;
-        // Apply first‑row formatting and row banding for visual distinction.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-        // Resize the table to fit its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+            // Save the document.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ReportWithMultipleTables.docx");
+            doc.Save(outputPath);
 
-        // End the table.
-        builder.EndTable();
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The report file was not created.");
+
+            // Optionally, inform the user (no interactive pause required).
+            Console.WriteLine($"Report generated successfully: {outputPath}");
+        }
     }
 }

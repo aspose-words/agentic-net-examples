@@ -2,54 +2,46 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;   // Needed for the Table class
+using Aspose.Words.Tables;
 
-namespace FloatingTextboxTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a floating textbox shape.
-            Shape textbox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-            // Make the textbox floating and position it at the center of the page.
-            textbox.WrapType = WrapType.None;
-            textbox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-            textbox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-            textbox.HorizontalAlignment = HorizontalAlignment.Center;
-            textbox.VerticalAlignment = VerticalAlignment.Center;
+        // Insert a floating textbox shape.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+        // Optional: set the textbox to be floating (default for TextBox shape).
+        textBox.WrapType = WrapType.None;
 
-            // Move the builder's cursor to the first paragraph inside the textbox.
-            builder.MoveTo(textbox.FirstParagraph);
+        // Move the builder cursor into the textbox so that subsequent content is placed there.
+        builder.MoveTo(textBox.FirstParagraph);
 
-            // Build a 2x2 table inside the floating textbox.
-            Table table = builder.StartTable();
+        // Build a simple 2x2 table inside the textbox.
+        Table table = builder.StartTable();
 
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        // First row.
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
 
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndRow();
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
 
-            builder.EndTable();
+        // Finish the table.
+        builder.EndTable();
 
-            // Save the document.
-            const string outputPath = "FloatingTextboxTable.docx";
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new Exception("The output document was not created.");
-        }
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FloatingTextboxTable.docx");
+        doc.Save(outputPath);
     }
 }

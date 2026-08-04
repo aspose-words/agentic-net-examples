@@ -3,76 +3,78 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableSplitExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // -------------------------------------------------
-        // Build a table with a horizontally merged cell.
-        // -------------------------------------------------
-        Table table = builder.StartTable();
-
-        // First cell – start of the merged range.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged Cell");
-
-        // Second cell – merged with the previous cell.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-
-        // Third cell – also merged with the previous cell.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-
-        // End the first row.
-        builder.EndRow();
-
-        // Add a normal second row with three separate cells.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 3");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document that contains the merged cell.
-        string mergedPath = Path.Combine(Environment.CurrentDirectory, "MergedTable.docx");
-        doc.Save(mergedPath);
-
-        // -------------------------------------------------
-        // Split the previously merged cell back into separate cells.
-        // -------------------------------------------------
-        // The merged region consists of three cells in the first row.
-        // To split them, clear the merge flags on each cell.
-        Row firstRow = table.Rows[0];
-        foreach (Cell cell in firstRow.Cells)
+        public static void Main()
         {
-            cell.CellFormat.HorizontalMerge = CellMerge.None;
-            cell.CellFormat.VerticalMerge = CellMerge.None;
+            // Define output folder and ensure it exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // -------------------------------------------------
+            // 1. Build a table with a horizontally merged cell.
+            // -------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            Table table = builder.StartTable();
+
+            // First cell – start of a merged range.
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.First;
+            builder.Write("Merged Cell");
+
+            // Second cell – merged with the previous one.
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+            // End the first row.
+            builder.EndRow();
+
+            // Add a second row with normal cells.
+            builder.InsertCell();
+            builder.Write("Row 2, Cell 1");
+            builder.InsertCell();
+            builder.Write("Row 2, Cell 2");
+            builder.EndRow();
+
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document that contains the merged cell.
+            string mergedPath = Path.Combine(outputDir, "MergedCell.docx");
+            doc.Save(mergedPath);
+
+            // -------------------------------------------------
+            // 2. Load the document and split the merged cell.
+            // -------------------------------------------------
+            Document loadedDoc = new Document(mergedPath);
+            Table loadedTable = loadedDoc.FirstSection.Body.Tables[0];
+
+            // The merged cell is the first cell of the first row.
+            Row firstRow = loadedTable.Rows[0];
+            Cell mergedCell = firstRow.Cells[0];
+
+            // Reset the merge flag on the original cell.
+            mergedCell.CellFormat.HorizontalMerge = CellMerge.None;
+
+            // Insert a new cell after the original one to replace the split part.
+            Cell newCell = new Cell(loadedDoc);
+            // Ensure the new cell has at least one paragraph (required for a valid cell).
+            newCell.EnsureMinimum();
+
+            // Insert the new cell into the row.
+            firstRow.InsertAfter(newCell, mergedCell);
+
+            // Save the document after splitting.
+            string splitPath = Path.Combine(outputDir, "SplitCell.docx");
+            loadedDoc.Save(splitPath);
+
+            // Simple verification: output the cell count of the first row.
+            int cellCount = firstRow.Cells.Count;
+            Console.WriteLine($"First row now has {cellCount} cells after split.");
         }
-
-        // Save the document after splitting.
-        string splitPath = Path.Combine(Environment.CurrentDirectory, "SplitMergedCell.docx");
-        doc.Save(splitPath);
-
-        // Simple validation to ensure the files were created.
-        if (!File.Exists(mergedPath))
-            throw new FileNotFoundException("Merged table document was not saved.", mergedPath);
-        if (!File.Exists(splitPath))
-            throw new FileNotFoundException("Split table document was not saved.", splitPath);
-
-        // Indicate successful completion.
-        Console.WriteLine("Documents created successfully:");
-        Console.WriteLine($"- Merged table: {mergedPath}");
-        Console.WriteLine($"- Split table: {splitPath}");
     }
 }

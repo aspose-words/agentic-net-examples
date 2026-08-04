@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class SetTableBidirectional
+public class Program
 {
     public static void Main()
     {
@@ -14,32 +14,33 @@ public class SetTableBidirectional
         // Build a simple 2x2 table.
         Table table = builder.StartTable();
 
+        // First row.
         builder.InsertCell();
-        builder.Write("Cell 1,1");
+        builder.Write("Cell 1, Row 1");
         builder.InsertCell();
-        builder.Write("Cell 1,2");
+        builder.Write("Cell 2, Row 1");
         builder.EndRow();
 
+        // Second row.
         builder.InsertCell();
-        builder.Write("Cell 2,1");
+        builder.Write("Cell 1, Row 2");
         builder.InsertCell();
-        builder.Write("Cell 2,2");
-        builder.EndTable();
+        builder.Write("Cell 2, Row 2");
+        builder.EndTable(); // Ends the table and moves the cursor after it.
 
         // Set the table to be right‑to‑left (bidirectional).
         table.Bidi = true;
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BidirectionalTable.docx");
+        // Define an output folder and file name.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "RightToLeftTable.docx");
 
         // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
-
-        // Optional: inform that the process completed successfully.
-        Console.WriteLine("Document saved to: " + outputPath);
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

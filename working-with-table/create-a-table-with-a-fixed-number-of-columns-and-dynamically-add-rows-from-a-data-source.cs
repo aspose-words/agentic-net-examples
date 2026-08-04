@@ -6,71 +6,57 @@ using Aspose.Words.Tables;
 
 public class Program
 {
-    // Simple data model for the table rows.
-    private class Person
-    {
-        public string Name { get; set; }
-        public int Age { get; set; }
-        public string City { get; set; }
-
-        public Person(string name, int age, string city)
-        {
-            Name = name;
-            Age = age;
-            City = city;
-        }
-    }
-
     public static void Main()
     {
-        // Prepare a sample data source.
-        List<Person> people = new List<Person>
+        // Sample data source: each string array represents a row.
+        var data = new List<string[]>
         {
-            new Person("Alice", 30, "New York"),
-            new Person("Bob", 25, "London"),
-            new Person("Charlie", 35, "Paris")
+            new[] { "Alice", "Engineering", "1000" },
+            new[] { "Bob", "Marketing", "1500" },
+            new[] { "Charlie", "HR", "1200" }
         };
 
         // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Start a table with a fixed number of columns (3 in this case).
+        // Fixed number of columns for the table.
+        const int columnCount = 3;
+
+        // Start the table.
         Table table = builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Write("Name");
-        builder.InsertCell();
-        builder.Write("Age");
-        builder.InsertCell();
-        builder.Write("City");
-        builder.EndRow();
-
-        // Data rows – added dynamically from the collection.
-        foreach (Person p in people)
+        // Add a header row.
+        string[] headers = { "Name", "Department", "Salary" };
+        for (int i = 0; i < columnCount; i++)
         {
             builder.InsertCell();
-            builder.Write(p.Name);
-            builder.InsertCell();
-            builder.Write(p.Age.ToString());
-            builder.InsertCell();
-            builder.Write(p.City);
+            builder.Write(headers[i]);
+        }
+        builder.EndRow();
+
+        // Add rows from the data source.
+        foreach (var row in data)
+        {
+            for (int i = 0; i < columnCount; i++)
+            {
+                builder.InsertCell();
+                builder.Write(row[i]);
+            }
             builder.EndRow();
         }
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file in the current directory.
+        // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DynamicTable.docx");
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
-
-        // Optionally, inform that the process completed (no interactive prompts required).
-        Console.WriteLine("Document created successfully at: " + outputPath);
+        {
+            throw new InvalidOperationException($"The output file was not created: {outputPath}");
+        }
     }
 }

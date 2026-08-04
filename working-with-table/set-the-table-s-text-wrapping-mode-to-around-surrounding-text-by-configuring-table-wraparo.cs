@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,34 +10,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑cell table.
+        // Start building a table.
         Table table = builder.StartTable();
+
+        // First row, first cell.
         builder.InsertCell();
         builder.Write("Cell 1");
+
+        // First row, second cell.
         builder.InsertCell();
         builder.Write("Cell 2");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Set a preferred width so the floating table is visible.
-        table.PreferredWidth = PreferredWidth.FromPoints(200);
+        // Set a preferred width so the table is visible.
+        table.PreferredWidth = PreferredWidth.FromPoints(300);
 
         // Configure the table to wrap text around it.
         table.TextWrapping = TextWrapping.Around;
-        // Optional: define the distance between the table and surrounding text.
-        table.AbsoluteHorizontalDistance = 20; // points
-        table.AbsoluteVerticalDistance = 10;   // points
+        // Optional: set distances from surrounding text.
+        table.AbsoluteHorizontalDistance = 20;
+        table.AbsoluteVerticalDistance = 10;
 
-        // Add a paragraph after the table to demonstrate the wrapping effect.
-        builder.Writeln(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+        // Add some surrounding text after the table.
+        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                        "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWrapAround.docx");
-        doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+        // Save the document to the local file system.
+        doc.Save("TableWrapAround.docx");
     }
 }

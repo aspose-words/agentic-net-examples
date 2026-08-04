@@ -1,6 +1,6 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -12,40 +12,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the size of the table.
-        int rowCount = 4;
-        int columnCount = 5;
-
-        // Colors to alternate between columns.
-        Color evenColumnColor = Color.LightGray;
-        Color oddColumnColor = Color.White;
-
         // Start building the table.
         Table table = builder.StartTable();
 
-        for (int row = 0; row < rowCount; row++)
+        int rows = 4;
+        int columns = 3;
+
+        // Iterate through rows.
+        for (int row = 0; row < rows; row++)
         {
-            for (int col = 0; col < columnCount; col++)
+            // Iterate through columns.
+            for (int col = 0; col < columns; col++)
             {
-                // Insert a new cell into the current row.
+                // Apply alternating background colors based on column index.
+                if (col % 2 == 0)
+                    builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
+                else
+                    builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+
+                // Insert a new cell and write its coordinates.
                 builder.InsertCell();
-
-                // Apply shading based on the column index (alternating colors).
-                builder.CellFormat.Shading.BackgroundPatternColor = (col % 2 == 0) ? evenColumnColor : oddColumnColor;
-
-                // Add some sample text to the cell.
                 builder.Write($"R{row + 1}C{col + 1}");
             }
 
-            // End the current row before starting the next one.
+            // End the current row.
             builder.EndRow();
         }
 
-        // Finish the table construction.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingColumnsTable.docx");
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingColumnShading.docx");
+
+        // Save the document.
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

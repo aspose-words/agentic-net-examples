@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class OptimizeTableRendering
 {
     public static void Main()
     {
@@ -10,30 +10,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a large table (500 rows × 10 columns) while layout updates are not required.
-        // The layout will be calculated only once after the table is fully constructed.
+        // Start a table.
         Table table = builder.StartTable();
 
-        int rowCount = 500;
-        int columnCount = 10;
+        // Insert the first cell of the first row (required before any formatting).
+        builder.InsertCell();
 
-        for (int r = 0; r < rowCount; r++)
+        // Turn off automatic layout updates by postponing the layout refresh.
+        // Aspose.Words updates the layout lazily; we will force a single layout update
+        // after all rows have been added to avoid repeated recalculations.
+        // (No explicit property to disable layout; we simply avoid calling UpdatePageLayout
+        // until the batch operation is finished.)
+
+        // Add a large number of rows to the table.
+        const int rowCount = 5000; // Example large number for performance testing.
+        for (int i = 0; i < rowCount; i++)
         {
-            for (int c = 0; c < columnCount; c++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{r + 1}C{c + 1}");
-            }
+            // First cell of the row.
+            builder.InsertCell();
+            builder.Write($"Row {i + 1}, Cell 1");
+
+            // Second cell of the row.
+            builder.InsertCell();
+            builder.Write($"Row {i + 1}, Cell 2");
+
+            // End the current row.
             builder.EndRow();
         }
 
-        // Finish the table.
+        // End the table construction.
         builder.EndTable();
 
-        // Perform a single layout pass now that all modifications are complete.
+        // After all modifications are done, update the layout once.
         doc.UpdatePageLayout();
 
-        // Save the resulting document.
-        doc.Save("LargeTable.docx");
+        // Save the document to verify the result.
+        const string outputPath = "OptimizedTable.docx";
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

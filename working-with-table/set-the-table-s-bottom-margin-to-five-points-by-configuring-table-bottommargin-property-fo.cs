@@ -3,43 +3,37 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableBottomMarginExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Create a new empty document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Initialize a DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
+        builder.InsertCell();
+        builder.Write("Cell 1,2");
+        builder.EndRow();
 
-            // Start a table and add a simple 2x2 grid.
-            Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+        builder.EndTable();
 
-            // First row.
-            builder.InsertCell();
-            builder.Write("Cell 1, Row 1");
-            builder.InsertCell();
-            builder.Write("Cell 2, Row 1");
-            builder.EndRow();
+        // Set the distance between the table bottom and surrounding text (bottom margin) to 5 points.
+        table.DistanceBottom = 5.0;
 
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Cell 1, Row 2");
-            builder.InsertCell();
-            builder.Write("Cell 2, Row 2");
-            builder.EndTable(); // Ends the table and returns the Table node.
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableBottomMargin.docx");
+        doc.Save(outputPath);
 
-            // Set the distance between the bottom of the table and surrounding text (bottom margin) to 5 points.
-            table.DistanceBottom = 5.0;
-
-            // Define an output path relative to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableBottomMargin.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

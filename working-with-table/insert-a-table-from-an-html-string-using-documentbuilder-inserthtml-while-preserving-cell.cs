@@ -1,52 +1,52 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
+        // HTML string containing a table with cell background color and bold text.
+        string html = @"
+<table border='1' style='border-collapse:collapse;'>
+    <tr>
+        <td style='background-color:#FFCC00;'><b>Cell 1</b></td>
+        <td>Cell 2</td>
+    </tr>
+</table>";
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // HTML string that contains a table with cell background colors and explicit widths.
-        const string html = @"
-            <table style='border-collapse:collapse;'>
-                <tr>
-                    <td style='background:#FFCCCC; width:100pt;'>Cell 1</td>
-                    <td style='background:#CCFFCC; width:100pt;'>Cell 2</td>
-                </tr>
-            </table>";
+        // Insert the HTML table into the document.
+        builder.InsertHtml(html);
 
-        // Insert the HTML into the document while preserving block‑level formatting (e.g., cell shading).
-        builder.InsertHtml(html, HtmlInsertOptions.PreserveBlocks);
-
-        // Save the document to a local file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "InsertedTable.docx");
+        // Save the document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved.");
-
-        // Retrieve the inserted table.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Reload the document to verify the table and its formatting.
+        Document loadedDoc = new Document(outputPath);
+        Table table = loadedDoc.GetChild(NodeType.Table, 0, true) as Table;
         if (table == null)
-            throw new InvalidOperationException("No table was found after HTML insertion.");
+            throw new InvalidOperationException("No table was found in the document.");
 
-        // Verify that the first cell retained its background color from the HTML.
+        // Verify the first cell's background shading.
         Cell firstCell = table.Rows[0].Cells[0];
-        Color expectedColor = ColorTranslator.FromHtml("#FFCCCC");
-        Color actualColor = firstCell.CellFormat.Shading.BackgroundPatternColor;
-
-        if (actualColor.ToArgb() != expectedColor.ToArgb())
+        Color expectedColor = Color.FromArgb(255, 255, 204, 0); // #FFCC00
+        if (firstCell.CellFormat.Shading.BackgroundPatternColor.ToArgb() != expectedColor.ToArgb())
             throw new InvalidOperationException("Cell background color was not preserved.");
 
-        // Inform that the process completed successfully.
-        Console.WriteLine("Document created and table formatting verified successfully.");
+        // Verify the first cell contains bold text.
+        Paragraph para = firstCell.FirstParagraph;
+        Run run = para?.FirstChild as Run;
+        if (run == null || !run.Font.Bold)
+            throw new InvalidOperationException("Bold formatting of the cell text was not preserved.");
+
+        Console.WriteLine("Table inserted from HTML and cell formatting preserved successfully.");
     }
 }
