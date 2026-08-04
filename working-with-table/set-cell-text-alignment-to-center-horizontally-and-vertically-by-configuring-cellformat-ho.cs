@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -14,40 +13,34 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // Configure horizontal alignment by setting paragraph alignment.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        // Configure vertical alignment for the cell.
+        // First cell: set vertical alignment via CellFormat and horizontal alignment via ParagraphFormat.
+        builder.InsertCell();
         builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Write("Centered");
 
-        // First cell.
+        // Second cell: apply the same alignment.
         builder.InsertCell();
-        builder.Write("Cell 1");
-
-        // Second cell.
-        builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Write("Centered");
 
         // End the first row.
         builder.EndRow();
 
-        // Add a second row with the same alignment settings.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-
-        builder.InsertCell();
-        builder.Write("Cell 4");
-
-        builder.EndRow();
+        // Validate that the alignments were applied.
+        if (table.Rows[0].Cells[0].CellFormat.VerticalAlignment != CellVerticalAlignment.Center ||
+            table.Rows[0].Cells[0].FirstParagraph.ParagraphFormat.Alignment != ParagraphAlignment.Center ||
+            table.Rows[0].Cells[1].CellFormat.VerticalAlignment != CellVerticalAlignment.Center ||
+            table.Rows[0].Cells[1].FirstParagraph.ParagraphFormat.Alignment != ParagraphAlignment.Center)
+        {
+            throw new InvalidOperationException("Cell alignment was not set correctly.");
+        }
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlignedTable.docx");
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
+        // Save the document.
+        doc.Save("AlignedTable.docx");
     }
 }

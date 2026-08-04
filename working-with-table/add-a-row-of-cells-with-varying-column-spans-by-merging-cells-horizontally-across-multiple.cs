@@ -11,56 +11,69 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start a new table.
         Table table = builder.StartTable();
 
-        // -------------------------------------------------
-        // Row with cells that have different horizontal spans.
-        // -------------------------------------------------
-
-        // First cell – start a merge that will span 2 columns.
+        // -----------------------------------------------------------------
+        // First row – simple header cells (no merging).
+        // -----------------------------------------------------------------
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged 2 columns");
+        builder.Write("Header 1");
 
-        // Second cell – part of the previous merge.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text needed for merged cells.
+        builder.Write("Header 2");
 
-        // Third cell – normal, not merged.
+        builder.InsertCell();
+        builder.Write("Header 3");
+
+        builder.EndRow();
+
+        // -----------------------------------------------------------------
+        // Second row – cells with varying horizontal spans.
+        // -----------------------------------------------------------------
+
+        // Cell that spans two columns.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.First; // start of merge range
+        builder.Write("Span 2 columns");
+
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // merged with previous cell
+        // No text needed for merged cell.
+
+        // Normal (unmerged) cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.None;
         builder.Write("Normal cell");
 
-        // Fourth cell – start a merge that will span 3 columns.
+        // Cell that spans three columns.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged 3 columns");
+        builder.Write("Span 3 columns");
 
-        // Fifth cell – part of the previous merge.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // Sixth cell – part of the previous merge.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // No text for the merged cells.
 
-        // End the row.
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedTable.docx");
+        // Save the document to a local file.
+        string outputPath = "MergedCells.docx";
         doc.Save(outputPath);
 
-        // Simple validation – ensure the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
 
-        // Inform the user (no interactive pause required).
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Inform the user (optional, no interaction required).
+        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

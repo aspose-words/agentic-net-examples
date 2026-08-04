@@ -6,9 +6,9 @@ using Aspose.Words.Tables;
 
 namespace AsposeWordsTableStyleExample
 {
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
             // Create a new blank document.
             Document doc = new Document();
@@ -19,49 +19,46 @@ namespace AsposeWordsTableStyleExample
 
             // Header row.
             builder.InsertCell();
-            builder.Write("Product");
+            builder.Write("Header 1");
             builder.InsertCell();
-            builder.Write("Quantity");
+            builder.Write("Header 2");
             builder.EndRow();
 
-            // Data rows.
+            // First data row.
             builder.InsertCell();
-            builder.Write("Apples");
+            builder.Write("Row 1, Col 1");
             builder.InsertCell();
-            builder.Write("10");
+            builder.Write("Row 1, Col 2");
             builder.EndRow();
 
+            // Second data row.
             builder.InsertCell();
-            builder.Write("Bananas");
+            builder.Write("Row 2, Col 1");
             builder.InsertCell();
-            builder.Write("20");
+            builder.Write("Row 2, Col 2");
             builder.EndRow();
 
+            // Finish the table.
             builder.EndTable();
 
             // Create a custom table style.
-            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
 
-            // Set a distinct background color for the header (first) row.
-            customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightBlue;
+            // Set the background color for the header (first) row.
+            customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightGray;
+
+            // Optional: set a default background for the rest of the table.
+            customStyle.Shading.BackgroundPatternColor = Color.White;
 
             // Apply the style to the table.
             table.Style = customStyle;
 
-            // Enable the first‑row conditional formatting in the style options.
+            // Enable the first‑row conditional formatting.
             table.StyleOptions = TableStyleOptions.FirstRow;
 
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // Save the document.
-            string outputPath = Path.Combine(outputDir, "TableWithHeaderStyle.docx");
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableStyleHeaderRow.docx");
             doc.Save(outputPath);
-
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
         }
     }
 }

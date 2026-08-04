@@ -3,60 +3,58 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a table that will have a single column.
+        Table table = builder.StartTable();
+
+        // Define the number of rows you want in the table.
+        int totalRows = 7; // Example: 7 rows (adjust as needed).
+
+        for (int rowIndex = 0; rowIndex < totalRows; rowIndex++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Insert a cell for the current row.
+            builder.InsertCell();
 
-            // Start a table with a single column.
-            Table table = builder.StartTable();
-
-            int totalRows = 6; // Number of rows in the table.
-
-            for (int rowIndex = 1; rowIndex <= totalRows; rowIndex++)
+            // Every second cell (rowIndex % 2 == 1) should merge vertically with the previous one.
+            if (rowIndex % 2 == 0) // First cell of a pair (or the last odd row).
             {
-                // Insert the only cell for this row.
-                builder.InsertCell();
-
-                // Determine vertical merge settings.
-                if (rowIndex == 1 || rowIndex == 6)
+                // If there is a following row, start a vertical merge range.
+                if (rowIndex + 1 < totalRows)
                 {
-                    // First and last rows are not merged.
-                    builder.CellFormat.VerticalMerge = CellMerge.None;
-                    builder.Write($"Row {rowIndex}");
-                }
-                else if (rowIndex % 2 == 0)
-                {
-                    // Even rows start a merged group.
                     builder.CellFormat.VerticalMerge = CellMerge.First;
-                    builder.Write($"Group {(rowIndex / 2)}");
                 }
                 else
                 {
-                    // Odd rows (after an even row) continue the merge.
-                    builder.CellFormat.VerticalMerge = CellMerge.Previous;
-                    // No text is written to merged cells other than the first.
+                    // No merge needed for the final unpaired row.
+                    builder.CellFormat.VerticalMerge = CellMerge.None;
                 }
 
-                // End the current row.
-                builder.EndRow();
+                // Write some content for the first cell of the merge group.
+                builder.Write($"Row {rowIndex + 1}");
+            }
+            else // Second cell of a pair – merge with the previous cell.
+            {
+                builder.CellFormat.VerticalMerge = CellMerge.Previous;
+                // Merged cells must be empty.
+                builder.Write(string.Empty);
             }
 
-            // Finish the table.
-            builder.EndTable();
-
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableVerticalMerge.docx");
-            doc.Save(outputPath);
-
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
+            // End the current row.
+            builder.EndRow();
         }
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableWithVerticalMerges.docx");
+        doc.Save(outputPath);
     }
 }

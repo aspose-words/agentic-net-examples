@@ -2,63 +2,41 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableColumnRemoval
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a 3x3 table.
+        Table table = builder.StartTable();
+        for (int row = 0; row < 3; row++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a 3x3 table.
-            Table table = builder.StartTable();
-
-            // First row.
-            builder.InsertCell();
-            builder.Write("R1C1");
-            builder.InsertCell();
-            builder.Write("R1C2");
-            builder.InsertCell();
-            builder.Write("R1C3");
-            builder.EndRow();
-
-            // Second row.
-            builder.InsertCell();
-            builder.Write("R2C1");
-            builder.InsertCell();
-            builder.Write("R2C2");
-            builder.InsertCell();
-            builder.Write("R2C3");
-            builder.EndRow();
-
-            // Third row.
-            builder.InsertCell();
-            builder.Write("R3C1");
-            builder.InsertCell();
-            builder.Write("R3C2");
-            builder.InsertCell();
-            builder.Write("R3C3");
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Delete the second column (index 1) by removing the cell at that index from each row.
-            int columnIndexToRemove = 1;
-            if (table.Rows.Count > 0 && table.Rows[0].Cells.Count > columnIndexToRemove)
+            for (int col = 0; col < 3; col++)
             {
-                foreach (Row row in table.Rows)
-                {
-                    // Ensure the current row has enough cells before removal.
-                    if (row.Cells.Count > columnIndexToRemove)
-                        row.Cells.RemoveAt(columnIndexToRemove);
-                }
+                builder.InsertCell();
+                builder.Write($"R{row + 1}C{col + 1}");
             }
-
-            // Save the resulting document.
-            doc.Save("DeleteColumn.docx");
+            builder.EndRow();
         }
+        builder.EndTable();
+
+        // Save the original table for reference.
+        doc.Save("TableBefore.docx");
+
+        // Delete the second column (index 1) by removing the cell at that index from each row.
+        if (table.Rows.Count > 0 && table.Rows[0].Cells.Count > 1)
+        {
+            foreach (Row row in table.Rows)
+            {
+                // Remove the cell at column index 1.
+                row.Cells.RemoveAt(1);
+            }
+        }
+
+        // Save the document after column removal.
+        doc.Save("TableAfter.docx");
     }
 }

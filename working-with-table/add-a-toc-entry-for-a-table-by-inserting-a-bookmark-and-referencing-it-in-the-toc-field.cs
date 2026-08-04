@@ -1,80 +1,59 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Fields;
+using Aspose.Words.Tables;
 
-namespace AsposeWordsTableTocExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a Table of Contents (TOC) field at the beginning of the document.
-            // Use a simple switch string; the field will be updated later.
-            Field tocField = builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-            // Cast to FieldToc to set additional properties.
-            if (tocField is FieldToc toc)
-            {
-                // The TOC will include only entries that are inside the bookmark named "TableBookmark".
-                toc.BookmarkName = "TableBookmark";
-                // Make TOC entries clickable hyperlinks.
-                toc.InsertHyperlinks = true;
-            }
+        // Insert a bookmark that will surround the table.
+        builder.StartBookmark("TableBookmark");
 
-            // Insert a page break so the table appears on a new page.
-            builder.InsertBreak(BreakType.PageBreak);
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
 
-            // Start a bookmark that will surround the table and its heading.
-            builder.StartBookmark("TableBookmark");
+        // First row.
+        builder.InsertCell();
+        builder.Write("Cell 1, Row 1");
+        builder.InsertCell();
+        builder.Write("Cell 2, Row 1");
+        builder.EndRow();
 
-            // Insert a heading that will appear in the TOC as the table entry.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Table 1: Sample Data");
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Cell 1, Row 2");
+        builder.InsertCell();
+        builder.Write("Cell 2, Row 2");
+        builder.EndRow();
 
-            // Build a simple 2x2 table.
-            Table table = builder.StartTable();
+        // Finish the table.
+        builder.EndTable();
 
-            // First row.
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 2");
-            builder.EndRow();
+        // End the bookmark after the table.
+        builder.EndBookmark("TableBookmark");
 
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 2");
-            builder.EndRow();
+        // Insert a paragraph break before the TOC.
+        builder.Writeln();
 
-            // Finish the table.
-            builder.EndTable();
+        // Insert a TOC field that references the bookmark containing the table.
+        FieldToc tocField = (FieldToc)builder.InsertField(FieldType.FieldTOC, true);
+        tocField.BookmarkName = "TableBookmark";
 
-            // End the bookmark.
-            builder.EndBookmark("TableBookmark");
+        // Update fields so the TOC reflects the current document structure.
+        doc.UpdateFields();
 
-            // Update all fields (including the TOC) so that the entry appears.
-            doc.UpdateFields();
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-            // Define the output path relative to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithToc.docx");
-            doc.Save(outputPath);
-
-            // Simple validation to ensure the file was created.
-            if (File.Exists(outputPath))
-            {
-                Console.WriteLine($"Document saved successfully to: {outputPath}");
-            }
-            else
-            {
-                throw new InvalidOperationException("Failed to save the document.");
-            }
-        }
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "TableWithToc.docx");
+        doc.Save(outputPath);
     }
 }

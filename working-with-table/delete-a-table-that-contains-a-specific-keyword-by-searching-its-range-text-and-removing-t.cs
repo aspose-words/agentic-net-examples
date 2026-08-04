@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class DeleteTableByKeyword
+public class Program
 {
     public static void Main()
     {
@@ -11,50 +11,43 @@ public class DeleteTableByKeyword
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build first table (does NOT contain the keyword).
-        builder.StartTable();
+        // Build the first table that contains the keyword "DeleteMe".
+        Table tableWithKeyword = builder.StartTable();
         builder.InsertCell();
-        builder.Write("First table, cell 1.");
-        builder.InsertCell();
-        builder.Write("First table, cell 2.");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Build second table (contains the keyword "DeleteMe").
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("This table will be deleted. Keyword: DeleteMe");
+        builder.Write("This cell will be deleted because it contains the keyword DeleteMe.");
         builder.InsertCell();
         builder.Write("Another cell.");
         builder.EndRow();
         builder.EndTable();
 
-        // Save the original document (optional, for inspection).
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
-        doc.Save(outputPath);
+        // Build a second table that does NOT contain the keyword.
+        Table tableWithoutKeyword = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("This table stays.");
+        builder.InsertCell();
+        builder.Write("More content.");
+        builder.EndRow();
+        builder.EndTable();
 
-        // Keyword to search for.
-        const string keyword = "DeleteMe";
-
-        // Find and delete tables that contain the keyword.
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        // Iterate backwards because removing nodes changes the collection indexing.
-        for (int i = tables.Count - 1; i >= 0; i--)
+        // Search for tables whose full text contains the specific keyword and remove them.
+        NodeCollection allTables = doc.GetChildNodes(NodeType.Table, true);
+        for (int i = allTables.Count - 1; i >= 0; i--)
         {
-            Table tbl = (Table)tables[i];
-            if (tbl.Range.Text != null && tbl.Range.Text.Contains(keyword))
+            Table tbl = (Table)allTables[i];
+            if (tbl.Range.Text.Contains("DeleteMe"))
             {
-                // Remove the entire table node from the document.
                 tbl.Remove();
             }
         }
 
-        // Save the modified document.
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedTable.docx");
-        doc.Save(resultPath);
+        // Save the resulting document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedTable.docx");
+        doc.Save(outputPath);
 
-        // Simple verification that the file was created.
-        if (!File.Exists(resultPath))
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(outputPath))
+        {
             throw new InvalidOperationException("The output document was not saved correctly.");
+        }
     }
 }

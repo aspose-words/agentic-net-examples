@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,46 +10,37 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table with two columns.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // ---------- First row ----------
-        // First cell – this will be the top cell of the vertically merged range.
+        // ---- First row ----
+        // First cell: start a vertical merge range.
         builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.First; // Mark as the first cell in a vertical merge.
-        builder.Write("Vertically merged cells");
+        builder.CellFormat.VerticalMerge = CellMerge.First;
+        builder.Write("Merged vertically");
 
-        // Second cell – normal, not merged.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Normal cell");
-        builder.EndRow();
-
-        // ---------- Second row ----------
-        // First cell – merge with the cell above.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.Previous; // Merge with the previous (top) cell.
-        // No text is written to merged cells other than the first one.
-
-        // Second cell – normal, not merged.
+        // Second cell: regular (not merged) cell.
         builder.InsertCell();
         builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Normal cell");
+        builder.Write("Unmerged cell");
         builder.EndRow();
 
-        // Finish the table.
+        // ---- Second row ----
+        // First cell: merge with the cell above.
+        builder.InsertCell();
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+        // No text is written for merged cells.
+
+        // Second cell: regular cell.
+        builder.InsertCell();
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+        builder.Write("Unmerged cell");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
         // Save the document to a file.
-        string outputPath = "MergedCells.docx";
-        doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
-
-        // The program ends here without waiting for user input.
+        doc.Save("MergedCells.docx");
     }
 }

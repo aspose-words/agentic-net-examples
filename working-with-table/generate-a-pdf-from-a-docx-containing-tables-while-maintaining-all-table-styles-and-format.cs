@@ -1,71 +1,70 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define output folder and ensure it exists.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Paths for the intermediate DOCX and final PDF.
+        string docPath = Path.Combine(artifactsDir, "Sample.docx");
+        string pdfPath = Path.Combine(artifactsDir, "Sample.pdf");
 
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to construct a table with a built‑in style.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the table.
+        // Start a table and keep a reference to it.
         Table table = builder.StartTable();
 
         // First row – header cells.
         builder.InsertCell();
-        builder.Write("Product");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Write("Header 2");
         builder.EndRow();
 
-        // Second row – data.
+        // Second row – data cells.
         builder.InsertCell();
-        builder.Write("Apples");
+        builder.Write("Data 1");
         builder.InsertCell();
-        builder.Write("10");
-        builder.EndRow();
-
-        // Third row – data.
-        builder.InsertCell();
-        builder.Write("Bananas");
-        builder.InsertCell();
-        builder.Write("20");
+        builder.Write("Data 2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Apply a built‑in table style that includes shading and borders.
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+        // Create a custom table style and configure some formatting.
+        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+        tableStyle.RowStripe = 1; // Apply row banding.
+        tableStyle.CellSpacing = 5; // Space between cells.
+        tableStyle.Shading.BackgroundPatternColor = Color.LightBlue;
+        tableStyle.Borders.Color = Color.DarkBlue;
+        tableStyle.Borders.LineStyle = LineStyle.Single;
 
-        // Convert any style‑based formatting to direct formatting.
-        // This ensures the PDF retains the exact appearance of the table.
+        // Apply the style to the table.
+        table.Style = tableStyle;
+
+        // Convert style-based formatting to direct formatting so it is preserved in PDF.
         doc.ExpandTableStylesToDirectFormatting();
 
-        // Save the document as DOCX (optional, for verification).
-        string docxPath = Path.Combine(outputDir, "SampleTable.docx");
-        doc.Save(docxPath);
+        // Save the document as DOCX (optional, shows the intermediate file).
+        doc.Save(docPath);
 
-        // Save the document as PDF, preserving table styles and formatting.
-        string pdfPath = Path.Combine(outputDir, "SampleTable.pdf");
+        // Save the same document as PDF, preserving all table formatting.
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Simple validation – ensure the PDF file was created.
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+            throw new Exception("PDF file was not created.");
 
-        // Inform the user (no interactive prompts required).
-        Console.WriteLine($"PDF generated successfully at: {pdfPath}");
+        // Optionally, inform that the process completed (no interactive input required).
+        Console.WriteLine("PDF generated successfully at: " + pdfPath);
     }
 }

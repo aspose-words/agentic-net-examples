@@ -9,30 +9,36 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        builder.StartTable();
+        // Start the table.
+        Table table = builder.StartTable();
 
-        // Create 3 rows.
-        for (int row = 0; row < 3; row++)
+        // Build 3 rows.
+        for (int row = 1; row <= 3; row++)
         {
-            // Create 4 columns (cells) in each row.
-            for (int col = 0; col < 4; col++)
+            // Build 4 columns for each row.
+            for (int col = 1; col <= 4; col++)
             {
                 builder.InsertCell();
-                builder.Write($"Row {row + 1}, Cell {col + 1}");
+                builder.Write($"Row {row}, Cell {col}");
             }
 
             // End the current row.
             builder.EndRow();
         }
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableExample.docx");
+        // Save the document to a file.
+        string outputPath = "Table.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

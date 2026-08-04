@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,42 +10,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table. The first InsertCell call is required before any table formatting.
+        // Start building a table.
         Table table = builder.StartTable();
-        builder.InsertCell();
 
-        // Apply a built‑in style and enable row banding (alternating row shading).
+        // Header row – required before applying any style settings.
+        builder.InsertCell();
+        builder.Write("Item");
+        builder.InsertCell();
+        builder.Write("Quantity");
+        builder.EndRow();
+
+        // Apply a built‑in style that supports row banding.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Enable only row banding (alternating row shading).
         table.StyleOptions = TableStyleOptions.RowBands;
 
-        // Optional: let the table auto‑fit its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Populate the table with sample data (two columns, three rows).
-        builder.Writeln("Item");
-        builder.InsertCell();
-        builder.Writeln("Quantity (kg)");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Writeln("Apples");
-        builder.InsertCell();
-        builder.Writeln("20");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Writeln("Bananas");
-        builder.InsertCell();
-        builder.Writeln("40");
-        builder.EndRow();
+        // Add a few data rows.
+        for (int i = 1; i <= 4; i++)
+        {
+            builder.InsertCell();
+            builder.Writeln($"Item {i}");
+            builder.InsertCell();
+            builder.Writeln($"{i * 10}");
+            builder.EndRow();
+        }
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to a local file.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "Table.RowBanding.docx");
-        doc.Save(outputPath);
+        // Save the document to the current directory.
+        doc.Save("TableStyleRowBanding.docx");
     }
 }

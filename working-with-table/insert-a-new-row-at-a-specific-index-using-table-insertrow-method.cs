@@ -1,9 +1,8 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableInsertRowExample
+namespace AsposeWordsInsertRowExample
 {
     public class Program
     {
@@ -14,7 +13,7 @@ namespace AsposeWordsTableInsertRowExample
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // Build an initial 2x2 table.
-            builder.StartTable();
+            Table table = builder.StartTable();
 
             // First row.
             builder.InsertCell();
@@ -28,39 +27,39 @@ namespace AsposeWordsTableInsertRowExample
             builder.Write("Row 2, Cell 1");
             builder.InsertCell();
             builder.Write("Row 2, Cell 2");
-            builder.EndTable();
+            builder.EndTable(); // Ends the table construction.
 
-            // Retrieve the created table.
-            Table table = doc.FirstSection.Body.Tables[0];
+            // At this point the table has two rows. We will insert a new row at index 1 (between the existing rows).
 
-            // Create a new row that will be inserted.
+            // Create a new row that matches the table's column count.
             Row newRow = new Row(doc);
 
-            // Add two cells to the new row (matching the existing column count).
+            // First cell of the new row.
             Cell cell1 = new Cell(doc);
             cell1.AppendChild(new Paragraph(doc));
             cell1.FirstParagraph.AppendChild(new Run(doc, "Inserted Row, Cell 1"));
             newRow.AppendChild(cell1);
 
+            // Second cell of the new row.
             Cell cell2 = new Cell(doc);
             cell2.AppendChild(new Paragraph(doc));
             cell2.FirstParagraph.AppendChild(new Run(doc, "Inserted Row, Cell 2"));
             newRow.AppendChild(cell2);
 
-            // Insert the new row at index 1 (between the original rows).
-            // RowCollection.Insert inserts the row at the specified position.
+            // Insert the new row at the desired index using the RowCollection.Insert method.
+            // The index is zero‑based; 1 means after the first row.
             table.Rows.Insert(1, newRow);
 
-            // Optional validation: the table should now contain three rows.
+            // Simple validation to ensure the row was inserted.
             if (table.Rows.Count != 3)
-                throw new InvalidOperationException("Row insertion failed.");
+                throw new InvalidOperationException("Row insertion failed; expected 3 rows.");
 
             // Save the document to the local file system.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "InsertedRow.docx");
+            string outputPath = "InsertRowExample.docx";
             doc.Save(outputPath);
 
-            // Indicate successful completion.
-            Console.WriteLine($"Document saved to: {outputPath}");
+            // Inform that the process completed successfully.
+            Console.WriteLine($"Document saved to '{outputPath}'. Table now contains {table.Rows.Count} rows.");
         }
     }
 }

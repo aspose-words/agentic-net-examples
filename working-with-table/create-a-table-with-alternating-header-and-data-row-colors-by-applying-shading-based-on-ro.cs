@@ -1,7 +1,8 @@
 using System;
-using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Drawing;
 
 public class Program
 {
@@ -14,37 +15,50 @@ public class Program
         // Start the table.
         Table table = builder.StartTable();
 
-        // ---------- Header row ----------
-        // Apply a distinct background color for the header.
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
+        // Define number of rows (including header) and columns.
+        int totalRows = 6; // 1 header + 5 data rows
+        int totalCols = 3;
 
-        builder.InsertCell();
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.EndRow();
-
-        // ---------- Data rows ----------
-        // Generate several data rows with alternating shading based on row index parity.
-        int dataRowCount = 6; // Example number of data rows.
-        for (int i = 0; i < dataRowCount; i++)
+        // Loop through each row.
+        for (int rowIndex = 0; rowIndex < totalRows; rowIndex++)
         {
-            // Choose shading color: even rows white, odd rows light gray.
-            Color rowColor = (i % 2 == 0) ? Color.White : Color.LightGray;
-            builder.CellFormat.Shading.BackgroundPatternColor = rowColor;
+            // Apply shading based on row index parity.
+            // Even index (0) -> header row, use LightGray.
+            // Odd index -> LightBlue, even index after header -> White.
+            if (rowIndex == 0)
+                builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+            else if (rowIndex % 2 == 1)
+                builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
+            else
+                builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
 
-            builder.InsertCell();
-            builder.Writeln($"Row {i + 1} - Col 1");
-            builder.InsertCell();
-            builder.Writeln($"Row {i + 1} - Col 2");
+            // Insert cells for the current row.
+            for (int colIndex = 0; colIndex < totalCols; colIndex++)
+            {
+                builder.InsertCell();
+                // Write sample text indicating row and column.
+                if (rowIndex == 0)
+                    builder.Write($"Header {colIndex + 1}");
+                else
+                    builder.Write($"Row {rowIndex}, Col {colIndex + 1}");
+            }
+
+            // End the current row.
             builder.EndRow();
         }
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
         // Save the document to the local file system.
-        string outputPath = "AlternatingRows.docx";
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingRows.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
+
+        // Optionally, inform that the process completed.
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

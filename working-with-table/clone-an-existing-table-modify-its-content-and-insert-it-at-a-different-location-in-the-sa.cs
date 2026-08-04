@@ -1,68 +1,73 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableCloneExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a paragraph before the first table.
-        builder.Writeln("Document with original table:");
-
-        // Build the original table (2 rows x 2 columns).
-        Table originalTable = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("A1");
-        builder.InsertCell();
-        builder.Write("B1");
-        builder.EndRow();
-        builder.InsertCell();
-        builder.Write("A2");
-        builder.InsertCell();
-        builder.Write("B2");
-        builder.EndTable();
-
-        // Add a paragraph after the original table to separate content.
-        builder.Writeln("\nDocument after original table:");
-
-        // Clone the original table (deep clone).
-        Table clonedTable = (Table)originalTable.Clone(true);
-
-        // Modify the cloned table's cell contents.
-        int rowIndex = 0;
-        foreach (Row row in clonedTable.Rows)
+        public static void Main()
         {
-            int cellIndex = 0;
-            foreach (Cell cell in row.Cells)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build the original table (2 rows x 2 columns) using the builder.
+            Table originalTable = builder.StartTable();
+            builder.InsertCell();
+            builder.Write("Cell 1,1");
+            builder.InsertCell();
+            builder.Write("Cell 1,2");
+            builder.EndRow();
+
+            builder.InsertCell();
+            builder.Write("Cell 2,1");
+            builder.InsertCell();
+            builder.Write("Cell 2,2");
+            builder.EndRow();
+            builder.EndTable(); // The table is now part of the document.
+
+            // Clone the existing table (deep clone).
+            Table clonedTable = (Table)originalTable.Clone(true);
+
+            // Modify the cloned table's content.
+            foreach (Row row in clonedTable.Rows)
             {
-                // Remove existing content.
-                cell.RemoveAllChildren();
-
-                // Add new paragraph with modified text.
-                Paragraph para = new Paragraph(doc);
-                Run run = new Run(doc, $"Cloned {rowIndex + 1},{cellIndex + 1}");
-                para.AppendChild(run);
-                cell.AppendChild(para);
-
-                cellIndex++;
+                foreach (Cell cell in row.Cells)
+                {
+                    // Each cell already contains a paragraph with a run.
+                    // Replace the text of the first run with new content.
+                    if (cell.FirstParagraph != null && cell.FirstParagraph.Runs.Count > 0)
+                    {
+                        cell.FirstParagraph.Runs[0].Text = "Cloned";
+                    }
+                    else
+                    {
+                        // Ensure the cell has a paragraph and add a run if needed.
+                        cell.EnsureMinimum();
+                        cell.FirstParagraph.AppendChild(new Run(doc, "Cloned"));
+                    }
+                }
             }
-            rowIndex++;
+
+            // Insert a marker paragraph where the cloned table will be placed.
+            builder.MoveToDocumentEnd();
+            builder.Writeln("=== Cloned Table Inserted Below ===");
+            // Capture the marker paragraph node.
+            Paragraph markerParagraph = (Paragraph)doc.LastSection.Body.LastParagraph;
+
+            // Insert the cloned table after the marker paragraph.
+            // Use InsertAfter on the parent node (the body) to place the table correctly.
+            markerParagraph.ParentNode.InsertAfter(clonedTable, markerParagraph);
+
+            // Save the resulting document.
+            string outputPath = "ClonedTable.docx";
+            doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The output document was not created.");
         }
-
-        // Insert the cloned table after the original table.
-        // The parent of a table is a CompositeNode (e.g., Body), so cast accordingly.
-        CompositeNode parent = originalTable.ParentNode as CompositeNode;
-        if (parent == null)
-            throw new InvalidOperationException("Unable to locate a valid parent node for insertion.");
-
-        parent.InsertAfter(clonedTable, originalTable);
-
-        // Save the resulting document.
-        const string outputPath = "ClonedTable.docx";
-        doc.Save(outputPath);
     }
 }

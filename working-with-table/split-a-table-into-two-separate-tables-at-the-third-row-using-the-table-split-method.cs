@@ -1,63 +1,68 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace SplitTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a table with 5 rows and 2 columns.
+        Table table = builder.StartTable();
+        for (int i = 1; i <= 5; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // First cell of the row.
+            builder.InsertCell();
+            builder.Write($"Row {i}, Cell 1");
 
-            // Build a table with five rows and two columns.
-            Table table = builder.StartTable();
+            // Second cell of the row.
+            builder.InsertCell();
+            builder.Write($"Row {i}, Cell 2");
 
-            for (int row = 1; row <= 5; row++)
-            {
-                // First cell.
-                builder.InsertCell();
-                builder.Write($"Row {row}, Cell 1");
-
-                // Second cell.
-                builder.InsertCell();
-                builder.Write($"Row {row}, Cell 2");
-
-                // End the current row (except after the last row we will end the table later).
-                if (row < 5)
-                    builder.EndRow();
-            }
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Split the table after the third row (zero‑based index 2).
-            int splitIndex = 2; // rows 0,1,2 stay in the original table
-
-            // Create a new table that will hold the rows after the split.
-            Table secondTable = new Table(doc);
-            // Insert the new table right after the original one in the document tree.
-            table.ParentNode.InsertAfter(secondTable, table);
-
-            // Move rows from the original table to the new table.
-            while (table.Rows.Count > splitIndex + 1)
-            {
-                // The row to move is always the one that follows the split index.
-                Row rowToMove = table.Rows[splitIndex + 1];
-                // Detach the row from the original table.
-                rowToMove.Remove();
-                // Append it to the new table.
-                secondTable.Rows.Add(rowToMove);
-            }
-
-            // Validate the split.
-            if (table.Rows.Count != 3 || secondTable.Rows.Count != 2)
-                throw new InvalidOperationException("Table split did not produce the expected row counts.");
-
-            // Save the document.
-            doc.Save("SplitTable.docx");
+            // End the current row.
+            builder.EndRow();
         }
+        // Finish the table.
+        builder.EndTable();
+
+        // Split the table at the third row (zero‑based index 2).
+        // The original table will keep rows before the split,
+        // and the new table will contain the rows from the split index onward.
+        int splitIndex = 2; // zero‑based index where the split starts
+
+        // Create a new empty table that will receive the split rows.
+        Table secondTable = new Table(doc);
+
+        // Move rows from the original table to the new table.
+        while (table.Rows.Count > splitIndex)
+        {
+            // Get the row that should be moved.
+            Row movingRow = table.Rows[splitIndex];
+
+            // Detach the row from the original table.
+            movingRow.Remove();
+
+            // Append the row to the new table.
+            secondTable.Rows.Add(movingRow);
+        }
+
+        // Insert the new table into the document immediately after the original table.
+        table.ParentNode.InsertAfter(secondTable, table);
+
+        // Optional validation: output row counts of both tables.
+        Console.WriteLine($"First table rows: {table.Rows.Count}");
+        Console.WriteLine($"Second table rows: {secondTable.Rows.Count}");
+
+        // Save the document containing the two separate tables.
+        string outputPath = "SplitTable.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output file was not created.");
     }
 }

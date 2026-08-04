@@ -8,32 +8,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a table.
         Table table = builder.StartTable();
 
-        int rows = 5;
-        int columns = 4;
+        int rows = 4;
+        int cols = 4;
 
+        // Build the table rows and cells.
         for (int r = 0; r < rows; r++)
         {
-            for (int c = 0; c < columns; c++)
+            for (int c = 0; c < cols; c++)
             {
-                // Apply shading to every second column (1‑based index: columns 2,4,...).
+                // Apply shading to every second column (1‑based even columns).
                 if (c % 2 == 1)
-                {
                     builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-                }
                 else
-                {
-                    // Remove any previous shading.
-                    builder.CellFormat.Shading.ClearFormatting();
-                }
+                    builder.CellFormat.Shading.ClearFormatting(); // No shading for odd columns.
 
-                // Insert the cell and write some text.
+                // Insert a cell and write some text.
                 builder.InsertCell();
                 builder.Write($"R{r + 1}C{c + 1}");
             }
@@ -42,17 +38,15 @@ public class Program
             builder.EndRow();
         }
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingColumnShading.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingColumnsTable.docx");
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("The output document was not created.");
-        }
+            throw new Exception("The output document was not saved correctly.");
     }
 }

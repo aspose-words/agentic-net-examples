@@ -2,8 +2,9 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
-namespace AsposeWordsTableTextDirection
+namespace TableTextDirectionExample
 {
     public class Program
     {
@@ -16,29 +17,44 @@ namespace AsposeWordsTableTextDirection
             // Start a table.
             Table table = builder.StartTable();
 
-            // Build a 2x2 table. Set each cell's orientation to vertical Asian script
-            // (top‑to‑bottom) using the CellFormat.Orientation property.
-            for (int row = 0; row < 2; row++)
-            {
-                for (int col = 0; col < 2; col++)
-                {
-                    builder.InsertCell();
-                    builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
-                    builder.Write($"R{row + 1}C{col + 1}");
-                }
-                builder.EndRow();
-            }
+            // First row, first cell.
+            builder.InsertCell();
+            // Set the cell's text orientation to vertical (top‑to‑bottom) for Asian scripts.
+            builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
+            builder.Write("縦書きセル 1");
+
+            // First row, second cell.
+            builder.InsertCell();
+            builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
+            builder.Write("縦書きセル 2");
+            builder.EndRow();
+
+            // Second row, first cell.
+            builder.InsertCell();
+            builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
+            builder.Write("縦書きセル 3");
+
+            // Second row, second cell.
+            builder.InsertCell();
+            builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
+            builder.Write("縦書きセル 4");
+            builder.EndRow();
 
             // Finish the table.
             builder.EndTable();
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableTextDirection.docx");
+            // Define output path.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableTextDirection.docx");
+
+            // Save the document.
             doc.Save(outputPath);
 
             // Verify that the file was created.
             if (!File.Exists(outputPath))
-                throw new Exception("Failed to create the output document.");
+                throw new InvalidOperationException("The output document was not created.");
+
+            // Optional: inform that the process completed (no interactive prompts).
+            Console.WriteLine("Document saved to: " + outputPath);
         }
     }
 }

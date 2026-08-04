@@ -3,41 +3,49 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableIndentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Configure paragraph indentation.
-            builder.ParagraphFormat.LeftIndent = 30;   // 30 points left indent.
-            builder.ParagraphFormat.RightIndent = 30; // 30 points right indent.
+        // Define paragraph indentation that we want the table to align with.
+        double paragraphLeftIndent = 50.0;   // points
+        double paragraphRightIndent = 30.0;  // points
 
-            // Start a table.
-            Table table = builder.StartTable();
+        // Apply the indentation to the builder's paragraph format.
+        builder.ParagraphFormat.LeftIndent = paragraphLeftIndent;
+        builder.ParagraphFormat.RightIndent = paragraphRightIndent;
 
-            // Insert the first cell (required before setting table formatting).
-            builder.InsertCell();
+        // Start a new table.
+        Table table = builder.StartTable();
 
-            // Align the table's left indent with the paragraph's left indent.
-            table.LeftIndent = builder.ParagraphFormat.LeftIndent;
+        // Insert the first cell.
+        builder.InsertCell();
 
-            // Populate the first row with two cells.
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        // Align the table's left indent with the paragraph's left indent.
+        table.LeftIndent = paragraphLeftIndent;
 
-            // End the table.
-            builder.EndTable();
+        // NOTE: Table.RightIndent is not available per the library restrictions,
+        // so we rely on the paragraph's right indent for visual alignment.
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableIndent.docx");
-            doc.Save(outputPath);
-        }
+        // Add some sample content to the cell.
+        builder.Writeln("This table aligns its left edge with the paragraph's left indent.");
+
+        // End the current row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // Save the document to a local file.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "TableIndentAlignment.docx");
+        doc.Save(outputPath);
+
+        // Simple verification that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

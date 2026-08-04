@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -14,15 +13,19 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // First cell – set custom margins (implemented as padding).
+        // Insert the first cell.
         builder.InsertCell();
-        builder.CellFormat.TopPadding = 10;      // MarginTop
-        builder.CellFormat.BottomPadding = 15;   // MarginBottom
-        builder.CellFormat.LeftPadding = 20;     // MarginLeft
-        builder.CellFormat.RightPadding = 25;    // MarginRight
+
+        // Define cell margins (implemented as padding in Aspose.Words).
+        builder.CellFormat.TopPadding = 10;      // Equivalent to MarginTop
+        builder.CellFormat.BottomPadding = 10;   // Equivalent to MarginBottom
+        builder.CellFormat.LeftPadding = 15;     // Equivalent to MarginLeft
+        builder.CellFormat.RightPadding = 15;    // Equivalent to MarginRight
+
+        // Add some text to the cell.
         builder.Write("Cell with custom margins.");
 
-        // Second cell – keep default margins.
+        // Insert a second cell with default margins.
         builder.InsertCell();
         builder.Write("Cell with default margins.");
 
@@ -30,8 +33,7 @@ public class Program
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CellMargins.docx");
-        doc.Save(outputPath);
+        // Save the document to the local file system.
+        doc.Save("CellMargins.docx");
     }
 }

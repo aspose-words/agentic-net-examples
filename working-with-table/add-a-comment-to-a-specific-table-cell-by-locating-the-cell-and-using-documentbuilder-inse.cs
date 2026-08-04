@@ -2,51 +2,65 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableCommentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table.
-            builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
-            // First row.
-            builder.InsertCell();
-            builder.Write("Cell 1,1");
-            builder.InsertCell();
-            builder.Write("Cell 1,2");
-            builder.EndRow();
+        // First row, first cell.
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
 
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Cell 2,1");
-            builder.InsertCell();
-            builder.Write("Cell 2,2");
-            builder.EndTable();
+        // First row, second cell.
+        builder.InsertCell();
+        builder.Write("Cell 1,2");
 
-            // Locate the target cell (first row, second column).
-            Table table = doc.FirstSection.Body.Tables[0];
-            Cell targetCell = table.Rows[0].Cells[1];
+        // End the first row.
+        builder.EndRow();
 
-            // Move the builder's cursor to the beginning of the target cell.
-            builder.MoveTo(targetCell.FirstParagraph);
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
 
-            // Create a comment and attach it to the paragraph inside the cell.
-            Comment comment = new Comment(doc, "Author", "AI", DateTime.Now);
-            // Append the comment node to the current paragraph.
-            builder.CurrentParagraph.AppendChild(comment);
-            // Move the builder inside the comment to add the comment text.
-            builder.MoveTo(comment.AppendChild(new Paragraph(doc)));
-            builder.Write("This is a comment added to the cell.");
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
 
-            // Save the document.
-            string outputPath = "CommentInTableCell.docx";
-            doc.Save(outputPath);
-        }
+        // End the second row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // Locate the specific cell to comment (first row, second column).
+        Table table = doc.FirstSection.Body.Tables[0];
+        Cell targetCell = table.Rows[0].Cells[1]; // zero‑based indices.
+
+        // Ensure the cell has at least one paragraph.
+        targetCell.EnsureMinimum();
+        Paragraph para = targetCell.FirstParagraph;
+
+        // Create a comment.
+        Comment comment = new Comment(doc, "Author", "AU", DateTime.Now);
+        comment.SetText("This is a comment on the cell.");
+
+        // Insert comment range start before the first run.
+        CommentRangeStart rangeStart = new CommentRangeStart(doc, comment.Id);
+        para.PrependChild(rangeStart);
+
+        // Insert comment range end after the last run.
+        CommentRangeEnd rangeEnd = new CommentRangeEnd(doc, comment.Id);
+        para.AppendChild(rangeEnd);
+
+        // Append the comment node itself.
+        para.AppendChild(comment);
+
+        // Save the document.
+        string outputPath = "CommentInTableCell.docx";
+        doc.Save(outputPath);
     }
 }

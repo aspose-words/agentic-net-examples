@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables;   // Needed for the Table class
+using Aspose.Words.Tables;   // Required for the Table class
 
-public class Program
+public class ExportTableAsImage
 {
     public static void Main()
     {
@@ -14,15 +14,12 @@ public class Program
 
         // Build a simple 2x2 table.
         Table table = builder.StartTable();
-
-        // First row.
         builder.InsertCell();
         builder.Write("Cell 1, Row 1");
         builder.InsertCell();
         builder.Write("Cell 2, Row 1");
         builder.EndRow();
 
-        // Second row.
         builder.InsertCell();
         builder.Write("Cell 1, Row 2");
         builder.InsertCell();
@@ -32,16 +29,30 @@ public class Program
         // Finish the table.
         builder.EndTable();
 
-        // Render the document (which contains only the table) to a PNG image.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
-        // Render only the first page where the table resides.
-        options.PageSet = new PageSet(0);
+        // Save the document to a temporary DOCX file (required for rendering).
+        string tempDocPath = Path.Combine(Path.GetTempPath(), "TempTableDoc.docx");
+        doc.Save(tempDocPath, SaveFormat.Docx);
 
-        string outputPath = "TableImage.png";
-        doc.Save(outputPath, options);
+        // Reload the document to ensure all layout calculations are performed.
+        Document renderedDoc = new Document(tempDocPath);
 
-        // Verify that the image file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the table image.");
+        // Configure image save options to render the first page (which contains the table) as PNG.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+        {
+            // Render only the first page where the table resides.
+            PageSet = new PageSet(0)
+        };
+
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the rendered image.
+        string outputImagePath = Path.Combine(outputDir, "TableImage.png");
+        renderedDoc.Save(outputImagePath, options);
+
+        // Clean up the temporary document.
+        if (File.Exists(tempDocPath))
+            File.Delete(tempDocPath);
     }
 }

@@ -9,82 +9,109 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for the intermediate DOCX and final HTML files.
-        string docPath = Path.Combine(outputDir, "ComplexTable.docx");
-        string htmlPath = Path.Combine(outputDir, "ComplexTable.html");
-
-        // Create a new document and a builder to construct a complex table.
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOCX that contains a complex table.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the table.
-        Table table = builder.StartTable();
+        // Start the outer table.
+        Table outerTable = builder.StartTable();
 
-        // Ensure the table has at least one row before applying formatting.
-        table.EnsureMinimum();
-
-        // Apply borders to the table (outline and inside borders).
-        table.SetBorder(BorderType.Left, LineStyle.Single, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Right, LineStyle.Single, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Top, LineStyle.Single, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Bottom, LineStyle.Single, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Horizontal, LineStyle.Single, 1.0, Color.Gray, true);
-        table.SetBorder(BorderType.Vertical, LineStyle.Single, 1.0, Color.Gray, true);
-
-        // Set cell padding for the whole table.
-        table.LeftPadding = 10;
-        table.RightPadding = 10;
-        table.TopPadding = 5;
-        table.BottomPadding = 5;
-
-        // First row – header cells.
+        // -----------------------------------------------------------------
+        // Row 1 – a merged cell that spans two columns.
+        // -----------------------------------------------------------------
         builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Font.Bold = true;
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Font.Bold = false;
-        builder.Write("Header 2");
-        builder.EndRow();
-
-        // Second row – normal data cells.
-        builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
-        builder.Write("Data 1");
-        builder.InsertCell();
-        builder.Write("Data 2");
-        builder.EndRow();
-
-        // Third row – demonstrate a merged cell (horizontal merge).
-        builder.InsertCell();
+        // Add some padding to this specific cell.
+        builder.CellFormat.SetPaddings(5, 5, 5, 5);
+        // Mark the start of a horizontal merge.
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged Cell");
+        builder.Write("Header spanning two columns");
+
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue merge.
+        // Mark the continuation of the merge.
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // No content needed for the merged part.
         builder.EndRow();
 
-        // Finish the table.
+        // -----------------------------------------------------------------
+        // Row 2 – normal cells.
+        // -----------------------------------------------------------------
+        builder.InsertCell();
+        builder.Write("Row 1, Col 1");
+        builder.InsertCell();
+        builder.Write("Row 1, Col 2");
+        builder.EndRow();
+
+        // -----------------------------------------------------------------
+        // Row 3 – first cell contains a nested table.
+        // -----------------------------------------------------------------
+        builder.InsertCell();
+
+        // Start nested table.
+        Table nestedTable = builder.StartTable();
+
+        // Nested table row 1.
+        builder.InsertCell();
+        builder.Write("Nested 1");
+        builder.InsertCell();
+        builder.Write("Nested 2");
+        builder.EndRow();
+
+        // Apply formatting to the nested table after it has at least one row.
+        nestedTable.SetBorders(LineStyle.Single, 0.5, Color.Blue);
+        nestedTable.LeftPadding = 2;
+        nestedTable.RightPadding = 2;
+        nestedTable.TopPadding = 2;
+        nestedTable.BottomPadding = 2;
+
+        // Finish nested table.
         builder.EndTable();
 
-        // Save the intermediate DOCX (optional, shows the source document).
+        // Continue outer table – second cell of the same row.
+        builder.InsertCell();
+        builder.Write("Row 2, Col 2");
+        builder.EndRow();
+
+        // Finish the outer table.
+        builder.EndTable();
+
+        // Apply formatting to the outer table after it has rows.
+        outerTable.SetBorder(BorderType.Left,   LineStyle.Single, 1.5, Color.Black, true);
+        outerTable.SetBorder(BorderType.Right,  LineStyle.Single, 1.5, Color.Black, true);
+        outerTable.SetBorder(BorderType.Top,    LineStyle.Single, 1.5, Color.Black, true);
+        outerTable.SetBorder(BorderType.Bottom, LineStyle.Single, 1.5, Color.Black, true);
+        outerTable.SetBorder(BorderType.Horizontal, LineStyle.Single, 1.0, Color.Gray, true);
+        outerTable.SetBorder(BorderType.Vertical,   LineStyle.Single, 1.0, Color.Gray, true);
+
+        outerTable.LeftPadding   = 10;
+        outerTable.RightPadding  = 10;
+        outerTable.TopPadding    = 5;
+        outerTable.BottomPadding = 5;
+
+        // Save the sample DOCX to disk.
+        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "SampleComplexTable.docx");
         doc.Save(docPath);
 
-        // Convert the document to HTML while preserving borders and padding.
+        // -----------------------------------------------------------------
+        // 2. Load the document and convert it to HTML while preserving borders
+        //    and cell padding.
+        // -----------------------------------------------------------------
+        Document loadDoc = new Document(docPath);
+
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
+            // Export all width information (absolute and relative) to keep layout.
             TableWidthOutputMode = HtmlElementSizeOutputMode.All
         };
-        doc.Save(htmlPath, htmlOptions);
 
-        // Validate that the HTML file was created.
+        string htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "ComplexTable.html");
+        loadDoc.Save(htmlPath, htmlOptions);
+
+        // -----------------------------------------------------------------
+        // 3. Simple validation – ensure the HTML file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML conversion failed: output file not found.");
-
-        Console.WriteLine("Conversion completed successfully. HTML saved to:");
-        Console.WriteLine(htmlPath);
+            throw new Exception("HTML conversion failed: output file was not created.");
     }
 }

@@ -1,61 +1,49 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a simple table.
         Table table = builder.StartTable();
-
-        // First row (header).
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Header");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Value");
         builder.EndRow();
 
-        // Second row (data).
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Item 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("10");
         builder.EndRow();
 
-        // Finish the table.
         builder.EndTable();
 
         // Create a custom table style.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
-        customStyle.Shading.BackgroundPatternColor = Color.LightGray;
-        customStyle.Borders.Color = Color.Blue;
-        customStyle.Borders.LineStyle = LineStyle.Single;
-        customStyle.Borders.LineWidth = 1.5;
-        customStyle.CellSpacing = 2;
-        customStyle.BottomPadding = 5;
-        customStyle.TopPadding = 5;
-        customStyle.LeftPadding = 5;
-        customStyle.RightPadding = 5;
+        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+        tableStyle.Shading.BackgroundPatternColor = Color.LightYellow;
+        tableStyle.Borders.Color = Color.DarkBlue;
+        tableStyle.Borders.LineStyle = LineStyle.Single;
+        tableStyle.Borders.LineWidth = 1.5;
 
-        // Apply the style to the table using the Table.Style property.
-        table.Style = customStyle;
+        // Apply the style to the table via the Style property.
+        table.Style = tableStyle;
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableStyleExample.docx");
+        // Save the document.
+        string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
-
-        // Indicate successful completion.
-        Console.WriteLine($"Document saved to: {outputPath}");
+            throw new InvalidOperationException("Failed to create the output document.");
     }
 }

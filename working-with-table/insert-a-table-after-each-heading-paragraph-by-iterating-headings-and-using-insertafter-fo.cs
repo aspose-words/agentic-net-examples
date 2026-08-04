@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -15,11 +13,11 @@ namespace AsposeWordsTableInsertion
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add sample heading paragraphs.
+            // Add sample content with heading paragraphs.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
             builder.Writeln("Chapter 1");
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("Some introductory text.");
+            builder.Writeln("This is some introductory text.");
 
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
             builder.Writeln("Section 1.1");
@@ -29,70 +27,72 @@ namespace AsposeWordsTableInsertion
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
             builder.Writeln("Chapter 2");
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("More content.");
+            builder.Writeln("More introductory text.");
 
-            // Collect all heading paragraphs first to avoid modifying the collection while iterating.
-            List<Paragraph> headingParagraphs = doc.GetChildNodes(NodeType.Paragraph, true)
-                .Cast<Paragraph>()
-                .Where(p => IsHeading(p))
-                .ToList();
-
-            // Insert a table after each heading.
-            foreach (Paragraph heading in headingParagraphs)
+            // Iterate through all paragraphs to find headings.
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            foreach (Paragraph para in paragraphs)
             {
-                Table table = CreateSampleTable(doc);
-                // Insert the table after the heading paragraph.
-                heading.ParentNode.InsertAfter(table, heading);
+                // Check if the paragraph style is a heading (any level).
+                if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1 ||
+                    para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading2 ||
+                    para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading3 ||
+                    para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading4 ||
+                    para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading5 ||
+                    para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading6 ||
+                    para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading7 ||
+                    para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading8 ||
+                    para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading9)
+                {
+                    // Create a new table to insert after the heading.
+                    Table table = CreateSampleTable(doc);
+
+                    // Insert the table after the heading paragraph.
+                    para.ParentNode.InsertAfter(table, para);
+                }
             }
 
             // Save the document.
             string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
             doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not saved correctly.");
         }
 
-        // Determines whether a paragraph is a heading (any heading level).
-        private static bool IsHeading(Paragraph paragraph)
-        {
-            StyleIdentifier style = paragraph.ParagraphFormat.StyleIdentifier;
-            return style == StyleIdentifier.Heading1 ||
-                   style == StyleIdentifier.Heading2 ||
-                   style == StyleIdentifier.Heading3 ||
-                   style == StyleIdentifier.Heading4 ||
-                   style == StyleIdentifier.Heading5 ||
-                   style == StyleIdentifier.Heading6 ||
-                   style == StyleIdentifier.Heading7 ||
-                   style == StyleIdentifier.Heading8 ||
-                   style == StyleIdentifier.Heading9;
-        }
-
-        // Creates a simple 2x2 table with sample text.
+        // Helper method that creates a 2x2 table with sample text.
         private static Table CreateSampleTable(Document doc)
         {
             Table table = new Table(doc);
 
-            // First row
+            // First row.
             Row row1 = new Row(doc);
-            table.AppendChild(row1);
             Cell cell11 = new Cell(doc);
             cell11.AppendChild(new Paragraph(doc));
-            cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1,1"));
+            cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
             row1.AppendChild(cell11);
+
             Cell cell12 = new Cell(doc);
             cell12.AppendChild(new Paragraph(doc));
-            cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 1,2"));
+            cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
             row1.AppendChild(cell12);
 
-            // Second row
+            table.AppendChild(row1);
+
+            // Second row.
             Row row2 = new Row(doc);
-            table.AppendChild(row2);
             Cell cell21 = new Cell(doc);
             cell21.AppendChild(new Paragraph(doc));
-            cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 2,1"));
+            cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 3"));
             row2.AppendChild(cell21);
+
             Cell cell22 = new Cell(doc);
             cell22.AppendChild(new Paragraph(doc));
-            cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 2,2"));
+            cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 4"));
             row2.AppendChild(cell22);
+
+            table.AppendChild(row2);
 
             return table;
         }

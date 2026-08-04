@@ -2,92 +2,96 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Directory to store sample and result documents.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Paths for the source documents that contain individual tables.
-        string sourcePath1 = Path.Combine(artifactsDir, "Table1.docx");
-        string sourcePath2 = Path.Combine(artifactsDir, "Table2.docx");
+        // Paths for the temporary source documents and the final merged document.
+        string sourcePath1 = Path.Combine(outputDir, "Source1.docx");
+        string sourcePath2 = Path.Combine(outputDir, "Source2.docx");
+        string mergedPath = Path.Combine(outputDir, "Merged.docx");
 
-        // Create first sample document with a simple 2x2 table.
-        Document srcDoc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(srcDoc1);
-        builder1.StartTable();
+        // -----------------------------------------------------------------
+        // Create first source document with a simple 2x2 table.
+        // -----------------------------------------------------------------
+        Document sourceDoc1 = new Document();
+        DocumentBuilder builder1 = new DocumentBuilder(sourceDoc1);
+        builder1.Writeln("Source Document 1");
+        Table table1 = builder1.StartTable();
         builder1.InsertCell();
-        builder1.Write("Source 1 - Cell A1");
+        builder1.Write("Doc1 R1C1");
         builder1.InsertCell();
-        builder1.Write("Source 1 - Cell A2");
+        builder1.Write("Doc1 R1C2");
         builder1.EndRow();
         builder1.InsertCell();
-        builder1.Write("Source 1 - Cell B1");
+        builder1.Write("Doc1 R2C1");
         builder1.InsertCell();
-        builder1.Write("Source 1 - Cell B2");
+        builder1.Write("Doc1 R2C2");
         builder1.EndRow();
         builder1.EndTable();
-        srcDoc1.Save(sourcePath1);
+        sourceDoc1.Save(sourcePath1);
 
-        // Create second sample document with a 2x2 table that has shading to demonstrate formatting preservation.
-        Document srcDoc2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(srcDoc2);
-        builder2.StartTable();
+        // -----------------------------------------------------------------
+        // Create second source document with a simple 3x1 table.
+        // -----------------------------------------------------------------
+        Document sourceDoc2 = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(sourceDoc2);
+        builder2.Writeln("Source Document 2");
+        Table table2 = builder2.StartTable();
         builder2.InsertCell();
-        // Apply background shading to the first cell.
-        builder2.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
-        builder2.Write("Source 2 - Cell A1 (shaded)");
-        builder2.InsertCell();
-        builder2.Write("Source 2 - Cell A2");
+        builder2.Write("Doc2 Row1");
         builder2.EndRow();
         builder2.InsertCell();
-        builder2.Write("Source 2 - Cell B1");
+        builder2.Write("Doc2 Row2");
+        builder2.EndRow();
         builder2.InsertCell();
-        builder2.Write("Source 2 - Cell B2");
+        builder2.Write("Doc2 Row3");
         builder2.EndRow();
         builder2.EndTable();
-        srcDoc2.Save(sourcePath2);
+        sourceDoc2.Save(sourcePath2);
 
-        // Destination document that will receive the imported tables.
+        // -----------------------------------------------------------------
+        // Create the destination document that will hold all imported tables.
+        // -----------------------------------------------------------------
         Document destDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.Writeln("Merged Document");
+        destBuilder.Writeln(); // Add an empty paragraph to separate from imported tables.
 
-        // Array of source file paths to process.
-        string[] sourceFiles = { sourcePath1, sourcePath2 };
-
-        foreach (string srcPath in sourceFiles)
+        // -----------------------------------------------------------------
+        // Helper method to import all tables from a source document.
+        // -----------------------------------------------------------------
+        void ImportTables(Document src)
         {
-            // Load the source document.
-            Document srcDoc = new Document(srcPath);
-
-            // Retrieve the first table from the source document.
-            Table srcTable = srcDoc.FirstSection.Body.Tables[0];
-
-            // Import the table into the destination document, preserving its original formatting.
-            NodeImporter importer = new NodeImporter(srcDoc, destDoc, ImportFormatMode.KeepSourceFormatting);
-            Table importedTable = (Table)importer.ImportNode(srcTable, true);
-
-            // Insert a paragraph break before each imported table for visual separation (except before the first one).
-            if (destDoc.FirstSection.Body.Tables.Count > 0)
+            // Find all Table nodes in the source document.
+            NodeCollection tables = src.GetChildNodes(NodeType.Table, true);
+            foreach (Table srcTable in tables)
             {
+                // Import the table into the destination document preserving its formatting.
+                NodeImporter importer = new NodeImporter(src, destDoc, ImportFormatMode.KeepSourceFormatting);
+                Table importedTable = (Table)importer.ImportNode(srcTable, true);
+
+                // Append the imported table to the body of the destination document.
+                destDoc.FirstSection.Body.AppendChild(importedTable);
+                // Add a paragraph after each table for visual separation.
                 destDoc.FirstSection.Body.AppendChild(new Paragraph(destDoc));
             }
-
-            // Append the imported table to the destination document.
-            destDoc.FirstSection.Body.AppendChild(importedTable);
         }
 
+        // Import tables from both source documents.
+        ImportTables(sourceDoc1);
+        ImportTables(sourceDoc2);
+
         // Save the merged document.
-        string mergedPath = Path.Combine(artifactsDir, "MergedTables.docx");
         destDoc.Save(mergedPath);
 
         // Simple validation to ensure the file was created.
         if (!File.Exists(mergedPath))
-        {
-            throw new Exception("Merged document was not saved correctly.");
-        }
+            throw new InvalidOperationException("Merged document was not saved correctly.");
     }
 }

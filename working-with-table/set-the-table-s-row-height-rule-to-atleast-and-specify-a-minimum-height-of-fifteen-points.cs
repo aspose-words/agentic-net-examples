@@ -14,29 +14,33 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // First row with default formatting.
+        // First row.
         builder.InsertCell();
-        builder.Write("First row, cell 1.");
+        builder.Write("First row, first cell.");
         builder.InsertCell();
-        builder.Write("First row, cell 2.");
+        builder.Write("First row, second cell.");
         builder.EndRow();
 
-        // Configure the row height rule to AtLeast and set a minimum height of 15 points.
+        // Set height rule to AtLeast with a minimum height of 15 points for the next row.
         builder.RowFormat.Height = 15;
         builder.RowFormat.HeightRule = HeightRule.AtLeast;
 
-        // Second row will inherit the above settings.
+        // Second row.
         builder.InsertCell();
-        builder.Write("Second row, cell 1.");
+        builder.Write("Second row, first cell.");
         builder.InsertCell();
-        builder.Write("Second row, cell 2.");
+        builder.Write("Second row, second cell.");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableRowHeight.docx");
+        // Save the document.
+        string outputPath = "TableRowHeight.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Failed to create the output document.");
     }
 }

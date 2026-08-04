@@ -13,18 +13,20 @@ namespace AsposeWordsTableInsertExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add some paragraphs. One of them contains the keyword we will search for.
-            builder.Writeln("This is the first paragraph.");
-            builder.Writeln("Paragraph with the keyword: INSERT_TABLE_HERE.");
-            builder.Writeln("This is the third paragraph.");
+            // Add a paragraph that contains the keyword we will search for.
+            const string keyword = "INSERT_TABLE_AFTER_ME";
+            builder.Writeln($"This paragraph contains the keyword: {keyword}.");
+            // Add another paragraph to demonstrate normal content.
+            builder.Writeln("This is another paragraph that should stay before the table.");
 
-            // Search for the paragraph that contains the specific keyword.
-            const string keyword = "INSERT_TABLE_HERE";
+            // Search for the paragraph node that contains the keyword.
             Paragraph targetParagraph = null;
             NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
             foreach (Paragraph para in paragraphs)
             {
-                if (para.GetText().Contains(keyword))
+                // Get the plain text of the paragraph.
+                string text = para.GetText();
+                if (text != null && text.Contains(keyword))
                 {
                     targetParagraph = para;
                     break;
@@ -32,29 +34,54 @@ namespace AsposeWordsTableInsertExample
             }
 
             if (targetParagraph == null)
-                throw new InvalidOperationException($"Keyword \"{keyword}\" not found in the document.");
+                throw new InvalidOperationException("Target paragraph with the keyword was not found.");
 
-            // Create a new table that will be inserted after the found paragraph.
+            // Build a simple 2x2 table manually (without using DocumentBuilder.StartTable).
             Table table = new Table(doc);
-            // Ensure the table has at least one row and one cell.
-            table.EnsureMinimum();
 
-            // Populate the table with a single cell containing some text.
-            Row row = table.FirstRow;
-            Cell cell = row.FirstCell;
-            cell.FirstParagraph.AppendChild(new Run(doc, "This is the inserted table cell."));
+            // First row.
+            Row row1 = new Row(doc);
+            table.AppendChild(row1);
 
-            // Insert the table after the target paragraph.
-            // The paragraph's parent is a Body node, which can accept block-level nodes like Table.
-            targetParagraph.ParentNode.InsertAfter(table, targetParagraph);
+            Cell cell11 = new Cell(doc);
+            cell11.AppendChild(new Paragraph(doc));
+            cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1,1"));
+            row1.AppendChild(cell11);
 
-            // Save the document.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "InsertedTable.docx");
+            Cell cell12 = new Cell(doc);
+            cell12.AppendChild(new Paragraph(doc));
+            cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 1,2"));
+            row1.AppendChild(cell12);
+
+            // Second row.
+            Row row2 = new Row(doc);
+            table.AppendChild(row2);
+
+            Cell cell21 = new Cell(doc);
+            cell21.AppendChild(new Paragraph(doc));
+            cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 2,1"));
+            row2.AppendChild(cell21);
+
+            Cell cell22 = new Cell(doc);
+            cell22.AppendChild(new Paragraph(doc));
+            cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 2,2"));
+            row2.AppendChild(cell22);
+
+            // Insert the table after the target paragraph using InsertAfter.
+            // The paragraph is a child of the Body node, so we insert after it in the Body.
+            Body body = doc.FirstSection.Body;
+            body.InsertAfter(table, targetParagraph);
+
+            // Validate that the insertion succeeded.
+            if (targetParagraph.NextSibling != table)
+                throw new InvalidOperationException("The table was not inserted after the target paragraph.");
+
+            // Save the resulting document.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "OutputTableAfterParagraph.docx");
             doc.Save(outputPath);
 
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new FileNotFoundException("The output document was not saved correctly.", outputPath);
+            // Indicate completion (no interactive prompts).
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

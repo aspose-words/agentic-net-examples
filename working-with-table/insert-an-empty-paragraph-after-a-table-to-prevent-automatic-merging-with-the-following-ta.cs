@@ -3,58 +3,61 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableParagraphExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- First table ----------
-        builder.StartTable();
+            // ---------- First table ----------
+            builder.StartTable();
+            // Row 1
+            builder.InsertCell();
+            builder.Write("Table 1, Row 1, Cell 1");
+            builder.InsertCell();
+            builder.Write("Table 1, Row 1, Cell 2");
+            builder.EndRow();
+            // Row 2
+            builder.InsertCell();
+            builder.Write("Table 1, Row 2, Cell 1");
+            builder.InsertCell();
+            builder.Write("Table 1, Row 2, Cell 2");
+            builder.EndRow();
+            builder.EndTable();
 
-        // First row, two cells.
-        builder.InsertCell();
-        builder.Write("First table, Cell 1");
-        builder.InsertCell();
-        builder.Write("First table, Cell 2");
-        builder.EndRow();
+            // Insert an empty paragraph to separate the tables.
+            // This prevents Word from automatically merging the two tables.
+            builder.InsertParagraph();
 
-        // Second row, two cells.
-        builder.InsertCell();
-        builder.Write("First table, Cell 3");
-        builder.InsertCell();
-        builder.Write("First table, Cell 4");
-        builder.EndTable();
+            // ---------- Second table ----------
+            builder.StartTable();
+            // Row 1
+            builder.InsertCell();
+            builder.Write("Table 2, Row 1, Cell 1");
+            builder.InsertCell();
+            builder.Write("Table 2, Row 1, Cell 2");
+            builder.EndRow();
+            // Row 2
+            builder.InsertCell();
+            builder.Write("Table 2, Row 2, Cell 1");
+            builder.InsertCell();
+            builder.Write("Table 2, Row 2, Cell 2");
+            builder.EndRow();
+            builder.EndTable();
 
-        // Insert an empty paragraph to separate the tables.
-        // This prevents Word from automatically merging the two tables.
-        builder.Writeln();
+            // Save the document.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+            doc.Save(outputPath);
 
-        // ---------- Second table ----------
-        builder.StartTable();
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not created.");
 
-        // First row, two cells.
-        builder.InsertCell();
-        builder.Write("Second table, Cell 1");
-        builder.InsertCell();
-        builder.Write("Second table, Cell 2");
-        builder.EndRow();
-
-        // Second row, two cells.
-        builder.InsertCell();
-        builder.Write("Second table, Cell 3");
-        builder.InsertCell();
-        builder.Write("Second table, Cell 4");
-        builder.EndTable();
-
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TablesWithSeparator.docx");
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            // The program ends automatically; no user interaction required.
+        }
     }
 }

@@ -1,8 +1,6 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
 public class Program
 {
@@ -12,31 +10,17 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a simple 1x1 table.
         Table table = builder.StartTable();
-
-        // First row.
         builder.InsertCell();
-        builder.Write("Cell 1,1");
-        builder.InsertCell();
-        builder.Write("Cell 1,2");
-        builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 2,1");
-        builder.InsertCell();
-        builder.Write("Cell 2,2");
-        builder.EndRow();
-
-        // Finish the table.
+        builder.Write("Sample text");
         builder.EndTable();
 
-        // Remove all borders from the table.
+        // Remove all borders from the table (including cell borders).
         table.ClearBorders();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Table_NoBorders.docx");
+        // Save the document.
+        string outputPath = "TableNoBorders.docx";
         doc.Save(outputPath);
     }
 }

@@ -13,24 +13,26 @@ public class Program
         // Start building a table.
         Table table = builder.StartTable();
 
-        // First cell with a fixed width.
+        // Insert first cell and set a fixed preferred width.
         builder.InsertCell();
         builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
         builder.Write("Fixed width cell 1");
 
-        // Second cell with a fixed width.
+        // Insert second cell and set a fixed preferred width.
         builder.InsertCell();
         builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
         builder.Write("Fixed width cell 2");
 
-        // End the current row and the table.
+        // Finish the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Disable automatic column resizing while preserving the existing widths.
+        // Disable automatic column resizing while preserving the existing column widths.
+        // This can be done by turning off the AllowAutoFit flag.
         table.AllowAutoFit = false;
 
         // Save the document to a file.
-        doc.Save("TableAutoFitDisabled.docx");
+        const string outputFile = "TableAutoFitDisabled.docx";
+        doc.Save(outputFile);
     }
 }

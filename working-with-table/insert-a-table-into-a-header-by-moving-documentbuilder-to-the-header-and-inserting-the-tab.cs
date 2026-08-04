@@ -3,48 +3,62 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace HeaderTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Move the builder cursor to the primary header of the first section.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            // Create a DocumentBuilder which will be used to insert content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table inside the header.
-        Table table = builder.StartTable();
+            // Move the builder's cursor to the primary header of the first section.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // First row with two cells.
-        builder.InsertCell();
-        builder.Write("Header Cell 1");
-        builder.InsertCell();
-        builder.Write("Header Cell 2");
-        builder.EndRow();
+            // Start a new table in the header.
+            Table table = builder.StartTable();
 
-        // Second row with a single cell that spans two columns.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First; // Begin horizontal merge.
-        builder.Write("Spanned Cell");
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue merge.
-        builder.EndRow();
+            // First row, first cell.
+            builder.InsertCell();
+            builder.Write("Header Cell 1");
 
-        // Finish the table.
-        builder.EndTable();
+            // First row, second cell.
+            builder.InsertCell();
+            builder.Write("Header Cell 2");
+            builder.EndRow();
 
-        // Return to the main document body and add a sample paragraph.
-        builder.MoveToSection(0);
-        builder.Writeln("Document body text.");
+            // Second row, first cell.
+            builder.InsertCell();
+            builder.Write("Header Cell 3");
 
-        // Save the document to disk.
-        string outputPath = "HeaderTable.docx";
-        doc.Save(outputPath);
+            // Second row, second cell.
+            builder.InsertCell();
+            builder.Write("Header Cell 4");
+            builder.EndRow();
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+            // Finish the table.
+            builder.EndTable();
+
+            // Define the output path.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string outputPath = Path.Combine(outputDir, "HeaderTable.docx");
+
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Simple verification that the file was created.
+            if (File.Exists(outputPath))
+            {
+                Console.WriteLine("Document saved successfully to: " + outputPath);
+            }
+            else
+            {
+                throw new InvalidOperationException("Failed to save the document.");
+            }
+        }
     }
 }

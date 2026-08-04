@@ -1,9 +1,8 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableColumnWidthDemo
+namespace TableColumnWidthExample
 {
     public class Program
     {
@@ -13,8 +12,8 @@ namespace TableColumnWidthDemo
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a sample table with varying text lengths.
-            Table table = builder.StartTable();
+            // Build a sample table with header and data rows.
+            builder.StartTable();
 
             // Header row.
             builder.InsertCell();
@@ -27,21 +26,23 @@ namespace TableColumnWidthDemo
 
             // Data rows.
             AddRow(builder, "Apple", "Fresh red apple", "$1.20");
-            AddRow(builder, "Banana", "Ripe yellow banana from Ecuador", "$0.80");
-            AddRow(builder, "Cherry", "Sweet cherries", "$3.50");
-            AddRow(builder, "Dragonfruit", "Exotic tropical fruit with vibrant color", "$5.00");
+            AddRow(builder, "Banana", "Ripe yellow banana", "$0.80");
+            AddRow(builder, "Cherry", "Sweet dark cherries", "$3.50");
+            AddRow(builder, "Watermelon", "Large green watermelon", "$7.00");
 
             builder.EndTable();
 
-            // Auto‑fit the table columns to the contents.
+            // Retrieve the created table.
+            Table table = doc.FirstSection.Body.Tables[0];
+
+            // Auto‑fit the columns to the contents of the cells.
             table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
             // Save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableColumnWidths.docx");
-            doc.Save(outputPath);
+            doc.Save("TableColumnWidths.docx");
         }
 
-        // Helper method to insert a row with three cells.
+        // Helper method to add a data row to the table.
         private static void AddRow(DocumentBuilder builder, string col1, string col2, string col3)
         {
             builder.InsertCell();

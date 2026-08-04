@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -14,54 +13,44 @@ public class Program
         // Start a table with three rows and two columns.
         Table table = builder.StartTable();
 
-        // ----- Row 1 -----
-        // First cell – start of a vertically merged range (covers three rows).
+        // ---------- Row 1 ----------
+        // First cell (column 1) – this will be the top cell of the vertical merge.
         builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.First;
-        builder.Write("Merged vertically across three rows.");
+        builder.CellFormat.VerticalMerge = CellMerge.First; // Mark as the first merged cell.
+        builder.Write("Vertically merged cell (rows 1‑3)");
 
-        // Second cell – normal (no merging).
+        // Second cell (column 2) – normal, unmerged.
         builder.InsertCell();
         builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row 1, Cell 2.");
+        builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
-        // ----- Row 2 -----
-        // First cell – continues the vertical merge.
+        // ---------- Row 2 ----------
+        // First cell – merge with the cell above.
         builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;
-
-        // Second cell – normal.
+        builder.CellFormat.VerticalMerge = CellMerge.Previous; // Continue vertical merge.
+        // No text needed for merged cells; they must be empty.
+        // Second cell – independent content.
         builder.InsertCell();
         builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row 2, Cell 2.");
+        builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
-        // ----- Row 3 -----
-        // First cell – continues the vertical merge.
+        // ---------- Row 3 ----------
+        // First cell – merge with the cell above (third part of the merge).
         builder.InsertCell();
         builder.CellFormat.VerticalMerge = CellMerge.Previous;
-
-        // Second cell – normal.
+        // Second cell – independent content.
         builder.InsertCell();
         builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row 3, Cell 2.");
+        builder.Write("Row 3, Cell 2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Define output path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "MergedTable.docx");
-
-        // Save the document.
+        // Save the document to a file.
+        string outputPath = "MergedTable.docx";
         doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
-
-        // Optionally, inform that the process completed.
-        Console.WriteLine("Document created successfully at: " + outputPath);
     }
 }

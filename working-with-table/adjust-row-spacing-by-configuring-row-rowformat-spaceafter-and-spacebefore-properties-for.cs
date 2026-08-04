@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,47 +12,56 @@ namespace RowSpacingExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 3‑row, 2‑column table.
+            // Start a table.
             Table table = builder.StartTable();
 
-            // Row 1
+            // First row.
             builder.InsertCell();
-            builder.Write("R1C1");
+            builder.Write("Row 1, Cell 1");
             builder.InsertCell();
-            builder.Write("R1C2");
+            builder.Write("Row 1, Cell 2");
             builder.EndRow();
 
-            // Row 2
+            // Second row.
             builder.InsertCell();
-            builder.Write("R2C1");
+            builder.Write("Row 2, Cell 1");
             builder.InsertCell();
-            builder.Write("R2C2");
+            builder.Write("Row 2, Cell 2");
             builder.EndRow();
 
-            // Row 3
+            // Third row.
             builder.InsertCell();
-            builder.Write("R3C1");
+            builder.Write("Row 3, Cell 1");
             builder.InsertCell();
-            builder.Write("R3C2");
+            builder.Write("Row 3, Cell 2");
             builder.EndRow();
 
             // Finish the table.
             builder.EndTable();
 
-            // Adjust row height as a simple way to add visual spacing.
-            // The RowFormat class does not expose SpaceBefore/SpaceAfter properties,
-            // so we use the Height property with the AtLeast rule to create extra space.
-            double[] extraHeights = { 5, 10, 15 }; // points of additional space per row
+            // -----------------------------------------------------------------
+            // NOTE:
+            // Aspose.Words RowFormat does not expose SpaceBefore/SpaceAfter
+            // properties. To influence the visual distance between rows you can
+            // adjust the row height (Height) together with the HeightRule, or
+            // insert empty rows as spacers. Below we demonstrate setting a
+            // minimum height for each row to create extra space.
+            // -----------------------------------------------------------------
 
-            for (int i = 0; i < table.Rows.Count; i++)
-            {
-                Row row = table.Rows[i];
-                row.RowFormat.Height = extraHeights[i];
-                row.RowFormat.HeightRule = HeightRule.AtLeast;
-            }
+            // Row 0: add extra space by increasing its height.
+            table.Rows[0].RowFormat.Height = 30;               // height in points
+            table.Rows[0].RowFormat.HeightRule = HeightRule.AtLeast;
 
-            // Save the document to the local folder.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "RowSpacing.docx");
+            // Row 1: larger height for more spacing.
+            table.Rows[1].RowFormat.Height = 40;
+            table.Rows[1].RowFormat.HeightRule = HeightRule.AtLeast;
+
+            // Row 2: even larger height.
+            table.Rows[2].RowFormat.Height = 50;
+            table.Rows[2].RowFormat.HeightRule = HeightRule.AtLeast;
+
+            // Save the document.
+            const string outputPath = "RowSpacing.docx";
             doc.Save(outputPath);
         }
     }

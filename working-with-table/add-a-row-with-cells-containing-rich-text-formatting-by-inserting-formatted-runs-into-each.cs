@@ -1,70 +1,77 @@
 using System;
 using System.IO;
-using System.Drawing; // For Color
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Path to the output document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RichTextTable.docx");
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Start a new table.
+        Table table = builder.StartTable();
 
-            // Start a table.
-            Table table = builder.StartTable();
+        // ---------- First cell ----------
+        // Insert a cell and add a paragraph with formatted runs.
+        Cell cell1 = builder.InsertCell();
+        Paragraph para1 = cell1.FirstParagraph;
 
-            // -----------------------------------------------------------------
-            // First row – simple header cells.
-            // -----------------------------------------------------------------
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.EndRow();
+        Run runBold = new Run(doc, "Bold");
+        runBold.Font.Bold = true;
+        para1.AppendChild(runBold);
 
-            // -----------------------------------------------------------------
-            // Second row – cells with rich text formatting using Runs.
-            // -----------------------------------------------------------------
-            // First cell with bold and red text.
-            Cell cell1 = builder.InsertCell();
-            Paragraph para1 = cell1.FirstParagraph;
-            Run runBoldRed = new Run(doc, "Bold Red");
-            runBoldRed.Font.Bold = true;
-            runBoldRed.Font.Color = Color.Red; // Correct property
-            para1.AppendChild(runBoldRed);
-            // Append normal text after the formatted run.
-            para1.AppendChild(new Run(doc, " normal text"));
+        Run runSpace1 = new Run(doc, " ");
+        para1.AppendChild(runSpace1);
 
-            // Second cell with italic, blue text and underline.
-            Cell cell2 = builder.InsertCell();
-            Paragraph para2 = cell2.FirstParagraph;
-            Run runItalicBlue = new Run(doc, "Italic Blue");
-            runItalicBlue.Font.Italic = true;
-            runItalicBlue.Font.Color = Color.Blue; // Correct property
-            para2.AppendChild(runItalicBlue);
-            Run runUnderline = new Run(doc, " underlined");
-            runUnderline.Font.Underline = Underline.Single;
-            para2.AppendChild(runUnderline);
+        Run runItalic = new Run(doc, "Italic");
+        runItalic.Font.Italic = true;
+        para1.AppendChild(runItalic);
 
-            // Finish the row.
-            builder.EndRow();
+        Run runSpace2 = new Run(doc, " ");
+        para1.AppendChild(runSpace2);
 
-            // End the table.
-            builder.EndTable();
+        Run runRed = new Run(doc, "Red");
+        runRed.Font.Color = Color.Red;
+        para1.AppendChild(runRed);
 
-            // Save the document.
-            doc.Save(outputPath);
+        // ---------- Second cell ----------
+        Cell cell2 = builder.InsertCell();
+        Paragraph para2 = cell2.FirstParagraph;
 
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new Exception($"Failed to create the output file at {outputPath}");
-        }
+        Run runUnderline = new Run(doc, "Underline");
+        runUnderline.Font.Underline = Underline.Single;
+        para2.AppendChild(runUnderline);
+
+        Run runSpace3 = new Run(doc, " ");
+        para2.AppendChild(runSpace3);
+
+        Run runBlue = new Run(doc, "Blue");
+        runBlue.Font.Color = Color.Blue;
+        para2.AppendChild(runBlue);
+
+        Run runSpace4 = new Run(doc, " ");
+        para2.AppendChild(runSpace4);
+
+        Run runLarge = new Run(doc, "Large");
+        runLarge.Font.Size = 16;
+        para2.AppendChild(runLarge);
+
+        // End the current row.
+        builder.EndRow();
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RichTextTable.docx");
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The document was not saved successfully.");
     }
 }

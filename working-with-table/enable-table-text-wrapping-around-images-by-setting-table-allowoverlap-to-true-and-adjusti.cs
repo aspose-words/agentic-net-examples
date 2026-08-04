@@ -12,47 +12,57 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Insert a floating image ----------
-        // Tiny 1x1 PNG image encoded as Base64 (avoids System.Drawing dependency).
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=");
-        Shape imageShape = builder.InsertImage(pngBytes);
-        imageShape.WrapType = WrapType.Square;                     // Text wraps around the image.
+        // -----------------------------------------------------------------
+        // Insert a floating image that will allow text to wrap around it.
+        // -----------------------------------------------------------------
+        const string imagePath = "sample.png";
+        if (!File.Exists(imagePath))
+        {
+            // Create a minimal 1x1 transparent PNG if it does not exist.
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X6V8AAAAASUVORK5CYII=";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            File.WriteAllBytes(imagePath, pngBytes);
+        }
+
+        // Insert the image as a floating shape.
+        Shape imageShape = builder.InsertImage(imagePath);
+        imageShape.WrapType = WrapType.Square;                     // Wrap text tightly around the image.
         imageShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
         imageShape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
-        imageShape.HorizontalAlignment = HorizontalAlignment.Right; // Position the image to the right.
-        imageShape.VerticalAlignment = VerticalAlignment.Top;
-        imageShape.AllowOverlap = true;                            // Allow overlapping with other floating objects.
+        imageShape.AllowOverlap = true;                            // Allow the image to overlap other floating objects.
 
-        // Add a paragraph after the image so the builder is positioned correctly.
-        builder.Writeln();
+        // Add a paragraph of text before the table.
+        builder.Writeln("This paragraph appears before the table. The image above should have text wrapped around it.");
 
-        // ---------- Create a floating table that wraps text ----------
+        // -----------------------------------------------------------------
+        // Create a floating table that will wrap text around it.
+        // -----------------------------------------------------------------
         Table table = builder.StartTable();
-
-        // First row.
         builder.InsertCell();
         builder.Write("Cell 1");
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
-
-        // End the table construction.
         builder.EndTable();
 
-        // Configure the table to float and wrap text around it.
-        table.PreferredWidth = PreferredWidth.FromPoints(300);
-        table.TextWrapping = TextWrapping.Around;          // Enable text wrapping.
-        table.HorizontalAnchor = RelativeHorizontalPosition.Margin;
-        table.VerticalAnchor = RelativeVerticalPosition.Paragraph;
-        table.AbsoluteHorizontalDistance = 10;              // Space on the left/right of the table.
-        table.AbsoluteVerticalDistance = 10;                // Space above/below the table.
+        // Enable text wrapping around the table and make it a floating object.
+        table.TextWrapping = TextWrapping.Around;
+        table.HorizontalAnchor = RelativeHorizontalPosition.Margin;   // Position relative to page margin horizontally.
+        table.VerticalAnchor = RelativeVerticalPosition.Paragraph;   // Position relative to the paragraph vertically.
+        table.AbsoluteHorizontalDistance = 20;                        // Horizontal offset from the anchor point.
+        table.AbsoluteVerticalDistance = 20;                          // Vertical offset from the anchor point.
 
-        // Add some surrounding text to demonstrate wrapping.
-        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+        // Note: Table.AllowOverlap is read‑only and defaults to true. No explicit check is required.
 
+        // Add another paragraph after the table.
+        builder.Writeln("This paragraph appears after the table. Both the image and the table should have text wrapped around them.");
+
+        // -----------------------------------------------------------------
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWrapAroundImage.docx");
+        // -----------------------------------------------------------------
+        const string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "TableWrapAroundImage.docx");
         doc.Save(outputPath);
     }
 }

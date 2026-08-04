@@ -1,51 +1,39 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableWrapExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        // Build a simple 2‑cell table.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndTable();
 
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndTable();
+        // Give the table a fixed width so that text wrapping can be observed.
+        table.PreferredWidth = PreferredWidth.FromPoints(200);
 
-            // Set a preferred width so the table does not occupy the whole line.
-            table.PreferredWidth = PreferredWidth.FromPoints(300);
+        // Set the table's text wrapping to "Around" (square style).
+        table.TextWrapping = TextWrapping.Around;
 
-            // Configure text wrapping around the table (square style).
-            table.TextWrapping = TextWrapping.Around;
-            // Optional: set distances from surrounding text.
-            table.AbsoluteHorizontalDistance = 20;
-            table.AbsoluteVerticalDistance = 10;
+        // Optional: define the distance between the table and surrounding text.
+        table.AbsoluteHorizontalDistance = 20;
+        table.AbsoluteVerticalDistance = 20;
 
-            // Add a paragraph after the table to demonstrate wrapping.
-            builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+        // Add a paragraph after the table to demonstrate the wrapping effect.
+        builder.Writeln(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
 
-            // Determine an output path and ensure the directory exists.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWrapText.docx");
-            Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
-
-            // Save the document.
-            doc.Save(outputPath);
-        }
+        // Save the document to the local file system.
+        doc.Save("TableWrapText.docx");
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,29 +10,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and insert the first cell.
+        // Start building a table.
         Table table = builder.StartTable();
+
+        // Insert a single cell with some text.
         builder.InsertCell();
-
-        // Set the left indent to 2 centimeters (1 cm = 28.3464567 points).
-        double pointsPerCentimeter = 28.3464567;
-        table.LeftIndent = 2 * pointsPerCentimeter;
-
-        // Add some sample text to the cell.
-        builder.Write("This table is indented by 2 cm from the left margin.");
+        builder.Write("Sample cell");
 
         // Finish the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableLeftIndent.docx");
+        // Set the left indent of the table to 2 centimeters.
+        // 1 centimeter = 28.3464567 points, so 2 cm ≈ 56.6929 points.
+        table.LeftIndent = 2 * 28.3464567;
 
-        // Save the document.
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved successfully.");
+        // Save the document to the current directory.
+        doc.Save("TableLeftIndent.docx");
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,25 +12,36 @@ public class Program
 
         // Build a simple 2x2 table.
         Table table = builder.StartTable();
+
+        // First row
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Cell 1,1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Cell 1,2");
         builder.EndRow();
+
+        // Second row
         builder.InsertCell();
-        builder.Write("Cell 3");
+        builder.Write("Cell 2,1");
         builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Write("Cell 2,2");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Apply a padding of 5 points to every side of each cell.
-        foreach (Cell cell in table.GetChildNodes(NodeType.Cell, true))
+        // Set padding of 5 points on all sides for every cell in the table.
+        foreach (Row row in table.Rows)
         {
-            cell.CellFormat.SetPaddings(5, 5, 5, 5);
+            foreach (Cell cell in row.Cells)
+            {
+                // Use SetPaddings to apply left, top, right, bottom padding.
+                cell.CellFormat.SetPaddings(5, 5, 5, 5);
+            }
         }
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CellPadding.docx");
+        string outputPath = "CellPadding.docx";
         doc.Save(outputPath);
     }
 }

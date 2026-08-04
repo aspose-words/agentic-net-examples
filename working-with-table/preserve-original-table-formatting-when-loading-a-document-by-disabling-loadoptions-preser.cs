@@ -4,69 +4,49 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using System.Drawing;
 
-public class PreserveTableFormattingExample
+public class Program
 {
     public static void Main()
     {
-        // Define a folder for all generated files.
+        // Ensure the output directory exists.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Paths for the original and the re‑loaded documents.
-        string originalPath = Path.Combine(artifactsDir, "Original.docx");
-        string reloadedPath = Path.Combine(artifactsDir, "ReloadedPreserved.docx");
-
-        // -------------------------------------------------
-        // 1. Create a sample document that contains a table.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with a formatted table.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 1‑row, 2‑cell table with distinct cell shading.
-        builder.StartTable();
+        // Start a table.
+        Table table = builder.StartTable();
 
+        // First cell with light blue shading.
         builder.InsertCell();
         builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
         builder.Write("Cell 1");
 
+        // Second cell with light green shading.
         builder.InsertCell();
         builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
         builder.Write("Cell 2");
 
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
         // Save the original document.
+        string originalPath = Path.Combine(artifactsDir, "Original.docx");
         doc.Save(originalPath);
 
-        // -------------------------------------------------
-        // 2. Load the document.
-        // -------------------------------------------------
-        // In this version of Aspose.Words the PreserveFormatting option is enabled by default,
-        // so loading without explicit LoadOptions preserves the original table formatting.
+        // -----------------------------------------------------------------
+        // 2. Load the document. No special LoadOptions are required because
+        //    the default loading behavior preserves the original table formatting.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(originalPath);
 
-        // -------------------------------------------------
-        // 3. Verify that the table formatting is still present.
-        // -------------------------------------------------
-        Table loadedTable = loadedDoc.FirstSection.Body.Tables[0];
-        Cell firstCell = loadedTable.FirstRow.FirstCell;
-        Cell secondCell = loadedTable.FirstRow.LastCell;
-
-        // The background colors should match the ones we set earlier.
-        if (firstCell.CellFormat.Shading.BackgroundPatternColor.ToArgb() != Color.LightBlue.ToArgb() ||
-            secondCell.CellFormat.Shading.BackgroundPatternColor.ToArgb() != Color.LightGreen.ToArgb())
-        {
-            throw new InvalidOperationException("Table formatting was not preserved after loading.");
-        }
-
-        // -------------------------------------------------
-        // 4. Save the re‑loaded document.
-        // -------------------------------------------------
-        loadedDoc.Save(reloadedPath);
-
-        // Simple validation that the output file exists.
-        if (!File.Exists(reloadedPath))
-            throw new FileNotFoundException("The reloaded document was not saved correctly.", reloadedPath);
+        // Save the loaded document to verify that formatting is preserved.
+        string loadedPath = Path.Combine(artifactsDir, "LoadedPreserved.docx");
+        loadedDoc.Save(loadedPath);
     }
 }

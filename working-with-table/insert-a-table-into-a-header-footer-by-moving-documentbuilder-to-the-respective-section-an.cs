@@ -3,76 +3,71 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace HeaderFooterTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a primary header to the first section.
-        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        doc.FirstSection.HeadersFooters.Add(header);
+            // -------------------------------------------------
+            // Insert a table into the primary header.
+            // -------------------------------------------------
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            // Start building the table.
+            Table headerTable = builder.StartTable();
 
-        // Add a primary footer to the first section.
-        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
-        doc.FirstSection.HeadersFooters.Add(footer);
+            // First row, first cell.
+            builder.InsertCell();
+            builder.Write("Header Cell 1");
 
-        // Create a DocumentBuilder attached to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // First row, second cell.
+            builder.InsertCell();
+            builder.Write("Header Cell 2");
 
-        // -------------------------------------------------
-        // Insert a table into the header.
-        // -------------------------------------------------
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            // End the first row.
+            builder.EndRow();
 
-        // Start a 2x2 table.
-        Table headerTable = builder.StartTable();
+            // End the table.
+            builder.EndTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Header Cell 1");
-        builder.InsertCell();
-        builder.Write("Header Cell 2");
-        builder.EndRow();
+            // -------------------------------------------------
+            // Insert a table into the primary footer.
+            // -------------------------------------------------
+            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            Table footerTable = builder.StartTable();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Header Cell 3");
-        builder.InsertCell();
-        builder.Write("Header Cell 4");
-        builder.EndRow();
+            // First row, first cell.
+            builder.InsertCell();
+            builder.Write("Footer Cell 1");
 
-        // Finish the table.
-        builder.EndTable();
+            // First row, second cell.
+            builder.InsertCell();
+            builder.Write("Footer Cell 2");
 
-        // -------------------------------------------------
-        // Insert a table into the footer.
-        // -------------------------------------------------
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            // End the row and the table.
+            builder.EndRow();
+            builder.EndTable();
 
-        // Start a 2x2 table.
-        Table footerTable = builder.StartTable();
+            // -------------------------------------------------
+            // Return to the main document body and add some text.
+            // -------------------------------------------------
+            builder.MoveToSection(0);
+            builder.Writeln("This is the main body of the document.");
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Footer Cell 1");
-        builder.InsertCell();
-        builder.Write("Footer Cell 2");
-        builder.EndRow();
+            // Save the document to the local file system.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderFooterTable.docx");
+            doc.Save(outputPath);
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Footer Cell 3");
-        builder.InsertCell();
-        builder.Write("Footer Cell 4");
-        builder.EndRow();
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("Failed to create the output document.");
 
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "HeaderFooterTable.docx");
-        doc.Save(outputPath);
+            // Inform the user (no interactive prompts required).
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        }
     }
 }

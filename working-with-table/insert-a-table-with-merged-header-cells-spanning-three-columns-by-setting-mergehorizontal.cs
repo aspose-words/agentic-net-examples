@@ -11,20 +11,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building the table.
+        // Start the table.
         Table table = builder.StartTable();
 
-        // ---------- Header row (merged across three columns) ----------
-        // First cell: marks the start of a merged range.
+        // ----- Header row (merged across three columns) -----
+        // First cell: start of the merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
         builder.Write("Header spanning three columns");
 
-        // Second cell: merges with the previous cell.
+        // Second cell: merged with the previous cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // Third cell: also merges with the previous cell.
+        // Third cell: merged with the previous cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
@@ -34,7 +34,7 @@ public class Program
         // Reset merge settings for subsequent rows.
         builder.CellFormat.HorizontalMerge = CellMerge.None;
 
-        // ---------- First data row ----------
+        // ----- First data row (three separate cells) -----
         builder.InsertCell();
         builder.Write("Row 1, Col 1");
         builder.InsertCell();
@@ -43,7 +43,7 @@ public class Program
         builder.Write("Row 1, Col 3");
         builder.EndRow();
 
-        // ---------- Second data row ----------
+        // ----- Second data row (three separate cells) -----
         builder.InsertCell();
         builder.Write("Row 2, Col 1");
         builder.InsertCell();
@@ -52,18 +52,21 @@ public class Program
         builder.Write("Row 2, Col 3");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedHeaderTable.docx");
+        // Save the document.
+        string outputPath = "MergedHeaderTable.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        // Inform the user where the file was saved.
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Verify that the file was saved.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to {Path.GetFullPath(outputPath)}");
+        }
+        else
+        {
+            throw new Exception("Failed to save the document.");
+        }
     }
 }

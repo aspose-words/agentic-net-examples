@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -12,7 +11,7 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start building a table.
         Table table = builder.StartTable();
 
         // ----- Header row -----
@@ -20,43 +19,41 @@ public class Program
         builder.Write("Header 1");
         builder.InsertCell();
         builder.Write("Header 2");
+        builder.InsertCell();
+        builder.Write("Header 3");
         builder.EndRow();
 
         // ----- Data rows -----
-        builder.InsertCell();
-        builder.Write("Row 1, Col 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Col 2");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Row 2, Col 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Col 2");
-        builder.EndRow();
+        for (int i = 1; i <= 3; i++)
+        {
+            builder.InsertCell();
+            builder.Write($"Row {i} Col 1");
+            builder.InsertCell();
+            builder.Write($"Row {i} Col 2");
+            builder.InsertCell();
+            builder.Write($"Row {i} Col 3");
+            builder.EndRow();
+        }
 
         // Finish the table.
         builder.EndTable();
 
         // Create a custom table style.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
+        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
         // Default font size for the table.
-        customStyle.Font.Size = 12;
+        tableStyle.Font.Size = 12;
         // Larger font size for the first (header) row.
-        customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Size = 20;
-        // Optional: give the header a background color.
-        customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightGray;
+        tableStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Size = 16;
+        // Optional: give the header row a light gray background.
+        tableStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightGray;
 
-        // Apply the style to the table and enable the FirstRow conditional formatting.
-        table.Style = customStyle;
+        // Apply the style to the table.
+        table.Style = tableStyle;
+        // Enable the first‑row conditional formatting.
         table.StyleOptions = TableStyleOptions.FirstRow;
 
         // Save the document.
-        string outputPath = "TableWithHeaderStyle.docx";
+        const string outputPath = "TableWithHeaderStyle.docx";
         doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
     }
 }

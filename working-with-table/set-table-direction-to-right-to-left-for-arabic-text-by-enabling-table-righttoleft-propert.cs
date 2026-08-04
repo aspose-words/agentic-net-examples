@@ -1,37 +1,44 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableDirection
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a couple of cells with Arabic text.
-        Table table = builder.StartTable();
+            // Build a simple 2‑column table with Arabic and English text.
+            Table table = builder.StartTable();
 
-        builder.InsertCell();
-        builder.Write("مرحبا"); // "Hello" in Arabic
-        builder.InsertCell();
-        builder.Write("عالم"); // "World" in Arabic
-        builder.EndRow();
+            // First cell – Arabic text.
+            builder.InsertCell();
+            builder.Write("مرحبا بالعالم"); // "Hello World" in Arabic.
 
-        builder.InsertCell();
-        builder.Write("كيف حالك؟"); // "How are you?" in Arabic
-        builder.InsertCell();
-        builder.Write("بخير"); // "Fine" in Arabic
-        builder.EndRow();
+            // Second cell – English text.
+            builder.InsertCell();
+            builder.Write("Hello World");
 
-        // Finish the table.
-        builder.EndTable();
+            // Finish the row and the table.
+            builder.EndRow();
+            builder.EndTable();
 
-        // Enable right‑to‑left layout for the table.
-        table.Bidi = true;
+            // Enable right‑to‑left layout for the table.
+            // The Bidi property makes the table render its cells from right to left.
+            table.Bidi = true;
 
-        // Save the document to the local file system.
-        doc.Save("TableRightToLeft.docx");
+            // Save the document to a file.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableRightToLeft.docx");
+            doc.Save(outputPath);
+
+            // Simple validation: ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not saved correctly.");
+        }
     }
 }

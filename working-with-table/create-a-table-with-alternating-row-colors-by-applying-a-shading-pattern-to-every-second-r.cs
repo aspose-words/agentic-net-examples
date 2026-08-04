@@ -12,40 +12,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Begin a table.
-        Table table = builder.StartTable();
+        // Start the table.
+        builder.StartTable();
 
-        int rowCount = 6;   // Total number of rows.
-        int colCount = 3;   // Number of cells per row.
+        int rowCount = 6;   // Number of rows to create.
+        int colCount = 3;   // Number of columns per row.
 
-        for (int row = 0; row < rowCount; row++)
+        for (int i = 0; i < rowCount; i++)
         {
-            // Apply a light gray shading to every second row (odd index).
-            if (row % 2 == 1)
-                builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-            else
-                builder.CellFormat.Shading.ClearFormatting(); // No shading for other rows.
-
             // Populate the cells of the current row.
-            for (int col = 0; col < colCount; col++)
+            for (int j = 0; j < colCount; j++)
             {
                 builder.InsertCell();
-                builder.Write($"R{row + 1}C{col + 1}");
+                builder.Write($"Row {i + 1}, Col {j + 1}");
             }
 
-            // Finish the current row.
-            builder.EndRow();
+            // End the current row and obtain the Row object.
+            Row row = builder.EndRow();
+
+            // Apply shading to every second row (i.e., rows with odd index).
+            if (i % 2 == 1)
+            {
+                foreach (Cell cell in row.Cells)
+                {
+                    cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+                }
+            }
         }
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to the working directory.
-        string outputPath = "AlternatingRows.docx";
+        // Save the document to the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingRows.docx");
         doc.Save(outputPath);
 
-        // Simple validation that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Output file was not created: {outputPath}");
+            throw new Exception("The output document was not created.");
+
+        // The program ends automatically; no user interaction required.
     }
 }

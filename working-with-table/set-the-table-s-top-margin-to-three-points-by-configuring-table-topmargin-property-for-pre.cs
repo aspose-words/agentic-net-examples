@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,26 +9,24 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for constructing the document content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Build a simple table with one cell.
         Table table = builder.StartTable();
-
-        // Add a single cell with some text.
         builder.InsertCell();
-        builder.Write("Sample cell content.");
-
-        // End the current row and the table.
+        builder.Write("Sample cell");
         builder.EndRow();
         builder.EndTable();
 
         // Set the distance between the table top and surrounding text to 3 points.
-        // This property controls the vertical placement of the table relative to surrounding paragraphs.
         table.DistanceTop = 3.0;
 
-        // Save the document to the local file system.
-        doc.Save("TableTopMargin.docx");
+        // Save the document.
+        string outputPath = "TableTopMargin.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
     }
 }

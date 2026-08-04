@@ -1,10 +1,10 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableShading
+namespace AsposeWordsTableShadingExample
 {
     public class Program
     {
@@ -17,23 +17,39 @@ namespace AsposeWordsTableShading
             // Start a table.
             Table table = builder.StartTable();
 
-            // First cell – apply light gray shading with a solid texture.
+            // Insert first cell and apply light gray solid shading.
             builder.InsertCell();
             builder.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
             builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-            builder.Write("Shaded Cell");
+            builder.Write("Cell 1");
 
-            // Second cell – no shading.
+            // Insert second cell without special shading.
             builder.InsertCell();
-            builder.Write("Normal Cell");
-
-            // End the first row and the table.
+            builder.Write("Cell 2");
             builder.EndRow();
+
+            // Insert a second row (no shading needed).
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
+
+            // End the table.
             builder.EndTable();
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableShading.docx");
+            // Define output path.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableShading.docx");
+
+            // Save the document.
             doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output file was not created.");
+
+            // Optionally, you could load the document again to verify shading,
+            // but this example focuses on creation and saving only.
         }
     }
 }

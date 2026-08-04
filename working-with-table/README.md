@@ -1,6 +1,6 @@
 # Working With Table Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Working With Table category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Working With Table category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Working With Ta
 - Slug: working-with-table
 - Total examples: 198
 - Publish-ready successful examples: 198 / 198
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Table Workflow examples: 197
 - Table Dom Api examples: 1
 
@@ -23,7 +23,7 @@ This folder contains the live, publish-ready C# examples for the Working With Ta
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 - Newtonsoft.Json
 
 ## Running Examples
@@ -33,7 +33,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Newtonsoft.Json
 
 # Copy one example from this folder into the project as Program.cs
@@ -55,7 +55,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Newtonsoft.Json
 
 # PowerShell example
@@ -72,7 +72,7 @@ dotnet run --configuration Release --no-build
 | 1 | `create-a-table-with-three-rows-and-four-columns-using-documentbuilder-in-a-new-document.cs` | Create a table with three rows and four columns using DocumentBuilder in a new document. | table-workflow | docx | mcp |
 | 2 | `create-a-table-using-the-dom-api-by-instantiating-table-row-and-cell-nodes-and-appending-t.cs` | Create a table using the DOM API by instantiating Table, Row, and Cell nodes and appending them. | table-workflow | docx | mcp |
 | 3 | `add-a-new-row-to-an-existing-table-by-calling-table-rows-add-and-then-inserting-cells-with.cs` | Add a new row to an existing table by calling Table.Rows.Add and then inserting cells with Row.Cells.Add. | table-workflow | docx | mcp |
-| 4 | `insert-a-table-at-a-bookmark-location-by-moving-the-documentbuilder-cursor-to-the-bookmark.cs` | Insert a table at a bookmark location by moving the DocumentBuilder cursor to the bookmark and calling InsertTable. | table-workflow | docx | llm |
+| 4 | `insert-a-table-at-a-bookmark-location-by-moving-the-documentbuilder-cursor-to-the-bookmark.cs` | Insert a table at a bookmark location by moving the DocumentBuilder cursor to the bookmark and calling InsertTable. | table-workflow | docx | mcp |
 | 5 | `insert-a-table-into-a-header-by-moving-documentbuilder-to-the-header-and-inserting-the-tab.cs` | Insert a table into a header by moving DocumentBuilder to the header and inserting the table. | table-workflow | docx | mcp |
 | 6 | `insert-a-table-into-a-header-footer-by-moving-documentbuilder-to-the-respective-section-an.cs` | Insert a table into a header/footer by moving DocumentBuilder to the respective section and calling InsertTable. | table-workflow | docx | mcp |
 | 7 | `insert-a-table-into-a-document-end-by-moving-documentbuilder-to-the-end-and-calling-insert.cs` | Insert a table into a document end by moving DocumentBuilder to the end and calling InsertTable. | table-workflow | docx | mcp |
@@ -84,7 +84,7 @@ dotnet run --configuration Release --no-build
 | 13 | `clone-an-existing-table-node-and-insert-the-copy-after-a-specific-paragraph-using-node-ins.cs` | Clone an existing Table node and insert the copy after a specific paragraph using Node.InsertAfter. | table-workflow | docx | mcp |
 | 14 | `clone-a-table-from-a-template-document-and-replace-placeholder-text-in-each-cell-using-fin.cs` | Clone a table from a template document and replace placeholder text in each cell using FindReplaceOptions. | table-workflow | docx | mcp |
 | 15 | `load-an-html-file-with-a-complex-table-and-convert-it-to-a-word-document-preserving-merged.cs` | Load an HTML file with a complex table and convert it to a Word document preserving merged cells. | table-workflow | html | mcp |
-| 16 | `insert-a-table-from-an-html-string-using-documentbuilder-inserthtml-while-preserving-cell.cs` | Insert a table from an HTML string using DocumentBuilder.InsertHtml while preserving cell formatting. | table-workflow | html | mcp |
+| 16 | `insert-a-table-from-an-html-string-using-documentbuilder-inserthtml-while-preserving-cell.cs` | Insert a table from an HTML string using DocumentBuilder.InsertHtml while preserving cell formatting. | table-workflow | html | llm |
 | 17 | `set-table-autofit-to-autofitbehavior-autofittowindow-to-automatically-adjust-column-widths.cs` | Set Table.AutoFit to AutoFitBehavior.AutoFitToWindow to automatically adjust column widths to page margins. | table-workflow | docx | mcp |
 | 18 | `enable-automatic-resizing-of-table-columns-to-fit-content-by-setting-table-autofit-to-auto.cs` | Enable automatic resizing of table columns to fit content by setting Table.AutoFit to AutoFitBehavior.AutoFitToContents. | table-workflow | docx | mcp |
 | 19 | `prevent-automatic-resizing-of-a-table-after-content-changes-by-disabling-table-autofit-and.cs` | Prevent automatic resizing of a table after content changes by disabling Table.AutoFit and fixing column widths. | table-workflow | docx | mcp |
@@ -136,11 +136,11 @@ dotnet run --configuration Release --no-build
 | 65 | `add-a-row-of-cells-with-varying-column-spans-by-merging-cells-horizontally-across-multiple.cs` | Add a row of cells with varying column spans by merging cells horizontally across multiple columns. | table-workflow | docx | mcp |
 | 66 | `insert-a-table-with-merged-header-cells-spanning-three-columns-by-setting-mergehorizontal.cs` | Insert a table with merged header cells spanning three columns by setting MergeHorizontal on the first row's cells. | table-workflow | docx | mcp |
 | 67 | `create-a-table-with-one-cell-spanning-full-width-by-merging-all-first-row-cells-horizontal.cs` | Create a table with one cell spanning full width by merging all first-row cells horizontally. | table-workflow | docx | mcp |
-| 68 | `create-a-table-with-a-merged-cell-spanning-the-entire-first-row-by-merging-all-first-row-c.cs` | Create a table with a merged cell spanning the entire first row by merging all first-row cells horizontally. | table-workflow | docx | mcp |
+| 68 | `create-a-table-with-a-merged-cell-spanning-the-entire-first-row-by-merging-all-first-row-c.cs` | Create a table with a merged cell spanning the entire first row by merging all first-row cells horizontally. | table-workflow | docx | llm |
 | 69 | `insert-a-table-with-a-cell-spanning-two-rows-and-three-columns-by-setting-mergehorizontal.cs` | Insert a table with a cell spanning two rows and three columns by setting MergeHorizontal and MergeVertical. | table-workflow | docx | mcp |
 | 70 | `split-a-merged-cell-back-into-individual-cells-by-resetting-its-mergehorizontal-and-mergev.cs` | Split a merged cell back into individual cells by resetting its MergeHorizontal and MergeVertical properties to false. | table-workflow | docx | mcp |
 | 71 | `split-a-table-into-two-separate-tables-at-the-third-row-using-the-table-split-method.cs` | Split a table into two separate tables at the third row using the Table.Split method. | table-workflow | docx | mcp |
-| 72 | `split-a-table-into-three-parts-by-calling-table-split-twice-at-specified-row-indices-for-c.cs` | Split a table into three parts by calling Table.Split twice at specified row indices for custom pagination. | table-workflow | docx | mcp |
+| 72 | `split-a-table-into-three-parts-by-calling-table-split-twice-at-specified-row-indices-for-c.cs` | Split a table into three parts by calling Table.Split twice at specified row indices for custom pagination. | table-workflow | docx | llm |
 | 73 | `join-adjacent-tables-by-inserting-an-empty-paragraph-between-them.cs` | Join adjacent tables by inserting an empty paragraph between them. | table-workflow | docx | mcp |
 | 74 | `set-the-table-s-text-wrapping-mode-to-around-surrounding-text-by-configuring-table-wraparo.cs` | Set the table's text wrapping mode to around surrounding text by configuring Table.WrapAround property. | table-workflow | docx | mcp |
 | 75 | `add-a-row-with-cells-containing-rich-text-formatting-by-inserting-formatted-runs-into-each.cs` | Add a row with cells containing rich text formatting by inserting formatted runs into each cell's paragraphs. | table-workflow | docx | mcp |
@@ -189,7 +189,7 @@ dotnet run --configuration Release --no-build
 | 118 | `apply-gradient-shading-to-cells-by-setting-cellformat-shading-texture-and-backgroundpatter.cs` | Apply gradient shading to cells by setting CellFormat.Shading.Texture and BackgroundPatternColor properties. | table-workflow | docx | mcp |
 | 119 | `set-uniform-column-widths-for-all-cells-by-iterating-columns-and-assigning-cellformat-widt.cs` | Set uniform column widths for all cells by iterating columns and assigning CellFormat.Width values. | table-workflow | docx | mcp |
 | 120 | `adjust-row-spacing-by-configuring-row-rowformat-spaceafter-and-spacebefore-properties-for.cs` | Adjust row spacing by configuring Row.RowFormat.SpaceAfter and SpaceBefore properties for each row. | table-workflow | docx | mcp |
-| 121 | `insert-a-caption-above-a-table-using-documentbuilder-insertcaption-with-appropriate-label.cs` | Insert a caption above a table using DocumentBuilder.InsertCaption with appropriate label and numbering. | table-workflow | docx | mcp |
+| 121 | `insert-a-caption-above-a-table-using-documentbuilder-insertcaption-with-appropriate-label.cs` | Insert a caption above a table using DocumentBuilder.InsertCaption with appropriate label and numbering. | table-workflow | docx | existing_repo |
 | 122 | `update-all-table-captions-after-adding-new-tables-by-iterating-tables-and-refreshing-capti.cs` | Update all table captions after adding new tables by iterating tables and refreshing caption numbers. | table-workflow | docx | mcp |
 | 123 | `protect-a-table-from-editing-by-applying-a-read-only-restriction-using-document-protect-wi.cs` | Protect a table from editing by applying a read-only restriction using Document.Protect with editing type. | table-workflow | docx | mcp |
 | 124 | `export-a-table-as-an-image-by-rendering-the-table-node-to-a-bitmap-and-saving-as-png.cs` | Export a table as an image by rendering the table node to a bitmap and saving as PNG. | table-workflow | png | mcp |
@@ -216,9 +216,9 @@ dotnet run --configuration Release --no-build
 | 145 | `apply-a-table-style-that-includes-banded-rows-and-columns-by-configuring-tablestyle-banded.cs` | Apply a table style that includes banded rows and columns by configuring TableStyle.BandedRows and BandedColumns. | table-workflow | docx | mcp |
 | 146 | `generate-a-report-with-multiple-tables-each-using-a-distinct-tablestyle-and-ensure-consist.cs` | Generate a report with multiple tables, each using a distinct TableStyle, and ensure consistent spacing between them. | table-workflow | docx | mcp |
 | 147 | `convert-a-table-with-complex-merged-cells-to-plain-html-by-calculating-appropriate-colspan.cs` | Convert a table with complex merged cells to plain HTML by calculating appropriate colspan and rowspan attributes. | table-workflow | html | mcp |
-| 148 | `apply-a-watermark-behind-a-table-by-inserting-a-shape-with-text-and-positioning-it-behind.cs` | Apply a watermark behind a table by inserting a Shape with text and positioning it behind table nodes. | table-workflow | docx | llm |
+| 148 | `apply-a-watermark-behind-a-table-by-inserting-a-shape-with-text-and-positioning-it-behind.cs` | Apply a watermark behind a table by inserting a Shape with text and positioning it behind table nodes. | table-workflow | docx | mcp |
 | 149 | `set-table-text-wrapping-style-to-square-by-configuring-table-textwrapping-property-accordi.cs` | Set table text wrapping style to square by configuring Table.TextWrapping property accordingly. | table-workflow | docx | mcp |
-| 150 | `enable-table-overlapping-with-other-floating-objects-by-setting-table-allowoverlap-to-true.cs` | Enable table overlapping with other floating objects by setting Table.AllowOverlap to true. | table-workflow | docx | mcp |
+| 150 | `enable-table-overlapping-with-other-floating-objects-by-setting-table-allowoverlap-to-true.cs` | Enable table overlapping with other floating objects by setting Table.AllowOverlap to true. | table-workflow | docx | existing_repo |
 | 151 | `add-a-comment-to-a-specific-table-cell-by-locating-the-cell-and-using-documentbuilder-inse.cs` | Add a comment to a specific table cell by locating the cell and using DocumentBuilder.InsertComment. | table-workflow | docx | mcp |
 | 152 | `retrieve-the-list-of-all-tables-in-a-document-by-iterating-nodes-of-type-nodetype-table.cs` | Retrieve the list of all tables in a document by iterating nodes of type NodeType.Table. | table-workflow | docx | mcp |
 | 153 | `delete-a-table-that-contains-a-specific-keyword-by-searching-its-range-text-and-removing-t.cs` | Delete a table that contains a specific keyword by searching its Range.Text and removing the node. | table-workflow | docx | mcp |
@@ -296,6 +296,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

@@ -3,53 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableStyleExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table.
-            Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
 
-            // First row (header).
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.EndRow();
+        // First row – this row will be styled to appear bold.
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
 
-            // Second row (data).
-            builder.InsertCell();
-            builder.Write("Data 1");
-            builder.InsertCell();
-            builder.Write("Data 2");
-            builder.EndRow();
+        // Second row – regular formatting.
+        builder.InsertCell();
+        builder.Write("Value 1");
+        builder.InsertCell();
+        builder.Write("Value 2");
+        builder.EndRow();
 
-            // Finish the table.
-            builder.EndTable();
+        // Finish the table.
+        builder.EndTable();
 
-            // Apply a built‑in table style.
-            table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        // Apply a built‑in table style.
+        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
 
-            // Enable the style for the first row only.
-            table.StyleOptions = TableStyleOptions.FirstRow;
+        // Enable the conditional formatting for the first row.
+        table.StyleOptions = TableStyleOptions.FirstRow;
 
-            // Retrieve the style object and make the first‑row text bold.
-            TableStyle tableStyle = (TableStyle)doc.Styles[StyleIdentifier.MediumShading1Accent1];
-            tableStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
+        // Retrieve the style object that was applied to the table.
+        TableStyle appliedStyle = (TableStyle)doc.Styles[table.StyleIdentifier];
 
-            // Save the document.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableStyleFirstRowBold.docx");
-            doc.Save(outputPath);
+        // Make the text in the first row bold via the conditional style.
+        appliedStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
 
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
-        }
+        // Save the document.
+        string outputPath = "TableStyleFirstRowBold.docx";
+        doc.Save(outputPath);
+
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

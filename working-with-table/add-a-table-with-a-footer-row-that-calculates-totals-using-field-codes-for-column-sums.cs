@@ -16,57 +16,48 @@ public class Program
 
         // ----- Header row -----
         builder.InsertCell();
-        builder.Writeln("Item");
+        builder.Font.Bold = true;
+        builder.Write("Item");
         builder.InsertCell();
-        builder.Writeln("Quantity");
+        builder.Write("Quantity");
         builder.EndRow();
 
         // ----- Data rows -----
-        // Row 1
-        builder.InsertCell();
-        builder.Writeln("Apples");
-        builder.InsertCell();
-        builder.Writeln("20");
-        builder.EndRow();
-
-        // Row 2
-        builder.InsertCell();
-        builder.Writeln("Bananas");
-        builder.InsertCell();
-        builder.Writeln("40");
-        builder.EndRow();
-
-        // Row 3
-        builder.InsertCell();
-        builder.Writeln("Carrots");
-        builder.InsertCell();
-        builder.Writeln("50");
-        builder.EndRow();
+        AddDataRow(builder, "Apples", "20");
+        AddDataRow(builder, "Bananas", "40");
+        AddDataRow(builder, "Carrots", "50");
 
         // ----- Footer row with totals -----
-        // First cell: label
         builder.InsertCell();
-        builder.Writeln("Total");
+        builder.Font.Bold = true;
+        builder.Write("Total");
+        builder.InsertCell();
 
-        // Second cell: field that sums the values above in this column.
-        // The field code "=SUM(ABOVE)" calculates the sum of numeric values in the column above.
-        builder.InsertCell();
-        builder.InsertField("=SUM(ABOVE)", "0");
+        // Insert a field that sums the values above in the same column.
+        // The field code "=SUM(ABOVE)" calculates the sum of numeric values in the column.
+        builder.InsertField("=SUM(ABOVE)", null);
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Define output path.
+        // Save the document to the local file system.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithFooter.docx");
-
-        // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new Exception($"Failed to create the output file at '{outputPath}'.");
-        }
+            throw new InvalidOperationException("The output document was not saved correctly.");
+    }
+
+    // Helper method to add a data row with two cells.
+    private static void AddDataRow(DocumentBuilder builder, string item, string quantity)
+    {
+        builder.InsertCell();
+        builder.Font.Bold = false;
+        builder.Write(item);
+        builder.InsertCell();
+        builder.Write(quantity);
+        builder.EndRow();
     }
 }

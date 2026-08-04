@@ -1,44 +1,28 @@
-using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableSpacingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1,1");
-            builder.InsertCell();
-            builder.Write("Cell 1,2");
-            builder.EndRow();
+        // Build a simple 1‑row, 2‑cell table.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.EndTable();
 
-            builder.InsertCell();
-            builder.Write("Cell 2,1");
-            builder.InsertCell();
-            builder.Write("Cell 2,2");
-            builder.EndTable();
+        // Set the top (distance to preceding text) and bottom (distance to following text) spacing of the table in points.
+        table.DistanceTop = 12;    // 12 points = 1/6 inch
+        table.DistanceBottom = 24; // 24 points = 1/3 inch
 
-            // Set the spacing before and after the table (in points).
-            // Use DistanceTop for space above the table and DistanceBottom for space below.
-            table.DistanceTop = 20;    // 20 points above the table.
-            table.DistanceBottom = 30; // 30 points below the table.
-
-            // Save the document to disk.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableSpacing.docx");
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved successfully.");
-        }
+        // Save the document.
+        doc.Save("TableSpacing.docx");
     }
 }

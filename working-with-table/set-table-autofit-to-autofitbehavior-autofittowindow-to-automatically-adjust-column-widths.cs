@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,32 +9,28 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Use DocumentBuilder to construct a simple 2‑column table.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         Table table = builder.StartTable();
 
-        // First row.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("First column");
+
+        // First row, second cell.
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Second column");
         builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Value 1");
-        builder.InsertCell();
-        builder.Write("Value 2");
-        builder.EndRow();
-
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Adjust the table so its columns automatically fit the page margins.
+        // Apply AutoFit to make the table width adjust to the page margins.
         table.AutoFit(AutoFitBehavior.AutoFitToWindow);
 
         // Save the document to the current directory.
-        doc.Save("TableAutoFitToWindow.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AutoFitTable.docx");
+        doc.Save(outputPath);
     }
 }
