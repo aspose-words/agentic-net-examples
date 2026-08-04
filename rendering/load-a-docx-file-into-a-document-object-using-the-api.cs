@@ -6,24 +6,28 @@ public class Program
 {
     public static void Main()
     {
-        // Define a folder for temporary files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare a folder for the sample files.
+        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        Directory.CreateDirectory(dataDir);
 
-        // Path of the sample DOCX file.
-        string samplePath = Path.Combine(artifactsDir, "Sample.docx");
+        // Path of the DOCX file that will be created and later loaded.
+        string docPath = Path.Combine(dataDir, "Sample.docx");
 
-        // 1. Create a simple DOCX document.
-        Document createdDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(createdDoc);
-        builder.Writeln("Hello Aspose.Words!");
-        createdDoc.Save(samplePath); // Persist the document so it can be loaded later.
+        // -----------------------------------------------------------------
+        // Create a simple DOCX document and save it to the file system.
+        // -----------------------------------------------------------------
+        Document doc = new Document();                     // Create a blank document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello Aspose.Words!");           // Add some text.
+        doc.Save(docPath);                                // Save; format inferred from ".docx".
 
-        // 2. Load the DOCX file into a new Document object.
-        Document loadedDoc = new Document(samplePath);
+        // -----------------------------------------------------------------
+        // Load the previously saved DOCX file into a new Document object.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);       // Load using the file name.
 
-        // 3. Output the loaded document's text to verify successful loading.
-        Console.WriteLine("Loaded document text:");
-        Console.WriteLine(loadedDoc.GetText().Trim());
+        // Simple verification: output the text contained in the loaded document.
+        string loadedText = loadedDoc.GetText().Trim();
+        Console.WriteLine($"Loaded document text: {loadedText}");
     }
 }

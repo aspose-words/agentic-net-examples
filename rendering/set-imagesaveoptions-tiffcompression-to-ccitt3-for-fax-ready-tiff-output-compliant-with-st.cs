@@ -7,28 +7,30 @@ public class Program
 {
     public static void Main()
     {
+        // Define a folder for output files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
         // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, fax‑ready TIFF!");
+        builder.Writeln("Hello World!");
 
-        // Configure image save options for TIFF with CCITT3 compression.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.TiffCompression = TiffCompression.Ccitt3;
+        // Configure TIFF save options with CCITT3 compression (fax‑ready).
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            TiffCompression = TiffCompression.Ccitt3
+        };
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FaxReady.tiff");
-
-        // Save the document as a TIFF image using the specified options.
-        doc.Save(outputPath, options);
+        // Save the document as a TIFF file.
+        string outputPath = Path.Combine(artifactsDir, "FaxReady.tiff");
+        doc.Save(outputPath, tiffOptions);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
-        }
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        // Optionally, indicate success (no interactive output required).
-        Console.WriteLine("TIFF file created successfully.");
+        // Indicate successful completion.
+        Console.WriteLine("TIFF file saved with CCITT3 compression at: " + outputPath);
     }
 }

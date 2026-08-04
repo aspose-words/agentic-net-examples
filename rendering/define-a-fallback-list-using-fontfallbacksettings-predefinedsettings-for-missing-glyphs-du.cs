@@ -2,15 +2,14 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create an output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define folders for output files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
         // Create a new blank document.
         Document doc = new Document();
@@ -19,35 +18,25 @@ public class Program
         FontSettings fontSettings = new FontSettings();
         doc.FontSettings = fontSettings;
 
-        // Load the predefined Microsoft Office fallback scheme.
+        // Load a predefined fallback scheme that mimics Microsoft Office.
         FontFallbackSettings fallback = fontSettings.FallbackSettings;
         fallback.LoadMsOfficeFallbackSettings();
 
-        // Save the fallback configuration to an XML file (optional, for inspection).
-        string fallbackPath = Path.Combine(outputDir, "FallbackSettings.xml");
-        fallback.Save(fallbackPath);
+        // (Optional) Save the loaded fallback settings to an XML file for inspection.
+        string fallbackXmlPath = Path.Combine(artifactsDir, "FallbackSettings.xml");
+        fallback.Save(fallbackXmlPath);
 
-        // Build document content using a font that does not exist.
+        // Write some text using a font that does not exist on the system.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = "Missing Font";
-        builder.Writeln("This text uses a missing font. The following characters require fallback:");
-        builder.Writeln("Latin: ABC");
-        builder.Writeln("Cyrillic: АБВ");
-        builder.Writeln("Greek: ΑΒΓ");
-        builder.Writeln("Arabic: أبج");
-        builder.Writeln("Hebrew: אבג");
-        builder.Writeln("Chinese: 汉字");
-        builder.Writeln("Emoji: 😊");
+        builder.Writeln("This line uses a missing font and will be rendered with a fallback font.");
 
-        // Render the document to PDF, which will apply the fallback settings.
-        string pdfPath = Path.Combine(outputDir, "DocumentWithFallback.pdf");
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, pdfOptions);
+        // Render the document to PDF.
+        string pdfPath = Path.Combine(artifactsDir, "RenderedWithFallback.pdf");
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Simple validation that the files were created.
-        if (!File.Exists(fallbackPath))
-            throw new Exception("Fallback settings file was not created.");
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new Exception("PDF output file was not created.");
+            throw new FileNotFoundException("The PDF output was not created.", pdfPath);
     }
 }

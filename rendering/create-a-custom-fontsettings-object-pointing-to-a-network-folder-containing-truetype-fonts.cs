@@ -7,49 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Simulate a network folder that contains TrueType fonts.
+        // Define a folder that simulates a network share.
         string networkFontsFolder = Path.Combine(Directory.GetCurrentDirectory(), "NetworkFonts");
         Directory.CreateDirectory(networkFontsFolder);
 
-        // Copy a known system font (e.g., Arial) into the simulated network folder.
-        // This ensures the folder actually contains a usable TrueType font.
-        string systemFontPath = FindSystemFont("Arial.ttf");
-        if (systemFontPath != null)
+        // Locate a TrueType font on the local system and copy it to the simulated network folder.
+        string[] systemFontFolders = SystemFontSource.GetSystemFontFolders();
+        if (systemFontFolders.Length == 0)
+            throw new InvalidOperationException("No system font folders found.");
+
+        string sourceFontPath = null;
+        foreach (var folder in systemFontFolders)
         {
-            string destination = Path.Combine(networkFontsFolder, Path.GetFileName(systemFontPath));
-            File.Copy(systemFontPath, destination, true);
+            var ttfFiles = Directory.GetFiles(folder, "*.ttf");
+            if (ttfFiles.Length > 0)
+            {
+                sourceFontPath = ttfFiles[0];
+                break;
+            }
         }
 
-        // Create a simple document that uses the copied font.
+        if (sourceFontPath == null)
+            throw new FileNotFoundException("No TrueType font file found on the system.");
+
+        string destFontPath = Path.Combine(networkFontsFolder, Path.GetFileName(sourceFontPath));
+        File.Copy(sourceFontPath, destFontPath, true);
+
+        // Create custom FontSettings pointing to the network folder.
+        FontSettings customFontSettings = new FontSettings();
+        customFontSettings.SetFontsFolder(networkFontsFolder, true);
+
+        // Build a simple document that uses a font available in the copied folder.
         Document doc = new Document();
+        doc.FontSettings = customFontSettings;
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial";
-        builder.Writeln("This text is rendered with a font loaded from a network folder.");
+        builder.Font.Name = Path.GetFileNameWithoutExtension(destFontPath);
+        builder.Writeln("This text is rendered using a font loaded from the network folder.");
 
-        // Configure FontSettings to point to the network font folder.
-        FontSettings fontSettings = new FontSettings();
-        // 'true' enables recursive scanning of subfolders.
-        fontSettings.SetFontsFolder(networkFontsFolder, true);
-        doc.FontSettings = fontSettings;
-
-        // Save the document to PDF to trigger layout and font resolution.
+        // Save the document to PDF to trigger font resolution.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.pdf");
-        doc.Save(outputPath, SaveFormat.Pdf);
+        doc.Save(outputPath);
 
-        // Verify that the PDF was created.
+        // Verify that the output file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the output PDF.");
-    }
+            throw new InvalidOperationException("The PDF file was not created.");
 
-    // Helper method that searches system font folders for a specific font file.
-    private static string FindSystemFont(string fontFileName)
-    {
-        foreach (string folder in SystemFontSource.GetSystemFontFolders())
-        {
-            string candidate = Path.Combine(folder, fontFileName);
-            if (File.Exists(candidate))
-                return candidate;
-        }
-        return null;
+        // Clean up temporary files (optional).
+        // File.Delete(outputPath);
+        // Directory.Delete(networkFontsFolder, true);
     }
 }

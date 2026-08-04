@@ -7,60 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Define paths for the sample DOCX and the rendered PDF.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define a folder for output files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        string docxPath = Path.Combine(artifactsDir, "SampleDocument.docx");
-        string pdfPath = Path.Combine(artifactsDir, "RenderedDocument.pdf");
+        // Create a simple DOCX document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "Arial";
+        builder.Font.Size = 24;
+        builder.Writeln("This is a sample document created for rendering demonstration.");
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple DOCX document if it does not already exist.
-        // -----------------------------------------------------------------
-        if (!File.Exists(docxPath))
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln("Hello Aspose.Words!");
-            builder.Writeln("This document will be rendered to PDF with custom options.");
-            sampleDoc.Save(docxPath);
-        }
-
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX document.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docxPath);
-
-        // -----------------------------------------------------------------
-        // 3. Configure rendering options before conversion.
-        // -----------------------------------------------------------------
+        // Configure PDF rendering options.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Example: render the PDF in grayscale.
-            ColorMode = ColorMode.Grayscale,
-
-            // Example: use high‑quality rendering (slower but better visual fidelity).
+            // Use high‑quality rendering algorithms.
             UseHighQualityRendering = true,
-
-            // Example: embed fonts as subsets to keep file size small.
+            // Do not embed full fonts (use subsetting to keep file size small).
             EmbedFullFonts = false,
-
-            // Example: render DrawingML shapes as they are (no fallback).
-            DmlRenderingMode = DmlRenderingMode.DrawingML
+            // Render colors normally.
+            ColorMode = ColorMode.Normal
         };
 
-        // -----------------------------------------------------------------
-        // 4. Convert the document to PDF using the configured options.
-        // -----------------------------------------------------------------
-        loadedDoc.Save(pdfPath, pdfOptions);
+        // Save the document as PDF using the configured options.
+        string pdfPath = Path.Combine(outputDir, "RenderedDocument.pdf");
+        doc.Save(pdfPath, pdfOptions);
 
-        // -----------------------------------------------------------------
-        // 5. Verify that the output file was created.
-        // -----------------------------------------------------------------
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+            throw new InvalidOperationException("Failed to create the PDF output file.");
 
-        // Optional: indicate success.
-        Console.WriteLine("Document rendered successfully to: " + pdfPath);
+        // Optionally, inform that the process completed successfully.
+        Console.WriteLine($"PDF successfully saved to: {pdfPath}");
     }
 }

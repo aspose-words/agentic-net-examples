@@ -1,46 +1,51 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Folder where the rendered PDF will be saved.
+        // Define folders for artifacts and the simulated USB drive.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        // Simulated USB drive folder that contains TrueType fonts.
-        string usbFontsDir = Path.Combine(Directory.GetCurrentDirectory(), "UsbFonts");
-
-        // Ensure the directories exist.
+        string usbFontsDir = Path.Combine(artifactsDir, "UsbFonts");
         Directory.CreateDirectory(artifactsDir);
         Directory.CreateDirectory(usbFontsDir);
 
-        // Create a sample document that contains special Unicode symbols.
+        // Locate a system font file to copy to the USB folder.
+        string systemFontFolder = SystemFontSource.GetSystemFontFolders().FirstOrDefault();
+        if (string.IsNullOrEmpty(systemFontFolder))
+            throw new InvalidOperationException("System font folder could not be located.");
+
+        string sourceFontPath = Directory.GetFiles(systemFontFolder, "*.ttf").FirstOrDefault();
+        if (string.IsNullOrEmpty(sourceFontPath))
+            throw new InvalidOperationException("No TrueType font file found in the system font folder.");
+
+        // Copy the font file to the USB folder.
+        string fontFileName = Path.GetFileName(sourceFontPath);
+        string usbFontPath = Path.Combine(usbFontsDir, fontFileName);
+        File.Copy(sourceFontPath, usbFontPath, true);
+
+        // Create a new document and write text containing special symbols.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial Unicode MS"; // Font with broad Unicode coverage (system font).
-        builder.Writeln("Document with special symbols:");
-        builder.Writeln("Greek: α β γ δ ε");
-        builder.Writeln("Cyrillic: А Б В Г Д");
-        builder.Writeln("Emoji: 😀 😃 😄");
+        builder.Font.Name = Path.GetFileNameWithoutExtension(fontFileName); // Use the copied font.
+        builder.Writeln("Special symbols: ☺ ★ 漢字 🚀");
 
         // Configure FontSettings to load fonts from the USB folder.
         FontSettings fontSettings = new FontSettings();
-        // The second argument (true) enables recursive scanning of subfolders.
-        fontSettings.SetFontsFolder(usbFontsDir, true);
-        // Apply the FontSettings to the document.
+        fontSettings.SetFontsFolder(usbFontsDir, recursive: false);
         doc.FontSettings = fontSettings;
 
-        // Render the document to PDF.
-        string pdfPath = Path.Combine(artifactsDir, "SpecialSymbols.pdf");
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // Save the document to PDF.
+        string outputPath = Path.Combine(artifactsDir, "DocumentWithUsbFonts.pdf");
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
-        if (!File.Exists(pdfPath))
-            throw new Exception("PDF file was not created.");
-
-        // Informative output (no user interaction required).
-        Console.WriteLine($"PDF successfully saved to: {pdfPath}");
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The PDF file was not created.", outputPath);
     }
 }

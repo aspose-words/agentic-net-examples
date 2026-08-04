@@ -7,69 +7,59 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        // Resolve input file path.
-        string inputPath;
-        if (args.Length >= 1 && File.Exists(args[0]))
+        // Expected arguments: <inputPath> <dpi> <compression>
+        // If arguments are missing or invalid, defaults are used.
+        string inputPath = args.Length > 0 ? args[0] : string.Empty;
+        int dpi = args.Length > 1 && int.TryParse(args[1], out int parsedDpi) ? parsedDpi : 300;
+        string compressionArg = args.Length > 2 ? args[2] : "Lzw";
+
+        // Resolve compression type.
+        if (!Enum.TryParse<TiffCompression>(compressionArg, true, out TiffCompression compression))
         {
-            inputPath = args[0];
+            compression = TiffCompression.Lzw; // fallback to default
+        }
+
+        // Ensure we have a source document.
+        Document doc;
+        if (!string.IsNullOrEmpty(inputPath) && File.Exists(inputPath))
+        {
+            doc = new Document(inputPath);
         }
         else
         {
-            // No valid input file – create a temporary sample document.
-            inputPath = Path.Combine(Directory.GetCurrentDirectory(), "SampleDocument.docx");
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln("This is a sample document generated for TIFF conversion.");
-
-            // Insert a placeholder image only if one exists.
-            string placeholder = GetPlaceholderImagePath();
-            if (!string.IsNullOrEmpty(placeholder))
-                builder.InsertImage(placeholder);
-
-            sampleDoc.Save(inputPath);
+            // Create a simple sample document.
+            doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Sample document for TIFF conversion.");
+            // Save the sample document locally so it can be reloaded if needed.
+            string samplePath = Path.Combine(Path.GetTempPath(), "SampleDocument.docx");
+            doc.Save(samplePath);
+            doc = new Document(samplePath);
         }
 
-        // Resolve DPI (default 300).
-        int dpi = 300;
-        if (args.Length >= 2 && int.TryParse(args[1], out int parsedDpi) && parsedDpi > 0)
-            dpi = parsedDpi;
-
-        // Resolve compression type (default Lzw).
-        TiffCompression compression = TiffCompression.Lzw;
-        if (args.Length >= 3 && Enum.TryParse<TiffCompression>(args[2], true, out TiffCompression parsedComp))
-            compression = parsedComp;
-
-        // Load the source document.
-        Document doc = new Document(inputPath);
-
-        // Configure TIFF save options.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Prepare TIFF save options.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
             Resolution = dpi,
             TiffCompression = compression
         };
 
         // Determine output file path.
-        string outputPath = Path.ChangeExtension(inputPath, ".tiff");
+        string outputDirectory = Path.GetDirectoryName(inputPath);
+        if (string.IsNullOrEmpty(outputDirectory) || !Directory.Exists(outputDirectory))
+            outputDirectory = Directory.GetCurrentDirectory();
+
+        string outputFileName = $"Converted_{dpi}dpi_{compression}.tiff";
+        string outputPath = Path.Combine(outputDirectory, outputFileName);
 
         // Save the document as a TIFF image.
-        doc.Save(outputPath, saveOptions);
+        doc.Save(outputPath, tiffOptions);
 
-        // Verify that the output file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create TIFF file: {outputPath}");
-    }
+            throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
 
-    // Attempts to locate a sample image in the current directory.
-    private static string GetPlaceholderImagePath()
-    {
-        string[] possibleNames = { "Placeholder.png", "Placeholder.jpg", "Placeholder.bmp" };
-        foreach (var name in possibleNames)
-        {
-            string candidate = Path.Combine(Directory.GetCurrentDirectory(), name);
-            if (File.Exists(candidate))
-                return candidate;
-        }
-        return string.Empty;
+        // Optionally, inform the user (no interactive wait).
+        Console.WriteLine($"TIFF file saved to: {outputPath}");
     }
 }

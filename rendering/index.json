@@ -10,7 +10,7 @@
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0",
+      "Aspose.Words": "26.7.0",
       "Aspose.Drawing.Common": "25.11.0"
     },
     "required_namespaces": [
@@ -18,11 +18,11 @@
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Saving",
-      "System.Linq",
+      "Aspose.Drawing",
+      "Aspose.Drawing.Imaging",
       "Aspose.Words.Fonts",
-      "Aspose.Words.Drawing",
-      "System.Collections.Generic",
       "System.Threading.Tasks",
+      "System.Linq",
       "System.Text",
       "System.Text.RegularExpressions",
       "System.Threading"
@@ -35,10 +35,10 @@
       "SaveFormat",
       "File",
       "ImageSaveOptions",
-      "StyleIdentifier",
+      "MemoryStream",
       "Font",
       "PdfSaveOptions",
-      "Range"
+      "Run"
     ]
   },
   "stats": {
@@ -254,8 +254,8 @@
         "doc",
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
@@ -831,8 +831,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 66,
@@ -842,8 +842,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 67,
@@ -853,8 +853,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 68,

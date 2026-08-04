@@ -7,66 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for all generated files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Directories for input DOCX files and output TIFF files.
+        string inputDir = "InputDocs";
+        string outputDir = "OutputTiffs";
 
-        // -----------------------------------------------------------------
-        // 1. Create a few sample DOCX files (the task requires DOC files,
-        //    but DOCX is also a Word format and can be loaded directly).
-        // -----------------------------------------------------------------
+        // Ensure the directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
+
+        // Create a few sample DOCX documents.
         for (int i = 1; i <= 3; i++)
         {
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-
-            builder.Writeln($"Sample document {i} - Page 1");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Sample document {i} - Page 2");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Sample document {i} - Page 3");
-
-            string docPath = Path.Combine(artifactsDir, $"Sample{i}.docx");
-            sampleDoc.Save(docPath);
+            builder.Writeln($"Sample document {i}");
+            builder.Writeln("This document will be rendered to a 1‑bit TIFF image using CCITT4 compression.");
+            string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
+            sampleDoc.Save(samplePath);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Convert each DOC/DOCX file in the folder to a single TIFF file
-        //    using 1‑bit pixel format and CCITT4 compression.
-        // -----------------------------------------------------------------
-        string[] sourceFiles = Directory.GetFiles(artifactsDir, "*.doc*");
-
-        foreach (string sourcePath in sourceFiles)
+        // Process each DOCX file in the input directory.
+        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
         {
             // Load the source document.
-            Document doc = new Document(sourcePath);
+            Document doc = new Document(docPath);
 
             // Configure image save options for TIFF output.
-            ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // Use CCITT4 compression (suitable for 1‑bpp images).
+                // Use CCITT4 compression (suitable for 1‑bit images).
                 TiffCompression = TiffCompression.Ccitt4,
-
-                // Force a 1‑bit per pixel format.
+                // Render the image as 1‑bit indexed (black and white).
                 PixelFormat = ImagePixelFormat.Format1bppIndexed,
-
-                // Render all pages into a multi‑frame TIFF.
+                // Render all pages into a single multi‑frame TIFF.
                 PageLayout = MultiPageLayout.TiffFrames()
             };
 
-            // Destination TIFF file path (same name, .tiff extension).
-            string tiffPath = Path.ChangeExtension(sourcePath, ".tiff");
+            // Determine the output file name.
+            string outputFileName = Path.GetFileNameWithoutExtension(docPath) + ".tiff";
+            string outputPath = Path.Combine(outputDir, outputFileName);
 
-            // Save the document as TIFF.
-            doc.Save(tiffPath, tiffOptions);
+            // Save the document as a TIFF image.
+            doc.Save(outputPath, options);
 
             // Verify that the TIFF file was created.
-            if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
-
-            Console.WriteLine($"Converted '{Path.GetFileName(sourcePath)}' to '{Path.GetFileName(tiffPath)}'.");
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create TIFF file: {outputPath}");
         }
 
-        Console.WriteLine("Batch conversion completed successfully.");
+        // Indicate successful completion.
+        Console.WriteLine("Batch conversion to TIFF completed successfully.");
     }
 }

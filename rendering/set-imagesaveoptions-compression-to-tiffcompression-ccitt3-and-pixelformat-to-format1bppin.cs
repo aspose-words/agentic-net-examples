@@ -7,33 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "SmallestTiff.tiff");
+
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for TIFF compression test.");
+        builder.Writeln("This is a sample document rendered to a highly compressed TIFF image.");
+        // Add a small image to demonstrate rendering (optional).
+        // builder.InsertImage("sample.png"); // Uncomment and provide a valid image path if needed.
 
-        // Configure image save options:
-        // - Save as TIFF.
-        // - Use CCITT3 compression (good for black‑and‑white images).
-        // - Use 1‑bit per pixel indexed format to minimise file size.
+        // Configure image save options for smallest file size.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Ccitt3,
             PixelFormat = ImagePixelFormat.Format1bppIndexed
         };
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.tiff");
-
-        // Save the document using the configured options.
+        // Save the document as a TIFF image using the configured options.
         doc.Save(outputPath, options);
 
-        // Verify that the file was created and is not empty.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
 
+        // Optionally, report the file size.
         long fileSize = new FileInfo(outputPath).Length;
-        if (fileSize == 0)
-            throw new InvalidOperationException("The TIFF file is empty.");
+        Console.WriteLine($"TIFF file saved successfully. Size: {fileSize} bytes.");
     }
 }

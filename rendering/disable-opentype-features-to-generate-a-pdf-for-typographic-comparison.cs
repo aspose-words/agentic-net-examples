@@ -7,31 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Define output folder and file.
+        // Prepare output directory.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string pdfPath = Path.Combine(outputDir, "TypographicComparison.pdf");
 
-        // Create a new blank document.
+        // Create a new document and add some text that would normally use OpenType ligatures.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Use a font that contains OpenType features (e.g., ligatures) and write sample text.
-        builder.Font.Name = "Arial";
+        builder.Font.Name = "Times New Roman";
         builder.Font.Size = 48;
-        builder.Writeln("Office"); // Contains the "fi" ligature.
+        builder.Writeln("Office");          // Contains "ff" ligature.
+        builder.Writeln("fi fl ffi ffl");   // Contains "fi", "fl", "ffi", "ffl" ligatures.
 
         // Disable OpenType font formatting features for the whole document.
         doc.CompatibilityOptions.DisableOpenTypeFontFormattingFeatures = true;
 
-        // Save the document as PDF.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, pdfOptions);
+        // Save the document to PDF.
+        string pdfPath = Path.Combine(outputDir, "DisabledOpenType.pdf");
+        PdfSaveOptions saveOptions = new PdfSaveOptions();
+        doc.Save(pdfPath, saveOptions);
 
-        // Verify that the PDF was created.
+        // Verify that the PDF file was created and is not empty.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the PDF file.");
+            throw new Exception("PDF file was not created.");
 
-        Console.WriteLine($"PDF generated successfully at: {pdfPath}");
+        if (new FileInfo(pdfPath).Length == 0)
+            throw new Exception("PDF file is empty.");
     }
 }

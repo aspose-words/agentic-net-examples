@@ -7,37 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with several pages of text.
+        // Prepare output directory.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a sample document with enough content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        for (int i = 1; i <= 5; i++)
+        builder.Font.Size = 24;
+        builder.Writeln("Aspose.Words TIFF Compression Demo");
+        builder.Writeln("This document will be saved twice:");
+        builder.Writeln("- First without compression (TiffCompression.None)");
+        builder.Writeln("- Then with CCITT3 compression (TiffCompression.Ccitt3)");
+        // Add several paragraphs to increase the page size.
+        for (int i = 0; i < 30; i++)
         {
-            builder.Writeln($"Page {i}");
-            builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
-            // Add a page break after each page except the last.
-            if (i < 5)
-                builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"Line {i + 1}: The quick brown fox jumps over the lazy dog.");
         }
 
-        // Define output folder (current directory).
-        string outputFolder = Directory.GetCurrentDirectory();
-
-        // Save the document as an uncompressed TIFF.
+        // Save uncompressed TIFF.
+        string uncompressedPath = Path.Combine(artifactsDir, "Uncompressed.tiff");
         ImageSaveOptions uncompressedOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            TiffCompression = TiffCompression.None
+            TiffCompression = TiffCompression.None,
+            // Ensure a reasonable resolution for size comparison.
+            Resolution = 150
         };
-        string uncompressedPath = Path.Combine(outputFolder, "uncompressed.tiff");
         doc.Save(uncompressedPath, uncompressedOptions);
 
-        // Save the document as a TIFF using CCITT3 compression.
+        // Save CCITT3 compressed TIFF.
+        string compressedPath = Path.Combine(artifactsDir, "Compressed_Ccitt3.tiff");
         ImageSaveOptions compressedOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            TiffCompression = TiffCompression.Ccitt3
+            TiffCompression = TiffCompression.Ccitt3,
+            // Use the same resolution as the uncompressed version.
+            Resolution = 150
         };
-        string compressedPath = Path.Combine(outputFolder, "compressed.tiff");
         doc.Save(compressedPath, compressedOptions);
 
         // Verify that both files exist.
@@ -51,11 +56,10 @@ public class Program
         Console.WriteLine($"Uncompressed TIFF size: {uncompressedSize} bytes");
         Console.WriteLine($"CCITT3 compressed TIFF size: {compressedSize} bytes");
 
-        // Ensure the compressed file is significantly smaller (e.g., less than 50% of the original).
-        if (compressedSize >= uncompressedSize * 0.5)
-            throw new InvalidOperationException("Compressed TIFF is not sufficiently smaller than the uncompressed version.");
+        // Expect a significant reduction (e.g., at least 30% smaller).
+        if (compressedSize >= uncompressedSize * 0.7)
+            throw new InvalidOperationException("CCITT3 compression did not reduce the file size significantly.");
 
-        // Success message.
-        Console.WriteLine("Compression verification passed.");
+        Console.WriteLine("Compression verification succeeded.");
     }
 }

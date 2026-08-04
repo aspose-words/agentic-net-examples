@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Saving;
 
 public class Program
 {
@@ -11,37 +10,35 @@ public class Program
         // Prepare output directory.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string pdfPath = Path.Combine(outputDir, "Rendered.pdf");
+        string pdfPath = Path.Combine(outputDir, "NoFontSubstitution.pdf");
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write text using a font that is unlikely to be present on the system.
+        // Write text using a font that is unlikely to exist on the system.
         builder.Font.Name = "MissingFont";
-        builder.Writeln("This text uses a missing font. Font substitution is disabled.");
+        builder.Writeln("This text is formatted with a missing font.");
 
-        // Configure font settings to disable all substitution rules.
+        // Configure font settings and disable all substitution rules.
         FontSettings fontSettings = new FontSettings();
-
-        // Disable each substitution rule.
         fontSettings.SubstitutionSettings.FontNameSubstitution.Enabled = false;
-        fontSettings.SubstitutionSettings.FontInfoSubstitution.Enabled = false;
-        fontSettings.SubstitutionSettings.TableSubstitution.Enabled = false;
         fontSettings.SubstitutionSettings.FontConfigSubstitution.Enabled = false;
+        fontSettings.SubstitutionSettings.TableSubstitution.Enabled = false;
+        fontSettings.SubstitutionSettings.FontInfoSubstitution.Enabled = false;
         fontSettings.SubstitutionSettings.DefaultFontSubstitution.Enabled = false;
 
-        // Assign the configured settings to the document.
+        // Apply the font settings to the document.
         doc.FontSettings = fontSettings;
 
         // Render the document to PDF.
-        PdfSaveOptions saveOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, saveOptions);
+        doc.Save(pdfPath);
 
-        // Verify that the PDF file was created.
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
             throw new InvalidOperationException("The PDF file was not created.");
 
-        // Optionally, you could add further validation here (e.g., file size check).
+        // Optionally, output the path (no interactive prompts required).
+        Console.WriteLine($"PDF saved to: {pdfPath}");
     }
 }

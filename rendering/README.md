@@ -1,6 +1,6 @@
 # Rendering Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Rendering category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Rendering category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Rendering categ
 - Slug: rendering
 - Total examples: 70
 - Publish-ready successful examples: 70 / 70
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Rendering Workflow examples: 70
 
 ## Category rules that shaped these examples
@@ -23,7 +23,7 @@ This folder contains the live, publish-ready C# examples for the Rendering categ
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 - Aspose.Drawing.Common 25.11.0
 
 ## Running Examples
@@ -33,7 +33,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 
 # Copy one example from this folder into the project as Program.cs
@@ -55,7 +55,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 
 # PowerShell example
@@ -83,7 +83,7 @@ dotnet run --configuration Release --no-build
 | 12 | `save-the-document-as-a-multipage-tiff-using-document-save-with-configured-options.cs` | Save the document as a multipage TIFF using Document.Save with configured options. | rendering-workflow | doc, tiff | mcp |
 | 13 | `batch-process-a-folder-of-docx-files-applying-200-dpi-and-ccitt3-compression-to-each-tiff.cs` | Batch process a folder of DOCX files, applying 200 DPI and CCITT3 compression to each TIFF. | rendering-workflow | docx, doc, tiff | mcp |
 | 14 | `create-a-console-application-that-accepts-input-path-dpi-and-compression-type-arguments-fo.cs` | Create a console application that accepts input path, DPI, and compression type arguments for TIFF conversion. | rendering-workflow | tiff | mcp |
-| 15 | `load-documents-from-a-network-share-configure-custom-font-folders-and-output-tiffs-to-a-lo.cs` | Load documents from a network share, configure custom font folders, and output TIFFs to a local directory. | rendering-workflow | doc, tiff | llm |
+| 15 | `load-documents-from-a-network-share-configure-custom-font-folders-and-output-tiffs-to-a-lo.cs` | Load documents from a network share, configure custom font folders, and output TIFFs to a local directory. | rendering-workflow | doc, tiff | mcp |
 | 16 | `install-truetype-fonts-on-linux-by-copying-ttf-files-and-pointing-fontsettings-to-the-dire.cs` | Install TrueType fonts on Linux by copying .TTF files and pointing FontSettings to the directory. | rendering-workflow | pdf | mcp |
 | 17 | `render-a-doc-file-on-a-headless-linux-server-using-fontsettings-that-reference-the-linux-f.cs` | Render a DOC file on a headless Linux server using FontSettings that reference the Linux font folder. | rendering-workflow | doc | mcp |
 | 18 | `verify-that-opentype-features-such-as-discretionary-ligatures-appear-correctly-in-the-gene.cs` | Verify that OpenType features such as discretionary ligatures appear correctly in the generated TIFF. | rendering-workflow | tiff | mcp |
@@ -133,9 +133,9 @@ dotnet run --configuration Release --no-build
 | 62 | `set-imagesaveoptions-dpix-to-72-and-dpiy-to-144-to-create-vertically-stretched-tiff.cs` | Set ImageSaveOptions.DpiX to 72 and DpiY to 144 to create vertically stretched TIFF. | rendering-workflow | tiff | mcp |
 | 63 | `set-imagesaveoptions-dpix-to-72-and-dpiy-to-300-for-asymmetric-resolution-tiff.cs` | Set ImageSaveOptions.DpiX to 72 and DpiY to 300 for asymmetric resolution TIFF. | rendering-workflow | tiff | mcp |
 | 64 | `split-a-generated-multipage-tiff-into-individual-page-images-programmatically-after-conver.cs` | Split a generated multipage TIFF into individual page images programmatically after conversion. | rendering-workflow | tiff | mcp |
-| 65 | `create-a-unit-test-that-verifies-tiff-output-matches-expected-pixel-format-and-compression.cs` | Create a unit test that verifies TIFF output matches expected pixel format and compression. | rendering-workflow | tiff | llm |
-| 66 | `create-a-unit-test-that-ensures-1-bit-tiff-files-contain-exactly-two-colors.cs` | Create a unit test that ensures 1-bit TIFF files contain exactly two colors. | rendering-workflow | tiff | mcp |
-| 67 | `extract-embedded-truetype-fonts-from-a-pdf-to-verify-correct-subsetting-after-rendering.cs` | Extract embedded TrueType fonts from a PDF to verify correct subsetting after rendering. | rendering-workflow | pdf | mcp |
+| 65 | `create-a-unit-test-that-verifies-tiff-output-matches-expected-pixel-format-and-compression.cs` | Create a unit test that verifies TIFF output matches expected pixel format and compression. | rendering-workflow | tiff | mcp |
+| 66 | `create-a-unit-test-that-ensures-1-bit-tiff-files-contain-exactly-two-colors.cs` | Create a unit test that ensures 1-bit TIFF files contain exactly two colors. | rendering-workflow | tiff | existing_repo |
+| 67 | `extract-embedded-truetype-fonts-from-a-pdf-to-verify-correct-subsetting-after-rendering.cs` | Extract embedded TrueType fonts from a PDF to verify correct subsetting after rendering. | rendering-workflow | pdf | llm |
 | 68 | `render-a-docx-to-pdf-with-full-font-embedding-and-then-extract-fonts-to-confirm-subsetting.cs` | Render a DOCX to PDF with full font embedding and then extract fonts to confirm subsetting disabled. | rendering-workflow | docx, doc, pdf | mcp |
 | 69 | `configure-fontsettings-substitutionsettings-to-map-missing-arial-to-liberation-sans-on-lin.cs` | Configure FontSettings.SubstitutionSettings to map missing Arial to Liberation Sans on Linux platforms. | rendering-workflow | pdf | mcp |
 | 70 | `configure-fontsettings-to-prioritize-fonts-from-a-user-specified-directory-over-system-fon.cs` | Configure FontSettings to prioritize fonts from a user-specified directory over system fonts during rendering. | rendering-workflow | pdf | mcp |
@@ -168,6 +168,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.
