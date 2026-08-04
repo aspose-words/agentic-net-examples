@@ -1,52 +1,67 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Prepare an output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Define directories for input and output.
+        string baseDir = Directory.GetCurrentDirectory();
+        string outputDir = Path.Combine(baseDir, "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with six pages.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 1; i <= 6; i++)
+        // Create a sample document with multiple pages.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        for (int i = 1; i <= 5; i++)
         {
             builder.Writeln($"This is page {i}.");
-            if (i < 6)
+            if (i < 5)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save the original document.
+        // Save the source document (optional, for reference).
         string sourcePath = Path.Combine(outputDir, "Source.docx");
-        doc.Save(sourcePath);
+        sourceDoc.Save(sourcePath);
 
-        // Define custom page ranges (zero‑based): pages 1‑3 (indices 0‑2) and pages 5‑6 (indices 4‑5).
+        // Create a DocumentSplitCriteria instance and set a split mode.
+        // Here we use PageBreak as an example; custom page‑range splitting will be performed manually.
+        DocumentSplitCriteria splitCriteria = DocumentSplitCriteria.PageBreak;
+
+        // Define custom page ranges (zero‑based indices). Example: pages 1‑2 and 4‑5.
         var customRanges = new (int start, int count)[]
         {
-            (0, 3), // pages 1‑3
-            (4, 2)  // pages 5‑6
+            (0, 2), // pages 1 and 2
+            (3, 2)  // pages 4 and 5
         };
 
-        // Extract each range and save it as a separate HTML file.
+        // Extract each range and save as a separate document.
         for (int i = 0; i < customRanges.Length; i++)
         {
             var (start, count) = customRanges[i];
-            Document part = doc.ExtractPages(start, count);
-            string partPath = Path.Combine(outputDir, $"SplitCustom_part{i + 1}.html");
-            part.Save(partPath, SaveFormat.Html);
+            Document part = sourceDoc.ExtractPages(start, count);
+            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
+            part.Save(partPath);
         }
 
-        // Validate that the expected split files were created.
-        string[] splitFiles = Directory.GetFiles(outputDir, "SplitCustom_part*.html");
-        if (splitFiles.Length != customRanges.Length)
-            throw new InvalidOperationException($"Expected {customRanges.Length} split HTML files, but found {splitFiles.Length}.");
+        // Verify that the expected split files were created.
+        for (int i = 1; i <= customRanges.Length; i++)
+        {
+            string partPath = Path.Combine(outputDir, $"Part_{i}.docx");
+            if (!File.Exists(partPath))
+                throw new FileNotFoundException($"Expected split document not found: {partPath}");
+        }
 
-        Console.WriteLine($"Generated {splitFiles.Length} split HTML file(s) in '{outputDir}'.");
+        // Optional: demonstrate saving the source document to HTML using the split criteria.
+        // This will split the HTML output at each page break.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
+        {
+            DocumentSplitCriteria = splitCriteria
+        };
+        string htmlPath = Path.Combine(outputDir, "Source.html");
+        sourceDoc.Save(htmlPath, htmlOptions);
     }
 }

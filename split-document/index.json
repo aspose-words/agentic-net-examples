@@ -1,6 +1,6 @@
 {
   "category": {
-    "name": "Split-Document",
+    "name": "Split Document",
     "slug": "split-document",
     "product": "Aspose.Words",
     "language": "csharp",
@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -18,21 +18,23 @@
       "Aspose.Words.Saving",
       "System.Linq",
       "System.Collections.Generic",
+      "Aspose.Words.Loading",
       "Aspose.Words.Tables"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "Directory",
-      "File",
       "Path",
+      "Paragraph",
       "HtmlSaveOptions",
       "SaveFormat",
       "StyleIdentifier",
-      "Paragraph",
-      "Node",
+      "File",
       "NodeType",
-      "Style",
+      "Node",
+      "MemoryStream",
+      "LoadOptions",
       "Range",
       "Table",
       "Row",
@@ -301,8 +303,8 @@
         "doc",
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 20,
@@ -368,8 +370,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 26,
@@ -391,8 +393,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
@@ -402,8 +404,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 29,

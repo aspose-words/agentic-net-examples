@@ -1,100 +1,62 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Create an output folder for the split parts.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
-        if (!Directory.Exists(outputDir))
-            Directory.CreateDirectory(outputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with heading paragraphs.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Build a sample document that contains three sections.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add three chapters, each starting with a Heading 1 style.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 1.");
+        // Section 1
+        builder.Writeln("Section 1 - First paragraph.");
+        builder.Writeln("Section 1 - Second paragraph.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage); // start Section 2
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 2.");
+        // Section 2
+        builder.Writeln("Section 2 - First paragraph.");
+        builder.Writeln("Section 2 - Second paragraph.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage); // start Section 3
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 3");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 3.");
+        // Section 3
+        builder.Writeln("Section 3 - First paragraph.");
+        builder.Writeln("Section 3 - Second paragraph.");
 
-        // Save the source document for inspection (optional).
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        sourceDoc.Save(sourcePath);
-
-        // ----------- Split the document by heading paragraphs -------------
-        // Manually create separate Document objects for each heading section.
-        List<Document> splitDocs = new List<Document>();
-
-        // Get all paragraphs in the source document (deep traversal).
-        NodeCollection paragraphs = sourceDoc.GetChildNodes(NodeType.Paragraph, true);
-
-        Document currentPart = null;
-        NodeImporter importer = null;
-
-        foreach (Paragraph para in paragraphs)
+        // Split the document by its sections.
+        for (int i = 0; i < doc.Sections.Count; i++)
         {
-            // Determine whether the paragraph is a heading.
-            bool isHeading = para.ParagraphFormat.IsHeading;
+            Section sourceSection = doc.Sections[i];
 
-            if (isHeading)
-            {
-                // When a new heading is encountered, finish the previous part.
-                if (currentPart != null)
-                    splitDocs.Add(currentPart);
+            // Create a new empty document that will hold the imported section.
+            Document splitDoc = new Document();
 
-                // Start a new part document.
-                currentPart = new Document();
-                currentPart.EnsureMinimum(); // Guarantees a section/body/paragraph exists.
-                importer = new NodeImporter(sourceDoc, currentPart, ImportFormatMode.KeepSourceFormatting);
-            }
+            // Remove the default empty section that Aspose.Words creates for a new document.
+            splitDoc.RemoveAllChildren();
 
-            // If we have an active part, import the current paragraph into it.
-            if (currentPart != null && importer != null)
-            {
-                Node importedNode = importer.ImportNode(para, true);
-                currentPart.FirstSection.Body.AppendChild(importedNode);
-            }
-        }
+            // Import the source section into the new document.
+            // NodeImporter works with Document objects, not with Section objects directly.
+            NodeImporter importer = new NodeImporter(doc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(sourceSection, true);
 
-        // Add the final part if it exists.
-        if (currentPart != null)
-            splitDocs.Add(currentPart);
+            // Append the imported section to the split document.
+            splitDoc.AppendChild(importedSection);
 
-        // Save each split part to a separate file.
-        for (int i = 0; i < splitDocs.Count; i++)
-        {
-            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
-            splitDocs[i].Save(partPath);
-        }
+            // Save the split part to a file.
+            string partPath = Path.Combine(outputDir, $"SplitPart_{i + 1}.docx");
+            splitDoc.Save(partPath, SaveFormat.Docx);
 
-        // Simple validation: ensure that the expected number of parts were created.
-        int expectedParts = 3; // We added three heading paragraphs.
-        if (splitDocs.Count != expectedParts)
-            throw new InvalidOperationException($"Expected {expectedParts} split parts, but got {splitDocs.Count}.");
-
-        // Verify that each output file exists.
-        for (int i = 0; i < expectedParts; i++)
-        {
-            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
+            // Verify that the file was created.
             if (!File.Exists(partPath))
-                throw new FileNotFoundException($"Split part file not found: {partPath}");
+                throw new InvalidOperationException($"Failed to create split file: {partPath}");
         }
 
-        Console.WriteLine("Document split completed successfully.");
+        Console.WriteLine($"Document split into {doc.Sections.Count} parts. Files saved to: {outputDir}");
     }
 }

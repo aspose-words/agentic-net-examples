@@ -6,7 +6,7 @@ framework: net8.0
 product: Aspose.Words
 ---
 
-# AGENTS.md - Split-Document
+# AGENTS.md - Split Document
 
 ## Purpose
 
@@ -130,7 +130,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Split an HTML source into chapters and save each as DOCX while preserving inline styles.
   - Workflow: split-workflow
   - Outputs: docx, doc, html
-  - Selected engine: llm
+  - Selected engine: mcp
 - `split-a-document-by-custom-page-ranges-like-1-3-5-7-and-export-each-range-as-pdf.cs`
   - Task: Split a document by custom page ranges like 1-3,5-7 and export each range as PDF.
   - Workflow: split-workflow
@@ -160,7 +160,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Use DocumentSplitCriteria enumeration to split by sections and then merge selected parts.
   - Workflow: split-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `apply-documentpartsavingcallback-to-customize-file-naming-convention-for-each-split-output.cs`
   - Task: Apply DocumentPartSavingCallback to customize file naming convention for each split output.
   - Workflow: split-workflow
@@ -170,12 +170,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that each split DOCX file maintains original header and footer content after saving.
   - Workflow: split-workflow
   - Outputs: docx, doc
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `execute-split-operation-on-multiple-documents-sequentially-storing-results-in-designated-o.cs`
   - Task: Execute split operation on multiple documents sequentially, storing results in designated output directories.
   - Workflow: split-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `combine-page-range-and-heading-criteria-to-produce-parts-that-start-at-each-heading-on-new.cs`
   - Task: Combine page range and heading criteria to produce parts that start at each heading on new page.
   - Workflow: split-workflow
@@ -204,7 +204,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -218,7 +218,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

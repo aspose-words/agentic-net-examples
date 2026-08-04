@@ -3,43 +3,35 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class SplitDocumentByPages
 {
     public static void Main()
     {
-        // Define folders for input DOCX files and output PDF files.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputPdfs");
+        // Base working directory for the demo.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitDocumentDemo");
+        string inputDir = Path.Combine(baseDir, "Input");
+        string outputDir = Path.Combine(baseDir, "Output");
 
-        // Ensure the folders exist.
+        // Ensure input and output folders exist.
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create a few sample DOCX files if the input folder is empty.
-        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
-        {
-            CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"));
-            CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"));
-        }
+        // Create sample DOCX files with multiple pages.
+        CreateSampleDocuments(inputDir);
 
-        // Process each DOCX file in the input folder.
+        // Process each DOCX file: split by pages and save each page as a PDF.
         foreach (string docxPath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            // Load the source document.
             Document sourceDoc = new Document(docxPath);
+            int pageCount = sourceDoc.PageCount; // Triggers layout calculation.
 
-            // Ensure the layout is up‑to‑date and obtain the page count.
-            int pageCount = sourceDoc.PageCount;
-
-            // Extract each page and save it as an individual PDF.
-            for (int pageIndex = 0; pageIndex < pageCount; pageIndex++)
+            for (int page = 1; page <= pageCount; page++)
             {
-                // Extract a single page (pageIndex is zero‑based). The second parameter is the count of pages to extract.
-                Document pageDoc = sourceDoc.ExtractPages(pageIndex, 1);
+                // Extract a single page (zero‑based index, count = 1).
+                Document pageDoc = sourceDoc.ExtractPages(page - 1, 1);
 
                 // Build the output PDF file name.
-                string pdfFileName = $"{Path.GetFileNameWithoutExtension(docxPath)}_Page{pageIndex + 1}.pdf";
+                string pdfFileName = $"{Path.GetFileNameWithoutExtension(docxPath)}_Page{page}.pdf";
                 string pdfPath = Path.Combine(outputDir, pdfFileName);
 
                 // Save the extracted page as PDF.
@@ -47,34 +39,51 @@ public class Program
             }
         }
 
-        // Validate that PDFs were created.
-        int createdPdfCount = Directory.GetFiles(outputDir, "*.pdf").Length;
-        if (createdPdfCount == 0)
-        {
-            throw new InvalidOperationException("No PDF files were generated.");
-        }
-
-        // Report the result.
-        Console.WriteLine($"Processing complete. {createdPdfCount} PDF files created in '{outputDir}'.");
+        // Validate that each expected PDF file was created.
+        ValidateOutputs(inputDir, outputDir);
     }
 
-    // Helper method to create a simple multi‑page DOCX document.
-    private static void CreateSampleDocument(string filePath)
+    private static void CreateSampleDocuments(string folder)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add three pages with distinct content.
-        for (int i = 1; i <= 3; i++)
+        // Create two sample documents, each with three pages.
+        for (int docIndex = 1; docIndex <= 2; docIndex++)
         {
-            builder.Writeln($"This is page {i} of {Path.GetFileName(filePath)}.");
-            if (i < 3)
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            for (int page = 1; page <= 3; page++)
             {
-                builder.InsertBreak(BreakType.PageBreak);
+                builder.Writeln($"Sample Document {docIndex} - Page {page}");
+                if (page < 3)
+                {
+                    // Insert a page break to start a new page.
+                    builder.InsertBreak(BreakType.PageBreak);
+                }
+            }
+
+            string fileName = Path.Combine(folder, $"Sample{docIndex}.docx");
+            doc.Save(fileName);
+        }
+    }
+
+    private static void ValidateOutputs(string inputFolder, string outputFolder)
+    {
+        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
+        {
+            Document doc = new Document(docxPath);
+            int expectedPages = doc.PageCount;
+
+            for (int page = 1; page <= expectedPages; page++)
+            {
+                string expectedPdf = Path.Combine(
+                    outputFolder,
+                    $"{Path.GetFileNameWithoutExtension(docxPath)}_Page{page}.pdf");
+
+                if (!File.Exists(expectedPdf))
+                {
+                    throw new FileNotFoundException($"Expected PDF not found: {expectedPdf}");
+                }
             }
         }
-
-        // Save the document.
-        doc.Save(filePath);
     }
 }

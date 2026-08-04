@@ -1,14 +1,14 @@
-# Split-Document Examples for Aspose.Words for .NET
+# Split Document Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Split-Document category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Split Document category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
-- Category: Split-Document
+- Category: Split Document
 - Slug: split-document
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Split Workflow examples: 30
 
 ## Category rules that shaped these examples
@@ -22,7 +22,7 @@ This folder contains the live, publish-ready C# examples for the Split-Document 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 
 ## Running Examples
 
@@ -31,7 +31,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -52,7 +52,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # PowerShell example
 Copy-Item ..\split-document\load-a-docx-source-document-using-the-document-class-before-splitting.cs .\Program.cs
@@ -83,16 +83,16 @@ dotnet run --configuration Release --no-build
 | 16 | `merge-selected-split-documents-by-loading-them-and-using-appenddocument-to-create-combined.cs` | Merge selected split documents by loading them and using AppendDocument to create combined file. | split-workflow | doc | mcp |
 | 17 | `process-a-batch-of-docx-files-splitting-each-by-pages-and-saving-pdfs-to-a-folder.cs` | Process a batch of DOCX files, splitting each by pages and saving PDFs to a folder. | split-workflow | docx, doc, pdf | mcp |
 | 18 | `split-an-epub-source-into-chapters-and-save-each-chapter-as-html-preserving-layout.cs` | Split an EPUB source into chapters and save each chapter as HTML preserving layout. | split-workflow | html, epub | mcp |
-| 19 | `split-an-html-source-into-chapters-and-save-each-as-docx-while-preserving-inline-styles.cs` | Split an HTML source into chapters and save each as DOCX while preserving inline styles. | split-workflow | docx, doc, html | llm |
+| 19 | `split-an-html-source-into-chapters-and-save-each-as-docx-while-preserving-inline-styles.cs` | Split an HTML source into chapters and save each as DOCX while preserving inline styles. | split-workflow | docx, doc, html | mcp |
 | 20 | `split-a-document-by-custom-page-ranges-like-1-3-5-7-and-export-each-range-as-pdf.cs` | Split a document by custom page ranges like 1-3,5-7 and export each range as PDF. | split-workflow | doc, pdf | mcp |
 | 21 | `split-a-large-word-file-into-50-page-chunks-and-save-each-chunk-as-pdf.cs` | Split a large Word file into 50-page chunks and save each chunk as PDF. | split-workflow | pdf | mcp |
 | 22 | `ensure-split-parts-retain-complete-table-rows-when-original-document-contains-spanning-tab.cs` | Ensure split parts retain complete table rows when original document contains spanning tables. | split-workflow | doc | mcp |
 | 23 | `retain-original-page-orientation-for-each-split-part-preserving-landscape-pages.cs` | Retain original page orientation for each split part, preserving landscape pages. | split-workflow | docx | mcp |
 | 24 | `load-a-source-document-define-split-criteria-and-execute-split-operation-in-a-single-workf.cs` | Load a source document, define split criteria, and execute split operation in a single workflow. | split-workflow | doc | mcp |
-| 25 | `use-documentsplitcriteria-enumeration-to-split-by-sections-and-then-merge-selected-parts.cs` | Use DocumentSplitCriteria enumeration to split by sections and then merge selected parts. | split-workflow | doc | llm |
+| 25 | `use-documentsplitcriteria-enumeration-to-split-by-sections-and-then-merge-selected-parts.cs` | Use DocumentSplitCriteria enumeration to split by sections and then merge selected parts. | split-workflow | doc | mcp |
 | 26 | `apply-documentpartsavingcallback-to-customize-file-naming-convention-for-each-split-output.cs` | Apply DocumentPartSavingCallback to customize file naming convention for each split output. | split-workflow | doc | mcp |
-| 27 | `validate-that-each-split-docx-file-maintains-original-header-and-footer-content-after-savi.cs` | Validate that each split DOCX file maintains original header and footer content after saving. | split-workflow | docx, doc | existing_repo |
-| 28 | `execute-split-operation-on-multiple-documents-sequentially-storing-results-in-designated-o.cs` | Execute split operation on multiple documents sequentially, storing results in designated output directories. | split-workflow | doc | llm |
+| 27 | `validate-that-each-split-docx-file-maintains-original-header-and-footer-content-after-savi.cs` | Validate that each split DOCX file maintains original header and footer content after saving. | split-workflow | docx, doc | mcp |
+| 28 | `execute-split-operation-on-multiple-documents-sequentially-storing-results-in-designated-o.cs` | Execute split operation on multiple documents sequentially, storing results in designated output directories. | split-workflow | doc | mcp |
 | 29 | `combine-page-range-and-heading-criteria-to-produce-parts-that-start-at-each-heading-on-new.cs` | Combine page range and heading criteria to produce parts that start at each heading on new page. | split-workflow | docx | mcp |
 | 30 | `use-documentsplitcriteria-to-split-by-sections-then-save-each-part-to-a-network-share-loca.cs` | Use DocumentSplitCriteria to split by sections, then save each part to a network share location. | split-workflow | doc | mcp |
 
@@ -124,6 +124,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

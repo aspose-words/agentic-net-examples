@@ -4,13 +4,13 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Define a folder for output files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Create a sample document with headings and sections.
         Document doc = new Document();
@@ -18,54 +18,56 @@ public class Program
 
         // First heading (level 1).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1");
+        builder.Writeln("Heading 1 - Section A");
 
-        // Add some normal text.
+        // Some body text.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("Paragraph under Heading 1.");
 
-        // Insert a section break.
+        // Insert a section break (new page) to start a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
         // Second heading (level 2) in the new section.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 2");
+        builder.Writeln("Heading 2 - Section B");
 
-        // Add more text.
+        // More body text.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("Paragraph under Heading 2.");
 
-        // Insert another heading (level 3) – this will not trigger a split because we limit to level 2.
+        // Insert another heading (level 3) without a new section.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Heading 3");
+        builder.Writeln("Heading 3 - Same Section");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("Paragraph under Heading 3.");
 
-        // Configure HtmlSaveOptions to split by both headings and sections.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+        // Prepare HtmlSaveOptions to split by both headings and sections.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
+            // Combine the flags using bitwise OR.
             DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph | DocumentSplitCriteria.SectionBreak,
-            DocumentSplitHeadingLevel = 2 // Split at Heading 1 and Heading 2.
+            // Split at heading levels 1 and 2 (adjust as needed).
+            DocumentSplitHeadingLevel = 2
         };
 
-        // Save the document; Aspose.Words will create multiple HTML files.
-        string mainFileName = Path.Combine(artifactsDir, "SplitDocument.html");
-        doc.Save(mainFileName, saveOptions);
+        // Save the document; Aspose.Words will generate multiple HTML files.
+        string baseFileName = Path.Combine(outputDir, "CombinedSplit.html");
+        doc.Save(baseFileName, saveOptions);
 
-        // Verify that split parts were created.
-        string[] splitFiles = Directory.GetFiles(artifactsDir, "SplitDocument-*.html");
-        Console.WriteLine($"Main file: {Path.GetFileName(mainFileName)}");
-        Console.WriteLine($"Number of split parts: {splitFiles.Length}");
-        foreach (string file in splitFiles)
+        // Validate that split parts were created.
+        // The main file plus at least one part file should exist.
+        string[] htmlFiles = Directory.GetFiles(outputDir, "CombinedSplit*.html");
+        if (htmlFiles.Length < 2)
         {
-            Console.WriteLine($" - {Path.GetFileName(file)}");
+            throw new InvalidOperationException("Expected multiple split HTML files, but fewer were found.");
         }
 
-        // Simple validation: ensure at least one split part exists.
-        if (splitFiles.Length == 0)
+        // Output the list of generated files (optional, for verification).
+        Console.WriteLine("Generated split HTML files:");
+        foreach (string file in htmlFiles.OrderBy(f => f))
         {
-            throw new InvalidOperationException("No split parts were generated.");
+            Console.WriteLine(" - " + Path.GetFileName(file));
         }
     }
 }

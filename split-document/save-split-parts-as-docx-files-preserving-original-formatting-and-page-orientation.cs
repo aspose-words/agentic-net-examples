@@ -1,74 +1,90 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Folder for all generated files.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample source document with two sections having different
-        //    page orientations (portrait and landscape) and some text.
+        // 1. Create a sample source document with multiple sections.
+        //    Each section has its own orientation, header and footer.
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // First section – default portrait orientation.
-        builder.Writeln("First section – portrait orientation.");
-        // Insert a section break to start a new section.
+        // Section 1 – Portrait orientation.
+        builder.PageSetup.Orientation = Orientation.Portrait;
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Write("Header – Section 1");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Write("Footer – Section 1");
+        builder.MoveToDocumentStart(); // Return to body.
+        builder.Writeln("Content of Section 1 (Portrait).");
+
+        // Insert a section break.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Second section – change orientation to landscape.
+        // Section 2 – Landscape orientation.
         builder.PageSetup.Orientation = Orientation.Landscape;
-        builder.Writeln("Second section – landscape orientation.");
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Write("Header – Section 2");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Write("Footer – Section 2");
+        builder.MoveToDocumentStart();
+        builder.Writeln("Content of Section 2 (Landscape).");
+
+        // Insert another section break.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Section 3 – Portrait orientation again.
+        builder.PageSetup.Orientation = Orientation.Portrait;
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Write("Header – Section 3");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Write("Footer – Section 3");
+        builder.MoveToDocumentStart();
+        builder.Writeln("Content of Section 3 (Portrait).");
 
         // Save the source document (optional, for inspection).
-        string sourcePath = Path.Combine(outputDir, "SourceDocument.docx");
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
+        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        sourceDoc.Save(sourcePath);
 
         // -----------------------------------------------------------------
-        // 2. Split the source document by sections.
-        //    Each section is saved as an independent DOCX file preserving
-        //    its original formatting and page setup (including orientation).
+        // 2. Split the document by sections and save each part as a DOCX.
+        //    Use ImportNode to correctly transfer sections between documents.
         // -----------------------------------------------------------------
-        int partNumber = 1;
-        foreach (Section section in sourceDoc.Sections)
+        int sectionCount = sourceDoc.Sections.Count;
+
+        for (int i = 0; i < sectionCount; i++)
         {
-            // Create a new empty document.
+            // Create a new empty document and remove its default empty section.
             Document partDoc = new Document();
-            // Remove the automatically created empty section.
             partDoc.RemoveAllChildren();
 
-            // Import the current section into the new document.
-            // KeepSourceFormatting ensures that all formatting, headers,
-            // footers, page setup, etc., are preserved.
-            Node importedSection = partDoc.ImportNode(section, true, ImportFormatMode.KeepSourceFormatting);
+            // Import the i‑th section from the source document into the new document.
+            // ImportNode performs a deep copy and re‑parents the nodes to the destination document.
+            Section importedSection = (Section)partDoc.ImportNode(sourceDoc.Sections[i], true);
+
+            // Append the imported section to the new document.
             partDoc.AppendChild(importedSection);
 
             // Save the split part.
-            string partPath = Path.Combine(outputDir, $"Part_{partNumber}.docx");
-            partDoc.Save(partPath, SaveFormat.Docx);
+            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
+            partDoc.Save(partPath);
 
             // Verify that the file was created.
             if (!File.Exists(partPath))
                 throw new InvalidOperationException($"Failed to create split part: {partPath}");
-
-            partNumber++;
         }
 
         // -----------------------------------------------------------------
-        // 3. Simple validation – ensure at least two parts were created.
+        // 3. Simple confirmation output (no user interaction required).
         // -----------------------------------------------------------------
-        int expectedParts = sourceDoc.Sections.Count;
-        int actualParts = Directory.GetFiles(outputDir, "Part_*.docx").Length;
-        if (actualParts != expectedParts)
-            throw new InvalidOperationException($"Expected {expectedParts} split parts, but found {actualParts}.");
-
-        // Execution completed without user interaction.
+        Console.WriteLine($"Source document and {sectionCount} split parts have been saved to: {outputDir}");
     }
 }

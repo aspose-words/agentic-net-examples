@@ -3,118 +3,83 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class SplitDocumentExample
+public class SplitDocumentAndValidate
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Define a folder for all generated files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitDemo");
         Directory.CreateDirectory(outputDir);
 
-        // Remove any previous split files.
-        foreach (string file in Directory.GetFiles(outputDir, "*.docx"))
-            File.Delete(file);
-
-        // -------------------------------------------------------------
-        // 1. Create a sample source document with three sections.
-        //    Each section has distinct header/footer texts.
-        // -------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // 1. Create a sample source document with two sections, each having
+        //    distinct header and footer text.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Enable different headers/footers for first, even and odd pages.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
-        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
+        // Section 1 header/footer.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Write("Header - Section 1");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Write("Footer - Section 1");
+        builder.MoveToSection(0);
+        builder.Writeln("Content of Section 1");
 
-        for (int i = 1; i <= 3; i++)
-        {
-            // Header – Primary
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            builder.Writeln($"Header Primary Sec{i}");
+        // Insert a section break to start Section 2.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-            // Header – Even
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
-            builder.Writeln($"Header Even Sec{i}");
+        // Section 2 header/footer.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Write("Header - Section 2");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Write("Footer - Section 2");
+        builder.MoveToSection(1);
+        builder.Writeln("Content of Section 2");
 
-            // Header – First
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-            builder.Writeln($"Header First Sec{i}");
-
-            // Footer – Primary
-            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-            builder.Writeln($"Footer Primary Sec{i}");
-
-            // Footer – Even
-            builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
-            builder.Writeln($"Footer Even Sec{i}");
-
-            // Footer – First
-            builder.MoveToHeaderFooter(HeaderFooterType.FooterFirst);
-            builder.Writeln($"Footer First Sec{i}");
-
-            // Return to the main body and add some content.
-            builder.MoveToDocumentEnd();
-            builder.Writeln($"Content of section {i}");
-
-            // Insert a section break after each section except the last.
-            if (i < 3)
-                builder.InsertBreak(BreakType.SectionBreakNewPage);
-        }
-
-        // Save the source document (optional, for reference).
+        // Save the source document.
         string sourcePath = Path.Combine(outputDir, "Source.docx");
         sourceDoc.Save(sourcePath);
 
-        // -------------------------------------------------------------
-        // 2. Split the document by sections, preserving headers/footers.
-        // -------------------------------------------------------------
-        for (int idx = 0; idx < sourceDoc.Sections.Count; idx++)
+        // -----------------------------------------------------------------
+        // 2. Split the document by sections. Each section becomes a separate
+        //    document that preserves its own headers and footers.
+        // -----------------------------------------------------------------
+        Document src = new Document(sourcePath);
+        int sectionCount = src.Sections.Count;
+
+        for (int i = 0; i < sectionCount; i++)
         {
             // Create a new empty document.
-            Document splitDoc = new Document();
-            // Remove the automatically created empty section.
-            splitDoc.Sections.Clear();
+            Document part = new Document();
+            part.RemoveAllChildren(); // Ensure the document is truly empty.
 
-            // Import the required section from the source document into the new document.
-            // ImportNode clones the node and reassigns it to the target document.
-            Section importedSection = (Section)splitDoc.ImportNode(sourceDoc.Sections[idx], true);
-            splitDoc.Sections.Add(importedSection);
+            // Import the i‑th section (including headers/footers) into the new document.
+            Section importedSection = (Section)part.ImportNode(src.Sections[i], true);
+            part.AppendChild(importedSection);
 
-            // Save the split document.
-            string splitPath = Path.Combine(outputDir, $"Section_{idx + 1}.docx");
-            splitDoc.Save(splitPath);
-        }
+            // Save the split part.
+            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
+            part.Save(partPath);
 
-        // -------------------------------------------------------------
-        // 3. Verify that each split document contains the expected headers
-        //    and footers.
-        // -------------------------------------------------------------
-        for (int i = 1; i <= 3; i++)
-        {
-            string splitPath = Path.Combine(outputDir, $"Section_{i}.docx");
-            if (!File.Exists(splitPath))
-                throw new FileNotFoundException($"Expected split file not found: {splitPath}");
+            // -----------------------------------------------------------------
+            // 3. Re‑open the saved part and verify that its header/footer text
+            //    matches the expected values.
+            // -----------------------------------------------------------------
+            Document loadedPart = new Document(partPath);
+            string headerText = loadedPart.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary].GetText().Trim();
+            string footerText = loadedPart.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary].GetText().Trim();
 
-            Document part = new Document(splitPath);
-            Section sec = part.FirstSection;
+            string expectedHeader = $"Header - Section {i + 1}";
+            string expectedFooter = $"Footer - Section {i + 1}";
 
-            // Helper to check that a header/footer contains the expected marker text.
-            void Verify(HeaderFooterType type, string expected)
+            if (!headerText.Contains(expectedHeader) || !footerText.Contains(expectedFooter))
             {
-                HeaderFooter hf = sec.HeadersFooters[type];
-                if (hf == null || !hf.GetText().Contains(expected))
-                    throw new InvalidOperationException(
-                        $"Header/Footer of type {type} does not contain expected text \"{expected}\" in {splitPath}");
+                throw new InvalidOperationException($"Validation failed for '{partPath}'. Expected header/footer not found.");
             }
-
-            Verify(HeaderFooterType.HeaderPrimary, $"Header Primary Sec{i}");
-            Verify(HeaderFooterType.HeaderEven, $"Header Even Sec{i}");
-            Verify(HeaderFooterType.HeaderFirst, $"Header First Sec{i}");
-            Verify(HeaderFooterType.FooterPrimary, $"Footer Primary Sec{i}");
-            Verify(HeaderFooterType.FooterEven, $"Footer Even Sec{i}");
-            Verify(HeaderFooterType.FooterFirst, $"Footer First Sec{i}");
         }
 
-        Console.WriteLine("Document split and verification completed successfully.");
+        // If execution reaches this point, all parts were created and validated successfully.
+        Console.WriteLine("Document split and validation completed successfully.");
     }
 }

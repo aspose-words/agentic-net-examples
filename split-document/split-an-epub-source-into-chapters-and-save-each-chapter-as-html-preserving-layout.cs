@@ -13,66 +13,65 @@ public class Program
         Directory.CreateDirectory(artifactsDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document that will be saved as EPUB.
+        // 1. Create a sample document with heading paragraphs representing chapters.
         // -----------------------------------------------------------------
         Document sampleDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-        // First chapter.
+        // Chapter 1
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of the first chapter.");
+        builder.Writeln("Content of chapter 1.");
 
-        // Second chapter.
+        // Chapter 2
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 2");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of the second chapter.");
+        builder.Writeln("Content of chapter 2.");
 
-        // Save the sample as EPUB – this will be our source file.
-        string sourceEpubPath = Path.Combine(artifactsDir, "Source.epub");
-        sampleDoc.Save(sourceEpubPath, SaveFormat.Epub);
+        // Save the document as an EPUB file (the source to be split).
+        string epubPath = Path.Combine(artifactsDir, "Sample.epub");
+        sampleDoc.Save(epubPath, SaveFormat.Epub);
 
         // -----------------------------------------------------------------
-        // 2. Load the EPUB source document.
+        // 2. Load the EPUB source.
         // -----------------------------------------------------------------
-        Document epubDoc = new Document(sourceEpubPath);
+        Document epubDoc = new Document(epubPath);
 
         // -----------------------------------------------------------------
         // 3. Configure HtmlSaveOptions to split at heading paragraphs.
         // -----------------------------------------------------------------
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
             DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-            DocumentSplitHeadingLevel = 1 // Split at Heading 1 only.
+            DocumentSplitHeadingLevel = 1 // Split only at Heading 1 (chapters).
         };
 
-        // Base name for the output HTML files.
-        string baseHtmlName = Path.Combine(artifactsDir, "Chapter.html");
-
-        // Save the document; Aspose.Words will create multiple HTML files.
-        epubDoc.Save(baseHtmlName, htmlOptions);
+        // Optional: specify a folder for images extracted during HTML conversion.
+        string imagesDir = Path.Combine(artifactsDir, "Images");
+        if (Directory.Exists(imagesDir))
+            Directory.Delete(imagesDir, true);
+        Directory.CreateDirectory(imagesDir);
+        saveOptions.ImagesFolder = imagesDir;
 
         // -----------------------------------------------------------------
-        // 4. Validate that the expected split files were created.
+        // 4. Save the EPUB as HTML with splitting enabled.
         // -----------------------------------------------------------------
-        // The first part keeps the original name, subsequent parts get a suffix like "-01.html".
-        string[] splitFiles = Directory.GetFiles(artifactsDir, "Chapter*.html")
-                                       .OrderBy(f => f)
-                                       .ToArray();
+        string htmlBasePath = Path.Combine(artifactsDir, "SplitOutput.html");
+        epubDoc.Save(htmlBasePath, saveOptions);
 
-        // Expect at least two files (two chapters).
-        if (splitFiles.Length < 2)
-        {
-            throw new InvalidOperationException($"Expected at least 2 split HTML files, but found {splitFiles.Length}.");
-        }
+        // -----------------------------------------------------------------
+        // 5. Validate that split HTML files were created.
+        // -----------------------------------------------------------------
+        string[] htmlFiles = Directory.GetFiles(artifactsDir, "SplitOutput*.html");
+        if (htmlFiles.Length < 2)
+            throw new InvalidOperationException("Expected multiple HTML parts after splitting, but fewer were found.");
 
-        // Output the list of generated files (optional, for verification).
-        Console.WriteLine("Generated HTML chapter files:");
-        foreach (string file in splitFiles)
+        // (Optional) Output the list of generated files for verification.
+        foreach (string file in htmlFiles.OrderBy(f => f))
         {
-            Console.WriteLine($"- {Path.GetFileName(file)}");
+            Console.WriteLine($"Generated: {Path.GetFileName(file)}");
         }
     }
 }

@@ -2,103 +2,102 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        // Prepare a temporary folder for output files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
+        if (Directory.Exists(outputDir))
+            Directory.Delete(outputDir, true);
         Directory.CreateDirectory(outputDir);
 
-        // Sample HTML with chapters (using <h1> as chapter headings)
+        // Sample HTML source containing headings and inline styles.
         string htmlContent = @"
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset='utf-8' />
-    <title>Sample Document</title>
-    <style>
-        .highlight { color: red; font-weight: bold; }
-    </style>
-</head>
+<head><title>Sample Document</title></head>
 <body>
-    <h1>Chapter 1: Introduction</h1>
-    <p>This is the <span class='highlight'>first</span> paragraph of the introduction.</p>
-    <p>Another paragraph with <b>bold</b> text.</p>
-
-    <h1>Chapter 2: Details</h1>
-    <p>Details start here. <i>Italic text</i> is also present.</p>
-    <p>More details in the second chapter.</p>
-
-    <h1>Chapter 3: Conclusion</h1>
-    <p>The conclusion wraps up the document.</p>
+<h1 style='color:blue;'>Chapter 1</h1>
+<p style='font-weight:bold;'>This is the first paragraph of chapter 1.</p>
+<p>This is a normal paragraph.</p>
+<h1 style='color:green;'>Chapter 2</h1>
+<p style='font-style:italic;'>First paragraph of chapter 2 with italic style.</p>
+<p>Another paragraph in chapter 2.</p>
+<h1 style='color:red;'>Chapter 3</h1>
+<p>Content of chapter 3.</p>
 </body>
 </html>";
 
-        // Write HTML to a temporary file
-        string htmlPath = Path.Combine(outputDir, "sample.html");
-        File.WriteAllText(htmlPath, htmlContent);
-
-        // Load the HTML document
-        Document sourceDoc = new Document(htmlPath);
-
-        // Find all Heading 1 paragraphs (chapters)
-        List<Paragraph> chapterHeadings = new List<Paragraph>();
-        foreach (Paragraph para in sourceDoc.GetChildNodes(NodeType.Paragraph, true))
+        // Load the HTML into an Aspose.Words Document using a MemoryStream.
+        using (MemoryStream htmlStream = new MemoryStream())
+        using (StreamWriter writer = new StreamWriter(htmlStream))
         {
-            string styleName = para.ParagraphFormat.Style?.Name;
-            if (!string.IsNullOrEmpty(styleName) && styleName.Equals("Heading 1", StringComparison.OrdinalIgnoreCase))
-                chapterHeadings.Add(para);
-        }
+            writer.Write(htmlContent);
+            writer.Flush();
+            htmlStream.Position = 0;
 
-        if (chapterHeadings.Count == 0)
-            throw new InvalidOperationException("No chapter headings (Heading 1) were found in the document.");
+            LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Html };
+            Document sourceDoc = new Document(htmlStream, loadOptions);
 
-        // Split each chapter into its own DOCX
-        for (int i = 0; i < chapterHeadings.Count; i++)
-        {
-            Paragraph startHeading = chapterHeadings[i];
-            Paragraph endHeading = (i + 1 < chapterHeadings.Count) ? chapterHeadings[i + 1] : null;
+            // Collect all paragraphs to identify heading paragraphs (Heading 1).
+            NodeCollection paragraphs = sourceDoc.GetChildNodes(NodeType.Paragraph, true);
 
-            // Create a new empty document
-            Document chapterDoc = new Document();
-            // Remove the default empty section body content
-            chapterDoc.FirstSection.Body.RemoveAllChildren();
+            List<Document> chapterDocs = new List<Document>();
+            Document currentChapter = null;
+            NodeImporter importer = null;
+            int chapterIndex = 0;
 
-            // Import headers and footers from the source document's first section (if any)
-            NodeImporter headerFooterImporter = new NodeImporter(sourceDoc, chapterDoc, ImportFormatMode.KeepSourceFormatting);
-            Section sourceSection = sourceDoc.FirstSection;
-            foreach (HeaderFooter headerFooter in sourceSection.HeadersFooters)
+            foreach (Paragraph para in paragraphs)
             {
-                HeaderFooter imported = (HeaderFooter)headerFooterImporter.ImportNode(headerFooter, true);
-                chapterDoc.FirstSection.HeadersFooters.Add(imported);
+                // Determine if the paragraph is a Heading 1.
+                bool isHeading1 = para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1;
+
+                if (isHeading1)
+                {
+                    // When a new heading is found, finalize the previous chapter (if any).
+                    if (currentChapter != null)
+                    {
+                        string chapterPath = Path.Combine(outputDir, $"Chapter_{chapterIndex}.docx");
+                        currentChapter.Save(chapterPath);
+                    }
+
+                    // Start a new chapter document.
+                    chapterIndex++;
+                    currentChapter = new Document();
+                    // Ensure the document has a section and body.
+                    currentChapter.RemoveAllChildren();
+                    Section sec = new Section(currentChapter);
+                    currentChapter.AppendChild(sec);
+                    Body body = new Body(currentChapter);
+                    sec.AppendChild(body);
+
+                    // Prepare an importer for this chapter.
+                    importer = new NodeImporter(sourceDoc, currentChapter, ImportFormatMode.KeepSourceFormatting);
+                }
+
+                // If we have an active chapter, import the current paragraph.
+                if (currentChapter != null && importer != null)
+                {
+                    Node importedNode = importer.ImportNode(para, true);
+                    currentChapter.FirstSection.Body.AppendChild(importedNode);
+                }
             }
 
-            // Import nodes belonging to this chapter
-            NodeImporter importer = new NodeImporter(sourceDoc, chapterDoc, ImportFormatMode.KeepSourceFormatting);
-            Node currentNode = startHeading;
-            while (currentNode != null && currentNode != endHeading)
+            // Save the last chapter if it exists.
+            if (currentChapter != null)
             {
-                Node importedNode = importer.ImportNode(currentNode, true);
-                chapterDoc.FirstSection.Body.AppendChild(importedNode);
-                currentNode = currentNode.NextSibling;
+                string chapterPath = Path.Combine(outputDir, $"Chapter_{chapterIndex}.docx");
+                currentChapter.Save(chapterPath);
             }
 
-            // Save the chapter document
-            string chapterPath = Path.Combine(outputDir, $"Chapter_{i + 1}.docx");
-            chapterDoc.Save(chapterPath);
+            // Validation: ensure that at least three chapter files were created.
+            string[] savedFiles = Directory.GetFiles(outputDir, "Chapter_*.docx");
+            if (savedFiles.Length < 3)
+                throw new InvalidOperationException("Expected at least three chapter files to be created.");
         }
-
-        // Verify that the expected files were created
-        for (int i = 0; i < chapterHeadings.Count; i++)
-        {
-            string expectedPath = Path.Combine(outputDir, $"Chapter_{i + 1}.docx");
-            if (!File.Exists(expectedPath))
-                throw new FileNotFoundException($"Expected chapter file not found: {expectedPath}");
-        }
-
-        // Optional: clean up temporary HTML file (comment out if you want to keep it)
-        // File.Delete(htmlPath);
     }
 }

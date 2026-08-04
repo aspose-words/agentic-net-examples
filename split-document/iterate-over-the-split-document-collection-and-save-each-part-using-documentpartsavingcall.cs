@@ -1,69 +1,101 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace SplitDocumentExample
 {
-    public static void Main()
+    // Custom callback to control how each document part is saved.
+    public class CustomDocumentPartSavingCallback : IDocumentPartSavingCallback
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        private readonly string _outputDirectory;
+        private readonly string _baseFileName;
+        private readonly DocumentSplitCriteria _splitCriteria;
+        private int _partCount = 0;
 
-        // Create a sample document with three sections.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Section 1");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 2");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 3");
-
-        // Configure HTML save options to split by section.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        public CustomDocumentPartSavingCallback(string outputDirectory, string baseFileName, DocumentSplitCriteria splitCriteria)
         {
-            DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-            DocumentPartSavingCallback = new SavedDocumentPartRename(outputDir, DocumentSplitCriteria.SectionBreak)
-        };
-
-        // Main output file name (the first part will be saved with this name if not overridden).
-        string mainFilePath = Path.Combine(outputDir, "SplitDocument.html");
-        doc.Save(mainFilePath, saveOptions);
-
-        // Verify that the expected parts were saved.
-        string[] partFiles = Directory.GetFiles(outputDir, "SplitDocument_part_*.html");
-        if (partFiles.Length != doc.Sections.Count)
-            throw new InvalidOperationException($"Expected {doc.Sections.Count} parts, but found {partFiles.Length}.");
-
-        // Example: list saved part files (no console output required by the task).
-        // foreach (var file in partFiles) { /* process if needed */ }
-    }
-
-    // Callback that assigns a custom file name and stream for each document part.
-    private class SavedDocumentPartRename : IDocumentPartSavingCallback
-    {
-        private readonly string _outputDir;
-        private readonly DocumentSplitCriteria _criteria;
-        private int _count;
-
-        public SavedDocumentPartRename(string outputDir, DocumentSplitCriteria criteria)
-        {
-            _outputDir = outputDir;
-            _criteria = criteria;
+            _outputDirectory = outputDirectory;
+            _baseFileName = baseFileName;
+            _splitCriteria = splitCriteria;
         }
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Generate a unique file name for each part.
-            string partFileName = $"SplitDocument_part_{++_count}.html";
+            // Determine the type of part being saved (section, page, etc.).
+            string partType = _splitCriteria switch
+            {
+                DocumentSplitCriteria.PageBreak => "Page",
+                DocumentSplitCriteria.ColumnBreak => "Column",
+                DocumentSplitCriteria.SectionBreak => "Section",
+                DocumentSplitCriteria.HeadingParagraph => "Heading",
+                _ => "Part"
+            };
 
-            // Set the file name (without path) and provide a stream to write the part.
+            // Create a unique file name for the part.
+            string partFileName = $"{_baseFileName}_part{++_partCount}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+
+            // Set the file name (without path) and the stream where Aspose.Words will write the part.
             args.DocumentPartFileName = partFileName;
-            args.DocumentPartStream = new FileStream(Path.Combine(_outputDir, partFileName), FileMode.Create);
-            // KeepDocumentPartStreamOpen remains false (default), so Aspose.Words will close the stream after saving.
+            string fullPath = Path.Combine(_outputDirectory, partFileName);
+            args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
+
+            // Ensure the stream will be closed by Aspose.Words after saving.
+            args.KeepDocumentPartStreamOpen = false;
+        }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Define output folder.
+            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+            Directory.CreateDirectory(artifactsDir);
+
+            // Create a sample document with multiple sections.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Section 1
+            builder.Writeln("Section 1 - Introduction");
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+            // Section 2
+            builder.Writeln("Section 2 - Body");
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+            // Section 3
+            builder.Writeln("Section 3 - Conclusion");
+
+            // Prepare HTML save options with splitting by section.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            {
+                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
+            };
+
+            // Base file name for the main output (used only for naming parts).
+            string baseFileName = "SplitDocument";
+
+            // Assign the custom callback.
+            saveOptions.DocumentPartSavingCallback = new CustomDocumentPartSavingCallback(
+                artifactsDir,
+                baseFileName,
+                saveOptions.DocumentSplitCriteria);
+
+            // Save the document; Aspose.Words will invoke the callback for each part.
+            string mainOutputPath = Path.Combine(artifactsDir, $"{baseFileName}.html");
+            doc.Save(mainOutputPath, saveOptions);
+
+            // Verify that the expected part files were created.
+            string[] partFiles = Directory.GetFiles(artifactsDir, $"{baseFileName}_part*_*.html");
+            if (partFiles.Length == 0)
+                throw new InvalidOperationException("No document parts were saved.");
+
+            // Output the list of generated files (optional, for demonstration).
+            Console.WriteLine("Generated document parts:");
+            foreach (string file in partFiles)
+                Console.WriteLine(Path.GetFileName(file));
         }
     }
 }
