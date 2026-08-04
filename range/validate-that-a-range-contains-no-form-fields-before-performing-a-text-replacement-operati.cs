@@ -1,36 +1,60 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
-public class Program
+namespace AsposeWordsRangeValidation
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add some text that includes a placeholder to be replaced later.
-        builder.Writeln("Hello _Name_! This is a sample document.");
-
-        // Uncomment the line below to add a form field and see the validation skip the replacement.
-        // builder.InsertField("FORMTEXT", "Enter name");
-
-        // Validate that the document's range does not contain any form fields.
-        bool containsFormFields = doc.Range.FormFields.Count > 0;
-
-        if (!containsFormFields)
+        public static void Main()
         {
-            // No form fields found – perform the text replacement.
-            int replaced = doc.Range.Replace("_Name_", "John Doe");
-            Console.WriteLine($"Replacements performed: {replaced}");
-        }
-        else
-        {
-            // Form fields are present – skip the replacement.
-            Console.WriteLine("The range contains form fields; replacement was not performed.");
-        }
+            // Define file paths.
+            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+            Directory.CreateDirectory(artifactsDir);
+            string sourcePath = Path.Combine(artifactsDir, "Source.docx");
+            string resultPath = Path.Combine(artifactsDir, "Result.docx");
 
-        // Save the resulting document to the local file system.
-        doc.Save("Output.docx");
+            // -----------------------------------------------------------------
+            // 1. Create a sample document with placeholder text.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Dear _Name_,");
+            builder.Writeln("Welcome to the Aspose.Words demo.");
+            // Uncomment the following line to add a form field and see the validation fail.
+            // builder.InsertCheckBox("AcceptTerms", false, false, 0);
+
+            // Save the source document.
+            doc.Save(sourcePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the document from disk.
+            // -----------------------------------------------------------------
+            Document loadedDoc = new Document(sourcePath);
+
+            // -----------------------------------------------------------------
+            // 3. Validate that the document's range contains no form fields.
+            // -----------------------------------------------------------------
+            // Use fully qualified type name to avoid conflict with System.Range.
+            Aspose.Words.Range range = loadedDoc.Range;
+            if (range.FormFields.Count == 0)
+            {
+                // No form fields found – perform the text replacement.
+                int replacements = range.Replace("_Name_", "John Doe");
+                Console.WriteLine($"Replacement performed. Count: {replacements}");
+            }
+            else
+            {
+                // Form fields exist – skip replacement.
+                Console.WriteLine("The range contains form fields; replacement skipped.");
+            }
+
+            // -----------------------------------------------------------------
+            // 4. Save the resulting document.
+            // -----------------------------------------------------------------
+            loadedDoc.Save(resultPath);
+            Console.WriteLine($"Result document saved to: {resultPath}");
+        }
     }
 }

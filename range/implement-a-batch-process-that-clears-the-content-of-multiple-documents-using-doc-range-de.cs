@@ -7,45 +7,46 @@ public class Program
     public static void Main()
     {
         // Define folders for input and output documents.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
 
         // Ensure the directories exist.
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create a few sample source documents.
-        CreateSampleDocument(Path.Combine(inputDir, "Doc1.docx"), "First document content.");
-        CreateSampleDocument(Path.Combine(inputDir, "Doc2.docx"), "Second document content.");
-        CreateSampleDocument(Path.Combine(inputDir, "Doc3.docx"), "Third document content.");
-
-        // Process each document: load, clear its entire range, and save the cleared version.
-        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
+        // -----------------------------------------------------------------
+        // Step 1: Create a few sample documents with some text.
+        // -----------------------------------------------------------------
+        for (int i = 1; i <= 3; i++)
         {
-            // Load the document.
-            Document doc = new Document(filePath);
-
-            // Delete all characters in the document's range, effectively clearing its content.
-            doc.Range.Delete();
-
-            // Determine the output file path (same file name in the output folder).
-            string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
-
-            // Save the cleared document.
-            doc.Save(outputPath);
+            string filePath = Path.Combine(inputDir, $"Sample{i}.docx");
+            CreateSampleDocument(filePath, $"This is the content of document {i}.");
         }
 
-        // Optional: indicate completion (no interactive input required).
-        Console.WriteLine("Batch clearing completed.");
+        // -----------------------------------------------------------------
+        // Step 2: Batch process each document – clear its entire content.
+        // -----------------------------------------------------------------
+        foreach (string file in Directory.GetFiles(inputDir, "*.docx"))
+        {
+            // Load the document.
+            Document doc = new Document(file);
+
+            // Delete all characters in the whole‑document range.
+            doc.Range.Delete();
+
+            // Save the cleared document to the output folder.
+            string fileName = Path.GetFileNameWithoutExtension(file);
+            string outPath = Path.Combine(outputDir, $"{fileName}_Cleared.docx");
+            doc.Save(outPath);
+        }
     }
 
-    // Helper method to create a simple document with specified text.
-    private static void CreateSampleDocument(string filePath, string text)
+    // Helper method to create a simple document with a single paragraph of text.
+    private static void CreateSampleDocument(string path, string text)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln(text);
-        doc.Save(filePath);
+        doc.Save(path);
     }
 }

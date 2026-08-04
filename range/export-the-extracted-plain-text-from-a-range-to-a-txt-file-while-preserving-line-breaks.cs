@@ -3,37 +3,26 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class ExportRangeToText
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample content with line breaks.
+        // Add some paragraphs and a page break to generate line breaks in the text.
         builder.Writeln("First line.");
         builder.Writeln("Second line.");
-        builder.Writeln("Third line.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Third line after page break.");
 
-        // Extract the plain text of the whole document range.
-        // The returned string contains control characters (CR) that represent line breaks.
+        // Extract the plain text from the whole‑document range.
+        // The Range.Text property includes control characters such as carriage returns and page breaks.
         string extractedText = doc.Range.Text;
 
-        // Define the output .txt file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ExtractedText.txt");
-
-        // Write the extracted text to the file, preserving the original line breaks.
+        // Save the extracted text to a .txt file, preserving the line breaks as they appear in the string.
+        string outputPath = "ExtractedText.txt";
         File.WriteAllText(outputPath, extractedText);
-
-        // Optionally, also demonstrate saving the document directly as plain text using TxtSaveOptions.
-        // This shows an alternative way to obtain the same result.
-        TxtSaveOptions txtOptions = new TxtSaveOptions
-        {
-            // Ensure paragraph breaks are written as CRLF (default) to keep line breaks.
-            ParagraphBreak = Environment.NewLine
-        };
-        string directSavePath = Path.Combine(Directory.GetCurrentDirectory(), "DirectSave.txt");
-        doc.Save(directSavePath, txtOptions);
     }
 }

@@ -7,46 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // ---------------------------------------------------------------
-        // 1. Simulate a data source (e.g., a database) using a DataTable.
-        // ---------------------------------------------------------------
-        DataTable employees = new DataTable("Employees");
-        employees.Columns.Add("Id", typeof(int));
-        employees.Columns.Add("FullName", typeof(string));
+        // Simulate a database by using an in‑memory DataTable.
+        DataTable table = new DataTable();
+        table.Columns.Add("Id", typeof(int));
+        table.Columns.Add("Name", typeof(string));
+
+        // Define the primary key so that Find can locate rows by Id.
+        table.PrimaryKey = new[] { table.Columns["Id"] };
 
         // Insert a sample record.
-        employees.Rows.Add(1, "John Doe");
+        table.Rows.Add(1, "John Doe");
 
-        // Retrieve the FullName value for Id = 1.
-        string fullName = null;
-        foreach (DataRow row in employees.Rows)
-        {
-            if ((int)row["Id"] == 1)
-            {
-                fullName = row["FullName"].ToString();
-                break;
-            }
-        }
+        // Retrieve the name for replacement (mimicking a DB query).
+        string nameFromDb = table.Rows.Find(1) != null
+            ? table.Rows.Find(1)["Name"].ToString()
+            : "Unknown";
 
-        // ---------------------------------------------------------------
-        // 2. Create a Word document containing a placeholder to be replaced.
-        // ---------------------------------------------------------------
+        // Build a Word document containing a placeholder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Employee Report");
-        builder.Writeln("Name: {{FullName}}"); // Placeholder that will be replaced.
+        builder.Writeln("Dear _FullName_,");
+        builder.Writeln("Welcome to our service.");
 
-        // ---------------------------------------------------------------
-        // 3. Replace the placeholder text inside the document's range.
-        // ---------------------------------------------------------------
-        // Use the Range.Replace method for a simple string replacement.
-        // The placeholder "{{FullName}}" is replaced with the value retrieved from the data source.
-        doc.Range.Replace("{{FullName}}", fullName ?? string.Empty);
+        // Replace the placeholder with the value retrieved from the simulated database.
+        doc.Range.Replace("_FullName_", nameFromDb, new FindReplaceOptions());
 
-        // ---------------------------------------------------------------
-        // 4. Save the resulting document to the local file system.
-        // ---------------------------------------------------------------
-        const string outputPath = "EmployeeReport.docx";
+        // Save the resulting document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
+
+        // Output the final text to the console for verification.
+        Console.WriteLine("Document text after replacement:");
+        Console.WriteLine(doc.GetText().Trim());
     }
 }

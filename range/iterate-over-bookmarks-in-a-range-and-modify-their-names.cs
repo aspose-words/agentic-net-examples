@@ -12,30 +12,24 @@ public class Program
         // Insert three bookmarks with some text inside each.
         for (int i = 1; i <= 3; i++)
         {
-            string bookmarkName = $"MyBookmark_{i}";
+            string bookmarkName = $"Bookmark_{i}";
             builder.StartBookmark(bookmarkName);
-            builder.Write($"Text inside {bookmarkName}.");
+            builder.Write($"Content of {bookmarkName}");
             builder.EndBookmark(bookmarkName);
-            builder.Writeln(); // Add a line break after each bookmark.
+            builder.Writeln(); // Move to next line.
         }
 
-        // Iterate over all bookmarks in the document's range and modify their names.
+        // Get the collection of all bookmarks in the whole document range.
         BookmarkCollection bookmarks = doc.Range.Bookmarks;
+
+        // Iterate over each bookmark and modify its name.
         foreach (Bookmark bookmark in bookmarks)
         {
-            // Append "_Modified" to each bookmark name.
+            // Append "_Modified" to the original bookmark name.
             bookmark.Name = $"{bookmark.Name}_Modified";
         }
 
-        // Save the modified document.
-        string outputPath = "ModifiedBookmarks.docx";
-        doc.Save(outputPath);
-
-        // Output the new bookmark names to the console for verification.
-        Console.WriteLine("Modified bookmark names:");
-        foreach (Bookmark bookmark in doc.Range.Bookmarks)
-        {
-            Console.WriteLine(bookmark.Name);
-        }
+        // Save the modified document to disk.
+        doc.Save("ModifiedBookmarks.docx");
     }
 }
