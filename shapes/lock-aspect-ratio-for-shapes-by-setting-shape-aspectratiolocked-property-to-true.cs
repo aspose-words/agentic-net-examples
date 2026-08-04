@@ -11,18 +11,13 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // A tiny red PNG image (2x2 pixels) encoded in Base64.
-        // This avoids the need for System.Drawing and external image files.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAADUlEQVQImWNgYGD4DwABBAEA7pV6WQAAAABJRU5ErkJggg==";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        // Insert a rectangle shape with initial width and height.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 200, 100);
 
-        // Insert the image from the byte array as an inline shape.
-        Shape shape = builder.InsertImage(imageBytes);
-
-        // Lock the aspect ratio of the shape.
+        // Lock the shape's aspect ratio.
         shape.AspectRatioLocked = true;
 
-        // Define output path.
+        // Define the output file path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AspectRatioLocked.docx");
 
         // Save the document.
@@ -30,6 +25,6 @@ public class Program
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new Exception("The document was not saved successfully.");
     }
 }

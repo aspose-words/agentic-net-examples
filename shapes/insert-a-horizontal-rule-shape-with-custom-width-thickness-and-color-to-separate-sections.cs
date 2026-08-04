@@ -1,44 +1,41 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some content before the horizontal rule.
+        // Add some text before the horizontal rule.
         builder.Writeln("Section 1: Introduction");
         builder.Writeln("This is the first section of the document.");
 
-        // Insert the horizontal rule shape.
+        // Insert a horizontal rule shape.
         Shape horizontalRule = builder.InsertHorizontalRule();
 
-        // Customize the rule's appearance.
+        // Customize the horizontal rule: 80% width, 4 points thickness, blue color, solid (no shading).
         HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
-        format.Alignment = HorizontalRuleAlignment.Center;
-        format.WidthPercent = 80;      // 80% of the page width.
-        format.Height = 5;             // Thickness in points.
-        format.Color = Color.DarkBlue;
-        format.NoShade = true;         // Solid color without 3‑D shading.
+        format.WidthPercent = 80;      // Width as a percentage of the page width.
+        format.Height = 4;             // Thickness in points.
+        format.Color = Color.Blue;    // Rule color.
+        format.NoShade = true;         // Use solid color without 3D shading.
 
-        // Add content after the rule.
+        // Add text after the horizontal rule.
         builder.Writeln("Section 2: Details");
-        builder.Writeln("This is the second section of the document.");
+        builder.Writeln("This is the second section after the horizontal rule.");
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HorizontalRuleExample.docx");
-        doc.Save(outputPath);
+        string outputFile = Path.Combine(Directory.GetCurrentDirectory(), "HorizontalRuleExample.docx");
+        doc.Save(outputFile);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+        if (!File.Exists(outputFile))
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

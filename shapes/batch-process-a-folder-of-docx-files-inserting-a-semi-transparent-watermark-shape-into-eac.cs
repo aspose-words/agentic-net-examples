@@ -1,62 +1,59 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
-public class Program
+public class BatchWatermarkProcessor
 {
     public static void Main()
     {
-        // Define input and output folders relative to the current directory.
-        string inputFolder = Path.Combine(Environment.CurrentDirectory, "InputDocs");
-        string outputFolder = Path.Combine(Environment.CurrentDirectory, "OutputDocs");
+        // Define input and output directories relative to the current working directory.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputDocs");
 
-        // Ensure both directories exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure the input directory exists; create it if missing.
+        Directory.CreateDirectory(inputDir);
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputDir);
 
         // If the input folder is empty, create a sample DOCX file to process.
-        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
+        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
         {
-            Document sample = new Document();
-            DocumentBuilder sampleBuilder = new DocumentBuilder(sample);
-            sampleBuilder.Writeln("This is a sample document for watermark processing.");
-            string samplePath = Path.Combine(inputFolder, "Sample.docx");
-            sample.Save(samplePath);
+            string samplePath = Path.Combine(inputDir, "Sample.docx");
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln("This is a sample document for watermark processing.");
+            sampleDoc.Save(samplePath);
         }
 
-        // Process each DOCX file in the input folder.
-        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Process each DOCX file in the input directory.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
             // Load the document.
             Document doc = new Document(filePath);
-            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Move to the primary header so the watermark appears on every page.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            // Configure a semi‑transparent text watermark.
+            TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+            {
+                FontFamily = "Arial",
+                FontSize = 36,
+                Color = Color.Gray,
+                Layout = WatermarkLayout.Diagonal,
+                IsSemitrasparent = true // Ensure the watermark is semi‑transparent.
+            };
 
-            // Insert a floating rectangle shape that will serve as the watermark.
-            Shape watermark = builder.InsertShape(ShapeType.Rectangle, 300, 200);
-            watermark.FillColor = Color.LightGray;
-            // Set semi‑transparent fill (0 = opaque, 1 = fully transparent).
-            watermark.Fill.Transparency = 0.5f;
+            // Apply the watermark to the document.
+            doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
 
-            // Position the shape behind the text and center it on the page.
-            watermark.WrapType = WrapType.None;
-            watermark.BehindText = true;
-            watermark.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-            watermark.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-            watermark.HorizontalAlignment = HorizontalAlignment.Center;
-            watermark.VerticalAlignment = VerticalAlignment.Center;
-
-            // Save the modified document to the output folder.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
+            // Determine the output file path and save the modified document.
+            string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
             doc.Save(outputPath);
 
-            // Verify that the file was saved successfully.
+            // Validate that the file was saved successfully.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to save processed file: {outputPath}");
+                throw new IOException($"Failed to save watermarked document: {outputPath}");
         }
     }
 }

@@ -17,41 +17,35 @@ public class Program
             ShapeType.Rectangle,
             RelativeHorizontalPosition.Page, 100,   // 100 points from the left of the page
             RelativeVerticalPosition.Page, 100,     // 100 points from the top of the page
-            200, 100,                               // width = 200 points, height = 100 points
-            WrapType.None);                         // No text wrapping
+            200,                                     // width
+            100,                                     // height
+            WrapType.None);                         // no text wrapping
 
+        // Set visual properties of the rectangle.
         rect.FillColor = System.Drawing.Color.LightBlue;
         rect.StrokeColor = System.Drawing.Color.DarkBlue;
         rect.StrokeWeight = 2.0;
 
-        // Insert a floating text box shape with some text.
-        Shape textBox = builder.InsertShape(
-            ShapeType.TextBox,
-            RelativeHorizontalPosition.Page, 350,
-            RelativeVerticalPosition.Page, 150,
-            250, 100,
-            WrapType.None);
-
+        // Insert an inline text box shape.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 150, 50);
         textBox.FillColor = System.Drawing.Color.LightYellow;
         textBox.StrokeColor = System.Drawing.Color.Orange;
         textBox.StrokeWeight = 1.5;
 
-        // Add a paragraph inside the text box.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Hello Aspose.Words Shapes!");
-        run.Font.Size = 14;
-        run.Font.Bold = true;
-        para.AppendChild(run);
-        textBox.AppendChild(para);
+        // Add text to the text box.
+        builder.MoveTo(textBox.FirstParagraph);
+        builder.Font.Size = 12;
+        builder.Font.Name = "Arial";
+        builder.Writeln("Hello Shapes!");
 
-        // Configure PDF save options to render DrawingML shapes directly.
+        // Prepare PDF save options to render DrawingML shapes directly.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             DmlRenderingMode = DmlRenderingMode.DrawingML
         };
 
-        // Determine output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Shapes.pdf");
+        // Define output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapesOutput.pdf");
 
         // Save the document as PDF.
         doc.Save(outputPath, pdfOptions);
@@ -60,6 +54,7 @@ public class Program
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("Failed to create the PDF file.");
 
-        // Optionally, you could add further validation of file size, etc.
+        // Optionally, inform that the process completed (no interactive I/O required).
+        Console.WriteLine("PDF saved successfully to: " + outputPath);
     }
 }

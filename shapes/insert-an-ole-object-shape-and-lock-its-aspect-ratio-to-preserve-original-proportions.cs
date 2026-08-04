@@ -7,33 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a simple text file content to embed as an OLE object.
-        byte[] oleData = System.Text.Encoding.UTF8.GetBytes("This is a sample OLE object content.");
-        using (MemoryStream oleStream = new MemoryStream(oleData))
-        {
-            // Ensure the stream is positioned at the beginning.
-            oleStream.Position = 0;
+        // Create a temporary text file that will be embedded as an OLE object.
+        string tempFilePath = Path.Combine(Path.GetTempPath(), "SampleOle.txt");
+        File.WriteAllText(tempFilePath, "This is sample OLE content.");
 
-            // Insert the OLE object. Use the generic "Package" progId for a plain file.
-            // asIcon = false to embed the object directly, presentation = null to use default icon.
-            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
+        // Insert the OLE object (embedded, not as an icon) at the current cursor position.
+        // Parameters: file name, isLinked = false (embed), asIcon = false (show content), presentation = null.
+        Shape oleShape = builder.InsertOleObject(tempFilePath, false, false, null);
 
-            // Lock the aspect ratio to preserve original proportions.
-            oleShape.AspectRatioLocked = true;
-        }
+        // Lock the aspect ratio to preserve the original proportions of the OLE object.
+        oleShape.AspectRatioLocked = true;
 
-        // Define the output file path.
+        // Save the document to the current working directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectShape.docx");
-
-        // Save the document.
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved successfully.");
+            throw new Exception("The output document was not created.");
+
+        // Clean up the temporary file.
+        File.Delete(tempFilePath);
     }
 }

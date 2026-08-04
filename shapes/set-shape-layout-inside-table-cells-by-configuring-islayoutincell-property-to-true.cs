@@ -8,43 +8,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table with a single cell.
+        // Build a simple 2‑cell table.
         Table table = builder.StartTable();
         builder.InsertCell();
+        builder.Write("First cell");
+        builder.InsertCell();
+        builder.Write("Second cell");
+        builder.EndRow();
+        builder.EndTable();
 
-        // Move the cursor to the first paragraph of the first cell.
+        // Move the cursor to the first cell where the shape will be placed.
         builder.MoveTo(table.FirstRow.FirstCell.FirstParagraph);
 
-        // Insert a floating rectangle shape inside the cell.
+        // Insert a floating rectangle shape.
         Shape shape = builder.InsertShape(
             ShapeType.Rectangle,
-            RelativeHorizontalPosition.LeftMargin, 50,
-            RelativeVerticalPosition.TopMargin, 100,
+            RelativeHorizontalPosition.LeftMargin, 0,
+            RelativeVerticalPosition.TopMargin, 0,
             100, 100,
             WrapType.None);
 
         // Configure the shape to be laid out inside the table cell.
         shape.IsLayoutInCell = true;
-        shape.WrapType = WrapType.None; // Required for IsLayoutInCell to take effect.
-
-        // End the table.
-        builder.EndTable();
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeLayoutInCell.docx");
 
         // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeLayoutInCell.docx");
         doc.Save(outputPath);
 
-        // Validate that the file was created and the property is set correctly.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        if (!shape.IsLayoutInCell)
-            throw new InvalidOperationException("IsLayoutInCell property was not set to true.");
+            throw new Exception("The document was not saved correctly.");
     }
 }

@@ -12,25 +12,24 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a floating rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 80);
-        shape.WrapType = WrapType.None; // Make it a floating shape.
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        shape.Left = 100; // Position from the left edge of the page.
-        shape.Top = 120;  // Position from the top edge of the page.
+        Shape shape = builder.InsertShape(
+            ShapeType.Rectangle,
+            RelativeHorizontalPosition.Page, 100,   // left distance from page
+            RelativeVerticalPosition.Page, 100,     // top distance from page
+            200,                                    // width
+            100,                                    // height
+            WrapType.None);
 
-        // Retrieve the actual bounds of the shape after layout.
-        // The BoundsInPoints property provides the shape's bounding rectangle in points.
+        shape.StrokeColor = Color.Blue;
+
+        // Retrieve the actual bounds of the shape.
+        // The Shape class does not have GetActualBounds; use BoundsInPoints instead.
         RectangleF actualBounds = shape.BoundsInPoints;
 
         // Log the coordinate points.
-        Console.WriteLine("Actual Bounds:");
-        Console.WriteLine($"  X      = {actualBounds.X}");
-        Console.WriteLine($"  Y      = {actualBounds.Y}");
-        Console.WriteLine($"  Width  = {actualBounds.Width}");
-        Console.WriteLine($"  Height = {actualBounds.Height}");
+        Console.WriteLine($"Actual Bounds: X={actualBounds.X}, Y={actualBounds.Y}, Width={actualBounds.Width}, Height={actualBounds.Height}");
 
-        // Save the document to verify the shape is present.
+        // Save the document to the local file system.
         doc.Save("ActualBounds.docx");
     }
 }

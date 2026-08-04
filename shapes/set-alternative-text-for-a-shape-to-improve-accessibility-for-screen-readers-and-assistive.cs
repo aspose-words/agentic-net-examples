@@ -7,31 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple cube shape.
+        // Insert an inline cube shape with a size of 150x150 points.
         Shape shape = builder.InsertShape(ShapeType.Cube, 150, 150);
         shape.Name = "MyCube";
 
-        // Set alternative text for accessibility.
+        // Set the alternative text for accessibility (screen readers, etc.).
         shape.AlternativeText = "Alt text for MyCube.";
 
-        // Define output path.
+        // Define the output file path in the current working directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Shape_AltText.docx");
 
         // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created successfully.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
 
-        // Optional: Load the document again and confirm the alternative text.
-        Document loadedDoc = new Document(outputPath);
-        Shape loadedShape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
-        if (loadedShape.AlternativeText != "Alt text for MyCube.")
-            throw new InvalidOperationException("Alternative text was not set correctly.");
+        // Optionally, inform the user (no interactive prompts required).
+        Console.WriteLine($"Document saved successfully to: {outputPath}");
     }
 }

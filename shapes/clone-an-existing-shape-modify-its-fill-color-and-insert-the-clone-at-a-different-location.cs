@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -8,41 +8,44 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an initial floating rectangle shape.
-        Shape original = builder.InsertShape(
+        // Insert a floating rectangle shape at a specific position.
+        Shape originalShape = builder.InsertShape(
             ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, 100,   // left position
-            RelativeVerticalPosition.Page, 100,     // top position
-            100,                                     // width
-            50,                                      // height
-            WrapType.None);
+            RelativeHorizontalPosition.Page, 100,   // 100 points from the left of the page
+            RelativeVerticalPosition.Page, 100,     // 100 points from the top of the page
+            150, 100,                               // width = 150 points, height = 100 points
+            WrapType.None);                         // No text wrapping
 
         // Set the fill color of the original shape.
-        original.FillColor = Color.LightGray;
+        originalShape.FillColor = Color.LightBlue;
 
         // Clone the original shape (deep clone).
-        Shape cloned = (Shape)original.Clone(true);
+        Shape clonedShape = (Shape)originalShape.Clone(true);
 
-        // Modify the fill color of the cloned shape.
-        cloned.FillColor = Color.LightBlue;
+        // Change the fill color of the cloned shape.
+        clonedShape.FillColor = Color.LightCoral;
 
-        // Position the cloned shape at a different location.
-        cloned.Left = 300; // points from the left edge of the page
-        cloned.Top = 200;  // points from the top edge of the page
+        // Move the cloned shape to a different location.
+        clonedShape.Left = 300; // 300 points from the left of the page
+        clonedShape.Top = 200;  // 200 points from the top of the page
 
-        // Insert the cloned shape into the document tree.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(cloned);
+        // Insert the cloned shape into the document.
+        builder.InsertNode(clonedShape);
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ClonedShape.docx");
+        // Define the output file name.
+        string outputPath = "ClonedShape.docx";
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved successfully.");
+        {
+            throw new Exception($"The output file '{outputPath}' was not created.");
+        }
     }
 }
