@@ -1,6 +1,6 @@
 # OLE Objects Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the OLE Objects category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the OLE Objects category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the OLE Objects cat
 - Slug: ole-objects
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Inspection examples: 8
 - Insertion examples: 3
 - Online Video examples: 3
@@ -29,7 +29,7 @@ This folder contains the live, publish-ready C# examples for the OLE Objects cat
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 
 ## Running Examples
 
@@ -38,7 +38,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -59,7 +59,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # PowerShell example
 Copy-Item ..\ole-objects\insert-a-spreadsheet-ole-object-into-a-docx-using-documentbuilder-insertoleobject-with-its.cs .\Program.cs
@@ -73,7 +73,7 @@ dotnet run --configuration Release --no-build
 | # | File | Original task | Workflow | Outputs | Selected engine |
 |---|---|---|---|---|---|
 | 1 | `insert-a-spreadsheet-ole-object-into-a-docx-using-documentbuilder-insertoleobject-with-its.cs` | Insert a spreadsheet OLE object into a DOCX using DocumentBuilder.InsertOleObject with its ProgId. | inspection | docx | mcp |
-| 2 | `insert-a-pdf-file-as-an-ole-icon-specifying-custom-icon-image-and-display-size.cs` | Insert a PDF file as an OLE icon, specifying custom icon image and display size. | insertion | docx | mcp |
+| 2 | `insert-a-pdf-file-as-an-ole-icon-specifying-custom-icon-image-and-display-size.cs` | Insert a PDF file as an OLE icon, specifying custom icon image and display size. | insertion | docx | llm |
 | 3 | `insert-an-ole-object-as-an-icon-using-default-system-icon-without-specifying-custom-image.cs` | Insert an OLE object as an icon using default system icon without specifying custom image. | insertion | docx | mcp |
 | 4 | `set-the-file-name-and-extension-for-an-inserted-ole-object-to-preserve-original-metadata.cs` | Set the file name and extension for an inserted OLE object to preserve original metadata. | inspection | docx | mcp |
 | 5 | `use-documentbuilder-to-insert-an-ole-object-with-custom-width-and-height-parameters-for-pr.cs` | Use DocumentBuilder to insert an OLE object with custom width and height parameters for precise layout control. | insertion | docx | mcp |
@@ -136,6 +136,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

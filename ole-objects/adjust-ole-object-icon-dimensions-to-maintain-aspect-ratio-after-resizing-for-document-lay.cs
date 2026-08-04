@@ -7,32 +7,34 @@ public class AdjustOleIconAspectRatio
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a temporary file to be used as the OLE object source.
-        string tempDir = Path.GetTempPath();
-        string oleFilePath = Path.Combine(tempDir, "SampleOleObject.txt");
-        File.WriteAllText(oleFilePath, "This is a sample OLE object content.");
+        // Prepare a temporary text file to embed as an OLE object.
+        string tempDir = Path.Combine(Directory.GetCurrentDirectory(), "TempFiles");
+        Directory.CreateDirectory(tempDir);
+        string oleFilePath = Path.Combine(tempDir, "Sample.txt");
+        File.WriteAllText(oleFilePath, "This is a sample text file for OLE embedding.");
 
-        // Insert the OLE object as an icon. The icon will be the default one chosen by Aspose.Words.
-        // Parameters: file name, isLinked (false = embed), iconFile (null = default), iconCaption (null = file name).
-        Shape oleShape = builder.InsertOleObjectAsIcon(oleFilePath, false, null, null);
+        // Insert the OLE object as an icon. No custom icon file is provided (null), so Aspose.Words uses a default one.
+        // The returned Shape represents the OLE object icon.
+        Shape oleShape = builder.InsertOleObjectAsIcon(oleFilePath, false, null, "Sample Text File");
 
-        // Ensure the shape's aspect ratio is locked so that resizing preserves the original proportions.
+        // Lock the aspect ratio to keep the icon proportions consistent when resizing.
         oleShape.AspectRatioLocked = true;
 
-        // Resize the icon to a desired width (in points). Height will adjust automatically.
-        oleShape.Width = 150; // 150 points ≈ 2.08 inches.
+        // Desired new width for the icon (in points). Height will be adjusted to preserve the aspect ratio.
+        double desiredWidth = 150.0;
+        double originalWidth = oleShape.Width;
+        double scaleFactor = desiredWidth / originalWidth;
 
-        // Optionally, you can also move the icon to a specific location on the page.
-        oleShape.WrapType = WrapType.None;
-        oleShape.Left = 100;
-        oleShape.Top = 100;
+        // Apply the new dimensions while maintaining the original aspect ratio.
+        oleShape.Width = desiredWidth;
+        oleShape.Height = oleShape.Height * scaleFactor;
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AdjustedOleIcon.docx");
+        // Save the document to the output file.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleIconAdjusted.docx");
         doc.Save(outputPath);
     }
 }

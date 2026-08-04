@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class OlePackageExample
+public class Program
 {
     public static void Main()
     {
@@ -11,22 +11,25 @@ public class OlePackageExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare some dummy data to embed. Here we use a simple text file content.
-        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("This is a sample OLE package content.");
-
-        // Insert the OLE object using the legacy "Package" progId.
-        // The object will be displayed as an icon.
-        using (MemoryStream dataStream = new MemoryStream(dummyData))
+        // Prepare some data to embed as an OLE package (e.g., a simple text file).
+        byte[] fileBytes = System.Text.Encoding.UTF8.GetBytes("Hello from embedded OLE package!");
+        using (MemoryStream stream = new MemoryStream(fileBytes))
         {
-            Shape oleShape = builder.InsertOleObject(dataStream, "Package", true, null);
+            // Insert the OLE object using the legacy "Package" progId.
+            // The object is inserted as an icon (asIcon = true) with the default presentation.
+            Shape shape = builder.InsertOleObject(stream, "Package", true, null);
 
-            // Configure the OLE package properties.
-            oleShape.OleFormat.OlePackage.FileName = "SamplePackage.txt";
-            oleShape.OleFormat.OlePackage.DisplayName = "Sample Package";
+            // Set the OLE package's file name and display name.
+            shape.OleFormat.OlePackage.FileName = "Sample.txt";
+            shape.OleFormat.OlePackage.DisplayName = "Sample Text File";
         }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OlePackageExample.docx");
+        // Define output path and ensure the directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "OlePackageExample.docx");
+
+        // Save the document.
         doc.Save(outputPath);
     }
 }

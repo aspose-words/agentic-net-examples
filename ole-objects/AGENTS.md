@@ -53,7 +53,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a PDF file as an OLE icon, specifying custom icon image and display size.
   - Workflow: insertion
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-an-ole-object-as-an-icon-using-default-system-icon-without-specifying-custom-image.cs`
   - Task: Insert an OLE object as an icon using default system icon without specifying custom image.
   - Workflow: insertion
@@ -216,7 +216,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -230,7 +230,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

@@ -3,38 +3,35 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class InsertOleObjectExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document and a builder to work with it.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare some dummy data to embed as an OLE object.
-        byte[] dummyData = new byte[] { 0x00, 0x01, 0x02, 0x03 };
-        using (MemoryStream oleStream = new MemoryStream(dummyData))
+        // Prepare a simple memory stream as the OLE data source.
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Dummy OLE data");
+        using (MemoryStream stream = new MemoryStream(dummyData))
         {
-            // Use a ProgId that is unlikely to be registered on the system.
-            string invalidProgId = "NonExistent.ProgId";
+            builder.Writeln("Attempting to insert OLE object with an invalid ProgId:");
 
             try
             {
-                // Attempt to insert the OLE object. This may throw if the ProgId is not registered.
-                builder.InsertOleObject(oleStream, invalidProgId, asIcon: false, presentation: null);
-                Console.WriteLine("OLE object inserted successfully.");
+                // Use a ProgId that is not registered on the system to trigger an exception.
+                builder.InsertOleObject(stream, "NonExistent.ProgId", false, null);
+                builder.Writeln("OLE object inserted successfully.");
             }
             catch (Exception ex)
             {
-                // Handle the error gracefully and inform the user.
-                Console.WriteLine($"Failed to insert OLE object with ProgId '{invalidProgId}'.");
-                Console.WriteLine($"Error: {ex.Message}");
+                // Gracefully handle the error and inform the user.
+                builder.Writeln($"Failed to insert OLE object: {ex.Message}");
             }
         }
 
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "InsertOleObjectResult.docx");
+        // Save the resulting document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectErrorHandling.docx");
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

@@ -1,48 +1,66 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class ExportOleObjects
 {
     public static void Main()
     {
-        // Path to the source document. Adjust the file name as needed.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "Input.docx");
-        if (!File.Exists(inputPath))
-            return; // Exit if the document is not found.
+        // -----------------------------------------------------------------
+        // Prepare a temporary folder for all generated files.
+        // -----------------------------------------------------------------
+        string baseDir = Directory.GetCurrentDirectory();
+        string tempDir = Path.Combine(baseDir, "TempOle");
+        Directory.CreateDirectory(tempDir);
 
-        // Load the document.
-        Document doc = new Document(inputPath);
+        // -----------------------------------------------------------------
+        // Create a simple text file that will be embedded as an OLE object.
+        // -----------------------------------------------------------------
+        string sampleTextPath = Path.Combine(tempDir, "sample.txt");
+        File.WriteAllText(sampleTextPath, "This is a sample OLE embedded file.");
 
-        // Get all shapes in the document.
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        // -----------------------------------------------------------------
+        // Create a new Word document and embed the text file as an OLE object.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert the OLE object (embedded, not linked, not displayed as an icon).
+        builder.InsertOleObject(sampleTextPath, false, false, null);
 
+        // -----------------------------------------------------------------
+        // Directory where extracted OLE objects will be saved.
+        // -----------------------------------------------------------------
+        string outputDir = Path.Combine(baseDir, "ExtractedOleObjects");
+        Directory.CreateDirectory(outputDir);
+
+        // -----------------------------------------------------------------
+        // Iterate through all shapes in the document and export any OLE objects.
+        // -----------------------------------------------------------------
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
         int oleIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+
+        foreach (Shape shape in shapes)
         {
-            // Each shape that contains an OLE object has a non‑null OleFormat.
             OleFormat ole = shape.OleFormat;
             if (ole == null)
+                continue; // Not an OLE object.
+
+            // Skip linked OLE objects – they cannot be saved directly.
+            if (ole.IsLink)
                 continue;
 
-            // Determine a file name for the extracted OLE object.
-            // Use the suggested file name if available; otherwise create a generic one.
-            string baseName = !string.IsNullOrEmpty(ole.SuggestedFileName)
-                ? Path.GetFileNameWithoutExtension(ole.SuggestedFileName)
-                : $"OleObject_{oleIndex}";
-
-            // Preserve the original extension suggested by Aspose.Words.
+            // Use the suggested extension (includes the leading dot) to build the file name.
             string extension = ole.SuggestedExtension ?? ".bin";
+            string fileName = $"OleObject_{oleIndex}{extension}";
+            string fullPath = Path.Combine(outputDir, fileName);
 
-            string outputFileName = $"{baseName}{extension}";
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), outputFileName);
-
-            // Save the OLE object directly to a file.
-            ole.Save(outputPath);
-
+            // Save the OLE object to the file system.
+            ole.Save(fullPath);
             oleIndex++;
         }
+
+        // Optional: inform the user where the files were saved.
+        Console.WriteLine($"Extracted {oleIndex} OLE object(s) to: {outputDir}");
     }
 }

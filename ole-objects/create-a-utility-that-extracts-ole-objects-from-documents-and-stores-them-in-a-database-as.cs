@@ -1,63 +1,65 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
 public class OleExtractor
 {
+    // Path to the source Word document. Adjust as needed.
+    private const string InputDocumentPath = "input.docx";
+
+    // Folder where extracted OLE objects will be saved (simulating storage).
+    private const string OutputFolder = "ExtractedOleObjects";
+
     public static void Main()
     {
-        // Path to the source Word document containing OLE objects.
-        const string sourceDocPath = "SampleDocument.docx";
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(OutputFolder);
 
-        // Verify that the source document exists.
-        if (!File.Exists(sourceDocPath))
+        // Load the Word document. If the file does not exist, create an empty document instead.
+        Document doc;
+        if (File.Exists(InputDocumentPath))
         {
-            Console.WriteLine($"Source document not found: {Path.GetFullPath(sourceDocPath)}");
-            return;
+            doc = new Document(InputDocumentPath); // Load existing document
+        }
+        else
+        {
+            Console.WriteLine($"Input file \"{InputDocumentPath}\" not found. Creating an empty document.");
+            doc = new Document(); // Create a blank document
         }
 
-        // Directory where extracted OLE objects will be saved.
-        const string outputDirectory = "ExtractedOleObjects";
-
-        // Load the Word document.
-        Document doc = new Document(sourceDocPath);
-
-        // Ensure the output directory exists.
-        if (!Directory.Exists(outputDirectory))
-            Directory.CreateDirectory(outputDirectory);
+        // List to hold extracted OLE objects (file name + raw data).
+        var extractedOleObjects = new List<(string FileName, byte[] Data)>();
 
         // Iterate over all shapes in the document.
-        int oleIndex = 0;
         foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat == null)
+            OleFormat ole = shape.OleFormat;
+            if (ole == null)
                 continue; // Not an OLE object.
 
-            // Skip linked OLE objects; only process embedded ones.
-            if (oleFormat.IsLink)
+            // Skip linked objects – they have no embedded data.
+            if (ole.IsLink)
                 continue;
 
-            // Determine a file name for the object.
-            string fileName = oleFormat.SuggestedFileName;
+            // Retrieve raw OLE data.
+            byte[] rawData = ole.GetRawData();
+
+            // Determine a file name for storage (use suggested name if available).
+            string fileName = ole.SuggestedFileName;
             if (string.IsNullOrEmpty(fileName))
-            {
-                // Fallback to a generated name using the suggested extension.
-                string extension = oleFormat.SuggestedExtension ?? ".bin";
-                fileName = $"OleObject_{oleIndex}{extension}";
-            }
+                fileName = $"OleObject_{Guid.NewGuid():N}.bin";
 
-            // Build the full path for the output file.
-            string outputPath = Path.Combine(outputDirectory, fileName);
+            // Save the raw data to a file (simulating a BLOB storage).
+            string outputPath = Path.Combine(OutputFolder, fileName);
+            File.WriteAllBytes(outputPath, rawData);
 
-            // Save the OLE object directly to the file.
-            oleFormat.Save(outputPath);
-
-            Console.WriteLine($"Extracted OLE object saved to: {outputPath}");
-            oleIndex++;
+            // Keep the record in the in‑memory list.
+            extractedOleObjects.Add((fileName, rawData));
         }
 
-        Console.WriteLine("OLE extraction completed.");
+        // Simple console report.
+        Console.WriteLine($"Extracted {extractedOleObjects.Count} OLE object(s) to folder \"{OutputFolder}\".");
     }
 }

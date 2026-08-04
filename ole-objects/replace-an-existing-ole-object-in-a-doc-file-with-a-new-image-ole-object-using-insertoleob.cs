@@ -1,76 +1,61 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-namespace OleObjectReplacementExample
+public class ReplaceOleObjectExample
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document and a builder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a placeholder OLE object (a simple text file) into the document.
+        builder.Writeln("Original OLE object:");
+        using (MemoryStream textStream = new MemoryStream())
+        using (StreamWriter writer = new StreamWriter(textStream))
         {
-            // Prepare a temporary working folder.
-            string tempDir = Path.Combine(Path.GetTempPath(), "OleExample");
-            Directory.CreateDirectory(tempDir);
+            writer.Write("This is the original OLE object content.");
+            writer.Flush();
+            textStream.Position = 0; // Reset stream position before insertion.
 
-            // Paths for the input document, the image to embed, and the output document.
-            string inputDocPath = Path.Combine(tempDir, "Input.docx");
-            string newImagePath = Path.Combine(tempDir, "NewImage.png");
-            string outputDocPath = Path.Combine(tempDir, "Output.docx");
-
-            // Ensure an image file exists – write a simple red PNG if it does not.
-            if (!File.Exists(newImagePath))
-            {
-                // Base64-encoded 1x1 red PNG image.
-                const string redPngBase64 =
-                    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
-                byte[] pngBytes = Convert.FromBase64String(redPngBase64);
-                File.WriteAllBytes(newImagePath, pngBytes);
-            }
-
-            // If the input document does not exist, create one containing a dummy OLE object.
-            if (!File.Exists(inputDocPath))
-            {
-                // Create a blank document.
-                Document doc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(doc);
-
-                // Embed a simple text package as an OLE object.
-                using (MemoryStream dummyPackage = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("Dummy OLE content")))
-                {
-                    // "Package" progId creates a generic OLE package.
-                    builder.InsertOleObject(dummyPackage, "Package", false, null);
-                }
-
-                // Save the document that will later be loaded.
-                doc.Save(inputDocPath);
-            }
-
-            // Load the existing document that contains the OLE object.
-            Document loadedDoc = new Document(inputDocPath);
-
-            // Find the first OLE object shape.
-            Shape oldOleShape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
-            if (oldOleShape == null || oldOleShape.ShapeType != ShapeType.OleObject)
-                throw new InvalidOperationException("No OLE object found in the document.");
-
-            // Position the builder at the OLE shape.
-            DocumentBuilder builderAtOle = new DocumentBuilder(loadedDoc);
-            builderAtOle.MoveTo(oldOleShape);
-
-            // Remove the old OLE shape.
-            oldOleShape.Remove();
-
-            // Insert the new image as an embedded OLE object (still using the "Package" progId).
-            using (FileStream imageStream = File.OpenRead(newImagePath))
-            {
-                builderAtOle.InsertOleObject(imageStream, "Package", false, null);
-            }
-
-            // Save the modified document.
-            loadedDoc.Save(outputDocPath);
-
-            Console.WriteLine($"OLE object replaced successfully. Output saved to: {outputDocPath}");
+            // Insert the OLE object using the stream. ProgId "Package" creates a generic OLE package.
+            builder.InsertOleObject(textStream, "Package", false, null);
         }
+
+        // Save the document that contains the original OLE object.
+        const string originalPath = "Original.docx";
+        doc.Save(originalPath);
+
+        // Load the document we just saved.
+        Document loadedDoc = new Document(originalPath);
+        DocumentBuilder loadedBuilder = new DocumentBuilder(loadedDoc);
+
+        // Find the first OLE object shape in the document.
+        Shape oleShape = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                                 .OfType<Shape>()
+                                 .FirstOrDefault(s => s.ShapeType == ShapeType.OleObject);
+
+        // Remove the existing OLE object if it was found.
+        oleShape?.Remove();
+
+        // Prepare a simple PNG image (1x1 pixel) encoded in Base64.
+        const string pngBase64 =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(pngBase64);
+
+        // Insert the new image as an OLE object at the end of the document.
+        loadedBuilder.Writeln("\nReplaced OLE object (image):");
+        using (MemoryStream imageStream = new MemoryStream(pngBytes))
+        {
+            // Insert the image stream as a generic OLE package.
+            loadedBuilder.InsertOleObject(imageStream, "Package", false, null);
+        }
+
+        // Save the document after replacement.
+        const string replacedPath = "Replaced.docx";
+        loadedDoc.Save(replacedPath);
     }
 }
