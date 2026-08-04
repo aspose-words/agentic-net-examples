@@ -8,29 +8,32 @@ public class Program
     {
         // Create a new empty document.
         Document doc = new Document();
-
-        // Create a DocumentBuilder which will be used to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a default numbered list.
         builder.ListFormat.ApplyNumberDefault();
+        builder.Writeln("Item 1 - level 0");
 
-        // First level item.
-        builder.Writeln("First level item");
-
-        // Increase the list level – this creates a sub‑list.
+        // Increase the list level (indent) to create a sub‑list.
         builder.ListFormat.ListIndent();
-        builder.Writeln("Second level item (indented)");
+        builder.Writeln("Item 2 - level 1");
 
-        // Decrease the list level – promotes the next paragraph back to the first level.
+        // Increase again to a deeper level.
+        builder.ListFormat.ListIndent();
+        builder.Writeln("Item 3 - level 2");
+
+        // Decrease the list level (outdent) to promote the paragraph.
         builder.ListFormat.ListOutdent();
-        builder.Writeln("First level item after outdent");
+        builder.Writeln("Item 4 - back to level 1");
 
-        // End the list.
+        // Decrease once more to return to the top level.
+        builder.ListFormat.ListOutdent();
+        builder.Writeln("Item 5 - back to level 0");
+
+        // End the list formatting.
         builder.ListFormat.RemoveNumbers();
 
         // Save the document to the current directory.
-        string outputPath = "Lists.DecreaseIndent.docx";
-        doc.Save(outputPath);
+        doc.Save("DecreaseIndent.docx");
     }
 }

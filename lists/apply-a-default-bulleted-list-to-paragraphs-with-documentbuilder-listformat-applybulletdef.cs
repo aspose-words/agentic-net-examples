@@ -1,37 +1,43 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Lists;
 
-public class Program
+namespace AsposeWordsListsExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Attach a DocumentBuilder to the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a heading before the list.
-        builder.Writeln("Bulleted list example:");
+            // Write a heading before the list.
+            builder.Writeln("Default bulleted list example:");
 
-        // Start a default bulleted list.
-        builder.ListFormat.ApplyBulletDefault();
+            // Start a default bulleted list and apply it to subsequent paragraphs.
+            builder.ListFormat.ApplyBulletDefault();
 
-        // Add list items.
-        builder.Writeln("First item");
-        builder.Writeln("Second item");
-        builder.Writeln("Third item");
+            // Add several list items.
+            builder.Writeln("First bullet item");
+            builder.Writeln("Second bullet item");
+            builder.Writeln("Third bullet item");
+            builder.Writeln("Fourth bullet item");
+            builder.Writeln("Fifth bullet item");
 
-        // End the bulleted list.
-        builder.ListFormat.RemoveNumbers();
+            // End the list.
+            builder.ListFormat.RemoveNumbers();
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
+            // Define the output folder and file name.
+            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+            Directory.CreateDirectory(outputDir);
+            string outputPath = Path.Combine(outputDir, "DefaultBulletedList.docx");
 
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "DefaultBulletedList.docx");
-        doc.Save(outputPath);
+            // Save the document to the specified path.
+            doc.Save(outputPath);
+        }
     }
 }

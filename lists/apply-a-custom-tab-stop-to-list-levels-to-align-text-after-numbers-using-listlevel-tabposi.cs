@@ -1,7 +1,6 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -10,55 +9,28 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add a custom list based on the default numbered template.
-        List customList = doc.Lists.Add(ListTemplate.NumberDefault);
+        // Add a numbered list based on the default template.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
         // Configure the first list level.
-        ListLevel level0 = customList.ListLevels[0];
-        level0.Font.Color = System.Drawing.Color.DarkBlue;
-        level0.Font.Size = 12;
-        level0.NumberStyle = NumberStyle.Arabic;
-        level0.StartAt = 1;
-        level0.NumberFormat = "%1.";
-        // Position of the number (negative moves it left of the left indent).
-        level0.NumberPosition = -36;
-        // Position where the text starts after the number.
-        level0.TextPosition = 144;
-        // Use a tab as the separator between number and text.
-        level0.TrailingCharacter = ListTrailingCharacter.Tab;
-        // Set the tab stop that aligns the text after the number.
-        level0.TabPosition = 144;
-
-        // Configure the second list level (optional, demonstrates nesting).
-        ListLevel level1 = customList.ListLevels[1];
-        level1.Font.Color = System.Drawing.Color.DarkGreen;
-        level1.Font.Size = 12;
-        level1.NumberStyle = NumberStyle.LowercaseLetter;
-        level1.NumberFormat = "%2.";
-        level1.NumberPosition = -18;
-        level1.TextPosition = 216;
-        level1.TrailingCharacter = ListTrailingCharacter.Tab;
-        level1.TabPosition = 216;
+        ListLevel level = list.ListLevels[0];
+        level.Font.Size = 12;                         // Font size for the number.
+        level.NumberStyle = NumberStyle.Arabic;       // Use Arabic numbers.
+        level.NumberFormat = "%1.";                   // Number format (e.g., "1.").
+        level.TrailingCharacter = ListTrailingCharacter.Tab; // Place a tab after the number.
+        level.NumberPosition = -18;                   // Position of the number (negative moves it left).
+        level.TextPosition = 36;                      // Position where the text starts.
+        level.TabPosition = 36;                       // Tab stop aligns the text after the number.
 
         // Use DocumentBuilder to add list items.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ListFormat.List = customList;
+        builder.ListFormat.List = list;
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        builder.Writeln("Third item");
+        builder.ListFormat.RemoveNumbers(); // End the list.
 
-        // First level items.
-        builder.Writeln("First level item 1");
-        builder.Writeln("First level item 2");
-
-        // Indent to second level.
-        builder.ListFormat.ListIndent();
-        builder.Writeln("Second level item 1");
-        builder.Writeln("Second level item 2");
-        builder.ListFormat.ListOutdent();
-
-        // Remove list formatting.
-        builder.ListFormat.RemoveNumbers();
-
-        // Save the document.
-        string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CustomListTabPosition.docx");
-        doc.Save(outputPath);
+        // Save the document to a file.
+        doc.Save("CustomTabStopList.docx");
     }
 }

@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -17,21 +17,21 @@
       "Aspose.Words",
       "Aspose.Words.Lists",
       "System.Drawing",
-      "Aspose.Words.Drawing",
-      "Aspose.Words.Tables",
-      "Aspose.Words.Saving"
+      "Aspose.Words.Saving",
+      "Aspose.Words.Settings",
+      "System.Linq"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Directory",
       "Path",
-      "NodeType",
-      "Paragraph",
+      "Directory",
       "Font",
+      "Paragraph",
       "Run",
       "StyleIdentifier",
-      "SaveFormat"
+      "SaveFormat",
+      "NodeType"
     ]
   },
   "stats": {

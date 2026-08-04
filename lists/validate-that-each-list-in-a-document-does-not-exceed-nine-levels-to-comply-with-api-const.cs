@@ -2,42 +2,37 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace ListLevelValidator
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a list that uses the maximum allowed 9 levels.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = list;
-
-        for (int level = 0; level < 9; level++)
+        public static void Main()
         {
-            builder.ListFormat.ListLevelNumber = level;
-            builder.Writeln($"Level {level + 1}");
-        }
+            // Create a new empty document.
+            Document doc = new Document();
 
-        // End the list formatting.
-        builder.ListFormat.RemoveNumbers();
+            // Add a sample list using a predefined template.
+            // All lists created by Aspose.Words contain up to 9 levels.
+            List sampleList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Validate that no list exceeds nine levels.
-        foreach (List lst in doc.Lists)
-        {
-            int levelCount = lst.ListLevels.Count;
-            if (levelCount > 9)
+            // Validate each list in the document.
+            foreach (List list in doc.Lists)
             {
-                Console.WriteLine($"List ID {lst.ListId} exceeds the maximum of 9 levels (has {levelCount}).");
-            }
-            else
-            {
-                Console.WriteLine($"List ID {lst.ListId} is valid with {levelCount} level(s).");
-            }
-        }
+                int levelCount = list.ListLevels.Count;
 
-        // Save the document (optional, just to demonstrate saving).
-        doc.Save("ValidatedLists.docx");
+                // According to the API, a list may have 1 to 9 levels.
+                if (levelCount > 9)
+                {
+                    Console.WriteLine($"List ID {list.ListId} exceeds the maximum allowed levels: {levelCount}");
+                }
+                else
+                {
+                    Console.WriteLine($"List ID {list.ListId} is valid with {levelCount} level(s).");
+                }
+            }
+
+            // Save the document (optional, just to demonstrate the save lifecycle).
+            doc.Save("ValidatedLists.docx");
+        }
     }
 }

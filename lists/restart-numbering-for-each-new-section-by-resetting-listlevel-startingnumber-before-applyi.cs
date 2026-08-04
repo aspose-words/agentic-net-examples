@@ -1,9 +1,6 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
-using System.Drawing;
 
 public class Program
 {
@@ -13,37 +10,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a numbered list based on a built‑in template.
-        List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
+        // Add a numbered list based on the default template.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Optional: let Word know the list should restart at each section.
-        numberedList.IsRestartAtEachSection = true;
+        // Ensure the first level starts at 1 for the first section.
+        list.ListLevels[0].StartAt = 1;
 
-        // First section.
-        builder.Writeln("Section 1");
-        // Reset the starting number for the first level before using the list.
-        numberedList.ListLevels[0].StartAt = 1;
-        builder.ListFormat.List = numberedList;
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
-        builder.ListFormat.RemoveNumbers();
+        // Apply the list to the first section.
+        builder.ListFormat.List = list;
+        builder.Writeln("Section 1 - Item 1");
+        builder.Writeln("Section 1 - Item 2");
 
         // Insert a section break (new page) to start a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Second section.
-        builder.Writeln("Section 2");
-        // Reset the starting number again for the new section.
-        numberedList.ListLevels[0].StartAt = 1;
-        builder.ListFormat.List = numberedList;
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
-        builder.Writeln("Item 4");
-        builder.ListFormat.RemoveNumbers();
+        // Reset the starting number for the next section.
+        list.ListLevels[0].StartAt = 1;
 
-        // Save the document to the output file.
-        doc.Save("RestartNumberingPerSection.docx");
+        // Apply the same list to the second section.
+        builder.ListFormat.List = list;
+        builder.Writeln("Section 2 - Item 1");
+        builder.Writeln("Section 2 - Item 2");
+
+        // Save the document to disk.
+        doc.Save("RestartListPerSection.docx");
     }
 }
