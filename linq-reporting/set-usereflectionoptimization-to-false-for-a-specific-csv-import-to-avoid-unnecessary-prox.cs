@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,8 +8,18 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample CSV data.
-        string csvPath = "people.csv";
+        // Register code page provider for CSV parsing (required on .NET Core).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Define file paths.
+        string workDir = Directory.GetCurrentDirectory();
+        string csvPath = Path.Combine(workDir, "people.csv");
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "Report.docx");
+
+        // -----------------------------------------------------------------
+        // 1. Create a simple CSV file with headers and sample data.
+        // -----------------------------------------------------------------
         string[] csvLines =
         {
             "Name,Age",
@@ -16,14 +27,15 @@ public class Program
             "Bob,25",
             "Charlie,35"
         };
-        File.WriteAllLines(csvPath, csvLines);
+        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
 
-        // Create a LINQ Reporting template.
-        string templatePath = "template.docx";
+        // -----------------------------------------------------------------
+        // 2. Build a Word template that uses LINQ Reporting tags.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Use a foreach block to iterate over the CSV rows.
+        builder.Writeln("People Report");
         builder.Writeln("<<foreach [person in persons]>>");
         builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
@@ -31,22 +43,31 @@ public class Program
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
+        // -----------------------------------------------------------------
+        // 3. Load the template back for report generation.
+        // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
 
-        // Configure CSV data source with headers.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
+        // -----------------------------------------------------------------
+        // 4. Prepare CSV data source with header information.
+        // -----------------------------------------------------------------
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true); // CSV has headers.
         CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // Disable reflection optimization for this report.
+        // -----------------------------------------------------------------
+        // 5. Disable reflection optimization for this specific import.
+        // -----------------------------------------------------------------
         ReportingEngine.UseReflectionOptimization = false;
 
-        // Build the report using the CSV data source.
+        // -----------------------------------------------------------------
+        // 6. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, csvDataSource, "persons");
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
+        // -----------------------------------------------------------------
+        // 7. Save the generated report.
+        // -----------------------------------------------------------------
         reportDoc.Save(outputPath);
     }
 }

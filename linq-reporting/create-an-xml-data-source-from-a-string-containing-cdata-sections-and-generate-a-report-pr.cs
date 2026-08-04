@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,58 +8,54 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // XML string with CDATA sections.
+        string xmlContent = @"<?xml version='1.0' encoding='utf-8'?>
+<Root>
+    <Item>
+        <Description><![CDATA[Some <b>bold</b> text]]></Description>
+    </Item>
+    <Item>
+        <Description><![CDATA[Another <i>italic</i> text]]></Description>
+    </Item>
+</Root>";
 
-        // 1. Create an XML file that contains CDATA sections.
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<people>
-    <person>
-        <name><![CDATA[John <Doe>]]></name>
-        <bio><![CDATA[Developer & Engineer]]></bio>
-    </person>
-    <person>
-        <name><![CDATA[Jane & Smith]]></name>
-        <bio><![CDATA[Designer > Artist]]></bio>
-    </person>
-</people>";
-        string xmlPath = Path.Combine(outputDir, "people.xml");
-        File.WriteAllText(xmlPath, xmlContent);
+        // Load XML into a memory stream.
+        using MemoryStream xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlContent));
+        xmlStream.Position = 0;
 
-        // 2. Build a LINQ Reporting template programmatically.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Ensure the root object is always generated for proper collection access.
+        XmlDataLoadOptions loadOptions = new XmlDataLoadOptions { AlwaysGenerateRootObject = true };
+        XmlDataSource dataSource = new XmlDataSource(xmlStream, loadOptions);
 
-        // The root name for the data source will be "data".
-        // Iterate over each <person> element and output its fields.
-        // Since the XML root element is <people>, the generated root object
-        // directly exposes the <person> collection, so we iterate over data.person.
-        builder.Writeln("<<foreach [p in data.person]>>");
-        builder.Writeln("Name: <<[p.name]>>");
-        builder.Writeln("Bio: <<[p.bio]>>");
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        builder.Writeln("Items Report");
+        // LINQ Reporting foreach loop over the collection Root.Item
+        builder.Writeln("<<foreach [item in root.Item]>>");
+        builder.Writeln("Description: <<[item.Description]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template before building the report.
-        templateDoc.Save(templatePath);
+        // Save the template.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // 3. Load the template and bind the XML data source.
-        Document reportDoc = new Document(templatePath);
-
-        // Ensure the XML data source generates a root object.
-        XmlDataLoadOptions loadOptions = new XmlDataLoadOptions
-        {
-            AlwaysGenerateRootObject = true
-        };
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlPath, loadOptions);
-
-        // 4. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document report = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, xmlDataSource, "data");
 
-        // 5. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+        // Build the report using the XML data source; the root object name is "root".
+        engine.BuildReport(report, dataSource, "root");
+
+        // Save the generated report.
+        const string reportPath = "Report.docx";
+        report.Save(reportPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
     }
 }

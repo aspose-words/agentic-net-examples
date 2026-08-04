@@ -8,57 +8,60 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing (required on .NET Core).
+        // Register code page provider for CSV handling.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample CSV data.
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.csv");
-        File.WriteAllText(csvPath,
-            "Value1,Value2,Description\r\n" +
-            "10,20,First row\r\n" +
-            "5,7,Second row\r\n" +
-            "12,8,Third row");
+        // Define file paths.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string csvPath = Path.Combine(outputDir, "data.csv");
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string reportPath = Path.Combine(outputDir, "report.docx");
 
-        // Create a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
+        // 1. Create sample CSV data.
+        File.WriteAllLines(csvPath, new[]
+        {
+            "Value1,Value2",
+            "10,20",
+            "5,7",
+            "12,8"
+        });
+
+        // 2. Create the template document with LINQ Reporting tags.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("LINQ Reporting – CSV Example");
-        builder.Writeln("-------------------------------------------------");
-
-        // Begin a foreach loop over the CSV data source named "csv".
-        builder.Writeln("<<foreach [row in csv]>>");
-        builder.Writeln("Value 1: <<[row.Value1]>>");
-        builder.Writeln("Value 2: <<[row.Value2]>>");
-        // Calculated field that sums the two numeric columns.
-        builder.Writeln("Sum (Value1 + Value2): <<[row.Value1 + row.Value2]>>");
-        builder.Writeln("Description: <<[row.Description]>>");
-        builder.Writeln("-------------------------------------------------");
+        // Begin a foreach loop over the CSV rows (named "data").
+        builder.Writeln("<<foreach [row in data]>>");
+        builder.Writeln("Value1: <<[row.Value1]>>");
+        builder.Writeln("Value2: <<[row.Value2]>>");
+        // Calculated field: sum of the two numeric columns.
+        builder.Writeln("Sum: <<[row.Value1 + row.Value2]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template document.
-        Document doc = new Document(templatePath);
+        // 3. Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Configure CSV loading options – the file has a header row.
+        // 4. Prepare CSV data source with headers.
         CsvDataLoadOptions loadOptions = new CsvDataLoadOptions
         {
-            HasHeaders = true
+            HasHeaders = true,
+            Delimiter = ','
         };
+        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
 
-        // Create the CSV data source.
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // 5. Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        // The data source name "data" must match the name used in the template tags.
+        engine.BuildReport(reportDoc, csvData, "data");
 
-        // Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        // Pass the data source name "csv" to match the foreach tag.
-        engine.BuildReport(doc, csvDataSource, "csv");
-
-        // Save the generated report.
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "ReportResult.docx");
-        doc.Save(resultPath);
+        // 6. Save the generated report.
+        reportDoc.Save(reportPath);
     }
 }

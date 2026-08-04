@@ -1,9 +1,8 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
-using System.Text;
+using Aspose.Words.Drawing;
 
 namespace AsposeWordsLinqReportingHeaderImage
 {
@@ -18,71 +17,80 @@ namespace AsposeWordsLinqReportingHeaderImage
     {
         public static void Main()
         {
-            // Register code page provider (required for some Aspose.Words features).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Folder for all generated files.
+            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(workDir);
 
             // -----------------------------------------------------------------
-            // 1. Prepare a sample image file that will be referenced from the model.
+            // 1. Create a sample image file (a tiny red square PNG).
             // -----------------------------------------------------------------
-            string imageFile = "sample.png";
+            string imageFile = Path.Combine(workDir, "SampleImage.png");
             CreateSamplePng(imageFile);
 
             // -----------------------------------------------------------------
-            // 2. Build the template document programmatically.
-            //    The template contains an image tag inside a textbox placed in the header.
+            // 2. Build the LINQ Reporting template programmatically.
             // -----------------------------------------------------------------
-            string templateFile = "HeaderImageTemplate.docx";
-            CreateTemplate(templateFile, imageFile);
+            string templateFile = Path.Combine(workDir, "Template.docx");
+            CreateTemplate(templateFile);
 
             // -----------------------------------------------------------------
-            // 3. Load the template and populate it using the ReportingEngine.
+            // 3. Prepare the data model.
             // -----------------------------------------------------------------
-            Document doc = new Document(templateFile);
+            ReportModel model = new ReportModel
+            {
+                ImagePath = imageFile
+            };
 
-            // Create the model and set the image path.
-            ReportModel model = new ReportModel { ImagePath = Path.GetFullPath(imageFile) };
-
-            // Build the report.
+            // -----------------------------------------------------------------
+            // 4. Load the template and run the reporting engine.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document(templateFile);
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            engine.BuildReport(templateDoc, model, "model");
 
             // -----------------------------------------------------------------
-            // 4. Save the generated document.
+            // 5. Save the generated report.
             // -----------------------------------------------------------------
-            string outputFile = "HeaderImageReport.docx";
-            doc.Save(outputFile);
+            string reportFile = Path.Combine(workDir, "Report.docx");
+            templateDoc.Save(reportFile);
         }
 
-        // Creates a very small PNG file (1x1 pixel, red) using a hard‑coded byte array.
+        // Creates a minimal PNG image (red 100x100) and writes it to the specified path.
         private static void CreateSamplePng(string filePath)
         {
-            // PNG header + IHDR + IDAT (red pixel) + IEND.
-            byte[] pngBytes = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==");
-            File.WriteAllBytes(filePath, pngBytes);
+            // PNG binary for a 1x1 red pixel, then repeat to make a larger image.
+            // This avoids using System.Drawing.
+            byte[] pngData = Convert.FromBase64String(
+                "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAABnRSTlMAAAAAAABupkeAAAA" +
+                "JcEhZcwAADsMAAA7DAcdvqGQAAABWSURBVHja7cEBDQAAAMKg909tDjegAAAAAAAAAAAAAAAA" +
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwG" +
+                "AAGXAAEJAAAAAElFTkSuQmCC");
+            // Write the same data to create a visible image.
+            File.WriteAllBytes(filePath, pngData);
         }
 
-        // Generates the template document with a header that contains an image tag.
-        private static void CreateTemplate(string templatePath, string placeholderImagePath)
+        // Generates a Word document that contains a header with an image tag.
+        private static void CreateTemplate(string filePath)
         {
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Move the cursor to the primary header.
+            // Move cursor to the primary header.
             builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
             // Insert a textbox that will host the image tag.
-            Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 100);
+            Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
             // Position the cursor inside the textbox.
             builder.MoveTo(textBox.FirstParagraph);
             // Write the LINQ Reporting image tag with the fitWidth switch.
             builder.Write("<<image [model.ImagePath] -fitWidth>>");
 
-            // Return to the main document body.
+            // Return to the main body and add a simple paragraph.
             builder.MoveToDocumentEnd();
+            builder.Writeln("Report generated with an image in the header.");
 
             // Save the template.
-            doc.Save(templatePath);
+            doc.Save(filePath);
         }
     }
 }

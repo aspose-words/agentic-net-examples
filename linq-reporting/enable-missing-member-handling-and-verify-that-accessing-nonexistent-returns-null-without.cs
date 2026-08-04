@@ -1,48 +1,67 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class EmptyModel
+{
+    // No members – used to demonstrate missing‑member handling.
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "output.docx");
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string resultPath = "Result.docx";
 
-        // 1. Create a template document with a missing-member tag.
+        // -----------------------------------------------------------------
+        // 1. Create a template document containing a tag that references a
+        //    non‑existent member (<<[nonexistent]>>).
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        // The tag references a member that does not exist in the data source.
-        builder.Writeln("<<[nonexistent]>>");
+        builder.Writeln("<<[nonexistent]>>"); // Missing member tag.
         templateDoc.Save(templatePath);
 
-        // 2. Load the template for reporting.
+        // -----------------------------------------------------------------
+        // 2. Load the template back from disk.
+        // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
 
-        // 3. Configure the reporting engine to allow missing members.
-        ReportingEngine engine = new ReportingEngine
+        // -----------------------------------------------------------------
+        // 3. Configure the ReportingEngine to allow missing members.
+        //    Missing members will be treated as null literals.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
+        // Leaving MissingMemberMessage empty means the engine will insert an empty string.
+        engine.MissingMemberMessage = string.Empty;
+
+        // The data source must be a non‑anonymous, visible type.
+        var dataSource = new EmptyModel();
+
+        // Build the report. The missing member tag will be replaced with an empty value.
+        engine.BuildReport(reportDoc, dataSource);
+
+        // -----------------------------------------------------------------
+        // 4. Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(resultPath);
+
+        // -----------------------------------------------------------------
+        // 5. Verify that the missing member was handled without error.
+        //    The document text should be empty (or contain only whitespace).
+        // -----------------------------------------------------------------
+        string reportText = reportDoc.GetText().Trim();
+
+        if (string.IsNullOrEmpty(reportText))
         {
-            Options = ReportBuildOptions.AllowMissingMembers,
-            // Optional: customize the message printed for missing members.
-            MissingMemberMessage = string.Empty
-        };
-
-        // 4. Build the report using an empty data source.
-        // The data source does not contain a 'nonexistent' member.
-        object emptyDataSource = new object();
-        engine.BuildReport(reportDoc, emptyDataSource, "");
-
-        // 5. Verify that the missing member was treated as null (empty output).
-        string resultText = reportDoc.GetText().Trim();
-        bool isEmpty = string.IsNullOrEmpty(resultText);
-        Console.WriteLine(isEmpty
-            ? "Missing member handled correctly: output is empty."
-            : $"Unexpected output: \"{resultText}\"");
-
-        // 6. Save the generated report.
-        reportDoc.Save(outputPath);
+            Console.WriteLine("Missing member handled successfully – output is empty as expected.");
+        }
+        else
+        {
+            Console.WriteLine("Unexpected output: '" + reportText + "'");
+        }
     }
 }

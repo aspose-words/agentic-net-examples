@@ -1,89 +1,91 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+namespace AsposeWordsLinqReportingExample
 {
-    public int OrderId { get; set; }
-    public int CustomerId { get; set; }
-    public string Product { get; set; } = "";
-    public double Price { get; set; }
-}
-
-public class CustomerGroup
-{
-    public int CustomerId { get; set; }
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class ReportModel
-{
-    public List<CustomerGroup> CustomerGroups { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model for an order.
+    public class Order
     {
-        // Paths for the temporary template and the final report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        public int OrderId { get; set; }
+        public int CustomerId { get; set; }
+        public string Product { get; set; } = "";
+        public double Price { get; set; }
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+    // Wrapper model that contains the collection of orders and the grouped view.
+    public class ReportModel
+    {
+        public List<Order> Orders { get; set; } = new();
+        public List<OrderGroup> Groups { get; set; } = new();
+    }
 
-        // Outer loop over customer groups.
-        builder.Writeln("<<foreach [group in model.CustomerGroups]>>");
-        builder.Writeln("Customer ID: <<[group.CustomerId]>>");
-        builder.Writeln("Orders:");
-        // Inner loop over orders belonging to the current customer.
-        builder.Writeln("<<foreach [order in group.Orders]>>");
-        builder.Writeln("- Order <<[order.OrderId]>>: <<[order.Product]>> - $<<[order.Price]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
+    // Represents a group of orders belonging to a single customer.
+    public class OrderGroup
+    {
+        public int CustomerId { get; set; }
+        public List<Order> Orders { get; set; } = new();
+    }
 
-        // Save the template to disk before building the report.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Prepare sample data and group orders by CustomerId.
-        // -----------------------------------------------------------------
-        List<Order> orders = new()
+    public class Program
+    {
+        public static void Main()
         {
-            new Order { OrderId = 1, CustomerId = 101, Product = "Laptop", Price = 1200.00 },
-            new Order { OrderId = 2, CustomerId = 102, Product = "Smartphone", Price = 800.00 },
-            new Order { OrderId = 3, CustomerId = 101, Product = "Mouse", Price = 25.50 },
-            new Order { OrderId = 4, CustomerId = 103, Product = "Keyboard", Price = 45.00 },
-            new Order { OrderId = 5, CustomerId = 102, Product = "Monitor", Price = 300.00 }
-        };
+            // 1. Create a template document with LINQ Reporting tags.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Use LINQ GroupBy to create a collection of CustomerGroup objects.
-        ReportModel model = new()
-        {
-            CustomerGroups = orders
+            // Iterate over each customer group.
+            builder.Writeln("<<foreach [group in model.Groups]>>");
+            builder.Writeln("Customer ID: <<[group.CustomerId]>>");
+            // Iterate over the orders within the current group.
+            builder.Writeln("<<foreach [order in group.Orders]>>");
+            builder.Writeln("- Order ID: <<[order.OrderId]>>, Product: <<[order.Product]>>, Price: $<<[order.Price]>>");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // 2. Load the template for report generation.
+            Document reportDoc = new Document(templatePath);
+
+            // 3. Prepare sample data.
+            var orders = new List<Order>
+            {
+                new Order { OrderId = 1, CustomerId = 1, Product = "Apple",  Price = 1.20 },
+                new Order { OrderId = 2, CustomerId = 1, Product = "Banana", Price = 0.80 },
+                new Order { OrderId = 3, CustomerId = 2, Product = "Carrot", Price = 0.50 },
+                new Order { OrderId = 4, CustomerId = 2, Product = "Doughnut", Price = 1.50 },
+                new Order { OrderId = 5, CustomerId = 3, Product = "Eggplant", Price = 1.00 }
+            };
+
+            // Group orders by CustomerId using LINQ.
+            var groups = orders
                 .GroupBy(o => o.CustomerId)
-                .Select(g => new CustomerGroup
+                .Select(g => new OrderGroup
                 {
                     CustomerId = g.Key,
                     Orders = g.ToList()
                 })
-                .ToList()
-        };
+                .ToList();
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            var model = new ReportModel
+            {
+                Orders = orders,
+                Groups = groups
+            };
 
-        // Save the generated report.
-        doc.Save(reportPath);
+            // 4. Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // 5. Save the generated report.
+            const string reportPath = "Report.docx";
+            reportDoc.Save(reportPath);
+        }
     }
 }

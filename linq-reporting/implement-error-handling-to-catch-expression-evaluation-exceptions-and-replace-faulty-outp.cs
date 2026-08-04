@@ -1,64 +1,59 @@
 using System;
-using System.Text;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Model
+{
+    public int Value { get; set; } = 10;
+    public int Divisor { get; set; } = 0; // Will cause division by zero
+}
+
 public class Program
 {
-    // Simple data model used by the template.
-    public class Model
-    {
-        public int Number { get; set; } = 10;
-        public int Zero { get; set; } = 0;
-    }
-
     public static void Main()
     {
-        // Register code page provider (required for some data sources).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // 1. Create a template document with a LINQ Reporting tag that will cause an exception.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("Result: <<[model.Value / model.Divisor]>>");
 
-        // 1. Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        const string templatePath = "Template.docx";
+        template.Save(templatePath); // Save the template to disk.
 
-        // Normal expression – should render correctly.
-        builder.Writeln("Value: <<[model.Number]>>");
+        // 2. Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // Faulty expression – division by zero will throw during evaluation.
-        builder.Writeln("Faulty: <<[model.Number / model.Zero]>>");
+        // 3. Prepare the data model.
+        var model = new Model();
 
-        // Save the template (optional, just for inspection).
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // 2. Prepare the data source.
-        Model model = new Model();
-
-        // 3. Configure the ReportingEngine to inline error messages.
-        ReportingEngine engine = new ReportingEngine();
+        // 4. Configure the reporting engine to inline error messages.
+        var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // 4. Build the report. Catch any evaluation exceptions.
+        // 5. Build the report. Catch any evaluation exceptions.
         bool success;
         try
         {
-            success = engine.BuildReport(template, model, "model");
+            success = engine.BuildReport(doc, model, "model");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Report build failed: {ex.Message}");
+            // If an exception occurs, treat the build as failed.
+            Console.WriteLine($"Report generation error: {ex.Message}");
             success = false;
         }
 
-        // 5. Replace any inline error messages with a placeholder text.
-        // Aspose.Words inserts the word "Error" in the message; replace it with "[Invalid]".
-        template.Range.Replace("Error", "[Invalid]");
+        // 6. Replace any inline error messages with a placeholder text.
+        // Aspose.Words inserts the error message as plain text, e.g., "Error evaluating expression".
+        // The regular expression removes the whole error line.
+        doc.Range.Replace(new Regex(@"Error.*?(?=\r|\n|$)"), "[Invalid]");
 
-        // 6. Save the final document.
-        const string outputPath = "report.docx";
-        template.Save(outputPath);
+        // 7. Save the final report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-        // Indicate completion.
-        Console.WriteLine($"Report generated. Success flag: {success}");
+        // 8. Output simple status (no interactive input).
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "had errors")}. Output saved to {outputPath}");
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,42 +6,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary folder for the generated files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Path for the template and the final report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document that uses a static DateTime call.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // -------------------------------------------------
+        // 1. Create a simple template that uses DateTime.Now.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
         builder.Writeln("Current date and time: <<[DateTime.Now]>>");
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template back (simulating a real‑world scenario).
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
+        // -------------------------------------------------
+        // 2. Load the template for reporting.
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         // 3. Configure the ReportingEngine.
-        //    Add System.DateTime to KnownTypes so the template can access it.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
+
+        // Add System.DateTime to the set of known types so the template can access static members.
         engine.KnownTypes.Add(typeof(DateTime));
 
-        // No data source is required for static members, but BuildReport needs an object.
-        // Pass an empty anonymous object as a placeholder.
-        bool success = engine.BuildReport(doc, new object(), "");
+        // No data source is required for this example; an empty object is sufficient.
+        engine.BuildReport(reportDoc, new object());
 
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(workDir, "Report.docx");
-        doc.Save(outputPath);
+        // -------------------------------------------------
+        reportDoc.Save(reportPath);
 
-        // The example finishes without waiting for user input.
-        // (Optional) You could verify success here, but no output is required.
+        // Indicate completion (no interactive input required).
+        Console.WriteLine($"Report generated successfully: {reportPath}");
     }
 }

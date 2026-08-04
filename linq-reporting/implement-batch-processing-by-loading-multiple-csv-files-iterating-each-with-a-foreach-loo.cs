@@ -1,122 +1,85 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Reporting; // for CsvDataLoadOptions
 
-namespace AsposeWordsLinqReportingBatchCsv
+public class Program
 {
-    // Model representing a CSV file.
-    public class FileModel
+    public static void Main()
     {
-        public string FileName { get; set; } = string.Empty;
-    }
+        // Register code page provider for CSV parsing.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    // Row representation matching the CSV columns.
-    public class Row
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public double Value { get; set; }
-    }
+        // Create a folder for sample CSV files.
+        string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        Directory.CreateDirectory(dataFolder);
 
-    class Program
-    {
-        static void Main()
+        // Generate two sample CSV files.
+        CreateSampleCsv(Path.Combine(dataFolder, "people1.csv"));
+        CreateSampleCsv(Path.Combine(dataFolder, "people2.csv"));
+
+        // Create a template document that contains LINQ Reporting tags.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        CreateTemplate(templatePath);
+
+        // Document that will hold the merged results from all CSV files.
+        Document masterDocument = new Document();
+
+        // Process each CSV file in the folder.
+        foreach (string csvFile in Directory.GetFiles(dataFolder, "*.csv"))
         {
-            // Prepare folders.
-            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-            Directory.CreateDirectory(workDir);
-            string dataDir = Path.Combine(workDir, "Data");
-            Directory.CreateDirectory(dataDir);
+            // Load the template for the current CSV file.
+            Document templateDocument = new Document(templatePath);
 
-            // Create sample CSV files.
-            CreateSampleCsv(Path.Combine(dataDir, "data1.csv"));
-            CreateSampleCsv(Path.Combine(dataDir, "data2.csv"));
-
-            // Create the LINQ Reporting template.
-            string templatePath = Path.Combine(workDir, "template.docx");
-            CreateTemplate(templatePath);
-
-            // Load the template once; it will be cloned for each CSV file.
-            Document template = new Document(templatePath);
-
-            // Reporting engine configuration.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-
-            // Final document that will contain merged results from all CSV files.
-            Document finalReport = new Document();
-
-            // Process each CSV file.
-            foreach (string csvFile in Directory.GetFiles(dataDir, "*.csv"))
+            // Configure CSV loading options (headers are present).
+            CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true)
             {
-                // Model exposing the file name.
-                FileModel model = new FileModel { FileName = Path.GetFileName(csvFile) };
-
-                // CSV data source with header support.
-                CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true)
-                {
-                    HasHeaders = true,
-                    Delimiter = ',',
-                    QuoteChar = '"'
-                };
-                CsvDataSource csvSource = new CsvDataSource(csvFile, loadOptions);
-
-                // Clone the template for the current file.
-                Document currentDoc = (Document)template.Clone(true);
-
-                // Build the report using two data sources: the model ("model") and the CSV rows ("rows").
-                engine.BuildReport(currentDoc,
-                    new object[] { model, csvSource },
-                    new[] { "model", "rows" });
-
-                // Append the generated document to the final report.
-                finalReport.AppendDocument(currentDoc, ImportFormatMode.KeepSourceFormatting);
-            }
-
-            // Save the merged report.
-            string outputPath = Path.Combine(workDir, "MergedReport.docx");
-            finalReport.Save(outputPath);
-        }
-
-        // Generates a simple CSV file with headers Id,Name,Value.
-        private static void CreateSampleCsv(string path)
-        {
-            string[] lines =
-            {
-                "Id,Name,Value",
-                "1,Alpha,10.5",
-                "2,Beta,20.75",
-                "3,Gamma,30.0"
+                HasHeaders = true
             };
-            File.WriteAllLines(path, lines);
+
+            // Create a CSV data source from the file.
+            CsvDataSource csvData = new CsvDataSource(csvFile, loadOptions);
+
+            // Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(templateDocument, csvData, "persons");
+
+            // Append the generated report to the master document.
+            masterDocument.AppendDocument(templateDocument, ImportFormatMode.KeepSourceFormatting);
         }
 
-        // Creates a Word template containing LINQ Reporting tags.
-        private static void CreateTemplate(string path)
+        // Save the combined report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedReport.docx");
+        masterDocument.Save(outputPath);
+    }
+
+    // Generates a simple CSV file with Name and Age columns.
+    private static void CreateSampleCsv(string filePath)
+    {
+        string[] lines =
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            "Name,Age",
+            "Alice,30",
+            "Bob,25"
+        };
+        File.WriteAllLines(filePath, lines);
+    }
 
-            // Header showing the source file name.
-            builder.Writeln("Report for file: <<[model.FileName]>>");
-            builder.Writeln();
+    // Creates a Word template containing LINQ Reporting tags.
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Table header.
-            builder.Writeln("Id\tName\tValue");
-            // Begin foreach over CSV rows.
-            builder.Writeln("<<foreach [row in rows]>>");
-            // Row data.
-            builder.Writeln("<<[row.Id]>>\t<<[row.Name]>>\t<<[row.Value]>>");
-            // End foreach.
-            builder.Writeln("<</foreach>>");
-            builder.Writeln();
-            builder.Writeln("--------------------------------------------------");
-            builder.Writeln();
+        builder.Writeln("People Report");
+        builder.Writeln("----------------");
 
-            doc.Save(path);
-        }
+        // Begin foreach loop over the CSV rows (exposed as 'persons').
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>\tAge: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(filePath);
     }
 }

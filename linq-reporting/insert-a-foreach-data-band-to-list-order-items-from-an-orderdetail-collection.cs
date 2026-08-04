@@ -1,87 +1,78 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReportingDemo
 {
-    // Data model classes
+    // Simple data model representing an order.
     public class Order
     {
         public string CustomerName { get; set; } = string.Empty;
-        public List<OrderDetail> Details { get; set; } = new();
+        public List<OrderDetail> OrderDetails { get; set; } = new();
     }
 
+    // Simple data model representing a line item in an order.
     public class OrderDetail
     {
-        public string Name { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
         public int Quantity { get; set; }
-        public double Price { get; set; }
     }
 
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            // Step 1: Create the template document programmatically.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // Register code page provider required by Aspose.Words for some encodings.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Static text with a placeholder for the customer's name.
-            builder.Writeln("Order Report for <<[order.CustomerName]>>");
-            builder.Writeln(); // empty line
-
-            // Begin a foreach data band that iterates over Order.Details.
-            builder.Writeln("<<foreach [detail in order.Details]>>");
-
-            // Create a table header.
-            var table = builder.StartTable();
-            builder.InsertCell();
-            builder.Writeln("Item");
-            builder.InsertCell();
-            builder.Writeln("Quantity");
-            builder.InsertCell();
-            builder.Writeln("Price");
-            builder.EndRow();
-
-            // Row for each order detail.
-            builder.InsertCell();
-            builder.Writeln("<<[detail.Name]>>");
-            builder.InsertCell();
-            builder.Writeln("<<[detail.Quantity]>>");
-            builder.InsertCell();
-            builder.Writeln("<<[detail.Price]>>");
-            builder.EndRow();
-
-            // End the table and the foreach block.
-            builder.EndTable();
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            const string templatePath = "OrderTemplate.docx";
-            template.Save(templatePath);
-
-            // Step 2: Prepare sample data.
-            var order = new Order
+            // Prepare sample data.
+            Order order = new Order
             {
                 CustomerName = "John Doe",
-                Details = new List<OrderDetail>
+                OrderDetails = new List<OrderDetail>
                 {
-                    new() { Name = "Apple", Quantity = 3, Price = 0.5 },
-                    new() { Name = "Banana", Quantity = 5, Price = 0.3 },
-                    new() { Name = "Cherry", Quantity = 10, Price = 0.2 }
+                    new OrderDetail { ProductName = "Apple", Quantity = 3 },
+                    new OrderDetail { ProductName = "Banana", Quantity = 5 },
+                    new OrderDetail { ProductName = "Orange", Quantity = 2 }
                 }
             };
 
-            // Step 3: Load the template and build the report.
-            var reportDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // default options
-            bool success = engine.BuildReport(reportDoc, order, "order");
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Step 4: Save the generated report.
-            const string outputPath = "OrderReport.docx";
-            reportDoc.Save(outputPath);
+            // Header with customer name.
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln();
+
+            // Begin a foreach data band that iterates over OrderDetails.
+            builder.Writeln("Order Items:");
+            builder.Writeln("<<foreach [detail in OrderDetails]>>");
+            // Each line will display product name and quantity.
+            builder.Writeln("- <<[detail.ProductName]>> : <<[detail.Quantity]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk (required before building the report).
+            string templatePath = "OrderReportTemplate.docx";
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
+
+            // The root object name in the template tags is "order".
+            engine.BuildReport(reportDoc, order, "order");
+
+            // Save the generated report.
+            string reportPath = "OrderReportResult.docx";
+            reportDoc.Save(reportPath);
         }
     }
 }

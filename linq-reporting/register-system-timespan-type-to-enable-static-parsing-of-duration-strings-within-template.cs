@@ -2,35 +2,37 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Model
+{
+    public string Duration { get; set; } = "01:02:03";
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Create a template document programmatically.
+        // Create a template document with a LINQ Reporting tag that parses a duration string.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Insert LINQ Reporting tags that use static parsing of a TimeSpan string.
-        // Use double quotes inside the expression to avoid char literal parsing errors.
-        builder.Writeln("Parsed duration: <<[TimeSpan.Parse(\"02:15:30\")]>>");
-        builder.Writeln("Total minutes: <<[TimeSpan.Parse(\"02:15:30\").TotalMinutes]>>");
-
-        // Save the template to disk.
+        builder.Writeln("Parsed duration (hh:mm:ss): <<[TimeSpan.Parse(Duration)]>>");
         const string templatePath = "Template.docx";
         template.Save(templatePath);
 
         // Load the template for reporting.
-        Document report = new Document(templatePath);
+        Document doc = new Document(templatePath);
 
-        // Create the reporting engine and register System.TimeSpan for static method access.
+        // Prepare the data model.
+        Model model = new Model();
+
+        // Configure the reporting engine.
         ReportingEngine engine = new ReportingEngine();
+        // Register System.TimeSpan to allow static method calls like TimeSpan.Parse in the template.
         engine.KnownTypes.Add(typeof(TimeSpan));
 
-        // Build the report. No data source is required because the template uses only static calls.
-        engine.BuildReport(report, new object());
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        report.Save(outputPath);
+        doc.Save("Report.docx");
     }
 }

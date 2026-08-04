@@ -5,75 +5,59 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Root data model
-    public class ReportModel
-    {
-        // Initialize collection to avoid null warnings
-        public List<Person> Persons { get; set; } = new();
-    }
-
-    // Simple person entity
+    // Simple data model.
     public class Person
     {
-        // Default to empty string to avoid nullable warnings
+        // Name may be null to simulate missing data.
         public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
+    }
+
+    // Wrapper class that will be passed as the root data source.
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // -------------------------------------------------
-            // Step 1: Create a template document with LINQ Reporting tags
-            // -------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // Create a template document programmatically.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            builder.Writeln("Report:");
-            // Loop over the Persons collection
-            builder.Writeln("<<foreach [person in Persons]>>");
-            // Output only when the current item is not null
-            builder.Writeln("<<if [person != null]>>Name: <<[person.Name]>> Age: <<[person.Age]>><</if>>");
+            // Direct reference to a possibly missing member.
+            builder.Writeln("First person name: <<[model.Persons[0].Name]>>");
+
+            // Loop over the collection; missing members will be treated as empty strings.
+            builder.Writeln("<<foreach [person in model.Persons]>>");
+            builder.Writeln("Name: <<[person.Name]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template locally
-            const string templatePath = "template.docx";
-            template.Save(templatePath);
+            // Prepare sample data with a null name.
+            var model = new ReportModel
+            {
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice" },
+                    new Person { Name = null }, // Missing name.
+                    new Person { Name = "Charlie" }
+                }
+            };
 
-            // -------------------------------------------------
-            // Step 2: Load the template for reporting
-            // -------------------------------------------------
-            var doc = new Document(templatePath);
-
-            // -------------------------------------------------
-            // Step 3: Prepare sample data with a null entry in the collection
-            // -------------------------------------------------
-            var model = new ReportModel();
-            model.Persons.Add(new Person { Name = "Alice", Age = 30 });
-            model.Persons.Add(null); // This null entry will be ignored by the IF condition
-            model.Persons.Add(new Person { Name = "Bob", Age = 25 });
-
-            // -------------------------------------------------
-            // Step 4: Configure the ReportingEngine to treat missing members as empty strings
-            // -------------------------------------------------
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.AllowMissingMembers;
-            // Empty message suppresses output for missing members
+            // Configure the reporting engine to treat missing members as empty strings.
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.AllowMissingMembers
+            };
+            // Optional: customize the placeholder text for missing members.
             engine.MissingMemberMessage = string.Empty;
 
-            // -------------------------------------------------
-            // Step 5: Build the report
-            // -------------------------------------------------
+            // Build the report. The root object name used in the template is "model".
             engine.BuildReport(doc, model, "model");
 
-            // -------------------------------------------------
-            // Step 6: Save the generated report
-            // -------------------------------------------------
-            const string outputPath = "output.docx";
-            doc.Save(outputPath);
-
-            Console.WriteLine($"Report generated successfully: {outputPath}");
+            // Save the generated report.
+            doc.Save("ReportOutput.docx");
         }
     }
 }

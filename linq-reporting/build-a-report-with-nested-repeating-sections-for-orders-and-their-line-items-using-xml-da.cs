@@ -7,70 +7,81 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data.
-        const string xmlFile = "Orders.xml";
-        File.WriteAllText(xmlFile, GetSampleXml());
+        // Paths for the template, XML data source and the final report.
+        string templatePath = "Template.docx";
+        string xmlDataPath = "Orders.xml";
+        string reportPath = "Report.docx";
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
+        // Title.
         builder.Writeln("Orders Report");
         builder.Writeln();
 
-        // Outer foreach – iterate over orders.
+        // Outer foreach – iterate over each Order element.
+        // The XML data source is named "orders", which represents a collection of Order rows.
         builder.Writeln("<<foreach [order in orders]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Order Date: <<[order.OrderDate]>>");
+        builder.Writeln("Order ID: <<[order.OrderId]>>");
         builder.Writeln("Items:");
-        // Inner foreach – iterate over line items of the current order.
+        // Inner foreach – iterate over each Item within the current Order.
         builder.Writeln("<<foreach [item in order.Items.Item]>>");
-        // Correct arithmetic expression syntax: the whole expression must be inside a single <<[ ... ]>> tag.
-        builder.Writeln("- <<[item.ProductName]>>: <<[item.Quantity]>> x <<[item.Price]>> = <<[item.Quantity * item.Price]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
+        builder.Writeln("- <<[item.ProductName]>>: <<[item.Quantity]>>");
+        builder.Writeln("<</foreach>>"); // End inner foreach.
+        builder.Writeln("<</foreach>>"); // End outer foreach.
 
-        // Build the report using the XML data source.
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Create a sample XML data source file.
+        // -----------------------------------------------------------------
+        string xmlContent =
+@"<Orders>
+    <Order>
+        <CustomerName>John Doe</CustomerName>
+        <OrderId>1001</OrderId>
+        <Items>
+            <Item>
+                <ProductName>Widget A</ProductName>
+                <Quantity>2</Quantity>
+            </Item>
+            <Item>
+                <ProductName>Widget B</ProductName>
+                <Quantity>5</Quantity>
+            </Item>
+        </Items>
+    </Order>
+    <Order>
+        <CustomerName>Jane Smith</CustomerName>
+        <OrderId>1002</OrderId>
+        <Items>
+            <Item>
+                <ProductName>Gadget X</ProductName>
+                <Quantity>1</Quantity>
+            </Item>
+        </Items>
+    </Order>
+</Orders>";
+        File.WriteAllText(xmlDataPath, xmlContent);
+
+        // -----------------------------------------------------------------
+        // 3. Load the template and build the report using the XML data source.
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlDataPath);
+
         ReportingEngine engine = new ReportingEngine();
-        XmlDataSource dataSource = new XmlDataSource(xmlFile);
-        engine.BuildReport(template, dataSource, "orders");
+        engine.Options = ReportBuildOptions.None; // Default options.
+
+        // Build the report. The data source name ("orders") must match the name used in the template tags.
+        engine.BuildReport(loadedTemplate, xmlDataSource, "orders");
 
         // Save the generated report.
-        template.Save("OrdersReport.docx");
-    }
-
-    // Returns a simple XML string containing two orders with line items.
-    private static string GetSampleXml()
-    {
-        return @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Orders>
-  <Order>
-    <CustomerName>John Doe</CustomerName>
-    <OrderDate>2023-08-01</OrderDate>
-    <Items>
-      <Item>
-        <ProductName>Widget A</ProductName>
-        <Quantity>2</Quantity>
-        <Price>9.99</Price>
-      </Item>
-      <Item>
-        <ProductName>Gadget B</ProductName>
-        <Quantity>1</Quantity>
-        <Price>19.95</Price>
-      </Item>
-    </Items>
-  </Order>
-  <Order>
-    <CustomerName>Jane Smith</CustomerName>
-    <OrderDate>2023-08-03</OrderDate>
-    <Items>
-      <Item>
-        <ProductName>Thingamajig</ProductName>
-        <Quantity>5</Quantity>
-        <Price>3.50</Price>
-      </Item>
-    </Items>
-  </Order>
-</Orders>";
+        loadedTemplate.Save(reportPath);
     }
 }

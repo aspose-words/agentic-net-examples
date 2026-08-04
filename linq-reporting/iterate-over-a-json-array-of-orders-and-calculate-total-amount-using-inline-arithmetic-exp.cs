@@ -4,54 +4,67 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Register code page provider for JSON handling.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Prepare sample JSON data.
-            string jsonPath = "orders.json";
-            File.WriteAllText(jsonPath, @"
+        // -----------------------------------------------------------------
+        // 1. Create sample JSON data representing an array of orders.
+        // -----------------------------------------------------------------
+        string jsonPath = "orders.json";
+        string jsonContent = @"
 [
-    { ""Id"": 1, ""Quantity"": 2, ""UnitPrice"": 15.5 },
-    { ""Id"": 2, ""Quantity"": 5, ""UnitPrice"": 9.99 },
-    { ""Id"": 3, ""Quantity"": 1, ""UnitPrice"": 120.0 }
-]".Trim());
+  { ""OrderId"": 1, ""CustomerName"": ""Alice"", ""Quantity"": 3, ""UnitPrice"": 19.99 },
+  { ""OrderId"": 2, ""CustomerName"": ""Bob"",   ""Quantity"": 5, ""UnitPrice"": 9.50 },
+  { ""OrderId"": 3, ""CustomerName"": ""Carol"", ""Quantity"": 2, ""UnitPrice"": 45.00 }
+]
+";
+        File.WriteAllText(jsonPath, jsonContent.Trim());
 
-            // Create a JSON data source.
-            JsonDataSource dataSource = new JsonDataSource(jsonPath);
+        // -----------------------------------------------------------------
+        // 2. Build the template document programmatically.
+        // -----------------------------------------------------------------
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Build the template document programmatically.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Order Report");
+        builder.Writeln("------------------------------");
 
-            // Header.
-            builder.Writeln("Order Report");
-            builder.Writeln("------------------------------");
+        // Begin a foreach loop over the JSON array named 'orders'.
+        builder.Writeln("<<foreach [order in orders]>>");
 
-            // Iterate over the orders collection.
-            builder.Writeln("<<foreach [order in orders]>>");
-            builder.Writeln("Order ID: <<[order.Id]>>");
-            builder.Writeln("Quantity: <<[order.Quantity]>>");
-            builder.Writeln("Unit Price: $<<[order.UnitPrice]>>");
-            // Inline arithmetic: calculate line amount.
-            builder.Writeln("Line Amount: $<<[order.Quantity * order.UnitPrice]>>");
-            builder.Writeln("<</foreach>>");
+        // Output order details and calculate line total using an inline expression.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Quantity: <<[order.Quantity]>>");
+        builder.Writeln("Unit Price: $<<[order.UnitPrice]>>");
+        builder.Writeln("Line Total: $<<[order.Quantity * order.UnitPrice]>>");
+        builder.Writeln(""); // Blank line for readability.
 
-            builder.Writeln("------------------------------");
-            // Inline arithmetic: calculate total amount for all orders.
-            builder.Writeln("Total Amount: $<<[orders.Sum(o => o.Quantity * o.UnitPrice)]>>");
+        // End the foreach block.
+        builder.Writeln("<</foreach>>");
 
-            // Build the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, dataSource, "orders");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-            // Save the generated report.
-            doc.Save("OrderReport.docx");
-        }
+        // -----------------------------------------------------------------
+        // 3. Load the template and bind the JSON data source.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+        JsonDataSource jsonData = new JsonDataSource(jsonPath);
+
+        // Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // Default options.
+        engine.BuildReport(reportDoc, jsonData, "orders");
+
+        // -----------------------------------------------------------------
+        // 4. Save the generated report.
+        // -----------------------------------------------------------------
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

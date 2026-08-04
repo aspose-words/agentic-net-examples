@@ -9,84 +9,63 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var reportData = new ReportModel
-        {
-            Title = "Order Summary",
-            Order = new Order
-            {
-                CustomerName = "John Doe",
-                Items = new List<Item>
-                {
-                    new Item { Index = 1, Name = "Apple" },
-                    new Item { Index = 2, Name = "Banana" },
-                    new Item { Index = 3, Name = "Cherry" }
-                }
-            }
-        };
+        // Create a template document in memory.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Create a template document programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln("Customer: <<[model.Order.CustomerName]>>");
+        // Simple title.
+        builder.Writeln("Order Report");
+        builder.Writeln("Customer: <<[model.CustomerName]>>");
         builder.Writeln();
-        builder.Writeln("<<foreach [item in model.Order.Items]>>");
 
-        // Table header.
-        var table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Index");
-        builder.InsertCell();
-        builder.Writeln("Product");
-        builder.EndRow();
-
-        // Table row for each item.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.EndRow();
-
-        builder.EndTable();
+        // LINQ Reporting foreach block to list items.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item: <<[item.Name]>> - Qty: <<[item.Quantity]>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report using LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, reportData, "model");
+        // Build the report using the data model.
+        ReportingEngine engine = new ReportingEngine();
+        OrderReport model = CreateSampleModel();
+        engine.BuildReport(template, model, "model");
 
-        // Serialize the generated report to a memory stream.
-        using var reportStream = new MemoryStream();
-        templateDoc.Save(reportStream, SaveFormat.Docx);
-        reportStream.Position = 0; // Reset for further processing.
-
-        // For demonstration, save the stream to a file.
-        const string outputPath = "GeneratedReport.docx";
-        File.WriteAllBytes(outputPath, reportStream.ToArray());
-
-        // Optionally, display the size of the generated report.
-        Console.WriteLine($"Report generated and saved to '{outputPath}'. Size: {reportStream.Length} bytes.");
+        // Serialize the generated report to a memory stream (e.g., for emailing).
+        using (MemoryStream reportStream = new MemoryStream())
+        {
+            template.Save(reportStream, SaveFormat.Docx);
+            // The stream now contains the DOCX bytes.
+            Console.WriteLine($"Report generated. Stream length: {reportStream.Length} bytes");
+            // Reset position if the stream will be read later.
+            reportStream.Position = 0;
+            // Further processing such as attaching to an email would use 'reportStream'.
+        }
     }
-}
 
-// Root model class referenced in the template as "model".
-public class ReportModel
-{
-    public string Title { get; set; } = string.Empty;
-    public Order Order { get; set; } = new();
-}
+    // Creates a sample data model for the report.
+    private static OrderReport CreateSampleModel()
+    {
+        return new OrderReport
+        {
+            CustomerName = "John Doe",
+            Items = new()
+            {
+                new Item { Name = "Apple", Quantity = 3 },
+                new Item { Name = "Banana", Quantity = 5 },
+                new Item { Name = "Orange", Quantity = 2 }
+            }
+        };
+    }
 
-// Order class containing customer information and a collection of items.
-public class Order
-{
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
+    // Root data model referenced in the template as 'model'.
+    public class OrderReport
+    {
+        public string CustomerName { get; set; } = "";
+        public List<Item> Items { get; set; } = new();
+    }
 
-// Item class used inside the foreach loop.
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
+    // Item model used inside the foreach loop.
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+    }
 }

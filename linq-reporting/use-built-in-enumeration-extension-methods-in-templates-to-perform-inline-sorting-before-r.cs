@@ -1,68 +1,63 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingSortingExample
 {
-    public static void Main()
+    // Simple data model.
+    public class Person
     {
-        // Prepare sample data (unsorted).
-        var model = new ReportModel
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+    }
+
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Persons = new List<Person>
+            // Prepare sample data (unsorted).
+            var model = new ReportModel
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob",   Age = 25 },
-                new Person { Name = "Carol", Age = 35 },
-                new Person { Name = "Dave",  Age = 28 }
-            }
-        };
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 34 },
+                    new Person { Name = "Bob",   Age = 28 },
+                    new Person { Name = "Carol", Age = 45 },
+                    new Person { Name = "Dave",  Age = 22 }
+                }
+            };
 
-        // Create a template document with LINQ Reporting tags that sort the collection inline.
-        string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+            // Create a template document programmatically.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-        // Load the template.
-        Document doc = new Document(templatePath);
+            builder.Writeln("People sorted by Age (ascending):");
+            // Inline sorting using LINQ OrderBy extension method.
+            builder.Writeln("<<foreach [p in Persons.OrderBy(person => person.Age)]>>");
+            builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
+            builder.Writeln("<</foreach>>");
 
-        // Build the report using the model as the root data source named "model".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Save the template (optional, just to illustrate the lifecycle).
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-        // Save the generated report.
-        string reportPath = "Report.docx";
-        doc.Save(reportPath);
+            // Load the template (demonstrating load step).
+            var loadedTemplate = new Document(templatePath);
+
+            // Build the report using the ReportingEngine.
+            var engine = new ReportingEngine();
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // Save the final report.
+            const string reportPath = "Report.docx";
+            loadedTemplate.Save(reportPath);
+        }
     }
-
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Title.
-        builder.Writeln("Persons sorted by Age (descending):");
-
-        // Inline sorting using OrderByDescending extension method.
-        builder.Writeln("<<foreach [p in model.Persons.OrderByDescending(p => p.Age)]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(filePath);
-    }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

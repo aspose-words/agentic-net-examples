@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,84 +7,63 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any encoding needs.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create the template document with LINQ Reporting tags.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
         // Begin a foreach loop over the Sections collection.
         builder.Writeln("<<foreach [sec in Sections]>>");
-        // Write a heading that shows the numeric value and its corresponding letter.
-        builder.Writeln("Section <<[sec.Number]>>: <<[sec.Letter]>>");
+
+        // Write a heading where the integer Section value is converted to an uppercase letter.
+        builder.Writeln("<<[sec.Letter]>>. <<[sec.Title]>>");
+
         // End the foreach loop.
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Prepare the data model.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // Load the template back for report generation.
+        var document = new Document(templatePath);
+
+        // Prepare the data model.
+        var model = new ReportModel
         {
-            Sections = new List<Section>
+            Sections = new List<SectionItem>
             {
-                new Section { Number = 1 },
-                new Section { Number = 2 },
-                new Section { Number = 3 },
-                new Section { Number = 4 },
-                new Section { Number = 5 }
+                new SectionItem { Section = 1, Title = "Introduction" },
+                new SectionItem { Section = 2, Title = "Details" },
+                new SectionItem { Section = 3, Title = "Conclusion" }
             }
         };
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(document, model, "model");
 
-        // Save the final report.
-        reportDoc.Save(reportPath);
+        // Save the generated report.
+        const string reportPath = "Report.docx";
+        document.Save(reportPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
+// Root data model for the report.
 public class ReportModel
 {
-    public List<Section> Sections { get; set; } = new();
+    // Collection of sections to be iterated over in the template.
+    public List<SectionItem> Sections { get; set; } = new();
 }
 
-public class Section
+// Represents a single section with an integer identifier and a title.
+public class SectionItem
 {
-    public int Number { get; set; }
+    // Integer value that will be converted to an uppercase letter in the report.
+    public int Section { get; set; }
 
-    // Converts the integer to an uppercase alphabetic representation (A, B, ..., Z, AA, AB, ...).
-    public string Letter => ConvertToLetters(Number);
+    // Title of the section.
+    public string Title { get; set; } = string.Empty;
 
-    private static string ConvertToLetters(int number)
-    {
-        if (number <= 0) return string.Empty;
-
-        string result = string.Empty;
-        int n = number;
-        while (n > 0)
-        {
-            n--; // Adjust because 'A' corresponds to 1.
-            char ch = (char)('A' + (n % 26));
-            result = ch + result;
-            n /= 26;
-        }
-        return result;
-    }
+    // Computed property that converts the integer Section to an uppercase alphabetic letter (1 → A, 2 → B, etc.).
+    public string Letter => ((char)('A' + Section - 1)).ToString();
 }

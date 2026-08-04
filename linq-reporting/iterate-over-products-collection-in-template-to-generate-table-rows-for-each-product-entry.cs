@@ -2,63 +2,84 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-public class Product
+namespace LinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model for a product.
+    public class Product
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+    // Wrapper model that contains the collection used in the template.
+    public class ReportModel
+    {
+        public List<Product> Products { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Products = new List<Product>
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string outputPath = "Report.docx";
+
+            // -----------------------------------------------------------------
+            // 1. Create the template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Begin the foreach loop over the Products collection.
+            builder.Writeln("<<foreach [p in model.Products]>>");
+
+            // Create a table header.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("Product Name");
+            builder.InsertCell();
+            builder.Writeln("Price");
+            builder.EndRow();
+
+            // Row that will be repeated for each product.
+            builder.InsertCell();
+            builder.Writeln("<<[p.Name]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[p.Price]>>");
+            builder.EndRow();
+
+            // Finish the table and the foreach block.
+            builder.EndTable();
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Prepare sample data.
+            // -----------------------------------------------------------------
+            var model = new ReportModel
             {
-                new Product { Name = "Apple", Price = 0.99m },
-                new Product { Name = "Banana", Price = 0.59m },
-                new Product { Name = "Cherry", Price = 2.49m }
-            }
-        };
+                Products = new List<Product>
+                {
+                    new Product { Name = "Apple", Price = 1.23m },
+                    new Product { Name = "Banana", Price = 0.99m },
+                    new Product { Name = "Cherry", Price = 2.50m }
+                }
+            };
 
-        // Create a template document in memory.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+            // -----------------------------------------------------------------
+            // 3. Load the template and build the report.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-        builder.Writeln("Product Report");
-        builder.Writeln("<<foreach [p in model.Products]>>");
-
-        // Table header.
-        var table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Price");
-        builder.EndRow();
-
-        // Table row for each product.
-        builder.InsertCell();
-        builder.Writeln("<<[p.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[p.Price]>>");
-        builder.EndRow();
-
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        doc.Save("Report.docx");
+            // Save the generated report.
+            doc.Save(outputPath);
+        }
     }
 }

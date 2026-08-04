@@ -1,77 +1,71 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace HyperlinkLinqReportingExample
 {
-    // Model classes used by the LINQ Reporting engine.
+    // Data model for the report.
     public class ReportModel
     {
-        // Base URL for the hyperlink.
+        // Base URL used to build hyperlink targets.
         public string BaseUrl { get; set; } = string.Empty;
 
-        // Collection of query parameters.
-        public List<QueryParam> QueryParams { get; set; } = new();
-
-        // Text that will be displayed for the hyperlink.
-        public string LinkText { get; set; } = string.Empty;
-
-        // Dynamically constructed full URL (base + encoded query string).
-        public string FullUrl
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(BaseUrl))
-                    return string.Empty;
-
-                if (QueryParams == null || QueryParams.Count == 0)
-                    return BaseUrl;
-
-                var encodedParams = QueryParams
-                    .Select(p => $"{Uri.EscapeDataString(p.Name)}={Uri.EscapeDataString(p.Value)}");
-                return $"{BaseUrl}?{string.Join("&", encodedParams)}";
-            }
-        }
+        // Collection of items to iterate over.
+        public List<Item> Items { get; set; } = new();
     }
 
-    public class QueryParam
+    // Individual item containing parameters for the hyperlink.
+    public class Item
     {
+        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public string Value { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // 1. Create a blank document that will serve as the template.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // 1. Create the template document programmatically.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // 2. Insert a LINQ Reporting link tag.
-            //    The first expression provides the URI, the second provides the display text.
-            builder.Writeln("<<link [model.FullUrl] [model.LinkText]>>");
+            // Begin a foreach loop over the Items collection.
+            builder.Writeln("<<foreach [item in model.Items]>>");
+
+            // Insert a link tag where the URI is built from BaseUrl and the item's Id,
+            // and the display text is the item's Name.
+            builder.Writeln("<<link [model.BaseUrl + \"?id=\" + item.Id] [item.Name]>>");
+
+            // End the foreach loop.
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // 2. Load the template for reporting.
+            var document = new Document(templatePath);
 
             // 3. Prepare sample data.
-            ReportModel model = new ReportModel
+            var model = new ReportModel
             {
-                BaseUrl = "https://example.com/search",
-                LinkText = "Search on Example.com",
-                QueryParams = new List<QueryParam>
+                BaseUrl = "https://example.com/product",
+                Items = new List<Item>
                 {
-                    new QueryParam { Name = "q", Value = "aspose words" },
-                    new QueryParam { Name = "page", Value = "1" }
+                    new Item { Id = 101, Name = "Widget A" },
+                    new Item { Id = 202, Name = "Gadget B" },
+                    new Item { Id = 303, Name = "Doohickey C" }
                 }
             };
 
-            // 4. Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            // 4. Build the report using the LINQ Reporting engine.
+            var engine = new ReportingEngine();
+            engine.BuildReport(document, model, "model");
 
-            // 5. Save the resulting document.
-            doc.Save("HyperlinkReport.docx");
+            // 5. Save the generated report.
+            const string outputPath = "ReportWithHyperlinks.docx";
+            document.Save(outputPath);
         }
     }
 }

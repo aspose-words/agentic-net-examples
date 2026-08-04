@@ -3,71 +3,93 @@ using System.Collections.Generic;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
-using Newtonsoft.Json;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a blank document that will serve as the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert LINQ Reporting tags into the template.
-        builder.Writeln("Report for <<[model.CustomerName]>>");
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Build a sample data model.
-        ReportModel model = new()
+        // Prepare sample data.
+        Order order = new()
         {
-            CustomerName = "Acme Corporation",
+            CustomerName = "John Doe",
             Items = new()
             {
-                new() { Name = "Widget", Quantity = 12 },
-                new() { Name = "Gadget", Quantity = 7 },
-                new() { Name = "Doohickey", Quantity = 3 }
+                new Item { Name = "Apple", Quantity = 3 },
+                new Item { Name = "Banana", Quantity = 5 },
+                new Item { Name = "Orange", Quantity = 2 }
             }
         };
 
-        // (Optional) Serialize the model to JSON to demonstrate the Newtonsoft.Json dependency.
-        string json = JsonConvert.SerializeObject(model);
-        Console.WriteLine("Sample data model serialized to JSON:");
-        Console.WriteLine(json);
+        // Create a template document programmatically.
+        string templatePath = "template.docx";
+        CreateTemplate(templatePath);
 
-        // Create the reporting engine and build the report.
+        // Load the template.
+        Document doc = new(templatePath);
+
+        // Build the report using LINQ Reporting Engine.
         ReportingEngine engine = new();
         engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(doc, model, "model");
+        engine.BuildReport(doc, order, "order");
 
-        // If the build succeeded, save the rendered document as PDF.
-        if (success)
-        {
-            doc.Save("Report.pdf", SaveFormat.Pdf);
-            Console.WriteLine("Report generated and saved as Report.pdf");
-        }
-        else
-        {
-            Console.WriteLine("Report generation failed.");
-        }
+        // Export the rendered document to PDF.
+        string outputPdf = "output.pdf";
+        doc.Save(outputPdf, SaveFormat.Pdf);
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        // Write static text and LINQ Reporting tags.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln();
+        builder.Writeln("Items:");
+
+        // Begin foreach block for items.
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Start table inside the foreach block.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Quantity");
+        builder.EndRow();
+
+        // Data row (repeated for each item).
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Quantity]>>");
+        builder.EndRow();
+
+        // End table.
+        builder.EndTable();
+
+        // End foreach block.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(path);
     }
 }
 
-// Data model classes used by the LINQ Reporting engine.
-public class ReportModel
+public class Order
 {
-    public string CustomerName { get; set; } = "";
+    public string CustomerName { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
 }
 
 public class Item
 {
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
     public int Quantity { get; set; }
 }

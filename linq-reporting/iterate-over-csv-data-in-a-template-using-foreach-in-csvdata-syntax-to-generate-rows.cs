@@ -3,46 +3,71 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Reporting;
 
-class Program
+public class Program
 {
-    static void Main()
+    public static void Main()
     {
-        // Register code page provider for CSV parsing.
+        // Register code page provider for CSV parsing (required for some encodings).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for the temporary files.
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "people.csv");
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        // Define file paths in the current working directory.
+        string templatePath = "Template.docx";
+        string csvPath = "Data.csv";
+        string outputPath = "Report.docx";
 
-        // 1. Create sample CSV data.
-        File.WriteAllText(csvPath, "Name,Age\r\nAlice,30\r\nBob,25\r\nCharlie,35", Encoding.UTF8);
+        // -----------------------------------------------------------------
+        // Step 1: Create a simple CSV file with headers and sample rows.
+        // -----------------------------------------------------------------
+        string[] csvLines =
+        {
+            "Name,Age",
+            "Alice,30",
+            "Bob,25",
+            "Charlie,35"
+        };
+        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
 
-        // 2. Build the template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("<<foreach [in csvData]>>");
-        builder.Writeln("<<[Name]>> - <<[Age]>>");
+        // -----------------------------------------------------------------
+        // Step 2: Build a Word template that contains LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Add a title.
+        builder.Writeln("People List:");
+        builder.Writeln();
+
+        // Begin the foreach loop over the CSV data source named "csvData".
+        // Correct syntax: <<foreach [row in csvData]>>
+        builder.Writeln("<<foreach [row in csvData]>>");
+        // Inside the loop output the fields from each CSV row.
+        builder.Writeln("Name: <<[row.Name]>>, Age: <<[row.Age]>>");
+        // End the foreach block.
         builder.Writeln("<</foreach>>");
-        template.Save(templatePath);
 
-        // 3. Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // 4. Prepare CSV data source with header support.
+        // -----------------------------------------------------------------
+        // Step 3: Load the template and bind the CSV data source.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Configure CSV loading to treat the first line as headers.
         CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
         CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // 5. Build the report using the data source.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(reportDoc, csvDataSource, "csvData");
+        // Create the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
 
-        // 6. Save the generated report.
-        reportDoc.Save(reportPath);
+        // Build the report. The data source name used in the template tags is "csvData".
+        engine.BuildReport(doc, csvDataSource, "csvData");
+
+        // -----------------------------------------------------------------
+        // Step 4: Save the generated report.
+        // -----------------------------------------------------------------
+        doc.Save(outputPath);
     }
 }

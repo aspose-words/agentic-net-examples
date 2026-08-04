@@ -3,66 +3,67 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace LinqReportingErrorLogging
 {
-    public string Name { get; set; } = "Sample Name";
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model used as the root object for the report.
+    public class SampleModel
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        public string Name { get; set; } = "Test Name";
+    }
 
-        // Paths for the template, generated report and error log.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        string errorLogPath = Path.Combine(outputDir, "error.log");
-
-        // -----------------------------------------------------------------
-        // 1. Create a template document with an invalid LINQ Reporting tag.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Valid text.
-        builder.Writeln("Report Header");
-        // Invalid tag – missing one closing '>' character.
-        builder.Writeln("<<[model.Name]>");
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template back (as required by the workflow).
-        // -----------------------------------------------------------------
-        var loadedDoc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data source.
-        // -----------------------------------------------------------------
-        var model = new ReportModel();
-
-        // -----------------------------------------------------------------
-        // 4. Build the report with InlineErrorMessages disabled.
-        //    Capture any syntax errors and write them to a log file.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // InlineErrorMessages disabled.
-
-        try
+    public class Program
+    {
+        public static void Main()
         {
-            // This will throw an exception because the template contains a syntax error.
-            engine.BuildReport(loadedDoc, model, "model");
-        }
-        catch (Exception ex)
-        {
-            // Log the exception message (and optionally the stack trace) to a file.
-            File.WriteAllText(errorLogPath, $"Error building report:{Environment.NewLine}{ex.Message}");
-        }
+            // Paths for the template, output document, and error log.
+            string templatePath = "template.docx";
+            string outputPath = "output.docx";
+            string logPath = "error.log";
 
-        // Save the (unmodified) document so we have an output file.
-        loadedDoc.Save(reportPath);
+            // -----------------------------------------------------------------
+            // 1. Create a template document with an invalid LINQ Reporting tag.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // This tag references a non‑existent member and will cause a syntax error.
+            builder.Writeln("<<[model.NonExistentProperty]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template back for report generation.
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Build the report without InlineErrorMessages.
+            //    The engine will throw an exception on the syntax error.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // InlineErrorMessages disabled.
+
+            try
+            {
+                // Attempt to build the report. This will fail because of the invalid tag.
+                bool success = engine.BuildReport(doc, new SampleModel(), "model");
+
+                // If, for any reason, the build succeeds, save the result.
+                if (success)
+                {
+                    doc.Save(outputPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                // -----------------------------------------------------------------
+                // 4. Log the syntax error details to a file.
+                // -----------------------------------------------------------------
+                File.WriteAllText(logPath, $"Report generation failed: {ex.Message}");
+            }
+
+            // Ensure the program finishes without waiting for user input.
+        }
     }
 }

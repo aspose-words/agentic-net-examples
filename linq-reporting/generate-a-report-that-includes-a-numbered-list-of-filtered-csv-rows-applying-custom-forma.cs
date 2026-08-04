@@ -1,88 +1,74 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Lists;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Demonstrates LINQ Reporting with a CSV data source, a numbered list, filtering, and conditional formatting.
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create output folder.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(workDir);
+
+        // 1. Create a sample CSV file.
+        string csvPath = Path.Combine(workDir, "data.csv");
+        File.WriteAllText(csvPath,
+            "Id,Name,Value\r\n" +
+            "1,Alpha,30\r\n" +
+            "2,Beta,60\r\n" +
+            "3,Gamma,45\r\n" +
+            "4,Delta,80\r\n");
+
+        // 2. Build the template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Create a numbered list style and apply it to subsequent paragraphs.
+        List numberedList = template.Lists.Add(ListTemplate.NumberDefault);
+        builder.ListFormat.List = numberedList;
+
+        // Insert LINQ Reporting tags.
+        // The <<restartNum>> tag must be placed immediately before <<foreach>> in the same numbered paragraph.
+        builder.Writeln("<<restartNum>><<foreach [row in csv]>>");
+
+        // Conditional formatting: rows with Value > 50 get a light gray background.
+        builder.Writeln(
+            "<<if [row.Value > 50]>>" +
+            "<<backColor [\"LightGray\"]>><<[row.Name]>> <</backColor>><</if>>" +
+            "<<if [row.Value <= 50]>>" +
+            "<<[row.Name]>>" +
+            "<</if>>");
+
+        // End of the foreach block.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, just for inspection).
+        string templatePath = Path.Combine(workDir, "template.docx");
+        template.Save(templatePath);
+
+        // 3. Prepare CSV data source with load options.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions
         {
-            // Register code page provider for CSV handling (required for some encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            HasHeaders = true,
+            Delimiter = ',',
+            QuoteChar = '"',
+            CommentChar = '#'
+        };
+        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
 
-            // -----------------------------------------------------------------
-            // 1. Create sample CSV data.
-            // -----------------------------------------------------------------
-            const string csvPath = "data.csv";
-            File.WriteAllText(csvPath,
-                "Id,Name,Value\n" +
-                "1,Alpha,5\n" +
-                "2,Beta,12\n" +
-                "3,Gamma,8\n" +
-                "4,Delta,15\n" +
-                "5,Epsilon,22");
+        // 4. Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-            // -----------------------------------------------------------------
-            // 2. Build a template document programmatically.
-            // -----------------------------------------------------------------
-            const string templatePath = "template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // The data source name used in the template tags is "csv".
+        engine.BuildReport(template, csvData, "csv");
 
-            // Create a numbered list style and apply it to the following paragraphs.
-            List numberedList = templateDoc.Lists.Add(ListTemplate.NumberDefault);
-            builder.ListFormat.List = numberedList;
+        // 5. Save the generated report.
+        string reportPath = Path.Combine(workDir, "report.docx");
+        template.Save(reportPath);
 
-            // Place <<restartNum>> and <<foreach>> in the same numbered paragraph.
-            builder.Writeln("<<restartNum>><<foreach [row in persons]>>");
-
-            // Filter rows where Value > 10.
-            builder.Writeln("<<if [row.Value > 10]>>");
-
-            // Conditional background color for even values.
-            builder.Writeln(
-                "<<if [row.Value % 2 == 0]>>" +
-                "<<backColor [\"LightGray\"]>><<[row.Name]>> <</backColor>>" +
-                "<<else>>" +
-                "<<[row.Name]>>" +
-                "<</if>> - <<[row.Value]>>");
-
-            // End the outer if condition.
-            builder.Writeln("<</if>>");
-
-            // End the foreach loop.
-            builder.Writeln("<</foreach>>");
-
-            // Remove list formatting after the loop.
-            builder.ListFormat.RemoveNumbers();
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
-
-            // Configure CSV data source to treat the first line as headers.
-            var loadOptions = new CsvDataLoadOptions(true);
-            var csvDataSource = new CsvDataSource(csvPath, loadOptions);
-
-            // Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.None
-            };
-            engine.BuildReport(reportDoc, csvDataSource, "persons");
-
-            // Save the final report.
-            const string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        Console.WriteLine("Report generated at: " + reportPath);
     }
 }

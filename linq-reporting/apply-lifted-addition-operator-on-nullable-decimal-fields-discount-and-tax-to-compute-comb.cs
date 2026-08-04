@@ -4,63 +4,58 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Program
 {
-    // Data model with nullable decimal fields and a combined property using lifted addition.
-    public class Order
+    public static void Main()
     {
-        public decimal? Discount { get; set; } = null;
-        public decimal? Tax { get; set; } = null;
+        // Register code page provider for Aspose.Words (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // The lifted addition operator returns null if either operand is null.
-        public decimal? Combined => Discount + Tax;
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data with nullable decimal fields.
+        var model = new ReportModel
         {
-            // Register code page provider required by Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Discount = 12.5m,
+            Tax = null // Tax is missing for this example.
+        };
 
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string resultPath = "Result.docx";
+        // Create a template document programmatically.
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
 
-            // -------------------------------------------------
-            // Create the LINQ Reporting template programmatically.
-            // -------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Combined value: <<[order.Combined]>>");
-            templateDoc.Save(templatePath);
+        // Load the template document.
+        var doc = new Document(templatePath);
 
-            // -------------------------------------------------
-            // Load the template for report generation.
-            // -------------------------------------------------
-            var reportDoc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // -------------------------------------------------
-            // Prepare the data source.
-            // -------------------------------------------------
-            var order = new Order
-            {
-                Discount = 5.5m,
-                Tax = 2.3m
-            };
-
-            // -------------------------------------------------
-            // Build the report using Aspose.Words LINQ Reporting Engine.
-            // -------------------------------------------------
-            var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, order, "order");
-
-            // -------------------------------------------------
-            // Save the generated report.
-            // -------------------------------------------------
-            reportDoc.Save(resultPath);
-
-            Console.WriteLine($"Report generated successfully: {Path.GetFullPath(resultPath)}");
-        }
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
+
+    // Generates a simple Word template containing LINQ Reporting tags.
+    private static void CreateTemplate(string filePath)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Discount: <<[model.Discount]>>");
+        builder.Writeln("Tax: <<[model.Tax]>>");
+        builder.Writeln("Combined (Discount + Tax): <<[model.Combined]>>");
+
+        doc.Save(filePath);
+    }
+}
+
+// Data model used by the report. All members are public.
+public class ReportModel
+{
+    // Nullable decimal fields.
+    public decimal? Discount { get; set; }
+    public decimal? Tax { get; set; }
+
+    // Combined value using the lifted addition operator.
+    // The result is null if either operand is null.
+    public decimal? Combined => Discount + Tax;
 }

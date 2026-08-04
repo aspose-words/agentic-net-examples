@@ -1,54 +1,72 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class PhoneModel
+{
+    public string PhoneNumber { get; set; } = string.Empty;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple data model.
-        var person = new Person
+        // Paths for the template and the generated report.
+        string templatePath = "Template.docx";
+        string reportPath = "Report.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Write a line that conditionally shows whether the phone number matches the pattern.
+        // The pattern expects format: 123-456-7890
+        builder.Writeln("Phone: <<if [Regex.IsMatch(model.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>");
+        builder.Writeln("<<[model.PhoneNumber]>> (valid)");
+        builder.Writeln("<</if>>");
+        builder.Writeln("<<if [!Regex.IsMatch(model.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>");
+        builder.Writeln("<<[model.PhoneNumber]>> (invalid)");
+        builder.Writeln("<</if>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template for reporting.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data source.
+        // -----------------------------------------------------------------
+        PhoneModel model = new PhoneModel
         {
-            Name = "John Doe",
+            // Change this value to test different formats.
             PhoneNumber = "123-456-7890"
         };
 
-        // Build the template document programmatically.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // -----------------------------------------------------------------
+        // 4. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine
+        {
+            // Explicitly set options (none in this case).
+            Options = ReportBuildOptions.None
+        };
 
-        // Write static text and LINQ Reporting tags.
-        builder.Writeln("Name: <<[person.Name]>>");
-
-        // Conditional block that checks the phone number format using Regex.IsMatch.
-        builder.Writeln("<<if [Regex.IsMatch(person.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>><<[person.PhoneNumber]>> (valid)<</if>>");
-        builder.Writeln("<<if [!Regex.IsMatch(person.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>><<[person.PhoneNumber]>> (invalid)<</if>>");
-
-        // Save the template to a temporary file.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
-
-        // Configure the reporting engine.
-        var engine = new ReportingEngine();
+        // Allow the engine to use static members of Regex in expressions.
         engine.KnownTypes.Add(typeof(Regex));
-        engine.Options = ReportBuildOptions.None;
 
-        // Build the report using the data model.
-        engine.BuildReport(doc, person, "person");
+        // Build the report. The root object name used in the template is "model".
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(reportPath);
     }
-}
-
-// Public data model class with non‑nullable properties.
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public string PhoneNumber { get; set; } = string.Empty;
 }

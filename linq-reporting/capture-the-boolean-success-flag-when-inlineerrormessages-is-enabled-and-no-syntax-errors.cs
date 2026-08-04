@@ -1,44 +1,47 @@
 using System;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace AsposeWordsLinqReportingExample
 {
-    // Sample data model.
+    // Simple data model used as the root object for the report.
     public class Person
     {
-        public string Name { get; set; } = string.Empty;
+        // Initialize non‑nullable reference types to avoid warnings.
+        public string Name { get; set; } = "";
         public int Age { get; set; }
     }
 
-    public class ReportProgram
+    public class Program
     {
         public static void Main()
         {
-            // Required for code page support.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Create a blank document and add LINQ Reporting tags.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Template tags reference the root object named "model".
+            builder.Writeln("Name: <<[model.Name]>>");
+            builder.Writeln("Age: <<[model.Age]>>");
 
             // Prepare sample data.
-            var model = new Person { Name = "Alice", Age = 30 };
-
-            // Create a template document in memory.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            // Insert a LINQ Reporting tag that references the model.
-            builder.Writeln("<<[model.Name]>> is <<[model.Age]>> years old.");
+            Person model = new Person
+            {
+                Name = "John Doe",
+                Age = 30
+            };
 
             // Configure the reporting engine to inline error messages.
-            var engine = new ReportingEngine();
+            ReportingEngine engine = new ReportingEngine();
             engine.Options = ReportBuildOptions.InlineErrorMessages;
 
             // Build the report and capture the success flag.
             bool success = engine.BuildReport(doc, model, "model");
 
-            // Output the result.
+            // Output the result flag.
             Console.WriteLine($"Report build success: {success}");
 
-            // Save the generated document.
+            // Save the generated report.
             doc.Save("ReportOutput.docx");
         }
     }

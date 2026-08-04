@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,71 +7,50 @@ public class Program
 {
     public static void Main()
     {
-        // Create an output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document using the default tag delimiters << >>.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write a foreach block.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        // Inside the block write an expression for Name and Age.
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-        // Close the foreach block.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template back for reporting.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // Sample data model.
+        var model = new ReportModel
         {
-            Persons = new List<Person>
+            Name = "John Doe",
+            Age = 30,
+            Items = new List<Item>
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob",   Age = 45 },
-                new Person { Name = "Carol", Age = 27 }
+                new Item { Index = 1, Description = "Item One" },
+                new Item { Index = 2, Description = "Item Two" }
             }
         };
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using the default delimiters.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // Create a blank document and a builder to insert the template.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // The root object name used in the template is "model".
+        // Use the default LINQ Reporting delimiters (<< and >>) for tags.
+        builder.Writeln("Report for: <<[model.Name]>>");
+        builder.Writeln("Age: <<[model.Age]>>");
+        builder.Writeln();
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        builder.Writeln(" - <<[item.Index]>>: <<[item.Description]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Build the report using the model as the root data source named "model".
+        var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        doc.Save(reportPath);
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes (public, non‑nullable properties initialized).
-// ---------------------------------------------------------------------
+// Data model classes.
 public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Person
 {
     public string Name { get; set; } = string.Empty;
     public int Age { get; set; }
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public int Index { get; set; }
+    public string Description { get; set; } = string.Empty;
 }

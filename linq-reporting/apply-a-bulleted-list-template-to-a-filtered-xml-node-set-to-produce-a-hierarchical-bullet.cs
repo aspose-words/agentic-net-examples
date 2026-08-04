@@ -1,72 +1,103 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Lists;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data.
-        const string xmlFile = "Categories.xml";
-        File.WriteAllText(xmlFile,
-@"<Categories>
-    <Category Name=""Fruits"">
-        <Item>Apple</Item>
-        <Item>Banana</Item>
-        <Item>Cherry</Item>
-    </Category>
-    <Category Name=""Vegetables"">
-        <Item>Carrot</Item>
-        <Item>Broccoli</Item>
-    </Category>
-    <Category Name=""Beverages"">
-        <Item>Tea</Item>
-        <Item>Coffee</Item>
-        <Item>Juice</Item>
-    </Category>
-</Categories>");
+        // Sample XML data.
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Catalog>
+  <Category Name=""Fruits"" Type=""A"">
+    <Product Name=""Apple"" />
+    <Product Name=""Banana"" />
+  </Category>
+  <Category Name=""Vegetables"" Type=""B"">
+    <Product Name=""Carrot"" />
+    <Product Name=""Lettuce"" />
+  </Category>
+  <Category Name=""Beverages"" Type=""A"">
+    <Product Name=""Coffee"" />
+    <Product Name=""Tea"" />
+  </Category>
+</Catalog>";
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Write XML to a temporary file (optional, just to keep the example self‑contained).
+        string xmlPath = Path.Combine(Directory.GetCurrentDirectory(), "catalog.xml");
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // Create a single‑level bullet list and assign it to the builder.
-        List bulletList = template.Lists.Add(ListTemplate.BulletDefault);
-        builder.ListFormat.List = bulletList;
+        // Load XML into strongly‑typed model classes.
+        Catalog catalog = LoadCatalogFromXml(xmlPath);
 
-        // Outer loop – iterate over categories.
-        builder.Writeln("<<foreach [cat in Categories]>>");
-        // First level bullet (category name).
-        builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("<<[cat.Name]>>");
+        // Build the template document with LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Inner loop – iterate over items within a category.
-        builder.Writeln("<<foreach [it in cat.Item]>>");
-        // Second level bullet (item name).
-        builder.ListFormat.ListLevelNumber = 1;
-        builder.Writeln("<<[it]>>");
-        builder.Writeln("<</foreach>>"); // End inner foreach.
+        builder.Writeln("<<foreach [cat in catalog.Category]>>");
+        builder.Writeln("<<if [cat.Type == \"A\"]>>");
+        builder.Writeln("• <<[cat.Name]>>");
+        builder.Writeln("<<foreach [prod in cat.Product]>>");
+        builder.Writeln("   • <<[prod.Name]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</if>>");
+        builder.Writeln("<</foreach>>");
 
-        builder.Writeln("<</foreach>>"); // End outer foreach.
-
-        // Save the template to disk.
-        const string templateFile = "BulletTemplate.docx";
-        template.Save(templateFile);
-
-        // Load the template for reporting.
-        Document reportDoc = new Document(templateFile);
-
-        // Load XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlFile);
-
-        // Build the report. The root object name must match the tag used in the template.
+        // Generate the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, dataSource, "Categories");
+        engine.BuildReport(doc, catalog, "catalog");
 
-        // Save the generated report.
-        const string outputFile = "BulletReport.docx";
-        reportDoc.Save(outputFile);
+        // Save the resulting document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        doc.Save(outputPath);
     }
+
+    private static Catalog LoadCatalogFromXml(string xmlPath)
+    {
+        XDocument xdoc = XDocument.Load(xmlPath);
+        Catalog catalog = new Catalog();
+
+        foreach (XElement catElem in xdoc.Root.Elements("Category"))
+        {
+            Category category = new Category
+            {
+                Name = (string)catElem.Attribute("Name") ?? string.Empty,
+                Type = (string)catElem.Attribute("Type") ?? string.Empty
+            };
+
+            foreach (XElement prodElem in catElem.Elements("Product"))
+            {
+                Product product = new Product
+                {
+                    Name = (string)prodElem.Attribute("Name") ?? string.Empty
+                };
+                category.Product.Add(product);
+            }
+
+            catalog.Category.Add(category);
+        }
+
+        return catalog;
+    }
+}
+
+// Public data model classes.
+public class Catalog
+{
+    public List<Category> Category { get; set; } = new();
+}
+
+public class Category
+{
+    public string Name { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public List<Product> Product { get; set; } = new();
+}
+
+public class Product
+{
+    public string Name { get; set; } = string.Empty;
 }

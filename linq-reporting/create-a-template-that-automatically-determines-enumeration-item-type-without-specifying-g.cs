@@ -7,36 +7,28 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        // Create a template document with LINQ Reporting tags.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert a foreach tag that iterates over a collection named Items.
-        // The engine will infer the item type at runtime.
+        // Write a foreach tag that iterates over the Items collection.
+        // The engine will infer the item type (Item) automatically.
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        builder.Writeln("Index: <<[item.Index]>>");
+        builder.Writeln("Name: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the template for report generation.
-        // -------------------------------------------------
+        // Load the template for report generation.
         Document reportDoc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 3. Prepare sample data.
-        // -------------------------------------------------
+        // Prepare sample data.
         ReportModel model = new ReportModel
         {
-            Items = new List<Item>
+            Items =
             {
                 new Item { Index = 1, Name = "Alpha" },
                 new Item { Index = 2, Name = "Beta" },
@@ -44,28 +36,24 @@ public class Program
             }
         };
 
-        // -------------------------------------------------
-        // 4. Build the report using the LINQ Reporting engine.
-        // -------------------------------------------------
+        // Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
         engine.BuildReport(reportDoc, model, "model");
 
-        // -------------------------------------------------
-        // 5. Save the generated report.
-        // -------------------------------------------------
-        reportDoc.Save(reportPath);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
-// Public data model exposed to the template.
+// Root data model exposed to the template.
 public class ReportModel
 {
-    // Strongly typed collection allows the engine to determine the item type automatically.
-    public IEnumerable<Item> Items { get; set; } = new List<Item>();
+    // Collection of items; the engine will determine the item type at runtime.
+    public List<Item> Items { get; set; } = new();
 }
 
-// Item type used in the collection.
+// Simple item class referenced inside the foreach loop.
 public class Item
 {
     public int Index { get; set; }

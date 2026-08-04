@@ -4,70 +4,56 @@ using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class TaskItem
 {
-    // Data model for the report.
-    public class TaskItem
-    {
-        public int Index { get; set; }
-        public string Description { get; set; } = string.Empty;
-    }
+    // Description of the task.
+    public string Description { get; set; } = string.Empty;
+}
 
-    public class ReportModel
-    {
-        public List<TaskItem> Tasks { get; set; } = new();
-    }
+public class ReportModel
+{
+    // Collection of tasks to be listed.
+    public List<TaskItem> Tasks { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            // Apply a numbered list style to the paragraph that will contain the items.
-            List numberedList = template.Lists.Add(ListTemplate.NumberDefault);
-            builder.ListFormat.List = numberedList;
-
-            // Insert the LINQ Reporting tags.
-            // <<restartNum>> resets the numbering at the start of the list.
-            // <<foreach [task in Tasks]>> iterates over the collection.
-            // Each iteration writes the task description on a new paragraph.
-            builder.Writeln("<<restartNum>><<foreach [task in Tasks]>><<[task.Description]>>\r<</foreach>>");
-
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document report = new Document(templatePath);
-
-            // Prepare sample data.
-            ReportModel model = new ReportModel
+            Tasks = new List<TaskItem>
             {
-                Tasks = new List<TaskItem>
-                {
-                    new TaskItem { Index = 1, Description = "Review project requirements" },
-                    new TaskItem { Index = 2, Description = "Design architecture" },
-                    new TaskItem { Index = 3, Description = "Implement core modules" },
-                    new TaskItem { Index = 4, Description = "Write unit tests" },
-                    new TaskItem { Index = 5, Description = "Perform code review" }
-                }
-            };
+                new() { Description = "Review project requirements" },
+                new() { Description = "Design architecture diagram" },
+                new() { Description = "Implement core modules" },
+                new() { Description = "Write unit tests" },
+                new() { Description = "Perform code review" }
+            }
+        };
 
-            // Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // default options
-            engine.BuildReport(report, model, "model");
+        // Create a new blank document.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Save the generated checklist.
-            const string outputPath = "Checklist.docx";
-            report.Save(outputPath);
-        }
+        // Apply a numbered list style to the paragraph that will contain the LINQ Reporting tags.
+        builder.ListFormat.List = doc.Lists.Add(ListTemplate.NumberDefault);
+
+        // Insert the LINQ Reporting tags.
+        // <<restartNum>> ensures numbering starts at 1 for the first item.
+        // The foreach loop repeats the paragraph for each task in the collection.
+        builder.Writeln("<<restartNum>><<foreach [task in Tasks]>><<[task.Description]>>");
+        builder.Writeln("<</foreach>>");
+
+        // End the list formatting for subsequent content (optional).
+        builder.ListFormat.RemoveNumbers();
+
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated document.
+        doc.Save("Checklist.docx");
     }
 }

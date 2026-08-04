@@ -1,8 +1,9 @@
 using System;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
+using Aspose.Words.Saving;
+using Aspose.Words.Drawing.Charts; // ChartType resides in this namespace
 
 namespace AsposeWordsLinqReportingExample
 {
@@ -10,22 +11,21 @@ namespace AsposeWordsLinqReportingExample
     public class ReportModel
     {
         // URL that the link will point to.
-        public string Url { get; set; } = "https://www.example.com";
+        public string Url { get; set; } = "https://example.com";
 
-        // Text displayed for the hyperlink.
-        public string LinkText { get; set; } = "Visit Example.com";
+        // Text displayed for the link.
+        public string Text { get; set; } = "Visit Example.com";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider (required for some environments).
+            // Register code page provider (required for some Aspose.Words features).
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Paths for the temporary template and final report.
             const string templatePath = "Template.docx";
-            const string outputPath = "ReportOutput.docx";
+            const string reportPath = "Report.docx";
 
             // -------------------------------------------------
             // 1. Create the template document programmatically.
@@ -33,12 +33,15 @@ namespace AsposeWordsLinqReportingExample
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Add a title paragraph.
-            builder.Writeln("LINQ Reporting – Link Example");
+            // Paragraph that will contain the link tag.
+            builder.Writeln("Please click the following link:");
+            // Write the link tag inside the same paragraph run (no line break).
+            builder.Write("<<link [model.Url] [model.Text]>>");
 
-            // Insert a link tag inside a regular paragraph run.
-            // The tag must not be placed inside any chart element.
-            builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+            // Insert a chart after the paragraph to demonstrate that the link is NOT inside a chart.
+            // The chart itself does not contain any LINQ Reporting tags.
+            builder.Writeln(); // Ensure the chart starts on a new paragraph.
+            builder.InsertChart(ChartType.Column, 400, 300);
 
             // Save the template to disk.
             templateDoc.Save(templatePath);
@@ -46,20 +49,28 @@ namespace AsposeWordsLinqReportingExample
             // -------------------------------------------------
             // 2. Load the template and build the report.
             // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+            Document reportDoc = new Document(templatePath);
 
             // Prepare the data source.
             ReportModel model = new ReportModel();
 
-            // Create the reporting engine and generate the report.
-            ReportingEngine engine = new ReportingEngine();
-            // No special options are required for this simple scenario.
-            engine.BuildReport(loadedTemplate, model, "model");
+            // Configure and execute the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.None
+            };
+            bool success = engine.BuildReport(reportDoc, model, "model");
+
+            // (Optional) You can check the success flag if InlineErrorMessages were enabled.
+            if (!success)
+            {
+                Console.WriteLine("Report generation encountered errors.");
+            }
 
             // -------------------------------------------------
             // 3. Save the generated report.
             // -------------------------------------------------
-            loadedTemplate.Save(outputPath);
+            reportDoc.Save(reportPath, SaveFormat.Docx);
         }
     }
 }

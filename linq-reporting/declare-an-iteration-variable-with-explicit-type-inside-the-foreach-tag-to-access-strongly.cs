@@ -1,70 +1,77 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Program
 {
-    // Data model classes
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+        // Register code page provider (required for some encodings).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+        // -----------------------------------------------------------------
+        // 1. Create a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class Program
-    {
-        public static void Main()
+        // Correct foreach syntax: variable name without explicit type.
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template back (ensures BuildReport is called after loading).
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare sample data.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
         {
-            // Register code page provider (required for Aspose.Words)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // -----------------------------------------------------------------
-            // 1. Create a template document with a foreach tag that iterates over
-            //    the Persons collection. The iteration variable is declared without
-            //    an explicit type (Aspose.Words LINQ Reporting syntax requires this).
-            // -----------------------------------------------------------------
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
-            builder.Document.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template document.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare sample data.
-            // -----------------------------------------------------------------
-            var model = new ReportModel
+            Persons = new List<Person>
             {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 45 },
-                    new Person { Name = "Charlie", Age = 22 }
-                }
-            };
+                new Person { Name = "John Doe", Age = 30 },
+                new Person { Name = "Jane Smith", Age = 25 },
+                new Person { Name = "Bob Johnson", Age = 45 }
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // 4. Build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // -----------------------------------------------------------------
+        // 4. Build the report using ReportingEngine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            doc.Save("Report.docx");
-        }
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive prompts).
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes (public with public properties, non‑nullable).
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

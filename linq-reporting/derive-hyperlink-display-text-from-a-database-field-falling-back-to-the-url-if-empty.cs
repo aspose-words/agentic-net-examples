@@ -1,82 +1,58 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReportingDemo
 {
-    // Data model for the report.
+    // Model classes used by the LINQ Reporting engine.
     public class ReportModel
     {
-        // Collection of link items.
-        public List<LinkItem> Items { get; set; } = new();
+        // Collection of items to be iterated over in the template.
+        public List<Item> Items { get; set; } = new();
     }
 
-    // Individual link item.
-    public class LinkItem
+    public class Item
     {
         // URL of the hyperlink.
         public string Url { get; set; } = string.Empty;
 
         // Optional display text; may be empty.
-        public string DisplayText { get; set; } = string.Empty;
+        public string LinkText { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider for Aspose.Words (required for some encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Prepare sample data.
+            var model = new ReportModel();
+            model.Items.Add(new Item { Url = "https://example.com/first", LinkText = "First Link" });
+            model.Items.Add(new Item { Url = "https://example.com/second", LinkText = "" }); // Empty display text.
+            model.Items.Add(new Item { Url = "https://example.com/third", LinkText = null! }); // Null treated as empty.
 
-            // Paths for the temporary template and the final report.
-            const string templatePath = "template.docx";
-            const string outputPath = "report.docx";
-
-            // ---------- Create the template document ----------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // Create a new blank document and build the template.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
             // Begin a foreach loop over the Items collection.
             builder.Writeln("<<foreach [item in Items]>>");
 
-            // If DisplayText is null or empty, use the URL as the display text.
-            builder.Writeln("<<if [string.IsNullOrEmpty(item.DisplayText)]>>");
-            builder.Writeln("<<link [item.Url] [item.Url]>>");
-            builder.Writeln("<</if>>");
+            // If LinkText is not empty, use it as the display text.
+            builder.Writeln("<<if [!string.IsNullOrEmpty(item.LinkText)]>><<link [item.Url] [item.LinkText]>> <</if>>");
 
-            // If DisplayText has a value, use it as the display text.
-            builder.Writeln("<<if [!string.IsNullOrEmpty(item.DisplayText)]>>");
-            builder.Writeln("<<link [item.Url] [item.DisplayText]>>");
-            builder.Writeln("<</if>>");
+            // If LinkText is empty, fall back to using the URL as the display text.
+            builder.Writeln("<<if [string.IsNullOrEmpty(item.LinkText)]>><<link [item.Url] [item.Url]>> <</if>>");
 
             // End the foreach loop.
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // ---------- Load the template and build the report ----------
-            var reportDoc = new Document(templatePath);
-
-            // Prepare sample data.
-            var model = new ReportModel
-            {
-                Items = new List<LinkItem>
-                {
-                    new LinkItem { Url = "https://www.example.com", DisplayText = "Example Site" },
-                    new LinkItem { Url = "https://www.github.com", DisplayText = "" }, // Empty display text.
-                    new LinkItem { Url = "https://www.microsoft.com", DisplayText = null } // Null display text.
-                }
-            };
-
-            // Create the reporting engine and build the report.
+            // Build the report using the LINQ Reporting engine.
             var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
+            engine.BuildReport(doc, model, "model");
 
-            // Save the generated report.
-            reportDoc.Save(outputPath);
+            // Save the generated document.
+            doc.Save("Report.docx");
         }
     }
 }

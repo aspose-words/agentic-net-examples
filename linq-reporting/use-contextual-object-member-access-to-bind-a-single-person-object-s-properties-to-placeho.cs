@@ -1,58 +1,45 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Bibliography;
 
-namespace AsposeWordsLinqReportingDemo
+namespace AsposeWordsLinqReportingExample
 {
+    // Simple data model with public properties.
+    public class Person
+    {
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public int Age { get; set; }
+
+        public Person(string firstName, string lastName, int age)
+        {
+            FirstName = firstName;
+            LastName = lastName;
+            Age = age;
+        }
+    }
+
     public class Program
     {
         public static void Main()
         {
-            // Define file names for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            // Create a sample Person instance.
+            Person person = new Person("John", "Doe", 30);
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Create a blank document and insert LINQ Reporting tags.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert placeholders that reference a root object named "person".
-            builder.Writeln("First Name: <<[person.First]>>");
-            builder.Writeln("Middle Name: <<[person.Middle]>>");
-            builder.Writeln("Last Name: <<[person.Last]>>");
+            // Use contextual object member access: the root name is "person".
+            builder.Writeln("Name: <<[person.FirstName]>> <<[person.LastName]>>");
+            builder.Writeln("Age: <<[person.Age]>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back (simulating a real‑world scenario where the
-            //    template exists as an external file).
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data model – a single Person object.
-            // -----------------------------------------------------------------
-            // The Person class resides in Aspose.Words.Bibliography.
-            // Constructor: Person(string last, string first, string middle)
-            Person person = new Person("Doe", "John", "A.");
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using the LINQ Reporting engine.
-            // -----------------------------------------------------------------
+            // Build the report by binding the Person object to the template.
             ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // Explicit assignment as required.
+            engine.BuildReport(doc, person, "person");
 
-            // The root object name in the template is "person", so we pass that name.
-            engine.BuildReport(loadedTemplate, person, "person");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            loadedTemplate.Save(reportPath);
+            // Save the generated report.
+            doc.Save("Report.docx");
         }
     }
 }

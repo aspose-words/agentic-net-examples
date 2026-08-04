@@ -1,66 +1,61 @@
 using System;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model that provides the image URL.
-    public class ReportModel
+    public static void Main()
     {
-        // URL of the image to be inserted into the report.
-        public string ImageUrl { get; set; } = string.Empty;
-    }
+        // Register code page provider for Aspose.Words (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data model with image bytes from an embedded Base64 PNG
+        ReportModel model = new()
         {
-            // Register code page provider (required for some encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            ImageData = Convert.FromBase64String(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=")
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document with a textbox that contains the
-            //    LINQ Reporting image tag.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a template document programmatically
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
 
-            // Insert a textbox that will act as the image container.
-            Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-            // Move the cursor inside the textbox.
-            builder.MoveTo(textBox.FirstParagraph);
-            // Write the image tag. The expression refers to the model's ImageUrl property.
-            builder.Write("<<image [model.ImageUrl] -fitSize>>");
+        // Load the template
+        Document doc = new(templatePath);
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
+        // Build the report using LINQ Reporting Engine
+        ReportingEngine engine = new();
+        bool success = engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 2. Prepare the data source (model) with a real image URL.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
-            {
-                // Example public image URL. Replace with any reachable image if needed.
-                ImageUrl = "https://www.w3.org/Icons/WWW/w3c_home_nb.png"
-            };
+        // Save the generated report
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
-
-            // Build the report. The root object name must match the tag prefix ("model").
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            loadedTemplate.Save(outputPath);
-        }
+        // Indicate completion (no interactive input)
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
     }
+
+    private static void CreateTemplate(string path)
+    {
+        Document template = new();
+        DocumentBuilder builder = new(template);
+
+        // Insert a textbox to host the image tag
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        builder.MoveTo(textBox.FirstParagraph);
+        // Image tag referencing the ImageData property of the model
+        builder.Write("<<image [ImageData] -fitSize>>");
+
+        // Save the template
+        template.Save(path);
+    }
+}
+
+// Data model used by the report
+public class ReportModel
+{
+    // Image data to be inserted into the report (byte array)
+    public byte[] ImageData { get; set; } = Array.Empty<byte>();
 }

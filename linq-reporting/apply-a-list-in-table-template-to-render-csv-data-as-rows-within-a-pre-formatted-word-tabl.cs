@@ -3,73 +3,72 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+using Aspose.Words.Tables;   // Required for the Table class
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
+        // Register code page provider for CSV parsing (required on .NET Core).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create a sample CSV file.
-        string csvPath = "data.csv";
-        File.WriteAllLines(csvPath, new[]
-        {
-            "Id,Name,Quantity",
-            "1,Apple,10",
-            "2,Banana,20",
-            "3,Cherry,15"
-        });
+        // Prepare sample CSV data.
+        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "people.csv");
+        File.WriteAllText(csvPath, "Name,Age\r\nAlice,30\r\nBob,25\r\nCharlie,35");
 
-        // 2. Build a Word template containing a table with LINQ Reporting tags.
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a Word template with a pre‑formatted table and LINQ Reporting tags.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        CreateTemplate(templatePath);
 
-        builder.Writeln("Product Report");
-        builder.Writeln(); // blank line
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Begin the foreach block that iterates over the CSV rows.
-        builder.Writeln("<<foreach [row in data]>>");
+        // Configure CSV load options – the first row contains column headers.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
+        loadOptions.HasHeaders = true; // Enable header parsing so column names are recognised.
 
-        // Create the table.
-        Table table = builder.StartTable();
+        // Use the CSV file as a data source.
+        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
 
-        // Header row (static content).
-        builder.InsertCell(); builder.Writeln("Id");
-        builder.InsertCell(); builder.Writeln("Name");
-        builder.InsertCell(); builder.Writeln("Quantity");
-        builder.EndRow();
-
-        // Data row (dynamic content).
-        builder.InsertCell(); builder.Writeln("<<[row.Id]>>");
-        builder.InsertCell(); builder.Writeln("<<[row.Name]>>");
-        builder.InsertCell(); builder.Writeln("<<[row.Quantity]>>");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // End the foreach block.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // 3. Load the template and bind the CSV data source.
-        var reportDoc = new Document(templatePath);
-
-        var loadOptions = new CsvDataLoadOptions(true)
-        {
-            Delimiter = ','
-        };
-
-        var csvData = new CsvDataSource(csvPath, loadOptions);
-
-        var engine = new ReportingEngine();
+        // Build the report: the root data source name must match the tag reference ("data").
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, csvData, "data");
 
-        // 4. Save the generated report.
-        reportDoc.Save("output.docx");
+        // Save the generated report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(outputPath);
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start the foreach block that will iterate over CSV rows.
+        builder.Writeln("<<foreach [row in data]>>");
+
+        // Create a table inside the foreach block.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Age");
+        builder.EndRow();
+
+        // Data row – each cell contains a tag that references a CSV column.
+        builder.InsertCell();
+        builder.Writeln("<<[row.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[row.Age]>>");
+        builder.EndRow();
+
+        // Close the table and the foreach block.
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(filePath);
     }
 }

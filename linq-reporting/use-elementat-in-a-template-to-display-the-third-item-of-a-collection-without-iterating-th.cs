@@ -1,60 +1,51 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Model class exposed to the template.
+    public class ReportModel
     {
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "First",  Index = 1 },
-                new Item { Name = "Second", Index = 2 },
-                new Item { Name = "Third",  Index = 3 },
-                new Item { Name = "Fourth", Index = 4 }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 1. Create a template document with a LINQ Reporting tag that uses
-        //    ElementAt to fetch the third element (index 2) from the collection.
-        // -----------------------------------------------------------------
-        string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Third item name: <<[model.Items.ElementAt(2).Name]>>");
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 3. Save the generated report.
-        // -----------------------------------------------------------------
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Initialize the collection to avoid nullable warnings.
+        public List<string> Items { get; set; } = new();
     }
-}
 
-// Root data model referenced in the template as "model".
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare sample data.
+            var model = new ReportModel();
+            model.Items.AddRange(new[] { "Apple", "Banana", "Cherry", "Date", "Elderberry" });
 
-// Simple item class used in the collection.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public int Index { get; set; }
+            // -----------------------------------------------------------------
+            // Step 1: Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            // Insert a LINQ Reporting tag that fetches the third item (index 2) using ElementAt.
+            builder.Writeln("Third item: <<[model.Items.ElementAt(2)]>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // Step 2: Load the template and build the report.
+            // -----------------------------------------------------------------
+            var loadedTemplate = new Document(templatePath);
+            var engine = new ReportingEngine();
+
+            // Build the report using the model and the root name "model".
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // Save the generated report.
+            const string reportPath = "Report.docx";
+            loadedTemplate.Save(reportPath);
+        }
+    }
 }

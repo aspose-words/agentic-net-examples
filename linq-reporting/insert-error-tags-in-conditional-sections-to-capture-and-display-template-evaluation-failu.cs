@@ -1,56 +1,66 @@
 using System;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    public string Name { get; set; } = "John Doe";
-    public int Age { get; set; } = 28;
-}
+using Newtonsoft.Json;
+using System.Text;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any legacy encodings Aspose.Words might need.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare file paths in the current working directory.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "report.docx");
 
-        // Create a template document programmatically.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // 1. Create a blank template document and insert LINQ Reporting tags.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Simple placeholder.
-        builder.Writeln("Customer: <<[model.Name]>>");
+        builder.Writeln("=== Report Start ===");
+        // Conditional block that references a non‑existent member.
+        builder.Writeln("<<if [model.ShowDetails]>>");
+        builder.Writeln("Attempting to read missing member: <<[model.MissingProperty]>>");
+        builder.Writeln("<</if>>");
+        builder.Writeln("=== Report End ===");
 
-        // Conditional that will succeed.
-        builder.Writeln("<<if [model.Age > 20]>>Age is greater than 20.<</if>>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Conditional that references a missing property to trigger an error.
-        // The InlineErrorMessages option will insert the error message into the output.
-        builder.Writeln("<<if [model.NonExistent]>>This will cause an error.<</if>>");
+        // 2. Load the saved template (simulating an external file).
+        Document doc = new Document(templatePath);
 
-        // Save the template (optional, shown for clarity).
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // Prepare the data model.
-        var model = new ReportModel();
-
-        // Configure the reporting engine to inline error messages.
-        var engine = new ReportingEngine
+        // 3. Prepare the data model.
+        ReportModel model = new ReportModel
         {
-            Options = ReportBuildOptions.InlineErrorMessages
+            ShowDetails = true
+            // Detail is intentionally left empty; the template references a property that does not exist.
         };
 
-        // Build the report. The root object name must match the tag prefix used in the template.
-        bool success = engine.BuildReport(template, model, "model");
+        // 4. Configure the ReportingEngine to inline error messages.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Save the generated report.
-        const string outputPath = "output.docx";
-        template.Save(outputPath);
+        // 5. Build the report. Missing members will be replaced by inline error messages.
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // Output the success flag.
-        Console.WriteLine($"Report generation success: {success}");
+        // 6. Save the generated report.
+        doc.Save(outputPath);
+
+        // 7. Output results to the console.
+        Console.WriteLine($"Report generation success flag: {success}");
+        Console.WriteLine("Generated document text:");
+        Console.WriteLine(doc.GetText());
     }
+}
+
+// Public data model aligned with the template.
+public class ReportModel
+{
+    // The conditional checks this flag.
+    public bool ShowDetails { get; set; } = false;
+
+    // This property exists but is not used in the faulty tag.
+    public string Detail { get; set; } = "";
 }

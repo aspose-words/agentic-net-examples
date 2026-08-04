@@ -1,56 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingTagValidation
 {
-    public static void Main()
-    {
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Insert LINQ Reporting tags.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item: <<[item.Name]>>");
-        builder.Writeln("<<if [item.Price > 10]>>");
-        builder.Writeln(" - Expensive");
-        builder.Writeln("<</if>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template (required by the lifecycle rule).
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // Load the template back (demonstrates load rule usage).
-        Document doc = new Document(templatePath);
-
-        // Validate that every opening tag has a matching closing tag.
-        ValidateTags(doc);
-
-        // Prepare sample data.
-        ReportModel model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Apple", Price = 5 },
-                new Item { Name = "Laptop", Price = 1200 },
-                new Item { Name = "Book", Price = 15 }
-            }
-        };
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
-    }
-
-    // Simple data model aligned with the template.
-    public class ReportModel
+    // Sample data model
+    public class Model
     {
         public List<Item> Items { get; set; } = new();
     }
@@ -58,47 +15,118 @@ public class Program
     public class Item
     {
         public string Name { get; set; } = string.Empty;
-        public double Price { get; set; }
+        public bool IsActive { get; set; }
     }
 
-    // Validates that each opening tag has a corresponding closing tag.
-    private static void ValidateTags(Document document)
+    public class Program
     {
-        string allText = document.GetText();
-
-        // List of supported tags.
-        var tags = new[]
+        public static void Main()
         {
-            "foreach", "if", "bookmark", "link",
-            "textColor", "backColor", "cellMerge", "restartNum"
-        };
+            // Paths for the temporary template and final report
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
-        foreach (var tag in tags)
+            // -------------------------------------------------
+            // 1. Create the template document programmatically
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Add a foreach block
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Name: <<[item.Name]>>");
+            // Add an if block inside the foreach
+            builder.Writeln("<<if [item.IsActive]>>Status: Active<</if>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk (required before BuildReport)
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // 2. Load the template back from disk
+            // -------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
+
+            // -------------------------------------------------
+            // 3. Validate that every opening tag has a matching closing tag
+            // -------------------------------------------------
+            if (!ValidateTags(loadedTemplate))
+            {
+                throw new InvalidOperationException("Tag validation failed: mismatched opening/closing tags.");
+            }
+
+            // -------------------------------------------------
+            // 4. Prepare sample data
+            // -------------------------------------------------
+            Model model = new Model
+            {
+                Items = new List<Item>
+                {
+                    new Item { Name = "Alice", IsActive = true },
+                    new Item { Name = "Bob",   IsActive = false },
+                    new Item { Name = "Carol", IsActive = true }
+                }
+            };
+
+            // -------------------------------------------------
+            // 5. Build the report using the LINQ Reporting engine
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // -------------------------------------------------
+            // 6. Save the generated report
+            // -------------------------------------------------
+            loadedTemplate.Save(reportPath);
+        }
+
+        // Simple validation that counts opening and closing tags for supported constructs
+        private static bool ValidateTags(Document doc)
         {
-            int openingCount = 0;
-            int closingCount = 0;
+            string text = doc.GetText();
 
-            // Count opening tags (<<tag ...>>).
+            // Define tag pairs to check
+            var tagPairs = new Dictionary<string, (string Open, string Close)>
+            {
+                { "foreach", ("<<foreach", "<</foreach>>") },
+                { "if",      ("<<if",      "<</if>>") },
+                { "bookmark",("<<bookmark","<</bookmark>>") },
+                { "textColor",("<<textColor", "<</textColor>>") },
+                { "backColor",("<<backColor", "<</backColor>>") },
+                { "cellMerge",("<<cellMerge", "<</cellMerge>>") },
+                { "restartNum",("<<restartNum", "<</restartNum>>") }
+                // Add more pairs as needed
+            };
+
+            foreach (var pair in tagPairs.Values)
+            {
+                int openCount = CountOccurrences(text, pair.Open);
+                int closeCount = CountOccurrences(text, pair.Close);
+                if (openCount != closeCount)
+                {
+                    // Mismatch found
+                    return false;
+                }
+            }
+
+            // All checked tags are balanced
+            return true;
+        }
+
+        // Helper to count non‑overlapping occurrences of a substring
+        private static int CountOccurrences(string source, string substring)
+        {
+            if (string.IsNullOrEmpty(substring))
+                return 0;
+
+            int count = 0;
             int index = 0;
-            while ((index = allText.IndexOf($"<<{tag}", index, StringComparison.Ordinal)) != -1)
+            while ((index = source.IndexOf(substring, index, StringComparison.Ordinal)) != -1)
             {
-                // Ensure this is not a closing tag like <</tag>>.
-                if (!allText.Substring(index).StartsWith($"<</{tag}"))
-                    openingCount++;
-                index += 2; // Move past '<<' to continue searching.
+                count++;
+                index += substring.Length;
             }
-
-            // Count closing tags (<</tag>>).
-            index = 0;
-            while ((index = allText.IndexOf($"<</{tag}", index, StringComparison.Ordinal)) != -1)
-            {
-                closingCount++;
-                index += 3; // Move past '<</' to continue searching.
-            }
-
-            if (openingCount != closingCount)
-                throw new InvalidOperationException(
-                    $"Tag mismatch detected for '{tag}': {openingCount} opening tag(s) vs {closingCount} closing tag(s).");
+            return count;
         }
     }
 }

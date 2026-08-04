@@ -7,10 +7,9 @@ namespace LinqReportingSignatureExample
     // Data model for the report.
     public class ReportModel
     {
-        // Report title – non‑nullable to avoid CS8618.
-        public string Title { get; set; } = string.Empty;
-
-        // Signatory name – nullable; when null the signature block is omitted.
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
+        // Nullable signatory – when null the signature block is omitted.
         public string? Signatory { get; set; }
     }
 
@@ -18,19 +17,26 @@ namespace LinqReportingSignatureExample
     {
         public static void Main()
         {
+            // Prepare sample data.
+            var model = new ReportModel
+            {
+                Title = "Quarterly Summary",
+                Content = "All targets have been met for this quarter.",
+                Signatory = "Jane Doe" // Set to null to omit the signature block.
+            };
+
             // -----------------------------------------------------------------
             // 1. Create the template document programmatically.
             // -----------------------------------------------------------------
             var template = new Document();
             var builder = new DocumentBuilder(template);
 
-            // Insert a title placeholder.
+            // Simple report fields.
             builder.Writeln("Report Title: <<[model.Title]>>");
+            builder.Writeln("Report Content: <<[model.Content]>>");
 
-            // Conditional block – the content inside will be included only if
-            // model.Signatory is not null.
+            // Conditional block – the signature line appears only when Signatory is not null.
             builder.Writeln("<<if [model.Signatory != null]>>");
-            builder.Writeln("Signature: ______________________");
             builder.Writeln("Signed by: <<[model.Signatory]>>");
             builder.Writeln("<</if>>");
 
@@ -39,28 +45,19 @@ namespace LinqReportingSignatureExample
             template.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data source.
+            // 2. Load the template and build the report.
             // -----------------------------------------------------------------
-            var loadedTemplate = new Document(templatePath);
-
-            var model = new ReportModel
-            {
-                Title = "Monthly Sales Report",
-                Signatory = "John Doe" // Change to null to omit the signature block.
-            };
-
-            // -----------------------------------------------------------------
-            // 3. Build the report using the LINQ Reporting engine.
-            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
             var engine = new ReportingEngine();
-            // The root object name must match the name used in the template tags.
-            engine.BuildReport(loadedTemplate, model, "model");
+
+            // BuildReport with the root object name "model".
+            engine.BuildReport(doc, model, "model");
 
             // -----------------------------------------------------------------
-            // 4. Save the generated report.
+            // 3. Save the generated report.
             // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            loadedTemplate.Save(outputPath);
+            const string outputPath = "ReportOutput.docx";
+            doc.Save(outputPath);
         }
     }
 }

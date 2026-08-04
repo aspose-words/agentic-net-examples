@@ -1,74 +1,66 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
+
+public class Item
+{
+    public string Category { get; set; } = "";
+    public string Name { get; set; } = "";
+    public double Value { get; set; }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
         // Prepare sample JSON data.
+        var items = new List<Item>
+        {
+            new Item { Category = "Fruits", Name = "Apple",  Value = 1.2 },
+            new Item { Category = "Fruits", Name = "Banana", Value = 0.8 },
+            new Item { Category = "Vegetables", Name = "Carrot", Value = 0.5 },
+            new Item { Category = "Fruits", Name = "Orange", Value = 1.0 },
+            new Item { Category = "Vegetables", Name = "Lettuce", Value = 0.7 }
+        };
         string jsonPath = "data.json";
-        string jsonContent = @"
-[
-    { ""Category"": ""Fruits"", ""Name"": ""Apple"",  ""Price"": 1.20 },
-    { ""Category"": ""Fruits"", ""Name"": ""Banana"", ""Price"": 0.80 },
-    { ""Category"": ""Vegetables"", ""Name"": ""Carrot"", ""Price"": 0.60 },
-    { ""Category"": ""Fruits"", ""Name"": ""Orange"", ""Price"": 1.00 },
-    { ""Category"": ""Vegetables"", ""Name"": ""Lettuce"", ""Price"": 1.10 }
-]";
-        File.WriteAllText(jsonPath, jsonContent.Trim());
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(items, Formatting.Indented));
 
-        // Deserialize JSON into model.
-        List<Item> items = JsonConvert.DeserializeObject<List<Item>>(File.ReadAllText(jsonPath)) ?? new();
-        ReportModel model = new ReportModel { Items = items };
+        // Create the template document with LINQ Reporting tags.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("Report grouped by Category");
+        builder.Writeln("");
 
-        // Create the LINQ Reporting template.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Outer foreach iterates over groups created by GroupBy.
+        builder.Writeln("<<foreach [g in items.GroupBy(i => i.Category)]>>");
+        builder.Writeln("Category: <<[g.Key]>>");
+        builder.Writeln("");
 
-        // Begin grouping by Category.
-        builder.Writeln("<<foreach [catGroup in model.Items.GroupBy(i => i.Category)]>>");
-        builder.Writeln("Category: <<[catGroup.Key]>>");
-        builder.Writeln("<<foreach [item in catGroup]>>");
-        builder.Writeln("- <<[item.Name]>>: $<<[item.Price]>>");
+        // Inner foreach iterates over items within the current group.
+        builder.Writeln("<<foreach [item in g]>>");
+        builder.Writeln("- <<[item.Name]>> : <<[item.Value]>>");
         builder.Writeln("<</foreach>>");
+        builder.Writeln("");
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        templateDoc.Save(templatePath);
+        string templatePath = "Template.docx";
+        template.Save(templatePath);
 
         // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        var doc = new Document(templatePath);
 
-        // Build the report using the model.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(reportDoc, model, "model");
+        // Load JSON data as a data source.
+        var jsonDataSource = new JsonDataSource(jsonPath);
 
-        // Save the final report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Build the report using the data source named "items".
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, jsonDataSource, "items");
+
+        // Save the generated report.
+        doc.Save("ReportOutput.docx");
     }
-}
-
-// Root model passed to the reporting engine.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Individual data item.
-public class Item
-{
-    public string Category { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
 }

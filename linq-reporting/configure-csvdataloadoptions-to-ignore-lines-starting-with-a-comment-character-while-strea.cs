@@ -4,76 +4,57 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace CsvLinqReportingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample CSV data with comment lines
+        string csvPath = "sample.csv";
+        string[] csvLines =
         {
-            // Register code page provider for CSV encoding support.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            "# This line is a comment and will be ignored",
+            "Name,Age",
+            "John,30",
+            "# Another comment line",
+            "Jane,25"
+        };
+        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
 
-            // Define file paths in the current working directory.
-            string workDir = Directory.GetCurrentDirectory();
-            string templatePath = Path.Combine(workDir, "Template.docx");
-            string csvPath = Path.Combine(workDir, "Data.csv");
-            string outputPath = Path.Combine(workDir, "Report.docx");
+        // Create a simple template document containing LINQ Reporting tags
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 1. Create a simple LINQ Reporting template programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // Load the template back (required by the workflow)
+        Document loadedTemplate = new Document(templatePath);
 
-            // The template iterates over a collection named "persons".
-            builder.Writeln("<<foreach [person in persons]>>");
-            builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
-            builder.Writeln("<</foreach>>");
+        // Configure CSV loading options to ignore comment lines (starting with '#')
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true) // first line has headers
+        {
+            Delimiter = ',',
+            CommentChar = '#',
+            HasHeaders = true
+        };
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Create a CSV data source from the file stream using the configured options
+        using (FileStream csvStream = File.OpenRead(csvPath))
+        {
+            CsvDataSource dataSource = new CsvDataSource(csvStream, loadOptions);
 
-            // -----------------------------------------------------------------
-            // 2. Create a CSV file that contains comment lines.
-            // -----------------------------------------------------------------
-            string[] csvLines =
-            {
-                "# This line is a comment and should be ignored",
-                "Name,Age",
-                "John,30",
-                "# Another comment line",
-                "Jane,25",
-                "Bob,40"
-            };
-            File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
-
-            // -----------------------------------------------------------------
-            // 3. Configure CsvDataLoadOptions to treat lines starting with '#'
-            //    as comments while streaming the CSV file.
-            // -----------------------------------------------------------------
-            var loadOptions = new CsvDataLoadOptions(hasHeaders: true)
-            {
-                Delimiter = ',',
-                CommentChar = '#'
-            };
-
-            // Open the CSV file as a stream and create a CsvDataSource with the options.
-            using var csvStream = File.OpenRead(csvPath);
-            var csvDataSource = new CsvDataSource(csvStream, loadOptions);
-
-            // -----------------------------------------------------------------
-            // 4. Load the template document and build the report.
-            // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
-
-            // Build the report using the data source name "persons" as referenced in the template.
-            engine.BuildReport(reportDoc, csvDataSource, "persons");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            reportDoc.Save(outputPath);
+            // Build the report using the data source; expose it to the template as "persons"
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(loadedTemplate, dataSource, "persons");
         }
+
+        // Save the generated report
+        string reportPath = "report.docx";
+        loadedTemplate.Save(reportPath);
     }
 }

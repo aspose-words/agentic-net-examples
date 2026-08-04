@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
@@ -12,107 +8,67 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider for XML parsing (required for .NET Core).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Prepare sample XML data
-        string xmlPath = "orders.xml";
-        File.WriteAllText(xmlPath, @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Orders>
-    <Order>
-        <Id>1</Id>
-        <Customer>John Doe</Customer>
-        <Amount>150.00</Amount>
-    </Order>
-    <Order>
-        <Id>2</Id>
-        <Customer>Jane Smith</Customer>
-        <Amount>230.50</Amount>
-    </Order>
-    <Order>
-        <Id>3</Id>
-        <Customer>Bob Johnson</Customer>
-        <Amount>99.99</Amount>
-    </Order>
-</Orders>");
+        // ---------- Sample XML data ----------
+        string xmlContent = @"<Items>
+    <Item>
+        <Name>Apple</Name>
+        <Price>1.20</Price>
+    </Item>
+    <Item>
+        <Name>Banana</Name>
+        <Price>0.80</Price>
+    </Item>
+    <Item>
+        <Name>Cherry</Name>
+        <Price>2.50</Price>
+    </Item>
+</Items>";
+        string xmlPath = "data.xml";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // Load XML and map to model
-        XDocument doc = XDocument.Load(xmlPath);
-        ReportModel model = new()
-        {
-            Orders = doc.Root?
-                .Elements("Order")
-                .Select(o => new Order
-                {
-                    Id = (string?)o.Element("Id") ?? string.Empty,
-                    Customer = (string?)o.Element("Customer") ?? string.Empty,
-                    Amount = (string?)o.Element("Amount") ?? string.Empty
-                })
-                .ToList() ?? new()
-        };
+        // ---------- Create template document ----------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Create template document programmatically
-        string templatePath = "template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        // Opening foreach tag – placed before the table so the whole table is repeated per item.
+        builder.Writeln("<<foreach [item in Items]>>");
 
-        // Begin foreach over Orders
-        builder.Writeln("<<foreach [order in Orders]>>");
-
-        // Start table
+        // Start a table.
         Table table = builder.StartTable();
 
-        // Header row (element names)
+        // Header row – column names taken from the XML element names.
         builder.InsertCell();
-        builder.Writeln("Id");
+        builder.Writeln("Name");
         builder.InsertCell();
-        builder.Writeln("Customer");
-        builder.InsertCell();
-        builder.Writeln("Amount");
+        builder.Writeln("Price");
         builder.EndRow();
 
-        // Data row
+        // Data row – will be repeated for each <Item> element.
         builder.InsertCell();
-        builder.Writeln("<<[order.Id]>>");
+        builder.Writeln("<<[item.Name]>>");
         builder.InsertCell();
-        builder.Writeln("<<[order.Customer]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[order.Amount]>>");
+        builder.Writeln("<<[item.Price]>>");
         builder.EndRow();
 
-        // End table
+        // Finish the table.
         builder.EndTable();
 
-        // End foreach
+        // Closing foreach tag.
         builder.Writeln("<</foreach>>");
 
-        // Save template
-        templateDoc.Save(templatePath);
+        // ---------- Load XML data source ----------
+        XmlDataSource dataSource = new XmlDataSource(xmlPath);
 
-        // Load template for reporting
-        Document reportDoc = new(templatePath);
-        ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "model");
+        // ---------- Build the report ----------
+        ReportingEngine engine = new ReportingEngine();
+        // The root object name in the template is "Items".
+        engine.BuildReport(template, dataSource, "Items");
 
-        // Save final report
-        string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
-
-        // Indicate completion (no interactive input)
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // ---------- Save the generated report ----------
+        string outputPath = "Report.docx";
+        template.Save(outputPath);
     }
-}
-
-// Wrapper model for the report
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-// Simple order data class
-public class Order
-{
-    public string Id { get; set; } = string.Empty;
-    public string Customer { get; set; } = string.Empty;
-    public string Amount { get; set; } = string.Empty;
 }

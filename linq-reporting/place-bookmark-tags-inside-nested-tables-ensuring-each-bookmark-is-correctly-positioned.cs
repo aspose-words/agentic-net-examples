@@ -1,111 +1,116 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Needed for Table type
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data model.
-        ReportModel model = new()
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Sections = new List<Section>
+            Items = new List<OuterItem>
             {
-                new()
+                new OuterItem
                 {
-                    Title = "First Section",
-                    Items = new List<Item>
+                    Header = "Section 1",
+                    Details = new List<InnerItem>
                     {
-                        new() { Name = "Item 1A", BookmarkName = "BM_1A" },
-                        new() { Name = "Item 1B", BookmarkName = "BM_1B" }
+                        new InnerItem { BookmarkName = "Bkm1", Text = "First inner item" },
+                        new InnerItem { BookmarkName = "Bkm2", Text = "Second inner item" }
                     }
                 },
-                new()
+                new OuterItem
                 {
-                    Title = "Second Section",
-                    Items = new List<Item>
+                    Header = "Section 2",
+                    Details = new List<InnerItem>
                     {
-                        new() { Name = "Item 2A", BookmarkName = "BM_2A" },
-                        new() { Name = "Item 2B", BookmarkName = "BM_2B" },
-                        new() { Name = "Item 2C", BookmarkName = "BM_2C" }
+                        new InnerItem { BookmarkName = "Bkm3", Text = "Third inner item" },
+                        new InnerItem { BookmarkName = "Bkm4", Text = "Fourth inner item" }
                     }
                 }
             }
         };
 
-        // -----------------------------------------------------------------
         // Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Begin outer foreach over sections.
-        builder.Writeln("<<foreach [section in Sections]>>");
-        builder.Writeln("Section: <<[section.Title]>>");
+        // Begin outer foreach.
+        builder.Writeln("<<foreach [outer in Model.Items]>>");
 
-        // Outer table – one cell per section that will contain the inner table.
+        // Start outer table.
         Table outerTable = builder.StartTable();
-        builder.InsertCell(); // start outer cell
 
-        // Begin inner foreach over items of the current section.
-        builder.Writeln("<<foreach [item in section.Items]>>");
+        // First cell: outer header.
+        builder.InsertCell();
+        builder.Writeln("<<[outer.Header]>>");
 
-        // Inner table – each item becomes a row with a bookmark.
+        // Second cell: will contain inner table.
+        builder.InsertCell();
+
+        // Begin inner foreach inside the second cell.
+        builder.Writeln("<<foreach [inner in outer.Details]>>");
+
+        // Start inner table.
         Table innerTable = builder.StartTable();
 
-        // Row for the current item.
+        // Cell with bookmark.
         builder.InsertCell();
-        builder.Writeln("<<bookmark [item.BookmarkName]>>");
-        builder.Writeln("<<[item.Name]>>");
+        builder.Writeln("<<bookmark [inner.BookmarkName]>>");
+        builder.Writeln("<<[inner.Text]>>");
         builder.Writeln("<</bookmark>>");
+
+        // End inner row and table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // End inner foreach.
+        builder.Writeln("<</foreach>>");
+
+        // End outer row.
         builder.EndRow();
 
-        builder.EndTable(); // end inner table for this item
-        builder.Writeln("<</foreach>>"); // end inner foreach
-
-        // End outer cell/row and outer table.
-        builder.EndRow();
+        // End outer table.
         builder.EndTable();
 
         // End outer foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to a temporary file.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-        template.Save(templatePath);
+        // Save the template (optional, for inspection).
+        const string templatePath = "Template.docx";
+        doc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        // Build the report using the LINQ Reporting Engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "Model");
 
-        // Build the report using LINQ Reporting Engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the resulting document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+        // Save the generated report.
+        const string outputPath = "Report.docx";
         doc.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
 // Data model classes.
-// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public List<Section> Sections { get; set; } = new();
+    public List<OuterItem> Items { get; set; } = new();
 }
 
-public class Section
+public class OuterItem
 {
-    public string Title { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
+    public string Header { get; set; } = "";
+    public List<InnerItem> Details { get; set; } = new();
 }
 
-public class Item
+public class InnerItem
 {
-    public string Name { get; set; } = string.Empty;
-    public string BookmarkName { get; set; } = string.Empty;
+    public string BookmarkName { get; set; } = "";
+    public string Text { get; set; } = "";
 }

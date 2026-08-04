@@ -1,68 +1,76 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-public class JsonReportExample
+public class Program
 {
     public static void Main()
     {
-        // Create a working directory for the example files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "JsonReportExample");
-        Directory.CreateDirectory(workDir);
+        // Register code page provider (required for some environments).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Generate a sample JSON file containing a list of Person objects.
-        string jsonPath = Path.Combine(workDir, "people.json");
+        // Prepare sample data.
         var people = new List<Person>
         {
-            new Person { Name = "Alice", Age = 30, BirthDate = new DateTime(1993, 5, 12) },
-            new Person { Name = "Bob",   Age = 45, BirthDate = new DateTime(1978, 11, 3) },
-            new Person { Name = "Carol", Age = 27, BirthDate = new DateTime(1996, 2, 20) }
-        };
-        string jsonContent = System.Text.Json.JsonSerializer.Serialize(
-            people,
-            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(jsonPath, jsonContent);
-
-        // 2. Configure JSON loading options to enable loose type inference.
-        var jsonLoadOptions = new JsonDataLoadOptions
-        {
-            SimpleValueParseMode = JsonSimpleValueParseMode.Loose,
-            PreserveSpaces = true
+            new Person { Name = "Alice", Age = 30, IsMember = true, JoinDate = new DateTime(2020, 5, 12) },
+            new Person { Name = "Bob", Age = 45, IsMember = false, JoinDate = new DateTime(2018, 11, 3) },
+            new Person { Name = "Charlie", Age = 28, IsMember = true, JoinDate = new DateTime(2021, 2, 20) }
         };
 
-        // 3. Create a JsonDataSource from the file using the configured options.
-        var jsonDataSource = new JsonDataSource(jsonPath, jsonLoadOptions);
+        // Serialize data to JSON and write to a file.
+        string jsonPath = "people.json";
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(people, Formatting.Indented));
 
-        // 4. Build the template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a template document with LINQ Reporting tags.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Insert a foreach loop that iterates over the JSON array named "persons".
         builder.Writeln("<<foreach [person in persons]>>");
         builder.Writeln("Name: <<[person.Name]>>");
         builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("Birth Date: <<[person.BirthDate]>>");
+        builder.Writeln("Member: <<[person.IsMember]>>");
+        builder.Writeln("Joined: <<[person.JoinDate]>>");
         builder.Writeln("<</foreach>>");
 
-        // 5. Generate the report using ReportingEngine.
+        // Save the template.
+        string templatePath = "template.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+
+        // Enable type inference via JsonDataLoadOptions (default behavior, but we set it explicitly).
+        var jsonOptions = new JsonDataLoadOptions
+        {
+            // Loose parsing allows the engine to infer types such as int, bool, DateTime, etc.
+            SimpleValueParseMode = JsonSimpleValueParseMode.Loose,
+            PreserveSpaces = true,
+            AlwaysGenerateRootObject = true
+        };
+
+        // Create the JSON data source.
+        var jsonDataSource = new JsonDataSource(jsonPath, jsonOptions);
+
+        // Build the report.
         var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        engine.BuildReport(doc, jsonDataSource, "persons");
+        engine.Options = ReportBuildOptions.None; // default options
+        engine.BuildReport(reportDoc, jsonDataSource, "persons");
 
-        // 6. Save the resulting document.
-        string outputPath = Path.Combine(workDir, "Report.docx");
-        doc.Save(outputPath);
-
-        Console.WriteLine($"Report generated at: {outputPath}");
+        // Save the generated report.
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
+}
 
-    // Public data model used only for JSON creation; properties are initialized to avoid nullable warnings.
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-        public DateTime BirthDate { get; set; }
-    }
+// Data model class with public properties (required for LINQ Reporting).
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+    public bool IsMember { get; set; }
+    public DateTime JoinDate { get; set; }
 }

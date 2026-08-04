@@ -2,95 +2,88 @@ using System;
 using System.IO;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting; // Contains ReportingEngine, JsonDataSource, XmlDataSource
+using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
+        // Enable code pages for any required encodings.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for temporary files
-        string templatePath = "Template.docx";
-        string xmlPath = "Orders.xml";
-        string jsonPath = "Products.json";
-        string outputPath = "ReportOutput.docx";
+        // File paths.
+        string xmlPath = "departments.xml";
+        string jsonPath = "employees.json";
+        string templatePath = "template.docx";
+        string outputPath = "report.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create sample XML data source file
-        // -----------------------------------------------------------------
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Orders>
-    <Order>
-        <CustomerName>John Doe</CustomerName>
-        <OrderId>1</OrderId>
-    </Order>
-    <Order>
-        <CustomerName>Jane Smith</CustomerName>
-        <OrderId>2</OrderId>
-    </Order>
-</Orders>";
-        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
+        // Create sample XML data source.
+        File.WriteAllText(xmlPath,
+@"<Departments>
+    <Department>
+        <Id>1</Id>
+        <Name>Human Resources</Name>
+    </Department>
+    <Department>
+        <Id>2</Id>
+        <Name>Information Technology</Name>
+    </Department>
+    <Department>
+        <Id>3</Id>
+        <Name>Finance</Name>
+    </Department>
+</Departments>");
 
-        // -----------------------------------------------------------------
-        // 2. Create sample JSON data source file
-        // -----------------------------------------------------------------
-        string jsonContent = @"{
-    ""products"": [
-        { ""Name"": ""Apple"",  ""Price"": 1.20 },
-        { ""Name"": ""Banana"", ""Price"": 0.80 },
-        { ""Name"": ""Orange"", ""Price"": 1.50 }
-    ]
-}";
-        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+        // Create sample JSON data source.
+        File.WriteAllText(jsonPath,
+@"[
+    { ""Id"": 1, ""Name"": ""Alice"", ""Title"": ""HR Manager"", ""DepartmentId"": 1 },
+    { ""Id"": 2, ""Name"": ""Bob"", ""Title"": ""Recruiter"", ""DepartmentId"": 1 },
+    { ""Id"": 3, ""Name"": ""Charlie"", ""Title"": ""Developer"", ""DepartmentId"": 2 },
+    { ""Id"": 4, ""Name"": ""Diana"", ""Title"": ""System Analyst"", ""DepartmentId"": 2 },
+    { ""Id"": 5, ""Name"": ""Eve"", ""Title"": ""Accountant"", ""DepartmentId"": 3 }
+]");
 
-        // -----------------------------------------------------------------
-        // 3. Build the template document with LINQ Reporting tags
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Build the template document with nested foreach tags.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("=== Multi‑Section Report ===");
+        builder.Writeln("Company Report");
+        builder.Writeln("----------------");
         builder.Writeln();
 
-        // Outer foreach over XML orders
-        builder.Writeln("<<foreach [order in orders]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Order ID: <<[order.OrderId]>>");
-        builder.Writeln("Products:");
+        // Outer loop over XML departments (named "xml").
+        builder.Writeln("<<foreach [dept in xml]>>");
+        builder.Writeln("Department: <<[dept.Name]>>");
+        builder.Writeln();
 
-        // Inner foreach over JSON products
-        builder.Writeln("<<foreach [product in products]>>");
-        builder.Writeln("- <<[product.Name]>> : $<<[product.Price]>>");
-        builder.Writeln("<</foreach>>"); // end inner foreach
+        // Inner loop over JSON employees (named "json").
+        builder.Writeln("<<foreach [emp in json]>>");
+        builder.Writeln(" - <<[emp.Name]>> (<<[emp.Title]>>), DeptId: <<[emp.DepartmentId]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+        builder.Writeln("<</foreach>>");
 
-        builder.Writeln("<</foreach>>"); // end outer foreach
-
-        // Save the template to disk
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 4. Load data sources
-        // -----------------------------------------------------------------
-        var xmlDataSource = new XmlDataSource(xmlPath);
-        var jsonDataSource = new JsonDataSource(jsonPath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 5. Load the template and build the report
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // Create data source objects.
+        var xmlData = new XmlDataSource(xmlPath);
+        var jsonData = new JsonDataSource(jsonPath);
+
+        // Configure the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // BuildReport with multiple data sources: orders (XML) and products (JSON)
+        // Build the report using both data sources.
         engine.BuildReport(reportDoc,
-            new object[] { xmlDataSource, jsonDataSource },
-            new[] { "orders", "products" });
+            new object[] { xmlData, jsonData },
+            new string[] { "xml", "json" });
 
-        // -----------------------------------------------------------------
-        // 6. Save the final report
-        // -----------------------------------------------------------------
+        // Save the final report.
         reportDoc.Save(outputPath);
     }
 }

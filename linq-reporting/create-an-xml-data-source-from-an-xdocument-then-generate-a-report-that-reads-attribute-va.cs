@@ -8,47 +8,44 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare directories.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(workDir);
-
-        // 1. Create sample XML data and save it.
-        XDocument xml = new XDocument(
-            new XElement("People",
-                new XElement("Person", new XAttribute("Name", "John"), new XAttribute("Age", "30")),
-                new XElement("Person", new XAttribute("Name", "Jane"), new XAttribute("Age", "25"))
+        // Create sample XML using XDocument.
+        XDocument xDoc = new XDocument(
+            new XElement("people",
+                new XElement("person",
+                    new XAttribute("name", "Alice"),
+                    new XAttribute("age", "30")),
+                new XElement("person",
+                    new XAttribute("name", "Bob"),
+                    new XAttribute("age", "25"))
             )
         );
-        string xmlPath = Path.Combine(workDir, "data.xml");
-        xml.Save(xmlPath);
 
-        // 2. Build a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Write the XML to a memory stream – this will be used as the XmlDataSource.
+        using MemoryStream xmlStream = new();
+        xDoc.Save(xmlStream);
+        xmlStream.Position = 0; // Reset before reading.
 
-        // Begin a foreach loop over the collection named "persons".
-        builder.Writeln("<<foreach [person in persons]>>");
-        // Output attribute values.
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
-        // End the loop.
+        // Create the reporting template programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // The XML root (<people>) is treated as a collection of <person> elements,
+        // so we iterate directly over the data source itself.
+        builder.Writeln("<<foreach [p in data]>>");
+        // Attribute values must be referenced with the attribute name inside double quotes.
+        builder.Writeln("Name: <<[p.@\"name\"]>>");
+        builder.Writeln("Age: <<[p.@\"age\"]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Build the report using the XML data source.
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(template, xmlDataSource, "data");
 
-        // 3. Load the template document.
-        Document reportDoc = new Document(templatePath);
-
-        // 4. Create an XML data source from the saved XML file.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
-
-        // 5. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, dataSource, "persons");
-
-        // 6. Save the generated report.
-        string reportPath = Path.Combine(workDir, "report.docx");
-        reportDoc.Save(reportPath);
+        // Save the generated report.
+        template.Save("Report.docx");
     }
 }

@@ -1,74 +1,58 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Sample data model with public properties.
-    public class ReportModel
+    // Simple data model with only public properties.
+    public class Person
     {
-        // This property is allowed to be accessed from the template.
-        public string PublicValue { get; set; } = "Visible";
-
-        // This property should be hidden from the template.
-        public string Secret { get; set; } = "Hidden";
+        public string Name { get; set; } = "John Doe";
+        public int Age { get; set; } = 30;
+        // Private field and method are not exposed to the template.
+        private string Secret = "Hidden";
+        private string GetSecret() => Secret;
     }
 
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Register code page provider for any required encodings.
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-            // Paths for the template and the generated report.
-            const string templatePath = "template.docx";
-            const string outputPath = "report.docx";
+        // 1. Create the template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Person Report");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
+        // Attempting to access a non‑public member would fail, but we don't include such a tag.
 
-            // -------------------------------------------------
-            // Create a simple Word template with LINQ tags.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Save the template to disk.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
 
-            // The template references both a public and a restricted member.
-            builder.Writeln("Public value: <<[model.PublicValue]>>");
-            builder.Writeln("Secret value: <<[model.Secret]>>");
+        // 2. Load the template back (required before building the report).
+        Document loadedTemplate = new Document(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // 3. Restrict access to types that should not be used in templates.
+        // Here we restrict the System.Environment type as an example.
+        // This does not affect our Person type, which only exposes public properties.
+        ReportingEngine.SetRestrictedTypes(typeof(Environment));
 
-            // -------------------------------------------------
-            // Load the template for reporting.
-            // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+        // 4. Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        // No special options are needed for this simple example.
+        Person person = new Person();
+        engine.BuildReport(loadedTemplate, person, "person");
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel();
+        // 5. Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        loadedTemplate.Save(reportPath);
 
-            // -------------------------------------------------
-            // Configure the ReportingEngine.
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-
-            // Aspose.Words ReportingEngine does not provide a per‑member
-            // restriction list (RestrictedMembers). If you need to block
-            // access to an entire type, you can use SetRestrictedTypes,
-            // but individual members cannot be hidden this way.
-            // For this example we simply omit any restriction.
-
-            // Allow missing members to be treated as empty strings instead of throwing.
-            engine.Options = ReportBuildOptions.AllowMissingMembers;
-            engine.MissingMemberMessage = string.Empty;
-
-            // Build the report using the root object name "model".
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // -------------------------------------------------
-            // Save the generated report.
-            // -------------------------------------------------
-            loadedTemplate.Save(outputPath);
-        }
+        // Indicate completion (no interactive prompts).
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }

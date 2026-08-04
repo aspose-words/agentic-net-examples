@@ -1,96 +1,54 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingDemo
 {
-    public static void Main()
+    // Simple data model used by the template.
+    public class ReportModel
     {
-        // Prepare sample data model.
-        var model = new ReportModel
+        // Regular property with a value.
+        public string Name { get; set; } = "John Doe";
+
+        // Property that returns an empty string – the paragraph will become empty after processing.
+        public string Empty { get; set; } = string.Empty;
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Order = new Order
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build a template that contains:
+            // 1. A valid expression.
+            // 2. An expression referencing a missing member (will generate an inline error).
+            // 3. An expression that evaluates to an empty string (will produce an empty paragraph).
+            builder.Writeln("Customer: <<[model.Name]>>");
+            builder.Writeln("Missing member: <<[model.Missing]>>");
+            builder.Writeln("Empty value: <<[model.Empty]>>");
+
+            // Configure the reporting engine to:
+            // - Remove paragraphs that become empty after tag processing.
+            // - Inline any syntax errors directly into the output document.
+            ReportingEngine engine = new ReportingEngine
             {
-                CustomerName = "John Doe",
-                Items = new List<Item>
-                {
-                    new Item { Name = "Apple", Price = 1.20 },
-                    new Item { Name = "Banana", Price = 0.80 }
-                },
-                // EmptyTag is null to produce an empty paragraph after processing.
-                EmptyTag = null
-                // MissingProperty is intentionally omitted to trigger an inline error.
-            }
-        };
+                Options = ReportBuildOptions.RemoveEmptyParagraphs | ReportBuildOptions.InlineErrorMessages
+            };
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+            // Build the report using the model as the data source.
+            // The third parameter ("model") matches the root name used in the template tags.
+            bool success = engine.BuildReport(doc, new ReportModel(), "model");
 
-        // Load the template.
-        var doc = new Document(templatePath);
+            // Output the result of the build (true = no parsing errors, false = errors were inlined).
+            Console.WriteLine($"Report build successful: {success}");
 
-        // Configure the reporting engine with both options.
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs | ReportBuildOptions.InlineErrorMessages
-        };
-
-        // Build the report; the returned flag indicates success when InlineErrorMessages is set.
-        bool success = engine.BuildReport(doc, model, "order");
-
-        // Save the generated report.
-        var outputPath = "ReportOutput.docx";
-        doc.Save(outputPath);
-
-        // Output simple status (no interactive prompts).
-        Console.WriteLine($"Report built successfully: {success}");
-        Console.WriteLine($"Output saved to: {Path.GetFullPath(outputPath)}");
+            // Save the generated document.
+            const string outputPath = "output.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to: {outputPath}");
+        }
     }
-
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Header with a valid field.
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-
-        // Loop over items.
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("Item: <<[item.Name]>> - Price: $<<[item.Price]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Tag that will be empty (EmptyTag is null).
-        builder.Writeln("<<[order.EmptyTag]>>");
-
-        // Tag referencing a missing property to demonstrate inline error messages.
-        builder.Writeln("Missing: <<[order.MissingProperty]>>");
-
-        doc.Save(filePath);
-    }
-}
-
-// Root wrapper class to align with BuildReport(rootObject, "order").
-public class ReportModel
-{
-    public Order Order { get; set; } = new();
-}
-
-// Sample order class.
-public class Order
-{
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-    public string? EmptyTag { get; set; }
-    // Note: MissingProperty is intentionally not defined.
-}
-
-// Sample item class.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
 }

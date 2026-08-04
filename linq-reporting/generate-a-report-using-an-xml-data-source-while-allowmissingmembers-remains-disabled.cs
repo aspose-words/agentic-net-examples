@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,38 +8,67 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a simple XML data source file.
-        const string xmlFileName = "people.xml";
-        string xmlContent =
-            @"<?xml version=""1.0"" encoding=""utf-8""?>"
-          + "<Persons>"
-          + "  <Person><Name>John Doe</Name><Age>30</Age></Person>"
-          + "  <Person><Name>Jane Smith</Name><Age>25</Age></Person>"
-          + "  <Person><Name>Bob Johnson</Name><Age>40</Age></Person>"
-          + "</Persons>";
-        File.WriteAllText(xmlFileName, xmlContent);
+        // Register code page provider for XML encoding support.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Define file names.
+        const string xmlFile = "people.xml";
+        const string templateFile = "template.docx";
+        const string outputFile = "Report.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create a simple XML data source file.
+        // -----------------------------------------------------------------
+        string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<persons>
+    <person>
+        <Name>John Doe</Name>
+        <Age>30</Age>
+    </person>
+    <person>
+        <Name>Jane Smith</Name>
+        <Age>25</Age>
+    </person>
+    <person>
+        <Name>Bob Johnson</Name>
+        <Age>40</Age>
+    </person>
+</persons>";
+        File.WriteAllText(xmlFile, xmlContent, Encoding.UTF8);
+
+        // -----------------------------------------------------------------
+        // 2. Build a template document that contains LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
         builder.Writeln("People Report");
-        builder.Writeln("==============");
-        // LINQ Reporting tags: iterate over the collection named "persons".
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Load the XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlFileName);
+        // Save the template to disk as required by the workflow.
+        templateDoc.Save(templateFile);
 
-        // Build the report. AllowMissingMembers is NOT enabled (default behavior).
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // explicit, but the default is also None.
-        engine.BuildReport(template, dataSource, "persons");
+        // -----------------------------------------------------------------
+        // 3. Load the template back and bind the XML data source.
+        // -----------------------------------------------------------------
+        var doc = new Document(templateFile);
+        var xmlDataSource = new XmlDataSource(xmlFile);
 
-        // Save the generated report.
-        const string outputFileName = "PeopleReport.docx";
-        template.Save(outputFileName);
+        // Create the reporting engine. Do NOT enable AllowMissingMembers.
+        var engine = new ReportingEngine();
+
+        // Build the report using the data source name "persons".
+        engine.BuildReport(doc, xmlDataSource, "persons");
+
+        // -----------------------------------------------------------------
+        // 4. Save the generated report.
+        // -----------------------------------------------------------------
+        doc.Save(outputFile);
+
+        // Inform the user (no interactive input required).
+        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputFile)}");
     }
 }

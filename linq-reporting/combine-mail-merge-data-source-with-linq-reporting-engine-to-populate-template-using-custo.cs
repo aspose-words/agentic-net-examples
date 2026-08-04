@@ -1,5 +1,6 @@
 using System;
-using System.Data;
+using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,46 +8,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document with LINQ Reporting tags.
+        // Register code page provider (required by Aspose.Words for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
+        Customer customer = new Customer
+        {
+            Name = "John Doe",
+            Address = "123 Main St, Anytown",
+            Email = "john.doe@example.com"
+        };
+
+        // Create a template document programmatically.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Add a title.
-        builder.Writeln("Customer List:");
-        // Begin a foreach loop over the data source named \"Customers\".
-        builder.Writeln("<<foreach [c in Customers]>>");
-        // Output each customer's name and address.
-        builder.Writeln("Name: <<[c.Name]>>");
-        builder.Writeln("Address: <<[c.Address]>>");
-        builder.Writeln("<</foreach>>");
+        builder.Writeln("Customer Report");
+        builder.Writeln("Name: <<[customer.Name]>>");
+        builder.Writeln("Address: <<[customer.Address]>>");
+        builder.Writeln("Email: <<[customer.Email]>>");
 
-        // Save the template to disk.
-        const string templatePath = "template.docx";
+        // Save the template to disk (optional, demonstrates load‑save workflow).
+        const string templatePath = "CustomerTemplate.docx";
         template.Save(templatePath);
 
-        // Load the template back (required before building the report).
-        Document doc = new Document(templatePath);
+        // Load the template back (simulating a real‑world scenario where the template exists on disk).
+        Document loadedTemplate = new Document(templatePath);
 
-        // Create a DataTable that will serve as the mail‑merge‑style data source.
-        DataTable customersTable = new DataTable("Customers");
-        customersTable.Columns.Add("Name", typeof(string));
-        customersTable.Columns.Add("Address", typeof(string));
-
-        // Populate the table with sample data.
-        customersTable.Rows.Add("Alice Johnson", "123 Maple Street");
-        customersTable.Rows.Add("Bob Smith", "456 Oak Avenue");
-        customersTable.Rows.Add("Carol White", "789 Pine Road");
-
-        // Build the report using the LINQ Reporting engine.
+        // Build the report using LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        // The data source name must match the name used in the template tags.
-        engine.BuildReport(doc, customersTable, "Customers");
+        engine.BuildReport(loadedTemplate, customer, "customer");
 
         // Save the generated report.
-        const string reportPath = "report.docx";
-        doc.Save(reportPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {reportPath}");
+        const string outputPath = "CustomerReport.docx";
+        loadedTemplate.Save(outputPath);
     }
+}
+
+// Public data model used by the template.
+public class Customer
+{
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
 }

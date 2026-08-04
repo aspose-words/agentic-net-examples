@@ -1,5 +1,5 @@
 using System;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,42 +7,54 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a simple data model.
-        var model = new ReportModel
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+
+        // ---------- Create the template document ----------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Paragraph that will be removed if the condition is false.
+        // The <<if>> tag evaluates the boolean property Include.
+        // When Include is false the paragraph becomes empty.
+        builder.Writeln("<<if [model.Include]>><<[model.Text]>> <</if>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // ---------- Load the template for reporting ----------
+        Document doc = new Document(templatePath);
+
+        // Sample data model. Include is false, so the paragraph will be empty.
+        ReportModel model = new ReportModel
         {
-            Name = "John Doe",
-            // This property will be empty after the report is built, leaving its paragraph empty.
-            EmptyTag = string.Empty
+            Include = false,
+            Text = "This text will appear only when Include is true."
         };
 
-        // Build the template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Paragraph that will contain a real value.
-        builder.Writeln("Customer: <<[model.Name]>>");
-
-        // Paragraph that contains only a tag which resolves to an empty string.
-        builder.Writeln("<<[model.EmptyTag]>>");
-
-        // Configure the reporting engine to remove empty paragraphs after processing.
-        var engine = new ReportingEngine();
+        // Configure the reporting engine to remove empty paragraphs.
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // Build the report using the model as the root data source.
+        // Build the report. The root object name must match the tag prefix (model).
         engine.BuildReport(doc, model, "model");
 
-        // Save the resulting document.
-        doc.Save("ReportOutput.docx");
+        // Save the final report.
+        doc.Save(reportPath);
     }
 }
 
-// Public data model class required by the LINQ Reporting engine.
+// Simple data model used by the template.
 public class ReportModel
 {
-    public string Name { get; set; } = string.Empty;
-    public string EmptyTag { get; set; } = string.Empty;
+    // When true the paragraph will contain Text; otherwise it will be empty.
+    public bool Include { get; set; } = false;
+
+    // Text to display if Include is true.
+    public string Text { get; set; } = string.Empty;
 }

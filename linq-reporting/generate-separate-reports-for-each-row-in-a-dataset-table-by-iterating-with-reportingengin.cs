@@ -3,7 +3,7 @@ using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class LinqReportingExample
+public class Program
 {
     public static void Main()
     {
@@ -12,34 +12,47 @@ public class LinqReportingExample
         DataTable table = new DataTable("Customers");
         table.Columns.Add("CustomerName", typeof(string));
         table.Columns.Add("Address", typeof(string));
-        table.Rows.Add("Alice Johnson", "123 Maple Street");
-        table.Rows.Add("Bob Smith", "456 Oak Avenue");
-        table.Rows.Add("Carol White", "789 Pine Road");
+        table.Rows.Add("Thomas Hardy", "120 Hanover Sq., London");
+        table.Rows.Add("Paolo Accorti", "Via Monte Bianco 34, Torino");
         dataSet.Tables.Add(table);
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Customer Report");
-        builder.Writeln("Name: <<[CustomerName]>>");
-        builder.Writeln("Address: <<[Address]>>");
-        // Save the template to disk.
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
+        // Create a LINQ Reporting template programmatically.
+        const string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
 
         // Iterate over each DataRow and generate a separate report.
-        int index = 0;
+        int index = 1;
         foreach (DataRow row in table.Rows)
         {
-            // Load the template for each iteration.
-            Document report = new Document(templatePath);
+            // Load a fresh copy of the template for each iteration.
+            Document doc = new Document(templatePath);
+
             // Build the report using the current DataRow as the data source.
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(report, row);
-            // Save the generated report.
+            engine.BuildReport(doc, row);
+
+            // Save the generated report with a distinct file name.
             string outputPath = $"Report_{index}.docx";
-            report.Save(outputPath);
+            doc.Save(outputPath);
             index++;
         }
+    }
+
+    // Creates a simple Word template containing LINQ Reporting tags.
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a title.
+        builder.Writeln("Customer Report");
+        builder.Writeln("----------------");
+
+        // Insert fields that will be replaced by the data source.
+        builder.Writeln("Name: <<[CustomerName]>>");
+        builder.Writeln("Address: <<[Address]>>");
+
+        // Save the template to disk.
+        doc.Save(filePath);
     }
 }

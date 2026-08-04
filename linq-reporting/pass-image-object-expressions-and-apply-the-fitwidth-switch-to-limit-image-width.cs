@@ -4,68 +4,81 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace AsposeWordsLinqReportingExample
 {
-    // Image data as a byte array to be used in the template.
-    public byte[] Image { get; set; } = Array.Empty<byte>();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model used by the LINQ Reporting engine.
+    public class ReportModel
     {
-        // Working directory.
-        string workDir = Directory.GetCurrentDirectory();
+        // Image data (byte array) that will be inserted into the report.
+        public byte[] Image { get; set; } = null!;
 
-        // Create a simple sample image file (a 1x1 red PNG).
-        string imagePath = Path.Combine(workDir, "sample.png");
-        CreateSampleImage(imagePath);
+        // Optional title to demonstrate additional fields.
+        public string Title { get; set; } = string.Empty;
+    }
 
-        // Build the template document programmatically.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        CreateTemplate(templatePath);
-
-        // Load the template.
-        Document doc = new Document(templatePath);
-
-        // Prepare the data model with the image bytes.
-        ReportModel model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Image = File.ReadAllBytes(imagePath)
-        };
+            // Working directory for temporary files.
+            string workDir = Directory.GetCurrentDirectory();
 
-        // Build the report using LINQ Reporting Engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // -----------------------------------------------------------------
+            // 1. Prepare a sample PNG image (a small red pixel) as a byte array.
+            // -----------------------------------------------------------------
+            // Base64-encoded PNG of a 1x1 red pixel.
+            const string base64RedPixel = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mP8z8BQDwAF/AL+XK5ZVQAAAABJRU5ErkJggg==";
+            byte[] imageBytes = Convert.FromBase64String(base64RedPixel);
 
-        // Save the generated report.
-        string outputPath = Path.Combine(workDir, "output.docx");
-        doc.Save(outputPath);
-    }
+            // -----------------------------------------------------------------
+            // 2. Prepare the data model instance with the image bytes.
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel
+            {
+                Image = imageBytes,
+                Title = "Sample Image Report"
+            };
 
-    // Writes a minimal red PNG (1x1 pixel) to the specified path.
-    private static void CreateSampleImage(string path)
-    {
-        // Base64-encoded PNG of a single red pixel.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(path, pngBytes);
-    }
+            // -----------------------------------------------------------------
+            // 3. Build the template document programmatically.
+            //    The image tag must be placed inside a textbox container.
+            // -----------------------------------------------------------------
+            string templatePath = Path.Combine(workDir, "template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    // Creates a template containing a textbox with an image tag that uses the -fitWidth switch.
-    private static void CreateTemplate(string path)
-    {
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+            // Optional title paragraph.
+            builder.Writeln("<<[model.Title]>>");
+            builder.Writeln(); // Empty line.
 
-        // Insert a textbox that will host the image.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-        // Move the cursor inside the textbox.
-        builder.MoveTo(textBox.FirstParagraph);
-        // Write the image tag. The expression returns a byte array from the model.
-        builder.Write("<<image [model.Image] -fitWidth>>");
+            // Insert a textbox that will hold the image.
+            Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+            // Move the cursor into the textbox's first paragraph.
+            builder.MoveTo(textBox.FirstParagraph);
+            // Image tag with -fitWidth switch to limit the width.
+            builder.Write("<<image [model.Image] -fitWidth>>");
 
-        // Save the template.
-        template.Save(path);
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 4. Load the template and generate the report using ReportingEngine.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
+
+            // Build the report; the root object name is "model".
+            engine.BuildReport(reportDoc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            string outputPath = Path.Combine(workDir, "ReportWithImage.docx");
+            reportDoc.Save(outputPath);
+
+            // Indicate completion.
+            Console.WriteLine("Report generated successfully at:");
+            Console.WriteLine(outputPath);
+        }
     }
 }

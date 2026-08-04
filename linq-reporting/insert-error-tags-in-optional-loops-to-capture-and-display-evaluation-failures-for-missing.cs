@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,60 +9,65 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and a builder to insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Template header.
-        builder.Writeln("Report generated with Aspose.Words LINQ Reporting");
-        builder.Writeln();
-
-        // Optional loop over the collection "Items".
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Name: <<[item.Name]>>");
-        // This expression refers to a non‑existent member and will cause an evaluation error.
-        builder.Writeln("MissingProperty: <<[item.MissingProperty]>>");
-        // The <<error>> tag will display the inline error message for the above failure.
-        builder.Writeln("<<error>>");
-        builder.Writeln("<</foreach>>");
-
-        // Configure the reporting engine to inline error messages.
-        ReportingEngine engine = new ReportingEngine
+        // Prepare sample data
+        var model = new ReportModel
         {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
-
-        // Build the report using the model as the root data source named "model".
-        ReportModel model = new ReportModel
-        {
+            Title = "Sample LINQ Reporting",
             Items = new List<Item>
             {
-                new Item { Name = "Alice", Age = 30 },
-                new Item { Name = "Bob" } // No Age, but Age is not used in the template.
+                new Item { Name = "Alice" },
+                new Item { Name = "Bob" }
+                // Note: Item does NOT have an Age property – this will cause an evaluation error.
             }
         };
 
-        bool success = engine.BuildReport(doc, model, "model");
+        // Create a template document programmatically
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Save the generated document.
-        const string outputPath = "ReportWithErrors.docx";
-        doc.Save(outputPath);
+        builder.Writeln("Report Title: <<[model.Title]>>");
+        builder.Writeln();
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        builder.Writeln("- Name: <<[item.Name]>>");
+        // Attempt to access a missing property 'Age' and capture the error with <<error>>
+        builder.Writeln("- Age: <<[item.Age]>> <<error>>");
+        builder.Writeln("<</foreach>>");
 
-        // Output the success flag (will be true because InlineErrorMessages is enabled).
+        // Save the template (optional, for inspection)
+        const string templatePath = "Template.docx";
+        doc.Save(templatePath);
+
+        // Load the template for reporting
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // Build the report
+        bool success = engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        // Output simple status (no interactive input)
         Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Document saved to: {outputPath}");
+        Console.WriteLine($"Report saved to: {Path.GetFullPath(outputPath)}");
     }
 }
 
-// Root data model.
+// Data model classes
 public class ReportModel
 {
+    public string Title { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
 }
 
-// Item model used inside the foreach loop.
 public class Item
 {
     public string Name { get; set; } = string.Empty;
-    public int? Age { get; set; }
+    // No Age property – used to demonstrate missing data handling.
 }

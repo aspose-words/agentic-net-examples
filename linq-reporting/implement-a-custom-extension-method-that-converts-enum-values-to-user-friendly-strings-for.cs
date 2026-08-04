@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -10,82 +10,84 @@ namespace AsposeWordsLinqReportingExample
     {
         Pending,
         Shipped,
-        Delivered
+        Delivered,
+        Cancelled
     }
 
-    // Extension methods for enums.
-    public static class EnumExtensions
+    // Extension method (also usable as a static method) to convert enum values to user‑friendly strings.
+    public static class OrderStatusExtensions
     {
-        // Converts an OrderStatus value to a user‑friendly string.
+        // This method can be called as an extension method or as a static method.
         public static string ToFriendlyString(this OrderStatus status)
         {
             return status switch
             {
                 OrderStatus.Pending => "Pending Approval",
-                OrderStatus.Shipped => "Shipped Out",
-                OrderStatus.Delivered => "Delivered to Customer",
-                _ => status.ToString()
+                OrderStatus.Shipped => "Shipped to Customer",
+                OrderStatus.Delivered => "Delivered Successfully",
+                OrderStatus.Cancelled => "Order Cancelled",
+                _ => "Unknown"
             };
         }
     }
 
-    // Data model used by the LINQ Reporting engine.
+    // Data model for a single order.
     public class Order
     {
-        public int Id { get; set; } = 0;
-        public OrderStatus Status { get; set; } = OrderStatus.Pending;
+        public int Id { get; set; }
         public string CustomerName { get; set; } = string.Empty;
+        public OrderStatus Status { get; set; }
+    }
+
+    // Wrapper model that contains a collection of orders.
+    public class ReportModel
+    {
+        public List<Order> Orders { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Prepare sample data.
-            var order = new Order
+            // Step 1: Create a template document with LINQ Reporting tags.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            builder.Writeln("<<foreach [order in Orders]>>");
+            builder.Writeln("Order ID: <<[order.Id]>>");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            // Use the static method call syntax that the ReportingEngine can resolve.
+            builder.Writeln("Status: <<[OrderStatusExtensions.ToFriendlyString(order.Status)]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // Step 2: Prepare sample data.
+            var orders = new List<Order>
             {
-                Id = 123,
-                CustomerName = "John Doe",
-                Status = OrderStatus.Shipped
+                new Order { Id = 1, CustomerName = "Alice", Status = OrderStatus.Pending },
+                new Order { Id = 2, CustomerName = "Bob",   Status = OrderStatus.Shipped },
+                new Order { Id = 3, CustomerName = "Carol", Status = OrderStatus.Delivered },
+                new Order { Id = 4, CustomerName = "Dave",  Status = OrderStatus.Cancelled }
             };
 
-            // Create a temporary folder for the template and result.
-            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-            Directory.CreateDirectory(workDir);
+            var model = new ReportModel { Orders = orders };
 
-            string templatePath = Path.Combine(workDir, "Template.docx");
-            string resultPath = Path.Combine(workDir, "Result.docx");
+            // Step 3: Load the template and build the report.
+            Document doc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // Register the type that contains the static method so the engine can invoke it.
+            engine.KnownTypes.Add(typeof(OrderStatusExtensions));
 
-            builder.Writeln("Order Report");
-            builder.Writeln("--------------------");
-            builder.Writeln($"Order ID: <<[order.Id]>>");
-            builder.Writeln($"Customer: <<[order.CustomerName]>>");
-            // Use a static call to the extension method (supported by the engine).
-            builder.Writeln($"Status: <<[EnumExtensions.ToFriendlyString(order.Status)]>>");
+            // Build the report using the wrapper model; the root name is "model".
+            engine.BuildReport(doc, model, "model");
 
-            // Save the template.
-            doc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            var loadedDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
-
-            // Register the static class that contains the extension method.
-            engine.KnownTypes.Add(typeof(EnumExtensions));
-
-            // Build the report using the root object name "order".
-            engine.BuildReport(loadedDoc, order, "order");
-
-            // Save the generated report.
-            loadedDoc.Save(resultPath);
+            // Step 4: Save the generated report.
+            const string reportPath = "Report.docx";
+            doc.Save(reportPath);
         }
     }
 }

@@ -1,38 +1,51 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
-
-public class Person
-{
-    public string FirstName { get; set; } = "John";
-    public string LastName { get; set; } = "Doe";
-    public int Age { get; set; } = 30;
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple data model.
-        var model = new Person();
+        // Prepare sample data model.
+        var model = new SampleModel
+        {
+            Id = 1,
+            Name = "John Doe",
+            Tags = new List<string> { "example", "json", "serialization" }
+        };
 
-        // Create a Word document and insert a LINQ Reporting tag that serializes the model to JSON.
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
         builder.Writeln("Serialized JSON:");
         // The tag calls the static JsonConvert.SerializeObject method.
         builder.Writeln("<<[JsonConvert.SerializeObject(model)]>>");
+        doc.Save(templatePath);
+
+        // Load the template document.
+        var loadedDoc = new Document(templatePath);
 
         // Configure the reporting engine.
         var engine = new ReportingEngine();
-        // Register the JsonConvert type so that static members can be used in the template.
+        // Register the JsonConvert type to allow static method calls in the template.
         engine.KnownTypes.Add(typeof(JsonConvert));
 
-        // Build the report using the model as the root data source named "model".
-        engine.BuildReport(doc, model, "model");
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(loadedDoc, model, "model");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+        // Save the generated report.
+        loadedDoc.Save("Report.docx");
     }
+}
+
+// Sample data model used in the report.
+public class SampleModel
+{
+    public int Id { get; set; } = 0;
+    public string Name { get; set; } = string.Empty;
+    public List<string> Tags { get; set; } = new();
 }

@@ -3,66 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class CsvReportExample
+public class Program
 {
     public static void Main()
     {
-        // Ensure the working directory exists.
-        string workDir = Directory.GetCurrentDirectory();
+        // Register code page provider for CSV encoding support.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // 1. Create a CSV file with a custom quote character (single quote) and sample data.
-        string csvPath = Path.Combine(workDir, "sample.csv");
-        // Header line.
-        string[] csvLines =
+        // File paths for CSV data, template, and output report.
+        string dataFile = "data.csv";
+        string templateFile = "template.docx";
+        string outputFile = "report.docx";
+
+        // Create CSV content with a custom quote character (backtick `).
+        string[] csvLines = new[]
         {
-            "Id,Description",
-            "1,'Hello, World'",
-            "2,'\"Quoted\" text'"
+            "Name,Description",
+            "`John Doe`,`\"He said, \"\"Hello\"\" to everyone\"`",
+            "`Jane Smith`,`\"She replied, \"\"Hi!\"\"\"`"
         };
-        File.WriteAllLines(csvPath, csvLines);
+        File.WriteAllLines(dataFile, csvLines);
 
-        // 2. Create a template document programmatically.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert a heading.
-        builder.Writeln("CSV Report");
-        builder.Writeln();
-
-        // Begin a foreach block that iterates over the CSV rows.
-        // The CSV data source will be referenced by the name "data".
-        builder.Writeln("<<foreach [row in data]>>");
-        // Output the Id and Description fields exactly as they appear in the CSV.
-        builder.Writeln("Id: <<[row.Id]>>");
-        builder.Writeln("Description: <<[row.Description]>>");
+        // Build the template document programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Description: <<[person.Description]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Save and reload the template to follow the load/save lifecycle.
+        doc.Save(templateFile);
+        Document template = new Document(templateFile);
 
-        // 3. Load the template document for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // 4. Configure CSV loading options with a custom quote character.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        loadOptions.Delimiter = ',';      // Use comma as the column separator.
-        loadOptions.QuoteChar = '\'';     // Use single quote as the quoting character.
-        loadOptions.HasHeaders = true;    // First line contains column names.
-
-        // 5. Create a CsvDataSource from the CSV file using the specified options.
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
-
-        // 6. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine
+        // Configure CSV load options with the custom quote character.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true)
         {
-            Options = ReportBuildOptions.None
+            Delimiter = ',',
+            QuoteChar = '`' // Custom quote character.
         };
-        // The root object name used in the template tags is "data".
-        engine.BuildReport(reportDoc, csvDataSource, "data");
 
-        // 7. Save the generated report.
-        string reportPath = Path.Combine(workDir, "CsvReport.docx");
-        reportDoc.Save(reportPath);
+        // Create the CSV data source.
+        CsvDataSource csvDataSource = new CsvDataSource(dataFile, loadOptions);
+
+        // Generate the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(template, csvDataSource, "persons");
+
+        // Save the final report.
+        template.Save(outputFile);
     }
 }

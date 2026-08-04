@@ -1,79 +1,78 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Data model for a customer.
-    public class Customer
+    public static void Main()
     {
-        public string Name { get; set; } = "";
-        public bool LoyaltyStatus { get; set; }
-    }
+        // Prepare folders.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-    // Wrapper model that will be passed to the reporting engine.
-    public class ReportModel
-    {
-        public List<Customer> Customers { get; set; } = new();
-    }
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    public class Program
-    {
-        public static void Main()
+        // Begin a foreach loop over the collection "Customers".
+        builder.Writeln("<<foreach [c in Customers]>>");
+        // Output the customer's name.
+        builder.Writeln("Customer: <<[c.Name]>>");
+        // Conditional block: show a promotional banner only for loyal customers.
+        builder.Writeln("<<if [c.IsLoyal]>>");
+        // The banner text is highlighted in green.
+        builder.Writeln("<<textColor [\"Green\"]>>Loyalty Promotion!<</textColor>>");
+        builder.Writeln("<</if>>");
+        // End of the foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and prepare the data model.
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
+
+        // Build a realistic data source.
+        ReportModel model = new ReportModel
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("Customer Report");
-            builder.Writeln(); // Empty line.
-
-            // Begin a foreach loop over the Customers collection.
-            builder.Writeln("<<foreach [c in Customers]>>");
-            // Output the customer's name.
-            builder.Writeln("Name: <<[c.Name]>>");
-            // Conditional block: show promotional banner only if LoyaltyStatus is true.
-            builder.Writeln("<<if [c.LoyaltyStatus]>>");
-            // The banner text is highlighted in red.
-            builder.Writeln("<<textColor [\"Red\"]>>*** Special Promotion! ***<</textColor>>");
-            builder.Writeln("<</if>>");
-            // End of the foreach block.
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            const string templatePath = "CustomerReportTemplate.docx";
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare sample data.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            var model = new ReportModel
+            Customers = new List<Customer>
             {
-                Customers = new List<Customer>
-                {
-                    new Customer { Name = "Alice",   LoyaltyStatus = true  },
-                    new Customer { Name = "Bob",     LoyaltyStatus = false },
-                    new Customer { Name = "Charlie", LoyaltyStatus = true  }
-                }
-            };
+                new Customer { Name = "Alice", IsLoyal = true },
+                new Customer { Name = "Bob", IsLoyal = false },
+                new Customer { Name = "Charlie", IsLoyal = true }
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // 3. Build the report using the LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            // The root object name in the template is "model".
-            engine.BuildReport(reportDoc, model, "model");
+        // -----------------------------------------------------------------
+        // 3. Build the report using Aspose.Words LINQ Reporting Engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // No special options required.
+        engine.BuildReport(loadedTemplate, model, "model");
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "CustomerReportOutput.docx";
-            reportDoc.Save(outputPath);
-        }
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        loadedTemplate.Save(reportPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes (public, non‑nullable properties initialized).
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<Customer> Customers { get; set; } = new();
+}
+
+public class Customer
+{
+    public string Name { get; set; } = string.Empty;
+    public bool IsLoyal { get; set; }
 }

@@ -1,52 +1,57 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
 public class Program
 {
+    // Data model used for JSON serialization.
+    public class Person
+    {
+        // Non‑nullable, initialized to avoid warnings.
+        public string Name { get; set; } = string.Empty;
+
+        // Nullable to allow missing values.
+        public int? Age { get; set; }
+    }
+
     public static void Main()
     {
-        // Enable code page support for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample JSON data.
+        string jsonPath = "people.json";
+        var people = new List<Person>
+        {
+            new Person { Name = "Alice", Age = 30 },
+            new Person { Name = "Bob" } // Age omitted
+        };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(people));
 
-        // Create sample JSON data with a missing Email field for the first person.
-        const string jsonFileName = "people.json";
-        var jsonContent = @"[
-            { ""Name"": ""John Doe"", ""Age"": 30 },
-            { ""Name"": ""Jane Smith"", ""Age"": 25, ""Email"": ""jane@example.com"" }
-        ]";
-        File.WriteAllText(jsonFileName, jsonContent);
+        // Create a template document programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a template document containing LINQ Reporting tags.
-        const string templateFileName = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("People Report");
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("Email: <<[person.Email]>>");
+        builder.Writeln("Report of Persons");
+        builder.Writeln("<<foreach [p in persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Age: <<[p.Age]>>");
+        // 'Address' does not exist in the JSON; it will be treated as null.
+        builder.Writeln("Address: <<[p.Address]>>");
         builder.Writeln("<</foreach>>");
-        templateDoc.Save(templateFileName);
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templateFileName);
-
-        // Load JSON data source.
-        var jsonDataSource = new JsonDataSource(jsonFileName);
-
-        // Configure the reporting engine to treat missing members as null.
-        var engine = new ReportingEngine();
+        // Configure the reporting engine to allow missing members.
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.AllowMissingMembers;
         engine.MissingMemberMessage = "N/A";
 
-        // Build the report. The root object name in the template is "persons".
-        engine.BuildReport(reportDoc, jsonDataSource, "persons");
+        // Load JSON data as a data source.
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+
+        // Build the report. The data source name ("persons") must match the tag used in the template.
+        engine.BuildReport(doc, jsonDataSource, "persons");
 
         // Save the generated report.
-        const string outputFileName = "report.docx";
-        reportDoc.Save(outputFileName);
+        doc.Save("Report.docx");
     }
 }

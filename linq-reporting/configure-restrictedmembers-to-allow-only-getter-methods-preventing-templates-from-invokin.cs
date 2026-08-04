@@ -3,66 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Person
 {
-    // Original data model (can still be used elsewhere).
-    public class CustomerModel
+    // Getter and setter are required for the template to read the values.
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class ReportModel
+{
+    // Initialize the property to avoid nullable warnings.
+    public Person Person { get; set; } = new Person { Name = "John Doe", Age = 42 };
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
-    }
+        // Create an output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-    // Read‑only wrapper exposing only getters – this is what the template can access.
-    public class CustomerModelReadOnly
-    {
-        public string Name { get; }
-        public int Age { get; }
+        // -----------------------------------------------------------------
+        // Create a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Name: <<[model.Person.Name]>>");
+        builder.Writeln("Age: <<[model.Person.Age]>>");
 
-        public CustomerModelReadOnly(CustomerModel source)
-        {
-            Name = source.Name;
-            Age = source.Age;
-        }
-    }
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+        // -----------------------------------------------------------------
+        // Load the template for reporting.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-            // 1. Create a template document programmatically.
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Customer Report");
-            builder.Writeln("Name: <<[model.Name]>>");
-            builder.Writeln("Age: <<[model.Age]>>");
-            // Save the template to disk.
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            templateDoc.Save(templatePath);
+        // -----------------------------------------------------------------
+        // Configure the ReportingEngine.
+        // No restricted types are set so that getters can be accessed.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
 
-            // 2. Load the template document (simulating a separate load step).
-            Document doc = new Document(templatePath);
+        // Build the report using the model and the root name "model".
+        engine.BuildReport(reportDoc, new ReportModel(), "model");
 
-            // 3. Prepare the data source.
-            CustomerModel model = new CustomerModel();
-
-            // Wrap the model in a read‑only view so that only getters are reachable from the template.
-            CustomerModelReadOnly readOnlyModel = new CustomerModelReadOnly(model);
-
-            // 4. Configure the ReportingEngine (no RestrictedMembers property exists).
-            ReportingEngine engine = new ReportingEngine();
-
-            // 5. Build the report using the root object name "model".
-            engine.BuildReport(doc, readOnlyModel, "model");
-
-            // 6. Save the generated report.
-            string resultPath = Path.Combine(outputDir, "Report.docx");
-            doc.Save(resultPath);
-
-            Console.WriteLine($"Report generated: {resultPath}");
-        }
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
     }
 }

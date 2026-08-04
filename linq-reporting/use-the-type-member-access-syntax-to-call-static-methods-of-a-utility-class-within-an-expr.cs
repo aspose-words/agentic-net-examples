@@ -1,68 +1,77 @@
 using System;
-using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingDemo
 {
-    // Utility class with a static method that will be called from the template.
+    // Utility class with a static method that will be called from a LINQ Reporting expression tag.
     public static class MyUtility
     {
-        // Returns a greeting message for the supplied name.
-        public static string GetGreeting(string name) => $"Hello, {name}!";
+        // Formats a DateTime value as a short date string.
+        public static string FormatDate(DateTime date) => date.ToString("yyyy-MM-dd");
     }
 
-    // Simple data model used as the root object for the report.
-    public class Person
+    // Simple data model that will be used as the root object for the report.
+    public class Order
     {
-        public string Name { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = "John Doe";
+        public DateTime OrderDate { get; set; } = DateTime.Today;
+        public decimal Amount { get; set; } = 123.45m;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider (required for some Aspose.Words operations).
+            // Register code page provider required by Aspose.Words for some encodings.
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Prepare output folder.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            string reportPath = Path.Combine(outputDir, "Report.docx");
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // -------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // The expression tag calls the static method MyUtility.GetGreeting,
-            // passing the Name property of the root data object.
-            builder.Writeln("Greeting: <<[MyUtility.GetGreeting(Name)]>>");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            // Call static method MyUtility.FormatDate via expression tag.
+            builder.Writeln("Order Date: <<[MyUtility.FormatDate(order.OrderDate)]>>");
+            builder.Writeln("Amount: <<[order.Amount]>>");
 
             // Save the template to disk.
+            const string templatePath = "Template.docx";
             templateDoc.Save(templatePath);
 
-            // -------------------------------------------------
-            // 2. Load the template and build the report.
-            // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // 2. Load the template back from disk (required before building the report).
+            // -----------------------------------------------------------------
+            var loadedTemplate = new Document(templatePath);
 
-            // Prepare the data source.
-            Person person = new Person { Name = "World" };
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            var order = new Order
+            {
+                CustomerName = "Alice Smith",
+                OrderDate = new DateTime(2023, 12, 15),
+                Amount = 987.65m
+            };
 
-            // Configure the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
+            // -----------------------------------------------------------------
+            // 4. Build the report using the ReportingEngine.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
 
-            // Register the utility type so that its static members can be used in expressions.
+            // Register the utility type so its static members can be accessed in expressions.
             engine.KnownTypes.Add(typeof(MyUtility));
 
-            // Build the report using the LINQ Reporting engine.
-            engine.BuildReport(loadedTemplate, person);
+            // The root object name used in the template tags is "order".
+            engine.BuildReport(loadedTemplate, order, "order");
 
-            // Save the generated report.
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string reportPath = "Report.docx";
             loadedTemplate.Save(reportPath);
         }
     }

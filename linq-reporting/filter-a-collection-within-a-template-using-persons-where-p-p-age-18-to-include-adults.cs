@@ -10,46 +10,49 @@ public class Person
     public int Age { get; set; }
 }
 
-public class ReportModel
+public class Model
 {
-    // Collection that will be filtered inside the template.
-    public List<Person> persons { get; set; } = new();
+    public List<Person> Persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Prepare sample data.
-        var model = new ReportModel
+        // 1. Create the template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        // Insert LINQ Reporting tags that filter the collection to adults (Age > 18).
+        builder.Writeln("<<foreach [p in Persons.Where(p => p.Age > 18)]>>");
+        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // 2. Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // 3. Prepare sample data.
+        var data = new Model
         {
-            persons = new List<Person>
+            Persons = new List<Person>
             {
-                new Person { Name = "Alice",   Age = 17 },
-                new Person { Name = "Bob",     Age = 22 },
-                new Person { Name = "Charlie", Age = 19 },
-                new Person { Name = "Diana",   Age = 15 }
+                new() { Name = "Alice", Age = 25 },
+                new() { Name = "Bob", Age = 17 },
+                new() { Name = "Charlie", Age = 30 },
+                new() { Name = "Diana", Age = 15 }
             }
         };
 
-        // 2. Create a template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Add a heading.
-        builder.Writeln("Adults (Age > 18):");
-
-        // LINQ Reporting tag that filters the collection using Where().
-        builder.Writeln("<<foreach [p in persons.Where(p => p.Age > 18)]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
-
-        // 3. Build the report using the ReportingEngine.
+        // 4. Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
-        // No special options are required for this simple example.
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(doc, data, "model");
 
-        // 4. Save the generated report.
-        doc.Save("AdultsReport.docx");
+        // 5. Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

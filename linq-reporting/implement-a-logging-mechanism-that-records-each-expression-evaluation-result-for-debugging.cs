@@ -4,89 +4,81 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public static class Logger
+{
+    private static readonly List<string> _entries = new();
+
+    public static void Log(string message) => _entries.Add($"{DateTime.Now:O} - {message}");
+
+    public static void Save(string filePath)
+    {
+        File.WriteAllLines(filePath, _entries);
+    }
+}
+
+public class ReportModel
+{
+    private string _customerName = string.Empty;
+    private double _amount;
+
+    public ReportModel(string customerName, double amount)
+    {
+        _customerName = customerName;
+        _amount = amount;
+    }
+
+    public string CustomerName
+    {
+        get
+        {
+            Logger.Log($"CustomerName evaluated: {_customerName}");
+            return _customerName;
+        }
+        set => _customerName = value;
+    }
+
+    public double Amount
+    {
+        get
+        {
+            Logger.Log($"Amount evaluated: {_amount}");
+            return _amount;
+        }
+        set => _amount = value;
+    }
+}
+
 public class Program
 {
-    // Central log that records every property evaluation during report generation.
-    private static readonly List<string> EvaluationLog = new();
-
     public static void Main()
     {
-        // Ensure the code page provider is available (required by Aspose.Words for some encodings).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Paths for files.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
+        const string logPath = "EvaluationLog.txt";
 
-        // 1. Create the LINQ Reporting template programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // 1. Create the template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Customer: <<[model.CustomerName]>>");
+        builder.Writeln("Amount: <<[model.Amount]>>");
+        templateDoc.Save(templatePath);
 
-        // Template uses a foreach loop over Items and prints Index and Name.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
+        // 2. Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // 2. Prepare realistic sample data.
-        ReportModel model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Index = 1, Name = "Apple" },
-                new Item { Index = 2, Name = "Banana" },
-                new Item { Index = 3, Name = "Cherry" }
-            }
-        };
+        // 3. Prepare the data model.
+        var model = new ReportModel("John Doe", 1234.56);
 
-        // 3. Build the report using Aspose.Words LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this example.
-        engine.BuildReport(template, model, "model");
+        // 4. Build the report using LINQ Reporting Engine.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(doc, model, "model");
 
-        // 4. Save the generated report.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string reportPath = Path.Combine(outputDir, "ReportOutput.docx");
-        template.Save(reportPath);
+        // 5. Save the generated report.
+        doc.Save(reportPath);
 
-        // 5. Write the evaluation log to a text file and also output to console.
-        string logPath = Path.Combine(outputDir, "EvaluationLog.txt");
-        File.WriteAllLines(logPath, EvaluationLog);
-        Console.WriteLine("Report generated at: " + reportPath);
-        Console.WriteLine("Evaluation log written to: " + logPath);
-        Console.WriteLine("=== Evaluation Log ===");
-        foreach (string entry in EvaluationLog)
-        {
-            Console.WriteLine(entry);
-        }
-    }
-
-    // Root data model for the report.
-    public class ReportModel
-    {
-        // Initialize to avoid nullable warnings.
-        public List<Item> Items { get; set; } = new();
-    }
-
-    // Data item whose property getters log each access.
-    public class Item
-    {
-        private int _index;
-        private string _name = string.Empty;
-
-        public int Index
-        {
-            get => Log(nameof(Index), _index);
-            set => _index = value;
-        }
-
-        public string Name
-        {
-            get => Log(nameof(Name), _name);
-            set => _name = value ?? string.Empty;
-        }
-
-        // Generic logging helper.
-        private static T Log<T>(string propertyName, T value)
-        {
-            EvaluationLog.Add($"{propertyName} accessed, value: {value}");
-            return value;
-        }
+        // 6. Persist the evaluation log.
+        Logger.Save(logPath);
     }
 }

@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,86 +9,43 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the working directory exists.
-        Directory.CreateDirectory("Output");
+        // Register code page provider for CSV parsing.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample CSV data with European date format (dd/MM/yyyy).
-        string csvPath = Path.Combine("Output", "data.csv");
-        File.WriteAllText(csvPath,
-            "Name,BirthDate\r\n" +
-            "Alice,31/12/1990\r\n" +
-            "Bob,15/07/1985\r\n" +
-            "Charlie,01/01/2000\r\n");
+        // Create a CSV file with European date format (dd/MM/yyyy).
+        const string csvFile = "people.csv";
+        File.WriteAllText(csvFile,
+            "Name,Date\r\n" +
+            "Alice,25/12/2022\r\n" +
+            "Bob,01/01/2023");
 
-        // 2. Set a custom culture that interprets dates in European format.
-        CultureInfo europeanCulture = new CultureInfo("fr-FR"); // dd/MM/yyyy pattern
-        CultureInfo.DefaultThreadCurrentCulture = europeanCulture;
-        CultureInfo.DefaultThreadCurrentUICulture = europeanCulture;
+        // Set the thread culture to a European culture (en-GB) – this will be used for parsing dates.
+        CultureInfo europeanCulture = new CultureInfo("en-GB");
+        System.Threading.Thread.CurrentThread.CurrentCulture = europeanCulture;
 
-        // 3. Load CSV and parse into model objects using the custom culture.
-        List<Person> persons = new();
-        using (var reader = new StreamReader(csvPath))
-        {
-            // Skip header.
-            if (!reader.EndOfStream) reader.ReadLine();
+        // Configure CSV load options. The HasHeaders flag is true because the first line contains column names.
+        var loadOptions = new CsvDataLoadOptions(true);
+        // If the library version supports it, assign the culture used for type conversion.
+        // This ensures dates like "25/12/2022" are interpreted correctly.
+        // Uncomment the following line if the property exists in your version:
+        // loadOptions.CultureInfo = europeanCulture;
 
-            while (!reader.EndOfStream)
-            {
-                string line = reader.ReadLine();
-                if (string.IsNullOrWhiteSpace(line)) continue;
+        // Create the CSV data source.
+        var csvDataSource = new CsvDataSource(csvFile, loadOptions);
 
-                string[] parts = line.Split(',');
-                if (parts.Length != 2) continue;
-
-                string name = parts[0].Trim();
-                string dateString = parts[1].Trim();
-
-                // Parse date using the custom culture.
-                if (!DateTime.TryParse(dateString, europeanCulture, DateTimeStyles.None, out DateTime birthDate))
-                {
-                    // Fallback to exact format if needed.
-                    birthDate = DateTime.ParseExact(dateString, "dd/MM/yyyy", europeanCulture);
-                }
-
-                persons.Add(new Person { Name = name, BirthDate = birthDate });
-            }
-        }
-
-        // 4. Prepare the data model for the report.
-        ReportModel model = new() { Persons = persons };
-
-        // 5. Create a Word template programmatically with LINQ Reporting tags.
-        string templatePath = Path.Combine("Output", "template.docx");
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
+        // Build a simple template document that iterates over the CSV rows.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
         builder.Writeln("People Report");
-        builder.Writeln("");
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Birth Date: <<[person.BirthDate]>>");
+        builder.Writeln("<<foreach [p in persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Date: <<[p.Date]>>");
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, csvDataSource, "persons");
 
-        // 6. Load the template and generate the report.
-        Document reportDoc = new(templatePath);
-        ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // 7. Save the generated report.
-        string reportPath = Path.Combine("Output", "report.docx");
-        reportDoc.Save(reportPath);
+        // Save the generated report.
+        doc.Save("PeopleReport.docx");
     }
-}
-
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public DateTime BirthDate { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
 }

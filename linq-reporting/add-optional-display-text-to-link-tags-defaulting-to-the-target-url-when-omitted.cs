@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,76 +7,65 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create a blank document that will serve as the template.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Paths for the template and the generated report.
-        const string templatePath = "LinkTemplate.docx";
-        const string reportPath = "LinkReport.docx";
+        // Begin a foreach block that iterates over the Items collection.
+        builder.Writeln("<<foreach [item in Items]>>");
 
-        // ---------- Create the LINQ Reporting template ----------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Simple heading.
-        builder.Writeln("Link Report");
-        builder.Writeln();
-
-        // Begin a foreach loop over the collection "Links".
-        builder.Writeln("<<foreach [link in Links]>>");
-
-        // Insert a link tag. The second expression (display text) is optional.
-        // If LinkText is null or empty, the engine will display the URL itself.
-        builder.Writeln("<<link [link.Url] [link.LinkText]>>");
-        builder.Writeln();
+        // Output a link for each item.
+        // If LinkText is not null or empty, use it as the display text.
+        // Otherwise output a link with only the URL – the engine will use the URL as the display text.
+        builder.Writeln(
+            "Link: " +
+            "<<if [item.LinkText != null && item.LinkText != \"\"]>>" +
+                "<<link [item.Url] [item.LinkText]>>" +
+            "<</if>>" +
+            "<<if [item.LinkText == null || item.LinkText == \"\"]>>" +
+                "<<link [item.Url]>>" +
+            "<</if>>");
 
         // End the foreach block.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // ---------- Load the template and build the report ----------
-        Document reportDoc = new Document(templatePath);
-
         // Prepare sample data.
-        ReportModel model = new ReportModel
+        Model data = new Model
         {
-            Links = new List<LinkInfo>
+            Items = new List<Item>
             {
-                new LinkInfo
-                {
-                    Url = "https://www.example.com",
-                    LinkText = "Example Site"
-                },
-                new LinkInfo
+                new Item
                 {
                     Url = "https://www.aspose.com",
-                    LinkText = null // No display text; URL will be used as the link text.
+                    LinkText = "Aspose Home"
+                },
+                new Item
+                {
+                    Url = "https://www.github.com",
+                    LinkText = null // No display text; URL will be used.
                 }
             }
         };
 
         // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(reportDoc, model, "model");
+        ReportingEngine engine = new ReportingEngine();
+        // Allow missing members so that a null LinkText does not cause an error.
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
+        engine.BuildReport(template, data, "model");
 
-        // Save the generated report.
-        reportDoc.Save(reportPath);
+        // Save the generated document.
+        template.Save("Report.docx");
     }
 }
 
-// Wrapper class that matches the root object name used in the template ("model").
-public class ReportModel
+// Root data model referenced in the template as "model".
+public class Model
 {
-    public List<LinkInfo> Links { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
 }
 
-// Data class representing a single link.
-public class LinkInfo
+// Individual item containing a URL and an optional display text.
+public class Item
 {
     public string Url { get; set; } = string.Empty;
     public string? LinkText { get; set; }

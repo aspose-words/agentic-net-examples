@@ -7,53 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple template document programmatically.
+        // -------------------- Prepare sample data --------------------
+        DataSet dataSet = new DataSet();
+
+        DataTable employeesTable = new DataTable("Employees");
+        employeesTable.Columns.Add("Name", typeof(string));
+        employeesTable.Columns.Add("Position", typeof(string));
+        employeesTable.Columns.Add("Salary", typeof(decimal));
+
+        employeesTable.Rows.Add("John Doe", "Manager", 75000m);
+        employeesTable.Rows.Add("Jane Smith", "Developer", 65000m);
+        employeesTable.Rows.Add("Bob Johnson", "Tester", 55000m);
+
+        dataSet.Tables.Add(employeesTable);
+
+        // -------------------- Create a template document --------------------
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Insert LINQ Reporting tags that reference the DataSet root object named "ds".
-        // The root object will be a DataRow, so the fields can be accessed directly.
-        builder.Writeln("Report Title: <<[ds.Title]>>");
-        builder.Writeln("Report Author: <<[ds.Author]>>");
-        builder.Writeln("Report Date: <<[ds.ReportDate]>>");
+        builder.Writeln("Employee Report");
+        // Insert the current date directly; using a LINQ Reporting tag for DateTime causes a parsing error.
+        builder.Writeln($"Generated on: {DateTime.Now}");
+        builder.Writeln();
 
-        // Save the template to a temporary file.
-        const string templatePath = "ReportTemplate.docx";
-        template.Save(templatePath);
+        // Loop through the Employees table using LINQ Reporting tags.
+        builder.Writeln("<<foreach [emp in Employees]>>");
+        builder.Writeln("Name: <<[emp.Name]>>");
+        builder.Writeln("Position: <<[emp.Position]>>");
+        builder.Writeln("Salary: <<[emp.Salary]>>");
+        builder.Writeln("<</foreach>>");
 
-        // Prepare a DataSet with a single DataTable containing the data.
-        DataSet ds = new DataSet();
-        DataTable table = new DataTable("ReportData");
-        table.Columns.Add("Title", typeof(string));
-        table.Columns.Add("Author", typeof(string));
-        table.Columns.Add("ReportDate", typeof(DateTime));
-
-        // Add one row of sample data.
-        table.Rows.Add("Quarterly Sales Summary", "Jane Doe", DateTime.Today);
-        ds.Tables.Add(table);
-
-        // Load the template document (demonstrates load step).
-        Document doc = new Document(templatePath);
-
-        // Use the first row of the DataTable as the data source for the report.
-        DataRow row = ds.Tables["ReportData"].Rows[0];
-
-        // Build the report using the ReportingEngine.
+        // -------------------- Build the report --------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, row, "ds");
+        // The data source name ("ds") can be used in the template if needed.
+        engine.BuildReport(template, dataSet, "ds");
 
-        // After the report is generated, set custom document properties based on the DataSet values.
-        doc.CustomDocumentProperties.Add("ReportTitle", row["Title"].ToString());
-        doc.CustomDocumentProperties.Add("ReportAuthor", row["Author"].ToString());
-        doc.CustomDocumentProperties.Add(
-            "ReportGeneratedOn",
-            ((DateTime)row["ReportDate"]).ToString("yyyy-MM-dd"));
+        // -------------------- Set custom document properties based on the data --------------------
+        int employeeCount = employeesTable.Rows.Count;
+        decimal totalSalary = 0m;
+        foreach (DataRow row in employeesTable.Rows)
+        {
+            totalSalary += (decimal)row["Salary"];
+        }
 
-        // Save the final report.
-        const string outputPath = "GeneratedReport.docx";
-        doc.Save(outputPath);
+        // Add custom properties to the generated document.
+        // Use the overload that accepts a double for the decimal value.
+        template.CustomDocumentProperties.Add("EmployeeCount", employeeCount);
+        template.CustomDocumentProperties.Add("TotalSalary", (double)totalSalary);
 
-        // Inform the user (no interactive input required).
-        Console.WriteLine($"Report generated and saved to '{outputPath}'.");
+        // -------------------- Save the final report --------------------
+        template.Save("EmployeeReport.docx");
     }
 }

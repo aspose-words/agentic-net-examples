@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,40 +9,49 @@ public class Person
     public int Age { get; set; }
 }
 
-public class Model
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new Model
+        // Register code page provider for legacy encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        const string templatePath = "template.docx";
+        const string outputPath = "report.docx";
+
+        // -------------------------------------------------
+        // Create the template document programmatically.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Use default LINQ Reporting tags << >> to avoid tag collisions.
+        builder.Writeln("<<[person.Name]>> is <<[person.Age]>> years old.");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // Load the template back for reporting.
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // Sample data source.
+        Person person = new Person
         {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 }
-            }
+            Name = "John Doe",
+            Age = 30
         };
 
-        // Create a blank document and a builder to insert template tags.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // -------------------------------------------------
+        // Configure the ReportingEngine.
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
 
-        // Use the default LINQ Reporting delimiters (<< and >>).
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
+        // Build the report using the root object name "person".
+        engine.BuildReport(reportDoc, person, "person");
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated document.
-        doc.Save("ReportWithDefaultDelimiters.docx");
+        // Save the generated report.
+        reportDoc.Save(outputPath);
     }
 }

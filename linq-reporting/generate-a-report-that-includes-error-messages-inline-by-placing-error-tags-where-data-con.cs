@@ -1,59 +1,51 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace AsposeWordsLinqReportingExample
 {
-    // Sample numeric property.
-    public int Age { get; set; } = 30;
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model used as the root object for the report.
+    public class OrderModel
     {
-        // Paths for the template and the final report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "ReportOutput.docx";
+        // Customer name – valid string.
+        public string CustomerName { get; set; } = "John Doe";
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Order date – intentionally invalid to trigger a conversion error.
+        public string OrderDate { get; set; } = "not-a-valid-date";
+    }
 
-        // Normal tag – will be replaced with the value of Age.
-        builder.Writeln("Customer age: <<[model.Age]>>");
-
-        // Tag that will cause a runtime error (division by zero).
-        // With InlineErrorMessages enabled, the engine will insert an <<error>> tag here.
-        builder.Writeln("Age divided by zero (will cause error): <<[model.Age] / 0>>");
-
-        // Save the template to disk before building the report.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportModel model = new ReportModel();
-
-        ReportingEngine engine = new ReportingEngine
+    public class Program
+    {
+        public static void Main()
         {
-            // Enable inline error messages.
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
+            // Create a new blank document and a builder to insert LINQ Reporting tags.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // BuildReport returns true only when InlineErrorMessages is set.
-        bool success = engine.BuildReport(reportDoc, model, "model");
+            // Insert a line that will be filled correctly.
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
 
-        Console.WriteLine($"BuildReport succeeded: {success}");
+            // Insert a line that attempts to format a date.
+            // The provided value is not a valid date, so with InlineErrorMessages the engine will insert <<error>>.
+            builder.Writeln("Order Date: <<[order.OrderDate]:date>>");
 
-        // -----------------------------------------------------------------
-        // 3. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(outputPath);
-        Console.WriteLine($"Report saved to: {Path.GetFullPath(outputPath)}");
+            // Prepare the data source.
+            OrderModel order = new OrderModel();
+
+            // Configure the reporting engine to inline error messages.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+            // Build the report. The root object name must match the name used in the template tags ("order").
+            bool success = engine.BuildReport(doc, order, "order");
+
+            // Save the generated document.
+            const string outputPath = "ReportWithInlineErrors.docx";
+            doc.Save(outputPath);
+
+            // Output the result of the build operation.
+            Console.WriteLine($"Report built successfully: {success}");
+            Console.WriteLine($"Output saved to: {outputPath}");
+        }
     }
 }

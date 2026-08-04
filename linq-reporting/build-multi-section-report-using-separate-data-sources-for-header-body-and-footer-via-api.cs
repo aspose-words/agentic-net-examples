@@ -1,106 +1,89 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Header data model
-    public class HeaderInfo
+    public static void Main()
     {
-        public string Title { get; set; } = "Monthly Sales Report";
-        public string Date { get; set; } = DateTime.Now.ToString("MMMM yyyy");
-    }
+        // Create a blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-    // Body data model
-    public class BodyInfo
-    {
-        public List<Item> Items { get; set; } = new()
+        // ---------- Header section ----------
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("<<[header.Title]>>");
+        builder.Writeln("Date: <<[header.Date]>>");
+
+        // ---------- Body section ----------
+        builder.MoveToDocumentEnd();
+        builder.Writeln("<<foreach [item in body.Items]>>");
+        builder.Writeln("Product: <<[item.Name]>> - Qty: <<[item.Quantity]>>");
+        builder.Writeln("<</foreach>>");
+
+        // ---------- Footer section ----------
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Page <<[footer.PageNumber]>> of <<[footer.TotalPages]>>");
+
+        // Prepare data sources.
+        HeaderModel header = new HeaderModel
         {
-            new Item { Name = "Product A", Quantity = 120 },
-            new Item { Name = "Product B", Quantity = 85 },
-            new Item { Name = "Product C", Quantity = 47 }
+            Title = "Sales Report",
+            Date = DateTime.Now.ToString("d")
         };
-    }
 
-    // Footer data model
-    public class FooterInfo
-    {
-        public string Note { get; set; } = "Confidential – For internal use only";
-    }
-
-    // Item used in the body collection
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public int Quantity { get; set; }
-    }
-
-    // Wrapper model that contains separate sections
-    public class ReportModel
-    {
-        public HeaderInfo Header { get; set; } = new();
-        public BodyInfo Body { get; set; } = new();
-        public FooterInfo Footer { get; set; } = new();
-    }
-
-    public class Program
-    {
-        public static void Main()
+        BodyModel body = new BodyModel
         {
-            // Register code page provider (required for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Items = new()
+            {
+                new Item { Name = "Apple", Quantity = 10 },
+                new Item { Name = "Banana", Quantity = 20 },
+                new Item { Name = "Cherry", Quantity = 15 }
+            }
+        };
 
-            // Paths for template and output
-            string templatePath = "Template.docx";
-            string outputPath = "Report.docx";
+        FooterModel footer = new FooterModel
+        {
+            PageNumber = 1,
+            TotalPages = 1
+        };
 
-            // -------------------------------------------------
-            // 1. Create the template document programmatically
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Build the report using three separate data sources.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        engine.BuildReport(doc,
+            new object[] { header, body, footer },
+            new string[] { "header", "body", "footer" });
 
-            // Header section
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            builder.Writeln("<<[model.Header.Title]>>");
-            builder.Writeln("Date: <<[model.Header.Date]>>");
-
-            // Body section (main document)
-            builder.MoveToSection(0);
-            builder.Writeln("Report Body");
-            builder.Writeln("<<foreach [item in model.Body.Items]>>");
-            builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Footer section
-            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-            builder.Writeln("Footer: <<[model.Footer.Note]>>");
-
-            // Save the template to disk
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template and build the report
-            // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Prepare the data source
-            ReportModel model = new ReportModel();
-
-            // Configure the reporting engine
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
-
-            // Build the report using the wrapper object and root name "model"
-            engine.BuildReport(reportDoc, model, "model");
-
-            // -------------------------------------------------
-            // 3. Save the generated report
-            // -------------------------------------------------
-            reportDoc.Save(outputPath);
-        }
+        // Save the generated report.
+        doc.Save("MultiSectionReport.docx");
     }
+}
+
+// Header data model.
+public class HeaderModel
+{
+    public string Title { get; set; } = string.Empty;
+    public string Date { get; set; } = string.Empty;
+}
+
+// Body data model containing a collection of items.
+public class BodyModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+// Individual item used in the body collection.
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+}
+
+// Footer data model.
+public class FooterModel
+{
+    public int PageNumber { get; set; }
+    public int TotalPages { get; set; }
 }

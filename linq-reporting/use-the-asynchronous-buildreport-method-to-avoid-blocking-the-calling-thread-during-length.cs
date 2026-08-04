@@ -1,94 +1,78 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingAsync
 {
-    // Entry point – asynchronous to avoid blocking while the report is being built.
-    public static async Task Main()
+    // Simple data model used by the template.
+    public class ReportModel
     {
-        // Register code page provider (required by Aspose.Words for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public List<Person> Persons { get; set; } = new();
+    }
 
-        // Prepare file paths.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-        string reportPath   = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+    public class Person
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Simple template that lists order items.
-        builder.Writeln("Order for <<[order.CustomerName]>>:");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Index]>>: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template back (simulating a real‑world scenario).
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare sample data.
-        // -----------------------------------------------------------------
-        Order sampleOrder = new Order
+    public class Program
+    {
+        // Async entry point.
+        public static async Task Main(string[] args)
         {
-            CustomerName = "John Doe",
-            Items = new List<Item>
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // 1. Create a template document with LINQ Reporting tags.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Add a heading.
+            builder.Writeln("People Report");
+            builder.Writeln();
+
+            // Begin a foreach loop over the Persons collection.
+            builder.Writeln("<<foreach [person in Persons]>>");
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Age: <<[person.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk (required before loading for the engine).
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            template.Save(templatePath);
+
+            // 2. Load the template back (simulating a real-world scenario where the template is a file).
+            Document loadedTemplate = new Document(templatePath);
+
+            // 3. Prepare sample data.
+            ReportModel model = new()
             {
-                new Item { Index = 1, Name = "Apple" },
-                new Item { Index = 2, Name = "Banana" },
-                new Item { Index = 3, Name = "Cherry" }
-            }
-        };
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 45 },
+                    new Person { Name = "Charlie", Age = 28 }
+                }
+            };
 
-        // -----------------------------------------------------------------
-        // 4. Build the report asynchronously.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
+            // 4. Build the report asynchronously to avoid blocking the calling thread.
+            ReportingEngine engine = new ReportingEngine();
+            // No special options are required for this simple example.
+            bool success = await Task.Run(() => engine.BuildReport(loadedTemplate, model, "model"));
 
-        // Wrap the synchronous BuildReport call in Task.Run to avoid blocking.
-        bool success = await Task.Run(() => engine.BuildReport(doc, sampleOrder, "order"));
+            // 5. Save the generated report.
+            string reportPath = Path.Combine(outputDir, "ReportOutput.docx");
+            loadedTemplate.Save(reportPath);
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        if (success)
-        {
-            doc.Save(reportPath);
-            Console.WriteLine($"Report generated successfully: {reportPath}");
-        }
-        else
-        {
-            Console.WriteLine("Report generation failed.");
+            // Inform the user (no interactive input required).
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
+            Console.WriteLine($"Template saved to: {templatePath}");
+            Console.WriteLine($"Report saved to: {reportPath}");
         }
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model – must be public with public properties for LINQ Reporting.
-// ---------------------------------------------------------------------
-public class Order
-{
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
 }

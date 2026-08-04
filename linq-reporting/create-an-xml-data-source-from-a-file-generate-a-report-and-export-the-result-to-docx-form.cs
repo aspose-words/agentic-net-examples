@@ -1,73 +1,81 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for XML handling.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Define file paths in the current working directory.
-        string workingDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workingDir, "Template.docx");
-        string xmlPath = Path.Combine(workingDir, "Data.xml");
-        string outputPath = Path.Combine(workingDir, "Report.docx");
+        // Prepare file paths
+        string workDir = Directory.GetCurrentDirectory();
+        string dataFile = Path.Combine(workDir, "data.xml");
+        string templateFile = Path.Combine(workDir, "template.docx");
+        string outputFile = Path.Combine(workDir, "report.docx");
 
-        // Create a sample XML data file.
-        CreateSampleXml(xmlPath);
+        // 1. Create sample XML data source
+        string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Orders>
+    <Order>
+        <Id>1</Id>
+        <CustomerName>John Doe</CustomerName>
+        <Total>123.45</Total>
+    </Order>
+    <Order>
+        <Id>2</Id>
+        <CustomerName>Jane Smith</CustomerName>
+        <Total>678.90</Total>
+    </Order>
+</Orders>";
+        File.WriteAllText(dataFile, xmlContent, Encoding.UTF8);
 
-        // Create a Word template containing LINQ Reporting tags.
-        CreateTemplateDocument(templatePath);
+        // 2. Build a Word template programmatically with LINQ Reporting tags
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Load the template document.
-        Document doc = new Document(templatePath);
-
-        // Load the XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
-
-        // Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource, "persons");
-
-        // Save the generated report.
-        doc.Save(outputPath);
-    }
-
-    private static void CreateSampleXml(string filePath)
-    {
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<People>
-  <Person>
-    <Name>John Doe</Name>
-    <Age>30</Age>
-  </Person>
-  <Person>
-    <Name>Jane Smith</Name>
-    <Age>25</Age>
-  </Person>
-</People>";
-        File.WriteAllText(filePath, xmlContent);
-    }
-
-    private static void CreateTemplateDocument(string filePath)
-    {
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Title.
-        builder.Writeln("People Report");
+        builder.Writeln("Order Report");
         builder.Writeln();
 
-        // LINQ Reporting tags.
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Age: <<[p.Age]>>");
+        // Begin foreach over Orders
+        builder.Writeln("<<foreach [order in Orders]>>");
+
+        // Start table inside the foreach block
+        Table table = builder.StartTable();
+
+        // Header row
+        builder.InsertCell(); builder.Writeln("Id");
+        builder.InsertCell(); builder.Writeln("Customer");
+        builder.InsertCell(); builder.Writeln("Total");
+        builder.EndRow();
+
+        // Data row
+        builder.InsertCell(); builder.Writeln("<<[order.Id]>>");
+        builder.InsertCell(); builder.Writeln("<<[order.CustomerName]>>");
+        builder.InsertCell(); builder.Writeln("<<[order.Total]>>");
+        builder.EndRow();
+
+        // End table
+        builder.EndTable();
+
+        // End foreach
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        template.Save(filePath);
+        // Save the template
+        templateDoc.Save(templateFile);
+
+        // 3. Load the template and generate the report using the XML data source
+        Document reportDoc = new Document(templateFile);
+        ReportingEngine engine = new ReportingEngine();
+
+        // Build the report: root name matches the XML root element "Orders"
+        engine.BuildReport(reportDoc, new XmlDataSource(dataFile), "Orders");
+
+        // 4. Save the generated report
+        reportDoc.Save(outputFile);
     }
 }

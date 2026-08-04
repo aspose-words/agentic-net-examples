@@ -3,69 +3,72 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
 namespace LinqReportingExample
 {
-    // Data model classes
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
-
+    // Root data model containing a collection to bind.
     public class ReportModel
     {
-        public List<Person> Persons { get; set; } = new();
+        // Initialize the collection to avoid nullable warnings.
+        public List<Item> Items { get; set; } = new();
+    }
+
+    // Simple item class used in the collection.
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider for Aspose.Words (required in some environments)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Paths for template and output documents
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
             // -------------------------------------------------
-            // 1. Create the template document with LINQ tags
+            // 1. Create the DOCX template with LINQ Reporting tags.
             // -------------------------------------------------
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("Persons Report");
-            builder.Writeln("<<foreach [person in Persons]>>");
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
+            builder.Writeln("Sample LINQ Reporting");
+            // Opening tag for the collection.
+            builder.Writeln("<<foreach [item in Items]>>");
+            // Content that will be repeated for each item.
+            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+            // Closing tag for the collection.
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk
+            // Save the template to disk.
             templateDoc.Save(templatePath);
 
             // -------------------------------------------------
-            // 2. Load the template and prepare the data source
+            // 2. Prepare sample data to bind to the template.
             // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
+            ReportModel model = new ReportModel
+            {
+                Items = new List<Item>
+                {
+                    new Item { Index = 1, Name = "Apple" },
+                    new Item { Index = 2, Name = "Banana" },
+                    new Item { Index = 3, Name = "Cherry" }
+                }
+            };
 
-            ReportModel model = new ReportModel();
-            model.Persons.Add(new Person { Name = "Alice", Age = 30 });
-            model.Persons.Add(new Person { Name = "Bob", Age = 45 });
-            model.Persons.Add(new Person { Name = "Charlie", Age = 28 });
-
             // -------------------------------------------------
-            // 3. Build the report using ReportingEngine
+            // 3. Load the template and build the report.
             // -------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
             ReportingEngine engine = new ReportingEngine();
-            // No special options required for this simple example
-            engine.BuildReport(reportDoc, model, "model");
 
-            // -------------------------------------------------
-            // 4. Save the generated report
-            // -------------------------------------------------
-            reportDoc.Save(reportPath);
+            // Bind the model to the template using the root name "model".
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // Save the generated report.
+            loadedTemplate.Save(reportPath);
         }
     }
 }

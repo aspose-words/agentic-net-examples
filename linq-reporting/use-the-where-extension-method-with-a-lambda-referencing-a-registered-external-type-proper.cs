@@ -1,73 +1,95 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingWhereExample
+public class Program
 {
-    // External type with a static property used in the LINQ filter.
-    public static class FilterHelper
+    public static void Main()
     {
-        // Minimum age for filtering persons.
-        public static int MinAge { get; set; } = 30;
-    }
+        // Register code page provider for Aspose.Words (required for some environments).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    // Data model representing a person.
-    public class Person
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
+        // Paths for the template and the generated report.
+        string templatePath = "Template.docx";
+        string reportPath = "Report.docx";
 
-    // Root data source for the report.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+        // -------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    class Program
-    {
-        static void Main()
+        // LINQ Reporting tag that filters the collection using Where and an external static property.
+        builder.Writeln("<<foreach [p in Persons.Where(p => p.Age > ExternalHelper.MinAge)]>>");
+        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // 2. Load the template for report generation.
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -------------------------------------------------
+        // 3. Prepare data source.
+        // -------------------------------------------------
+        var model = new ReportModel
         {
-            // 1. Prepare sample data.
-            var model = new ReportModel
+            Persons = new List<Person>
             {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 25 },
-                    new Person { Name = "Bob",   Age = 35 },
-                    new Person { Name = "Carol", Age = 45 }
-                }
-            };
+                new Person { Name = "Alice", Age = 25 },
+                new Person { Name = "Bob",   Age = 35 },
+                new Person { Name = "Carol", Age = 45 },
+                new Person { Name = "Dave",  Age = 28 }
+            }
+        };
 
-            // 2. Create a template document with LINQ Reporting tags.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+        // -------------------------------------------------
+        // 4. Configure ReportingEngine.
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
 
-            // Use Where extension method with a lambda that references the external static property.
-            builder.Writeln("<<foreach [p in Persons.Where(p => p.Age > FilterHelper.MinAge)]>>");
-            builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
+        // Register the external type so its static members can be used in the template.
+        engine.KnownTypes.Add(typeof(ExternalHelper));
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(reportDoc, model, "model");
 
-            // 3. Load the template for report generation.
-            var doc = new Document(templatePath);
+        // -------------------------------------------------
+        // 5. Save the generated report.
+        // -------------------------------------------------
+        reportDoc.Save(reportPath);
 
-            // 4. Configure the ReportingEngine.
-            var engine = new ReportingEngine();
-            // Register the external type so its static members can be used in expressions.
-            engine.KnownTypes.Add(typeof(FilterHelper));
-
-            // 5. Build the report. Use the overload without a root name to reference members directly.
-            engine.BuildReport(doc, model);
-
-            // 6. Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // Optional: indicate completion (no interactive input).
+        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
     }
+}
+
+// -------------------------------------------------
+// Data model classes.
+// -------------------------------------------------
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
+}
+
+// -------------------------------------------------
+// External helper class whose static property is used in the LINQ filter.
+// -------------------------------------------------
+public static class ExternalHelper
+{
+    // This value can be changed to affect the filtering logic.
+    public static int MinAge { get; set; } = 30;
 }

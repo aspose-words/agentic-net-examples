@@ -1,67 +1,58 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
-
-public class Item
-{
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-}
-
-public class ReportModel
-{
-    public string HtmlTable { get; set; } = "";
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
+        // Register code page provider for any required encodings.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // ---------- 1. Prepare sample JSON data ----------
-        string jsonPath = "data.json";
-        var sampleItems = new List<Item>
-        {
-            new Item { Name = "Apple", Price = 1.20m },
-            new Item { Name = "Banana", Price = 0.80m },
-            new Item { Name = "Cherry", Price = 2.50m }
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleItems, Formatting.Indented));
+        // File paths.
+        const string templatePath = "template.docx";
+        const string jsonPath = "data.json";
+        const string outputPath = "report.docx";
 
-        // ---------- 2. Load JSON and build HTML table ----------
-        var items = JsonConvert.DeserializeObject<List<Item>>(File.ReadAllText(jsonPath)) ?? new List<Item>();
-        var sb = new StringBuilder();
-        sb.AppendLine("<table style='border:1px solid black;border-collapse:collapse;width:50%;'>");
-        sb.AppendLine("<tr><th style='border:1px solid black;background:#D3D3D3;'>Name</th><th style='border:1px solid black;background:#D3D3D3;'>Price</th></tr>");
-        foreach (var it in items)
-        {
-            sb.AppendLine($"<tr><td style='border:1px solid black;padding:5px;'>{System.Net.WebUtility.HtmlEncode(it.Name)}</td><td style='border:1px solid black;padding:5px;'>{it.Price:C}</td></tr>");
-        }
-        sb.AppendLine("</table>");
+        // Create a JSON file containing an HTML table.
+        string jsonContent = @"{
+    ""HtmlTable"": ""<table style='border-collapse:collapse;'>
+        <tr>
+            <th style='border:1px solid black;background:#D3D3D3;'>Name</th>
+            <th style='border:1px solid black;background:#D3D3D3;'>Age</th>
+        </tr>
+        <tr>
+            <td style='border:1px solid black;'>Alice</td>
+            <td style='border:1px solid black;'>30</td>
+        </tr>
+        <tr>
+            <td style='border:1px solid black;'>Bob</td>
+            <td style='border:1px solid black;'>25</td>
+        </tr>
+    </table>""
+}";
+        File.WriteAllText(jsonPath, jsonContent);
 
-        var model = new ReportModel { HtmlTable = sb.ToString() };
-
-        // ---------- 3. Create template document with HTML switch ----------
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a template document with an HTML switch tag.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Customer Information:");
         builder.Writeln("<<[model.HtmlTable] -html>>");
         templateDoc.Save(templatePath);
 
-        // ---------- 4. Load template and build report ----------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(reportDoc, model, "model");
+        // Load the template.
+        Document reportDoc = new Document(templatePath);
 
-        // ---------- 5. Save final document ----------
-        string resultPath = "ReportResult.docx";
-        reportDoc.Save(resultPath);
+        // Load JSON data source.
+        JsonDataSource jsonData = new JsonDataSource(jsonPath);
+
+        // Build the report using the JSON data source.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, jsonData, "model");
+
+        // Save the generated report.
+        reportDoc.Save(outputPath);
     }
 }

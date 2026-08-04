@@ -2,37 +2,43 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-            builder.Writeln("Value of Math.PI: <<[Math.PI]>>");
+        // Paths for the template and the final report.
+        string templatePath = "Template.docx";
+        string reportPath = "Report.docx";
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // -----------------------------------------------------------------
+        // Create a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Load the template for reporting.
-            Document report = new Document(templatePath);
+        // Use static members of System.Math in the template.
+        builder.Writeln("The value of PI is: <<[Math.PI]>>");
+        builder.Writeln("Square root of 16 is: <<[Math.Sqrt(16)]>>");
 
-            // Register System.Math so its static members can be used in tags.
-            ReportingEngine engine = new ReportingEngine();
-            engine.KnownTypes.Add(typeof(System.Math));
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-            // Build the report. No data source is required for this example.
-            engine.BuildReport(report, new object());
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
 
-            // Save the generated report.
-            const string outputPath = "Report.docx";
-            report.Save(outputPath);
+        // Register System.Math so its static members can be used in the template.
+        engine.KnownTypes.Add(typeof(System.Math));
 
-            // Indicate completion (optional).
-            Console.WriteLine($"Report generated successfully: {outputPath}");
-        }
+        // No data source is required for this example; an empty object is sufficient.
+        engine.BuildReport(reportDoc, new object());
+
+        // Save the generated report.
+        reportDoc.Save(reportPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }

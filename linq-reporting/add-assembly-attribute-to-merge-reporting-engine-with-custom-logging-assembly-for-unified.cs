@@ -3,8 +3,10 @@ using System.IO;
 using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
+using System.Text;
 
-// Assembly attribute to associate the reporting engine with a custom logger.
+// Assembly attribute to specify the custom logger for the reporting engine.
 [assembly: ReportingEngineLogging(typeof(CustomLogger))]
 
 public class ReportingEngineLoggingAttribute : Attribute
@@ -19,56 +21,79 @@ public class ReportingEngineLoggingAttribute : Attribute
 
 public static class CustomLogger
 {
-    public static void Log(string message) => Console.WriteLine($"[CustomLog] {message}");
+    public static void Log(string message)
+    {
+        // Simple console logging; in real scenarios this could write to a file or logging framework.
+        Console.WriteLine($"[CustomLogger] {message}");
+    }
 }
 
-public class Model
+// Sample data model.
+public class ReportModel
 {
-    public string Name { get; set; } = "John Doe";
-    // Intentionally missing property to trigger an inline error.
+    public string Name { get; set; } = "World";
+    // Intentionally omitted property to trigger an inline error.
+    // public string Missing { get; set; }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new Model();
+        // Register code page provider for potential encoding needs.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a template document programmatically.
-        var templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Prepare a temporary folder for files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a simple Word template with LINQ Reporting tags.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
         builder.Writeln("Hello <<[model.Name]>>!");
-        builder.Writeln("This will cause an error: <<[model.Unknown]>>");
-        doc.Save(templatePath);
+        // This tag references a non‑existent property to demonstrate error handling.
+        builder.Writeln("Missing property: <<[model.Missing]>>");
+        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+        // Load the template.
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model.
+        ReportModel model = new ReportModel();
 
         // Configure the reporting engine.
-        var engine = new ReportingEngine();
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report.
-        bool success = engine.BuildReport(reportDoc, model, "model");
-
         // Retrieve the custom logger from the assembly attribute.
-        var attr = (ReportingEngineLoggingAttribute?)Attribute.GetCustomAttribute(
-            Assembly.GetExecutingAssembly(),
-            typeof(ReportingEngineLoggingAttribute));
+        var loggingAttr = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<ReportingEngineLoggingAttribute>();
+        Action<string>? logAction = null;
+        if (loggingAttr != null && typeof(CustomLogger).IsAssignableFrom(loggingAttr.LoggerType))
+        {
+            // Use reflection to obtain the static Log method.
+            MethodInfo? logMethod = loggingAttr.LoggerType.GetMethod("Log", BindingFlags.Public | BindingFlags.Static);
+            if (logMethod != null)
+            {
+                logAction = (msg) => logMethod.Invoke(null, new object[] { msg });
+            }
+        }
+
+        // Build the report.
+        bool success = engine.BuildReport(doc, model, "model");
 
         // Log the result using the custom logger if available.
-        if (attr?.LoggerType == typeof(CustomLogger))
+        if (logAction != null)
         {
             if (success)
-                CustomLogger.Log("Report generated successfully.");
+                logAction("Report built successfully.");
             else
-                CustomLogger.Log("Report generation failed. Inline error messages were inserted.");
+                logAction("Report build failed; see inline error messages in the document.");
         }
 
         // Save the generated report.
-        var outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+        string resultPath = Path.Combine(outputDir, "Result.docx");
+        doc.Save(resultPath);
     }
 }

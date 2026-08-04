@@ -2,93 +2,76 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
 public class Program
 {
+    // Simple data model for JSON serialization.
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Value { get; set; }
+    }
+
+    // Wrapper object that holds the collection; required for proper JSON structure.
+    public class RootObject
+    {
+        public List<Item> items { get; set; } = new();
+    }
+
     public static void Main()
     {
-        // Register code page provider for Aspose.Words
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Paths for temporary files.
+        const string jsonPath = "Data.json";
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
 
-        // Prepare large JSON data
-        const int itemCount = 20000;
-        var data = new DataWrapper
-        {
-            Persons = new List<Person>()
-        };
+        // 1. Generate a large JSON dataset.
+        const int itemCount = 50000; // Adjust for desired size.
+        var root = new RootObject();
         for (int i = 0; i < itemCount; i++)
         {
-            data.Persons.Add(new Person
-            {
-                Name = $"Person_{i:D5}",
-                Age = 20 + (i % 50)
-            });
+            root.items.Add(new Item { Name = $"Item {i}", Value = i });
         }
 
-        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "persons.json");
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(data));
+        // Serialize to JSON and write to file.
+        string json = JsonConvert.SerializeObject(root);
+        File.WriteAllText(jsonPath, json);
 
-        // Load data back from JSON (simulating real scenario)
-        var jsonContent = File.ReadAllText(jsonPath);
-        var model = JsonConvert.DeserializeObject<DataWrapper>(jsonContent)!;
-
-        // Create template document with LINQ Reporting tags
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        builder.Writeln("<<foreach [p in data.Persons]>>");
-        var table = builder.StartTable();
-
-        // Header row
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Age");
-        builder.EndRow();
-
-        // Data row
-        builder.InsertCell();
-        builder.Writeln("<<[p.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[p.Age]>>");
-        builder.EndRow();
-
-        builder.EndTable();
+        // 2. Create a LINQ Reporting template programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report generated with Aspose.Words LINQ Reporting");
+        builder.Writeln("<<foreach [item in items]>>");
+        builder.Writeln("<<[item.Name]>> - <<[item.Value]>>");
         builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // Enable reflection optimization
+        // 3. Load the template.
+        var doc = new Document(templatePath);
+
+        // 4. Prepare JSON data source with options.
+        var jsonOptions = new JsonDataLoadOptions
+        {
+            AlwaysGenerateRootObject = true
+        };
+        var jsonDataSource = new JsonDataSource(jsonPath, jsonOptions);
+
+        // 5. Enable reflection optimization.
         ReportingEngine.UseReflectionOptimization = true;
 
+        // 6. Build the report and benchmark the processing time.
         var engine = new ReportingEngine();
-
-        // Benchmark the report generation
         var stopwatch = Stopwatch.StartNew();
-        bool success = engine.BuildReport(template, model, "data");
+        engine.BuildReport(doc, jsonDataSource);
         stopwatch.Stop();
 
-        // Save the generated report
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        template.Save(reportPath);
+        // 7. Save the generated report.
+        doc.Save(outputPath);
 
-        // Output benchmark result
-        Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Processing time with reflection optimization: {stopwatch.ElapsedMilliseconds} ms");
-        Console.WriteLine($"Report saved to: {reportPath}");
+        // Output the elapsed time.
+        Console.WriteLine($"Report generation time with reflection optimization: {stopwatch.ElapsedMilliseconds} ms");
     }
-}
-
-public class DataWrapper
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

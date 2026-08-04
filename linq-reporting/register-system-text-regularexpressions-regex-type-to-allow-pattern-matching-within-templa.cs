@@ -4,56 +4,67 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    // Simple data model with a string to validate.
+    public class Model
     {
-        // Prepare sample data model.
-        var model = new Person
+        public string Input { get; set; } = "123-45-6789";
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Name = "John Doe",
-            Email = "john.doe@example.com"
-        };
+            // Paths for the template and the generated report.
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+            string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Load the template.
-        var doc = new Document(templatePath);
+            // Write a line that outputs the raw input value.
+            builder.Writeln("Input: <<[model.Input]>>");
 
-        // Configure the reporting engine.
-        var engine = new ReportingEngine();
-        // Register System.Text.RegularExpressions.Regex to allow its static members in template expressions.
-        engine.KnownTypes.Add(typeof(Regex));
+            // Write a conditional line that uses Regex.IsMatch to validate the input.
+            // The pattern checks for a US Social Security Number format: XXX-XX-XXXX.
+            builder.Writeln(
+                "Is SSN valid: <<if [Regex.IsMatch(model.Input, \"^\\\\d{3}-\\\\d{2}-\\\\d{4}$\")]>>Valid<</if>>");
 
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Save the generated report.
-        var outputPath = "Output.docx";
-        doc.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 2. Load the template document for reporting.
+            // -----------------------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the reporting engine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+
+            // Register the Regex type so that its static members can be used in template expressions.
+            engine.KnownTypes.Add(typeof(Regex));
+
+            // -----------------------------------------------------------------
+            // 4. Build the report using the model as the data source.
+            // -----------------------------------------------------------------
+            Model model = new Model(); // Sample data; Input is already set.
+
+            // The root object name in the template is "model".
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            loadedTemplate.Save(reportPath);
+
+            // Optional: indicate completion.
+            Console.WriteLine($"Report generated at: {reportPath}");
+        }
     }
-
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Insert placeholders that will be replaced by the reporting engine.
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Email: <<[model.Email]>>");
-        // Use Regex.IsMatch to validate the email format directly in the template.
-        builder.Writeln("Is Email Valid? <<[Regex.IsMatch(model.Email, \"^\\\\S+@\\\\S+\\\\.\\\\S+$\")]>>");
-
-        // Save the template to disk.
-        doc.Save(filePath);
-    }
-}
-
-// Simple data model with public properties.
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
 }

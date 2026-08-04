@@ -1,107 +1,99 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
+using Newtonsoft.Json;
 using System.Text;
 
-public class Program
+namespace LinqReportingPdfExample
 {
-    public static void Main()
+    // Root data model for the report.
+    public class ReportModel
     {
-        // Register code page provider (required for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public string Title { get; set; } = "Sample LINQ Reporting";
+        public string HtmlSnippet { get; set; } = "<b>Bold HTML snippet</b>";
+        public string ImagePath { get; set; } = "sample.png";
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Step 1: Create the DOCX template programmatically.
-        const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+    // Simple item used in a foreach loop.
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 
-        // Step 2: Load the template.
-        var doc = new Document(templatePath);
+    public class Program
+    {
+        private const string TemplateFileName = "template.docx";
+        private const string OutputPdfFileName = "report.pdf";
 
-        // Step 3: Prepare sample data.
-        var order = new Order
+        public static void Main()
         {
-            CustomerName = "John Doe",
-            Items = new List<OrderItem>
-            {
-                new OrderItem { Index = 1, Name = "Laptop", Price = 1200.00 },
-                new OrderItem { Index = 2, Name = "Mouse", Price = 25.50 },
-                new OrderItem { Index = 3, Name = "Keyboard", Price = 45.00 }
-            }
-        };
+            // Ensure the required image exists.
+            CreateSampleImage("sample.png");
 
-        // Step 4: Build the report using LINQ Reporting Engine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(doc, order, "order");
+            // Build the DOCX template with LINQ Reporting tags.
+            CreateTemplate();
 
-        // Step 5: Save the populated document as PDF.
-        doc.Save("Report.pdf", SaveFormat.Pdf);
+            // Load the template document.
+            Document doc = new Document(TemplateFileName);
+
+            // Prepare sample data.
+            ReportModel model = new ReportModel();
+            model.Items.Add(new Item { Index = 1, Name = "Alpha" });
+            model.Items.Add(new Item { Index = 2, Name = "Beta" });
+            model.Items.Add(new Item { Index = 3, Name = "Gamma" });
+
+            // Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // No special options required.
+            engine.BuildReport(doc, model, "model");
+
+            // Save the populated document as PDF.
+            doc.Save(OutputPdfFileName, SaveFormat.Pdf);
+        }
+
+        // Creates a simple DOCX template containing various LINQ tags.
+        private static void CreateTemplate()
+        {
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Title tag.
+            builder.Writeln("<<[model.Title]>>");
+            builder.Writeln();
+
+            // HTML snippet tag with -html switch.
+            builder.Writeln("<<[model.HtmlSnippet] -html>>");
+            builder.Writeln();
+
+            // Foreach loop over Items collection.
+            builder.Writeln("<<foreach [item in model.Items]>>");
+            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln();
+
+            // Image inside a textbox.
+            builder.Writeln("Image:");
+            Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+            builder.MoveTo(textBox.FirstParagraph);
+            builder.Write("<<image [model.ImagePath] -fitSize>>");
+
+            // Save the template to disk.
+            template.Save(TemplateFileName);
+        }
+
+        // Generates a 1x1 pixel PNG file from a Base64 string.
+        private static void CreateSampleImage(string filePath)
+        {
+            // Base64 for a transparent 1x1 PNG.
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9YV6ZV8AAAAASUVORK5CYII=";
+            byte[] imageBytes = Convert.FromBase64String(base64Png);
+            File.WriteAllBytes(filePath, imageBytes);
+        }
     }
-
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Title
-        builder.Writeln("Order Report");
-        builder.Writeln();
-
-        // Customer name tag
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln();
-
-        // Begin foreach loop over Items
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Table with header row
-        var table = builder.StartTable();
-
-        // Header cells
-        builder.InsertCell();
-        builder.Writeln("Index");
-        builder.InsertCell();
-        builder.Writeln("Product");
-        builder.InsertCell();
-        builder.Writeln("Price");
-        builder.EndRow();
-
-        // Data row (repeated for each item)
-        builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell();
-
-        // Price with conditional background color for expensive items (> 100)
-        builder.Writeln(
-            "<<if [item.Price > 100]>>" +
-            "<<backColor [\"LightGray\"]>><<[item.Price]>> <</backColor>><</if>>" +
-            "<<if [item.Price <= 100]>> <<[item.Price]>> <</if>>");
-
-        builder.EndRow();
-        builder.EndTable();
-
-        // End foreach loop
-        builder.Writeln("<</foreach>>");
-
-        // Save the template
-        doc.Save(filePath);
-    }
-}
-
-// Data model classes
-public class Order
-{
-    public string CustomerName { get; set; } = string.Empty;
-    public List<OrderItem> Items { get; set; } = new();
-}
-
-public class OrderItem
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
 }

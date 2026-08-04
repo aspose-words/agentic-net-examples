@@ -3,83 +3,86 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingExample
 {
-    public static void Main()
+    // Data model classes
+    public class Order
     {
-        // 1. Create the LINQ Reporting template.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        public string Product { get; set; } = "";
+        public int Quantity { get; set; }
 
-        // Outer loop: customers.
-        builder.Writeln("<<foreach [customer in model.Customers]>>");
-        builder.Writeln("Customer: <<[customer.Name]>>");
-        builder.Writeln("Orders:");
-        // Inner loop: orders of the current customer.
-        builder.Writeln("<<foreach [order in customer.Orders]>>");
-        builder.Writeln("- <<[order.ProductName]>>: <<[order.Quantity]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
+        public Order() { }
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // 2. Load the template for report generation.
-        var doc = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        var model = new ReportModel
+        public Order(string product, int quantity)
         {
-            Customers = new()
-            {
-                new Customer
-                {
-                    Name = "Alice",
-                    Orders = new()
-                    {
-                        new Order { ProductName = "Apple", Quantity = 5 },
-                        new Order { ProductName = "Banana", Quantity = 3 }
-                    }
-                },
-                new Customer
-                {
-                    Name = "Bob",
-                    Orders = new()
-                    {
-                        new Order { ProductName = "Carrot", Quantity = 7 },
-                        new Order { ProductName = "Dates", Quantity = 2 }
-                    }
-                }
-            }
-        };
-
-        // 4. Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // 5. Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+            Product = product;
+            Quantity = quantity;
+        }
     }
-}
 
-// Wrapper class that serves as the root data source for the template.
-public class ReportModel
-{
-    public List<Customer> Customers { get; set; } = new();
-}
+    public class Customer
+    {
+        public string Name { get; set; } = "";
+        public List<Order> Orders { get; set; } = new();
 
-// Customer entity with a collection of orders.
-public class Customer
-{
-    public string Name { get; set; } = string.Empty;
-    public List<Order> Orders { get; set; } = new();
-}
+        public Customer() { }
 
-// Simple order entity.
-public class Order
-{
-    public string ProductName { get; set; } = string.Empty;
-    public int Quantity { get; set; }
+        public Customer(string name, List<Order> orders)
+        {
+            Name = name;
+            Orders = orders;
+        }
+    }
+
+    // Wrapper model containing the collection used in the template
+    public class ReportModel
+    {
+        public List<Customer> Customers { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare sample data
+            var model = new ReportModel
+            {
+                Customers = new List<Customer>
+                {
+                    new Customer("Alice", new List<Order>
+                    {
+                        new Order("Apple", 5),
+                        new Order("Banana", 3)
+                    }),
+                    new Customer("Bob", new List<Order>
+                    {
+                        new Order("Carrot", 7),
+                        new Order("Dates", 2),
+                        new Order("Eggplant", 4)
+                    })
+                }
+            };
+
+            // Create the template document programmatically
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Outer foreach over customers
+            builder.Writeln("<<foreach [customer in Customers]>>");
+            builder.Writeln("Customer: <<[customer.Name]>>");
+            builder.Writeln("Orders:");
+            // Inner foreach over orders of the current customer
+            builder.Writeln("<<foreach [order in customer.Orders]>>");
+            builder.Writeln("- <<[order.Product]>> (Qty: <<[order.Quantity]>>)");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln("<</foreach>>");
+
+            // Build the report using the LINQ Reporting engine
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model);
+
+            // Save the generated report
+            doc.Save("Report.docx");
+        }
+    }
 }

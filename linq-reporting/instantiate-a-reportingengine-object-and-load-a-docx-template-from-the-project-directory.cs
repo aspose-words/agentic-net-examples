@@ -3,62 +3,47 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Model
 {
-    // Simple data model used by the template.
-    public class Person
+    // Public property accessed by the template tag <<[model.Name]>>
+    public string Name { get; set; } = "World";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public Person(string name)
+        // Register code page provider (required for some environments)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Path to the template file in the project directory
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+
+        // Create the template if it does not already exist
+        if (!File.Exists(templatePath))
         {
-            Name = name;
-        }
-
-        // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = "";
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // Define file names relative to the project directory.
-            const string templatePath = "Template.docx";
-            const string outputPath = "Report.docx";
-
-            // -----------------------------------------------------------------
-            // Step 1: Create a DOCX template with a LINQ Reporting tag.
-            // -----------------------------------------------------------------
+            // Create a blank document and add a simple LINQ Reporting tag
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert a simple paragraph containing a tag that references the data model.
-            builder.Writeln("Hello, <<[person.Name]>>!");
-
-            // Save the template to disk.
+            builder.Writeln("Hello, <<[model.Name]>>!");
+            // Save the template to disk
             templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // Step 2: Load the template from the file system.
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // Step 3: Prepare the data source.
-            // -----------------------------------------------------------------
-            Person person = new Person("Aspose");
-
-            // -----------------------------------------------------------------
-            // Step 4: Build the report using ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-
-            // The root object name in the template is "person".
-            engine.BuildReport(loadedTemplate, person, "person");
-
-            // -----------------------------------------------------------------
-            // Step 5: Save the generated report.
-            // -----------------------------------------------------------------
-            loadedTemplate.Save(outputPath);
         }
+
+        // Load the template document
+        Document doc = new Document(templatePath);
+
+        // Prepare the data source
+        Model model = new Model { Name = "Aspose" };
+
+        // Instantiate the reporting engine
+        ReportingEngine engine = new ReportingEngine();
+
+        // Build the report using the model as the root object named "model"
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        doc.Save(outputPath);
     }
 }

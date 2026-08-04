@@ -1,130 +1,94 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Program
 {
+    // In‑memory store for localized strings: culture code → (key → value)
+    private static readonly Dictionary<string, Dictionary<string, string>> s_Resources = new();
+
     public static void Main()
     {
-        // Ensure code pages are available (required by Aspose.Words in some environments).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create simple resource files for default (en) and French (fr) cultures.
-        CreateResourceFiles();
+        // Create simple resource entries for English and French.
+        CreateResourceEntry("en", "LinkText", "Click here");
+        CreateResourceEntry("fr", "LinkText", "Cliquez ici");
 
-        // Set the current culture to demonstrate multilingual support.
-        // Change to "en-US" for English or "fr-FR" for French.
-        CultureInfo.CurrentCulture = new CultureInfo("fr-FR");
+        // Build the LINQ Reporting template.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        BuildTemplate(templatePath);
 
-        // Build the data model.
-        ReportModel model = new()
+        // Generate reports for two cultures.
+        GenerateReport(outputDir, templatePath, "en-US", "Report_en.docx");
+        GenerateReport(outputDir, templatePath, "fr-FR", "Report_fr.docx");
+    }
+
+    // Stores a single string entry for a given two‑letter ISO language.
+    private static void CreateResourceEntry(string isoLanguage, string key, string value)
+    {
+        if (!s_Resources.TryGetValue(isoLanguage, out var dict))
+        {
+            dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            s_Resources[isoLanguage] = dict;
+        }
+
+        dict[key] = value;
+    }
+
+    // Builds a Word document containing a LINQ Reporting link tag.
+    private static void BuildTemplate(string templatePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // The template expects a root object named "model" with Url and LinkText properties.
+        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+
+        doc.Save(templatePath);
+    }
+
+    // Generates a report for a specific culture.
+    private static void GenerateReport(string outputDir, string templatePath, string cultureName, string outputFileName)
+    {
+        // Load the template.
+        Document template = new Document(templatePath);
+
+        // Prepare the model data.
+        ReportModel model = new ReportModel
         {
             Url = "https://example.com",
-            LinkText = GetLocalizedString("LinkText")
+            LinkText = GetLocalizedString(cultureName, "LinkText")
         };
 
-        // Create the LINQ Reporting template programmatically.
-        string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
-
-        // Load the template and build the report.
-        Document doc = new(templatePath);
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
+        // Build the report using LINQ Reporting.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(template, model, "model");
 
         // Save the generated document.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        string outputPath = Path.Combine(outputDir, outputFileName);
+        template.Save(outputPath);
     }
 
-    // Model class used as the root data source for the report.
+    // Retrieves a localized string from the in‑memory resource store.
+    private static string GetLocalizedString(string cultureName, string key)
+    {
+        string iso = new CultureInfo(cultureName).TwoLetterISOLanguageName;
+        if (s_Resources.TryGetValue(iso, out var dict) && dict.TryGetValue(key, out var value))
+            return value;
+
+        return string.Empty;
+    }
+
+    // Simple data model used by the LINQ Reporting engine.
     public class ReportModel
     {
-        public string Url { get; set; } = "";
-        public string LinkText { get; set; } = "";
-    }
-
-    // Creates the template document containing a LINQ Reporting link tag.
-    private static void CreateTemplate(string path)
-    {
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
-
-        // Insert a paragraph with a link tag. The display text comes from the data model.
-        builder.Writeln("Visit our site: <<link [model.Url] [model.LinkText]>>");
-
-        doc.Save(path);
-    }
-
-    // Retrieves a localized string from the appropriate .resx file.
-    private static string GetLocalizedString(string key)
-    {
-        string baseName = "Strings";
-        string cultureSuffix = CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "fr" ? ".fr" : "";
-        string resxFile = $"{baseName}{cultureSuffix}.resx";
-
-        if (!File.Exists(resxFile))
-            return key; // Fallback if resource file is missing.
-
-        try
-        {
-            XDocument doc = XDocument.Load(resxFile);
-            XElement dataElement = doc.Root?.Element("data") ??
-                                   doc.Root?.Elements("data")
-                                      .FirstOrDefault(e => (string)e.Attribute("name") == key);
-
-            // If the simple lookup above fails, search all <data> elements.
-            if (dataElement == null)
-            {
-                foreach (XElement element in doc.Root?.Elements("data") ?? [])
-                {
-                    if ((string)element.Attribute("name") == key)
-                    {
-                        dataElement = element;
-                        break;
-                    }
-                }
-            }
-
-            if (dataElement != null)
-            {
-                XElement valueElement = dataElement.Element("value");
-                if (valueElement != null)
-                    return valueElement.Value;
-            }
-        }
-        catch
-        {
-            // Ignore parsing errors and fall back to the key.
-        }
-
-        return key; // Fallback if key is not found.
-    }
-
-    // Writes simple .resx files for English (default) and French cultures.
-    private static void CreateResourceFiles()
-    {
-        // Default (English) resources.
-        string defaultResx = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<root>
-  <data name=""LinkText"" xml:space=""preserve"">
-    <value>Click here</value>
-  </data>
-</root>";
-        File.WriteAllText("Strings.resx", defaultResx);
-
-        // French resources.
-        string frenchResx = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<root>
-  <data name=""LinkText"" xml:space=""preserve"">
-    <value>Cliquez ici</value>
-  </data>
-</root>";
-        File.WriteAllText("Strings.fr.resx", frenchResx);
+        public string Url { get; set; } = string.Empty;
+        public string LinkText { get; set; } = string.Empty;
     }
 }

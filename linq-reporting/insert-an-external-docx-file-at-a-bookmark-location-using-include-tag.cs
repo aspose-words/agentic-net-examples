@@ -6,68 +6,66 @@ public class Program
 {
     public static void Main()
     {
+        // File names used in the example.
+        const string externalDocPath = "External.docx";
+        const string templatePath = "Template.docx";
+        const string outputPath = "Result.docx";
+
         // -----------------------------------------------------------------
-        // Create a sample external document that will be inserted later.
+        // 1. Create the external document that will be inserted later.
         // -----------------------------------------------------------------
         Document externalDoc = new Document();
-        DocumentBuilder externalBuilder = new DocumentBuilder(externalDoc);
-        externalBuilder.Writeln("This is the content of the external document.");
-        externalDoc.Save("External.docx");
-
-        // Load the external document so it can be passed to the reporting engine.
-        Document includeDoc = new Document("External.docx");
+        DocumentBuilder extBuilder = new DocumentBuilder(externalDoc);
+        extBuilder.Writeln("This is the content of the external document.");
+        externalDoc.Save(externalDocPath);
 
         // -----------------------------------------------------------------
-        // Build the LINQ Reporting template programmatically.
+        // 2. Create the template document with a bookmark and a <<doc>> tag.
         // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        Document templateDoc = new Document();
+        DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Report start");
+        tmplBuilder.Writeln("Start of the main document.");
 
-        // Open a bookmark whose name comes from the model.
-        builder.Writeln("<<bookmark [model.BookmarkName]>>");
+        // Bookmark where the external document will be inserted.
+        tmplBuilder.StartBookmark("InsertHere");
+        // The <<doc>> tag tells the LINQ Reporting engine to insert the document.
+        tmplBuilder.Writeln("<<doc [src.Document]>>");
+        tmplBuilder.EndBookmark("InsertHere");
 
-        // Insert the external document inside the bookmark using the supported <<doc>> tag.
-        builder.Writeln("<<doc [model.IncludeDoc]>>");
-
-        // Close the bookmark.
-        builder.Writeln("<</bookmark>>");
-
-        builder.Writeln("Report end");
-
-        // (Optional) Save the template for inspection.
-        template.Save("Template.docx");
+        tmplBuilder.Writeln("End of the main document.");
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // Prepare the data model.
+        // 3. Load the template for reporting.
         // -----------------------------------------------------------------
-        ReportModel model = new ReportModel(includeDoc);
+        Document loadedTemplate = new Document(templatePath);
 
         // -----------------------------------------------------------------
-        // Build the report.
+        // 4. Prepare the data model for the report.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
+        {
+            Document = new Document(externalDocPath) // Load the external document.
+        };
+
+        // -----------------------------------------------------------------
+        // 5. Build the report using the ReportingEngine.
         // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+        // The data source name "src" must match the prefix used in the <<doc>> tag.
+        engine.BuildReport(loadedTemplate, model, "src");
 
-        // Save the final document.
-        template.Save("Result.docx");
+        // -----------------------------------------------------------------
+        // 6. Save the final document.
+        // -----------------------------------------------------------------
+        loadedTemplate.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
 // Data model used by the LINQ Reporting engine.
-// ---------------------------------------------------------------------
+// The property name must match the expression used in the <<doc>> tag.
 public class ReportModel
 {
-    // Name of the bookmark where the external document will be inserted.
-    public string BookmarkName { get; set; } = "InsertHere";
-
-    // The external document to include.
-    public Document IncludeDoc { get; set; }
-
-    public ReportModel(Document includeDoc)
-    {
-        IncludeDoc = includeDoc ?? throw new ArgumentNullException(nameof(includeDoc));
-    }
+    public Document Document { get; set; } = null!;
 }

@@ -4,86 +4,81 @@ using System.Diagnostics;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Item
+public class ReportItem
 {
-    public string Text { get; set; } = string.Empty;
+    // Some items will have a null value to produce empty paragraphs after merging.
+    public string? Value { get; set; }
 }
 
 public class ReportModel
 {
-    public List<Item> Items { get; set; } = new();
+    public List<ReportItem> Items { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        const string outputDir = "output";
-        System.IO.Directory.CreateDirectory(outputDir);
-
-        // Paths for the template and generated reports.
-        const string templatePath = "template.docx";
-        const string reportWithPath = outputDir + "/Report_WithRemoveEmptyParagraphs.docx";
-        const string reportWithoutPath = outputDir + "/Report_WithoutRemoveEmptyParagraphs.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create a large template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // LINQ Reporting tags: iterate over Items and write each item's Text.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<[item.Text]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk (required before BuildReport).
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Prepare a large data source.
-        // -----------------------------------------------------------------
-        const int totalItems = 5000;
-        ReportModel model = new ReportModel();
-
-        for (int i = 0; i < totalItems; i++)
+        // Prepare a large data set (e.g., 10,000 items, half with null values).
+        var model = new ReportModel();
+        const int itemCount = 10000;
+        for (int i = 0; i < itemCount; i++)
         {
-            // Half of the items have empty text to produce empty paragraphs.
-            string text = (i % 2 == 0) ? string.Empty : $"Item #{i}";
-            model.Items.Add(new Item { Text = text });
+            model.Items.Add(new ReportItem
+            {
+                Value = i % 2 == 0 ? $"Item {i}" : null   // Even indices have text, odd are null.
+            });
         }
 
-        // -----------------------------------------------------------------
-        // 3. Benchmark with RemoveEmptyParagraphs enabled.
-        // -----------------------------------------------------------------
-        Document docWith = new Document(templatePath);
-        ReportingEngine engineWith = new ReportingEngine
+        // Create the LINQ Reporting template programmatically.
+        const string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // Benchmark with RemoveEmptyParagraphs disabled.
+        var timeWithoutRemoval = BenchmarkReport(templatePath, model, ReportBuildOptions.None, "Report_WithoutRemoveEmptyParagraphs.docx");
+
+        // Benchmark with RemoveEmptyParagraphs enabled.
+        var timeWithRemoval = BenchmarkReport(templatePath, model, ReportBuildOptions.RemoveEmptyParagraphs, "Report_WithRemoveEmptyParagraphs.docx");
+
+        // Output the results.
+        Console.WriteLine($"Report generation without RemoveEmptyParagraphs: {timeWithoutRemoval.TotalMilliseconds} ms");
+        Console.WriteLine($"Report generation with    RemoveEmptyParagraphs: {timeWithRemoval.TotalMilliseconds} ms");
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Begin a foreach block over Items.
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Each iteration writes the value; if the value is null the paragraph becomes empty.
+        builder.Writeln("<<[item.Value]>>");
+        // End the foreach block.
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(filePath);
+    }
+
+    private static TimeSpan BenchmarkReport(string templatePath, ReportModel model, ReportBuildOptions options, string outputPath)
+    {
+        // Load the template.
+        var doc = new Document(templatePath);
+
+        // Configure the reporting engine.
+        var engine = new ReportingEngine
         {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
+            Options = options
         };
 
-        Stopwatch swWith = Stopwatch.StartNew();
-        engineWith.BuildReport(docWith, model, "model");
-        swWith.Stop();
+        // Measure the time taken to build the report.
+        var stopwatch = Stopwatch.StartNew();
+        engine.BuildReport(doc, model, "model");
+        stopwatch.Stop();
 
-        docWith.Save(reportWithPath);
-        Console.WriteLine($"Report with RemoveEmptyParagraphs: {swWith.ElapsedMilliseconds} ms");
+        // Save the generated document.
+        doc.Save(outputPath);
 
-        // -----------------------------------------------------------------
-        // 4. Benchmark with RemoveEmptyParagraphs disabled.
-        // -----------------------------------------------------------------
-        Document docWithout = new Document(templatePath);
-        ReportingEngine engineWithout = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-
-        Stopwatch swWithout = Stopwatch.StartNew();
-        engineWithout.BuildReport(docWithout, model, "model");
-        swWithout.Stop();
-
-        docWithout.Save(reportWithoutPath);
-        Console.WriteLine($"Report without RemoveEmptyParagraphs: {swWithout.ElapsedMilliseconds} ms");
+        return stopwatch.Elapsed;
     }
 }

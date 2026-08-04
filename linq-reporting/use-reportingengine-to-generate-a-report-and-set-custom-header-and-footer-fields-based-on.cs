@@ -3,67 +3,85 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Register code page provider required by Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Paths for temporary files.
-        string jsonPath = "reportData.json";
-        string templatePath = "ReportTemplate.docx";
-        string outputPath = "ReportResult.docx";
-
-        // 1. Create sample JSON data.
-        var sampleData = new ReportModel
+        public static void Main()
         {
-            Header = "Custom Header Text",
-            Footer = "Custom Footer Text",
-            Body = "This is the main body of the report generated from JSON data."
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented), Encoding.UTF8);
+            // Register code page provider for possible encoding needs.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 2. Build the template document programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+            // Prepare output folder.
+            string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputFolder);
 
-        // Body content placeholder.
-        builder.Writeln("<<[model.Body]>>");
+            // Paths for the template, JSON data and final report.
+            string templatePath = Path.Combine(outputFolder, "Template.docx");
+            string jsonPath = Path.Combine(outputFolder, "data.json");
+            string reportPath = Path.Combine(outputFolder, "Report.docx");
 
-        // Header placeholder.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("<<[model.Header]>>");
+            // -----------------------------------------------------------------
+            // 1. Create a simple template document with header, footer and body.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Footer placeholder.
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("<<[model.Footer]>>");
+            // Header with a custom field from JSON.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            builder.Writeln("<<[model.Header]>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+            // Footer with page information from JSON.
+            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            builder.Writeln("Page <<[model.PageNumber]>> of <<[model.TotalPages]>>");
 
-        // 3. Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+            // Body content.
+            builder.MoveToDocumentEnd();
+            builder.Writeln("Report for <<[model.CustomerName]>>");
+            builder.Writeln("Generated on <<[model.GeneratedDate]>>");
 
-        // 4. Create a JSON data source.
-        var jsonDataSource = new JsonDataSource(jsonPath);
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // 5. Build the report using ReportingEngine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        engine.BuildReport(reportDoc, jsonDataSource, "model");
+            // ---------------------------------------------------------------
+            // 2. Create a JSON file that contains the data for the report.
+            // ---------------------------------------------------------------
+            var jsonData = new
+            {
+                Header = "Monthly Sales Report",
+                PageNumber = "1",
+                TotalPages = "5",
+                CustomerName = "Acme Corp",
+                GeneratedDate = DateTime.Now.ToString("yyyy-MM-dd")
+            };
+            string jsonString = JsonConvert.SerializeObject(jsonData, Formatting.Indented);
+            File.WriteAllText(jsonPath, jsonString, Encoding.UTF8);
 
-        // 6. Save the generated report.
-        reportDoc.Save(outputPath);
+            // ---------------------------------------------------------------
+            // 3. Load the template and bind it to the JSON data source.
+            // ---------------------------------------------------------------
+            Document doc = new Document(templatePath);
+            JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+
+            ReportingEngine engine = new ReportingEngine
+            {
+                // Remove empty paragraphs that may appear after tag removal.
+                Options = ReportBuildOptions.RemoveEmptyParagraphs
+            };
+
+            // Build the report. The root name used in the template tags is "model".
+            bool success = engine.BuildReport(doc, jsonDataSource, "model");
+
+            // ---------------------------------------------------------------
+            // 4. Save the generated report.
+            // ---------------------------------------------------------------
+            doc.Save(reportPath);
+
+            // Optional: indicate success (no console interaction required).
+            // The application will exit automatically.
+        }
     }
-}
-
-// Data model that matches the JSON structure.
-public class ReportModel
-{
-    public string Header { get; set; } = string.Empty;
-    public string Footer { get; set; } = string.Empty;
-    public string Body { get; set; } = string.Empty;
 }

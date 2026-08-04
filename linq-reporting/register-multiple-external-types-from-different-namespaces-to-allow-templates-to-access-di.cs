@@ -3,66 +3,65 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace ModelsA
+namespace AsposeWordsLinqReportingExample
 {
-    public class Person
+    // Custom helper class placed in a separate namespace.
+    namespace Helpers
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
-}
-
-namespace ModelsB
-{
-    public class Address
-    {
-        public string City { get; set; } = "";
-        public string Country { get; set; } = "";
-    }
-}
-
-public class ReportData
-{
-    public ModelsA.Person Person { get; set; } = new();
-    public ModelsB.Address Address { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
-    {
-        // Create template document with LINQ Reporting tags.
-        const string templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Customer Report");
-        builder.Writeln("Name: <<[data.Person.Name]>>");
-        builder.Writeln("Age: <<[data.Person.Age]>>");
-        builder.Writeln("City: <<[data.Address.City]>>");
-        builder.Writeln("Country: <<[data.Address.Country]>>");
-        doc.Save(templatePath);
-
-        // Load the template.
-        var template = new Document(templatePath);
-
-        // Prepare data.
-        var data = new ReportData
+        public static class MyHelper
         {
-            Person = new ModelsA.Person { Name = "John Doe", Age = 30 },
-            Address = new ModelsB.Address { City = "New York", Country = "USA" }
-        };
+            public static string GetMessage()
+            {
+                return "Hello from MyHelper!";
+            }
+        }
+    }
 
-        // Configure ReportingEngine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Ensure the output folder exists.
+            const string outputFolder = "Output";
+            Directory.CreateDirectory(outputFolder);
 
-        // Build the report.
-        bool success = engine.BuildReport(template, data, "data");
+            // -----------------------------------------------------------------
+            // 1. Create a template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        template.Save(outputPath);
+            // Insert a tag that accesses a static field from System.Math.
+            builder.Writeln("PI value: <<[Math.PI]>>");
 
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to {Path.GetFullPath(outputPath)}");
+            // Insert a tag that calls a static method from the custom helper class.
+            builder.Writeln("Custom message: <<[Helpers.MyHelper.GetMessage()]>>");
+
+            // Save the template to disk.
+            string templatePath = Path.Combine(outputFolder, "Template.docx");
+            template.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and configure the ReportingEngine.
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
+
+            // Register external types so that the template can reference them.
+            engine.KnownTypes.Add(typeof(System.Math));
+            engine.KnownTypes.Add(typeof(Helpers.MyHelper));
+
+            // No data source is required for this example; an empty object is sufficient.
+            object dummyRoot = new object();
+
+            // Build the report. The root name is irrelevant because the template does not reference it.
+            engine.BuildReport(doc, dummyRoot, "root");
+
+            // -----------------------------------------------------------------
+            // 3. Save the generated report.
+            // -----------------------------------------------------------------
+            string resultPath = Path.Combine(outputFolder, "Result.docx");
+            doc.Save(resultPath);
+        }
     }
 }

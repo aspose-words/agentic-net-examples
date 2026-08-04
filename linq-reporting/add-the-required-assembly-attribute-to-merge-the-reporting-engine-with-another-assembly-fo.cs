@@ -1,48 +1,43 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+public class Order
 {
-    // Public property accessed by the template.
-    public string Name { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = "John Doe";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Create a simple template document containing a LINQ Reporting tag.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Customer Name: <<[person.Name]>>");
-        templateDoc.Save(templatePath);
+        // Create a simple template document.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        doc.Save(templatePath);
 
-        // -------------------------------------------------
-        // Load the template document for report generation.
-        // -------------------------------------------------
-        var reportDoc = new Document(templatePath);
+        // Load the template.
+        var template = new Document(templatePath);
 
-        // -------------------------------------------------
-        // Prepare the data model that matches the template.
-        // -------------------------------------------------
-        var person = new Person { Name = "John Doe" };
+        // Prepare the data model.
+        var order = new Order { CustomerName = "Acme Corporation" };
 
-        // -------------------------------------------------
-        // Build the report using the ReportingEngine.
-        // -------------------------------------------------
+        // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, person, "person");
+        engine.BuildReport(template, order, "order");
 
-        // -------------------------------------------------
         // Save the generated report.
-        // -------------------------------------------------
-        reportDoc.Save(reportPath);
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        template.Save(reportPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }

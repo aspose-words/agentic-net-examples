@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Aspose.Words;
@@ -9,78 +8,79 @@ public class Program
 {
     public static async Task Main()
     {
-        // Ensure the output directory exists.
+        // Ensure the working directory exists.
         Directory.CreateDirectory("Output");
 
-        // Create a simple LINQ Reporting template programmatically.
-        const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // Create two template documents programmatically.
+        CreateTemplate("template1.docx");
+        CreateTemplate("template2.docx");
 
-        // Prepare two distinct data sources.
-        ReportModel model1 = new()
+        // Prepare sample data for each report.
+        var model1 = new ReportModel
         {
             Title = "First Report",
-            Items = new()
-            {
-                new Item { Name = "Alpha", Value = 100 },
-                new Item { Name = "Beta", Value = 200 }
-            }
+            Description = "This is the description of the first report."
         };
 
-        ReportModel model2 = new()
+        var model2 = new ReportModel
         {
             Title = "Second Report",
-            Items = new()
-            {
-                new Item { Name = "Gamma", Value = 300 },
-                new Item { Name = "Delta", Value = 400 }
-            }
+            Description = "This is the description of the second report."
         };
 
-        // Load separate document instances for each report.
-        Document doc1 = new(templatePath);
-        Document doc2 = new(templatePath);
+        // Generate reports in parallel.
+        Task task1 = GenerateReportAsync(
+            "template1.docx",
+            Path.Combine("Output", "Report1.docx"),
+            model1,
+            "model");
 
-        // Configure the reporting engine.
-        ReportingEngine engine = new();
-        engine.Options = ReportBuildOptions.None;
-
-        // Run report generation in parallel.
-        Task<bool> task1 = Task.Run(() => engine.BuildReport(doc1, model1, "model"));
-        Task<bool> task2 = Task.Run(() => engine.BuildReport(doc2, model2, "model"));
+        Task task2 = GenerateReportAsync(
+            "template2.docx",
+            Path.Combine("Output", "Report2.docx"),
+            model2,
+            "model");
 
         await Task.WhenAll(task1, task2);
-
-        // Save the generated reports.
-        doc1.Save(Path.Combine("Output", "Report1.docx"));
-        doc2.Save(Path.Combine("Output", "Report2.docx"));
     }
 
-    private static void CreateTemplate(string path)
+    // Creates a simple template with LINQ Reporting tags.
+    private static void CreateTemplate(string fileName)
     {
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Title placeholder.
-        builder.Writeln("Report Title: <<[model.Title]>>");
+        builder.Writeln("Report");
+        builder.Writeln("Title: <<[model.Title]>>");
+        builder.Writeln("Description: <<[model.Description]>>");
 
-        // Loop over items.
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        builder.Writeln("- <<[item.Name]>> : <<[item.Value]>>");
-        builder.Writeln("<</foreach>>");
+        doc.Save(fileName);
+    }
 
-        template.Save(path);
+    // Asynchronously loads a template, builds the report, and saves the result.
+    private static async Task GenerateReportAsync(string templatePath, string outputPath, object model, string rootName)
+    {
+        await Task.Run(() =>
+        {
+            // Load the template document.
+            var doc = new Document(templatePath);
+
+            // Configure the reporting engine.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None;
+
+            // Build the report using the provided model and root name.
+            engine.BuildReport(doc, model, rootName);
+
+            // Save the generated report.
+            doc.Save(outputPath);
+        });
     }
 }
 
+// Simple data model used by both templates.
 public class ReportModel
 {
-    public string Title { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = "";
-    public int Value { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }

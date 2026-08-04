@@ -4,30 +4,39 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 
-public class Spec
+public class Specification
 {
-    public int Index { get; set; }
-    public double Value { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public double Measurement { get; set; }
 
-    // Returns the value formatted as a fraction (e.g., 1/2, 3/4).
-    public string Fraction => ConvertToFraction(Value);
-
-    private static string ConvertToFraction(double value)
+    // Returns the measurement formatted as a simple fraction (e.g., 0.5 -> "1/2").
+    public string MeasurementFraction
     {
-        // Simple handling for common fractions.
-        if (Math.Abs(value - 0.5) < 0.0001) return "1/2";
-        if (Math.Abs(value - 0.75) < 0.0001) return "3/4";
+        get
+        {
+            // Handle common fractions with a small tolerance.
+            const double tolerance = 1e-6;
 
-        // Generic conversion with a denominator up to 100.
-        const int maxDenominator = 100;
-        int denominator = maxDenominator;
-        int numerator = (int)Math.Round(value * denominator);
-        int gcd = Gcd(numerator, denominator);
-        numerator /= gcd;
-        denominator /= gcd;
-        return $"{numerator}/{denominator}";
+            // Define a list of denominators to try.
+            int[] denominators = { 2, 4, 8, 16, 32, 64 };
+            foreach (int d in denominators)
+            {
+                double numerator = Math.Round(Measurement * d);
+                if (Math.Abs(Measurement - numerator / d) < tolerance && numerator > 0)
+                {
+                    // Reduce the fraction.
+                    int n = (int)numerator;
+                    int g = Gcd(n, d);
+                    return $"{n / g}/{d / g}";
+                }
+            }
+
+            // Fallback to decimal representation if no simple fraction found.
+            return Measurement.ToString("0.##");
+        }
     }
 
+    // Greatest common divisor (Euclidean algorithm).
     private static int Gcd(int a, int b)
     {
         while (b != 0)
@@ -36,64 +45,67 @@ public class Spec
             b = a % b;
             a = temp;
         }
-        return Math.Abs(a);
+        return a;
     }
 }
 
 public class ReportModel
 {
-    public List<Spec> Specs { get; set; } = new();
+    public List<Specification> Specs { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel();
-        model.Specs.Add(new Spec { Index = 1, Value = 0.5 });
-        model.Specs.Add(new Spec { Index = 2, Value = 0.75 });
-        model.Specs.Add(new Spec { Index = 3, Value = 0.3333 });
+        // Create a blank document and a builder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Create the template document ----------
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Add a title.
+        builder.Writeln("Specifications:");
 
-        builder.Writeln("Specifications Table:");
-        // Begin the foreach block before the table.
+        // Begin the foreach block.
         builder.Writeln("<<foreach [spec in Specs]>>");
 
-        // Build the table that will be repeated for each Spec.
+        // Build a table with two columns: Name and Measurement (formatted as fraction).
         Table table = builder.StartTable();
 
         // Header row.
         builder.InsertCell();
-        builder.Writeln("Index");
+        builder.Writeln("Name");
         builder.InsertCell();
-        builder.Writeln("Value (Fraction)");
+        builder.Writeln("Value");
         builder.EndRow();
 
-        // Data row – will be repeated.
+        // Data row.
         builder.InsertCell();
-        builder.Writeln("<<[spec.Index]>>");
+        builder.Writeln("<<[spec.Name]>>");
         builder.InsertCell();
-        builder.Writeln("<<[spec.Fraction]>>");
+        // Use the custom property that returns the fraction string.
+        builder.Writeln("<<[spec.MeasurementFraction]>>");
         builder.EndRow();
 
-        // Finish the table and the foreach block.
         builder.EndTable();
+
+        // End the foreach block.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Prepare sample data.
+        ReportModel model = new ReportModel
+        {
+            Specs = new List<Specification>
+            {
+                new Specification { Name = "Length", Measurement = 0.5 },   // 1/2
+                new Specification { Name = "Width",  Measurement = 0.75 }   // 3/4
+            }
+        };
 
-        // ---------- Load the template and build the report ----------
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the final report.
+        // Save the generated report.
         doc.Save("Report.docx");
     }
 }

@@ -1,109 +1,137 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace HyperlinkScanner
+public class HyperlinkScanner
 {
-    public class Program
+    // Entry point of the console application.
+    public static void Main()
     {
-        public static void Main()
+        // Create a sample document containing various hyperlinks.
+        string docPath = "Sample.docx";
+        CreateSampleDocument(docPath);
+
+        // Load the document for scanning.
+        Document doc = new Document(docPath);
+
+        // Scan the document for broken hyperlinks.
+        List<string> brokenLinks = ScanDocumentForBrokenHyperlinks(doc);
+
+        // Report the results.
+        Console.WriteLine("Hyperlink scan completed.");
+        if (brokenLinks.Count == 0)
         {
-            // Define file names in the current working directory.
-            string docPath = Path.Combine(Directory.GetCurrentDirectory(), "Generated.docx");
-            string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "BrokenLinksReport.txt");
+            Console.WriteLine("No broken hyperlinks were found.");
+        }
+        else
+        {
+            Console.WriteLine("Broken hyperlinks:");
+            foreach (string link in brokenLinks)
+                Console.WriteLine("- " + link);
+        }
+    }
 
-            // -----------------------------------------------------------------
-            // Step 1: Create a sample document containing several hyperlinks.
-            // -----------------------------------------------------------------
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+    // Creates a Word document with a mix of valid and invalid hyperlinks.
+    private static void CreateSampleDocument(string fileName)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Ensure the target folder for a valid file exists.
-            string existingFileName = "ExistingFile.txt";
-            File.WriteAllText(existingFileName, "Sample content"); // create a real file.
+        // Valid local file (will be created).
+        string validLocalFile = "ExistingFile.txt";
+        File.WriteAllText(validLocalFile, "Sample content");
+        builder.Write("Valid local file: ");
+        builder.InsertHyperlink("Open existing file", validLocalFile, false);
+        builder.Writeln();
 
-            // Insert a hyperlink that points to an existing local file.
-            builder.InsertHyperlink("Existing File", existingFileName, false);
-            builder.Writeln();
+        // Invalid local file (does not exist).
+        string missingLocalFile = "MissingFile.txt";
+        builder.Write("Missing local file: ");
+        builder.InsertHyperlink("Open missing file", missingLocalFile, false);
+        builder.Writeln();
 
-            // Insert a hyperlink that points to a missing local file.
-            builder.InsertHyperlink("Missing File", "MissingFile.txt", false);
-            builder.Writeln();
+        // Valid URL.
+        string validUrl = "https://www.example.com/";
+        builder.Write("Valid URL: ");
+        builder.InsertHyperlink("Visit Example.com", validUrl, false);
+        builder.Writeln();
 
-            // Insert a hyperlink that points to a web URL (treated as valid for this example).
-            builder.InsertHyperlink("Web Link", "https://www.example.com", false);
-            builder.Writeln();
+        // Invalid URL (expected to fail).
+        string invalidUrl = "https://nonexistent.example.invalid/";
+        builder.Write("Invalid URL: ");
+        builder.InsertHyperlink("Visit broken link", invalidUrl, false);
+        builder.Writeln();
 
-            // Save the generated document.
-            doc.Save(docPath);
+        // Bookmark within the document (always valid).
+        builder.StartBookmark("MyBookmark");
+        builder.Writeln("Bookmark target text.");
+        builder.EndBookmark("MyBookmark");
+        builder.Write("Internal bookmark: ");
+        builder.InsertHyperlink("Go to bookmark", "MyBookmark", true);
+        builder.Writeln();
 
-            // -----------------------------------------------------------------
-            // Step 2: Load the document and scan for broken hyperlinks.
-            // -----------------------------------------------------------------
-            Document loadedDoc = new Document(docPath);
-            List<string> brokenLinks = new List<string>();
+        // Save the document.
+        doc.Save(fileName);
+    }
 
-            foreach (Field field in loadedDoc.Range.Fields)
+    // Scans a document for hyperlinks whose targets cannot be resolved.
+    private static List<string> ScanDocumentForBrokenHyperlinks(Document doc)
+    {
+        var brokenLinks = new List<string>();
+        // HttpClient is intended to be reused; dispose at the end.
+        using var httpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(5)
+        };
+
+        // Iterate over all fields in the document.
+        foreach (Field field in doc.Range.Fields)
+        {
+            if (field.Type != FieldType.FieldHyperlink)
+                continue;
+
+            var hyperlink = (FieldHyperlink)field;
+            string address = hyperlink.Address?.Trim() ?? string.Empty;
+            string subAddress = hyperlink.SubAddress?.Trim() ?? string.Empty;
+
+            // If the hyperlink points to a bookmark inside the document, consider it valid.
+            if (string.IsNullOrEmpty(address) && !string.IsNullOrEmpty(subAddress))
+                continue;
+
+            // Empty address means nothing to check.
+            if (string.IsNullOrEmpty(address))
+                continue;
+
+            // Determine if the address is a URL or a file path.
+            if (address.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                address.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
-                if (field.Type != FieldType.FieldHyperlink)
-                    continue;
-
-                FieldHyperlink hyperlink = (FieldHyperlink)field;
-                string address = hyperlink.Address ?? string.Empty;
-
-                // Skip empty addresses and bookmark links.
-                if (string.IsNullOrWhiteSpace(address))
-                    continue;
-
-                // Treat HTTP/HTTPS URLs as valid (no network check performed).
-                if (address.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                    address.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                // Attempt a HEAD request to verify the URL is reachable.
+                try
                 {
-                    continue;
+                    using var request = new HttpRequestMessage(HttpMethod.Head, address);
+                    using var response = httpClient.SendAsync(request).Result;
+                    if (!response.IsSuccessStatusCode)
+                        brokenLinks.Add(address);
                 }
-
-                // Resolve relative paths against the document's directory.
-                string resolvedPath = address;
-                if (!Path.IsPathRooted(address))
+                catch
                 {
-                    string docDirectory = Path.GetDirectoryName(docPath) ?? string.Empty;
-                    resolvedPath = Path.Combine(docDirectory, address);
-                }
-
-                // If the file does not exist, record it as a broken link.
-                if (!File.Exists(resolvedPath))
-                {
+                    // Any exception indicates the URL is not reachable.
                     brokenLinks.Add(address);
                 }
             }
-
-            // -----------------------------------------------------------------
-            // Step 3: Generate a simple report of the broken hyperlinks.
-            // -----------------------------------------------------------------
-            using (StreamWriter writer = new StreamWriter(reportPath, false))
+            else
             {
-                if (brokenLinks.Count == 0)
-                {
-                    writer.WriteLine("No broken hyperlinks were found.");
-                    Console.WriteLine("No broken hyperlinks were found.");
-                }
-                else
-                {
-                    writer.WriteLine("Broken Hyperlinks Report");
-                    writer.WriteLine("========================");
-                    foreach (string link in brokenLinks)
-                    {
-                        writer.WriteLine($"- {link}");
-                        Console.WriteLine($"Broken link detected: {link}");
-                    }
-                }
+                // Resolve relative paths against the current directory.
+                string resolvedPath = Path.GetFullPath(address);
+                if (!File.Exists(resolvedPath))
+                    brokenLinks.Add(address);
             }
-
-            // Clean up the temporary existing file created for the example.
-            if (File.Exists(existingFileName))
-                File.Delete(existingFileName);
         }
+
+        return brokenLinks;
     }
 }

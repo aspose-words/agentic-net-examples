@@ -1,66 +1,55 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Simple data model used by the LINQ Reporting engine.
-    public class ReportModel
+    public static void Main()
     {
-        // The color name or HTML color code that will be applied to the text.
-        public string Color { get; set; } = "Blue";
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
-
-            // -----------------------------------------------------------------
-            // 1. Create a Word document that serves as the LINQ Reporting template.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert a paragraph that uses the <<textColor>> tag.
-            // The tag will evaluate the expression [model.Color] at build time.
-            builder.Writeln("<<textColor [model.Color]>>This text is colored dynamically<</textColor>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back (simulating a real-world scenario where the
-            //    template is stored separately from the code).
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
+            Items = new List<Item>
             {
-                // You can change this value to any known color name or HTML hex code.
-                Color = "DarkRed"
-            };
+                new Item { Text = "Approved", Color = "Green" },
+                new Item { Text = "Pending", Color = "Orange" },
+                new Item { Text = "Rejected", Color = "Red" }
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // 4. Build the report using Aspose.Words LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            // The root object name in the template is "model".
-            engine.BuildReport(loadedTemplate, model, "model");
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            loadedTemplate.Save(reportPath);
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Apply dynamic text color using the textColor tag.
+        builder.Writeln("<<textColor [item.Color]>>[item.Text]<</textColor>>");
+        builder.Writeln("<</foreach>>");
 
-            // The program finishes without waiting for user input.
-        }
+        templateDoc.Save(templatePath);
+
+        // Load the template and build the report.
+        var loadedTemplate = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
+
+        // Save the generated report.
+        loadedTemplate.Save("Report.docx");
     }
+}
+
+// Data model for the report.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+// Individual item containing text and a color expression.
+public class Item
+{
+    public string Text { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty;
 }

@@ -7,50 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider for any required encodings.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // File paths for the template and the generated report
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string resultPath = Path.Combine(outputDir, "Result.docx");
+        // -------------------- Create template --------------------
+        // The template contains a LINQ Reporting tag that references a Unicode property directly.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Customer name: <<[model.名字]>>");
 
-        // -------------------------------------------------
-        // 1. Create a template document containing a LINQ Reporting tag.
-        //    The tag references a property whose name includes literal Unicode characters.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("顧客情報:");                     // Japanese header text
-        builder.Writeln("<<[model.名前]>>");            // Directly use the Unicode identifier in the tag
-        templateDoc.Save(templatePath);                 // Save the template before building the report
+        // Save the template to disk (demonstrates the create‑save lifecycle).
+        const string templatePath = "Template.docx";
+        doc.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the saved template for reporting.
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
+        // -------------------- Load template --------------------
+        Document template = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 3. Create a data model with a Unicode property name.
-        // -------------------------------------------------
-        var model = new CustomerModel { 名前 = "山田太郎" };
+        // -------------------- Prepare data model --------------------
+        // The model uses a literal Unicode identifier for the property name.
+        var model = new ReportModel
+        {
+            名字 = "张三"
+        };
 
-        // -------------------------------------------------
-        // 4. Build the report using the ReportingEngine.
-        // -------------------------------------------------
+        // -------------------- Build report --------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // The root object name in the template is "model", so we pass it explicitly.
+        engine.BuildReport(template, model, "model");
 
-        // -------------------------------------------------
-        // 5. Save the generated report.
-        // -------------------------------------------------
-        doc.Save(resultPath);
+        // -------------------- Save result --------------------
+        const string outputPath = "Report.docx";
+        template.Save(outputPath);
     }
 }
 
-// Data model class with a property that uses literal Unicode characters in its name.
-public class CustomerModel
+// Data model with a Unicode property name written directly (no escape sequences).
+public class ReportModel
 {
-    // Property name contains Japanese characters directly (no escape sequences).
-    public string 名前 { get; set; } = string.Empty;
+    // Initialize to avoid nullable warnings.
+    public string 名字 { get; set; } = string.Empty;
 }

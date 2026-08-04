@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,49 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Create a blank document and a builder to insert LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Paths for the template and the generated report.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-
-        // ---------- Create the template document ----------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert a bookmark tag whose name is taken from the data model.
-        // The expression [model.BookmarkName] will be evaluated during report building.
+        // Insert a bookmark tag whose name comes from the model's BookmarkName property.
         builder.Writeln("<<bookmark [model.BookmarkName]>>");
         builder.Writeln("This text is inside the bookmark.");
         builder.Writeln("<</bookmark>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // ---------- Prepare the data model ----------
-        ReportModel model = new ReportModel
+        // Prepare the data model. The BookmarkName property must be a non‑empty string.
+        ReportModel model = new()
         {
-            // The bookmark name must be a non‑empty string.
-            BookmarkName = "SampleBookmark"
+            BookmarkName = "MyBookmark"
         };
 
-        // ---------- Load the template and build the report ----------
-        Document docToReport = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(doc, model, "model");
 
-        // BuildReport with the root object name "model" to match the tags.
-        engine.BuildReport(docToReport, model, "model");
-
-        // Save the final report.
-        docToReport.Save(reportPath);
+        // Save the resulting document.
+        doc.Save("BookmarkReport.docx");
     }
 }
 
-// Simple data model used by the LINQ Reporting engine.
+// Simple data model with a public property used in the bookmark expression.
 public class ReportModel
 {
-    // Non‑nullable property initialized to avoid warnings.
-    public string BookmarkName { get; set; } = string.Empty;
+    // Initialized to a non‑empty value to satisfy the bookmark requirement.
+    public string BookmarkName { get; set; } = "DefaultBookmark";
 }

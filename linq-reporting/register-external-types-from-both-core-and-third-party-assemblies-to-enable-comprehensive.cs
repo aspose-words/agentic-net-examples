@@ -1,73 +1,48 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
 public class Program
 {
-    // Model used for JSON deserialization.
-    public class Msg
-    {
-        public string Message { get; set; } = string.Empty;
-    }
-
-    // Helper class that encapsulates JSON deserialization logic.
-    // This avoids calling generic methods directly from the template.
-    public static class JsonHelper
-    {
-        public static string GetMessage()
-        {
-            // Sample JSON payload.
-            const string json = "{\"Message\":\"Hello from JSON!\"}";
-            // Deserialize using Newtonsoft.Json and return the Message property.
-            Msg? obj = JsonConvert.DeserializeObject<Msg>(json);
-            return obj?.Message ?? string.Empty;
-        }
-    }
-
     public static void Main()
     {
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        // Prepare directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Name: <<[model.Name]>>");
+        builder.Writeln("Square root of 16: <<[Math.Sqrt(16)]>>");
+        builder.Writeln("JSON representation: <<[JsonConvert.SerializeObject(model)]>>");
 
-        // Tag that uses a core .NET type (System.Math).
-        builder.Writeln("Value of Math.PI: <<[Math.PI]>>");
+        // Save and reload the template to simulate typical workflow.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
+        Document loadedTemplate = new Document(templatePath);
 
-        // Tag that uses a third‑party helper to obtain a JSON message.
-        builder.Writeln("Deserialized JSON message: <<[JsonHelper.GetMessage()]>>");
+        // Prepare the data model.
+        var model = new SampleModel { Name = "Alice" };
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template document for reporting.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Configure the ReportingEngine.
-        // -----------------------------------------------------------------
+        // Configure the reporting engine and register external types.
         ReportingEngine engine = new ReportingEngine();
-
-        // Register core and third‑party types so their static members can be accessed.
-        engine.KnownTypes.Add(typeof(Math));          // Core .NET type.
-        engine.KnownTypes.Add(typeof(JsonHelper));   // Wrapper for third‑party JSON logic.
-
-        // No data source is required because we only use static members.
-        object dummyDataSource = new object();
+        engine.KnownTypes.Add(typeof(Math));               // Core .NET type.
+        engine.KnownTypes.Add(typeof(JsonConvert));        // Third‑party type from Newtonsoft.Json.
 
         // Build the report.
-        engine.BuildReport(doc, dummyDataSource, "");
+        engine.BuildReport(loadedTemplate, model, "model");
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save(reportPath);
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        loadedTemplate.Save(reportPath);
     }
+}
+
+// Sample data model with a non‑nullable property.
+public class SampleModel
+{
+    public string Name { get; set; } = string.Empty;
 }

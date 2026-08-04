@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+namespace AsposeWordsLinqReportingExample
 {
     // Simple data model with a DateTime property.
     public class ReportModel
@@ -15,32 +15,27 @@ namespace AsposeWordsLinqReportingDemo
     {
         public static void Main()
         {
-            // 1. Create a template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a line that uses a LINQ Reporting expression tag.
-            // Use ToString with a custom format to produce ISO‑8601 output.
-            builder.Writeln(
-                "Created on: <<[model.CreatedDate.ToString(\"yyyy-MM-ddTHH:mm:ss\")]>>");
+            // Insert a LINQ Reporting tag that formats the DateTime as ISO 8601.
+            // Use ToString within the expression to apply the desired format.
+            builder.Writeln("Created: <<[model.CreatedDate.ToString(\"yyyy-MM-ddTHH:mm:ss\")]>>");
 
-            // 2. Prepare the data source.
+            // Prepare the data source.
             ReportModel model = new ReportModel
             {
                 // Example date; you can set any DateTime you need.
-                CreatedDate = new DateTime(2023, 5, 17, 14, 30, 45, DateTimeKind.Utc)
+                CreatedDate = new DateTime(2023, 5, 17, 14, 30, 45)
             };
 
-            // 3. Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.None
-            };
-            // The third argument is the name used in the template to reference the root object.
-            engine.BuildReport(template, model, "model");
+            // Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-            // 4. Save the generated report.
-            template.Save("Report.docx");
+            // Save the generated document.
+            doc.Save("Report_Output.docx");
         }
     }
 }
