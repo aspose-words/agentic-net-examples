@@ -1,52 +1,60 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Lists;
 
-public class ApplyStyleToHeadings
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add sample paragraphs, some with built‑in heading styles.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some sample paragraphs with different built‑in styles.
-        builder.Writeln("This is a normal paragraph."); // Normal style
-
+        // Heading 1
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1 - First");
+        builder.Writeln("Chapter 1: Introduction");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 2 - First");
-
+        // Normal paragraph
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Another normal paragraph.");
+        builder.Writeln("This is a normal paragraph that should remain unchanged.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1 - Second");
+        // Heading 2
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section 1.1: Overview");
+
+        // Another normal paragraph
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("More regular content.");
+
+        // Heading 3
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+        builder.Writeln("Subsection 1.1.1: Details");
 
         // Create a custom paragraph style that will be applied to all headings.
-        Style customHeadingStyle = doc.Styles.Add(StyleType.Paragraph, "MyHeadingStyle");
+        Style customHeadingStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomHeading");
         customHeadingStyle.Font.Name = "Arial";
-        customHeadingStyle.Font.Size = 14;
-        customHeadingStyle.Font.Color = Color.Blue;
-        customHeadingStyle.Font.Bold = true;
+        customHeadingStyle.Font.Size = 16;
+        customHeadingStyle.Font.Color = Color.DarkBlue;
+        customHeadingStyle.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        customHeadingStyle.ParagraphFormat.SpaceAfter = 12;
 
-        // Loop through all paragraphs in the document.
+        // Loop through all paragraphs in the document and replace the style
+        // of any paragraph that is a heading with the custom style.
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
-            // If the paragraph is a built‑in heading, replace its style with the custom one.
+            // The IsHeading property is true for built‑in heading styles.
             if (para.ParagraphFormat.IsHeading)
             {
+                // Apply the custom style.
                 para.ParagraphFormat.Style = customHeadingStyle;
             }
         }
 
-        // Save the resulting document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "StyledHeadings.docx");
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save("Output.docx");
     }
 }

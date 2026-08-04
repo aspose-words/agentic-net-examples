@@ -9,40 +9,42 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
       "Aspose.Words",
       "System.IO",
-      "System.Drawing",
-      "Aspose.Words.Layout",
-      "Aspose.Words.Drawing",
+      "Aspose.Words.Tables",
+      "System.Linq",
       "System.Text",
       "Aspose.Words.Saving",
       "Aspose.Words.Loading",
-      "System.Text.RegularExpressions",
-      "Aspose.Words.Lists",
-      "Aspose.Words.Tables",
+      "System.Drawing",
+      "Aspose.Words.Replacing",
       "System.Collections.Generic",
-      "Aspose.Words.Fields",
-      "System.Linq"
+      "Aspose.Words.Lists",
+      "Aspose.Words.Drawing",
+      "Aspose.Words.Fonts",
+      "Aspose.Words.Fields"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Paragraph",
       "Path",
+      "Paragraph",
       "Directory",
       "StyleIdentifier",
       "Style",
       "Font",
       "NodeType",
-      "Run",
       "File",
       "MemoryStream",
+      "Range",
+      "Run",
+      "Field",
       "Table",
-      "Field"
+      "Cell"
     ]
   },
   "stats": {

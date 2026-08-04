@@ -9,23 +9,24 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content.
+        // Use DocumentBuilder to add paragraphs.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply a built‑in style using the locale‑independent StyleIdentifier.
+        // Apply a locale‑independent style using StyleIdentifier.
+        // This ensures the same formatting regardless of the document language.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("This paragraph uses the Heading 1 style.");
+        builder.Writeln("This paragraph uses the Heading1 style.");
 
-        // Reset to Normal style for subsequent text.
+        // Change to another built‑in style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("This paragraph uses the Normal style.");
 
-        // Ensure the output folder exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Apply a third style for demonstration.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
+        builder.Writeln("This paragraph uses the Quote style.");
 
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "StyledParagraph.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "StyledParagraphs.docx");
         doc.Save(outputPath);
     }
 }

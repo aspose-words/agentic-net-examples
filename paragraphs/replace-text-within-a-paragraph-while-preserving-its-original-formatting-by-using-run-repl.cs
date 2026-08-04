@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
 public class Program
 {
@@ -9,26 +10,25 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a paragraph that contains two runs with different formatting.
-        builder.Font.Bold = true;               // First run – bold.
+        // Write a paragraph with a formatted placeholder.
         builder.Write("Hello ");
-        builder.Font.Bold = false;              // Second run – regular.
-        builder.Write("World");
-        builder.Writeln("!");                   // End the paragraph.
+        builder.Font.Bold = true;   // Make the placeholder bold.
+        builder.Font.Italic = true; // Make the placeholder italic.
+        builder.Write("_Name_");
 
-        // The paragraph we just created.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        // Reset the font formatting for the rest of the paragraph.
+        builder.Font.ClearFormatting();
 
-        // Replace the word "World" with "Aspose" while keeping each run's formatting.
-        foreach (Run run in paragraph.Runs)
-        {
-            if (run.Text.Contains("World"))
-            {
-                run.Text = run.Text.Replace("World", "Aspose");
-            }
-        }
+        builder.Writeln("!");
 
-        // Save the result to a file in the current directory.
+        // Replace the placeholder while preserving its original formatting.
+        int replacements = doc.Range.Replace("_Name_", "World");
+
+        // Verify that a replacement was made.
+        if (replacements == 0)
+            throw new InvalidOperationException("No occurrences were replaced.");
+
+        // Save the resulting document.
         doc.Save("Output.docx");
     }
 }

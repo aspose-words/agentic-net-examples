@@ -1,38 +1,36 @@
 using System;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Layout;
 
-namespace ParagraphLineCountDemo
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and add several paragraphs.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("First paragraph – single line.");
+        builder.Writeln("Second paragraph – line one.\nLine two.");
+        builder.Writeln("Third paragraph – line one.\nLine two.\nLine three.");
+
+        // Save the document (optional, just to have an output file).
+        doc.Save("SampleOutput.docx");
+
+        // Retrieve all paragraph nodes in the document.
+        var paragraphs = doc.GetChildNodes(NodeType.Paragraph, true)
+                           .OfType<Paragraph>()
+                           .ToList();
+
+        // Log an approximate line count for each paragraph.
+        for (int i = 0; i < paragraphs.Count; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Approximate line count by counting newline characters in the paragraph text.
+            // This is a safe compile‑time approximation because Aspose.Words does not expose a direct line‑count API.
+            string text = paragraphs[i].GetText(); // Includes the paragraph break character at the end.
+            int lineCount = text.Count(c => c == '\n') + 1; // Add 1 for the last line (or the only line).
 
-            // Add several paragraphs with different amounts of text.
-            builder.Writeln("Short paragraph.");
-            builder.Writeln("This paragraph contains a bit more text, but still fits on a single line in most layouts.");
-            builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
-                            "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.");
-
-            // Traverse all paragraph nodes in the document.
-            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-            int index = 1;
-            foreach (Paragraph para in paragraphs)
-            {
-                // Approximate the line count by using the number of runs in the paragraph.
-                // This is a compile‑safe placeholder because Aspose.Words does not expose a direct line‑count API.
-                int approximateLineCount = para.Runs.Count;
-
-                Console.WriteLine($"Paragraph {index}: Approximate line count (run count) = {approximateLineCount}");
-                index++;
-            }
-
-            // Save the document (optional, just to demonstrate the lifecycle).
-            doc.Save("ParagraphLineCount.docx");
+            Console.WriteLine($"Paragraph {i + 1}: Approximate line count = {lineCount}");
         }
     }
 }

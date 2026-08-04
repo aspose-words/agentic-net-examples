@@ -1,27 +1,36 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
-public class Program
+namespace ParagraphInsertionExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Add two initial paragraphs.
-        builder.Writeln("Paragraph 1");
-        builder.Writeln("Paragraph 2");
+            // Use DocumentBuilder to add initial content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("First paragraph.");   // Paragraph 0
+            builder.Writeln("Second paragraph."); // Paragraph 1
 
-        // Move the builder's cursor to the first paragraph.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        builder.MoveTo(firstParagraph);
+            // Move the builder's cursor to the end of the first paragraph.
+            // This positions the cursor right before the second paragraph.
+            builder.MoveTo(doc.FirstSection.Body.Paragraphs[0]);
 
-        // Insert an empty paragraph right after the first paragraph.
-        // The returned Paragraph object represents the newly inserted empty paragraph.
-        Paragraph emptyParagraph = builder.InsertParagraph();
+            // Insert an empty paragraph at the current cursor position.
+            // The method returns the newly inserted Paragraph, which will be empty.
+            Paragraph emptyParagraph = builder.InsertParagraph();
 
-        // Save the resulting document.
-        doc.Save("InsertedParagraph.docx");
+            // (Optional) Verify that the inserted paragraph has no child nodes (i.e., it is empty).
+            // This line does not affect the document; it is just for demonstration.
+            bool isEmpty = emptyParagraph.HasChildNodes == false;
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "InsertedEmptyParagraph.docx");
+            doc.Save(outputPath);
+        }
     }
 }
