@@ -3,38 +3,41 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace BookmarkShapeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Insert a bookmark named "MyBookmark" and add some text inside it.
-        builder.StartBookmark("MyBookmark");
-        builder.Write("This text is inside the bookmark.");
-        builder.EndBookmark("MyBookmark");
+            // Initialize a DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder's cursor to the start of the bookmark.
-        bool moved = builder.MoveToBookmark("MyBookmark");
-        if (!moved)
-            throw new InvalidOperationException("Bookmark 'MyBookmark' was not found.");
+            // Create a bookmark named "MyBookmark".
+            builder.StartBookmark("MyBookmark");
+            builder.Writeln("This text is inside the bookmark.");
+            builder.EndBookmark("MyBookmark");
 
-        // Insert a rectangle shape at the bookmark location.
-        // Using InsertShape for simplicity; width and height are in points.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        // Optional: set a fill color to make the shape visible.
-        shape.FillColor = System.Drawing.Color.LightBlue;
+            // Move the builder's cursor to the start of the bookmark.
+            bool moved = builder.MoveToBookmark("MyBookmark");
+            if (!moved)
+                throw new InvalidOperationException("Bookmark not found.");
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BookmarkShape.docx");
+            // Insert a rectangle shape at the bookmark location.
+            // Width = 100 points, Height = 50 points.
+            builder.InsertShape(ShapeType.Rectangle, 100, 50);
 
-        // Save the document.
-        doc.Save(outputPath);
+            // Define the output file path (in the same folder as the executable).
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BookmarkShape.docx");
 
-        // Validate that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not saved.", outputPath);
+        }
     }
 }

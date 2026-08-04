@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -12,26 +14,30 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a few sample shapes.
-        builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        // Inline rectangle.
+        builder.InsertShape(ShapeType.Rectangle, 120, 60);
+        // Inline ellipse.
         builder.InsertShape(ShapeType.Ellipse, 80, 80);
-        builder.InsertShape(ShapeType.Cloud, 120, 70);
+        // Floating shape with explicit positioning.
+        Shape floatingShape = builder.InsertShape(
+            ShapeType.Star, RelativeHorizontalPosition.Page, 100,
+            RelativeVerticalPosition.Page, 150, 100, 100, WrapType.None);
+        floatingShape.StrokeColor = Color.DarkGray; // Optional styling.
 
-        // Define the uniform brand fill color.
-        System.Drawing.Color brandColor = System.Drawing.Color.CornflowerBlue;
-
-        // Traverse all shapes in the document and apply the brand fill color.
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes)
+        // Apply a uniform fill color to every shape in the document.
+        var shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            shape.FillColor = brandColor; // Shortcut for solid fill.
+            // Set the fill to a solid LightBlue color.
+            shape.FillColor = Color.LightBlue;
         }
 
-        // Save the document to the local file system.
+        // Save the document.
         string outputPath = "UniformFillShapes.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException($"Failed to save the document to '{outputPath}'.");
     }
 }

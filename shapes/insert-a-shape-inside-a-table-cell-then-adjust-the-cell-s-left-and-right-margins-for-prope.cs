@@ -1,45 +1,44 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and insert the first cell.
+        // Begin a table.
         builder.StartTable();
+
+        // Insert the first cell of the table.
         builder.InsertCell();
 
-        // Insert a rectangle shape inside the current cell.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        shape.FillColor = System.Drawing.Color.LightBlue;
-        shape.StrokeColor = System.Drawing.Color.DarkBlue;
+        // Insert a rectangle shape into the current cell.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 50, 50);
+        shape.FillColor = Color.LightBlue;
 
-        // Adjust the left and right margins (padding) of the cell for proper spacing.
-        // The builder is positioned inside the cell, so we can obtain the cell from the current paragraph.
-        Cell currentCell = (Cell)builder.CurrentParagraph.ParentNode;
-        currentCell.CellFormat.LeftPadding = 10;   // points
-        currentCell.CellFormat.RightPadding = 10;  // points
+        // Adjust the cell's left and right margins (padding) to give the shape space.
+        builder.CellFormat.LeftPadding = 10;   // points
+        builder.CellFormat.RightPadding = 10; // points
+
+        // Optional text to illustrate the padding effect.
+        builder.Writeln("Shape inside cell");
 
         // Finish the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document to disk.
-        string outputPath = "ShapeInTableCell.docx";
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeInTableCell.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was saved.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
-
-        // Indicate successful completion.
-        Console.WriteLine("Document created: " + Path.GetFullPath(outputPath));
+            throw new InvalidOperationException("Document was not saved successfully.");
     }
 }

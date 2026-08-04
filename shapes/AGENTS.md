@@ -75,7 +75,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a custom snip corner rectangle shape with defined corner radius and light gray fill.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `retrieve-actual-bounds-of-a-shape-using-shape-getactualbounds-and-log-coordinate-points.cs`
   - Task: Retrieve actual bounds of a shape using Shape.GetActualBounds and log coordinate points.
   - Workflow: shape-workflow
@@ -100,7 +100,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Import MathML content as shapes, position them inline, and adjust baseline alignment.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-groupshape-instance-add-a-picture-textbox-and-autoshape-then-arrange-them.cs`
   - Task: Create a GroupShape instance, add a picture, textbox, and AutoShape, then arrange them.
   - Workflow: shape-workflow
@@ -120,7 +120,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Change a picture shape to an AutoShape programmatically by setting ShapeType while preserving size.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `apply-a-uniform-fill-color-to-every-shape-in-a-document-for-consistent-visual-branding.cs`
   - Task: Apply a uniform fill color to every shape in a document for consistent visual branding.
   - Workflow: shape-workflow
@@ -229,7 +229,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -243,7 +243,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

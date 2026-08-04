@@ -1,6 +1,6 @@
 # Shapes Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Shapes category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Shapes category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Shapes category
 - Slug: shapes
 - Total examples: 35
 - Publish-ready successful examples: 35 / 35
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Shape Workflow examples: 35
 
 ## Category rules that shaped these examples
@@ -22,7 +22,7 @@ This folder contains the live, publish-ready C# examples for the Shapes category
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 
 ## Running Examples
 
@@ -31,7 +31,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -52,7 +52,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 
 # PowerShell example
 Copy-Item ..\shapes\insert-an-image-shape-using-documentbuilder-insertimage-with-specified-size-wrap-type-and.cs .\Program.cs
@@ -72,16 +72,16 @@ dotnet run --configuration Release --no-build
 | 5 | `insert-a-picture-shape-into-a-table-cell-and-enable-islayoutincell-for-proper-layout.cs` | Insert a picture shape into a table cell and enable IsLayoutInCell for proper layout. | shape-workflow | docx | mcp |
 | 6 | `lock-aspect-ratio-for-shapes-by-setting-shape-aspectratiolocked-property-to-true.cs` | Lock aspect ratio for shapes by setting Shape.AspectRatioLocked property to true. | shape-workflow | docx | mcp |
 | 7 | `set-shape-layout-inside-table-cells-by-configuring-islayoutincell-property-to-true.cs` | Set shape layout inside table cells by configuring IsLayoutInCell property to true. | shape-workflow | docx | mcp |
-| 8 | `create-a-custom-snip-corner-rectangle-shape-with-defined-corner-radius-and-light-gray-fill.cs` | Create a custom snip corner rectangle shape with defined corner radius and light gray fill. | shape-workflow | docx | mcp |
+| 8 | `create-a-custom-snip-corner-rectangle-shape-with-defined-corner-radius-and-light-gray-fill.cs` | Create a custom snip corner rectangle shape with defined corner radius and light gray fill. | shape-workflow | docx | existing_repo |
 | 9 | `retrieve-actual-bounds-of-a-shape-using-shape-getactualbounds-and-log-coordinate-points.cs` | Retrieve actual bounds of a shape using Shape.GetActualBounds and log coordinate points. | shape-workflow | docx | mcp |
 | 10 | `set-vertical-anchor-of-a-shape-to-top-middle-or-bottom-based-on-design-requirements.cs` | Set vertical anchor of a shape to top, middle, or bottom based on design requirements. | shape-workflow | docx | mcp |
 | 11 | `detect-smartart-shapes-using-shape-issmartart-property-and-replace-them-with-alternative-d.cs` | Detect SmartArt shapes using Shape.IsSmartArt property and replace them with alternative diagrams. | shape-workflow | docx | mcp |
 | 12 | `insert-a-horizontal-rule-shape-with-custom-width-thickness-and-color-to-separate-sections.cs` | Insert a horizontal rule shape with custom width, thickness, and color to separate sections. | shape-workflow | docx | mcp |
-| 13 | `import-mathml-content-as-shapes-position-them-inline-and-adjust-baseline-alignment.cs` | Import MathML content as shapes, position them inline, and adjust baseline alignment. | shape-workflow | docx | mcp |
+| 13 | `import-mathml-content-as-shapes-position-them-inline-and-adjust-baseline-alignment.cs` | Import MathML content as shapes, position them inline, and adjust baseline alignment. | shape-workflow | docx | llm |
 | 14 | `create-a-groupshape-instance-add-a-picture-textbox-and-autoshape-then-arrange-them.cs` | Create a GroupShape instance, add a picture, textbox, and AutoShape, then arrange them. | shape-workflow | docx | mcp |
 | 15 | `append-a-new-shape-to-an-existing-groupshape-and-update-group-bounds-accordingly.cs` | Append a new shape to an existing GroupShape and update group bounds accordingly. | shape-workflow | docx | mcp |
 | 16 | `iterate-through-all-shapes-in-a-document-and-output-each-shape-s-type-using-shapetype-enum.cs` | Iterate through all shapes in a document and output each shape's type using ShapeType enumeration. | shape-workflow | doc | mcp |
-| 17 | `change-a-picture-shape-to-an-autoshape-programmatically-by-setting-shapetype-while-preserv.cs` | Change a picture shape to an AutoShape programmatically by setting ShapeType while preserving size. | shape-workflow | docx | llm |
+| 17 | `change-a-picture-shape-to-an-autoshape-programmatically-by-setting-shapetype-while-preserv.cs` | Change a picture shape to an AutoShape programmatically by setting ShapeType while preserving size. | shape-workflow | docx | mcp |
 | 18 | `apply-a-uniform-fill-color-to-every-shape-in-a-document-for-consistent-visual-branding.cs` | Apply a uniform fill color to every shape in a document for consistent visual branding. | shape-workflow | doc | mcp |
 | 19 | `export-each-shape-s-image-to-a-separate-file-naming-files-based-on-shape-index-and-type.cs` | Export each shape's image to a separate file, naming files based on shape index and type. | shape-workflow | docx | mcp |
 | 20 | `load-a-docx-template-insert-required-shapes-and-save-the-modified-document-as-a-new-docx-f.cs` | Load a DOCX template, insert required shapes, and save the modified document as a new DOCX file. | shape-workflow | docx, doc | mcp |
@@ -129,6 +129,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

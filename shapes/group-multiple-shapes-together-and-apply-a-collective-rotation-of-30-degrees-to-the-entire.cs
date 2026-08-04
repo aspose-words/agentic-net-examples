@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
@@ -12,30 +11,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 100, 100);
-        rectangle.Left = 50;   // Position from the left edge of the page.
-        rectangle.Top = 50;    // Position from the top edge of the page.
-        rectangle.Stroke.Color = Color.Blue;
+        // Insert two floating shapes that will be grouped.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 150, 100);
+        rect.Left = 50;
+        rect.Top = 50;
+        rect.FillColor = System.Drawing.Color.LightBlue;
+        rect.Stroke.Color = System.Drawing.Color.DarkBlue;
 
-        // Insert an ellipse shape.
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 80, 80);
-        ellipse.Left = 200;
-        ellipse.Top = 70;
-        ellipse.Stroke.Color = Color.Green;
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 120, 120);
+        ellipse.Left = 250;
+        ellipse.Top = 80;
+        ellipse.FillColor = System.Drawing.Color.LightCoral;
+        ellipse.Stroke.Color = System.Drawing.Color.DarkRed;
 
-        // Group the two shapes together. The group is inserted at the builder's current position.
-        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
+        // Group the two shapes together. The builder will calculate the group bounds automatically.
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Apply a collective rotation of 30 degrees to the entire group.
+        // Apply a collective rotation of 30 degrees to the whole group.
         group.Rotation = 30;
 
-        // Save the document to disk.
-        const string outputPath = "GroupRotation.docx";
+        // Save the document.
+        string outputPath = "GroupShapeRotation.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created successfully.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new Exception("The output document was not saved correctly.");
     }
 }

@@ -1,8 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 public class Program
 {
@@ -12,30 +13,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the first rectangle (will be sent to the back).
-        Shape backShape = builder.InsertShape(ShapeType.Rectangle, 200, 200);
-        backShape.FillColor = System.Drawing.Color.LightBlue;
-        backShape.Left = 100;   // Position to overlap with the second shape.
-        backShape.Top = 100;
+        // Insert three overlapping rectangles.
+        Shape shape1 = builder.InsertShape(
+            ShapeType.Rectangle,
+            RelativeHorizontalPosition.LeftMargin, 100,
+            RelativeVerticalPosition.TopMargin, 100,
+            200, 200,
+            WrapType.None);
+        shape1.FillColor = Color.Orange;
 
-        // Insert the second rectangle (will stay in front).
-        Shape frontShape = builder.InsertShape(ShapeType.Rectangle, 200, 200);
-        frontShape.FillColor = System.Drawing.Color.OrangeRed;
-        frontShape.Left = 150;  // Overlap the first shape.
-        frontShape.Top = 150;
+        Shape shape2 = builder.InsertShape(
+            ShapeType.Rectangle,
+            RelativeHorizontalPosition.LeftMargin, 150,
+            RelativeVerticalPosition.TopMargin, 150,
+            200, 200,
+            WrapType.None);
+        shape2.FillColor = Color.LightBlue;
 
-        // Send the first shape to the back by setting a lower ZOrder.
-        backShape.ZOrder = 0;   // Lowest stacking order.
-        frontShape.ZOrder = 1;  // Higher stacking order, appears in front.
+        Shape shape3 = builder.InsertShape(
+            ShapeType.Rectangle,
+            RelativeHorizontalPosition.LeftMargin, 200,
+            RelativeVerticalPosition.TopMargin, 200,
+            200, 200,
+            WrapType.None);
+        shape3.FillColor = Color.LightGreen;
 
-        // Define output path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ShapeSendToBack.docx");
+        // Retrieve all shapes in the document.
+        Shape[] shapes = doc.GetChildNodes(NodeType.Shape, true)
+                            .OfType<Shape>()
+                            .ToArray();
+
+        // Send the third shape to the back of the layering order.
+        // Lower ZOrder values are rendered behind higher values.
+        shapes[2].ZOrder = 0;
+
+        // Optional validation: ensure the ZOrder was set.
+        if (shapes[2].ZOrder != 0)
+            throw new InvalidOperationException("Failed to set shape ZOrder.");
 
         // Save the document.
-        doc.Save(outputPath, SaveFormat.Docx);
-
-        // Validate that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeBackOrder.docx");
+        doc.Save(outputPath);
     }
 }

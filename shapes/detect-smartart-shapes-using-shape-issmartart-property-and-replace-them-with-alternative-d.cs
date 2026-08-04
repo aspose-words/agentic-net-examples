@@ -1,82 +1,56 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class DetectAndReplaceSmartArt
 {
     public static void Main()
     {
-        // Create a sample document with a placeholder shape (non‑SmartArt).
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape placeholderShape = builder.InsertShape(ShapeType.Rectangle, 150, 100);
-        placeholderShape.WrapType = WrapType.Inline;
-        placeholderShape.Stroke.Color = System.Drawing.Color.Blue;
-        placeholderShape.FillColor = System.Drawing.Color.LightGray;
 
-        // Save the sample document (input).
-        const string inputPath = "Input.docx";
-        doc.Save(inputPath);
-
-        // Load the document (could be any document that may contain SmartArt).
-        Document loadedDoc = new Document(inputPath);
-
-        // Prepare a replacement image (generated programmatically).
-        const string replacementImagePath = "ReplacementDiagram.png";
-        GeneratePlaceholderImage(replacementImagePath, 150, 100);
+        // Insert a sample shape (not SmartArt) to have at least one shape in the document.
+        // This shape will remain unchanged because it does not contain SmartArt.
+        builder.InsertShape(ShapeType.Rectangle, 100, 50);
 
         // Traverse all shapes in the document.
-        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true).OfType<Shape>().ToList();
+        Shape[] shapes = doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>().ToArray();
 
         foreach (Shape shape in shapes)
         {
             // Detect SmartArt shapes using the HasSmartArt property.
             if (shape.HasSmartArt)
             {
-                // Create a new image shape to replace the SmartArt.
-                Shape imageShape = new Shape(loadedDoc, ShapeType.Image);
-                imageShape.ImageData.SetImage(replacementImagePath);
+                // Create a replacement shape (simple rectangle) with the same size and position.
+                Shape replacement = new Shape(doc, ShapeType.Rectangle)
+                {
+                    Width = shape.Width,
+                    Height = shape.Height,
+                    Left = shape.Left,
+                    Top = shape.Top,
+                    RelativeHorizontalPosition = shape.RelativeHorizontalPosition,
+                    RelativeVerticalPosition = shape.RelativeVerticalPosition,
+                    WrapType = shape.WrapType,
+                    HorizontalAlignment = shape.HorizontalAlignment,
+                    VerticalAlignment = shape.VerticalAlignment
+                };
 
-                // Preserve the original shape's size and position.
-                imageShape.Width = shape.Width;
-                imageShape.Height = shape.Height;
-                imageShape.Left = shape.Left;
-                imageShape.Top = shape.Top;
-                imageShape.RelativeHorizontalPosition = shape.RelativeHorizontalPosition;
-                imageShape.RelativeVerticalPosition = shape.RelativeVerticalPosition;
-                imageShape.WrapType = shape.WrapType;
-                imageShape.WrapSide = shape.WrapSide;
-                imageShape.HorizontalAlignment = shape.HorizontalAlignment;
-                imageShape.VerticalAlignment = shape.VerticalAlignment;
-
-                // Insert the new image shape after the original SmartArt shape.
-                shape.ParentNode.InsertAfter(imageShape, shape);
-                // Remove the original SmartArt shape.
+                // Insert the replacement after the original SmartArt shape and then remove the original.
+                shape.ParentNode.InsertAfter(replacement, shape);
                 shape.Remove();
             }
         }
 
-        // Save the modified document.
-        const string outputPath = "Output.docx";
-        loadedDoc.Save(outputPath);
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
 
-        // Simple validation to ensure the output file was created.
+        // Save the modified document.
+        doc.Save(outputPath);
+
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The output document was not saved correctly.");
-
-        // Clean up temporary files.
-        if (File.Exists(inputPath)) File.Delete(inputPath);
-        if (File.Exists(replacementImagePath)) File.Delete(replacementImagePath);
-    }
-
-    // Generates a minimal PNG file (1x1 pixel) as a placeholder image.
-    private static void GeneratePlaceholderImage(string filePath, int width, int height)
-    {
-        // This is a base64‑encoded 1×1 pixel transparent PNG.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(filePath, pngBytes);
     }
 }

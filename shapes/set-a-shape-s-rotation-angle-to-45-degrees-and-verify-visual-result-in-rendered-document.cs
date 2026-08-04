@@ -15,30 +15,30 @@ public class Program
 
         // Insert a simple rectangle shape.
         Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 100);
+
         // Rotate the shape 45 degrees clockwise.
         shape.Rotation = 45;
 
-        // Define output file paths.
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "RotatedShape.docx");
-        string pngPath = Path.Combine(Directory.GetCurrentDirectory(), "RotatedShape.png");
-
-        // Save the document.
+        // Save the document containing the rotated shape.
+        const string docPath = "RotatedShape.docx";
         doc.Save(docPath);
 
-        // Render the shape to an image file to visually verify the rotation.
-        ShapeRenderer renderer = shape.GetShapeRenderer();
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
-        renderer.Save(pngPath, options);
-
-        // Simple validation: ensure both files were created.
+        // Verify that the document file was created.
         if (!File.Exists(docPath))
-            throw new Exception("Document file was not saved.");
+            throw new FileNotFoundException("The output document was not created.", docPath);
 
-        if (!File.Exists(pngPath))
-            throw new Exception("Rendered shape image was not saved.");
+        // Retrieve the shape from the saved document to confirm the rotation value.
+        Shape loadedShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
+        if (Math.Abs(loadedShape.Rotation - 45) > 0.001)
+            throw new InvalidOperationException("The shape rotation was not set correctly.");
 
-        // Additional validation: check that the rotation property is set correctly.
-        if (Math.Abs(shape.Rotation - 45) > 0.001)
-            throw new Exception("Shape rotation was not set to 45 degrees.");
+        // Render the shape to an image file to visually verify the rotation.
+        const string imagePath = "RotatedShape.png";
+        ShapeRenderer renderer = loadedShape.GetShapeRenderer();
+        renderer.Save(imagePath, new ImageSaveOptions(SaveFormat.Png));
+
+        // Verify that the rendered image file was created.
+        if (!File.Exists(imagePath))
+            throw new FileNotFoundException("The rendered shape image was not created.", imagePath);
     }
 }

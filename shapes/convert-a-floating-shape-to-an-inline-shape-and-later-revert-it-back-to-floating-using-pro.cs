@@ -12,42 +12,42 @@ public class ShapeConversionExample
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a floating rectangle shape.
-        // Parameters: shape type, horizontal position reference, left, vertical position reference, top, width, height, wrap type.
-        Shape shape = builder.InsertShape(
+        Shape floatingShape = builder.InsertShape(
             ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, 100,
-            RelativeVerticalPosition.Page, 100,
-            100, 100,
-            WrapType.None); // Floating shape (WrapType.None)
+            RelativeHorizontalPosition.Page, 100,   // left position
+            RelativeVerticalPosition.Page, 100,     // top position
+            100, 100,                               // width, height
+            WrapType.None);                         // floating (no wrap)
 
-        // Verify that the shape is floating.
-        if (shape.IsInline)
+        // Validate that the shape is floating.
+        if (floatingShape.IsInline)
             throw new InvalidOperationException("Shape should be floating after insertion.");
 
         // Convert the floating shape to an inline shape.
-        shape.WrapType = WrapType.Inline;               // Inline shapes use WrapType.Inline
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Column; // Inline positioning defaults
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
-        shape.Left = 0;                                 // Position is ignored for inline shapes
-        shape.Top = 0;
+        floatingShape.WrapType = WrapType.Inline;
 
-        // Verify conversion to inline.
-        if (!shape.IsInline)
+        // Validate that the shape is now inline.
+        if (!floatingShape.IsInline)
             throw new InvalidOperationException("Shape should be inline after conversion.");
 
-        // Convert the inline shape back to a floating shape.
-        shape.WrapType = WrapType.None;                 // Set to floating
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        shape.Left = 150;                               // New floating position
-        shape.Top = 150;
+        // Revert the shape back to floating.
+        floatingShape.WrapType = WrapType.None;
+        floatingShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        floatingShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        floatingShape.Left = 100;
+        floatingShape.Top = 100;
+        floatingShape.Width = 100;
+        floatingShape.Height = 100;
 
-        // Verify conversion back to floating.
-        if (shape.IsInline)
+        // Validate that the shape is floating again.
+        if (floatingShape.IsInline)
             throw new InvalidOperationException("Shape should be floating after reverting.");
 
-        // Save the document to verify the result.
+        // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeConversion.docx");
         doc.Save(outputPath);
+
+        // Simple confirmation (no interactive prompts).
+        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

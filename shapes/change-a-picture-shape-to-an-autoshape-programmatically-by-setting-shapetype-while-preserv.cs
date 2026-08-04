@@ -7,53 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary sample image.
-        string imagePath = "sample.png";
-        CreateSampleImage(imagePath);
+        // A tiny red PNG image (1x1 pixel) encoded in base64.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mP8z/C/HwAFgwJ/lKXcVwAAAABJRU5ErkJggg==";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
 
-        // Create a new document and insert the image.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape pictureShape = builder.InsertImage(imagePath);
 
-        // Preserve the original size.
+        // Insert the image – this creates a picture shape (ShapeType.Image).
+        Shape pictureShape = builder.InsertImage(imageBytes);
+
+        // Preserve the original size of the picture shape.
         double originalWidth = pictureShape.Width;
         double originalHeight = pictureShape.Height;
 
-        // Create a rectangle AutoShape with the same size.
-        Shape rectangleShape = new Shape(doc, ShapeType.Rectangle)
-        {
-            Width = originalWidth,
-            Height = originalHeight,
-            WrapType = WrapType.Inline
-        };
+        // Create a new rectangle AutoShape with the same size.
+        Shape rectangleShape = new Shape(doc, ShapeType.Rectangle);
+        rectangleShape.Width = originalWidth;
+        rectangleShape.Height = originalHeight;
 
-        // Insert the rectangle after the picture and remove the picture.
-        var parentParagraph = pictureShape.ParentParagraph;
-        if (parentParagraph == null)
-            throw new Exception("Picture shape is not inside a paragraph.");
-
-        parentParagraph.InsertAfter(rectangleShape, pictureShape);
+        // Replace the picture shape with the new rectangle shape in the document tree.
+        pictureShape.ParentNode.InsertAfter(rectangleShape, pictureShape);
         pictureShape.Remove();
 
-        // Save the document.
-        string outputPath = "Output.docx";
+        // Save the resulting document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
         doc.Save(outputPath);
 
-        // Verify the output file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
-
-        // Clean up the temporary image file.
-        if (File.Exists(imagePath))
-            File.Delete(imagePath);
-    }
-
-    private static void CreateSampleImage(string path)
-    {
-        // Minimal 1x1 pixel PNG (transparent)
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(path, pngBytes);
+            throw new Exception("The document was not saved correctly.");
     }
 }

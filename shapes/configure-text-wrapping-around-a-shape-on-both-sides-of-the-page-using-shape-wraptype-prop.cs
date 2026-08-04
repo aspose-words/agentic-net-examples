@@ -1,9 +1,10 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class ConfigureShapeWrapping
+public class Program
 {
     public static void Main()
     {
@@ -11,37 +12,41 @@ public class ConfigureShapeWrapping
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert some introductory text.
-        builder.Writeln("This paragraph appears before the shape. It will demonstrate how text wraps around the shape on both sides of the page.");
+        // Add some initial text.
+        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                        "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
 
-        // Insert a floating rectangle shape with square text wrapping.
-        // The shape is positioned 100 points from the left and top edges of the page.
+        // Define shape size.
+        double shapeWidth = 100;
+        double shapeHeight = 100;
+
+        // Position the shape roughly in the center of the page.
+        double left = (builder.PageSetup.PageWidth - shapeWidth) / 2;
+        double top = (builder.PageSetup.PageHeight - shapeHeight) / 2;
+
+        // Insert a floating rectangle with Square wrap type (wraps on both sides).
         Shape shape = builder.InsertShape(
             ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, 100,
-            RelativeVerticalPosition.Page, 100,
-            150, 150,
+            RelativeHorizontalPosition.Page, left,
+            RelativeVerticalPosition.Page, top,
+            shapeWidth, shapeHeight,
             WrapType.Square);
 
-        // Ensure the shape uses the default WrapSide (Both) so text wraps on both sides.
-        shape.WrapSide = WrapSide.Both;
+        // Make the shape visible.
+        shape.FillColor = Color.LightBlue;
+        shape.StrokeColor = Color.DarkBlue;
 
-        // Add more text after the shape to see the wrapping effect.
-        builder.Writeln("This paragraph follows the shape. The text should flow around the shape on the left and right sides, demonstrating the Square wrap type with both-side wrapping.");
-
-        // Define the output file path in the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeWrapBothSides.docx");
+        // Add more text that will wrap around the shape.
+        builder.Writeln("\nMore text that should wrap around the shape on both sides. " +
+                        "The quick brown fox jumps over the lazy dog. " +
+                        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
 
         // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeWrapBothSides.docx");
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
-        }
-
-        // Optionally, inform that the process completed (no interactive prompts required).
-        Console.WriteLine($"Document saved successfully to: {outputPath}");
+            throw new Exception("The output document was not created.");
     }
 }

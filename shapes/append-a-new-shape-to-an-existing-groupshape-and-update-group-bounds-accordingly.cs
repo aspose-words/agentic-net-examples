@@ -4,93 +4,62 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class AppendShapeToGroup
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape.
+        // Create an initial GroupShape with a defined bounding rectangle.
         GroupShape group = new GroupShape(doc);
+        group.Bounds = new RectangleF(0, 0, 200, 200); // Initial size 200x200 points.
 
-        // First child shape – a rectangle.
+        // Add a rectangle shape inside the group.
         Shape rect = new Shape(doc, ShapeType.Rectangle)
         {
             Width = 100,
-            Height = 50,
-            Left = 0,
-            Top = 0,
-            Stroke = { Color = Color.Blue }
+            Height = 100,
+            Left = 20,
+            Top = 20,
+            FillColor = Color.LightBlue,
+            Stroke = { Color = Color.DarkBlue }
         };
         group.AppendChild(rect);
 
-        // Second child shape – an ellipse.
-        Shape ellipse = new Shape(doc, ShapeType.Ellipse)
-        {
-            Width = 80,
-            Height = 80,
-            Left = 120,
-            Top = 20,
-            Stroke = { Color = Color.Green }
-        };
-        group.AppendChild(ellipse);
-
-        // Set initial bounds of the group to enclose the two shapes.
-        group.Bounds = CalculateGroupBounds(group);
-
-        // Insert the group shape into the document.
+        // Insert the group into the document.
         builder.InsertNode(group);
 
-        // --- Append a new shape to the existing group ---
-
-        // New child shape – a star.
-        Shape star = new Shape(doc, ShapeType.Star)
+        // Create a new shape that will be appended to the existing group.
+        Shape ellipse = new Shape(doc, ShapeType.Ellipse)
         {
-            Width = 60,
-            Height = 60,
-            Left = 50,
-            Top = 100,
-            FillColor = Color.Yellow,
-            Stroke = { Color = Color.Orange }
+            Width = 120,
+            Height = 80,
+            Left = 150,   // Position that extends beyond the original group bounds.
+            Top = 150,
+            FillColor = Color.LightCoral,
+            Stroke = { Color = Color.Maroon }
         };
-        group.AppendChild(star);
 
-        // Update the group's bounds to include the newly added shape.
-        group.Bounds = CalculateGroupBounds(group);
+        // Append the new shape to the group.
+        group.AppendChild(ellipse);
+
+        // Update the group's bounds to encompass all child shapes.
+        // Use RectangleF.Union to combine the existing bounds with the new shape's bounds.
+        group.Bounds = RectangleF.Union(group.Bounds, ellipse.Bounds);
+
+        // Validate that the bounds have been updated correctly.
+        // Expected width >= 270 (200 original + extra 70) and height >= 230.
+        if (group.Bounds.Width < 270 || group.Bounds.Height < 230)
+            throw new InvalidOperationException("Group bounds were not updated correctly.");
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AppendShapeToGroup.docx");
+        string outputPath = "GroupShapeAppend.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
-    }
-
-    // Helper method to compute the minimal bounding rectangle that contains all child shapes of a group.
-    private static RectangleF CalculateGroupBounds(GroupShape group)
-    {
-        if (group.Count == 0)
-            return new RectangleF(0, 0, 0, 0);
-
-        float minLeft = float.MaxValue;
-        float minTop = float.MaxValue;
-        float maxRight = float.MinValue;
-        float maxBottom = float.MinValue;
-
-        foreach (ShapeBase child in group)
-        {
-            // Use the child's Bounds property (in the group's coordinate space).
-            RectangleF childBounds = child.Bounds;
-
-            if (childBounds.Left < minLeft) minLeft = childBounds.Left;
-            if (childBounds.Top < minTop) minTop = childBounds.Top;
-            if (childBounds.Right > maxRight) maxRight = childBounds.Right;
-            if (childBounds.Bottom > maxBottom) maxBottom = childBounds.Bottom;
-        }
-
-        return new RectangleF(minLeft, minTop, maxRight - minLeft, maxBottom - minTop);
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }
