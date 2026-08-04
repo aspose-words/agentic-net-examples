@@ -6,75 +6,61 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
+        // Prepare output folder.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        string destinationPath = Path.Combine(outputDir, "Destination.docx");
+        // Paths for the sample documents.
+        string destPath = Path.Combine(outputDir, "Destination.docx");
+        string srcPath = Path.Combine(outputDir, "Source.docx");
         string mergedPath = Path.Combine(outputDir, "Merged.docx");
 
-        // -----------------------------------------------------------------
-        // 1. Create a source document (the DOCX to be inserted).
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("=== Source Document ===");
-        srcBuilder.Writeln("This content comes from the source DOCX.");
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // 2. Create a destination document with multiple sections.
-        // -----------------------------------------------------------------
+        // ---------- Create destination document with multiple sections ----------
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
-        // Section 1
-        destBuilder.Writeln("=== Destination Document - Section 1 ===");
-        destBuilder.Writeln("First section content.");
+        destBuilder.Writeln("Destination Section 1");
         destBuilder.InsertBreak(BreakType.SectionBreakNewPage);
+        destBuilder.Writeln("Destination Section 2");
+        destDoc.Save(destPath); // optional, just to have a physical file.
 
-        // Section 2
-        destBuilder.Writeln("=== Destination Document - Section 2 ===");
-        destBuilder.Writeln("Second section content.");
-        // No extra break – we will insert the source after this section.
+        // ---------- Create source document ----------
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("Source Document Content");
+        srcDoc.Save(srcPath); // optional.
 
-        destDoc.Save(destinationPath, SaveFormat.Docx);
+        // ---------- Insert the source document at the end of each original section ----------
+        int originalSectionCount = destDoc.Sections.Count; // capture before modifications.
+        for (int i = 0; i < originalSectionCount; i++)
+        {
+            Section section = destDoc.Sections[i];
 
-        // -----------------------------------------------------------------
-        // 3. Load the documents (simulating a real‑world scenario where they
-        //    already exist on disk) and insert the source at the end of the
-        //    destination document using DocumentBuilder.
-        // -----------------------------------------------------------------
-        Document loadedDest = new Document(destinationPath);
-        Document loadedSource = new Document(sourcePath);
+            // Move the builder to the last paragraph of the current section.
+            destBuilder.MoveTo(section.Body.LastParagraph);
 
-        DocumentBuilder builder = new DocumentBuilder(loadedDest);
-        // Move the cursor to the end of the document (after the last section).
-        builder.MoveToDocumentEnd();
-        // Optional: add a page break before the inserted content.
-        builder.InsertBreak(BreakType.PageBreak);
-        // Insert the source document preserving its original formatting.
-        builder.InsertDocument(loadedSource, ImportFormatMode.KeepSourceFormatting);
+            // Optional page break before the inserted content.
+            destBuilder.InsertBreak(BreakType.PageBreak);
 
-        // -----------------------------------------------------------------
-        // 4. Save the merged result.
-        // -----------------------------------------------------------------
-        loadedDest.Save(mergedPath, SaveFormat.Docx);
+            // Insert the source document preserving its formatting.
+            destBuilder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+        }
 
-        // -----------------------------------------------------------------
-        // 5. Simple validation – ensure the merged file exists and contains
-        //    text from both source and destination documents.
-        // -----------------------------------------------------------------
+        // ---------- Save the merged document ----------
+        destDoc.Save(mergedPath, SaveFormat.Docx);
+
+        // ---------- Simple validation ----------
         if (!File.Exists(mergedPath))
             throw new InvalidOperationException("Merged document was not created.");
 
-        Document verificationDoc = new Document(mergedPath);
-        string mergedText = verificationDoc.GetText();
+        Document mergedDoc = new Document(mergedPath);
+        string mergedText = mergedDoc.GetText();
 
-        if (!mergedText.Contains("Source Document") || !mergedText.Contains("Destination Document"))
+        if (!mergedText.Contains("Destination Section 1") ||
+            !mergedText.Contains("Destination Section 2") ||
+            !mergedText.Contains("Source Document Content"))
+        {
             throw new InvalidOperationException("Merged document does not contain expected content.");
-
-        // The program finishes without interactive prompts.
+        }
     }
 }

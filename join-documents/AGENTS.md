@@ -131,12 +131,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Use ImportLanguageInfo option to preserve language settings when appending a source DOCX to a destination DOCX.
   - Workflow: append-document
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `manually-import-specific-tables-from-a-source-docx-using-nodeimporter-and-insert-them-into.cs`
   - Task: Manually import specific tables from a source DOCX using NodeImporter and insert them into a destination DOCX.
   - Workflow: insert-document
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `use-nodeimporter-to-import-only-paragraph-nodes-from-a-source-docx-and-insert-them-after-a.cs`
   - Task: Use NodeImporter to import only paragraph nodes from a source DOCX and insert them after a specific bookmark.
   - Workflow: insert-document
@@ -211,7 +211,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that all inserted sections contain correct page numbers by iterating through destination document nodes after insertion.
   - Workflow: insert-document
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `append-a-docx-generated-from-a-web-service-to-an-existing-docx-then-encrypt-final-pdf-with.cs`
   - Task: Append a DOCX generated from a web service to an existing DOCX, then encrypt final PDF with password.
   - Workflow: append-document
@@ -248,7 +248,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -262,7 +262,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

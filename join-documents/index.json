@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -17,21 +17,21 @@
       "Aspose.Words",
       "Aspose.Words.Saving",
       "Aspose.Words.Loading",
-      "Aspose.Words.Drawing",
       "System.Drawing",
+      "System.Text",
       "System.Text.RegularExpressions",
       "Aspose.Words.Replacing",
-      "System.Text",
       "System.Data",
-      "System.Collections.Generic",
       "Aspose.Words.MailMerging",
+      "Aspose.Words.Drawing",
       "System.Globalization",
       "Aspose.Words.Tables",
-      "Aspose.Words.Markup",
       "Aspose.Words.Notes",
       "Aspose.Words.Fields",
-      "Aspose.Words.Bibliography",
-      "System.Linq"
+      "System.Collections.Generic",
+      "System.Linq",
+      "Aspose.Words.Layout",
+      "System.Net.Http"
     ],
     "key_apis": [
       "Document",
@@ -42,22 +42,21 @@
       "Path",
       "ProtectionType",
       "LoadOptions",
-      "Font",
-      "Cell",
       "HtmlSaveOptions",
       "Paragraph",
       "Style",
-      "StyleIdentifier",
+      "Font",
       "Node",
       "CompositeNode",
       "NodeType",
       "Range",
-      "Run",
       "FindReplaceOptions",
       "Table",
+      "Run",
+      "Row",
       "PdfSaveOptions",
       "FieldType",
-      "Field"
+      "MemoryStream"
     ]
   },
   "stats": {
@@ -328,8 +327,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 19,
@@ -339,8 +338,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 20,
@@ -517,8 +516,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 35,

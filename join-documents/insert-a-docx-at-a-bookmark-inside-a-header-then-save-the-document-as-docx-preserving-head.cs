@@ -1,77 +1,55 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
-public class InsertDocxIntoHeaderBookmark
+public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string outputDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
-        string sourceDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
+        // Paths for the output document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
 
-        // -------------------------------------------------
-        // 1. Create the source document that will be inserted.
-        // -------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Font.Name = "Arial";
-        srcBuilder.Font.Size = 14;
-        srcBuilder.Font.Color = System.Drawing.Color.DarkBlue;
-        srcBuilder.Writeln("This is the inserted document content.");
-        // Save the source document (required by the rule to have a physical file).
-        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
-
-        // -------------------------------------------------
-        // 2. Create the destination document with a header containing a bookmark.
-        // -------------------------------------------------
+        // ---------- Create destination document with a header containing a bookmark ----------
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
-        // Ensure the document has a header.
+        // Move the builder to the primary header of the first section.
         destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        // Write some text before the bookmark.
-        destBuilder.Writeln("Header start - ");
 
-        // Insert a bookmark where the source document will be placed.
-        string bookmarkName = "InsertHere";
-        destBuilder.StartBookmark(bookmarkName);
-        // Placeholder text inside the bookmark (can be empty).
-        destBuilder.Writeln("[Placeholder]");
-        destBuilder.EndBookmark(bookmarkName);
+        // Insert a bookmark inside the header.
+        destBuilder.StartBookmark("HeaderBookmark");
+        destBuilder.Write("Header start. ");
+        destBuilder.EndBookmark("HeaderBookmark");
+        destBuilder.Writeln("Header end.");
 
-        // Write some text after the bookmark.
-        destBuilder.Writeln(" - Header end.");
+        // ---------- Create source document that will be inserted ----------
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("<<Inserted content from source DOCX>>");
 
-        // -------------------------------------------------
-        // 3. Insert the source document at the bookmark inside the header.
-        // -------------------------------------------------
-        // Move the cursor back to the header and to the bookmark.
+        // ---------- Insert the source document at the bookmark inside the header ----------
+        // Move back to the header and then to the bookmark.
         destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        destBuilder.MoveToBookmark(bookmarkName);
-        // Insert the source document, preserving its formatting.
-        destBuilder.InsertDocument(sourceDoc, ImportFormatMode.KeepSourceFormatting);
+        destBuilder.MoveToBookmark("HeaderBookmark");
 
-        // -------------------------------------------------
-        // 4. Save the resulting document.
-        // -------------------------------------------------
-        destDoc.Save(outputDocPath, SaveFormat.Docx);
+        // Insert the source document preserving its formatting.
+        destBuilder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // -------------------------------------------------
-        // 5. Validation: ensure the file exists and contains the inserted text.
-        // -------------------------------------------------
-        if (!File.Exists(outputDocPath))
-            throw new InvalidOperationException("The output document was not created.");
+        // ---------- Save the merged document ----------
+        destDoc.Save(outputPath, SaveFormat.Docx);
 
-        Document validationDoc = new Document(outputDocPath);
-        string fullText = validationDoc.GetText();
+        // ---------- Validation ----------
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output file was not created.");
 
-        if (!fullText.Contains("This is the inserted document content."))
-            throw new InvalidOperationException("The inserted content was not found in the output document.");
+        // Load the saved document and verify that the inserted text appears in the header.
+        Document verifyDoc = new Document(outputPath);
+        string headerText = verifyDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary].GetText();
 
-        // Cleanup temporary source file (optional).
-        if (File.Exists(sourceDocPath))
-            File.Delete(sourceDocPath);
+        if (!headerText.Contains("Inserted content from source DOCX"))
+            throw new InvalidOperationException("The inserted content was not found in the header.");
+
+        // If execution reaches this point, the operation succeeded.
+        Console.WriteLine("Document created successfully at: " + outputPath);
     }
 }

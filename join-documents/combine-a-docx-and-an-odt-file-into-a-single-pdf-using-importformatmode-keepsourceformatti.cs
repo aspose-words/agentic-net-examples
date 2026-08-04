@@ -7,60 +7,45 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string docxPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
-        string odtPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.odt");
-        string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "Combined.pdf");
+        // Define output directory and file paths.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
+        string docxPath = Path.Combine(outputDir, "Sample.docx");
+        string odtPath = Path.Combine(outputDir, "Sample.odt");
+        string pdfPath = Path.Combine(outputDir, "Combined.pdf");
+
         // Create a sample DOCX document.
-        // -----------------------------------------------------------------
         Document docx = new Document();
-        DocumentBuilder builder = new DocumentBuilder(docx);
-        builder.Writeln("This is the content of the DOCX document.");
+        DocumentBuilder docxBuilder = new DocumentBuilder(docx);
+        docxBuilder.Writeln("This is the DOCX part.");
         docx.Save(docxPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
         // Create a sample ODT document.
-        // -----------------------------------------------------------------
         Document odt = new Document();
-        builder = new DocumentBuilder(odt);
-        builder.Writeln("This is the content of the ODT document.");
+        DocumentBuilder odtBuilder = new DocumentBuilder(odt);
+        odtBuilder.Writeln("This is the ODT part.");
         odt.Save(odtPath, SaveFormat.Odt);
 
-        // -----------------------------------------------------------------
-        // Load the source documents.
-        // -----------------------------------------------------------------
+        // Load the created documents.
         Document srcDocx = new Document(docxPath);
         Document srcOdt = new Document(odtPath);
 
-        // -----------------------------------------------------------------
-        // Create the destination document and append the sources.
-        // The ODT content is appended with KeepSourceFormatting.
-        // -----------------------------------------------------------------
-        Document dst = new Document();
+        // Append the ODT document to the DOCX document, preserving ODT formatting.
+        srcDocx.AppendDocument(srcOdt, ImportFormatMode.KeepSourceFormatting);
 
-        // Append DOCX (default formatting behavior).
-        dst.AppendDocument(srcDocx, ImportFormatMode.UseDestinationStyles);
-
-        // Append ODT while preserving its original formatting.
-        dst.AppendDocument(srcOdt, ImportFormatMode.KeepSourceFormatting);
-
-        // -----------------------------------------------------------------
         // Save the combined document as PDF.
-        // -----------------------------------------------------------------
-        dst.Save(outputPdfPath, SaveFormat.Pdf);
+        srcDocx.Save(pdfPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // Validate that the PDF was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputPdfPath))
-        {
-            throw new InvalidOperationException("The combined PDF file was not created.");
-        }
+        // Validate that the PDF file was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The combined PDF was not created.");
 
-        // Cleanup temporary files (optional).
-        File.Delete(docxPath);
-        File.Delete(odtPath);
+        // Optional: verify that both source texts are present in the PDF.
+        Document pdfDoc = new Document(pdfPath);
+        string pdfText = pdfDoc.GetText();
+
+        if (!pdfText.Contains("DOCX part") || !pdfText.Contains("ODT part"))
+            throw new InvalidOperationException("The combined PDF does not contain expected content.");
     }
 }

@@ -1,65 +1,57 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define folder for generated files.
+        // Prepare output folder
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Create the source DOCX that will be inserted.
-        // -----------------------------------------------------------------
+        // File paths for the documents
         string sourcePath = Path.Combine(outputDir, "Source.docx");
+        string destinationPath = Path.Combine(outputDir, "Destination.docx");
+        string mergedPath = Path.Combine(outputDir, "MergedDocument.docx");
+
+        // ---------- Create source DOCX ----------
         Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("This is the content of the source document.");
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the source document content.");
         sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // Create the destination document with a bookmark named "Content".
-        // -----------------------------------------------------------------
-        string destPath = Path.Combine(outputDir, "Merged.docx");
+        // ---------- Create destination DOCX with a bookmark named "Content" ----------
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-
-        destBuilder.Writeln("=== Destination Document Start ===");
+        destBuilder.Writeln("Header of destination document.");
         destBuilder.StartBookmark("Content");
-        destBuilder.Writeln("[Placeholder for inserted content]");
+        destBuilder.Writeln("Placeholder inside bookmark.");
         destBuilder.EndBookmark("Content");
-        destBuilder.Writeln("=== Destination Document End ===");
+        destBuilder.Writeln("Footer of destination document.");
+        destDoc.Save(destinationPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // Move to the bookmark and insert the source document,
-        // preserving its original formatting.
-        // -----------------------------------------------------------------
+        // ---------- Load the source document ----------
+        Document srcToInsert = new Document(sourcePath);
+
+        // ---------- Move to the bookmark and insert the source document ----------
         bool moved = destBuilder.MoveToBookmark("Content");
         if (!moved)
-            throw new InvalidOperationException("Bookmark 'Content' was not found in the destination document.");
+            throw new InvalidOperationException("Bookmark 'Content' not found in the destination document.");
 
-        // Insert the source document at the bookmark location.
-        destBuilder.InsertDocument(sourceDoc, ImportFormatMode.KeepSourceFormatting);
+        destBuilder.InsertDocument(srcToInsert, ImportFormatMode.KeepSourceFormatting);
 
-        // Save the merged result.
-        destDoc.Save(destPath, SaveFormat.Docx);
+        // ---------- Save the merged document ----------
+        destDoc.Save(mergedPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // Validation: ensure the merged file exists and contains source text.
-        // -----------------------------------------------------------------
-        if (!File.Exists(destPath))
-            throw new FileNotFoundException("The merged document was not created.", destPath);
+        // ---------- Validate that the merged document exists and contains source content ----------
+        if (!File.Exists(mergedPath))
+            throw new FileNotFoundException("Merged document was not created.", mergedPath);
 
-        // Load the merged document to verify content.
-        Document verificationDoc = new Document(destPath);
-        string mergedText = verificationDoc.GetText();
+        Document mergedDoc = new Document(mergedPath);
+        string mergedText = mergedDoc.GetText();
 
-        if (!mergedText.Contains("This is the content of the source document."))
-            throw new Exception("The source content was not found in the merged document.");
-
-        // Indicate successful completion (no console output required).
+        if (!mergedText.Contains("This is the source document content."))
+            throw new Exception("Merged document does not contain the source document content.");
     }
 }
