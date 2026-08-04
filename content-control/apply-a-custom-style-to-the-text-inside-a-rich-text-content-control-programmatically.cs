@@ -1,39 +1,41 @@
 using System;
-using System.Drawing; // For font color handling
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Aspose.Words.Drawing;
 
-namespace ContentControlStyleExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Create a custom character style named "MyCustomStyle".
+        Style customStyle = doc.Styles.Add(StyleType.Character, "MyCustomStyle");
+        customStyle.Font.Name = "Calibri";
+        customStyle.Font.Size = 14;
+        customStyle.Font.Color = System.Drawing.Color.DarkBlue;
+        customStyle.Font.Bold = true;
+
+        // Create a rich text content control (block level).
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            Title = "RichTextControl",
+            Tag = "RichTextTag",
+            // Apply the custom style to the content control.
+            Style = customStyle
+        };
 
-            // Define a custom character style.
-            Style customStyle = doc.Styles.Add(StyleType.Character, "MyCustomStyle");
-            customStyle.Font.Name = "Arial";
-            customStyle.Font.Size = 14;
-            customStyle.Font.Color = Color.Blue; // System.Drawing.Color
+        // Add a paragraph with some text inside the content control.
+        Paragraph innerParagraph = new Paragraph(doc);
+        Run run = new Run(doc, "This text is inside a rich text content control with a custom style.");
+        innerParagraph.AppendChild(run);
+        richTextSdt.AppendChild(innerParagraph);
 
-            // Create a block‑level rich‑text content control and assign the custom style.
-            StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-            {
-                Style = customStyle
-            };
+        // Insert the content control into the document body.
+        doc.FirstSection.Body.AppendChild(richTextSdt);
 
-            // Add a paragraph with a run of text inside the content control.
-            Paragraph innerParagraph = new Paragraph(doc);
-            innerParagraph.AppendChild(new Run(doc, "Hello styled content control!"));
-            richTextSdt.AppendChild(innerParagraph);
-
-            // Insert the content control into the document body.
-            doc.FirstSection.Body.AppendChild(richTextSdt);
-
-            // Save the resulting document.
-            doc.Save("StyledRichTextContentControl.docx");
-        }
+        // Save the document to the working directory.
+        doc.Save("RichTextContentControlWithCustomStyle.docx");
     }
 }

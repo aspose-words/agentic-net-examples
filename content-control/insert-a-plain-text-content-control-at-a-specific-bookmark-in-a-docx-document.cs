@@ -6,38 +6,42 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample document with a bookmark.
+        // Create a sample document with a bookmark named "TargetBookmark".
         Document seedDoc = new Document();
         DocumentBuilder seedBuilder = new DocumentBuilder(seedDoc);
-
-        seedBuilder.Writeln("Document before the bookmark.");
         seedBuilder.StartBookmark("TargetBookmark");
-        seedBuilder.Writeln("Placeholder text inside the bookmark.");
+        seedBuilder.Write("Initial text inside the bookmark.");
         seedBuilder.EndBookmark("TargetBookmark");
-        seedBuilder.Writeln("Document after the bookmark.");
+        seedDoc.Save("input.docx");
 
-        // Save the seed document.
-        const string inputPath = "input.docx";
-        seedDoc.Save(inputPath);
+        // Load the document that contains the bookmark.
+        Document doc = new Document("input.docx");
 
-        // Step 2: Load the document that contains the bookmark.
-        Document doc = new Document(inputPath);
+        // Ensure the bookmark exists.
+        Bookmark bookmark = doc.Range.Bookmarks["TargetBookmark"];
+        if (bookmark == null)
+            throw new InvalidOperationException("Bookmark 'TargetBookmark' not found.");
+
+        // Clear the bookmark's existing text.
+        bookmark.Text = string.Empty;
+
+        // Move the builder to the bookmark location.
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Move the cursor to the start of the bookmark.
         builder.MoveToBookmark("TargetBookmark");
 
-        // Insert a plain‑text content control at the bookmark position.
-        StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
-        sdt.Title = "CustomerName";
-        sdt.Tag = "customer-name";
-
-        // Replace any existing placeholder text with the desired default content.
+        // Create a plain text content control (StructuredDocumentTag).
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "CustomerName",
+            Tag = "customer-name"
+        };
         sdt.RemoveAllChildren();
         sdt.AppendChild(new Run(doc, "Contoso"));
 
+        // Insert the content control at the bookmark position.
+        builder.InsertNode(sdt);
+
         // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        doc.Save("output.docx");
     }
 }

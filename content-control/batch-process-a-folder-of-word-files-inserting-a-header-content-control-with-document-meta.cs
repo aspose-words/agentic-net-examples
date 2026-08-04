@@ -1,94 +1,110 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Aspose.Words.Drawing;
 using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        // Prepare folders.
+        string inputFolder = Path.Combine(Environment.CurrentDirectory, "InputDocs");
+        string outputFolder = Path.Combine(Environment.CurrentDirectory, "OutputDocs");
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample documents if they do not exist
-        CreateSampleDocuments(inputFolder);
+        // Create sample documents if the input folder is empty.
+        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
+        {
+            CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docx"), "First Document", "Alice", new DateTime(2023, 1, 15));
+            CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docx"), "Second Document", "Bob", new DateTime(2023, 2, 20));
+            CreateSampleDocument(Path.Combine(inputFolder, "Sample3.docx"), "Third Document", "Carol", new DateTime(2023, 3, 25));
+        }
 
-        // Process each DOCX file
-        var summary = new List<object>();
+        // Collect processing results for optional JSON report.
+        var report = new List<ProcessedFileInfo>();
+
+        // Process each DOCX file in the input folder.
         foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
+            // Load the document.
             Document doc = new Document(filePath);
 
-            // Ensure a primary header exists
-            HeaderFooter header = doc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
+            // Ensure a primary header exists.
+            Section firstSection = doc.FirstSection;
+            HeaderFooter header = firstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
             if (header == null)
             {
                 header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-                doc.FirstSection.HeadersFooters.Add(header);
+                firstSection.HeadersFooters.Add(header);
             }
 
-            // Create a block‑level rich‑text content control
-            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+            // Build a block‑level rich‑text content control in the header.
+            StructuredDocumentTag metaSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
             {
-                Title = "DocMetadata",
-                Tag = "doc-metadata"
+                Title = "DocumentMetadata",
+                Tag = "DocMeta"
             };
 
-            // Build metadata text
-            string title = doc.BuiltInDocumentProperties.Title ?? "Untitled";
-            string author = doc.BuiltInDocumentProperties.Author ?? "Unknown";
-            string metadataText = $"Title: {title} | Author: {author}";
+            // Title paragraph.
+            Paragraph titlePara = new Paragraph(doc);
+            titlePara.AppendChild(new Run(doc, $"Title: {doc.BuiltInDocumentProperties.Title}"));
+            metaSdt.AppendChild(titlePara);
 
-            // Add paragraph with metadata inside the content control
-            Paragraph para = new Paragraph(doc);
-            para.AppendChild(new Run(doc, metadataText));
-            sdt.AppendChild(para);
+            // Author paragraph.
+            Paragraph authorPara = new Paragraph(doc);
+            authorPara.AppendChild(new Run(doc, $"Author: {doc.BuiltInDocumentProperties.Author}"));
+            metaSdt.AppendChild(authorPara);
 
-            // Insert the content control into the header
-            header.AppendChild(sdt);
+            // Created date paragraph (UTC).
+            Paragraph createdPara = new Paragraph(doc);
+            createdPara.AppendChild(new Run(doc, $"Created: {doc.BuiltInDocumentProperties.CreatedTime:u}"));
+            metaSdt.AppendChild(createdPara);
 
-            // Save processed document
+            // Insert the content control into the header.
+            header.AppendChild(metaSdt);
+
+            // Save the modified document to the output folder.
             string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
             doc.Save(outputPath);
 
-            // Record summary information
-            summary.Add(new
+            // Record information for the report.
+            report.Add(new ProcessedFileInfo
             {
                 FileName = Path.GetFileName(filePath),
-                Title = title,
-                Author = author,
-                ProcessedUtc = DateTime.UtcNow
+                Title = doc.BuiltInDocumentProperties.Title,
+                Author = doc.BuiltInDocumentProperties.Author,
+                CreatedUtc = doc.BuiltInDocumentProperties.CreatedTime
             });
         }
 
-        // Write summary JSON
-        string jsonPath = Path.Combine(outputFolder, "summary.json");
-        string json = JsonConvert.SerializeObject(summary, Formatting.Indented);
-        File.WriteAllText(jsonPath, json);
+        // Write a JSON summary of the processed files.
+        string jsonReportPath = Path.Combine(outputFolder, "ProcessingReport.json");
+        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText(jsonReportPath, json);
     }
 
-    private static void CreateSampleDocuments(string folder)
+    // Helper to create a simple document with some built‑in properties.
+    private static void CreateSampleDocument(string path, string title, string author, DateTime created)
     {
-        for (int i = 1; i <= 3; i++)
-        {
-            string fileName = $"Sample{i}.docx";
-            string filePath = Path.Combine(folder, fileName);
-            if (File.Exists(filePath))
-                continue;
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln($"This is the content of \"{title}\".");
+        doc.BuiltInDocumentProperties.Title = title;
+        doc.BuiltInDocumentProperties.Author = author;
+        doc.BuiltInDocumentProperties.CreatedTime = created;
+        doc.Save(path);
+    }
 
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is the content of {fileName}.");
-            // Set some built‑in properties for demonstration
-            doc.BuiltInDocumentProperties.Title = $"Sample Document {i}";
-            doc.BuiltInDocumentProperties.Author = $"Author {i}";
-            doc.Save(filePath);
-        }
+    // DTO for the JSON report.
+    private class ProcessedFileInfo
+    {
+        public string FileName { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public DateTime CreatedUtc { get; set; }
     }
 }

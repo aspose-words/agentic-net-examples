@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-namespace ContentControlDuplication
+namespace ContentControlDuplicationExample
 {
     public class Program
     {
@@ -12,42 +12,36 @@ namespace ContentControlDuplication
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add some introductory text.
-            builder.Writeln("Document with a content control that will be duplicated.");
+            // Add an introductory paragraph.
+            builder.Writeln("Paragraph before the original content control.");
 
-            // Create a block‑level rich‑text content control.
+            // Create a block‑level RichText content control.
             StructuredDocumentTag originalSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
             {
-                Title = "SampleControl",
-                Tag = "sample-control"
+                Title = "OriginalControl",
+                Tag = "original"
             };
 
             // Add a paragraph with some text inside the content control.
-            Paragraph innerParagraph = new Paragraph(doc);
-            innerParagraph.AppendChild(new Run(doc, "This is the original content control."));
-            originalSdt.AppendChild(innerParagraph);
+            Paragraph sdtParagraph = new Paragraph(doc);
+            sdtParagraph.AppendChild(new Run(doc, "This is the original content control."));
+            originalSdt.AppendChild(sdtParagraph);
 
-            // Insert the content control into the document body.
+            // Insert the original content control into the document body.
             doc.FirstSection.Body.AppendChild(originalSdt);
 
-            // Add a paragraph after the original content control.
-            builder.Writeln("Text after the original content control.");
+            // Add another paragraph after the original content control.
+            builder.Writeln("Paragraph after the original content control.");
 
-            // Clone the original content control (deep clone, including its children).
+            // Clone the original content control (deep clone with its children).
             StructuredDocumentTag clonedSdt = (StructuredDocumentTag)originalSdt.Clone(true);
-
-            // Optionally modify the cloned control (e.g., change its title/tag or inner text).
             clonedSdt.Title = "ClonedControl";
-            clonedSdt.Tag = "cloned-control";
+            clonedSdt.Tag = "cloned";
 
-            // Change the inner text of the cloned control.
-            if (clonedSdt.FirstChild is Paragraph clonedParagraph && clonedParagraph.FirstChild is Run clonedRun)
-            {
-                clonedRun.Text = "This is the cloned content control.";
-            }
-
-            // Insert the cloned content control after the original one.
-            doc.FirstSection.Body.InsertAfter(clonedSdt, originalSdt);
+            // Insert the cloned content control after the first paragraph in the document.
+            // The first paragraph is the one added by the first WriteLine call.
+            Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+            firstParagraph.ParentNode.InsertAfter(clonedSdt, firstParagraph);
 
             // Save the resulting document.
             doc.Save("DuplicatedContentControl.docx");

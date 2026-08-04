@@ -10,7 +10,7 @@
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -18,19 +18,17 @@
       "Aspose.Words.Markup",
       "System.IO",
       "System.Collections.Generic",
-      "System.Linq",
+      "Aspose.Words.Drawing",
       "Newtonsoft.Json",
       "System.Globalization",
       "Aspose.Words.Saving",
+      "System.Linq",
+      "Aspose.Words.Fields",
       "Aspose.Words.Tables",
       "System.Xml.Linq",
-      "System.Drawing",
-      "Aspose.Words.Fields",
-      "Aspose.Words.BuildingBlocks",
       "Aspose.Words.Themes",
       "System.Net.Http",
       "System.Threading.Tasks",
-      "Aspose.Words.Drawing",
       "System.Xml",
       "System.Xml.Xsl",
       "System.Text"
@@ -38,25 +36,23 @@
     "key_apis": [
       "Document",
       "DocumentBuilder",
+      "Range",
       "Run",
       "File",
       "Directory",
       "Path",
       "Paragraph",
       "MemoryStream",
+      "Shape",
       "PdfSaveOptions",
-      "SaveFormat",
       "NodeType",
       "Table",
       "Row",
       "Cell",
       "Style",
       "Font",
-      "Range",
-      "Shape",
-      "ImageData",
-      "Node",
-      "StyleIdentifier",
+      "FieldType",
+      "SaveFormat",
       "HtmlSaveOptions"
     ]
   },
@@ -145,8 +141,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 4,
@@ -179,8 +175,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 7,
@@ -190,8 +186,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 8,
@@ -300,8 +296,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 18,
@@ -466,8 +462,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 33,

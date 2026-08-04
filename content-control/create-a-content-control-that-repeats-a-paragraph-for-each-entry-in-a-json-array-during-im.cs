@@ -6,49 +6,57 @@ using Newtonsoft.Json;
 
 public class Program
 {
-    // Simple model matching the JSON structure.
-    private class Item
+    // Simple model that matches the JSON structure.
+    private class Person
     {
-        public string Text { get; set; } = "";
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
     }
 
     public static void Main()
     {
-        // Sample JSON array.
+        // 1. Prepare a JSON array with sample data.
         string json = @"[
-            { ""Text"": ""First entry"" },
-            { ""Text"": ""Second entry"" },
-            { ""Text"": ""Third entry"" }
+            { ""Name"": ""Alice"", ""Age"": 30 },
+            { ""Name"": ""Bob"",   ""Age"": 25 },
+            { ""Name"": ""Charlie"", ""Age"": 28 }
         ]";
 
-        // Deserialize JSON into a list of items.
-        List<Item> items = JsonConvert.DeserializeObject<List<Item>>(json) ?? new List<Item>();
+        // 2. Deserialize the JSON into a list of Person objects.
+        List<Person> people = JsonConvert.DeserializeObject<List<Person>>(json) ?? new List<Person>();
 
-        // Create a new blank document.
+        // 3. Create a new blank Word document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a block‑level repeating section content control.
+        // Optional: add a title before the repeating section.
+        builder.Writeln("People List:");
+        builder.Writeln(); // empty line for spacing.
+
+        // 4. Create a block‑level repeating section content control.
         StructuredDocumentTag repeatingSection = new StructuredDocumentTag(
             doc,
             SdtType.RepeatingSection,
             MarkupLevel.Block)
         {
-            Title = "RepeatingSection",
-            Tag = "repeating-section"
+            Title = "PeopleRepeatingSection",
+            Tag = "people-section"
         };
 
-        // Append the repeating section to the document body.
-        doc.FirstSection.Body.AppendChild(repeatingSection);
-
-        // For each JSON entry, add a paragraph inside the repeating section.
-        foreach (Item item in items)
+        // 5. For each person, create a paragraph and add it to the repeating section.
+        foreach (Person person in people)
         {
             Paragraph para = new Paragraph(doc);
-            para.AppendChild(new Run(doc, item.Text));
+            // The paragraph text can be formatted as needed.
+            para.AppendChild(new Run(doc, $"Name: {person.Name}, Age: {person.Age}"));
             repeatingSection.AppendChild(para);
         }
 
-        // Save the resulting document.
-        doc.Save("RepeatingSectionFromJson.docx");
+        // 6. Insert the repeating section into the document body.
+        doc.FirstSection.Body.AppendChild(repeatingSection);
+
+        // 7. Save the resulting document.
+        const string outputPath = "RepeatingSectionFromJson.docx";
+        doc.Save(outputPath);
     }
 }

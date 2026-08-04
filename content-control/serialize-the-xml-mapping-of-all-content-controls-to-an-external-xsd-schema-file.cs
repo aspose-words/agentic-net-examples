@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
@@ -12,83 +10,108 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Define a simple custom XML part that will be used for mapping.
+        // -----------------------------------------------------------------
+        // 1. Create a custom XML part that will hold the data for content controls.
+        // -----------------------------------------------------------------
         string xmlPartId = Guid.NewGuid().ToString("B");
         string xmlContent = @"<root>
     <person>
-        <firstName>John</firstName>
-        <lastName>Doe</lastName>
+        <name>John Doe</name>
+        <age>30</age>
     </person>
     <person>
-        <firstName>Jane</firstName>
-        <lastName>Smith</lastName>
+        <name>Jane Smith</name>
+        <age>28</age>
     </person>
 </root>";
         CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
 
-        // Insert a plain‑text content control mapped to the first person's first name.
-        StructuredDocumentTag firstNameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // -----------------------------------------------------------------
+        // 2. Define an XSD schema that describes the XML structure.
+        //    The schema is stored externally; we will also write it to a file.
+        // -----------------------------------------------------------------
+        string xsdSchema = @"<?xml version='1.0' encoding='utf-8'?>
+<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema' targetNamespace='http://example.com' xmlns='http://example.com' elementFormDefault='qualified'>
+  <xs:element name='root'>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name='person' maxOccurs='unbounded'>
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name='name' type='xs:string'/>
+              <xs:element name='age' type='xs:int'/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>";
+
+        // Associate the schema URI with the custom XML part (required by Word).
+        // The actual schema content will be saved separately.
+        xmlPart.Schemas.Add("http://example.com");
+
+        // -----------------------------------------------------------------
+        // 3. Insert content controls (structured document tags) and map them to XML nodes.
+        // -----------------------------------------------------------------
+        // First content control – maps to the first person's name.
+        StructuredDocumentTag nameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "FirstName",
-            Tag = "first-name-1"
+            Title = "FirstPersonName",
+            Tag = "first-person-name"
         };
-        firstNameSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/person[1]/firstName[1]", string.Empty);
-        doc.FirstSection.Body.FirstParagraph.AppendChild(firstNameSdt);
+        nameSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/person[1]/name[1]", string.Empty);
+        // Insert the control into the first paragraph.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(nameSdt);
+        firstParagraph.AppendChild(new Run(doc, " ")); // space separator
 
-        // Insert a plain‑text content control mapped to the first person's last name.
-        StructuredDocumentTag lastNameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Second content control – maps to the first person's age.
+        StructuredDocumentTag ageSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "LastName",
-            Tag = "last-name-1"
+            Title = "FirstPersonAge",
+            Tag = "first-person-age"
         };
-        lastNameSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/person[1]/lastName[1]", string.Empty);
-        doc.FirstSection.Body.FirstParagraph.AppendChild(lastNameSdt);
+        ageSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/person[1]/age[1]", string.Empty);
+        firstParagraph.AppendChild(ageSdt);
+        firstParagraph.AppendChild(new Run(doc, "\n")); // new line
 
-        // Save the document (optional, just to have a physical file).
-        doc.Save("MappedContentControls.docx");
-
-        // Collect mapping information from all content controls in the document.
-        List<MappingInfo> mappings = new List<MappingInfo>();
-        NodeCollection sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
-        foreach (Node node in sdtNodes)
+        // Third content control – maps to the second person's name.
+        StructuredDocumentTag nameSdt2 = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            if (node is StructuredDocumentTag sdt && sdt.XmlMapping.IsMapped)
-            {
-                mappings.Add(new MappingInfo
-                {
-                    Title = sdt.Title,
-                    Tag = sdt.Tag,
-                    XPath = sdt.XmlMapping.XPath,
-                    PrefixMappings = sdt.XmlMapping.PrefixMappings
-                });
-            }
-        }
+            Title = "SecondPersonName",
+            Tag = "second-person-name"
+        };
+        nameSdt2.XmlMapping.SetMapping(xmlPart, "/root[1]/person[2]/name[1]", string.Empty);
+        firstParagraph.AppendChild(nameSdt2);
+        firstParagraph.AppendChild(new Run(doc, " "));
 
-        // Serialize the mapping information to a simple XSD‑like file.
-        // For demonstration we write the original XML part data as the schema source.
-        string xsdPath = "ContentControlsMapping.xsd";
-        File.WriteAllText(xsdPath, xmlPart.Data != null ? Encoding.UTF8.GetString(xmlPart.Data) : string.Empty);
-
-        // Additionally, write a comment block with the collected mapping details.
-        StringBuilder commentBuilder = new StringBuilder();
-        commentBuilder.AppendLine("<!--");
-        commentBuilder.AppendLine("Mapping information for content controls in the document:");
-        foreach (MappingInfo info in mappings)
+        // Fourth content control – maps to the second person's age.
+        StructuredDocumentTag ageSdt2 = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            commentBuilder.AppendLine($"Title: {info.Title}, Tag: {info.Tag}, XPath: {info.XPath}, PrefixMappings: {info.PrefixMappings}");
-        }
-        commentBuilder.AppendLine("-->");
-        File.AppendAllText(xsdPath, commentBuilder.ToString());
+            Title = "SecondPersonAge",
+            Tag = "second-person-age"
+        };
+        ageSdt2.XmlMapping.SetMapping(xmlPart, "/root[1]/person[2]/age[1]", string.Empty);
+        firstParagraph.AppendChild(ageSdt2);
 
-        // The program finishes without waiting for user input.
-    }
+        // -----------------------------------------------------------------
+        // 4. Save the document.
+        // -----------------------------------------------------------------
+        const string docPath = "MappedContentControls.docx";
+        doc.Save(docPath);
 
-    // Helper class to hold mapping details.
-    private class MappingInfo
-    {
-        public string Title { get; set; } = string.Empty;
-        public string Tag { get; set; } = string.Empty;
-        public string XPath { get; set; } = string.Empty;
-        public string PrefixMappings { get; set; } = string.Empty;
+        // -----------------------------------------------------------------
+        // 5. Serialize the XSD schema to an external file.
+        // -----------------------------------------------------------------
+        const string xsdPath = "PersonSchema.xsd";
+        File.WriteAllText(xsdPath, xsdSchema);
+
+        // -----------------------------------------------------------------
+        // 6. (Optional) Output a simple confirmation to the console.
+        // -----------------------------------------------------------------
+        Console.WriteLine($"Document saved to: {Path.GetFullPath(docPath)}");
+        Console.WriteLine($"XSD schema saved to: {Path.GetFullPath(xsdPath)}");
     }
 }
