@@ -1,42 +1,42 @@
 using System;
 using System.IO;
+using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
         // Create a new blank document.
-        Aspose.Words.Document doc = new Aspose.Words.Document();
+        Document doc = new Document();
 
-        // The document already contains one section, body, and paragraph.
-        Aspose.Words.Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        // Create a run with sample text.
+        Run run = new Run(doc, "Bold, Italic, Underlined text");
 
-        // Create a run with some text.
-        Aspose.Words.Run run = new Aspose.Words.Run(doc, "Bold, Italic, Underlined text");
-
-        // Apply bold, italic, and underline formatting to the run.
-        Aspose.Words.Font runFont = run.Font;
-        runFont.Bold = true;
-        runFont.Italic = true;
-        runFont.Underline = Aspose.Words.Underline.Single;
+        // Apply bold, italic, and underline formatting using the Font properties.
+        Aspose.Words.Font font = run.Font;
+        font.Bold = true;
+        font.Italic = true;
+        font.Underline = Aspose.Words.Underline.Single;
 
         // Validate that the formatting was applied correctly.
-        if (!runFont.Bold || !runFont.Italic || runFont.Underline != Aspose.Words.Underline.Single)
+        if (!font.Bold || !font.Italic || font.Underline != Aspose.Words.Underline.Single)
         {
             throw new InvalidOperationException("Font formatting was not applied as expected.");
         }
 
-        // Append the run to the paragraph.
-        paragraph.AppendChild(run);
+        // Append the run to the first paragraph of the document.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
 
-        // Save the document to a file.
-        const string outputPath = "FormattedRun.docx";
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FormattedRun.docx");
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The document was not saved.", outputPath);
+            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
         }
     }
 }

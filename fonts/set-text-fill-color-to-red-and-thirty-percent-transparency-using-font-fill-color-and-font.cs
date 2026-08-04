@@ -1,8 +1,7 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing; // For Aspose.Drawing.Color
+using Aspose.Drawing; // for Aspose.Drawing.Color
 
 public class Program
 {
@@ -11,47 +10,35 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add a paragraph with a run of text.
+        // Create a DocumentBuilder to add content to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text with custom fill color and transparency.");
 
-        // Get the Font of the last run (the one we just added).
-        // The Run is the first (and only) run of the first paragraph.
-        Run run = doc.FirstSection.Body.Paragraphs[0].Runs[0];
-        Aspose.Words.Font font = run.Font; // Fully qualified to avoid ambiguity
+        // Ensure the fill type is solid.
+        builder.Font.Fill.Solid();
 
-        // Ensure the fill is set to a solid color.
-        font.Fill.Solid();
-
-        // Create a red color using Aspose.Drawing.Color.
+        // Create an Aspose.Drawing.Color (red) and convert it to System.Drawing.Color.
         Aspose.Drawing.Color asposeRed = Aspose.Drawing.Color.Red;
-
-        // Convert Aspose.Drawing.Color to System.Drawing.Color because Fill.Color expects System.Drawing.Color.
         System.Drawing.Color sysRed = System.Drawing.Color.FromArgb(asposeRed.ToArgb());
 
-        // Apply the color and set transparency to 30% (0.3).
-        font.Fill.Color = sysRed;
-        font.Fill.Transparency = 0.3; // 30% transparent
+        // Set the fill color to red.
+        builder.Font.Fill.Color = sysRed;
 
-        // Validate that the properties were set correctly.
-        if (font.Fill.Transparency != 0.3 ||
-            font.Fill.Color.ToArgb() != sysRed.ToArgb())
+        // Set the fill transparency to 30% (0.3 = 30% transparent, 0 = opaque).
+        builder.Font.Fill.Transparency = 0.3;
+
+        // Write a sample line that will use the configured fill.
+        builder.Writeln("Sample text with red fill and 30% transparency.");
+
+        // Validate that the properties were applied correctly.
+        Aspose.Words.Font font = builder.Font;
+        if (font.Fill.Color.ToArgb() != sysRed.ToArgb() ||
+            Math.Abs(font.Fill.Transparency - 0.3) > 0.0001)
         {
-            throw new InvalidOperationException("Font fill properties were not set as expected.");
+            throw new Exception("Font fill properties were not set as expected.");
         }
 
-        // Define output path.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "FontFillExample.docx");
-
-        // Save the document.
+        // Save the document to a file.
+        const string outputPath = "FontFillExample.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
-        }
     }
 }

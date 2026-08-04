@@ -10,21 +10,20 @@ public class Program
         Document doc = new Document();
 
         // Create a run with some text.
-        Run run = new Run(doc, "Hello World!");
+        Run run = new Run(doc, "Hello Aspose.Words!");
 
-        // Access the run's font and set its name to Arial.
-        Aspose.Words.Font font = run.Font;
-        font.Name = "Arial";
+        // Set the font name of the run to Arial.
+        run.Font.Name = "Arial";
 
         // Validate that the font name was set correctly.
-        if (font.Name != "Arial")
-            throw new InvalidOperationException("Failed to set the font name to Arial.");
+        if (run.Font.Name != "Arial")
+            throw new InvalidOperationException("Font name was not set to Arial.");
 
         // Append the run to the first paragraph of the document.
         doc.FirstSection.Body.FirstParagraph.AppendChild(run);
 
         // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RunWithArialFont.docx");
 
         // Save the document.
         doc.Save(outputPath);

@@ -7,36 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add some text with different fonts.
+        // Define the font names to replace.
+        const string oldFontName = "Arial";
+        const string newFontName = "Times New Roman";
+
+        // Create a new document and add sample text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Text using the font that we want to replace.
-        builder.Font.Name = "OldFont";
-        builder.Writeln("This text uses the OldFont.");
+        builder.Font.Name = oldFontName;
+        builder.Writeln("This paragraph uses the old font.");
 
-        // Text using another font (should remain unchanged).
-        builder.Font.Name = "AnotherFont";
-        builder.Writeln("This text uses AnotherFont.");
+        builder.Font.Name = "Courier New";
+        builder.Writeln("This paragraph uses a different font.");
 
         // Replace all occurrences of the old font with the new font.
-        const string fontToReplace = "OldFont";
-        const string replacementFont = "NewFont";
-
         foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
         {
-            if (string.Equals(run.Font.Name, fontToReplace, StringComparison.OrdinalIgnoreCase))
-            {
-                run.Font.Name = replacementFont;
-            }
+            if (string.Equals(run.Font.Name, oldFontName, StringComparison.OrdinalIgnoreCase))
+                run.Font.Name = newFontName;
         }
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
         // Save the modified document.
-        string outputPath = Path.Combine(outputDir, "FontReplaced.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

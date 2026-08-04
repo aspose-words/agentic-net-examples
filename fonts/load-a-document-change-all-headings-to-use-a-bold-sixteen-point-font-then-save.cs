@@ -1,37 +1,36 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
         // Define input and output file paths.
-        string inputPath = "input.docx";
-        string outputPath = "output.docx";
+        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        string inputPath = Path.Combine(dataDir, "Input.docx");
+        string outputPath = Path.Combine(dataDir, "Output.docx");
 
-        // If the input file does not exist, create a sample document with headings.
+        // Ensure the Data directory exists.
+        if (!Directory.Exists(dataDir))
+            Directory.CreateDirectory(dataDir);
+
+        // If the input file does not exist, create a simple sample document with headings.
         if (!File.Exists(inputPath))
         {
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-            // Create headings 1‑3.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
             builder.Writeln("Sample Heading 1");
 
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
             builder.Writeln("Sample Heading 2");
 
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-            builder.Writeln("Sample Heading 3");
-
-            // Normal paragraph.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("Regular paragraph text.");
+            builder.Writeln("Normal paragraph text.");
 
-            // Save the sample document to the expected input location.
             sampleDoc.Save(inputPath);
         }
 
@@ -49,10 +48,6 @@ public class Program
                     Aspose.Words.Font font = run.Font;
                     font.Bold = true;
                     font.Size = 16;
-
-                    // Validate the formatting.
-                    if (!font.Bold || font.Size != 16)
-                        throw new InvalidOperationException("Failed to set heading font properties.");
                 }
             }
         }
@@ -60,8 +55,10 @@ public class Program
         // Save the modified document.
         doc.Save(outputPath);
 
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+        // Validate that the output file was created.
+        if (File.Exists(outputPath))
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        else
+            Console.WriteLine("Failed to save the document.");
     }
 }

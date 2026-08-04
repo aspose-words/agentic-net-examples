@@ -2,50 +2,58 @@ using System;
 using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
 
 public class Program
 {
     public static void Main()
     {
+        // Define the output folder and ensure it exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "EastAsianEmphasis.docx");
+
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for inserting content.
+        // Initialize a DocumentBuilder for inserting and formatting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Set a common font for the document.
+        builder.Font.Name = "Arial";
+        builder.Font.Size = 24;
 
         // Define the LCID for Japanese language.
         int japaneseLcid = new CultureInfo("ja-JP", false).LCID;
 
-        // Set font properties for Japanese text.
-        builder.Font.Name = "Arial";
+        // Apply Japanese locale to the builder's font.
         builder.Font.LocaleId = japaneseLcid;
 
-        // Apply an emphasis mark only when the language is Japanese.
+        // Check if the current font language is Japanese before applying an emphasis mark.
         if (builder.Font.LocaleId == japaneseLcid)
         {
+            // Apply an East Asian emphasis mark (solid circle above the text).
             builder.Font.EmphasisMark = Aspose.Words.EmphasisMark.OverSolidCircle;
         }
 
-        // Write Japanese text with the emphasis mark.
-        builder.Writeln("日本語のテキストに強調マークが適用されています。");
+        // Write Japanese text that will display with the emphasis mark.
+        builder.Writeln("強調された日本語テキスト");
 
-        // Clear formatting to reset locale and emphasis.
+        // Clear formatting to reset emphasis and locale for the next run.
         builder.Font.ClearFormatting();
 
-        // Set font properties for English text (non-Japanese).
-        builder.Font.Name = "Arial";
+        // Set English locale (no emphasis will be applied).
         builder.Font.LocaleId = new CultureInfo("en-US", false).LCID;
 
-        // No emphasis mark will be applied because the language is not Japanese.
-        builder.Writeln("This English text does not have an emphasis mark.");
+        // Write English text; emphasis mark will remain None.
+        builder.Writeln("Regular English text without emphasis");
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "EastAsianEmphasis.docx");
+        // Save the document to the specified path.
         doc.Save(outputPath);
+
+        // Simple verification that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document created successfully at: " + outputPath);
+        }
     }
 }

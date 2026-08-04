@@ -7,34 +7,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for output files.
+        // Create output directory.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Build a simple document with a couple of different fonts.
+        // Build a simple document with two different fonts.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         builder.Font.Name = "Arial";
-        builder.Writeln("This line uses Arial.");
+        builder.Writeln("This text uses Arial.");
 
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("This line uses Times New Roman.");
+        builder.Font.Name = "Courier New";
+        builder.Writeln("This text uses Courier New.");
 
-        // Configure PDF save options to embed all fonts.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // Configure PDF save options to embed all fonts fully.
+        PdfSaveOptions options = new PdfSaveOptions
         {
-            // Embed every font used in the document.
-            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll,
-            // Optional: embed the full font files (no subsetting) for maximum fidelity.
-            EmbedFullFonts = true
+            EmbedFullFonts = true,
+            FontEmbeddingMode = Aspose.Words.Saving.PdfFontEmbeddingMode.EmbedAll
         };
 
-        // Save the document as PDF with the specified options.
+        // Save the document as PDF.
         string pdfPath = Path.Combine(artifactsDir, "EmbeddedFonts.pdf");
-        doc.Save(pdfPath, pdfOptions);
+        doc.Save(pdfPath, options);
 
-        // Simple verification that the file was created.
+        // Verify that the PDF file was created.
         if (File.Exists(pdfPath))
         {
             Console.WriteLine($"PDF saved successfully to: {pdfPath}");

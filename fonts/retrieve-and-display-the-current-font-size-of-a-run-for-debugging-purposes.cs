@@ -2,31 +2,31 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class RetrieveRunFontSize
 {
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a Run with sample text.
-        Run run = new Run(doc, "Sample text for font size debugging.");
+        // Create a run with sample text.
+        Run run = new Run(doc, "Sample text");
 
-        // Set a known font size (in points) using the Run's Font property.
-        Aspose.Words.Font font = run.Font;
-        font.Size = 24;
+        // Set a specific font size for the run.
+        run.Font.Size = 24;
 
-        // Append the Run to the first paragraph of the document.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
+        // Append the run to the first paragraph of the document.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        paragraph.AppendChild(run);
 
-        // Retrieve the current font size from the Run.
+        // Save the document (optional, but ensures output file exists).
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "RunFontSize.docx");
+        doc.Save(outputPath);
+
+        // Retrieve the current font size of the run.
         double currentSize = run.Font.Size;
 
-        // Output the font size to the console for debugging.
-        Console.WriteLine($"Current font size of the run: {currentSize} points");
-
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontSizeDebug.docx");
-        doc.Save(outputPath);
+        // Display the font size for debugging purposes.
+        Console.WriteLine($"Run font size: {currentSize} points");
     }
 }

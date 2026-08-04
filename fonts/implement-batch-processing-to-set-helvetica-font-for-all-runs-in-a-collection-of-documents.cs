@@ -4,60 +4,64 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-namespace FontBatchProcessing
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Define folders for source and processed documents.
+        string baseDir = Directory.GetCurrentDirectory();
+        string sourceDir = Path.Combine(baseDir, "SourceDocs");
+        string outputDir = Path.Combine(baseDir, "ProcessedDocs");
+
+        Directory.CreateDirectory(sourceDir);
+        Directory.CreateDirectory(outputDir);
+
+        // Create a few sample documents.
+        List<string> sourceFiles = new List<string>();
+        for (int i = 1; i <= 3; i++)
         {
-            // Folder to store sample documents.
-            string docsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
-            Directory.CreateDirectory(docsFolder);
+            string filePath = Path.Combine(sourceDir, $"Doc{i}.docx");
+            CreateSampleDocument(filePath, $"This is sample document {i}.");
+            sourceFiles.Add(filePath);
+        }
 
-            // Create a few sample documents.
-            List<string> docPaths = new List<string>();
-            for (int i = 1; i <= 3; i++)
+        // Process each document: set all Run fonts to Helvetica.
+        foreach (string srcPath in sourceFiles)
+        {
+            // Load the document.
+            Document doc = new Document(srcPath);
+
+            // Iterate over all Run nodes and set the font name.
+            NodeCollection runs = doc.GetChildNodes(NodeType.Run, true);
+            foreach (Run run in runs)
             {
-                string path = Path.Combine(docsFolder, $"Sample{i}.docx");
-                CreateSampleDocument(path, $"This is sample document {i}.");
-                docPaths.Add(path);
-            }
-
-            // Process each document: set Helvetica font for every Run.
-            foreach (string path in docPaths)
-            {
-                Document doc = new Document(path);
-
-                // Iterate over all Run nodes in the document.
-                foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+                run.Font.Name = "Helvetica";
+                // Simple validation that the font name was set.
+                if (run.Font.Name != "Helvetica")
                 {
-                    // Set the font name to Helvetica.
-                    run.Font.Name = "Helvetica";
-                }
-
-                // Save the modified document (overwrite original).
-                doc.Save(path);
-            }
-
-            // Verify that all documents exist after processing.
-            foreach (string path in docPaths)
-            {
-                if (!File.Exists(path))
-                {
-                    throw new FileNotFoundException($"Processed file not found: {path}");
+                    throw new InvalidOperationException("Failed to set font to Helvetica.");
                 }
             }
 
-            // All done.
+            // Save the modified document.
+            string fileName = Path.GetFileNameWithoutExtension(srcPath);
+            string outPath = Path.Combine(outputDir, $"{fileName}_Processed.docx");
+            doc.Save(outPath);
         }
 
-        // Helper method to create a simple document with one paragraph of text.
-        private static void CreateSampleDocument(string filePath, string text)
+        // Optional: confirm that processed files exist.
+        foreach (string file in Directory.GetFiles(outputDir, "*.docx"))
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln(text);
-            doc.Save(filePath);
+            Console.WriteLine($"Processed file created: {file}");
         }
+    }
+
+    // Helper method to create a simple document with some text.
+    private static void CreateSampleDocument(string path, string text)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(text);
+        doc.Save(path);
     }
 }

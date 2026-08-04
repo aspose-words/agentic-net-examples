@@ -6,45 +6,30 @@ public class Program
 {
     public static void Main()
     {
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UnderlineDoubleWave.docx");
+
         // Create a new blank document.
-        Document doc = new Document();
+        Aspose.Words.Document doc = new Aspose.Words.Document();
 
-        // Use DocumentBuilder to add content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a run with some text.
+        Aspose.Words.Run run = new Aspose.Words.Run(doc, "This run has a double‑wave underline.");
 
-        // Insert a run of text.
-        builder.Write("This text has a double wave underline.");
+        // Set the underline type to double wave (WavyDouble) for the run's font.
+        run.Font.Underline = Aspose.Words.Underline.WavyDouble;
 
-        // Set the underline type to double wave.
-        // The correct enum value is Underline.WavyDouble.
-        builder.Font.Underline = Underline.WavyDouble;
+        // Verify that the underline was set correctly.
+        if (run.Font.Underline != Aspose.Words.Underline.WavyDouble)
+            throw new InvalidOperationException("Failed to set the underline type to double wave.");
 
-        // Validate that the underline was set correctly.
-        if (builder.Font.Underline == Underline.WavyDouble)
-        {
-            Console.WriteLine("Underline type successfully set to DoubleWave.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to set underline type.");
-        }
+        // Append the run to the first paragraph of the document.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "DoubleWaveUnderline.docx");
+        // Save the document to the specified path.
         doc.Save(outputPath);
 
-        // Confirm that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to: {outputPath}");
-        }
-        else
-        {
-            Console.WriteLine("Document was not saved.");
-        }
+        // Ensure that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
     }
 }

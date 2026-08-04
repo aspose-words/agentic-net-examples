@@ -1,44 +1,45 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Drawing; // Required package, not used directly
-using Newtonsoft.Json; // Required package, not used directly
+using Aspose.Words.Fonts;
+using Newtonsoft.Json; // Included as per required packages.
 
 public class Program
 {
     public static void Main()
     {
         // Create a new blank document.
-        Aspose.Words.Document doc = new Aspose.Words.Document();
+        Document doc = new Document();
 
-        // Initialize a DocumentBuilder to add content to the document.
-        Aspose.Words.DocumentBuilder builder = new Aspose.Words.DocumentBuilder(doc);
+        // Use DocumentBuilder to add content to the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph of text.
-        builder.Writeln("This paragraph will have double line spacing.");
+        // Set the paragraph's line spacing to double.
+        // The default line height is 12 points, so double spacing is 24 points.
+        builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
+        builder.ParagraphFormat.LineSpacing = 24;
 
-        // Configure the paragraph to use multiple line spacing (based on line count).
-        builder.ParagraphFormat.LineSpacingRule = Aspose.Words.LineSpacingRule.Multiple;
+        // Add some text to demonstrate the line spacing.
+        builder.Writeln("This paragraph has double line spacing.");
+        builder.Writeln("Second line of the same paragraph.");
 
-        // Set the line spacing to double (2 * 12 points = 24 points).
-        builder.ParagraphFormat.LineSpacing = 24.0;
+        // Validate that the line spacing was applied correctly.
+        if (builder.ParagraphFormat.LineSpacing != 24 ||
+            builder.ParagraphFormat.LineSpacingRule != LineSpacingRule.Multiple)
+        {
+            throw new InvalidOperationException("Line spacing was not set correctly.");
+        }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DoubleLineSpacing.docx");
+        // Define the output file path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "DoubleLineSpacing.docx");
+
+        // Save the document to the specified path.
         doc.Save(outputPath);
 
-        // Verify that the file was created successfully.
-        if (File.Exists(outputPath))
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
         {
-            Console.WriteLine("Document saved successfully: " + outputPath);
+            throw new FileNotFoundException("The document was not saved.", outputPath);
         }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
-
-        // Output the line spacing value to confirm it was set.
-        double lineSpacing = builder.ParagraphFormat.LineSpacing;
-        Console.WriteLine("Line spacing set to: " + lineSpacing);
     }
 }

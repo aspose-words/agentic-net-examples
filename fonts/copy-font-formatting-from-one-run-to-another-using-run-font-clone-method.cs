@@ -1,6 +1,7 @@
 using System;
-using System.IO;
+using System.Diagnostics;
 using Aspose.Words;
+using Aspose.Drawing; // For Aspose.Drawing.Color creation
 
 public class Program
 {
@@ -12,46 +13,33 @@ public class Program
         // Ensure the document has at least one paragraph to work with.
         Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Create the source run with custom font formatting.
-        Run sourceRun = new Run(doc, "Source text ");
+        // Create the source run with distinct font formatting.
+        Run sourceRun = new Run(doc, "Source text. ");
         sourceRun.Font.Name = "Courier New";
         sourceRun.Font.Size = 24;
         sourceRun.Font.Bold = true;
-        sourceRun.Font.Color = System.Drawing.Color.Blue; // Fully qualified System.Drawing.Color
+        // Convert Aspose.Drawing.Color to System.Drawing.Color as required by Font.Color.
+        sourceRun.Font.Color = System.Drawing.Color.FromArgb(Aspose.Drawing.Color.Blue.ToArgb());
         paragraph.AppendChild(sourceRun);
 
-        // Create the target run that will receive the copied formatting.
-        Run targetRun = new Run(doc, "Target text");
+        // Create the destination run that will receive the copied formatting.
+        Run destinationRun = new Run(doc, "Copied formatting text.");
+        paragraph.AppendChild(destinationRun);
 
-        // Copy font properties manually (Font.Clone does not exist).
-        targetRun.Font.Name = sourceRun.Font.Name;
-        targetRun.Font.Size = sourceRun.Font.Size;
-        targetRun.Font.Bold = sourceRun.Font.Bold;
-        targetRun.Font.Color = sourceRun.Font.Color;
+        // Copy font properties from the source run to the destination run.
+        destinationRun.Font.Name = sourceRun.Font.Name;
+        destinationRun.Font.Size = sourceRun.Font.Size;
+        destinationRun.Font.Bold = sourceRun.Font.Bold;
+        // Font.Color of sourceRun is already a System.Drawing.Color, so copy directly.
+        destinationRun.Font.Color = sourceRun.Font.Color;
 
-        // Optional validation to ensure properties were copied correctly.
-        if (targetRun.Font.Name != sourceRun.Font.Name ||
-            targetRun.Font.Size != sourceRun.Font.Size ||
-            targetRun.Font.Bold != sourceRun.Font.Bold ||
-            targetRun.Font.Color.ToArgb() != sourceRun.Font.Color.ToArgb())
-        {
-            Console.WriteLine("Font properties were not copied correctly.");
-        }
-
-        paragraph.AppendChild(targetRun);
+        // Optional validation of the copied properties.
+        Debug.Assert(destinationRun.Font.Name == "Courier New");
+        Debug.Assert(destinationRun.Font.Size == 24);
+        Debug.Assert(destinationRun.Font.Bold);
+        Debug.Assert(destinationRun.Font.Color.ToArgb() == System.Drawing.Color.Blue.ToArgb());
 
         // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CopyFontFormatting.docx");
-        doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Document saved successfully: " + outputPath);
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+        doc.Save("CopyFontFormatting.docx");
     }
 }
