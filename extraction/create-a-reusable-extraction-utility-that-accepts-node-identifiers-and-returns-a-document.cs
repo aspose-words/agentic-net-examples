@@ -2,148 +2,185 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
 public class ExtractionUtility
 {
-    // Extracts content based on node type and identifier.
-    // nodeType: "Paragraph", "Bookmark", "Table"
-    // identifier: for Paragraph/Table - zero‑based index as string; for Bookmark - bookmark name.
-    public static Document ExtractContent(Document source, string nodeType, string identifier)
-    {
-        if (source == null) throw new ArgumentNullException(nameof(source));
-        if (string.IsNullOrEmpty(nodeType)) throw new ArgumentException("Node type is required.", nameof(nodeType));
-        if (string.IsNullOrEmpty(identifier)) throw new ArgumentException("Identifier is required.", nameof(identifier));
+    private readonly Document _source;
 
-        // Create an empty destination document.
+    public ExtractionUtility(Document source)
+    {
+        _source = source ?? throw new ArgumentNullException(nameof(source));
+    }
+
+    // Extracts the content of a bookmark into a new document.
+    public Document ExtractBookmark(string bookmarkName)
+    {
+        if (string.IsNullOrEmpty(bookmarkName))
+            throw new ArgumentException("Bookmark name must be provided.", nameof(bookmarkName));
+
+        Bookmark bookmark = _source.Range.Bookmarks[bookmarkName];
+        if (bookmark == null)
+            throw new InvalidOperationException($"Bookmark '{bookmarkName}' not found.");
+
+        // Create a new empty document with a proper structure.
         Document result = new Document();
         result.RemoveAllChildren();
 
-        // Add a section and body to the destination document.
         Section section = new Section(result);
         result.AppendChild(section);
         Body body = new Body(result);
         section.AppendChild(body);
 
-        // Use NodeImporter for efficient node import with style handling.
-        NodeImporter importer = new NodeImporter(source, result, ImportFormatMode.KeepSourceFormatting);
+        // Preserve the bookmark text as a paragraph.
+        Paragraph para = new Paragraph(result);
+        para.AppendChild(new Run(result, bookmark.Text));
+        body.AppendChild(para);
 
-        switch (nodeType.Trim().ToLowerInvariant())
+        return result;
+    }
+
+    // Extracts a range of paragraphs (inclusive) by their zero‑based indices.
+    public Document ExtractParagraphRange(int startIndex, int endIndex)
+    {
+        if (startIndex < 0 || endIndex < startIndex)
+            throw new ArgumentException("Invalid paragraph range.");
+
+        ParagraphCollection sourceParas = _source.FirstSection.Body.Paragraphs;
+        if (endIndex >= sourceParas.Count)
+            throw new ArgumentOutOfRangeException(nameof(endIndex), "End index exceeds paragraph count.");
+
+        Document result = new Document();
+        result.RemoveAllChildren();
+
+        Section section = new Section(result);
+        result.AppendChild(section);
+        Body body = new Body(result);
+        section.AppendChild(body);
+
+        for (int i = startIndex; i <= endIndex; i++)
         {
-            case "paragraph":
-                if (!int.TryParse(identifier, out int paraIndex))
-                    throw new ArgumentException("Paragraph identifier must be an integer index.", nameof(identifier));
-
-                Paragraph sourcePara = source.FirstSection.Body.Paragraphs[paraIndex];
-                if (sourcePara == null)
-                    throw new InvalidOperationException($"Paragraph at index {paraIndex} not found.");
-
-                // Import the paragraph into the destination document.
-                Node importedPara = importer.ImportNode(sourcePara, true);
-                body.AppendChild(importedPara);
-                break;
-
-            case "bookmark":
-                Bookmark bookmark = source.Range.Bookmarks[identifier];
-                if (bookmark == null)
-                    throw new InvalidOperationException($"Bookmark \"{identifier}\" not found.");
-
-                // Build a new paragraph in the destination document.
-                Paragraph para = new Paragraph(result);
-
-                // Traverse nodes between BookmarkStart and BookmarkEnd.
-                Node currentNode = bookmark.BookmarkStart.NextSibling;
-                while (currentNode != null && currentNode != bookmark.BookmarkEnd)
-                {
-                    Node importedNode = importer.ImportNode(currentNode, true);
-                    para.AppendChild(importedNode);
-                    currentNode = currentNode.NextSibling;
-                }
-
-                body.AppendChild(para);
-                break;
-
-            case "table":
-                if (!int.TryParse(identifier, out int tableIndex))
-                    throw new ArgumentException("Table identifier must be an integer index.", nameof(identifier));
-
-                NodeCollection tables = source.GetChildNodes(NodeType.Table, true);
-                if (tableIndex < 0 || tableIndex >= tables.Count)
-                    throw new InvalidOperationException($"Table at index {tableIndex} not found.");
-
-                Table sourceTable = tables[tableIndex] as Table;
-                if (sourceTable == null)
-                    throw new InvalidOperationException("Failed to cast node to Table.");
-
-                // Import the table into the destination document.
-                Node importedTable = importer.ImportNode(sourceTable, true);
-                body.AppendChild(importedTable);
-                break;
-
-            default:
-                throw new NotSupportedException($"Node type \"{nodeType}\" is not supported.");
+            // Import the paragraph into the destination document before appending.
+            Node imported = result.ImportNode(sourceParas[i], true);
+            body.AppendChild(imported);
         }
 
         return result;
     }
 
-    // Helper to create a sample document containing paragraphs, a table, and bookmarks.
-    private static void CreateSampleDocument(string filePath)
+    // Extracts a table by its zero‑based index.
+    public Document ExtractTable(int tableIndex)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        if (tableIndex < 0)
+            throw new ArgumentException("Table index must be non‑negative.", nameof(tableIndex));
 
-        // Paragraphs
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph.");
-        builder.Writeln("Third paragraph.");
+        NodeCollection tables = _source.GetChildNodes(NodeType.Table, true);
+        if (tableIndex >= tables.Count)
+            throw new InvalidOperationException($"Table at index {tableIndex} not found.");
 
-        // Table
-        builder.StartTable();
-        builder.InsertCell(); builder.Write("A1");
-        builder.InsertCell(); builder.Write("B1");
-        builder.EndRow();
-        builder.InsertCell(); builder.Write("A2");
-        builder.InsertCell(); builder.Write("B2");
-        builder.EndRow();
-        builder.EndTable();
+        Table table = tables[tableIndex] as Table;
+        if (table == null)
+            throw new InvalidOperationException($"Node at index {tableIndex} is not a table.");
 
-        // Bookmarks
-        builder.StartBookmark("SampleBookmark");
-        builder.Writeln("This is text inside the bookmark.");
-        builder.EndBookmark("SampleBookmark");
+        Document result = new Document();
+        result.RemoveAllChildren();
 
-        doc.Save(filePath);
+        Section section = new Section(result);
+        result.AppendChild(section);
+        Body body = new Body(result);
+        section.AppendChild(body);
+
+        // Import the table into the new document.
+        Node imported = result.ImportNode(table, true);
+        body.AppendChild(imported);
+
+        return result;
     }
+}
 
+public class Program
+{
     public static void Main()
     {
-        // Create a sample document.
-        string samplePath = "sample.docx";
-        CreateSampleDocument(samplePath);
+        // -----------------------------------------------------------------
+        // 1. Create a sample source document with paragraphs, a table and bookmarks.
+        // -----------------------------------------------------------------
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
 
-        Document sourceDoc = new Document(samplePath);
+        // Paragraphs
+        builder.Writeln("Paragraph 0 – introduction.");
+        builder.Writeln("Paragraph 1 – first content.");
+        builder.Writeln("Paragraph 2 – second content.");
+        builder.Writeln("Paragraph 3 – conclusion.");
 
-        // Extract the second paragraph (index 1).
-        Document paraDoc = ExtractContent(sourceDoc, "Paragraph", "1");
-        string paraOutput = "extracted-paragraph.docx";
-        paraDoc.Save(paraOutput);
-        if (!File.Exists(paraOutput))
-            throw new InvalidOperationException("Paragraph extraction failed.");
+        // Insert a table
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell A1");
+        builder.InsertCell();
+        builder.Write("Cell B1");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell A2");
+        builder.InsertCell();
+        builder.Write("Cell B2");
+        builder.EndTable();
 
-        // Extract the bookmark content.
-        Document bookmarkDoc = ExtractContent(sourceDoc, "Bookmark", "SampleBookmark");
-        string bookmarkOutput = "extracted-bookmark.docx";
-        bookmarkDoc.Save(bookmarkOutput);
-        if (!File.Exists(bookmarkOutput))
-            throw new InvalidOperationException("Bookmark extraction failed.");
+        // Bookmarks around the second paragraph
+        builder.StartBookmark("SampleBookmark");
+        builder.Writeln("This text is inside the bookmark.");
+        builder.EndBookmark("SampleBookmark");
 
-        // Extract the first table (index 0).
-        Document tableDoc = ExtractContent(sourceDoc, "Table", "0");
-        string tableOutput = "extracted-table.docx";
-        tableDoc.Save(tableOutput);
-        if (!File.Exists(tableOutput))
-            throw new InvalidOperationException("Table extraction failed.");
+        // Save the source document.
+        const string sourcePath = "source.docx";
+        source.Save(sourcePath);
 
-        // All extractions completed successfully.
+        // -----------------------------------------------------------------
+        // 2. Load the source document and use the extraction utility.
+        // -----------------------------------------------------------------
+        Document loaded = new Document(sourcePath);
+        ExtractionUtility extractor = new ExtractionUtility(loaded);
+
+        // Extract bookmark content.
+        Document bookmarkDoc = extractor.ExtractBookmark("SampleBookmark");
+        const string bookmarkPath = "bookmark_extracted.docx";
+        bookmarkDoc.Save(bookmarkPath);
+        if (!File.Exists(bookmarkPath))
+            throw new InvalidOperationException("Bookmark extraction failed – output file not created.");
+
+        // Extract paragraphs 1 through 2 (inclusive).
+        Document paraRangeDoc = extractor.ExtractParagraphRange(1, 2);
+        const string paraRangePath = "paragraph_range_extracted.docx";
+        paraRangeDoc.Save(paraRangePath);
+        if (!File.Exists(paraRangePath))
+            throw new InvalidOperationException("Paragraph range extraction failed – output file not created.");
+
+        // Extract the first table.
+        Document tableDoc = extractor.ExtractTable(0);
+        const string tablePath = "table_extracted.docx";
+        tableDoc.Save(tablePath);
+        if (!File.Exists(tablePath))
+            throw new InvalidOperationException("Table extraction failed – output file not created.");
+
+        // -----------------------------------------------------------------
+        // 3. Serialize simple metadata about the extraction to JSON (optional).
+        // -----------------------------------------------------------------
+        var metadata = new
+        {
+            BookmarkExtractionFile = bookmarkPath,
+            ParagraphRangeExtractionFile = paraRangePath,
+            TableExtractionFile = tablePath,
+            ExtractionTime = DateTime.UtcNow
+        };
+
+        string json = JsonConvert.SerializeObject(metadata, Formatting.Indented);
+        const string jsonPath = "extraction_metadata.json";
+        File.WriteAllText(jsonPath, json);
+        if (!File.Exists(jsonPath))
+            throw new InvalidOperationException("Failed to write extraction metadata JSON.");
+
+        // Indicate successful completion.
+        Console.WriteLine("Extraction completed successfully.");
     }
 }

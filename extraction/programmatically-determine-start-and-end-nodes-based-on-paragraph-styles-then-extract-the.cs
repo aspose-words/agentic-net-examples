@@ -7,96 +7,101 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with styled paragraphs.
+        // -----------------------------------------------------------------
+        // 1. Create a sample source document with styled paragraphs.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // Paragraph with style "Heading 1" – start marker.
+        builder.ParagraphFormat.StyleName = "Heading 1";
+        builder.Writeln("Start of the extracted segment");
+
+        // Normal paragraphs.
+        builder.ParagraphFormat.StyleName = "Normal";
+        builder.Writeln("Paragraph A");
+        builder.Writeln("Paragraph B");
+
+        // Paragraph with style "Heading 2" – end marker.
+        builder.ParagraphFormat.StyleName = "Heading 2";
+        builder.Writeln("End of the extracted segment");
+
+        // Additional content after the end marker.
+        builder.ParagraphFormat.StyleName = "Normal";
+        builder.Writeln("Paragraph C");
+
         const string sourcePath = "source.docx";
-        CreateSampleDocument(sourcePath);
+        sourceDoc.Save(sourcePath);
 
-        // Load the document.
-        Document sourceDoc = new Document(sourcePath);
-
-        // Define the styles that mark the start and end of the segment to extract.
-        const string startStyleName = "Heading 1";
-        const string endStyleName = "Heading 2";
+        // -----------------------------------------------------------------
+        // 2. Load the document for processing.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
 
         // Locate the start and end paragraphs based on their styles.
         Paragraph startParagraph = null;
         Paragraph endParagraph = null;
-        int startIndex = -1;
-        int endIndex = -1;
 
-        NodeCollection paragraphNodes = sourceDoc.FirstSection.Body.Paragraphs;
-        for (int i = 0; i < paragraphNodes.Count; i++)
+        foreach (Paragraph para in loadedDoc.FirstSection.Body.Paragraphs)
         {
-            Paragraph para = (Paragraph)paragraphNodes[i];
-            string style = para.ParagraphFormat.StyleName;
-
-            if (startParagraph == null && style == startStyleName)
-            {
+            string styleName = para.ParagraphFormat.StyleName;
+            if (startParagraph == null && styleName == "Heading 1")
                 startParagraph = para;
-                startIndex = i;
-            }
-            else if (startParagraph != null && style == endStyleName)
+            else if (startParagraph != null && styleName == "Heading 2")
             {
                 endParagraph = para;
-                endIndex = i;
                 break;
             }
         }
 
-        if (startParagraph == null || endParagraph == null)
-            throw new InvalidOperationException("Styled start or end paragraph not found.");
+        if (startParagraph == null)
+            throw new InvalidOperationException("Start paragraph with style 'Heading 1' not found.");
+        if (endParagraph == null)
+            throw new InvalidOperationException("End paragraph with style 'Heading 2' not found.");
 
-        // Build a new document that will contain the extracted segment.
-        Document extractedDoc = new Document();
-        extractedDoc.RemoveAllChildren();
+        // -----------------------------------------------------------------
+        // 3. Build a new document containing the extracted range.
+        // -----------------------------------------------------------------
+        Document resultDoc = new Document();
+        resultDoc.RemoveAllChildren();
 
-        // Create a fresh section and body for the destination document.
-        Section section = new Section(extractedDoc);
-        extractedDoc.AppendChild(section);
+        Section resultSection = new Section(resultDoc);
+        resultDoc.AppendChild(resultSection);
 
-        Body body = new Body(extractedDoc);
-        section.AppendChild(body);
+        Body resultBody = new Body(resultDoc);
+        resultSection.AppendChild(resultBody);
 
-        // Import and copy all paragraphs from start to end (inclusive) into the new document.
+        // Determine the indices of the start and end paragraphs within the body.
+        NodeCollection bodyParagraphs = loadedDoc.FirstSection.Body.GetChildNodes(NodeType.Paragraph, true);
+        int startIndex = bodyParagraphs.IndexOf(startParagraph);
+        int endIndex = bodyParagraphs.IndexOf(endParagraph);
+
+        if (startIndex < 0 || endIndex < 0 || endIndex < startIndex)
+            throw new InvalidOperationException("Invalid paragraph indices for extraction.");
+
+        // Use NodeImporter to copy nodes from the source document to the destination document.
+        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+
         for (int i = startIndex; i <= endIndex; i++)
         {
-            Paragraph srcPara = (Paragraph)paragraphNodes[i];
-            // Import the node so that it belongs to the destination document.
-            Node importedNode = extractedDoc.ImportNode(srcPara, true);
-            body.AppendChild(importedNode);
+            Paragraph srcPara = (Paragraph)bodyParagraphs[i];
+            Node importedNode = importer.ImportNode(srcPara, true);
+            resultBody.AppendChild(importedNode);
         }
 
-        // Save the extracted content.
+        // Verify that the extracted document contains the expected number of paragraphs.
+        int expectedCount = endIndex - startIndex + 1;
+        if (resultDoc.FirstSection.Body.Paragraphs.Count != expectedCount)
+            throw new InvalidOperationException("Paragraph count mismatch after extraction.");
+
+        // -----------------------------------------------------------------
+        // 4. Save the extracted segment.
+        // -----------------------------------------------------------------
         const string resultPath = "extracted.docx";
-        extractedDoc.Save(resultPath);
+        resultDoc.Save(resultPath);
 
-        // Verify that the output file was created.
+        // Ensure the output file was created.
         if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The extracted document was not saved.");
-    }
-
-    private static void CreateSampleDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Paragraph that marks the start (Heading 1).
-        builder.ParagraphFormat.StyleName = "Heading 1";
-        builder.Writeln("Start of extracted segment");
-
-        // Some normal paragraphs inside the segment.
-        builder.ParagraphFormat.StyleName = "Normal";
-        builder.Writeln("First paragraph inside segment.");
-        builder.Writeln("Second paragraph inside segment.");
-
-        // Paragraph that marks the end (Heading 2).
-        builder.ParagraphFormat.StyleName = "Heading 2";
-        builder.Writeln("End of extracted segment");
-
-        // Additional content after the segment.
-        builder.ParagraphFormat.StyleName = "Normal";
-        builder.Writeln("Paragraph after the extracted segment.");
-
-        doc.Save(filePath);
+            throw new InvalidOperationException("The extracted document was not created.");
     }
 }

@@ -2,96 +2,82 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // 1. Build a sample document containing a run and a bookmark.
-        // -------------------------------------------------
+        // 1. Create a sample source document with runs and a bookmark.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Paragraph before the run.");
+        builder.Writeln("Paragraph before the target run.");
+        builder.Write("FirstRun");               // This creates a Run inside a Paragraph.
+        builder.Writeln();                       // End the paragraph.
 
-        // Paragraph that will contain the target Run.
-        builder.Writeln("Paragraph with the target run:");
-        Paragraph paraWithRun = builder.CurrentParagraph;
-        Run targetRun = new Run(sourceDoc, "TargetRun");
-        paraWithRun.AppendChild(targetRun);
-
-        // Some additional content after the run.
-        builder.Writeln("Text after the run, before the bookmark.");
-
-        // Insert a bookmark after the above content.
-        builder.StartBookmark("MyBookmark");
+        builder.Writeln("Paragraph between run and bookmark.");
+        builder.StartBookmark("TargetBookmark");
         builder.Writeln("Content inside the bookmark.");
-        builder.EndBookmark("MyBookmark");
+        builder.EndBookmark("TargetBookmark");
+        builder.Writeln("Paragraph after the bookmark.");
 
-        // Save the source document (optional, for inspection).
         const string sourcePath = "source.docx";
         sourceDoc.Save(sourcePath);
 
-        // -------------------------------------------------
-        // 2. Locate the first bookmark that appears after the target run.
-        // -------------------------------------------------
-        BookmarkStart nextBookmarkStart = null;
-        Node node = targetRun;
-        while ((node = node.NextPreOrder(sourceDoc)) != null)
+        // 2. Locate the first Run node in the document.
+        Run startRun = sourceDoc.GetChildNodes(NodeType.Run, true)[0] as Run;
+        if (startRun == null)
+            throw new InvalidOperationException("Run node not found.");
+
+        // 3. Find the next BookmarkStart node after the Run.
+        BookmarkStart nextBookmark = null;
+        Node traversalNode = startRun;
+        while ((traversalNode = traversalNode.NextPreOrder(sourceDoc)) != null)
         {
-            if (node.NodeType == NodeType.BookmarkStart)
+            if (traversalNode.NodeType == NodeType.BookmarkStart)
             {
-                nextBookmarkStart = (BookmarkStart)node;
+                nextBookmark = (BookmarkStart)traversalNode;
                 break;
             }
         }
 
-        if (nextBookmarkStart == null)
-            throw new InvalidOperationException("No bookmark found after the target run.");
+        if (nextBookmark == null)
+            throw new InvalidOperationException("Next bookmark not found.");
 
-        // -------------------------------------------------
-        // 3. Extract all nodes that lie between the run and the bookmark.
-        //    Only block‑level nodes (Paragraph, Table) can be added directly to a Body.
-        //    Inline nodes (Run) are wrapped in a Paragraph first.
-        // -------------------------------------------------
-        Document extractedDoc = new Document(); // contains a default section & body.
+        // 4. Extract content between the Run and the next BookmarkStart.
+        Document extractedDoc = new Document();
+        extractedDoc.RemoveAllChildren(); // Ensure a clean document.
+
+        // Build a minimal document structure: Section -> Body.
+        Section section = new Section(extractedDoc);
+        extractedDoc.AppendChild(section);
+        Body body = new Body(extractedDoc);
+        section.AppendChild(body);
+
+        // Use NodeImporter to import nodes from sourceDoc into extractedDoc.
         NodeImporter importer = new NodeImporter(sourceDoc, extractedDoc, ImportFormatMode.KeepSourceFormatting);
-        Node current = targetRun;
 
-        while ((current = current.NextPreOrder(sourceDoc)) != null && current != nextBookmarkStart)
+        // Start traversal from the node immediately after the startRun.
+        Node currentNode = startRun;
+        while ((currentNode = currentNode.NextPreOrder(sourceDoc)) != null)
         {
-            // Import the node into the destination document.
-            Node imported = importer.ImportNode(current, true);
+            if (currentNode == nextBookmark)
+                break; // Stop before the bookmark.
 
-            switch (imported.NodeType)
+            // Import only block-level nodes that can be children of Body.
+            if (currentNode.NodeType == NodeType.Paragraph || currentNode.NodeType == NodeType.Table)
             {
-                case NodeType.Paragraph:
-                case NodeType.Table:
-                    // Block nodes can be appended directly.
-                    extractedDoc.FirstSection.Body.AppendChild(imported);
-                    break;
-
-                case NodeType.Run:
-                    // Inline nodes must be placed inside a paragraph.
-                    Paragraph wrapper = new Paragraph(extractedDoc);
-                    wrapper.AppendChild(imported);
-                    extractedDoc.FirstSection.Body.AppendChild(wrapper);
-                    break;
-
-                // Skip other node types (e.g., BookmarkStart/End) that are not needed for the output.
-                default:
-                    break;
+                Node importedNode = importer.ImportNode(currentNode, true);
+                body.AppendChild(importedNode);
             }
         }
 
-        // -------------------------------------------------
-        // 4. Save the extracted fragment as HTML.
-        // -------------------------------------------------
+        // 5. Convert the extracted segment to HTML.
         const string htmlPath = "extracted.html";
         extractedDoc.Save(htmlPath, SaveFormat.Html);
 
-        // Verify that the HTML file was created.
+        // Validate that the HTML file was created.
         if (!File.Exists(htmlPath))
             throw new InvalidOperationException("HTML extraction output was not created.");
     }

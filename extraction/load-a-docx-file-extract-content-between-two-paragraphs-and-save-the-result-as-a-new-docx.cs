@@ -2,77 +2,55 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample source document.
+        // Create a sample source document with four paragraphs.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Paragraph 1");
+        builder.Writeln("Paragraph 2");
+        builder.Writeln("Paragraph 3");
+        builder.Writeln("Paragraph 4");
         const string sourcePath = "source.docx";
-        var sourceDoc = new Document();
-        var builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Paragraph 0 - before start");
-        builder.Writeln("Paragraph 1 - start");
-        builder.Writeln("Paragraph 2 - middle");
-        builder.Writeln("Paragraph 3 - end");
-        builder.Writeln("Paragraph 4 - after end");
         sourceDoc.Save(sourcePath);
 
-        // Load the document.
-        var doc = new Document(sourcePath);
-        var body = doc.FirstSection.Body;
+        // Load the document from the file system.
+        Document loadedDoc = new Document(sourcePath);
 
-        // Identify the start and end paragraphs (by index).
-        if (body.Paragraphs.Count < 4)
-            throw new InvalidOperationException("The source document does not contain enough paragraphs.");
+        // Identify the start and end paragraphs (inclusive extraction).
+        Paragraph startParagraph = loadedDoc.FirstSection.Body.Paragraphs[1];
+        Paragraph endParagraph = loadedDoc.FirstSection.Body.Paragraphs[2];
 
-        var startParagraph = body.Paragraphs[1];
-        var endParagraph = body.Paragraphs[3];
+        if (startParagraph == null || endParagraph == null)
+            throw new InvalidOperationException("Required paragraphs were not found.");
 
-        // Determine their positions.
-        int startIndex = body.Paragraphs.IndexOf(startParagraph);
-        int endIndex = body.Paragraphs.IndexOf(endParagraph);
-        if (startIndex < 0 || endIndex < 0 || startIndex > endIndex)
-            throw new InvalidOperationException("Invalid paragraph boundaries.");
+        // Prepare the destination document.
+        Document resultDoc = new Document();
+        resultDoc.RemoveAllChildren(); // Clear the default nodes.
 
-        // Prepare the result document.
-        var resultDoc = new Document();
-        resultDoc.RemoveAllChildren(); // Remove the default empty section.
-
-        var resultSection = new Section(resultDoc);
+        // Create a new section and body for the result document.
+        Section resultSection = new Section(resultDoc);
         resultDoc.AppendChild(resultSection);
-        var resultBody = new Body(resultDoc);
+        Body resultBody = new Body(resultDoc);
         resultSection.AppendChild(resultBody);
 
-        // Importer to copy nodes between documents.
-        var importer = new NodeImporter(doc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        // Import the selected paragraphs into the result document.
+        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedStart = importer.ImportNode(startParagraph, true);
+        Node importedEnd = importer.ImportNode(endParagraph, true);
 
-        // Clone and copy paragraphs from start to end inclusive.
-        for (int i = startIndex; i <= endIndex; i++)
-        {
-            var paragraph = body.Paragraphs[i];
-            var importedNode = importer.ImportNode(paragraph, true);
-            resultBody.AppendChild(importedNode);
-        }
+        resultBody.AppendChild(importedStart);
+        resultBody.AppendChild(importedEnd);
 
-        // Save the extracted document.
+        // Save the extracted content as a new DOCX file.
         const string resultPath = "extracted.docx";
         resultDoc.Save(resultPath);
 
         // Verify that the output file was created.
         if (!File.Exists(resultPath))
             throw new InvalidOperationException("The extracted document was not created.");
-
-        // Optional: write a small JSON report.
-        var report = new
-        {
-            SourceDocument = sourcePath,
-            ExtractedDocument = resultPath,
-            ExtractedParagraphCount = resultBody.Paragraphs.Count,
-            ExtractionTime = DateTime.UtcNow
-        };
-        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
-        File.WriteAllText("extractionInfo.json", json);
     }
 }

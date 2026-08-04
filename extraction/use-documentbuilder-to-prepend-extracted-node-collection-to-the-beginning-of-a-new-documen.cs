@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -15,25 +14,27 @@ public class Program
         srcBuilder.Writeln("Third paragraph.");
         sourceDoc.Save("source.docx");
 
-        // Load the source document (demonstrates loading workflow).
+        // Load the source document.
         Document loadedSource = new Document("source.docx");
 
         // Extract all paragraph nodes from the source document.
-        NodeCollection sourceParagraphs = loadedSource.FirstSection.Body.GetChildNodes(NodeType.Paragraph, true);
+        NodeCollection sourceParagraphs = loadedSource.GetChildNodes(NodeType.Paragraph, true);
         if (sourceParagraphs.Count == 0)
-            throw new InvalidOperationException("No paragraphs were extracted from the source document.");
+            throw new InvalidOperationException("No paragraphs were found in the source document.");
 
-        // Create a new destination document.
+        // Create a new empty destination document and ensure it has the minimal structure.
         Document destDoc = new Document();
+        destDoc.RemoveAllChildren();
+        destDoc.EnsureMinimum(); // Adds a Section, Body, and an empty Paragraph.
+
+        // Get the body of the destination document.
+        Body destBody = destDoc.FirstSection.Body;
 
         // Prepare an importer to copy nodes while preserving source formatting.
         NodeImporter importer = new NodeImporter(loadedSource, destDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Get the body of the destination document where paragraphs will be prepended.
-        Body destBody = destDoc.FirstSection.Body;
-
-        // Prepend the extracted paragraphs to the beginning of the destination document.
-        // Iterate in reverse order and prepend each imported paragraph.
+        // Prepend the extracted paragraphs to the beginning of the destination body.
+        // Iterate in reverse order because PrependChild inserts before existing content.
         for (int i = sourceParagraphs.Count - 1; i >= 0; i--)
         {
             Node importedNode = importer.ImportNode(sourceParagraphs[i], true);
@@ -47,6 +48,6 @@ public class Program
         if (!File.Exists("result.docx"))
             throw new InvalidOperationException("The result document was not created.");
 
-        Console.WriteLine("Extraction and prepend operation completed successfully.");
+        Console.WriteLine("Document created successfully.");
     }
 }

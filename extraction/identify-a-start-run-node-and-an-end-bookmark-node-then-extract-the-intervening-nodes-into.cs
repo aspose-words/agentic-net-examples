@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -7,119 +8,117 @@ public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // 1. Create a sample source document with a start run and an end bookmark.
-        // -------------------------------------------------
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
+        // -----------------------------------------------------------------
+        // 1. Create a sample source document with a start Run and an end Bookmark.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Paragraph before start.");
-        // This run will be the start node we look for.
-        builder.Write("StartRun");
-        builder.Writeln(); // finish the paragraph.
+        // Paragraph before the range.
+        builder.Writeln("Paragraph before the range.");
 
-        builder.Writeln("Middle paragraph 1.");
-        builder.Writeln("Middle paragraph 2.");
+        // Insert the start Run that will mark the beginning of extraction.
+        Run startRun = new Run(sourceDoc, "StartRun");
+        builder.CurrentParagraph.AppendChild(startRun);
+        builder.Writeln(); // End the paragraph containing the start run.
 
-        // End bookmark.
-        builder.StartBookmark("EndBookmark");
-        builder.Writeln("Paragraph after end.");
-        builder.EndBookmark("EndBookmark");
+        // Content that should be extracted (paragraphs and a table).
+        builder.Writeln("First extracted paragraph.");
+        builder.Writeln("Second extracted paragraph.");
 
-        // Save the source document to a deterministic local file.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Insert the end Bookmark that will mark the end of extraction.
+        builder.StartBookmark("EndMarker");
+        builder.Writeln("Paragraph after the range (inside bookmark).");
+        builder.EndBookmark("EndMarker");
+
+        // Paragraph after the range.
+        builder.Writeln("Paragraph after the range.");
+
+        // Save the source document.
         const string sourcePath = "source.docx";
-        source.Save(sourcePath);
+        sourceDoc.Save(sourcePath);
 
-        // -------------------------------------------------
-        // 2. Load the document for processing.
-        // -------------------------------------------------
-        Document loaded = new Document(sourcePath);
+        // -----------------------------------------------------------------
+        // 2. Load the source document and locate the start Run and end Bookmark.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
 
-        // -------------------------------------------------
-        // 3. Locate the start Run node with the exact text "StartRun".
-        // -------------------------------------------------
-        Run startRun = null;
-        foreach (Run run in loaded.GetChildNodes(NodeType.Run, true))
+        // Find the start Run by its exact text.
+        Run foundStartRun = null;
+        foreach (Run run in loadedDoc.GetChildNodes(NodeType.Run, true))
         {
             if (run.Text == "StartRun")
             {
-                startRun = run;
+                foundStartRun = run;
                 break;
             }
         }
 
-        if (startRun == null)
-            throw new InvalidOperationException("Start run node not found.");
+        if (foundStartRun == null)
+            throw new InvalidOperationException("Start Run not found.");
 
-        // -------------------------------------------------
-        // 4. Locate the end bookmark.
-        // -------------------------------------------------
-        Bookmark endBookmark = loaded.Range.Bookmarks["EndBookmark"];
+        // Find the end Bookmark by name.
+        Bookmark endBookmark = loadedDoc.Range.Bookmarks["EndMarker"];
         if (endBookmark == null)
-            throw new InvalidOperationException("End bookmark not found.");
+            throw new InvalidOperationException("End Bookmark not found.");
 
-        // The bookmark start node marks the end of the extraction range.
-        BookmarkStart endBookmarkStart = endBookmark.BookmarkStart;
+        // Use the BookmarkStart node as the exclusive end boundary.
+        Node endNode = endBookmark.BookmarkStart;
 
-        // -------------------------------------------------
-        // 5. Determine the paragraphs that bound the extraction range.
-        // -------------------------------------------------
-        Paragraph startParagraph = startRun.ParentNode as Paragraph;
-        Paragraph endParagraph = endBookmarkStart.ParentNode as Paragraph;
+        // -----------------------------------------------------------------
+        // 3. Collect all block‑level nodes that lie between the start Run and the end Bookmark.
+        // -----------------------------------------------------------------
+        List<Node> nodesToExtract = new List<Node>();
 
-        if (startParagraph == null || endParagraph == null)
-            throw new InvalidOperationException("Unable to determine paragraph boundaries.");
+        // The start Run resides inside its own paragraph. We begin extraction after that paragraph.
+        Node current = foundStartRun.ParentNode?.NextSibling;
 
-        // -------------------------------------------------
-        // 6. Prepare the destination document (empty body).
-        // -------------------------------------------------
-        Document result = new Document();
-        result.RemoveAllChildren(); // Ensure a clean document.
-        Section resultSection = new Section(result);
-        result.AppendChild(resultSection);
-        Body resultBody = new Body(result);
-        resultSection.AppendChild(resultBody);
-
-        // -------------------------------------------------
-        // 7. Importer to copy nodes while preserving formatting.
-        // -------------------------------------------------
-        NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
-
-        // -------------------------------------------------
-        // 8. Collect paragraphs that lie strictly between the start and end paragraphs.
-        // -------------------------------------------------
-        bool withinRange = false;
-        int extractedCount = 0;
-        foreach (Paragraph para in loaded.GetChildNodes(NodeType.Paragraph, true))
+        while (current != null && !current.Equals(endNode))
         {
-            if (para == startParagraph)
-            {
-                withinRange = true;
-                continue; // Skip the start paragraph itself.
-            }
+            if (current.NodeType == NodeType.Paragraph || current.NodeType == NodeType.Table)
+                nodesToExtract.Add(current);
 
-            if (para == endParagraph)
-                break; // Stop before the end paragraph.
-
-            if (withinRange)
-            {
-                Node imported = importer.ImportNode(para, true);
-                resultBody.AppendChild(imported);
-                extractedCount++;
-            }
+            current = current.NextSibling;
         }
 
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No nodes were extracted between the specified markers.");
+        if (nodesToExtract.Count == 0)
+            throw new InvalidOperationException("No nodes were found between the start Run and the end Bookmark.");
 
-        // -------------------------------------------------
-        // 9. Save the extracted content.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 4. Create a new document and import the collected nodes.
+        // -----------------------------------------------------------------
+        Document resultDoc = new Document();
+        resultDoc.RemoveAllChildren();
+
+        Section resultSection = new Section(resultDoc);
+        resultDoc.AppendChild(resultSection);
+
+        Body resultBody = new Body(resultDoc);
+        resultSection.AppendChild(resultBody);
+
+        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+
+        foreach (Node node in nodesToExtract)
+        {
+            Node importedNode = importer.ImportNode(node, true);
+            resultBody.AppendChild(importedNode);
+        }
+
+        // -----------------------------------------------------------------
+        // 5. Save the extracted content and verify the output file.
+        // -----------------------------------------------------------------
         const string resultPath = "extracted.docx";
-        result.Save(resultPath);
+        resultDoc.Save(resultPath);
 
-        // Simple validation that the output file exists.
         if (!File.Exists(resultPath))
-            throw new InvalidOperationException("Extraction failed: output file was not created.");
+            throw new InvalidOperationException("The extracted document was not created.");
     }
 }
