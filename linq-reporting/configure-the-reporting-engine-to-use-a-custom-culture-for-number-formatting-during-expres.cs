@@ -7,36 +7,44 @@ public class Program
 {
     public static void Main()
     {
-        // Set a custom culture (German) for number formatting.
-        CultureInfo customCulture = new CultureInfo("de-DE");
-        System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
+        // Preserve the original thread culture.
+        CultureInfo originalCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
 
-        // Sample data model.
-        var model = new ReportModel { Price = 1234.56 };
+        // Set a custom culture (French - France) that uses a comma as the decimal separator.
+        System.Threading.Thread.CurrentThread.CurrentCulture = new CultureInfo("fr-FR");
 
+        // -------------------------------------------------
         // Create a template document with a LINQ Reporting tag.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Price: <<[model.Price]>>");
+        // -------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // The tag references the "Total" property of the root object named "model".
+        builder.Writeln("Total amount: <<[model.Total]>>");
 
-        // Save the template (demonstrates the create‑save lifecycle).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // -------------------------------------------------
+        // Prepare the data model.
+        // -------------------------------------------------
+        ReportModel model = new ReportModel { Total = 12345.67m };
 
-        // Load the template (demonstrates the load step).
-        Document loadedTemplate = new Document(templatePath);
-
-        // Build the report using the custom culture.
+        // -------------------------------------------------
+        // Build the report using the ReportingEngine.
+        // -------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
+        engine.Options = ReportBuildOptions.None; // default options
+        engine.BuildReport(doc, model, "model");
 
+        // -------------------------------------------------
         // Save the generated report.
-        loadedTemplate.Save("Report.docx");
+        // -------------------------------------------------
+        doc.Save("ReportOutput.docx");
+
+        // Restore the original culture.
+        System.Threading.Thread.CurrentThread.CurrentCulture = originalCulture;
     }
 
-    // Public data model with a numeric property.
+    // Simple data model with a numeric property.
     public class ReportModel
     {
-        public double Price { get; set; } = 0;
+        public decimal Total { get; set; } = 0;
     }
 }

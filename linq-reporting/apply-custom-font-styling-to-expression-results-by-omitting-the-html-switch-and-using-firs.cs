@@ -1,6 +1,5 @@
 using System;
-using System.IO;
-using System.Text;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,41 +7,65 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for legacy encodings (required by Aspose.Words in some environments)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create a blank document and a builder to insert LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare sample data
-        var person = new Person
+        // Title.
+        builder.Writeln("Product Report");
+        builder.Writeln();
+
+        // Begin a foreach loop over the Products collection.
+        builder.Writeln("<<foreach [p in Products]>>");
+
+        // Ensure the product name is not empty.
+        builder.Writeln("<<if [p.Name.Length > 0]>>");
+
+        // Apply a custom color to the first character only.
+        // The first character is wrapped in a textColor tag.
+        // The remainder of the name is inserted without any color tag.
+        builder.Writeln(
+            "<<textColor [\"Red\"]>><<[p.Name[0]]>><</textColor>><<[p.Name.Substring(1)]>>");
+
+        // Close the if block.
+        builder.Writeln("<</if>>");
+
+        // Append the price after a hyphen.
+        builder.Writeln(" - <<[p.Price]>>");
+        builder.Writeln();
+
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Prepare sample data.
+        ReportModel model = new()
         {
-            Name = "Alice Johnson"
+            Products = new()
+            {
+                new Product { Name = "Apple", Price = 1.20m },
+                new Product { Name = "Banana", Price = 0.80m },
+                new Product { Name = "Cherry", Price = 2.50m }
+            }
         };
 
-        // Create a template document programmatically
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Write a line that formats the first character of the name in red,
-        // then writes the rest of the name without special formatting.
-        builder.Writeln("Name: <<textColor [\"Red\"]>><<[person.Name.Substring(0,1)]>><</textColor>><<[person.Name.Substring(1)]>>");
-
-        doc.Save(templatePath);
-
-        // Load the template for reporting
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-
-        // Build the report using the person object as the root data source named "person"
-        engine.BuildReport(reportDoc, person, "person");
-
-        // Save the generated report
-        var outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Save the generated document.
+        doc.Save("Report.docx");
     }
 }
 
-// Simple data model used by the LINQ Reporting engine
-public class Person
+// Root data model for the report.
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
+
+// Simple product class.
+public class Product
 {
     public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
 }

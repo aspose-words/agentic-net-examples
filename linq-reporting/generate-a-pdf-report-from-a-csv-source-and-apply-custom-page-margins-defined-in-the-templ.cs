@@ -4,69 +4,103 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV reading.
+        // Register code page provider for CSV parsing on .NET Core.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample CSV data.
-        string csvPath = "data.csv";
-        File.WriteAllText(csvPath,
-            "Id,Name,Quantity,Price\n" +
-            "1,Apple,10,0.5\n" +
-            "2,Banana,5,0.3\n" +
-            "3,Cherry,20,0.2");
+        // File names used in the working directory.
+        const string templatePath = "ReportTemplate.docx";
+        const string csvPath = "Data.csv";
+        const string outputPath = "Report.pdf";
 
-        // Create a Word template programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // -----------------------------------------------------------------
+        // 1. Create a sample CSV file with headers and a few rows of data.
+        // -----------------------------------------------------------------
+        string[] csvLines =
+        {
+            "Product,Quantity,Price",
+            "Apple,10,0.5",
+            "Banana,5,0.3",
+            "Orange,8,0.6"
+        };
+        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
 
-        // Set custom page margins (1 inch on each side).
-        builder.PageSetup.LeftMargin = ConvertUtil.InchToPoint(1);
-        builder.PageSetup.RightMargin = ConvertUtil.InchToPoint(1);
-        builder.PageSetup.TopMargin = ConvertUtil.InchToPoint(1);
-        builder.PageSetup.BottomMargin = ConvertUtil.InchToPoint(1);
+        // ---------------------------------------------------------------
+        // 2. Build the Word template programmatically and insert LINQ tags.
+        // ---------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Add a title.
+        // Apply custom page margins (1 inch = 72 points).
+        builder.PageSetup.TopMargin = 72;
+        builder.PageSetup.BottomMargin = 72;
+        builder.PageSetup.LeftMargin = 72;
+        builder.PageSetup.RightMargin = 72;
+
+        // Title.
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
         builder.Font.Size = 16;
+        builder.Font.Bold = true;
         builder.Writeln("Product Report");
-        builder.Font.Size = 12;
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
-        builder.Writeln();
+        builder.Writeln(); // Empty line.
 
-        // Insert LINQ Reporting tags to iterate over CSV rows.
+        // Begin foreach loop over CSV rows (data source name will be "data").
         builder.Writeln("<<foreach [row in data]>>");
-        builder.Writeln("Id: <<[row.Id]>>");
-        builder.Writeln("Name: <<[row.Name]>>");
-        builder.Writeln("Quantity: <<[row.Quantity]>>");
-        builder.Writeln("Price: $<<[row.Price]>>");
+
+        // Table with header row.
+        Table table = builder.StartTable();
+
+        // Header cells.
+        builder.InsertCell();
+        builder.Font.Bold = true;
+        builder.Writeln("Product");
+        builder.InsertCell();
+        builder.Writeln("Quantity");
+        builder.InsertCell();
+        builder.Writeln("Price");
+        builder.EndRow();
+
+        // Data row – values are taken from the current CSV row.
+        builder.InsertCell();
+        builder.Font.Bold = false;
+        builder.Writeln("<<[row.Product]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[row.Quantity]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[row.Price]>>");
+        builder.EndRow();
+
+        builder.EndTable();
+
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to a file (optional, for inspection).
-        string templatePath = "template.docx";
-        template.Save(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Load the template back (demonstrates the required load step).
-        Document doc = new Document(templatePath);
+        // ---------------------------------------------------------------
+        // 3. Load the template and bind the CSV data source.
+        // ---------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-        // Configure CSV data source.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions
-        {
-            HasHeaders = true
-            // Default separator is ',' and default encoding is UTF8, which match our CSV.
-        };
-        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
+        // Configure CSV loading options (first line contains headers).
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
 
-        // Build the report using ReportingEngine.
+        // Create the CSV data source.
+        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+
+        // Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, csvData, "data");
+        engine.BuildReport(reportDoc, csvDataSource, "data");
 
-        // Save the generated report as PDF.
-        string outputPdf = "Report.pdf";
-        doc.Save(outputPdf, SaveFormat.Pdf);
+        // ---------------------------------------------------------------
+        // 4. Save the populated document as PDF.
+        // ---------------------------------------------------------------
+        reportDoc.Save(outputPath, SaveFormat.Pdf);
     }
 }

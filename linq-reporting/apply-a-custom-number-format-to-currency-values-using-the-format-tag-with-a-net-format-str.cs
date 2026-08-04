@@ -1,71 +1,42 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Order
+{
+    public decimal Amount { get; set; } = 0m;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Apple", Price = 1.23m },
-                new Item { Name = "Banana", Price = 0.99m },
-                new Item { Name = "Cherry", Price = 2.50m }
-            }
-        };
+        // Register code page provider for Aspose.Words
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create the LINQ Reporting template.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        CreateTemplate(templatePath);
-
-        // Load the template and build the report.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
-    }
-
-    private static void CreateTemplate(string filePath)
-    {
+        // Create a template document with a formatted currency tag
+        const string templatePath = "template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
+        builder.Writeln("Invoice Report");
+        // Use ToString with format specifier instead of the unsupported -format switch
+        builder.Writeln($"Total Amount: <<[order.Amount.ToString(\"C2\")]>>");
+        doc.Save(templatePath);
 
-        // Begin a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
+        // Load the template
+        var template = new Document(templatePath);
 
-        // Output product name.
-        builder.Writeln("Product: <<[item.Name]>>");
+        // Prepare data model
+        var order = new Order { Amount = 1234.56m };
 
-        // Output price using a custom currency format.
-        // The format string is placed inside double quotes to be parsed correctly.
-        builder.Writeln("Price: <<[item.Price]:\"$#,0.00\">>");
+        // Build the report
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, order, "order");
 
-        // End the foreach block.
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(filePath);
+        // Save the generated report
+        const string outputPath = "report.docx";
+        template.Save(outputPath);
     }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
 }

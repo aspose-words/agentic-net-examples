@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,45 +9,60 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample JSON data.
-        string jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "persons.json");
-        string jsonContent = @"[
-            { ""Name"": ""John Doe"", ""Age"": 30 },
-            { ""Name"": ""Jane Smith"", ""Age"": 25 }
-        ]";
+        // Paths for temporary files.
+        const string jsonFilePath = "people.json";
+        const string reportFilePath = "PeopleReport.docx";
+
+        // 1. Create sample JSON data.
+        var people = new List<Person>
+        {
+            new Person { Name = "Alice", Age = 30 },
+            new Person { Name = "Bob", Age = 45 },
+            new Person { Name = "Charlie", Age = 28 }
+        };
+        string jsonContent = JsonSerializer.Serialize(people);
         File.WriteAllText(jsonFilePath, jsonContent);
 
-        // Create a Word template with LINQ Reporting tags.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Persons Report");
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        // 2. Build a Word template with LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
-        templateDoc.Save(templatePath);
 
-        // Load the template back (required before building the report).
-        Document reportDoc = new Document(templatePath);
-
-        // Load JSON data from a file stream.
+        // 3. Load JSON data from a file stream.
         using (FileStream jsonStream = File.OpenRead(jsonFilePath))
         {
             JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
 
-            // Build the report.
+            // 4. Build the report using the ReportingEngine.
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, jsonDataSource, "persons");
+            engine.Options = ReportBuildOptions.None;
+            engine.BuildReport(doc, jsonDataSource, "persons");
         }
 
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "report.docx");
-        reportDoc.Save(reportPath);
+        // 5. Save the generated report locally.
+        doc.Save(reportFilePath);
 
-        // NOTE: Azure Blob Storage upload requires the Azure.Storage.Blobs package,
-        // which is not part of the required package list. To keep the example
-        // self‑contained and compilable, the upload step is represented as a placeholder.
-        Console.WriteLine($"Report generated at: {reportPath}");
-        Console.WriteLine("Upload to Azure Blob Storage would be performed here.");
+        // 6. Simulate uploading the report to Azure Blob Storage.
+        // In a real scenario you would use Azure.Storage.Blobs SDK.
+        // Here we simply copy the file to a local folder named "blobstorage".
+        const string simulatedContainer = "blobstorage";
+        Directory.CreateDirectory(simulatedContainer);
+        string destinationPath = Path.Combine(simulatedContainer, Path.GetFileName(reportFilePath));
+        File.Copy(reportFilePath, destinationPath, overwrite: true);
+        Console.WriteLine($"Report copied to simulated blob container: {destinationPath}");
+
+        // Cleanup temporary files (optional).
+        File.Delete(jsonFilePath);
+        File.Delete(reportFilePath);
+    }
+
+    // Simple data model matching the JSON structure.
+    public class Person
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
 }

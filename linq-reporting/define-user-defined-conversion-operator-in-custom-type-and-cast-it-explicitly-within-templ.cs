@@ -1,67 +1,53 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class MyNumber
 {
-    // Custom type with an explicit conversion operator to int.
-    public class MyNumber
+    public int Value { get; set; }
+
+    public MyNumber(int value) => Value = value;
+
+    // Explicit conversion to int
+    public static explicit operator int(MyNumber number) => number.Value;
+}
+
+public class ReportModel
+{
+    // Initialize to avoid nullable warnings
+    public MyNumber MyNumber { get; set; } = new MyNumber(0);
+    public string Title { get; set; } = string.Empty;
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public int Value { get; }
-
-        public MyNumber(int value) => Value = value;
-
-        // Explicit cast from MyNumber to int.
-        public static explicit operator int(MyNumber number) => number.Value;
-
-        public override string ToString() => Value.ToString();
-    }
-
-    // Model class used as the data source for the report.
-    public class ReportModel
-    {
-        // Initialize to avoid nullable warnings; will be overwritten in Main.
-        public MyNumber Custom { get; set; } = new MyNumber(0);
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data
+        var model = new ReportModel
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            Title = "Conversion Demo",
+            MyNumber = new MyNumber(42)
+        };
 
-            // Insert a LINQ Reporting tag that explicitly casts the custom type to int.
-            // The expression "(int)model.Custom" uses the explicit conversion operator defined above.
-            builder.Writeln("Custom value: <<[(int)model.Custom]>>");
+        // Create template document programmatically
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("<<[model.Title]>>");
+        // Explicit cast of custom type to int inside the template expression
+        builder.Writeln("Number (cast to int): <<[(int)model.MyNumber]>>");
+        builder.Document.Save(templatePath);
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Load the template for reporting
+        var doc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document report = new Document(templatePath);
+        // Build the report using LINQ Reporting engine
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel
-            {
-                Custom = new MyNumber(42) // Example value.
-            };
-
-            // Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(report, model, "model");
-
-            // -----------------------------------------------------------------
-            // 3. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            report.Save(outputPath);
-        }
+        // Save the generated report
+        var outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

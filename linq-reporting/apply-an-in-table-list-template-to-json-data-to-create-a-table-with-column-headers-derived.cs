@@ -1,79 +1,76 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // File paths.
-        const string templatePath = "Template.docx";
-        const string jsonPath = "Data.json";
-        const string outputPath = "Report.docx";
-
-        // Sample JSON data (array of objects with identical keys).
+        // Prepare sample JSON data
         string json = @"[
-            { ""Name"": ""Alice"", ""Age"": 30, ""City"": ""New York"" },
-            { ""Name"": ""Bob"",   ""Age"": 25, ""City"": ""Los Angeles"" },
-            { ""Name"": ""Carol"", ""Age"": 28, ""City"": ""Chicago"" }
+            { ""Name"": ""Alice"", ""Age"": 30 },
+            { ""Name"": ""Bob"",   ""Age"": 25 },
+            { ""Name"": ""Charlie"", ""Age"": 28 }
         ]";
-        File.WriteAllText(jsonPath, json);
+        File.WriteAllText("data.json", json, Encoding.UTF8);
 
-        // -----------------------------------------------------------------
-        // 1. Build the template document programmatically.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Load JSON into model
+        string jsonData = File.ReadAllText("data.json", Encoding.UTF8);
+        List<Person> persons = JsonConvert.DeserializeObject<List<Person>>(jsonData) ?? new();
+        ReportModel model = new() { Persons = persons };
 
-        builder.Writeln("Report generated from JSON data:");
-        builder.Writeln(); // Empty paragraph.
+        // Create template document
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Begin the foreach block.
-        builder.Writeln("<<foreach [item in data]>>");
+        // Begin foreach loop for data rows
+        builder.Writeln("<<foreach [person in Persons]>>");
 
-        // Start a table.
+        // Build table (header + data row)
         Table table = builder.StartTable();
 
-        // Header row – literal strings via expression tags.
+        // Header row
         builder.InsertCell();
-        builder.Writeln("<<[\"Name\"]>>");
+        builder.Writeln("Name");
         builder.InsertCell();
-        builder.Writeln("<<[\"Age\"]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[\"City\"]>>");
+        builder.Writeln("Age");
         builder.EndRow();
 
-        // Data row – repeat for each JSON object.
+        // Data row (repeated for each person)
         builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
+        builder.Writeln("<<[person.Name]>>");
         builder.InsertCell();
-        builder.Writeln("<<[item.Age]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.City]>>");
+        builder.Writeln("<<[person.Age]>>");
         builder.EndRow();
 
-        // Finish the table.
         builder.EndTable();
 
-        // End the foreach block.
+        // End foreach loop
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Generate report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report using the JSON data source.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var jsonDataSource = new JsonDataSource(jsonPath);
+        // Save the result
+        doc.Save("report.docx");
 
-        var engine = new ReportingEngine();
-        // The root object name used in the template tags is "data".
-        engine.BuildReport(reportDoc, jsonDataSource, "data");
-
-        // Save the generated report.
-        reportDoc.Save(outputPath);
+        Console.WriteLine("Report generated: report.docx");
     }
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
 }

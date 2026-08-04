@@ -3,71 +3,75 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace BookmarkLinqReportingExample
+namespace AsposeWordsLinqBookmarkExample
 {
-    // Data model classes
-    public class ReportModelWrapper
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string Title { get; set; } = "";
-        public string BookmarkName { get; set; } = "";
-    }
-
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report
-            const string templatePath = "template.docx";
-            const string outputPath = "output.docx";
+            // Register code pages provider (required for some Aspose.Words features).
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
             // -------------------------------------------------
-            // Create the template document with LINQ Reporting tags
+            // 1. Create a template document with LINQ Reporting tags.
             // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Begin a foreach loop over Items
+            // Define a foreach loop that creates a bookmark for each item.
             builder.Writeln("<<foreach [item in Items]>>");
-            // Insert a bookmark whose name comes from the data field
             builder.Writeln("<<bookmark [item.BookmarkName]>>");
-            // The content of the bookmark – the title of the item
             builder.Writeln("<<[item.Title]>>");
-            // Close the bookmark and the foreach block
             builder.Writeln("<</bookmark>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk
-            templateDoc.Save(templatePath);
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
             // -------------------------------------------------
-            // Prepare sample data
+            // 2. Load the template and build the report.
             // -------------------------------------------------
-            var model = new ReportModelWrapper
+            var doc = new Document(templatePath);
+
+            var model = new ReportModel
             {
                 Items = new List<Item>
                 {
-                    new Item { Title = "First Chapter", BookmarkName = "BM_First" },
-                    new Item { Title = "Second Chapter", BookmarkName = "BM_Second" },
-                    new Item { Title = "Conclusion", BookmarkName = "BM_Conclusion" }
+                    new Item { Id = 1, Title = "First Item" },
+                    new Item { Id = 2, Title = "Second Item" },
+                    new Item { Id = 3, Title = "Third Item" }
                 }
             };
 
-            // -------------------------------------------------
-            // Load the template and build the report
-            // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
+            var engine = new ReportingEngine();
+            // The root object name in the template is "model".
+            engine.BuildReport(doc, model, "model");
 
-            // Build the report using the model; the root name is "model"
-            engine.BuildReport(reportDoc, model, "model");
+            const string reportPath = "Report.docx";
+            doc.Save(reportPath);
 
-            // Save the generated document
-            reportDoc.Save(outputPath);
+            // -------------------------------------------------
+            // 3. Output created bookmark names (optional verification).
+            // -------------------------------------------------
+            foreach (Bookmark bookmark in doc.Range.Bookmarks)
+            {
+                Console.WriteLine($"Bookmark: {bookmark.Name}, Text: {bookmark.Text.Trim()}");
+            }
         }
+    }
+
+    // Root data model for the report.
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
+    // Individual item that provides a dynamic bookmark name.
+    public class Item
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        // Bookmark name derived from the Id field.
+        public string BookmarkName => $"Item_{Id}";
     }
 }

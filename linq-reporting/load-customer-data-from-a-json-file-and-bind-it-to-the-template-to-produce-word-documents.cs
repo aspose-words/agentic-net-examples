@@ -1,59 +1,70 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
+using Aspose.Words.Reporting; // JsonDataSource resides in this namespace
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare file paths.
-        string workDir = Directory.GetCurrentDirectory();
-        string jsonPath = Path.Combine(workDir, "customers.json");
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string outputPath = Path.Combine(workDir, "Report.docx");
+        // Register code page provider for proper encoding handling.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample JSON data.
+        // Prepare file paths in the current working directory.
+        string workDir = Directory.GetCurrentDirectory();
+        string dataFile = Path.Combine(workDir, "customers.json");
+        string templateFile = Path.Combine(workDir, "template.docx");
+        string outputFile = Path.Combine(workDir, "CustomerReport.docx");
+
+        // -----------------------------------------------------------------
+        // 1. Create sample JSON data file.
+        // -----------------------------------------------------------------
         string jsonContent = @"{
   ""Customers"": [
-    { ""Name"": ""John Doe"", ""Address"": ""123 Main St"", ""Email"": ""john.doe@example.com"" },
-    { ""Name"": ""Jane Smith"", ""Address"": ""456 Oak Ave"", ""Email"": ""jane.smith@example.com"" },
-    { ""Name"": ""Bob Johnson"", ""Address"": ""789 Pine Rd"", ""Email"": ""bob.johnson@example.com"" }
+    { ""Name"": ""John Doe"", ""Email"": ""john.doe@example.com"" },
+    { ""Name"": ""Jane Smith"", ""Email"": ""jane.smith@example.com"" }
   ]
 }";
-        File.WriteAllText(jsonPath, jsonContent);
+        File.WriteAllText(dataFile, jsonContent, Encoding.UTF8);
 
+        // -----------------------------------------------------------------
         // 2. Build a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
         builder.Writeln("Customer Report");
-        builder.Writeln("<<foreach [c in data.Customers]>>");
-        builder.Writeln("Name: <<[c.Name]>>");
-        builder.Writeln("Address: <<[c.Address]>>");
+        builder.Writeln("<<foreach [c in Customers]>>");
+        builder.Writeln("Name : <<[c.Name]>>");
         builder.Writeln("Email: <<[c.Email]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templateFile);
 
-        // 3. Load the template for reporting.
-        Document loadedTemplate = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 3. Load the template and the JSON data source.
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templateFile);
 
-        // 4. Create a JsonDataSource with options that generate a root object.
-        JsonDataLoadOptions loadOptions = new JsonDataLoadOptions
+        // Configure JSON loading to keep the root object so that the "Customers" collection is accessible.
+        JsonDataLoadOptions jsonOptions = new JsonDataLoadOptions
         {
             AlwaysGenerateRootObject = true
         };
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath, loadOptions);
+        JsonDataSource jsonData = new JsonDataSource(dataFile, jsonOptions);
 
-        // 5. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
+        // 4. Build the report.
+        // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        bool success = engine.BuildReport(loadedTemplate, jsonDataSource, "data");
+        // No root name is required because the template accesses members directly.
+        engine.BuildReport(loadedTemplate, jsonData, "");
 
-        // 6. Save the generated report.
-        loadedTemplate.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        loadedTemplate.Save(outputFile);
     }
 }

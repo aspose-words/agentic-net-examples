@@ -2,43 +2,57 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace AsposeWordsLinqReportingExample
 {
-    // Simple data model with only one defined property.
-    public class ReportModel
+    // Simple data model with a defined property only.
+    public class Model
     {
-        public string Existing { get; set; } = string.Empty;
-        // Note: No property named "Missing" is defined.
+        public string Name { get; set; } = "John Doe";
+        // Note: No property named MissingProperty – it will be missing in the template.
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document and insert LINQ Reporting tags.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // 1. Create a template document programmatically.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // The template references an existing property and a missing one.
-            builder.Writeln("Existing: <<[model.Existing]>>");
-            builder.Writeln("Missing: <<[model.Missing]>>"); // This member does not exist.
+            // Write a line that references an existing property.
+            builder.Writeln("Name: <<[model.Name]>>");
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel { Existing = "Hello, World!" };
+            // Write a line that references a missing property.
+            // With AllowMissingMembers this will be treated as null (empty output).
+            builder.Writeln("Missing: <<[model.MissingProperty]>>");
 
-            // Configure the reporting engine to treat missing members as null.
-            ReportingEngine engine = new ReportingEngine
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // 2. Load the template for reporting.
+            var reportDoc = new Document(templatePath);
+
+            // 3. Prepare the data source.
+            var data = new Model();
+
+            // 4. Configure the ReportingEngine to allow missing members.
+            var engine = new ReportingEngine
             {
-                Options = ReportBuildOptions.AllowMissingMembers
+                Options = ReportBuildOptions.AllowMissingMembers,
+                // Optional: customize the message shown for a missing plain reference.
+                MissingMemberMessage = string.Empty
             };
-            // Optional: customize the message shown for a plain missing member reference.
-            engine.MissingMemberMessage = string.Empty;
 
-            // Build the report. The missing member will be rendered as an empty string.
-            engine.BuildReport(doc, model, "model");
+            // 5. Build the report. The root object name must match the tag prefix ("model").
+            engine.BuildReport(reportDoc, data, "model");
 
-            // Save the generated report.
-            doc.Save("ReportOutput.docx");
+            // 6. Save the generated report.
+            const string reportPath = "Report.docx";
+            reportDoc.Save(reportPath);
+
+            // Indicate completion.
+            Console.WriteLine($"Report generated: {reportPath}");
         }
     }
 }

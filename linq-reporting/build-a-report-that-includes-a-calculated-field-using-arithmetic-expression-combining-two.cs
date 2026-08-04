@@ -4,71 +4,65 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Register code page provider for .NET Core compatibility.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Define file paths.
-            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "LinqReportingDemo");
-            Directory.CreateDirectory(workDir);
-            string jsonPath = Path.Combine(workDir, "data.json");
-            string templatePath = Path.Combine(workDir, "template.docx");
-            string reportPath = Path.Combine(workDir, "report.docx");
+        // Define file paths in the current working directory.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "ReportTemplate.docx");
+        string jsonPath = Path.Combine(workDir, "Data.json");
+        string outputPath = Path.Combine(workDir, "ReportResult.docx");
 
-            // -----------------------------------------------------------------
-            // 1. Create sample JSON data with two numeric properties.
-            // -----------------------------------------------------------------
-            string jsonContent = @"
-[
-    { ""Value1"": 10, ""Value2"": 5 },
-    { ""Value1"": 20, ""Value2"": 7 },
-    { ""Value1"": 15, ""Value2"": 3 }
+        // -----------------------------------------------------------------
+        // 1. Create a JSON file that will serve as the data source.
+        // -----------------------------------------------------------------
+        string jsonContent = @"[
+  { ""Name"": ""Item A"", ""Value1"": 10, ""Value2"": 5 },
+  { ""Name"": ""Item B"", ""Value1"": 7,  ""Value2"": 3 },
+  { ""Name"": ""Item C"", ""Value1"": 12, ""Value2"": 8 }
 ]";
-            File.WriteAllText(jsonPath, jsonContent.Trim());
+        File.WriteAllText(jsonPath, jsonContent);
 
-            // -----------------------------------------------------------------
-            // 2. Build a Word template that uses LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // 2. Build the template document programmatically.
+        //    The template contains LINQ Reporting tags, including a calculated
+        //    field that adds Value1 and Value2.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("LINQ Reporting Demo – Calculated Field");
-            builder.Writeln();
+        builder.Writeln("Report of Items");
+        builder.Writeln("<<foreach [item in items]>>");
+        builder.Writeln("Name: <<[item.Name]>>");
+        builder.Writeln("Value1: <<[item.Value1]>>");
+        builder.Writeln("Value2: <<[item.Value2]>>");
+        // Calculated field: sum of the two numeric properties.
+        builder.Writeln("Sum (Value1 + Value2): <<[item.Value1 + item.Value2]>>");
+        builder.Writeln("<</foreach>>");
 
-            // Begin foreach loop over the JSON array (named 'items' in the BuildReport call).
-            builder.Writeln("<<foreach [item in items]>>");
-            // Output each item's values and the calculated sum.
-            builder.Writeln("Value1: <<[item.Value1]>>, Value2: <<[item.Value2]>>, Sum: <<[item.Value1 + item.Value2]>>");
-            // End foreach.
-            builder.Writeln("<</foreach>>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // -----------------------------------------------------------------
+        // 3. Load the template and bind the JSON data source.
+        // -----------------------------------------------------------------
+        var loadedTemplate = new Document(templatePath);
+        var jsonDataSource = new JsonDataSource(jsonPath);
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and bind the JSON data source.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+        // -----------------------------------------------------------------
+        // 4. Build the final report.
+        // -----------------------------------------------------------------
+        var engine = new ReportingEngine();
+        // The root object name used in the template is "items".
+        engine.BuildReport(loadedTemplate, jsonDataSource, "items");
 
-            // Create the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-
-            // Build the report. The root name 'items' matches the foreach variable.
-            engine.BuildReport(reportDoc, jsonDataSource, "items");
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            reportDoc.Save(reportPath);
-
-            // Optional: indicate completion (no interactive input).
-            Console.WriteLine($"Report generated at: {reportPath}");
-        }
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        loadedTemplate.Save(outputPath);
     }
 }

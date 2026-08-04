@@ -1,61 +1,69 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Simple data model used as the root object for the report.
+    public class Person
     {
-        // Prepare sample data. The Description property is empty, which will result in an empty paragraph.
-        var model = new ReportModel
+        // Non‑nullable properties must be initialized to avoid warnings.
+        public string Name { get; set; } = "John Doe";
+        public int Age { get; set; } = 30;
+
+        // This property returns null, causing the corresponding paragraph to become empty.
+        public string? Empty { get; set; } = null;
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Title = "Sample Report",
-            Description = "",
-            Items = new List<Item>
+            // Prepare file paths.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            string resultPath = Path.Combine(outputDir, "Result.docx");
+
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert LINQ Reporting tags.
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Age: <<[person.Age]>>");
+            // This line will become empty after processing because the tag resolves to null.
+            builder.Writeln("<<[person.Empty]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template document for reporting.
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Configure the ReportingEngine to remove empty paragraphs.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine
             {
-                new Item { Name = "Item 1", Value = "Value 1" },
-                new Item { Name = "Item 2", Value = "" } // Empty value to demonstrate removal.
-            }
-        };
+                Options = ReportBuildOptions.RemoveEmptyParagraphs
+            };
 
-        // Create a template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+            // Root data object.
+            Person model = new Person();
 
-        // Title paragraph.
-        builder.Writeln("<<[model.Title]>>");
+            // Build the report. The root name in the template is "person".
+            engine.BuildReport(doc, model, "person");
 
-        // Description paragraph – will become empty after processing.
-        builder.Writeln("<<[model.Description]>>");
-
-        // Simple foreach loop to list items.
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        builder.Writeln("<<[item.Name]>>: <<[item.Value]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Configure the reporting engine to remove empty paragraphs.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-
-        // Build the report using the model as the root data source named "model".
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        doc.Save("ReportOutput.docx");
-    }
-
-    // Data model used by the template.
-    public class ReportModel
-    {
-        public string Title { get; set; } = "";
-        public string Description { get; set; } = "";
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public string Value { get; set; } = "";
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            doc.Save(resultPath);
+        }
     }
 }

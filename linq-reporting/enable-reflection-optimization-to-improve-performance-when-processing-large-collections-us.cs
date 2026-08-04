@@ -1,59 +1,76 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+public class ReportGenerator
 {
-    // Data model classes must be public with public properties.
-    public class Order
+    public static void Main()
     {
-        // Initialize non‑nullable reference types to avoid warnings.
-        public string CustomerName { get; set; } = string.Empty;
-        public List<Item> Items { get; set; } = new();
-    }
+        // Paths for the template and the generated report
+        string templatePath = "Template.docx";
+        string reportPath = "Report.docx";
 
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-    }
+        // 1. Create a template document with LINQ Reporting tags
+        CreateTemplate(templatePath);
 
-    public class Program
-    {
-        public static void Main()
+        // 2. Load the template document
+        Document doc = new Document(templatePath);
+
+        // 3. Enable reflection optimization (static property)
+        ReportingEngine.UseReflectionOptimization = true;
+
+        // 4. Prepare sample data
+        ReportModel model = new()
         {
-            // 1. Create a template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            // Insert LINQ Reporting tags.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("Item: <<[item.Name]>> - Qty: <<[item.Quantity]>>");
-            builder.Writeln("<</foreach>>");
-
-            // 2. Prepare sample data.
-            Order order = new Order
+            Items = new()
             {
-                CustomerName = "John Doe",
-                Items = new List<Item>
-                {
-                    new Item { Name = "Apple", Quantity = 3 },
-                    new Item { Name = "Banana", Quantity = 5 },
-                    new Item { Name = "Orange", Quantity = 2 }
-                }
-            };
+                new Item { Name = "Apple",  Price = 1.20 },
+                new Item { Name = "Banana", Price = 0.80 },
+                new Item { Name = "Cherry", Price = 2.50 }
+            }
+        };
 
-            // 3. Enable reflection optimization for large collections.
-            ReportingEngine.UseReflectionOptimization = true;
+        // 5. Build the report
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
-            // 4. Build the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(template, order, "order");
-
-            // 5. Save the generated report.
-            template.Save("Report_ReflectionOptimization.docx");
-        }
+        // 6. Save the generated report
+        doc.Save(reportPath);
     }
+
+    // Creates a simple Word template containing a foreach loop over Items
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        // Add a title
+        builder.Writeln("Product List");
+        builder.Writeln("-----------------");
+
+        // LINQ Reporting foreach tag
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Name: <<[item.Name]>>   Price: $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template
+        doc.Save(filePath);
+    }
+}
+
+// Root data model referenced in the template as <<[model.Items]>>
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+// Simple item class used inside the collection
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public double Price { get; set; }
 }

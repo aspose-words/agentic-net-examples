@@ -3,25 +3,13 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
-{
-    public string Title { get; set; } = "Untitled Report";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = "";
-    public double Value { get; set; }
-}
-
 public class Program
 {
     public static void Main()
     {
         // Paths for the template and the generated report.
         const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        const string outputPath = "ReportOutput.docx";
 
         // -----------------------------------------------------------------
         // 1. Create the template document programmatically.
@@ -29,50 +17,63 @@ public class Program
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Report title.
-        builder.Writeln("Report: <<[model.Title]>>");
-        builder.Writeln();
-
-        // Begin a foreach loop over the collection of items.
-        builder.Writeln("<<foreach [item in model.Items]>>");
-
-        // Item details.
-        builder.Writeln("Item: <<[item.Name]>> - Value: <<[item.Value]>>");
-
-        // Conditional section: appears only when the numeric value exceeds 50.
-        builder.Writeln("<<if [item.Value > 50]>>");
-        builder.Writeln("  *** High value detected! ***");
-        builder.Writeln("<</if>>");
-
-        // End of the foreach loop.
+        builder.Writeln("=== Sample Report ===");
+        // Start a foreach loop over the Items collection.
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Always show the item name.
+        builder.Writeln("Item: <<[item.Name]>>");
+        // Show the value only when it exceeds the threshold (100).
+        builder.Writeln("<<if [item.Value > 100]>>Value exceeds threshold: <<[item.Value]>> <</if>>");
+        // End the foreach loop.
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
+        // 2. Prepare the data model.
         // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // Sample data model.
-        ReportModel model = new()
+        ReportModel model = new ReportModel
         {
-            Title = "Quarterly Sales Report",
-            Items = new List<Item>
+            Items = new()
             {
-                new() { Name = "Product A", Value = 42.5 },
-                new() { Name = "Product B", Value = 67.0 },
-                new() { Name = "Product C", Value = 15.3 },
-                new() { Name = "Product D", Value = 89.9 }
+                new Item { Name = "Alpha",   Value = 75 },
+                new Item { Name = "Beta",    Value = 120 },
+                new Item { Name = "Gamma",   Value = 95 },
+                new Item { Name = "Delta",   Value = 180 }
             }
         };
 
-        // Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        // 3. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
 
-        // Save the generated report.
-        loadedTemplate.Save(reportPath);
+        // The root object is 'model', and the template references its Items collection directly.
+        engine.BuildReport(reportDoc, model, "model");
+
+        // -----------------------------------------------------------------
+        // 4. Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(outputPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    // Collection of items to be displayed in the report.
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    // Name of the item.
+    public string Name { get; set; } = string.Empty;
+
+    // Numeric value associated with the item.
+    public double Value { get; set; }
 }

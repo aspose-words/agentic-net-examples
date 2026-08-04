@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,49 +8,41 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the temporary template document.
-        const string templatePath = "template.docx";
+        // Register code page provider (required for some Aspose.Words features).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create a template that accesses a restricted type.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // The template creates a variable of type System.Type and then tries to read its FullName.
-        // Access to System.Type will be restricted later.
-        builder.Writeln("<<var [typeVar = typeof(string)]>><<[typeVar.FullName]>>");
+        // Create a template document with a variable that holds a Type object.
+        var templatePath = Path.Combine(outputDir, "template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("<<var [typeVar = \"\".GetType().BaseType]>>"); // typeVar is a System.Type instance.
+        builder.Writeln("<<[typeVar.FullName]>>"); // Attempt to read a member of System.Type.
+        doc.Save(templatePath);
 
-        // Save the template to disk before building the report (required by the lifecycle rule).
-        templateDoc.Save(templatePath);
+        // Load the template back (required before building the report).
+        var template = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the saved template.
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -------------------------------------------------
-        // 3. Set restricted types BEFORE the first BuildReport call.
-        // -------------------------------------------------
+        // Restrict the System.Type type – its members must not be accessible in the template.
         ReportingEngine.SetRestrictedTypes(typeof(System.Type));
 
-        // -------------------------------------------------
-        // 4. Build the report and verify that an exception is thrown.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-
+        // Build the report and verify that an exception is thrown due to the restricted type.
+        bool exceptionThrown = false;
         try
         {
-            // No data source is needed for this template; an empty object is sufficient.
-            engine.BuildReport(doc, new object());
-
-            // If we reach this line, the engine did NOT enforce the restriction as expected.
-            Console.WriteLine("Test FAILED: No exception was thrown.");
+            var engine = new ReportingEngine();
+            // No root object is needed; the template uses only the var tag.
+            engine.BuildReport(template, new object());
         }
         catch (Exception ex)
         {
-            // The engine should throw an exception because access to System.Type is prohibited.
-            Console.WriteLine($"Test PASSED: Caught expected exception -> {ex.GetType().Name}");
+            exceptionThrown = true;
+            Console.WriteLine($"Caught expected exception: {ex.GetType().Name}");
         }
+
+        Console.WriteLine($"Exception thrown as expected: {exceptionThrown}");
     }
 }

@@ -2,45 +2,54 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json; // Included as required package
+using System.Text; // For encoding provider
 
-public class Customer
+namespace LinqReportingExample
 {
-    // Initialize to avoid nullable warnings.
-    public string Name { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<Customer> Customers { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model representing a customer.
+    public class Customer
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public string Name { get; set; } = "";
+    }
 
-        // Build a simple LINQ Reporting template.
-        // The template will iterate over the Customers collection and output each name.
-        builder.Writeln("Customer List:");
-        builder.Writeln("<<foreach [c in Customers]>>");
-        builder.Writeln(" - <<[c.Name]>>");
-        builder.Writeln("<</foreach>>");
+    // Wrapper model that holds a collection of customers.
+    public class ReportModel
+    {
+        public List<Customer> Customers { get; set; } = new();
+    }
 
-        // Prepare sample data.
-        ReportModel model = new ReportModel();
-        model.Customers.Add(new Customer { Name = "Alice Johnson" });
-        model.Customers.Add(new Customer { Name = "Bob Smith" });
-        model.Customers.Add(new Customer { Name = "Charlie Davis" });
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider (required for some Aspose.Words operations).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        // The root object name must match the name used in the template tags.
-        engine.BuildReport(doc, model, "model");
+            // Prepare sample data.
+            var model = new ReportModel();
+            model.Customers.Add(new Customer { Name = "Alice Johnson" });
+            model.Customers.Add(new Customer { Name = "Bob Smith" });
+            model.Customers.Add(new Customer { Name = "Charlie Brown" });
 
-        // Save the generated report.
-        doc.Save("LINQReporting_Output.docx");
+            // Create a blank document and insert LINQ Reporting tags.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Customer List:");
+            // Begin a foreach loop over the Customers collection.
+            builder.Writeln("<<foreach [c in model.Customers]>>");
+            // Output each customer's name using a formatted expression tag.
+            builder.Writeln(" - <<[c.Name]>>");
+            // End the foreach loop.
+            builder.Writeln("<</foreach>>");
+
+            // Build the report using the model as the root object named "model".
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report.
+            doc.Save("CustomerReport.docx");
+        }
     }
 }

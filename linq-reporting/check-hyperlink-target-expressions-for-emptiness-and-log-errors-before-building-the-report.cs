@@ -1,90 +1,90 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace HyperlinkValidationExample
 {
-    public static void Main()
+    // Data model used by the LINQ Reporting template.
+    public class ReportModel
     {
-        // Register code page provider for Aspose.Words (required for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Hyperlink target (URL or bookmark name). Initialized to empty string to avoid nullable warnings.
+        public string Url { get; set; } = string.Empty;
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically
-        // -------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        builder.Writeln("Items Report");
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Show the link only when the URL is not empty
-        builder.Writeln("<<if [item.Url]>><<link [item.Url] [item.Name]>><</if>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // -------------------------------------------------
-        // 2. Load the template back before building the report
-        // -------------------------------------------------
-        var loadedTemplate = new Document(templatePath);
-
-        // -------------------------------------------------
-        // 3. Prepare sample data
-        // -------------------------------------------------
-        var model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Google", Url = "https://www.google.com" },
-                new Item { Name = "EmptyLink", Url = "" }, // This will trigger an error
-                new Item { Name = "Aspose", Url = "https://www.aspose.com" }
-            }
-        };
-
-        // -------------------------------------------------
-        // 4. Validate hyperlink targets and log errors
-        // -------------------------------------------------
-        foreach (var item in model.Items)
-        {
-            if (string.IsNullOrWhiteSpace(item.Url))
-            {
-                Console.WriteLine($"Error: Item '{item.Name}' has an empty hyperlink target.");
-            }
-        }
-
-        // -------------------------------------------------
-        // 5. Build the report using LINQ Reporting Engine
-        // -------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
-        bool success = engine.BuildReport(loadedTemplate, model, "model");
-
-        // -------------------------------------------------
-        // 6. Save the generated report
-        // -------------------------------------------------
-        const string outputPath = "report.docx";
-        loadedTemplate.Save(outputPath);
-
-        Console.WriteLine(success
-            ? $"Report generated successfully: {outputPath}"
-            : $"Report generation completed with errors. See the document: {outputPath}");
+        // Text displayed for the hyperlink. Initialized to a default value.
+        public string Text { get; set; } = "Link";
     }
-}
 
-// -------------------------------------------------
-// Data model classes
-// -------------------------------------------------
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider (required for some Aspose.Words features).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Insert a LINQ Reporting link tag that uses the model's Url and Text.
+            // Syntax must be exactly as required: <<link [model.Url] [model.Text]>>
+            builder.Writeln("<<link [model.Url] [model.Text]>>");
+
+            // Save the template to disk (required before building the report).
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template document.
+            // -----------------------------------------------------------------
+            var reportDoc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the data model.
+            // -----------------------------------------------------------------
+            var model = new ReportModel
+            {
+                // Intentionally leave Url empty to trigger validation.
+                Url = string.Empty,
+                Text = "Visit Site"
+            };
+
+            // -----------------------------------------------------------------
+            // 4. Validate hyperlink target expressions before building the report.
+            // -----------------------------------------------------------------
+            bool canBuild = true;
+            if (string.IsNullOrWhiteSpace(model.Url))
+            {
+                Console.WriteLine("Error: Hyperlink target (Url) is empty or whitespace.");
+                canBuild = false;
+            }
+
+            // -----------------------------------------------------------------
+            // 5. Build the report using Aspose.Words LINQ Reporting engine (only if valid).
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages; // Example option usage.
+
+            bool success = false;
+            if (canBuild)
+            {
+                success = engine.BuildReport(reportDoc, model, "model");
+            }
+            else
+            {
+                Console.WriteLine("Skipping report generation due to invalid hyperlink target.");
+            }
+
+            // -----------------------------------------------------------------
+            // 6. Save the generated (or empty) report.
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+
+            // Indicate completion.
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        }
+    }
 }

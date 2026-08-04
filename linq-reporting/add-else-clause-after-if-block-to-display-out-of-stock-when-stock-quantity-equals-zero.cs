@@ -1,61 +1,51 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Product
 {
-    // Simple data model representing a product.
-    public class Product
+    public string Name { get; set; } = "";
+    public int Quantity { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Name of the product.
-        public string Name { get; set; } = string.Empty;
+        // Step 1: Create the template document.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Quantity in stock.
-        public int Quantity { get; set; }
-    }
+        // Template with a foreach loop and an if‑else block.
+        builder.Writeln("<<foreach [p in Products]>>");
+        builder.Writeln("Product: <<[p.Name]>>");
+        builder.Writeln("<<if [p.Quantity > 0]>>Quantity: <<[p.Quantity]>> <<else>>Out of stock<</if>>");
+        builder.Writeln("<</foreach>>");
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Step 1: Create the template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-            // Insert product name placeholder.
-            builder.Writeln("Product: <<[product.Name]>>");
+        // Step 2: Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-            // Insert quantity placeholder with an if‑else logic.
-            // If Quantity > 0, display the numeric value; otherwise display "Out of stock".
-            builder.Writeln(
-                "Quantity: " +
-                "<<if [product.Quantity > 0]>>" +
-                "<<[product.Quantity]>>" +
-                "<</if>>" +
-                "<<if [product.Quantity == 0]>>Out of stock<</if>>");
+        // Step 3: Prepare sample data.
+        ReportModel model = new ReportModel();
+        model.Products.Add(new Product { Name = "Apple", Quantity = 5 });
+        model.Products.Add(new Product { Name = "Banana", Quantity = 0 });
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Step 4: Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-            // Step 2: Load the template for reporting.
-            Document reportDoc = new Document(templatePath);
-
-            // Step 3: Prepare sample data.
-            Product sampleProduct = new Product
-            {
-                Name = "Widget",
-                Quantity = 0 // Zero quantity triggers the else clause.
-            };
-
-            // Step 4: Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            // The root object name in the template is "product".
-            engine.BuildReport(reportDoc, sampleProduct, "product");
-
-            // Step 5: Save the generated report.
-            const string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        // Step 5: Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

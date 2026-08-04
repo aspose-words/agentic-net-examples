@@ -1,101 +1,83 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+using Aspose.Words.Tables; // Needed for the Table class
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        // Unique bookmark name for each row.
-        public string BookmarkName { get; set; } = "";
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data with unique bookmark names.
+        var model = new ReportModel
         {
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+            Items = new List<RowItem>()
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Begin a foreach loop over Items.
-            builder.Writeln("<<foreach [item in Items]>>");
-
-            // Create a table that will be repeated for each item.
-            Table table = builder.StartTable();
-
-            // Header row.
-            builder.InsertCell();
-            builder.Writeln("ID");
-            builder.InsertCell();
-            builder.Writeln("Name");
-            builder.EndRow();
-
-            // Data row – each cell contains LINQ Reporting tags.
-            // The first cell wraps the ID inside a unique bookmark.
-            builder.InsertCell();
-            builder.Writeln("<<bookmark [item.BookmarkName]>>");
-            builder.Writeln("<<[item.Id]>>");
-            builder.Writeln("<</bookmark>>");
-
-            // The second cell shows the item name.
-            builder.InsertCell();
-            builder.Writeln("<<[item.Name]>>");
-            builder.EndRow();
-
-            // End the table before closing the foreach block.
-            builder.EndTable();
-
-            // Close the foreach loop.
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Prepare sample data with unique bookmark names.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel();
-
-            for (int i = 1; i <= 5; i++)
+        for (int i = 1; i <= 5; i++)
+        {
+            model.Items.Add(new RowItem
             {
-                model.Items.Add(new Item
-                {
-                    Id = i,
-                    Name = $"Item {i}",
-                    // Generate a unique bookmark name per row.
-                    BookmarkName = $"RowBookmark_{i}"
-                });
-            }
-
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            ReportingEngine engine = new ReportingEngine();
-            // BuildReport requires the root object name to match the tags (model).
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report.
-            reportDoc.Save(reportPath);
+                Index = i,
+                Name = $"Item {i}",
+                // Ensure each bookmark name is unique.
+                BookmarkName = $"Row_{i}"
+            });
         }
+
+        // Create the template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        // Begin the foreach block.
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Build a table where each row contains a bookmark.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Index");
+        builder.InsertCell();
+        builder.Writeln("Name (bookmarked)");
+        builder.EndRow();
+
+        // Data row (will be repeated for each item).
+        builder.InsertCell();
+        builder.Writeln("<<[item.Index]>>");
+        builder.InsertCell();
+
+        // Bookmark tag: the bookmark name comes from the data source,
+        // and the visible content is the item's name.
+        builder.Writeln("<<bookmark [item.BookmarkName]>>");
+        builder.Writeln("<<[item.Name]>>");
+        builder.Writeln("<</bookmark>>");
+
+        builder.EndRow();
+        builder.EndTable();
+
+        // End the foreach block.
+        builder.Writeln("<</foreach>>");
+
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, model, "model");
+
+        // Save the generated document.
+        template.Save("Report.docx");
     }
+}
+
+// Wrapper class for the data source.
+public class ReportModel
+{
+    public List<RowItem> Items { get; set; } = new();
+}
+
+// Represents a single row in the table.
+public class RowItem
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string BookmarkName { get; set; } = string.Empty;
 }

@@ -1,92 +1,87 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-#nullable enable
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the output folder exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some JSON scenarios).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // 1. Create the template document programmatically.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        CreateTemplate(templatePath);
+        // File paths.
+        string templatePath = "template.docx";
+        string jsonPath = "persons.json";
+        string outputPath = "report.docx";
 
-        // 2. Create sample JSON data file.
-        string jsonPath = Path.Combine(outputDir, "Data.json");
-        CreateJsonData(jsonPath);
-
-        // 3. Load the template document.
-        Document doc = new Document(templatePath);
-
-        // 4. Load JSON data source.
-        using (FileStream jsonStream = File.OpenRead(jsonPath))
+        // ---------- Create sample JSON data ----------
+        var persons = new List<Person>
         {
-            JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
+            new Person { Name = "Alice", Age = 30 },
+            new Person { Name = "", Age = 25 },          // Empty name – should cause paragraph removal.
+            new Person { Name = "Bob", Age = 40 }
+        };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(persons));
 
-            // 5. Configure the reporting engine to remove empty paragraphs.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        // ---------- Build the template document ----------
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // 6. Build the report. The root object name is "items" to match the template tags.
-            engine.BuildReport(doc, jsonDataSource, "items");
-        }
-
-        // 7. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        doc.Save(reportPath);
-    }
-
-    // Creates a template with a static section and a JSON‑driven section.
-    private static void CreateTemplate(string filePath)
-    {
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // ----- Static section (should remain untouched) -----
+        // Static section (will not be affected by empty‑paragraph removal).
         builder.Writeln("=== Static Section ===");
-        builder.Writeln("This paragraph is always kept, even if empty.");
-        builder.Writeln(""); // an empty paragraph that we do NOT want removed
+        builder.Writeln("<<[model.StaticText]>>"); // Normal tag, no exclamation.
 
-        // Start a new section for JSON‑generated content.
+        // Start a new section that will be populated from JSON data.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("=== JSON Section ===");
+        builder.Writeln("=== JSON‑Generated Section ===");
+        builder.Writeln("<<foreach [person in model.Persons]>>");
 
-        // LINQ Reporting tags.
-        builder.Writeln("<<foreach [item in items]>>");
-        builder.Writeln("Item: <<[item.Name]>>");
-        // The exclamation mark after the tag marks this paragraph for selective removal.
-        builder.Writeln("Description: <<[item.Description]>>!");
+        // Tag with exclamation mark – empty paragraphs resulting from this tag will be removed.
+        // The exclamation mark must be placed **after** the closing tag delimiters.
+        builder.Writeln("Name: <<[person.Name]>>!"); // If Name is empty, the whole paragraph is removed.
+        builder.Writeln("Age: <<[person.Age]>>");
+
         builder.Writeln("<</foreach>>");
 
-        template.Save(filePath);
-    }
+        // Save the template to disk.
+        doc.Save(templatePath);
 
-    // Generates a JSON file with some empty / missing values.
-    private static void CreateJsonData(string filePath)
-    {
-        List<Item> items = new()
+        // ---------- Load the template ----------
+        var template = new Document(templatePath);
+
+        // ---------- Prepare the data model ----------
+        var model = new ReportModel
         {
-            new Item { Name = "Apple",  Description = "Fresh red apple" },
-            new Item { Name = "Banana", Description = "" },               // empty description
-            new Item { Name = "Cherry" }                                 // missing description
+            StaticText = "This is static content.",
+            Persons = JsonConvert.DeserializeObject<List<Person>>(File.ReadAllText(jsonPath))
         };
 
-        string json = JsonSerializer.Serialize(items);
-        File.WriteAllText(filePath, json);
-    }
+        // ---------- Configure and run the reporting engine ----------
+        var engine = new ReportingEngine
+        {
+            // Remove empty paragraphs only where tags contain an exclamation mark.
+            Options = ReportBuildOptions.RemoveEmptyParagraphs
+        };
+        engine.BuildReport(template, model, "model");
 
-    // Simple data model matching the JSON structure.
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
+        // ---------- Save the final report ----------
+        template.Save(outputPath);
     }
+}
+
+// Data model for the report.
+public class ReportModel
+{
+    public string StaticText { get; set; } = string.Empty;
+    public List<Person> Persons { get; set; } = new();
+}
+
+// Simple POCO representing a person.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

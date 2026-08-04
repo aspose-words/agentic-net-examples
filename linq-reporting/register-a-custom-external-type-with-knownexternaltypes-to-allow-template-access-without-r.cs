@@ -1,50 +1,91 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public static class Program
 {
-    // Sample data model with a non‑nullable property to avoid warnings.
-    public class Product
+    public static void Main()
     {
-        public decimal Price { get; set; } = 0m;
-    }
+        // Prepare file paths.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string outputPath = Path.Combine(workDir, "Report.docx");
 
-    // Custom external type whose static members can be used in the template.
-    public static class MyHelper
-    {
-        // Formats a decimal value as currency.
-        public static string FormatCurrency(decimal value) => $"${value:F2}";
-    }
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    public class Program
-    {
-        public static void Main()
+        // Use a foreach loop over model.Persons and call a static helper method.
+        builder.Writeln("<<foreach [p in model.Persons]>>");
+        builder.Writeln("<<[MyHelper.GetGreeting(p.Name)]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
         {
-            // 1. Create a template document programmatically.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
-            builder.Writeln("Product price: <<[MyHelper.FormatCurrency(Price)]>>");
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            Persons = new List<Person>
+            {
+                new Person { Name = "Alice" },
+                new Person { Name = "Bob" },
+                new Person { Name = "Charlie" }
+            }
+        };
 
-            // 2. Load the template for reporting.
-            var doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 4. Configure the ReportingEngine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
 
-            // 3. Prepare the data source.
-            var product = new Product { Price = 123.45m };
+        // Register the external type so its static members can be used in the template.
+        engine.KnownTypes.Add(typeof(MyHelper));
 
-            // 4. Configure the ReportingEngine.
-            var engine = new ReportingEngine();
-            // Register the custom external type so the template can call its static members without reflection.
-            engine.KnownTypes.Add(typeof(MyHelper));
+        // Build the report using the root object name "model".
+        engine.BuildReport(reportDoc, model, "model");
 
-            // 5. Build the report. Use the overload without a data source name to reference members directly.
-            engine.BuildReport(doc, product);
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(outputPath);
 
-            // 6. Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // Indicate completion.
+        Console.WriteLine("Report generated successfully.");
     }
+}
+
+// ---------------------------------------------------------------------
+// Helper class whose static members are accessed from the template.
+// ---------------------------------------------------------------------
+public static class MyHelper
+{
+    // Returns a greeting message for the supplied name.
+    public static string GetGreeting(string name) => $"Hello, {name}!";
+}
+
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
+public class Person
+{
+    // Name of the person.
+    public string Name { get; set; } = string.Empty;
+}
+
+public class ReportModel
+{
+    // Collection of persons to iterate over in the template.
+    public List<Person> Persons { get; set; } = new();
 }

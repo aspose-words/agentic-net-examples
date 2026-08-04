@@ -1,18 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReportingDemo
 {
-    // Data model representing an invoice.
+    // Simple data model representing an invoice.
     public class Invoice
     {
         public int Id { get; set; }
         public decimal Amount { get; set; }
+        public DateTime Date { get; set; }
     }
 
-    // Wrapper class that holds the collection used by the report.
+    // Wrapper class that holds the collection used in the template.
     public class ReportModel
     {
         public List<Invoice> Invoices { get; set; } = new();
@@ -22,39 +24,47 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Prepare sample data.
-            var model = new ReportModel();
-            model.Invoices.Add(new Invoice { Id = 1, Amount = 123.45m });
-            model.Invoices.Add(new Invoice { Id = 2, Amount = 678.90m });
-            model.Invoices.Add(new Invoice { Id = 3, Amount = 250.00m });
+            // Register code page provider required by Aspose.Words for some encodings.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // -----------------------------------------------------------------
-            // Create the template document containing LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            const string templateFile = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // Prepare sample data.
+            var invoices = new List<Invoice>
+            {
+                new() { Id = 1001, Amount = 250.75m, Date = new DateTime(2023, 5, 12) },
+                new() { Id = 1002, Amount = 480.00m, Date = new DateTime(2023, 6, 3) },
+                new() { Id = 1003, Amount = 125.50m, Date = new DateTime(2023, 7, 21) }
+            };
+
+            // Create the template document programmatically.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
             builder.Writeln("Invoice Report");
-            // Correct foreach syntax: variable name without explicit type.
-            builder.Writeln("<<foreach [invoice in Invoices]>>");
-            builder.Writeln("Id: <<[invoice.Id]>>   Amount: <<[invoice.Amount]>>");
+            builder.Writeln("----------------");
+
+            // Correct foreach tag syntax (type is not specified in LINQ Reporting tags).
+            builder.Writeln("<<foreach [inv in Invoices]>>");
+            builder.Writeln("ID: <<[inv.Id]>>, Amount: <<[inv.Amount]>>, Date: <<[inv.Date]>>");
             builder.Writeln("<</foreach>>");
 
             // Save the template to disk.
-            templateDoc.Save(templateFile);
+            doc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // Load the template and generate the report.
-            // -----------------------------------------------------------------
-            var reportDoc = new Document(templateFile);
+            // Load the template for report generation.
+            var templateDoc = new Document(templatePath);
+
+            // Prepare the root data object.
+            var model = new ReportModel { Invoices = invoices };
+
+            // Build the report using the LINQ Reporting engine.
             var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // No special options required.
+            engine.BuildReport(templateDoc, model, "model");
 
-            // Build the report using the model as the data source.
-            engine.BuildReport(reportDoc, model);
-
-            // Save the final report.
-            reportDoc.Save("InvoiceReport.docx");
+            // Save the generated report.
+            var outputPath = "Report.docx";
+            templateDoc.Save(outputPath);
         }
     }
 }

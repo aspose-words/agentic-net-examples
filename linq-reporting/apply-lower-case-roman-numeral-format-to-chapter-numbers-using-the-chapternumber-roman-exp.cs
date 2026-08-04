@@ -3,58 +3,76 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Chapter
+namespace AsposeWordsLinqReporting
 {
-    public int ChapterNumber { get; set; }
-    public string Title { get; set; } = string.Empty;
-}
-
-public class ReportModel
-{
-    public List<Chapter> Chapters { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    public class Program
     {
-        // Create a template document.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Add a foreach block that iterates over the Chapters collection.
-        builder.Writeln("<<foreach [chapter in Chapters]>>");
-        // Use the roman format for the chapter number (lower‑case).
-        builder.Writeln("Chapter <<[chapter.ChapterNumber]:roman>>: <<[chapter.Title]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
-
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+        public static void Main()
         {
-            Chapters = new List<Chapter>
+            // -----------------------------------------------------------------
+            // 1. Create a template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            const string templatePath = "Template.docx";
+
+            // Create a blank document and a builder to insert content.
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Begin a foreach loop over the Chapters collection.
+            builder.Writeln("<<foreach [chapter in Chapters]>>");
+
+            // Use the built‑in "roman" format to display the chapter number in lower‑case Roman numerals.
+            // Correct syntax: <<[expression]:format>>
+            builder.Writeln("Chapter <<[chapter.ChapterNumber]:roman>>: <<[chapter.Title]>>");
+
+            // End the foreach loop.
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template document that will be populated.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare sample data for the report.
+            // -----------------------------------------------------------------
+            var model = new ReportModel
             {
-                new Chapter { ChapterNumber = 1, Title = "Introduction" },
-                new Chapter { ChapterNumber = 2, Title = "Getting Started" },
-                new Chapter { ChapterNumber = 3, Title = "Advanced Topics" }
-            }
-        };
+                Chapters = new List<Chapter>
+                {
+                    new Chapter { ChapterNumber = 1, Title = "Introduction" },
+                    new Chapter { ChapterNumber = 2, Title = "Getting Started" },
+                    new Chapter { ChapterNumber = 3, Title = "Advanced Topics" }
+                }
+            };
 
-        // Build the report using LINQ Reporting.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // -----------------------------------------------------------------
+            // 4. Build the report using the ReportingEngine.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
+    }
 
-        // Indicate completion (no interactive input).
-        Console.WriteLine($"Report generated: {outputPath}");
+    // Root data model exposed to the template.
+    public class ReportModel
+    {
+        public List<Chapter> Chapters { get; set; } = new();
+    }
+
+    // Simple chapter class.
+    public class Chapter
+    {
+        public int ChapterNumber { get; set; }
+        public string Title { get; set; } = string.Empty;
     }
 }

@@ -1,49 +1,64 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace InlineErrorMessagesExample
+public class Program
 {
-    // Simple data model used by the template.
-    public class ReportModel
+    public static void Main()
     {
-        public string Name { get; set; } = "World";
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare a simple data model.
+        ReportModel model = new ReportModel
         {
-            // Create a blank document that will serve as the template.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            Name = "John Doe"
+        };
 
-            // Correct tag – will be replaced with the model's Name property.
-            builder.Writeln("Hello <<[model.Name]>>!");
+        // -----------------------------------------------------------------
+        // Step 1: Create a template document programmatically.
+        // -----------------------------------------------------------------
+        string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Malformed tag – missing closing ">>". This will generate a syntax error.
-            builder.Writeln("This line has a malformed tag: <<[model.Name]");
+        // Correct tag – will be replaced with the model's Name.
+        builder.Writeln("Customer: <<[model.Name]>>");
 
-            // Placeholder that will be replaced with the inline error message.
-            builder.Writeln("<<error>>");
+        // Incorrect tag – the property Age does not exist in ReportModel.
+        // This will generate a syntax error.
+        builder.Writeln("Age: <<[model.Age]>>");
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel();
+        // Placeholder where inline error messages will be inserted.
+        builder.Writeln("<<error>>");
 
-            // Configure the reporting engine to inline error messages.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-            // Build the report. The method returns true only if the template was parsed without errors.
-            bool success = engine.BuildReport(template, model, "model");
+        // -----------------------------------------------------------------
+        // Step 2: Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-            // Save the resulting document.
-            string outputPath = "InlineErrorReport.docx";
-            template.Save(outputPath);
+        ReportingEngine engine = new ReportingEngine();
+        // Enable inline error messages.
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Output the result to the console.
-            Console.WriteLine($"Report generation success: {success}");
-            Console.WriteLine($"Document saved to: {outputPath}");
-        }
+        // BuildReport returns a flag indicating whether parsing succeeded.
+        bool success = engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        // Output the result to the console.
+        Console.WriteLine($"Report generation success flag: {success}");
+        Console.WriteLine($"Template file: {Path.GetFullPath(templatePath)}");
+        Console.WriteLine($"Report file:   {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Simple data model used by the template.
+public class ReportModel
+{
+    // The only property that actually exists.
+    public string Name { get; set; } = string.Empty;
 }

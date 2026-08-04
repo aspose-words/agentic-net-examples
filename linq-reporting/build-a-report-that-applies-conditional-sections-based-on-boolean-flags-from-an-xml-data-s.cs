@@ -3,58 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare folders.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        public static void Main()
+        {
+            // Prepare sample XML data with boolean flags.
+            const string xmlFileName = "ReportData.xml";
+            string xmlContent =
+                @"<Report>
+                    <ShowSection1>true</ShowSection1>
+                    <ShowSection2>false</ShowSection2>
+                    <Section1Text>Content of the first conditional section.</Section1Text>
+                    <Section2Text>Content of the second conditional section.</Section2Text>
+                  </Report>";
+            File.WriteAllText(xmlFileName, xmlContent);
 
-        // Create sample XML data source.
-        string xmlPath = Path.Combine(workDir, "ReportData.xml");
-        string xmlContent =
-@"<Report>
-    <ShowSection1>true</ShowSection1>
-    <ShowSection2>false</ShowSection2>
-    <Section1Text>Details for section 1.</Section1Text>
-    <Section2Text>Details for section 2.</Section2Text>
-</Report>";
-        File.WriteAllText(xmlPath, xmlContent);
+            // Create a template document programmatically and insert LINQ Reporting tags.
+            const string templateFileName = "ReportTemplate.docx";
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Create the template document with conditional sections.
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("=== Sample Report ===");
+            // Conditional block for Section 1.
+            builder.Writeln("<<if [report.ShowSection1]>>");
+            builder.Writeln("<<[report.Section1Text]>>");
+            builder.Writeln("<</if>>");
+            // Conditional block for Section 2.
+            builder.Writeln("<<if [report.ShowSection2]>>");
+            builder.Writeln("<<[report.Section2Text]>>");
+            builder.Writeln("<</if>>");
 
-        builder.Writeln("Report Title");
-        builder.Writeln("<<if [report.ShowSection1]>>");
-        builder.Writeln("Section 1:");
-        builder.Writeln("<<[report.Section1Text]>>");
-        builder.Writeln("<</if>>");
-        builder.Writeln("<<if [report.ShowSection2]>>");
-        builder.Writeln("Section 2:");
-        builder.Writeln("<<[report.Section2Text]>>");
-        builder.Writeln("<</if>>");
+            // Save the template to disk.
+            templateDoc.Save(templateFileName);
 
-        templateDoc.Save(templatePath);
+            // Load the template document for reporting.
+            Document reportDoc = new Document(templateFileName);
 
-        // Load the template.
-        Document doc = new Document(templatePath);
+            // Load the XML data source.
+            XmlDataSource dataSource = new XmlDataSource(xmlFileName);
 
-        // Load XML data source.
-        XmlDataSource xmlData = new XmlDataSource(xmlPath);
+            // Build the report using the data source. The root name is "report".
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, dataSource, "report");
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        engine.BuildReport(doc, xmlData, "report");
-
-        // Save the generated report.
-        string outputPath = Path.Combine(workDir, "ReportResult.docx");
-        doc.Save(outputPath);
-
-        // Indicate completion (no interactive input).
-        Console.WriteLine($"Report generated at: {outputPath}");
+            // Save the generated report.
+            const string outputFileName = "ReportOutput.docx";
+            reportDoc.Save(outputFileName);
+        }
     }
 }

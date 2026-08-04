@@ -1,79 +1,85 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class LinkItem
-{
-    public string Url { get; set; } = "";
-    public string Text { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<LinkItem> Items { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
+        // Create sample data.
         var model = new ReportModel
         {
-            Items = new()
+            Items = new List<Item>
             {
-                new LinkItem { Url = "https://www.example.com", Text = "Example Site" },
-                new LinkItem { Url = "https://www.github.com", Text = "GitHub" },
-                new LinkItem { Url = "https://www.microsoft.com", Text = "Microsoft" }
+                new Item { Url = "https://example.com/1", Text = "Example 1" },
+                new Item { Url = "https://example.com/2", Text = "Example 2" },
+                new Item { Url = "https://example.com/3", Text = "Example 3" }
             }
         };
 
         // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
+        // Step 1: Build the template document programmatically.
         // -----------------------------------------------------------------
-        var templatePath = "Template.docx";
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach block that iterates over Items.
+        // Begin a foreach loop over the Items collection.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Create a table where each row contains a hyperlink.
+        // Create a table with two columns: a header and a hyperlink column.
         var table = builder.StartTable();
 
-        // First (and only) cell of the row.
+        // Header row.
         builder.InsertCell();
-        // Insert the link tag. The first expression is the URL, the second is the display text.
-        builder.Writeln("<<link [item.Url] [item.Text]>>");
-
-        // Finish the row and the table.
+        builder.Writeln("Item");
+        builder.InsertCell();
+        builder.Writeln("Link");
         builder.EndRow();
+
+        // Data row (repeated for each item).
+        builder.InsertCell();
+        builder.Writeln("<<[item.Text]>>");
+        builder.InsertCell();
+        // Place the link tag inside the cell.
+        builder.Writeln("<<link [item.Url] [item.Text]>>");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
         // End the foreach block.
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
+        const string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
+        // Step 2: Load the template and build the report.
         // -----------------------------------------------------------------
         var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
 
-        // Build the report using the model as the root object named "model".
+        // Build the report using the model as the data source.
         engine.BuildReport(reportDoc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 3. Save the generated report. Hyperlinks will be functional.
-        // -----------------------------------------------------------------
-        var outputDocx = "Report.docx";
-        var outputPdf = "Report.pdf";
-
-        reportDoc.Save(outputDocx);
-        reportDoc.Save(outputPdf);
+        // Save the final report.
+        const string reportPath = "Report.docx";
+        reportDoc.Save(reportPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Url { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
 }

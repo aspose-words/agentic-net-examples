@@ -9,69 +9,84 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data.
-        const string xmlPath = "order.xml";
-        File.WriteAllText(xmlPath,
-            @"<order>
-                <Id>1001</Id>
-                <Amount>1234.56</Amount>
-                <Customer>John Doe</Customer>
-              </order>");
+        // Register code page provider for additional encodings.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Create a template document with LINQ Reporting tags.
+        // 1. Create sample XML data source.
+        const string xmlPath = "orders.xml";
+        File.WriteAllText(xmlPath,
+@"<Orders>
+    <Order>
+        <CustomerName>John Doe</CustomerName>
+        <Amount>1234.56</Amount>
+    </Order>
+    <Order>
+        <CustomerName>Jane Smith</CustomerName>
+        <Amount>7890.12</Amount>
+    </Order>
+</Orders>");
+
+        // 2. Create a template document with LINQ Reporting tags.
         const string templatePath = "template.docx";
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Order Report");
-        builder.Writeln("==============");
-        builder.Writeln("Order ID: <<[order.Id]>>");
-        builder.Writeln("Customer: <<[order.Customer]>>");
+
+        builder.Writeln("Customer Orders Report");
+        builder.Writeln("----------------------");
+        builder.Writeln("<<foreach [order in orders]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
         builder.Writeln("Amount: <<[order.Amount]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
+        // 3. Load the template document.
         var doc = new Document(templatePath);
 
-        // Apply a custom number format provider for currency fields.
-        doc.FieldOptions.ResultFormatter = new CurrencyResultFormatter();
-
-        // Load XML data source.
+        // 4. Load XML data source.
         var xmlDataSource = new XmlDataSource(xmlPath);
 
-        // Build the report.
+        // 5. Build the report using ReportingEngine.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, xmlDataSource, "order");
+        engine.BuildReport(doc, xmlDataSource, "orders");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
+        // 6. Apply custom number format provider for currency fields.
+        doc.FieldOptions.ResultFormatter = new CurrencyResultFormatter();
+
+        // 7. Update fields to apply the custom formatting.
+        doc.UpdateFields();
+
+        // 8. Save the final report.
+        const string outputPath = "report.docx";
         doc.Save(outputPath);
     }
+}
 
-    // Custom formatter that formats numeric values as currency.
-    private class CurrencyResultFormatter : IFieldResultFormatter
+// Custom formatter that formats numeric values as currency.
+public class CurrencyResultFormatter : IFieldResultFormatter
+{
+    public string FormatNumeric(double value, string format)
     {
-        public string FormatNumeric(double value, string format)
-        {
-            // Apply custom currency format (e.g., $1,234.56).
-            return string.Format(CultureInfo.InvariantCulture, "${0:N2}", value);
-        }
+        // Format all numeric values as currency with two decimal places.
+        return string.Format(CultureInfo.InvariantCulture, "${0:N2}", value);
+    }
 
-        public string FormatDateTime(DateTime value, string format, CalendarType calendarType)
-        {
-            // No custom date formatting required.
-            return null;
-        }
+    public string FormatDateTime(DateTime value, string format, CalendarType calendarType)
+    {
+        // No custom date formatting required.
+        return null;
+    }
 
-        public string Format(string value, GeneralFormat format)
-        {
-            // No custom general formatting required.
-            return null;
-        }
+    public string Format(string value, GeneralFormat format)
+    {
+        // No custom general formatting required.
+        return null;
+    }
 
-        public string Format(double value, GeneralFormat format)
-        {
-            // No custom general formatting required.
-            return null;
-        }
+    public string Format(double value, GeneralFormat format)
+    {
+        // No custom general formatting required.
+        return null;
     }
 }

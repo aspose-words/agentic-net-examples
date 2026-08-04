@@ -3,87 +3,90 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace ReportingEngineIsolationExample
 {
-    // Data model for an order.
+    // Sample data model for an order.
     public class Order
     {
-        public string CustomerName { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = "";
         public List<Item> Items { get; set; } = new();
-
-        public Order(string customerName, List<Item> items)
-        {
-            CustomerName = customerName;
-            Items = items;
-        }
     }
 
-    // Data model for an item in the order.
+    // Sample data model for an item.
     public class Item
     {
-        public string Name { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-
-        public Item(string name, int quantity)
-        {
-            Name = name;
-            Quantity = quantity;
-        }
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
     }
 
-    public static void Main()
+    public class Program
     {
-        // Step 1: Create a LINQ Reporting template programmatically.
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Path constants.
+        private const string TemplatePath = "Template.docx";
+        private const string Report1Path = "Report1.docx";
+        private const string Report2Path = "Report2.docx";
 
-        // Insert tags that will be replaced by the reporting engine.
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Order Items:");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // Step 2: Simulate isolated reporting for multiple user requests.
-        // Each request gets its own ReportingEngine instance and its own data.
-        var userRequests = new[]
+        public static void Main()
         {
-            new Order(
-                "Alice Johnson",
-                new List<Item>
-                {
-                    new Item("Laptop", 1),
-                    new Item("Mouse", 2)
-                }),
+            // Step 1: Create the LINQ Reporting template programmatically.
+            CreateTemplate();
 
-            new Order(
-                "Bob Smith",
-                new List<Item>
+            // Step 2: Process first request with its own ReportingEngine instance.
+            var order1 = new Order
+            {
+                CustomerName = "Alice Johnson",
+                Items = new List<Item>
                 {
-                    new Item("Desk", 1),
-                    new Item("Chair", 4),
-                    new Item("Lamp", 2)
-                })
-        };
+                    new Item { Name = "Apple", Price = 1.20m },
+                    new Item { Name = "Banana", Price = 0.80m }
+                }
+            };
+            GenerateReport(order1, Report1Path);
 
-        for (int i = 0; i < userRequests.Length; i++)
+            // Step 3: Process second request with a separate ReportingEngine instance.
+            var order2 = new Order
+            {
+                CustomerName = "Bob Smith",
+                Items = new List<Item>
+                {
+                    new Item { Name = "Orange", Price = 1.50m },
+                    new Item { Name = "Grapes", Price = 2.30m },
+                    new Item { Name = "Mango", Price = 3.00m }
+                }
+            };
+            GenerateReport(order2, Report2Path);
+        }
+
+        // Creates a Word document containing LINQ Reporting tags.
+        private static void CreateTemplate()
         {
-            // Load a fresh copy of the template for each request.
-            var doc = new Document(templatePath);
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // Create a new ReportingEngine instance – isolated per request.
+            // Insert static text and data placeholders.
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Items:");
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(TemplatePath);
+        }
+
+        // Generates a report for a given order using an isolated ReportingEngine.
+        private static void GenerateReport(Order order, string outputPath)
+        {
+            // Load the previously saved template.
+            var doc = new Document(TemplatePath);
+
+            // Each request gets its own ReportingEngine instance.
             var engine = new ReportingEngine();
 
-            // Build the report using the order object as the root data source.
-            // The template references the root object with the name "order".
-            engine.BuildReport(doc, userRequests[i], "order");
+            // Build the report. The root object name must match the tag prefix used in the template.
+            engine.BuildReport(doc, order, "order");
 
             // Save the generated report.
-            string outputPath = $"Report_User{i + 1}.docx";
             doc.Save(outputPath);
         }
     }

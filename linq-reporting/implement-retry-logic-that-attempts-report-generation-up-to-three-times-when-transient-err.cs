@@ -1,94 +1,91 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Threading;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingRetry
 {
-    public static void Main()
+    // Simple data model used by the LINQ Reporting template.
+    public class ReportModel
     {
-        // Ensure the working directory exists.
-        const string templatePath = "Template.docx";
-        const string outputPath = "ReportOutput.docx";
-
-        // Step 1: Create a LINQ Reporting template programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Report Title: <<[model.Title]>>");
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        builder.Writeln("- <<[item.Name]>>: <<[item.Value]>>");
-        builder.Writeln("<</foreach>>");
-        templateDoc.Save(templatePath);
-
-        // Step 2: Load the template for report generation.
-        var doc = new Document(templatePath);
-
-        // Step 3: Prepare the data model.
-        var model = new ReportModel
-        {
-            Title = "Sales Summary",
-            Items = new List<ReportItem>
-            {
-                new ReportItem { Name = "Product A", Value = 1200 },
-                new ReportItem { Name = "Product B", Value = 850 },
-                new ReportItem { Name = "Product C", Value = 430 }
-            }
-        };
-
-        // Step 4: Build the report with retry logic (up to 3 attempts).
-        var engine = new ReportingEngine();
-        bool success = false;
-        const int maxAttempts = 3;
-
-        for (int attempt = 1; attempt <= maxAttempts; attempt++)
-        {
-            try
-            {
-                // BuildReport overload that includes the root object name.
-                engine.BuildReport(doc, model, "model");
-                success = true;
-                break; // Exit loop on success.
-            }
-            catch (Exception ex) when (IsTransient(ex) && attempt < maxAttempts)
-            {
-                // Transient error encountered – wait briefly before retrying.
-                Console.WriteLine($"Attempt {attempt} failed with a transient error: {ex.Message}");
-                Thread.Sleep(500); // Simple back‑off delay.
-            }
-        }
-
-        if (!success)
-        {
-            Console.WriteLine("Report generation failed after multiple attempts.");
-            return;
-        }
-
-        // Step 5: Save the generated report.
-        doc.Save(outputPath);
-        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
+        // Initialize to avoid nullable warnings.
+        public string Title { get; set; } = "Sample Report";
     }
 
-    // Simple heuristic to decide whether an exception is transient.
-    private static bool IsTransient(Exception ex)
+    public class Program
     {
-        // In a real scenario, inspect the exception type/message.
-        // For this example, treat all exceptions as transient.
-        return true;
+        public static void Main()
+        {
+            // Register code page provider (required for some Aspose.Words features).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for the template and the generated report.
+            const string templatePath = "template.docx";
+            const string outputPath = "output.docx";
+
+            // -------------------------------------------------
+            // Create the template document programmatically.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert a simple LINQ Reporting tag that references the model.
+            builder.Writeln("Report Title: <<[model.Title]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // Load the template for report generation.
+            // -------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // Prepare the data source.
+            ReportModel model = new ReportModel();
+
+            // Configure the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // No special options needed.
+
+            const int maxAttempts = 3;
+            bool success = false;
+
+            // -------------------------------------------------
+            // Retry logic: attempt to build the report up to three times.
+            // -------------------------------------------------
+            for (int attempt = 1; attempt <= maxAttempts && !success; attempt++)
+            {
+                try
+                {
+                    // BuildReport overload that allows referencing the root object name.
+                    success = engine.BuildReport(reportDoc, model, "model");
+                }
+                catch (Exception ex)
+                {
+                    // In a real scenario, inspect the exception to determine if it is transient.
+                    // For this example, any exception triggers a retry until the max attempts are reached.
+                    Console.WriteLine($"Attempt {attempt} failed: {ex.Message}");
+
+                    if (attempt == maxAttempts)
+                    {
+                        // Rethrow the exception after the final attempt.
+                        throw;
+                    }
+
+                    // Optionally, introduce a short delay before retrying.
+                    System.Threading.Thread.Sleep(500);
+                }
+            }
+
+            // -------------------------------------------------
+            // Save the generated report if successful.
+            // -------------------------------------------------
+            if (success)
+            {
+                reportDoc.Save(outputPath);
+                Console.WriteLine($"Report generated successfully and saved to '{outputPath}'.");
+            }
+        }
     }
-}
-
-// Data model for the report.
-public class ReportModel
-{
-    public string Title { get; set; } = string.Empty;
-    public List<ReportItem> Items { get; set; } = new();
-}
-
-// Individual item displayed in the report.
-public class ReportItem
-{
-    public string Name { get; set; } = string.Empty;
-    public int Value { get; set; }
 }

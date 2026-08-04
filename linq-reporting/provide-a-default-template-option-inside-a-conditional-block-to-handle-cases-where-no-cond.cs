@@ -1,56 +1,64 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingConditionalDefault
+public class Program
 {
-    // Simple data model used by the template.
-    public class ReportModel
+    public static void Main()
     {
-        // Status value that will be evaluated in the template.
-        public string Status { get; set; } = string.Empty;
-    }
+        // Register code page provider for possible legacy encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string outputPath = "Report.docx";
+            Persons = new List<Person>
+            {
+                new Person { Name = "Alice", Age = 15 },
+                new Person { Name = "Bob",   Age = 30 },
+                new Person { Name = "Carol", Age = 70 },
+                new Person { Name = "Dave",  Age = -1 } // Unexpected age to trigger default.
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a template document with LINQ Reporting tags.
+        const string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            // The template contains two IF conditions and a default IF that acts as ELSE.
-            // If none of the IF conditions evaluate to true, the default IF provides a fallback value.
-            builder.Writeln(
-                "Status: " +
-                "<<if [model.Status == \"A\"]>>A<</if>>" +
-                "<<if [model.Status == \"B\"]>>B<</if>>" +
-                // Default case when Status is neither A nor B.
-                "<<if [model.Status != \"A\" && model.Status != \"B\"]>>Other<</if>>");
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Category: ");
+        builder.Writeln("<<if [person.Age < 18]>>Minor<</if>>");
+        builder.Writeln("<<if [person.Age >= 65]>>Senior<</if>>");
+        builder.Writeln("<<if [person.Age >= 18 && person.Age < 65]>>Adult<</if>>");
+        // Default option when none of the above conditions are true.
+        builder.Writeln("<<if [person.Age < 0]>>Unknown<</if>>");
+        builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
+        // Load the template and build the report.
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Sample data where Status does not match any IF condition (triggers default).
-            ReportModel model = new ReportModel { Status = "C" };
-
-            // Create the reporting engine and populate the template.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the final report.
-            reportDoc.Save(outputPath);
-        }
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

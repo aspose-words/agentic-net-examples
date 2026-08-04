@@ -5,67 +5,47 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
 
+public class ReportModel
+{
+    public string Title { get; set; } = "Sales Report";
+    public List<Product> Products { get; set; } = new();
+}
+
+public class Product
+{
+    public string Name { get; set; } = "";
+    public int Quantity { get; set; }
+    public decimal Price { get; set; }
+}
+
 public class Program
 {
-    // Simple data model for the report.
-    public class Order
-    {
-        public string CustomerName { get; set; } = "John Doe";
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string Name { get; set; } = "Sample Item";
-        public decimal Price { get; set; }
-    }
-
     public static void Main()
     {
-        // 1. Create a template document programmatically.
+        // Create a template document with LINQ Reporting tags.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Add a title and a placeholder for the customer name.
-        builder.Writeln("Order Report");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln();
-
-        // Begin a foreach loop over the order items.
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln("<<foreach [p in model.Products]>>");
+        builder.Writeln("Product: <<[p.Name]>>");
+        builder.Writeln("Quantity: <<[p.Quantity]>>");
+        builder.Writeln("Price: $<<[p.Price]>>");
         builder.Writeln("<</foreach>>");
 
-        // 2. Prepare sample data.
-        Order order = new Order
-        {
-            CustomerName = "Alice Smith",
-            Items = new List<Item>
-            {
-                new Item { Name = "Laptop", Price = 1299.99m },
-                new Item { Name = "Mouse", Price = 25.50m },
-                new Item { Name = "Keyboard", Price = 45.00m }
-            }
-        };
+        // Prepare sample data.
+        ReportModel model = new ReportModel();
+        model.Products.Add(new Product { Name = "Apple", Quantity = 10, Price = 0.5m });
+        model.Products.Add(new Product { Name = "Banana", Quantity = 5, Price = 0.3m });
+        model.Products.Add(new Product { Name = "Orange", Quantity = 8, Price = 0.6m });
 
-        // 3. Build the report using ReportingEngine.
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, order, "order");
+        engine.BuildReport(template, model, "model");
 
-        // 4. Save the generated document to a memory stream and then to a file.
-        using (MemoryStream stream = new MemoryStream())
-        {
-            // Save directly to the stream in DOCX format.
-            template.Save(stream, SaveFormat.Docx);
-
-            // Write the stream contents to a physical file for demonstration.
-            stream.Position = 0;
-            using (FileStream file = File.Create("GeneratedReport.docx"))
-            {
-                stream.CopyTo(file);
-            }
-        }
-
-        Console.WriteLine("Report generated and saved as 'GeneratedReport.docx'.");
+        // Write the generated document to a memory stream (simulating an HTTP response body).
+        using MemoryStream responseBody = new MemoryStream();
+        template.Save(responseBody, SaveFormat.Docx);
+        Console.WriteLine($"Report generated, size: {responseBody.Length} bytes");
     }
 }

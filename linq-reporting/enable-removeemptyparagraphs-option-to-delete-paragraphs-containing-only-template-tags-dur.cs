@@ -4,51 +4,63 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Simple data model used as the root object for the report.
+    // Simple data model used by the LINQ Reporting template.
     public class ReportModel
     {
-        // This property will be null, causing the corresponding tag to render an empty string.
-        public string? Optional { get; set; } = null;
+        // Title will be displayed in the report.
+        public string Title { get; set; } = string.Empty;
 
-        // Additional property to demonstrate that the report still contains content.
-        public string Message { get; set; } = "Report generated successfully.";
+        // This property is intentionally left null to demonstrate removal of empty paragraphs.
+        public string? EmptyTag { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a blank document that will serve as the template.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // -----------------------------------------------------------------
+            // 1. Create a template document that contains LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Paragraph that contains only a LINQ Reporting tag.
-            // Since ReportModel.Optional is null, this paragraph will become empty after processing.
-            builder.Writeln("<<[model.Optional]>>");
+            // Paragraph that will be kept (contains a non‑empty value).
+            builder.Writeln("<<[model.Title]>>");
 
-            // Another paragraph with regular text to verify that the document still has content.
-            builder.Writeln("<<[model.Message]>>");
+            // Paragraph that contains only a tag whose value is null/empty.
+            // After the report is built this paragraph becomes empty and should be removed.
+            builder.Writeln("<<[model.EmptyTag]>>");
 
-            // Save the template to a local file (optional, shown for clarity).
+            // Save the template to disk.
             const string templatePath = "Template.docx";
             template.Save(templatePath);
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel();
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
 
-            // Configure the reporting engine to remove empty paragraphs after tag processing.
-            ReportingEngine engine = new ReportingEngine
+            // Configure the reporting engine to remove empty paragraphs.
+            var engine = new ReportingEngine
             {
                 Options = ReportBuildOptions.RemoveEmptyParagraphs
             };
 
-            // Build the report using the template and the data model.
-            // The root object name in the template is "model".
-            engine.BuildReport(template, model, "model");
+            // Prepare the data source.
+            var model = new ReportModel
+            {
+                Title = "Sample Report"
+                // EmptyTag remains null.
+            };
 
-            // Save the generated report.
-            const string outputPath = "Report.docx";
-            template.Save(outputPath);
+            // Build the report. The root object name must match the tag prefix ("model").
+            engine.BuildReport(doc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 3. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "ReportOutput.docx";
+            doc.Save(outputPath);
         }
     }
 }

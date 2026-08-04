@@ -1,74 +1,79 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Program
 {
-    // Simple data model used by the template.
-    public class Model
-    {
-        public string Name { get; set; } = "Aspose";
-    }
-
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some encodings).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Path for the template document.
+        const string templatePath = "template.docx";
 
-        // Insert a LINQ Reporting tag that references the model's Name property.
-        builder.Writeln("Hello, <<[model.Name]>>!");
+        // Create the template with LINQ Reporting tags.
+        CreateTemplate(templatePath);
 
-        // Save the template to disk (required before building a report).
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
+        // First data set.
+        var model1 = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Name = "Apple", Price = 1.20 },
+                new Item { Name = "Banana", Price = 0.80 }
+            }
+        };
 
-        // -----------------------------------------------------------------
-        // 2. Load the template document.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        // Second data set.
+        var model2 = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Name = "Carrot", Price = 0.50 },
+                new Item { Name = "Date", Price = 2.00 }
+            }
+        };
 
-        // -----------------------------------------------------------------
-        // 3. Enable engine caching.
-        //    The ReportingEngine caches compiled templates automatically when the same
-        //    ReportingEngine instance is reused. No additional API is required.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // Single ReportingEngine instance enables caching of the compiled template.
+        var engine = new ReportingEngine();
 
-        // (Optional) Enable reflection optimization – it does not affect caching
-        // but can improve performance for small data sets.
-        ReportingEngine.UseReflectionOptimization = true;
+        // Build first report.
+        var doc1 = new Document(templatePath);
+        engine.BuildReport(doc1, model1, "model");
+        doc1.Save("Report1.docx");
 
-        // -----------------------------------------------------------------
-        // 4. Build the report the first time.
-        // -----------------------------------------------------------------
-        Model model = new Model { Name = "World" };
-        engine.BuildReport(loadedTemplate, model, "model");
-        string firstOutput = Path.Combine(outputDir, "Report1.docx");
-        loadedTemplate.Save(firstOutput);
+        // Build second report using the same engine (cached template is reused).
+        var doc2 = new Document(templatePath);
+        engine.BuildReport(doc2, model2, "model");
+        doc2.Save("Report2.docx");
+    }
 
-        // -----------------------------------------------------------------
-        // 5. Build the report a second time using the same engine instance.
-        //    The compiled template is retrieved from the cache, resulting in faster processing.
-        // -----------------------------------------------------------------
-        // Reload the template to simulate a fresh document instance.
-        Document secondTemplate = new Document(templatePath);
-        Model secondModel = new Model { Name = "Everyone" };
-        engine.BuildReport(secondTemplate, secondModel, "model");
-        string secondOutput = Path.Combine(outputDir, "Report2.docx");
-        secondTemplate.Save(secondOutput);
+    // Creates a simple Word template containing a foreach loop.
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // 6. Inform the user that the reports have been generated.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Report 1 saved to: {firstOutput}");
-        Console.WriteLine($"Report 2 saved to: {secondOutput}");
+        builder.Writeln("Items Report");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(path);
+    }
+
+    // Root data model referenced in the template as <<[model]>>.
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
+    // Simple item class used in the collection.
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public double Price { get; set; }
     }
 }

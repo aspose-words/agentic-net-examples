@@ -5,47 +5,84 @@ using Aspose.Words.Reporting;
 
 namespace InlineErrorMessagesDemo
 {
-    // Simple data model with a single valid property.
-    public class Model
+    // Simple data model used as the root object for the report.
+    public class Person
     {
-        public string ExistingProperty { get; set; } = "Valid value";
-        // Note: No property named MissingProperty – this will trigger an inline error.
+        public string Name { get; set; } = string.Empty;
     }
 
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
-            // Create a new blank document and a builder to insert LINQ Reporting tags.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Prepare file paths.
+            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "DemoFiles");
+            Directory.CreateDirectory(workDir);
+            string templatePath = Path.Combine(workDir, "template.docx");
+            string resultPath = Path.Combine(workDir, "result.docx");
 
-            // Insert a valid tag.
-            builder.Writeln("<<[model.ExistingProperty]>>");
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // The template contains a valid tag <<[person.Name]>> and an invalid tag
+            // <<[person.MissingProperty]>> which will trigger an inline error message.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Hello <<[person.Name]>>!");
+            builder.Writeln("This line contains a missing member: <<[person.MissingProperty]>>");
+            templateDoc.Save(templatePath);
 
-            // Insert an invalid tag that references a non‑existent member.
-            // With InlineErrorMessages enabled, the engine will embed an error message here.
-            builder.Writeln("<<[model.MissingProperty]>>");
+            // -----------------------------------------------------------------
+            // 2. Load the template back (simulating a real-world scenario where the
+            //    template is stored on disk).
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
 
-            // Prepare the data source.
-            Model model = new Model();
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            Person model = new Person { Name = "John Doe" };
 
-            // Configure the reporting engine to inline error messages.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.InlineErrorMessages
-            };
+            // -----------------------------------------------------------------
+            // 4. Configure the ReportingEngine to use InlineErrorMessages.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Build the report. The method returns false because there is a syntax error.
-            bool success = engine.BuildReport(doc, model, "model");
+            // Build the report. The method returns a bool indicating whether the
+            // template was parsed without errors (when InlineErrorMessages is set).
+            bool success = engine.BuildReport(reportDoc, model, "person");
 
-            // Output the success flag.
+            // Save the generated document.
+            reportDoc.Save(resultPath);
+
+            // -----------------------------------------------------------------
+            // 5. Validate the outcome.
+            //    - The success flag should be false because the template contained
+            //      an invalid expression.
+            //    - The resulting document should contain an inline error message.
+            // -----------------------------------------------------------------
+            string resultText = reportDoc.GetText();
+
+            bool containsErrorMessage = resultText.Contains("Error", StringComparison.OrdinalIgnoreCase);
+
             Console.WriteLine($"BuildReport success flag: {success}");
+            Console.WriteLine($"Document contains inline error message: {containsErrorMessage}");
 
-            // Save the resulting document for manual inspection (optional).
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "InlineErrorReport.docx");
-            doc.Save(outputPath);
-            Console.WriteLine($"Report saved to: {outputPath}");
+            // Simple assertions to emulate an integration test.
+            if (success)
+                Console.WriteLine("FAIL: Expected success flag to be false due to missing member.");
+            else
+                Console.WriteLine("PASS: Success flag correctly indicates parsing errors.");
+
+            if (containsErrorMessage)
+                Console.WriteLine("PASS: Inline error message was embedded in the document.");
+            else
+                Console.WriteLine("FAIL: Inline error message was not found in the document.");
+
+            // Clean up (optional).
+            // File.Delete(templatePath);
+            // File.Delete(resultPath);
         }
     }
 }

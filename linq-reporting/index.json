@@ -11,7 +11,7 @@
       "System.Text.Encoding.CodePages"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0",
+      "Aspose.Words": "26.7.0",
       "System.Text.Encoding.CodePages": "9.0.2"
     },
     "required_namespaces": [
@@ -23,25 +23,24 @@
       "System.Text",
       "Aspose.Words.Tables",
       "Aspose.Words.Drawing",
-      "Aspose.Words.Lists",
       "System.Linq",
       "System.Globalization",
       "System.Text.RegularExpressions",
       "System.Threading.Tasks",
-      "Aspose.Words.Saving",
-      "Newtonsoft.Json",
       "System.Collections",
+      "Newtonsoft.Json",
+      "Aspose.Words.Lists",
       "System.Data",
-      "Aspose.Words.Fields",
-      "Aspose.Words.Notes",
+      "Aspose.Words.Saving",
       "Aspose.Words.Drawing.Charts",
+      "System.Net.Http",
+      "Aspose.Words.Fields",
       "System.Xml.Linq",
-      "Aspose.Words.Bibliography",
-      "System.Drawing",
+      "System.Text.Json",
       "System.Threading",
       "System.Diagnostics",
-      "System.Reflection",
-      "System.Text.Json"
+      "Aspose.Words.Replacing",
+      "System.Reflection"
     ],
     "key_apis": [
       "Document",
@@ -55,22 +54,23 @@
       "Cell",
       "NodeType",
       "Paragraph",
+      "Run",
       "JsonDataSource",
       "Range",
-      "Run",
       "SaveFormat",
       "StyleIdentifier",
       "Row",
-      "FieldType",
       "MemoryStream",
       "ImageData",
-      "Chart",
       "ChartType",
+      "Chart",
       "Field",
+      "FieldType",
       "XmlDataSource",
       "Font",
       "HtmlSaveOptions",
-      "PdfSaveOptions"
+      "PdfSaveOptions",
+      "FindReplaceOptions"
     ]
   },
   "stats": {
@@ -183,8 +183,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 3,
@@ -227,8 +227,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 7,
@@ -249,8 +249,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 9,
@@ -282,8 +282,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 12,
@@ -359,8 +359,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 19,
@@ -491,8 +491,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 31,
@@ -590,8 +590,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 40,
@@ -1118,8 +1118,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 88,
@@ -1184,7 +1184,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -1316,7 +1316,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -1371,8 +1371,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 111,
@@ -1482,8 +1482,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 121,
@@ -1537,8 +1537,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 126,
@@ -1581,8 +1581,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 130,
@@ -1614,7 +1614,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -1812,8 +1812,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 151,
@@ -1889,8 +1889,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 158,
@@ -1900,7 +1900,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -1922,8 +1922,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 161,
@@ -2010,8 +2010,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 169,
@@ -2054,8 +2054,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 173,
@@ -2065,7 +2065,7 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -2120,8 +2120,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
     },
     {
       "id": 179,
@@ -2175,8 +2175,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 184,
@@ -2230,8 +2230,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 189,
@@ -2241,8 +2241,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 190,
@@ -2274,8 +2274,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 193,
@@ -2307,8 +2307,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 196,
@@ -2352,7 +2352,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm_secondary",
+      "selected_engine": "llm",
       "winner": "llm"
     },
     {
@@ -2386,8 +2386,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 203,
@@ -2397,8 +2397,8 @@
       "outputs": [
         "rtf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 204,
@@ -2409,8 +2409,8 @@
         "docx",
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 205,
@@ -2464,8 +2464,8 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 210,
@@ -2530,8 +2530,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 216,
@@ -2574,7 +2574,7 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -2585,7 +2585,7 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -2596,7 +2596,7 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -2663,7 +2663,7 @@
         "docx",
         "json"
       ],
-      "selected_engine": "llm_secondary",
+      "selected_engine": "llm",
       "winner": "llm"
     },
     {
@@ -2729,8 +2729,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 234,
@@ -2787,8 +2787,8 @@
         "pdf",
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 239,
@@ -2799,8 +2799,8 @@
         "docx",
         "csv"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 240,
@@ -2811,7 +2811,7 @@
         "docx",
         "csv"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -2878,8 +2878,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 247,
@@ -3131,8 +3131,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 270,
@@ -3373,8 +3373,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 292,
@@ -3406,7 +3406,7 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -3439,8 +3439,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 298,
@@ -3461,8 +3461,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 300,
@@ -3483,7 +3483,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -3616,8 +3616,8 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
     },
     {
       "id": 314,
@@ -3683,8 +3683,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 320,
@@ -3751,8 +3751,8 @@
         "json",
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 326,
@@ -3773,8 +3773,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 328,
@@ -3839,8 +3839,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 334,
@@ -3872,8 +3872,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 337,
@@ -3938,8 +3938,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 343,
@@ -3960,8 +3960,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 345,
@@ -3993,8 +3993,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 348,
@@ -4048,8 +4048,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 353,
@@ -4070,8 +4070,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 355,
@@ -4180,8 +4180,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 365,
@@ -4191,8 +4191,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 366,
@@ -4246,7 +4246,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -4334,8 +4334,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 379,
@@ -4356,8 +4356,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 381,
@@ -4422,7 +4422,7 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -4444,8 +4444,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 389,
@@ -4455,8 +4455,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 390,
@@ -4510,8 +4510,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 395,
@@ -4521,8 +4521,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 396,
@@ -4587,7 +4587,7 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {

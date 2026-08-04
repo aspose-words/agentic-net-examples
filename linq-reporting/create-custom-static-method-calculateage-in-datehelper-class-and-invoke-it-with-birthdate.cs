@@ -1,13 +1,14 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class DateHelper
+public static class DateHelper
 {
     // Calculates age based on the provided birth date.
     public static int CalculateAge(DateTime birthDate)
     {
-        DateTime today = DateTime.Today;
+        var today = DateTime.Today;
         int age = today.Year - birthDate.Year;
         if (birthDate > today.AddYears(-age))
             age--;
@@ -17,41 +18,49 @@ public class DateHelper
 
 public class Person
 {
-    // Sample property used in the report.
-    public DateTime BirthDate { get; set; } = DateTime.MinValue;
+    public string Name { get; set; } = "";
+    public DateTime BirthDate { get; set; }
+}
+
+// Wrapper class required for LINQ Reporting (cannot use anonymous types).
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a template document with a LINQ Reporting tag.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Age: <<[DateHelper.CalculateAge(BirthDate)]>>");
-
-        // Save the template locally.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Step 2: Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // Step 3: Prepare the data source.
-        Person person = new Person
+        // Sample data.
+        var persons = new List<Person>
         {
-            BirthDate = new DateTime(1990, 5, 15) // Example birth date.
+            new Person { Name = "Alice", BirthDate = new DateTime(1990, 5, 12) },
+            new Person { Name = "Bob",   BirthDate = new DateTime(1985, 11, 23) }
         };
 
-        // Step 4: Configure the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
+        // Create a template document with LINQ Reporting tags.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Age: <<[DateHelper.CalculateAge(p.BirthDate)]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save and reload the template to satisfy the lifecycle rule.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+        var doc = new Document(templatePath);
+
+        // Prepare the reporting engine.
+        var engine = new ReportingEngine();
         engine.KnownTypes.Add(typeof(DateHelper));
 
-        // Step 5: Build the report using the data source.
-        engine.BuildReport(reportDoc, person, "person");
+        // Build the report using a non‑anonymous root data source.
+        var model = new ReportModel { Persons = persons };
+        engine.BuildReport(doc, model, "model");
 
-        // Step 6: Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }

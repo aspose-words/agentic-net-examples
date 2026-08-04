@@ -3,57 +3,65 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    class Program
     {
-        // Prepare sample XML data.
-        const string xmlFileName = "people.xml";
-        string xmlContent =
-            @"<People>" +
-            @"  <Person>" +
-            @"    <Name>John Doe</Name>" +
-            @"    <Age>30</Age>" +
-            @"  </Person>" +
-            @"  <Person>" +
-            @"    <Name>Jane Smith</Name>" +
-            @"    <Age>25</Age>" +
-            @"  </Person>" +
-            @"</People>";
-        File.WriteAllText(xmlFileName, xmlContent);
+        static void Main()
+        {
+            // Ensure the working directory is the executable's directory.
+            string workDir = AppDomain.CurrentDomain.BaseDirectory;
 
-        // Create a template document with LINQ Reporting tags.
-        const string templateFileName = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // 1. Create a sample XML data file.
+            string xmlPath = Path.Combine(workDir, "people.xml");
+            File.WriteAllText(xmlPath,
+@"<?xml version=""1.0"" encoding=""utf-8""?>
+<persons>
+    <person>
+        <Name>John Doe</Name>
+        <Age>30</Age>
+    </person>
+    <person>
+        <Name>Jane Smith</Name>
+        <Age>25</Age>
+    </person>
+    <person>
+        <Name>Bob Johnson</Name>
+        <Age>40</Age>
+    </person>
+</persons>");
 
-        builder.Writeln("People List:");
-        // Iterate over the Person elements from the XML data source named "xmlData".
-        // When the root element contains a collection, the data source itself can be iterated directly.
-        builder.Writeln("<<foreach [person in xmlData]>>");
-        builder.Writeln("- Name: <<[person.Name]>>");
-        builder.Writeln("- Age: <<[person.Age]>>");
-        builder.Writeln("<</foreach>>");
+            // 2. Build a template document that contains LINQ Reporting tags.
+            string templatePath = Path.Combine(workDir, "template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Save the template.
-        templateDoc.Save(templateFileName);
+            builder.Writeln("People Report");
+            builder.Writeln("<<foreach [p in persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>");
+            builder.Writeln("Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Load the template for report generation.
-        Document reportDoc = new Document(templateFileName);
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Create an XML data source.
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlFileName);
+            // 3. Load the template document.
+            Document doc = new Document(templatePath);
 
-        // Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // No special options required.
-        bool success = engine.BuildReport(reportDoc, xmlDataSource, "xmlData");
+            // 4. Create an XmlDataSource from the XML file.
+            XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
 
-        // Save the generated report.
-        const string outputFileName = "output.docx";
-        reportDoc.Save(outputFileName);
+            // 5. Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // default options
+            engine.BuildReport(doc, xmlDataSource, "persons");
 
-        // Indicate completion.
-        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
+            // 6. Save the generated report.
+            string outputPath = Path.Combine(workDir, "output.docx");
+            doc.Save(outputPath);
+
+            // Inform that the process completed (no interactive input required).
+            Console.WriteLine($"Report generated successfully: {outputPath}");
+        }
     }
 }

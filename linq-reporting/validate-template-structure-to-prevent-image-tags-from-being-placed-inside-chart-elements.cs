@@ -1,5 +1,8 @@
 using System;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -9,98 +12,111 @@ public class Program
 {
     public static void Main()
     {
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
-        const string imagePath = "sample.png";
+        // Register code page provider (required for Aspose.Words in some environments)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a minimal image file used by the image tag.
-        CreateSampleImage(imagePath);
+        // Prepare working directories
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Step 1: Build the template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a sample image file (1x1 pixel PNG)
+        string imagePath = Path.Combine(outputDir, "sample.png");
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=");
+        File.WriteAllBytes(imagePath, pngBytes);
 
-        // Insert a chart into the template.
-        builder.InsertChart(ChartType.Column, 400, 300);
+        // Create the template document
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        CreateTemplate(templatePath, imagePath);
 
-        // Retrieve the chart shape and (incorrectly) set a title that contains an image tag.
-        Shape chartShape = (Shape)template.GetChildNodes(NodeType.Shape, true)[0];
-        chartShape.Chart.Title.Text = "<<image [ImagePath]>>"; // Invalid placement for demonstration.
-
-        // Insert a valid image tag outside the chart.
-        builder.Writeln("<<image [ImagePath]>>");
-
-        // Save the template to disk.
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Step 2: Load the template and validate its structure.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        if (!ValidateTemplate(loadedTemplate))
+        // Validate the template structure
+        List<string> validationErrors = ValidateTemplate(templatePath);
+        if (validationErrors.Count > 0)
         {
-            Console.WriteLine("Template validation failed: image tag found inside a chart element.");
-            return;
+            Console.WriteLine("Template validation errors:");
+            foreach (var err in validationErrors)
+                Console.WriteLine("- " + err);
+        }
+        else
+        {
+            Console.WriteLine("Template validation passed. No image tags inside chart elements.");
         }
 
-        // -----------------------------------------------------------------
-        // Step 3: Prepare the data model.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // Build the report if validation passed
+        if (validationErrors.Count == 0)
         {
-            ImagePath = imagePath
-        };
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+            BuildReport(templatePath, reportPath, imagePath);
+            Console.WriteLine($"Report generated: {reportPath}");
+        }
+    }
 
-        // -----------------------------------------------------------------
-        // Step 4: Build the report using the LINQ Reporting engine.
-        // -----------------------------------------------------------------
+    private static void CreateTemplate(string templatePath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a chart shape (correctly without any image tags inside)
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        // Optionally add a caption or placeholder after the chart
+        builder.Writeln("Chart placeholder");
+
+        // Insert a textbox shape with a correct image tag
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 200);
+        builder.MoveTo(textBox.FirstParagraph);
+        builder.Writeln("<<image [model.ImagePath] -fitSize>>");
+
+        // Save the template
+        doc.Save(templatePath);
+    }
+
+    private static List<string> ValidateTemplate(string templatePath)
+    {
+        List<string> errors = new();
+        Document doc = new Document(templatePath);
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+        // Regex to detect image tags
+        Regex imageTagRegex = new(@"<<\s*image\s*\[.*?\]\s*(?:-[\w]+)*\s*>>", RegexOptions.IgnoreCase);
+
+        foreach (Shape shape in shapes)
+        {
+            if (shape.HasChart)
+            {
+                // Scan all paragraphs inside the chart shape for image tags
+                foreach (Paragraph para in shape.GetChildNodes(NodeType.Paragraph, true))
+                {
+                    if (imageTagRegex.IsMatch(para.GetText()))
+                    {
+                        errors.Add($"Image tag found inside chart shape at paragraph text \"{para.GetText().Trim()}\".");
+                    }
+                }
+            }
+        }
+
+        return errors;
+    }
+
+    private static void BuildReport(string templatePath, string reportPath, string imagePath)
+    {
+        Document reportDoc = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine
         {
             Options = ReportBuildOptions.None
         };
-        engine.BuildReport(loadedTemplate, model, "model");
 
-        // -----------------------------------------------------------------
-        // Step 5: Save the generated report.
-        // -----------------------------------------------------------------
-        loadedTemplate.Save(outputPath);
-        Console.WriteLine("Report generated successfully.");
-    }
-
-    // Validates that no image tags are placed inside chart titles.
-    private static bool ValidateTemplate(Document doc)
-    {
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        ReportModel model = new ReportModel
         {
-            // If the shape contains a chart, inspect its title.
-            if (shape.Chart != null && shape.Chart.Title != null)
-            {
-                string title = shape.Chart.Title.Text ?? string.Empty;
-                if (title.Contains("<<image"))
-                {
-                    return false; // Invalid image tag detected inside a chart title.
-                }
-            }
-        }
-        return true; // No invalid image tags found.
-    }
+            ImagePath = imagePath // Use full path so the engine can locate the image
+        };
 
-    // Creates a 1x1 transparent PNG file for the sample image.
-    private static void CreateSampleImage(string path)
-    {
-        byte[] pngData = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
-            "Z6VYAAAAASUVORK5CYII=");
-        File.WriteAllBytes(path, pngData);
+        engine.BuildReport(reportDoc, model, "model");
+        reportDoc.Save(reportPath);
     }
 }
 
-// Simple data model used by the reporting engine.
 public class ReportModel
 {
-    // Path to the image referenced by the image tag.
+    // ImagePath can be a relative or absolute path; using absolute path for simplicity
     public string ImagePath { get; set; } = string.Empty;
 }

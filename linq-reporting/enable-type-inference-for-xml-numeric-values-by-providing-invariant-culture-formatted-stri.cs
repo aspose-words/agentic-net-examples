@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,78 +8,79 @@ public class Program
 {
     public static void Main()
     {
-        // Working folder – the current directory.
-        string workDir = Directory.GetCurrentDirectory();
+        // Enable code page provider for XML encoding support.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for the template, the XML data source and the generated report.
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string xmlPath = Path.Combine(workDir, "Orders.xml");
-        string outputPath = Path.Combine(workDir, "Report.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create a simple XML file.  Numeric values are written with a dot
-        //    as the decimal separator (invariant culture) so that the
-        //    ReportingEngine can infer the correct numeric types.
-        // -----------------------------------------------------------------
+        // 1. Create sample XML data with numeric values formatted using invariant culture.
         string xmlContent =
             @"<?xml version=""1.0"" encoding=""utf-8""?>
-            <Orders>
-                <Order>
-                    <Id>1</Id>
-                    <Amount>1234.56</Amount>
-                </Order>
-                <Order>
-                    <Id>2</Id>
-                    <Amount>7890.12</Amount>
-                </Order>
-            </Orders>";
+<People>
+    <Person>
+        <Name>John Doe</Name>
+        <Age>30</Age>
+        <Salary>1234.56</Salary>
+    </Person>
+    <Person>
+        <Name>Jane Smith</Name>
+        <Age>27</Age>
+        <Salary>9876.54</Salary>
+    </Person>
+</People>";
+
+        string xmlPath = "people.xml";
         File.WriteAllText(xmlPath, xmlContent);
 
-        // -----------------------------------------------------------------
-        // 2. Build a Word template programmatically and embed LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // 2. Create a LINQ Reporting template programmatically.
+        string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Orders Report");
-        builder.Writeln(); // empty line
+        // Begin the foreach block before the table.
+        builder.Writeln("<<foreach [person in persons]>>");
 
-        // foreach over the collection named "Order".
-        builder.Writeln("<<foreach [order in Order]>>");
-        builder.Writeln("Id: <<[order.Id]>>");
-        builder.Writeln("Amount: <<[order.Amount]>>");
+        // Insert table header.
+        var table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Age");
+        builder.InsertCell();
+        builder.Writeln("Salary");
+        builder.EndRow();
+
+        // Insert data row placeholders.
+        builder.InsertCell();
+        builder.Writeln("<<[person.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[person.Age]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[person.Salary]>>");
+        builder.EndRow();
+
+        // Finish the table and the foreach block.
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template back (simulating a real‑world scenario where the
-        //    template is a file).
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        // 3. Load the template document.
+        var doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 4. Create an XmlDataSource from the XML file.
-        // -----------------------------------------------------------------
+        // 4. Load the XML data source using a stream.
         using (FileStream xmlStream = File.OpenRead(xmlPath))
         {
-            XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
+            var xmlDataSource = new XmlDataSource(xmlStream);
+            var engine = new ReportingEngine();
 
-            // -----------------------------------------------------------------
-            // 5. Build the report using ReportingEngine.
-            //    Provide a data source name ("Order") so that the engine can
-            //    resolve the collection correctly.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, xmlDataSource, "Order");
+            // Build the report. The root object name must match the tag reference ("persons").
+            engine.BuildReport(doc, xmlDataSource, "persons");
         }
 
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
-        loadedTemplate.Save(outputPath);
+        // 5. Save the generated report.
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
 
-        Console.WriteLine($"Report generated: {outputPath}");
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

@@ -1,93 +1,115 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Xml.Linq;
 using Aspose.Words;
+using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data entity representing a person.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
+        // -----------------------------------------------------------------
+        // Create a sample XML file that will serve as the data source.
+        // -----------------------------------------------------------------
+        const string xmlPath = "report.xml";
+        File.WriteAllText(xmlPath,
+@"<Report>
+  <Sections>
+    <Section>
+      <Title>Section 1</Title>
+      <Items>
+        <Item>Item 1.1</Item>
+        <Item>Item 1.2</Item>
+      </Items>
+    </Section>
+    <Section>
+      <Title>Section 2</Title>
+      <Items>
+        <Item>Item 2.1</Item>
+      </Items>
+    </Section>
+  </Sections>
+</Report>");
+
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        const string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Top‑level numbered list (1., 2., …).
+        List topList = templateDoc.Lists.Add(ListTemplate.NumberDefault);
+        builder.ListFormat.List = topList;
+
+        // Begin looping over the Section elements.
+        builder.Writeln("<<foreach [sec in report.Sections]>>");
+        // Restart numbering for each top‑level item and write the section title.
+        builder.Writeln("<<restartNum>><<[sec.Title]>>");
+
+        // Sub‑list for the items belonging to the current section.
+        List subList = templateDoc.Lists.Add(ListTemplate.NumberArabicParenthesis);
+        builder.ListFormat.List = subList;
+        builder.Writeln("<<foreach [itm in sec.Items]>>");
+        builder.Writeln("<<[itm]>>");
+        builder.Writeln("<</foreach>>");
+
+        // End the outer foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template and build the report using a strongly‑typed model.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
+        ReportModel model = LoadReportModel(xmlPath);
+
+        var engine = new ReportingEngine();
+        // The root object name used in the template tags is "report".
+        engine.BuildReport(doc, model, "report");
+
+        // Save the generated report.
+        doc.Save("ReportResult.docx");
     }
 
-    // Wrapper model that will be passed to the reporting engine.
-    public class ReportModel
+    // Loads the XML file into a strongly‑typed object graph that matches the template tags.
+    private static ReportModel LoadReportModel(string xmlPath)
     {
-        public List<Person> Items { get; set; } = new();
-    }
+        var xDoc = XDocument.Load(xmlPath);
+        var model = new ReportModel();
 
-    public class Program
-    {
-        public static void Main()
+        foreach (var xSection in xDoc.Root?.Element("Sections")?.Elements("Section") ?? new XElement[0])
         {
-            // -----------------------------------------------------------------
-            // 1. Create sample XML data.
-            // -----------------------------------------------------------------
-            const string xmlFile = "people.xml";
-            var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<People>
-    <Person><Name>John Doe</Name><Age>28</Age></Person>
-    <Person><Name>Jane Smith</Name><Age>35</Age></Person>
-    <Person><Name>Bob Johnson</Name><Age>42</Age></Person>
-    <Person><Name>Alice Brown</Name><Age>31</Age></Person>
-</People>";
-            File.WriteAllText(xmlFile, xmlContent);
-
-            // -----------------------------------------------------------------
-            // 2. Load XML, filter nodes (Age > 30), and map to model objects.
-            // -----------------------------------------------------------------
-            XDocument xDoc = XDocument.Load(xmlFile);
-            var filteredPersons = xDoc.Root?
-                .Elements("Person")
-                .Where(p => (int)p.Element("Age")! > 30)
-                .Select(p => new Person
-                {
-                    Name = (string)p.Element("Name")!,
-                    Age = (int)p.Element("Age")!
-                })
-                .ToList() ?? new List<Person>();
-
-            var model = new ReportModel { Items = filteredPersons };
-
-            // -----------------------------------------------------------------
-            // 3. Create a template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            const string templatePath = "template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("People Report (Age > 30)");
-            // The <<restartNum>> tag ensures numbering starts at 1 for this list.
-            // The foreach tag iterates over the Items collection in the model.
-            builder.Writeln("<<restartNum>><<foreach [person in Items]>><<[person.Name]>> (Age: <<[person.Age]>>)"); 
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 4. Load the template and build the report.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-            var engine = new ReportingEngine
+            var section = new SectionModel
             {
-                // Remove empty paragraphs that may appear after tag processing.
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
+                Title = (string?)xSection.Element("Title") ?? string.Empty,
+                Items = new List<string>()
             };
-            engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "PeopleReport.docx";
-            doc.Save(outputPath);
+            foreach (var xItem in xSection.Element("Items")?.Elements("Item") ?? new XElement[0])
+                section.Items.Add((string?)xItem ?? string.Empty);
 
-            // The example finishes without waiting for user input.
+            model.Sections.Add(section);
         }
+
+        return model;
     }
+}
+
+// ---------------------------------------------------------------------
+// Public data model classes that match the template expressions.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<SectionModel> Sections { get; set; } = new();
+}
+
+public class SectionModel
+{
+    public string Title { get; set; } = string.Empty;
+    public List<string> Items { get; set; } = new();
 }

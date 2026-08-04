@@ -1,88 +1,97 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Required for Table type
+using Aspose.Words.Tables;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Data model for a line item.
-    public class LineItem
+    public static void Main()
     {
-        public string Description { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-    }
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        string reportPath   = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
 
-    // Wrapper model containing the collection used in the foreach band.
-    public class ReportModel
-    {
-        public List<LineItem> Items { get; set; } = new();
-    }
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    public class Program
-    {
-        public static void Main()
+        // Title.
+        builder.Writeln("Order Details");
+        builder.Writeln();
+
+        // Begin the foreach band – iterate over order.Items.
+        builder.Writeln("<<foreach [item in order.Items]>>");
+
+        // Table with header and data rows.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell(); builder.Writeln("Item");
+        builder.InsertCell(); builder.Writeln("Qty");
+        builder.InsertCell(); builder.Writeln("Unit Price");
+        builder.InsertCell(); builder.Writeln("Line Total");
+        builder.EndRow();
+
+        // Data row – will be repeated for each item.
+        builder.InsertCell(); builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.UnitPrice]>>");
+        // Calculate line total directly in the expression tag.
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity * item.UnitPrice]>>");
+        builder.EndRow();
+
+        // Close the table.
+        builder.EndTable();
+
+        // End the foreach band.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and prepare the data model.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Sample order with a few items.
+        Order order = new()
         {
-            // Register code page provider for Aspose.Words (required in .NET Core).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Create a simple template document with a foreach band.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Begin foreach band over Items collection.
-            builder.Writeln("<<foreach [item in Items]>>");
-
-            // Create a table to display each line item.
-            Table table = builder.StartTable();
-
-            // Header row.
-            builder.InsertCell();
-            builder.Writeln("Description");
-            builder.InsertCell();
-            builder.Writeln("Quantity");
-            builder.InsertCell();
-            builder.Writeln("Unit Price");
-            builder.InsertCell();
-            builder.Writeln("Line Total");
-            builder.EndRow();
-
-            // Data row – use expression tags to output properties and calculate total.
-            builder.InsertCell();
-            builder.Writeln("<<[item.Description]>>");
-            builder.InsertCell();
-            builder.Writeln("<<[item.Quantity]>>");
-            builder.InsertCell();
-            builder.Writeln("<<[item.UnitPrice]>>");
-            builder.InsertCell();
-            // Calculate line total directly in the expression tag.
-            builder.Writeln("<<[item.Quantity * item.UnitPrice]>>");
-            builder.EndRow();
-
-            builder.EndTable();
-
-            // End foreach band.
-            builder.Writeln("<</foreach>>");
-
-            // Prepare sample data.
-            ReportModel model = new ReportModel
+            Items = new()
             {
-                Items = new List<LineItem>
-                {
-                    new LineItem { Description = "Apple", Quantity = 3, UnitPrice = 1.5m },
-                    new LineItem { Description = "Banana", Quantity = 2, UnitPrice = 0.8m },
-                    new LineItem { Description = "Cherry", Quantity = 5, UnitPrice = 0.6m }
-                }
-            };
+                new Item { Name = "Apple",  Quantity = 3, UnitPrice = 0.75m },
+                new Item { Name = "Banana", Quantity = 5, UnitPrice = 0.50m },
+                new Item { Name = "Cherry", Quantity = 2, UnitPrice = 2.00m }
+            }
+        };
 
-            // Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // -----------------------------------------------------------------
+        // 3. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        // The root object name used in the template is "order".
+        engine.BuildReport(doc, order, "order");
 
-            // Save the generated report.
-            doc.Save("Report.docx");
-        }
+        // Save the generated report.
+        doc.Save(reportPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
+public class Order
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
 }

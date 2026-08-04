@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -7,92 +8,89 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    public string Title { get; set; } = "Sample Report";
-    public string ImagePath { get; set; } = "";
-    public string Url { get; set; } = "https://example.com";
-    public string LinkText { get; set; } = "Example Link";
+    // No properties needed for this simple example.
 }
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // Prepare a simple 1x1 PNG image.
-        // -----------------------------------------------------------------
-        const string imageFileName = "sample.png";
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
-        File.WriteAllBytes(imageFileName, pngBytes);
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         // -----------------------------------------------------------------
-        // Create the data model.
+        // Step 1: Create a document template that contains a chart.
         // -----------------------------------------------------------------
-        var model = new ReportModel
-        {
-            ImagePath = Path.GetFullPath(imageFileName)
-        };
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // -----------------------------------------------------------------
-        // Create the template document.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Insert a column chart.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
 
-        // Simple text with a data field.
-        builder.Writeln("Report Title: <<[model.Title]>>");
+        // Intentionally place a prohibited tag inside the chart title for validation demo.
+        chartShape.Chart.Title.Text = "<<image [model.ImagePath]>>";
 
-        // Insert a chart (no tags inside).
-        builder.Writeln("Chart:");
-        builder.InsertChart(ChartType.Column, 400, 300);
-
-        // Valid tags placed outside the chart.
-        builder.Writeln("<<bookmark [model.Title]>>Bookmark Content<</bookmark>>");
-        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
-
-        // Image tag must be inside a textbox (image container).
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Write("<<image [model.ImagePath] -fitSize>>");
-
-        // Save the template.
+        // Save the template (optional, just to illustrate the file exists).
         const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // Load the template for validation and reporting.
+        // Step 2: Validate that no image, bookmark, or link tags are inside chart elements.
         // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
+        bool hasProhibitedTags = false;
+        string[] prohibitedPrefixes = { "<<image", "<<bookmark", "<<link" };
 
-        // Validate that no image, bookmark, or link tags exist inside chart elements.
-        bool invalidTagFound = false;
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        // Iterate over all shapes that contain charts.
+        foreach (Shape shape in templateDoc.GetChildNodes(NodeType.Shape, true))
         {
             if (shape.HasChart)
             {
-                string chartText = shape.GetText();
-                if (chartText.Contains("<<image") ||
-                    chartText.Contains("<<bookmark") ||
-                    chartText.Contains("<<link"))
+                // Check the chart title for prohibited tags.
+                string titleText = shape.Chart.Title?.Text ?? string.Empty;
+                if (!string.IsNullOrEmpty(titleText))
                 {
-                    invalidTagFound = true;
-                    break;
+                    foreach (string prefix in prohibitedPrefixes)
+                    {
+                        if (titleText.Contains(prefix, StringComparison.Ordinal))
+                        {
+                            hasProhibitedTags = true;
+                            Console.WriteLine(
+                                $"Prohibited tag \"{prefix}\" found in chart title: \"{titleText}\"");
+                        }
+                    }
                 }
+
+                // Additional checks (e.g., legend, axis titles) could be added here similarly.
             }
         }
 
-        Console.WriteLine(invalidTagFound
-            ? "Invalid tags were found inside a chart."
-            : "No invalid tags inside charts were detected.");
+        if (!hasProhibitedTags)
+        {
+            Console.WriteLine("Validation passed: no prohibited tags inside chart elements.");
+        }
 
         // -----------------------------------------------------------------
-        // Build the report using the LINQ Reporting engine.
+        // Step 3: Generate a clean report (chart without prohibited tags) using ReportingEngine.
         // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        Document cleanTemplate = new Document();
+        DocumentBuilder cleanBuilder = new DocumentBuilder(cleanTemplate);
 
-        // Save the final report.
+        Shape cleanChart = cleanBuilder.InsertChart(ChartType.Column, 400, 300);
+        cleanChart.Chart.Title.Text = "Sales Overview";
+
+        const string cleanTemplatePath = "CleanTemplate.docx";
+        cleanTemplate.Save(cleanTemplatePath);
+
+        // Load the clean template and build the report.
+        Document reportDoc = new Document(cleanTemplatePath);
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(reportDoc, new ReportModel(), "model");
+
         const string reportPath = "Report.docx";
-        doc.Save(reportPath);
+        reportDoc.Save(reportPath);
+        Console.WriteLine($"Report generated successfully: {reportPath}");
     }
 }

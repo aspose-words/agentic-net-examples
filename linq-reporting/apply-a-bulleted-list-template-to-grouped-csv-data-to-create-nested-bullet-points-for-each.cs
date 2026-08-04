@@ -10,64 +10,46 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for possible CSV encodings.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Ensure the working directory exists.
+        string workDir = Directory.GetCurrentDirectory();
 
-        // 1. Create a sample CSV file.
-        string csvPath = "sample.csv";
+        // 1. Create sample CSV data.
+        string csvPath = Path.Combine(workDir, "data.csv");
         File.WriteAllLines(csvPath, new[]
         {
             "Category,Item",
             "Fruits,Apple",
             "Fruits,Banana",
+            "Fruits,Orange",
             "Vegetables,Carrot",
-            "Vegetables,Tomato"
+            "Vegetables,Tomato",
+            "Vegetables,Potato"
         });
 
-        // 2. Load CSV data and transform it into a hierarchical model.
-        ReportModel model = BuildReportModelFromCsv(csvPath);
+        // 2. Load CSV and build a hierarchical model.
+        ReportModel model = BuildModelFromCsv(csvPath);
 
-        // 3. Build the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // 3. Create the LINQ Reporting template programmatically.
+        string templatePath = Path.Combine(workDir, "template.docx");
+        CreateTemplate(templatePath);
 
-        // Create a bulleted list that will be used for both levels.
-        List bulletList = template.Lists.Add(ListTemplate.BulletDefault);
-        builder.ListFormat.List = bulletList;
+        // 4. Load the template and build the report.
+        Document templateDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
+        engine.BuildReport(templateDoc, model, "model");
 
-        // Outer foreach – iterate over categories.
-        builder.Writeln("<<foreach [cat in Categories]>>");
-        builder.ListFormat.ListLevelNumber = 0; // first‑level bullet
-        builder.Writeln("<<[cat.Name]>>");
-
-        // Inner foreach – iterate over items belonging to the current category.
-        builder.Writeln("<<foreach [it in cat.Items]>>");
-        builder.ListFormat.ListLevelNumber = 1; // second‑level bullet
-        builder.Writeln("<<[it.Name]>>");
-        builder.Writeln("<</foreach>>"); // end inner foreach
-
-        builder.Writeln("<</foreach>>"); // end outer foreach
-
-        // Remove list formatting after the loops so subsequent paragraphs are normal.
-        builder.ListFormat.RemoveNumbers();
-
-        // 4. Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
-        engine.BuildReport(template, model, "model");
-
-        // 5. Save the generated document.
-        template.Save("Report.docx");
+        // 5. Save the generated report.
+        string outputPath = Path.Combine(workDir, "output.docx");
+        templateDoc.Save(outputPath);
     }
 
-    // Reads the CSV file and creates a hierarchical model suitable for the report.
-    private static ReportModel BuildReportModelFromCsv(string csvPath)
+    // Parses the CSV file and groups items by category.
+    private static ReportModel BuildModelFromCsv(string csvFile)
     {
-        var categories = new Dictionary<string, Category>(StringComparer.OrdinalIgnoreCase);
+        var groups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var line in File.ReadLines(csvPath).Skip(1)) // skip header
+        foreach (var line in File.ReadLines(csvFile).Skip(1)) // Skip header
         {
             if (string.IsNullOrWhiteSpace(line))
                 continue;
@@ -76,37 +58,76 @@ public class Program
             if (parts.Length != 2)
                 continue;
 
-            string catName = parts[0].Trim();
-            string itemName = parts[1].Trim();
+            string category = parts[0].Trim();
+            string item = parts[1].Trim();
 
-            if (!categories.TryGetValue(catName, out var category))
+            if (!groups.TryGetValue(category, out var list))
             {
-                category = new Category { Name = catName };
-                categories[catName] = category;
+                list = new List<string>();
+                groups[category] = list;
             }
 
-            category.Items.Add(new Item { Name = itemName });
+            list.Add(item);
         }
 
-        return new ReportModel { Categories = categories.Values.ToList() };
+        var model = new ReportModel
+        {
+            Groups = groups.Select(g => new CategoryGroup
+            {
+                Category = g.Key,
+                Items = g.Value
+            }).ToList()
+        };
+
+        return model;
+    }
+
+    // Creates a Word document containing the LINQ Reporting tags.
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Create a bulleted list style.
+        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+        builder.ListFormat.List = bulletList;
+
+        // Begin outer foreach over groups.
+        builder.Writeln("<<foreach [group in model.Groups]>>");
+
+        // Category line – top‑level bullet.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("<<[group.Category]>>");
+
+        // Begin inner foreach over items.
+        builder.Writeln("<<foreach [item in group.Items]>>");
+
+        // Item line – second‑level bullet.
+        builder.ListFormat.ListLevelNumber = 1;
+        builder.Writeln("<<[item]>>");
+
+        // End inner foreach.
+        builder.Writeln("<</foreach>>");
+
+        // End outer foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Reset list formatting for any following content.
+        builder.ListFormat.RemoveNumbers();
+
+        doc.Save(filePath);
     }
 }
 
-// Root object passed to the reporting engine.
+// Root data model.
 public class ReportModel
 {
-    public List<Category> Categories { get; set; } = new();
+    public List<CategoryGroup> Groups { get; set; } = new();
 }
 
-// Represents a category that contains multiple items.
-public class Category
+// Represents a category and its items.
+public class CategoryGroup
 {
-    public string Name { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-// Simple item class.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public List<string> Items { get; set; } = new();
 }

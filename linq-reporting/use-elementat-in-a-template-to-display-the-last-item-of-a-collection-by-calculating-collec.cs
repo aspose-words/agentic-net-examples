@@ -1,61 +1,58 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Item
 {
-    // Simple data model with a collection of items.
-    public class ReportModel
-    {
-        // Initialize the collection to avoid nullable warnings.
-        public List<Item> Items { get; set; } = new();
+    // Initialize to avoid nullable warnings.
+    public string Name { get; set; } = string.Empty;
+}
 
-        // Populate sample data in the constructor.
-        public ReportModel()
+public class ReportModel
+{
+    // Initialize collection to avoid null reference.
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Items.Add(new Item { Name = "Alpha", Value = 10 });
-            Items.Add(new Item { Name = "Beta", Value = 20 });
-            Items.Add(new Item { Name = "Gamma", Value = 30 });
-        }
-    }
+            Items = new List<Item>
+            {
+                new Item { Name = "First" },
+                new Item { Name = "Second" },
+                new Item { Name = "Last" } // This should be displayed.
+            }
+        };
 
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Value { get; set; }
-    }
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider for .NET Core environments.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Insert a LINQ Reporting tag that uses ElementAt to fetch the last item.
+        // The expression calculates the index as Items.Count - 1.
+        builder.Writeln("Last item name: <<[model.Items.ElementAt(model.Items.Count - 1).Name]>>");
 
-            // Step 1: Create the template document with a LINQ Reporting tag that
-            // uses ElementAt to fetch the last item based on collection length.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
-            builder.Writeln("Last item name: <<[model.Items.ElementAt(model.Items.Count - 1).Name]>>");
-            builder.Writeln("Last item value: <<[model.Items.ElementAt(model.Items.Count - 1).Value]>>");
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-            // Step 2: Load the template for report generation.
-            var doc = new Document(templatePath);
+        // Load the template for reporting.
+        var loadedDoc = new Document(templatePath);
 
-            // Step 3: Prepare the data source.
-            var model = new ReportModel();
+        // Build the report using the model as the root data source named "model".
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedDoc, model, "model");
 
-            // Step 4: Build the report using the ReportingEngine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // Step 5: Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        loadedDoc.Save(outputPath);
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables; // Needed for Table type
 
 public class Item
 {
@@ -18,28 +19,27 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
+        // Sample data.
         var model = new ReportModel
         {
             Items = new List<Item>
             {
                 new Item { Name = "Task A", Status = "Completed" },
                 new Item { Name = "Task B", Status = "Pending" },
-                new Item { Name = "Task C", Status = "Failed" }
+                new Item { Name = "Task C", Status = "Completed" },
+                new Item { Name = "Task D", Status = "InProgress" }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Build the template document.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Begin foreach loop over Items.
+        // Begin foreach loop.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Create a table with two columns: Name and Status.
-        var table = builder.StartTable();
+        // Table definition.
+        Table table = builder.StartTable();
 
         // Header row.
         builder.InsertCell();
@@ -48,36 +48,26 @@ public class Program
         builder.Writeln("Status");
         builder.EndRow();
 
-        // Data row.
+        // Data row with conditional background color.
         builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
+        builder.Writeln(
+            "<<if [item.Status == \"Completed\"]>><<backColor [\"LightGreen\"]>><<[item.Name]>> <</backColor>><</if>>" +
+            "<<if [item.Status != \"Completed\"]>><<[item.Name]>> <</if>>");
         builder.InsertCell();
-
-        // Apply background color based on item.Status using backColor tag and conditional expressions.
         builder.Writeln(
             "<<if [item.Status == \"Completed\"]>><<backColor [\"LightGreen\"]>><<[item.Status]>> <</backColor>><</if>>" +
-            "<<if [item.Status == \"Pending\"]>><<backColor [\"LightYellow\"]>><<[item.Status]>> <</backColor>><</if>>" +
-            "<<if [item.Status != \"Completed\" && item.Status != \"Pending\"]>><<backColor [\"LightCoral\"]>><<[item.Status]>> <</backColor>><</if>>");
-
+            "<<if [item.Status != \"Completed\"]>><<[item.Status]>> <</if>>");
         builder.EndRow();
-        builder.EndTable();
 
-        // End foreach loop.
+        // End table and foreach.
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template to a file.
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        var loadedDoc = new Document(templatePath);
+        // Generate the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(loadedDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        loadedDoc.Save(outputPath);
+        // Save output.
+        doc.Save("Report.docx");
     }
 }

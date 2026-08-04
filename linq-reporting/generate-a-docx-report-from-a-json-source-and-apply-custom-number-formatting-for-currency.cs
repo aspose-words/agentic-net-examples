@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using Aspose.Words;
@@ -10,77 +11,66 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
+        // Register code page provider for Aspose.Words
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data.
-        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "orders.json");
-        var sampleData = new Root
+        // Prepare sample JSON data
+        string jsonPath = "data.json";
+        var sampleData = new ReportData
         {
             Orders = new List<Order>
             {
-                new Order
-                {
-                    CustomerName = "Acme Corp",
-                    OrderDate = new DateTime(2023, 5, 21),
-                    Total = 1234.56m
-                },
-                new Order
-                {
-                    CustomerName = "Globex Inc",
-                    OrderDate = new DateTime(2023, 6, 3),
-                    Total = 7890.12m
-                }
+                new Order { CustomerName = "Alice Johnson", Total = 1234.56m },
+                new Order { CustomerName = "Bob Smith", Total = 7890.12m },
+                new Order { CustomerName = "Carol Davis", Total = 345.67m }
             }
         };
         File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Load JSON into model.
-        var root = JsonConvert.DeserializeObject<Root>(File.ReadAllText(jsonPath))!;
+        // Load data from JSON
+        var jsonContent = File.ReadAllText(jsonPath);
+        var data = JsonConvert.DeserializeObject<ReportData>(jsonContent) ?? new ReportData();
 
-        // Create a DOCX template with LINQ Reporting tags.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create template document
+        string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
         builder.Writeln("Order Report");
-        builder.Writeln("==============");
+        builder.Writeln("Generated on: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         builder.Writeln();
 
-        // Begin foreach over orders.
+        // Begin foreach loop over Orders
         builder.Writeln("<<foreach [order in Orders]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Date: <<[order.OrderDate.ToString(\"d\")]>>");
-        builder.Writeln("Total: <<[order.Total.ToString(\"C\")]>>");
+        builder.Writeln("Total: <<[order.TotalFormatted]>>");
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
+        // Save the template
+        doc.Save(templatePath);
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
+        // Load the template (optional, can reuse the same doc)
+        var templateDoc = new Document(templatePath);
 
-        // Build the report using the root object.
-        engine.BuildReport(reportDoc, root, "root");
+        // Build the report
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, data, "data");
 
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+        // Save the final report
+        string reportPath = "report.docx";
+        templateDoc.Save(reportPath);
     }
 }
 
-// Data model classes.
-public class Root
+public class ReportData
 {
     public List<Order> Orders { get; set; } = new();
 }
 
 public class Order
 {
-    public string CustomerName { get; set; } = string.Empty;
-    public DateTime OrderDate { get; set; }
+    public string CustomerName { get; set; } = "";
     public decimal Total { get; set; }
+
+    public string TotalFormatted => Total.ToString("C", CultureInfo.CurrentCulture);
 }

@@ -1,54 +1,46 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Replacing;
+
+public class Person
+{
+    public string Name { get; set; } = "John Doe";
+    public int Age { get; set; } = 30;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Paths for the template and the generated report.
+        string templatePath = "Template.docx";
+        string reportPath = "Report.docx";
 
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 35 }
-            }
-        };
+        // 1. Create a template document with custom tag delimiters [[ and ]].
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Use custom delimiters that will later be converted to proper LINQ Reporting tags.
+        builder.Writeln("Hello [[person.Name]], Age [[person.Age]]");
+        templateDoc.Save(templatePath);
 
-        // Create a template document using the default LINQ Reporting delimiters << and >>.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // 2. Load the template back from disk.
+        Document doc = new Document(templatePath);
 
-        // Write LINQ Reporting tags.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>  Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
+        // 3. Replace custom delimiters with the default LINQ Reporting delimiters <<[ and ]>>.
+        // This conversion yields valid tags like <<[person.Name]>>.
+        FindReplaceOptions replaceOptions = new FindReplaceOptions();
+        doc.Range.Replace("[[", "<<[", replaceOptions);
+        doc.Range.Replace("]]", "]>>", replaceOptions);
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+        // 4. Prepare the data source.
+        Person person = new Person();
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        template.Save(outputPath);
+        // 5. Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, person, "person");
+
+        // 6. Save the generated report.
+        doc.Save(reportPath);
     }
-}
-
-// Wrapper class that matches the root object name used in BuildReport.
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-// Simple data model class.
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

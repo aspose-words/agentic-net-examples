@@ -3,73 +3,69 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Sample data model.
+    public class Person
     {
-        // Ensure the output folder exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for the template and the generated report.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Simple data field.
-        builder.Writeln("Name: <<[model.Name]>>");
-
-        // Use a known external static type (Helper) to format the date.
-        builder.Writeln("Birth Date: <<[Helper.FormatDate(model.BirthDate)]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // Prepare the data source.
-        Person person = new Person
-        {
-            Name = "John Doe",
-            BirthDate = new DateTime(1990, 5, 23)
-        };
-
-        // Configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-
-        // Register the external type so its static members can be used safely in the template.
-        engine.KnownTypes.Add(typeof(Helper));
-
-        // Build the report. The root object name must match the name used in the template tags ("model").
-        engine.BuildReport(loadedTemplate, person, "model");
-
-        // Save the generated report.
-        loadedTemplate.Save(reportPath);
+        public string Name { get; set; } = "John Doe";
+        public int Age { get; set; } = 30;
     }
-}
 
-// ---------------------------------------------------------------------
-// Data model used by the template.
-// ---------------------------------------------------------------------
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public DateTime BirthDate { get; set; }
-}
+    // Utility class whose static members will be accessed from the template.
+    public static class MyUtils
+    {
+        public static string ToUpper(string value) => value?.ToUpperInvariant() ?? string.Empty;
+        public static string FormatAge(int age) => $"Age: {age}";
+    }
 
-// ---------------------------------------------------------------------
-// External static helper class whose members are allowed in the template.
-// ---------------------------------------------------------------------
-public static class Helper
-{
-    // Formats a DateTime as a short date string.
-    public static string FormatDate(DateTime date) => date.ToString("yyyy-MM-dd");
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare file paths.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            string resultPath = Path.Combine(outputDir, "Report.docx");
+
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Write simple placeholders using correct LINQ Reporting syntax.
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Uppercase Name: <<[MyUtils.ToUpper(person.Name)]>>");
+            builder.Writeln("Age Info: <<[MyUtils.FormatAge(person.Age)]>>");
+
+            // Save the template.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template for reporting.
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Configure the ReportingEngine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+
+            // Register the external type so its static members can be used safely.
+            engine.KnownTypes.Add(typeof(MyUtils));
+
+            // -----------------------------------------------------------------
+            // 4. Build the report using a root object named "person".
+            // -----------------------------------------------------------------
+            Person person = new Person { Name = "Alice Smith", Age = 42 };
+            engine.BuildReport(doc, person, "person");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            doc.Save(resultPath);
+        }
+    }
 }

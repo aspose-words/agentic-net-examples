@@ -1,96 +1,95 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    public class Program
     {
-        // Register code page provider for any required encodings.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-        // Prepare sample hierarchical data.
-        ReportModel model = new ReportModel
+        public static void Main()
         {
-            Categories = new List<Category>
+            // Register code page provider (required for some environments)
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            // Prepare sample hierarchical data
+            var model = new ReportModel
             {
-                new Category
+                Categories = new List<Category>
                 {
-                    Name = "Fruits",
-                    Items = new List<Item>
+                    new Category
                     {
-                        new Item { Index = 1, Name = "Apple" },
-                        new Item { Index = 2, Name = "Banana" }
-                    }
-                },
-                new Category
-                {
-                    Name = "Vegetables",
-                    Items = new List<Item>
+                        Name = "Fruits",
+                        Items = new List<Item>
+                        {
+                            new Item { Name = "Apple", Price = 1.20 },
+                            new Item { Name = "Banana", Price = 0.80 }
+                        }
+                    },
+                    new Category
                     {
-                        new Item { Index = 1, Name = "Carrot" },
-                        new Item { Index = 2, Name = "Tomato" }
+                        Name = "Vegetables",
+                        Items = new List<Item>
+                        {
+                            new Item { Name = "Carrot", Price = 0.50 },
+                            new Item { Name = "Tomato", Price = 0.90 }
+                        }
                     }
                 }
-            }
-        };
+            };
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Create the template document with LINQ Reporting tags
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-        // Outer foreach over categories.
-        builder.Writeln("<<foreach [category in Categories]>>");
-        builder.Writeln("Category: <<[category.Name]>>");
+            builder.Writeln("Product Catalog");
+            builder.Writeln();
 
-        // Inner foreach over items of the current category.
-        builder.Writeln("<<foreach [item in category.Items]>>");
-        builder.Writeln("- Item <<[item.Index]>>: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>"); // End inner foreach.
+            // Outer foreach for categories
+            builder.Writeln("<<foreach [category in Categories]>>");
+            builder.Writeln("Category: <<[category.Name]>>");
+            builder.Writeln();
 
-        builder.Writeln("<</foreach>>"); // End outer foreach.
+            // Inner foreach for items within each category
+            builder.Writeln("<<foreach [item in category.Items]>>");
+            builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln("<</foreach>>");
 
-        // Save the template to disk (required before building the report).
-        templateDoc.Save(templatePath);
+            // Save the template to a file
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report using the data model.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // No special options needed.
+            // Load the template for report generation
+            var doc = new Document(templatePath);
 
-        // Build the report. The root object name must match the name used in the template tags.
-        bool success = engine.BuildReport(reportDoc, model, "model");
+            // Build the report using the data model
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-        // Optionally, you could check the success flag if InlineErrorMessages were enabled.
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+            // Save the final report
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
     }
-}
 
-// ---------------------------------------------------------------------
-// Data model classes (public with public properties, no nullable warnings).
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public List<Category> Categories { get; set; } = new();
-}
+    // Root data model
+    public class ReportModel
+    {
+        public List<Category> Categories { get; set; } = new();
+    }
 
-public class Category
-{
-    public string Name { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
+    // Category containing a collection of items
+    public class Category
+    {
+        public string Name { get; set; } = "";
+        public List<Item> Items { get; set; } = new();
+    }
 
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
+    // Individual item
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public double Price { get; set; }
+    }
 }

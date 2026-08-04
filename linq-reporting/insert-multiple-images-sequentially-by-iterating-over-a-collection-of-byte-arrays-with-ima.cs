@@ -2,80 +2,82 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
+using Aspose.Words.Reporting;
+using Aspose.Words.Tables;   // Added to resolve the Table type
 
-public class ImageItem
+namespace AsposeWordsLinqReportingExample
 {
-    // Byte array containing the image data.
-    public byte[] ImageBytes { get; set; } = Array.Empty<byte>();
-}
-
-public class ReportModel
-{
-    // Collection of images to be inserted.
-    public List<ImageItem> Images { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Model class that holds a collection of images as byte arrays.
+    public class ReportModel
     {
-        // -----------------------------------------------------------------
-        // 1. Create a template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Initialize the list to avoid nullable warnings.
+        public List<ImageItem> Images { get; set; } = new();
 
-        // Simple heading.
-        builder.Writeln("Image Report");
-        builder.Writeln();
+        // Helper method to populate the collection with sample images.
+        public void LoadSampleImages()
+        {
+            // Two tiny PNG images encoded in Base64.
+            const string base64PngRed = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YcV4V8AAAAASUVORK5CYII=";
+            const string base64PngGreen = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8AABgAD/6V6XwAAAABJRU5ErkJggg==";
 
-        // Begin a foreach loop over the Images collection.
-        builder.Writeln("<<foreach [img in Images]>>");
+            Images.Add(new ImageItem { Data = Convert.FromBase64String(base64PngRed) });
+            Images.Add(new ImageItem { Data = Convert.FromBase64String(base64PngGreen) });
+        }
+    }
 
-        // Create a table row that will be repeated for each image.
-        Table table = builder.StartTable();
-        builder.InsertCell();
+    // Simple wrapper for a single image byte array.
+    public class ImageItem
+    {
+        public byte[] Data { get; set; } = Array.Empty<byte>();
+    }
 
-        // Insert a textbox that will host the image.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
-        // Move the cursor inside the textbox.
-        builder.MoveTo(textBox.FirstParagraph);
-        // Image tag referencing the byte[] property; fit the image to the textbox size.
-        builder.Write("<<image [img.ImageBytes] -fitSize>>");
+    public class Program
+    {
+        public static void Main()
+        {
+            // Step 1: Create the LINQ Reporting template programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Close the table row and table.
-        builder.EndRow();
-        builder.EndTable();
+            // Begin a foreach loop over the Images collection.
+            builder.Writeln("<<foreach [img in Images]>>");
 
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
+            // Create a table that will hold one image per row.
+            Table table = builder.StartTable();
+            builder.InsertCell();
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+            // Insert a textbox shape; the image tag must be inside the textbox.
+            Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 200);
+            builder.MoveTo(textBox.FirstParagraph);
+            builder.Writeln("<<image [img.Data]>>");
 
-        // -----------------------------------------------------------------
-        // 2. Prepare sample image data (two 1x1 PNG images encoded in Base64).
-        // -----------------------------------------------------------------
-        // A 1x1 pixel transparent PNG.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9Y6XK6cAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
+            // Close the row and the table for each iteration.
+            builder.EndRow();
+            builder.EndTable();
 
-        var model = new ReportModel();
-        model.Images.Add(new ImageItem { ImageBytes = pngBytes });
-        model.Images.Add(new ImageItem { ImageBytes = pngBytes }); // Add a second image for demonstration.
+            // End the foreach block.
+            builder.Writeln("<</foreach>>");
 
-        // -----------------------------------------------------------------
-        // 3. Load the template, build the report, and save the result.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+            // Step 2: Prepare the data model with sample images.
+            ReportModel model = new();
+            model.LoadSampleImages();
+
+            // Step 3: Load the template and build the report.
+            Document report = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.None
+            };
+            engine.BuildReport(report, model, "model");
+
+            // Step 4: Save the generated report.
+            const string reportPath = "Report.docx";
+            report.Save(reportPath);
+        }
     }
 }

@@ -1,25 +1,24 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace InlineErrorMessagesExample
+namespace AsposeWordsLinqReportingExample
 {
     // Simple data model used by the template.
     public class ReportModel
     {
-        // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; }
+
+        public ReportModel(string name) => Name = name;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Prepare file paths.
-            string workDir = Directory.GetCurrentDirectory();
-            string templatePath = Path.Combine(workDir, "template.docx");
-            string outputPath = Path.Combine(workDir, "output.docx");
+            // Paths for the template and the generated report.
+            string templatePath = "Template.docx";
+            string outputPath = "ReportOutput.docx";
 
             // -----------------------------------------------------------------
             // 1. Create a template document programmatically.
@@ -30,9 +29,10 @@ namespace InlineErrorMessagesExample
             // Correct tag – will be replaced with the model's Name value.
             builder.Writeln("Hello <<[model.Name]>>!");
 
-            // Intentional syntax error – missing closing ">>".
-            // This will cause the reporting engine to generate an inline error message.
-            builder.Writeln("This line has a syntax error: <<[model.Name]");
+            // Incorrect tag – missing closing ">>" to trigger a syntax error.
+            // This will cause the reporting engine to generate an inline error message
+            // when the InlineErrorMessages option is enabled.
+            builder.Writeln("This line contains a syntax error <<[model.Name]");
 
             // Save the template to disk.
             templateDoc.Save(templatePath);
@@ -40,37 +40,37 @@ namespace InlineErrorMessagesExample
             // -----------------------------------------------------------------
             // 2. Load the template document for reporting.
             // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // Create a model instance with sample data.
-            ReportModel model = new ReportModel { Name = "World" };
+            Document reportDoc = new Document(templatePath);
 
             // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine to inline error messages.
+            // 3. Prepare the reporting engine with InlineErrorMessages enabled.
             // -----------------------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
             engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Build the report. Capture the success flag; if an exception occurs,
-            // treat it as a failure (success = false).
+            // Sample data source.
+            ReportModel model = new ReportModel("World");
+
+            // Build the report and capture the success flag.
             bool success;
             try
             {
-                success = engine.BuildReport(doc, model, "model");
+                // The overload that includes the data source name allows the template
+                // to reference the root object via <<[model.Name]>>.
+                success = engine.BuildReport(reportDoc, model, "model");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // When a non‑recoverable syntax error occurs, BuildReport may throw.
-                // In this scenario we consider the build unsuccessful.
+                // If an unexpected exception occurs, treat the build as unsuccessful.
+                Console.WriteLine($"Exception during report build: {ex.Message}");
                 success = false;
             }
 
-            // Save the generated report.
-            doc.Save(outputPath);
-
             // Output the success flag to the console.
             Console.WriteLine($"Report build success: {success}");
-            Console.WriteLine($"Output document saved to: {outputPath}");
+
+            // Save the generated report.
+            reportDoc.Save(outputPath);
         }
     }
 }

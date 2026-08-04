@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,57 +8,62 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some data sources).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
-
-        // 1. Create the template document programmatically.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write a LINQ Reporting foreach loop.
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Insert the item text. The unsupported <<setAlignment>> tag has been removed.
-        builder.Writeln("<<[item.Text]>>");
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // 2. Load the template document for reporting.
-        Document doc = new Document(templatePath);
-
-        // 3. Prepare the data model.
-        ReportModel model = new ReportModel
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Items = new List<Item>
+            Items = new List<ParagraphItem>
             {
-                new Item { Text = "First centered paragraph." },
-                new Item { Text = "Second centered paragraph." },
-                new Item { Text = "Third centered paragraph." }
+                new ParagraphItem { Text = "First centered paragraph.", Alignment = "center" },
+                new ParagraphItem { Text = "Second right‑aligned paragraph.", Alignment = "right" },
+                new ParagraphItem { Text = "Third left‑aligned paragraph.", Alignment = "left" }
             }
         };
 
-        // 4. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Create the template document programmatically.
+        string templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // 5. Save the generated report.
-        doc.Save(outputPath);
+        // Write LINQ Reporting tags.
+        builder.Writeln("<<foreach [p in Items]>>");
+        // Use an HTML expression to control alignment dynamically.
+        builder.Writeln("<<[p.Html] -html>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // Build the report.
+        bool success = engine.BuildReport(reportDoc, model, "model");
+        if (!success)
+        {
+            Console.WriteLine("Report generation failed.");
+            return;
+        }
+
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
     }
 }
 
-// Data model classes.
+// Root data model.
 public class ReportModel
 {
-    public List<Item> Items { get; set; } = new();
+    public List<ParagraphItem> Items { get; set; } = new();
 }
 
-public class Item
+// Item model with dynamic alignment.
+public class ParagraphItem
 {
     public string Text { get; set; } = string.Empty;
+    public string Alignment { get; set; } = "left";
+
+    // Returns an HTML snippet that sets the paragraph alignment.
+    public string Html => $"<p style=\"text-align:{Alignment}; margin:0;\">{System.Net.WebUtility.HtmlEncode(Text)}</p>";
 }

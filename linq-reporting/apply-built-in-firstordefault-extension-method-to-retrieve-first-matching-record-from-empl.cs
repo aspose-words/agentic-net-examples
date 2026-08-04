@@ -1,46 +1,62 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Employee
 {
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
     public int Age { get; set; }
+    public string Department { get; set; } = string.Empty;
 }
 
-public class Model
+public class ReportModel
 {
-    public List<Employee> Employees { get; set; } = new();
+    public Employee Employee { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new Model
+        // Sample data source.
+        List<Employee> employees = new()
         {
-            Employees = new List<Employee>
-            {
-                new Employee { Name = "Alice", Age = 28 },
-                new Employee { Name = "Bob",   Age = 35 },
-                new Employee { Name = "Carol", Age = 42 }
-            }
+            new Employee { Name = "John Doe", Age = 30, Department = "Sales" },
+            new Employee { Name = "Jane Smith", Age = 25, Department = "HR" },
+            new Employee { Name = "Bob Johnson", Age = 40, Department = "IT" }
         };
 
-        // Create a blank document and insert a LINQ Reporting tag that uses FirstOrDefault.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        // Note: property name is case‑sensitive; use "Employees" as defined in the model.
-        builder.Writeln("First employee older than 30: <<[Employees.FirstOrDefault(p => p.Age > 30).Name]>>");
+        // Retrieve the first employee whose name contains "John".
+        Employee? firstMatch = employees.FirstOrDefault(e => e.Name.Contains("John"));
 
-        // Build the report using the model as the data source.
-        var engine = new ReportingEngine();
-        // No data source name is required because we reference members directly.
-        engine.BuildReport(doc, model, null);
+        if (firstMatch != null)
+        {
+            Console.WriteLine($"First matching employee: {firstMatch.Name}, Age {firstMatch.Age}, Dept {firstMatch.Department}");
+        }
+        else
+        {
+            Console.WriteLine("No matching employee found.");
+        }
+
+        // Create a simple Word template programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Use the full path to the model property in the template tags.
+        builder.Writeln("First matching employee: <<[model.Employee.Name]>> (Age: <<[model.Employee.Age]>>), Dept: <<[model.Employee.Department]>>");
+
+        // Prepare the model for the reporting engine.
+        ReportModel model = new()
+        {
+            Employee = firstMatch ?? new Employee()
+        };
+
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated document.
-        doc.Save("Report.docx");
+        doc.Save("FirstEmployeeReport.docx");
     }
 }

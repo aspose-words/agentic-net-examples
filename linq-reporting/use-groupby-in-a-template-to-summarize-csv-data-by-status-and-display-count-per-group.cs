@@ -1,59 +1,108 @@
 using System;
-using System.Data;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class StatusGroup
+{
+    public string Status { get; set; } = string.Empty;
+    public int Count { get; set; }
+}
+
+public class ReportModel
+{
+    public List<StatusGroup> Groups { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing (required for some encodings).
+        // Register code page provider for CSV handling (required on .NET Core).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare a working folder.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Prepare sample CSV data.
+        string csvPath = "sample.csv";
+        CreateSampleCsv(csvPath);
 
-        // 1. Create a sample CSV file.
-        string csvPath = Path.Combine(workDir, "data.csv");
-        File.WriteAllText(csvPath,
-            "Id,Name,Status\r\n" +
-            "1,Alice,Open\r\n" +
-            "2,Bob,Closed\r\n" +
-            "3,Charlie,Open\r\n" +
-            "4,David,InProgress\r\n" +
-            "5,Eve,Closed\r\n");
+        // Load CSV data, group by Status, and build the report model.
+        ReportModel model = BuildReportModelFromCsv(csvPath);
 
-        // 2. Build a template document containing LINQ Reporting tags.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a LINQ Reporting template programmatically.
+        string templatePath = "template.docx";
+        CreateTemplateDocument(templatePath);
 
-        builder.Writeln("Status Summary Report");
-        // Use GroupBy in the template to aggregate rows by the Status column.
-        builder.Writeln("<<foreach [g in persons.GroupBy(r => r[\"Status\"].ToString())]>>");
-        builder.Writeln("Status: <<[g.Key]>> - Count: <<[g.Count()]>>");
+        // Load the template.
+        Document doc = new Document(templatePath);
+
+        // Build the report using the model.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "ReportByStatus.docx";
+        doc.Save(outputPath);
+    }
+
+    // Generates a simple CSV file with Id, Name, and Status columns.
+    private static void CreateSampleCsv(string path)
+    {
+        var lines = new[]
+        {
+            "Id,Name,Status",
+            "1,Alpha,Open",
+            "2,Beta,Closed",
+            "3,Gamma,Open",
+            "4,Delta,InProgress",
+            "5,Epsilon,Closed",
+            "6,Zeta,Open"
+        };
+        File.WriteAllLines(path, lines, Encoding.UTF8);
+    }
+
+    // Reads the CSV file, groups records by the Status column, and returns a populated model.
+    private static ReportModel BuildReportModelFromCsv(string csvPath)
+    {
+        var lines = File.ReadAllLines(csvPath, Encoding.UTF8);
+        if (lines.Length < 2)
+            return new ReportModel();
+
+        // Parse header to find column indexes.
+        var headers = lines[0].Split(',');
+        int statusIndex = Array.IndexOf(headers, "Status");
+        if (statusIndex < 0)
+            throw new InvalidOperationException("CSV does not contain a 'Status' column.");
+
+        // Extract statuses from data rows.
+        var statuses = lines
+            .Skip(1)
+            .Select(line => line.Split(',')[statusIndex])
+            .Where(status => !string.IsNullOrWhiteSpace(status));
+
+        // Group by status and create model groups.
+        var groups = statuses
+            .GroupBy(s => s)
+            .Select(g => new StatusGroup { Status = g.Key, Count = g.Count() })
+            .OrderBy(g => g.Status)
+            .ToList();
+
+        return new ReportModel { Groups = groups };
+    }
+
+    // Creates a Word document containing LINQ Reporting tags that iterate over the Groups collection.
+    private static void CreateTemplateDocument(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Summary of records grouped by Status:");
+        builder.Writeln("<<foreach [group in model.Groups]>>");
+        builder.Writeln("Status: <<[group.Status]>>, Count: <<[group.Count]>>");
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
-
-        // 3. Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // 4. Create a CSV data source with header row detection.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        CsvDataSource dataSource = new CsvDataSource(csvPath, loadOptions);
-
-        // 5. Build the report using the data source.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, dataSource, "persons");
-
-        // 6. Save the generated report.
-        string outputPath = Path.Combine(workDir, "ReportOutput.docx");
-        reportDoc.Save(outputPath);
-
-        Console.WriteLine("Report generated at: " + outputPath);
+        doc.Save(path);
     }
 }

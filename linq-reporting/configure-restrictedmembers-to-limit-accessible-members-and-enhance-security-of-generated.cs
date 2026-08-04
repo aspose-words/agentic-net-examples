@@ -1,90 +1,78 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace AsposeWordsLinqReportingRestrictedMembers
 {
-    // Simple data model used as the root object for the report.
+    // Simple data model.
     public class Person
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
+        public string Name { get; set; } = "John Doe";
+        public int Age { get; set; } = 30;
+        public string Secret { get; set; } = "TopSecret";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider (required for some legacy encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Paths for the template and the generated report.
+            const string templatePath = "template.docx";
+            const string outputPath = "report.docx";
 
-            // Ensure output directory exists.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // -----------------------------------------------------------------
+            // -------------------------------------------------
             // 1. Create a template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // -------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // Variable that attempts to obtain the base type of System.String.
-            // This uses System.Type, which we will later restrict.
-            builder.Writeln("<<var [typeVar = \"\".GetType().BaseType]>>");
-
-            // Normal data fields.
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
-
-            // Attempt to output the restricted type variable.
-            builder.Writeln("Restricted type test: <<[typeVar]>>");
+            builder.Writeln("Name: <<[Name]>>");
+            builder.Writeln("Age: <<[Age]>>");
+            builder.Writeln("Secret: <<[Secret]>>");
+            // Attempt to access the System.Type of the object.
+            // This will be blocked after we restrict System.Type.
+            builder.Writeln("Type: <<[GetType().FullName]>>");
 
             // Save the template to disk.
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            template.Save(templatePath);
+            templateDoc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Configure restricted members before building any report.
-            // -----------------------------------------------------------------
-            // Prevent access to members of System.Type (and its derived types) from the template.
+            // -------------------------------------------------
+            // 2. Load the template for reporting.
+            // -------------------------------------------------
+            var reportDoc = new Document(templatePath);
+
+            // -------------------------------------------------
+            // 3. Configure restricted members.
+            //    Restrict System.Type so its members cannot be accessed from the template.
+            // -------------------------------------------------
             ReportingEngine.SetRestrictedTypes(typeof(System.Type));
 
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            Person person = new Person
+            // -------------------------------------------------
+            // 4. Prepare the reporting engine.
+            //    Allow missing members to avoid exceptions when a restricted member is accessed.
+            // -------------------------------------------------
+            var engine = new ReportingEngine
             {
-                Name = "John Doe",
-                Age = 30
+                Options = ReportBuildOptions.AllowMissingMembers,
+                MissingMemberMessage = "Restricted"
             };
 
-            // -----------------------------------------------------------------
-            // 4. Build the report.
-            // -----------------------------------------------------------------
-            // Load the template (demonstrates load‑save lifecycle).
-            Document doc = new Document(templatePath);
+            // -------------------------------------------------
+            // 5. Create the data source.
+            // -------------------------------------------------
+            var person = new Person();
 
-            ReportingEngine engine = new ReportingEngine();
-            // Allow missing members so that attempts to use restricted members
-            // do not throw an exception but are treated as missing.
-            engine.Options = ReportBuildOptions.AllowMissingMembers;
-            engine.MissingMemberMessage = "Restricted";
+            // -------------------------------------------------
+            // 6. Build the report.
+            //    Use the overload without a data source name; the root object is the data source itself.
+            // -------------------------------------------------
+            engine.BuildReport(reportDoc, person);
 
-            // Build the report using the root object name "person".
-            bool success = engine.BuildReport(doc, person, "person");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            string reportPath = Path.Combine(outputDir, "Report.docx");
-            doc.Save(reportPath);
-
-            // Simple console output to indicate completion.
-            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
-            Console.WriteLine($"Template saved to: {templatePath}");
-            Console.WriteLine($"Report saved to: {reportPath}");
+            // -------------------------------------------------
+            // 7. Save the generated report.
+            // -------------------------------------------------
+            reportDoc.Save(outputPath);
         }
     }
 }

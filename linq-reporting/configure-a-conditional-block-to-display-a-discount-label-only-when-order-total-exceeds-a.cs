@@ -2,52 +2,62 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+namespace LinqReportingConditionalExample
 {
-    // Simple data model for the report.
+    // Simple data model representing an order.
     public class Order
     {
         // Customer name – initialized to avoid nullable warnings.
-        public string CustomerName { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = "John Doe";
 
-        // Order total – using decimal for monetary values.
-        public decimal Total { get; set; }
+        // Order total – non‑nullable decimal.
+        public decimal Total { get; set; } = 0m;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // 1. Create a blank Word document and insert LINQ Reporting tags.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Plain fields.
+            // Insert placeholders for data fields.
             builder.Writeln("Customer: <<[order.CustomerName]>>");
             builder.Writeln("Total: <<[order.Total]>>");
 
             // Conditional block – the label appears only when Total > 100.
-            // Note the correct closing tag syntax: <</if>>.
-            builder.Writeln("<<if [order.Total > 100]>>Discount Applied! Total = <<[order.Total]>> <</if>>");
+            builder.Writeln("<<if [order.Total > 100]>>Discount Applied<</if>>");
 
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
             // 2. Prepare sample data.
+            // -----------------------------------------------------------------
             Order sampleOrder = new Order
             {
-                CustomerName = "John Doe",
-                Total = 150m // Change this value to test the condition.
+                CustomerName = "Alice Smith",
+                Total = 150.75m // Change this value to test the condition.
             };
 
-            // 3. Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.None
-            };
+            // -----------------------------------------------------------------
+            // 3. Load the template and build the report.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
 
-            // The root object name in the template is "order", so we pass the name accordingly.
-            engine.BuildReport(doc, sampleOrder, "order");
+            // The root object name in the template is "order".
+            engine.BuildReport(reportDoc, sampleOrder, "order");
 
+            // -----------------------------------------------------------------
             // 4. Save the generated report.
-            doc.Save("Report.docx");
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

@@ -1,98 +1,94 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Model class used as the data source for the report.
-    public class Order
+    // Configuration model for reporting engine options.
+    public class ReportConfig
     {
-        public string CustomerName { get; set; } = "John Doe";
-        public decimal Amount { get; set; } = 123.45m;
+        public List<string> Options { get; set; } = new();
     }
 
-    // Configuration class that mirrors the JSON file structure.
-    public class ReportingOptionsConfig
+    // Simple data model used in the JSON data source.
+    public class Person
     {
-        public bool AllowMissingMembers { get; set; }
-        public bool RemoveEmptyParagraphs { get; set; }
-        public bool InlineErrorMessages { get; set; }
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
     }
 
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Ensure code page support (required by Aspose.Words for some encodings).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Paths for files used in the example.
+        const string configPath = "reportConfig.json";
+        const string dataPath = "data.json";
+        const string templatePath = "template.docx";
+        const string outputPath = "output.docx";
+
+        // 1. Create a JSON configuration file that defines ReportingEngine options.
+        var config = new ReportConfig
         {
-            // Register code page provider (required for some encodings used by Aspose.Words).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Options = new() { "AllowMissingMembers", "RemoveEmptyParagraphs" }
+        };
+        File.WriteAllText(configPath, JsonConvert.SerializeObject(config, Formatting.Indented));
 
-            // -----------------------------------------------------------------
-            // 1. Prepare sample JSON configuration file.
-            // -----------------------------------------------------------------
-            const string configPath = "reportingOptions.json";
-            var sampleConfig = new ReportingOptionsConfig
+        // 2. Create a JSON data file that will be used as the data source.
+        var people = new List<Person>
+        {
+            new() { Name = "Alice", Age = 30 },
+            new() { Name = "Bob", Age = 45 },
+            new() { Name = "Charlie", Age = 28 }
+        };
+        File.WriteAllText(dataPath, JsonConvert.SerializeObject(people, Formatting.Indented));
+
+        // 3. Programmatically build a template document containing LINQ Reporting tags.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
+
+        // 4. Load the template document.
+        var doc = new Document(templatePath);
+
+        // 5. Load reporting options from the external JSON configuration file.
+        var configJson = File.ReadAllText(configPath);
+        var loadedConfig = JsonConvert.DeserializeObject<ReportConfig>(configJson) ?? new();
+
+        // 6. Translate option strings into ReportBuildOptions flags.
+        var engineOptions = ReportBuildOptions.None;
+        foreach (var opt in loadedConfig.Options)
+        {
+            engineOptions |= opt switch
             {
-                AllowMissingMembers = true,
-                RemoveEmptyParagraphs = true,
-                InlineErrorMessages = false
+                "AllowMissingMembers" => ReportBuildOptions.AllowMissingMembers,
+                "RemoveEmptyParagraphs" => ReportBuildOptions.RemoveEmptyParagraphs,
+                "InlineErrorMessages" => ReportBuildOptions.InlineErrorMessages,
+                "UseLegacyHeaderFooterVisiting" => ReportBuildOptions.UseLegacyHeaderFooterVisiting,
+                "RespectJpegExifOrientation" => ReportBuildOptions.RespectJpegExifOrientation,
+                "UpdateFieldsSyntaxAware" => ReportBuildOptions.UpdateFieldsSyntaxAware,
+                _ => ReportBuildOptions.None
             };
-            File.WriteAllText(configPath, JsonConvert.SerializeObject(sampleConfig, Formatting.Indented));
-
-            // -----------------------------------------------------------------
-            // 2. Create a simple Word template with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            const string templatePath = "template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Customer: <<[model.CustomerName]>>");
-            builder.Writeln("Amount: <<[model.Amount]>>");
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Load reporting options from the JSON configuration file.
-            // -----------------------------------------------------------------
-            var configJson = File.ReadAllText(configPath);
-            var optionsConfig = JsonConvert.DeserializeObject<ReportingOptionsConfig>(configJson)!;
-
-            // Build the combined ReportBuildOptions flag based on the configuration.
-            ReportBuildOptions engineOptions = ReportBuildOptions.None;
-            if (optionsConfig.AllowMissingMembers)
-                engineOptions |= ReportBuildOptions.AllowMissingMembers;
-            if (optionsConfig.RemoveEmptyParagraphs)
-                engineOptions |= ReportBuildOptions.RemoveEmptyParagraphs;
-            if (optionsConfig.InlineErrorMessages)
-                engineOptions |= ReportBuildOptions.InlineErrorMessages;
-
-            // -----------------------------------------------------------------
-            // 4. Initialize the ReportingEngine with the loaded options.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine { Options = engineOptions };
-
-            // -----------------------------------------------------------------
-            // 5. Prepare the data source object.
-            // -----------------------------------------------------------------
-            var order = new Order();
-
-            // -----------------------------------------------------------------
-            // 6. Load the template document (demonstrating load after creation).
-            // -----------------------------------------------------------------
-            var docForReport = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 7. Build the report using the engine.
-            // -----------------------------------------------------------------
-            engine.BuildReport(docForReport, order, "model");
-
-            // -----------------------------------------------------------------
-            // 8. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "output/report.docx";
-            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
-            docForReport.Save(outputPath);
         }
+
+        // 7. Create the reporting engine and apply the loaded options.
+        var engine = new ReportingEngine { Options = engineOptions };
+
+        // 8. Create a JsonDataSource from the data file.
+        var dataSource = new JsonDataSource(dataPath);
+
+        // 9. Build the report. The data source name "persons" matches the tag in the template.
+        engine.BuildReport(doc, dataSource, "persons");
+
+        // 10. Save the generated report.
+        doc.Save(outputPath);
     }
 }

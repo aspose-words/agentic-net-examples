@@ -1,41 +1,72 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public string City { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data with a "Country" attribute.
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<persons>
-    <person Name=""John Doe"" Country=""USA"" />
-    <person Name=""Anna Smith"" Country=""Canada"" />
-    <person Name=""Mike Johnson"" Country=""usa"" />
-    <person Name=""Li Wei"" Country=""China"" />
-</persons>";
-        string xmlPath = "people.xml";
-        File.WriteAllText(xmlPath, xmlContent);
+        // Sample XML data with a "city" attribute.
+        string xmlContent = @"
+<people>
+    <person name='Alice' city='London' />
+    <person name='Bob' city='Paris' />
+    <person name='Charlie' city='london' />
+    <person name='Diana' city='New York' />
+</people>";
 
-        // Create a LINQ Reporting template document programmatically.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Load XML into XDocument.
+        XDocument xdoc = XDocument.Parse(xmlContent);
 
-        // Insert a foreach tag that filters persons by Country using case‑insensitive comparison.
-        // The LINQ Reporting engine does not support StringComparison, so we compare lower‑cased values.
-        builder.Writeln("<<foreach [p in persons.Where(p => p.Country.ToLower() == \"usa\")]>>");
-        builder.Writeln("Name: <<[p.Name]>>  Country: <<[p.Country]>>");
+        // Filter persons where the city attribute equals "London" (case‑insensitive).
+        var filtered = xdoc.Root!
+            .Elements("person")
+            .Where(p => string.Equals((string?)p.Attribute("city"), "London", StringComparison.OrdinalIgnoreCase))
+            .Select(p => new Person
+            {
+                Name = (string?)p.Attribute("name") ?? "",
+                City = (string?)p.Attribute("city") ?? ""
+            })
+            .ToList();
+
+        // Prepare the model for the reporting engine.
+        ReportModel model = new ReportModel { Persons = filtered };
+
+        // Create a template document programmatically.
+        string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("People filtered by city (case‑insensitive):");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("<<[p.Name]>> - <<[p.City]>>");
         builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // Load the XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
-
-        // Build the report. The data source name must match the root element name used in the template.
+        // Load the template and build the report.
+        Document reportDoc = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource, "persons");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        // Save the final report.
+        string reportPath = "Report.docx";
+        reportDoc.Save(reportPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
     }
 }

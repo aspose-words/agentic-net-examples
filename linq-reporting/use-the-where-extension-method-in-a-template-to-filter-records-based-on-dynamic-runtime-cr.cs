@@ -1,72 +1,58 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingWhereExample
+public class Person
 {
-    // Simple data entity.
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
-    // Wrapper model that holds the collection and the runtime filter criteria.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-        public int MinAge { get; set; }
-    }
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data.
+        var persons = new List<Person>
         {
-            // Prepare sample data.
-            var model = new ReportModel
-            {
-                MinAge = 30,
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 25 },
-                    new Person { Name = "Bob",   Age = 35 },
-                    new Person { Name = "Carol", Age = 30 },
-                    new Person { Name = "Dave",  Age = 45 }
-                }
-            };
+            new() { Name = "Alice", Age = 28 },
+            new() { Name = "Bob", Age = 35 },
+            new() { Name = "Charlie", Age = 42 },
+            new() { Name = "Diana", Age = 23 }
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        var model = new ReportModel { Persons = persons };
 
-            // Title showing the dynamic filter value.
-            builder.Writeln("Persons with Age >= <<[data.MinAge]>>:");
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Foreach loop over all persons.
-            builder.Writeln("<<foreach [p in data.Persons]>>");
-            // Conditional output – only show persons that satisfy the runtime criteria.
-            builder.Writeln("<<if [p.Age >= data.MinAge]>>- <<[p.Name]>> (Age: <<[p.Age]>>)<</if>>");
-            builder.Writeln("<</foreach>>");
+        // Insert a foreach tag that uses the Where extension method to filter persons older than 30.
+        builder.Writeln("<<foreach [p in model.Persons.Where(p => p.Age > 30)]>>");
+        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            var loadedDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
+        // Load the template (optional, demonstrates the load step).
+        var loadedDoc = new Document(templatePath);
 
-            // Build the report using the model; the root name in the template is "data".
-            engine.BuildReport(loadedDoc, model, "data");
+        // Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedDoc, model, "model");
 
-            // Save the generated report.
-            const string reportPath = "Report.docx";
-            loadedDoc.Save(reportPath);
-        }
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        loadedDoc.Save(outputPath);
     }
 }

@@ -1,66 +1,79 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Data model classes.
-    public class ReportModel
+    public static void Main()
     {
-        // Collection of persons to be iterated in the template.
-        public List<Person> Persons { get; set; } = new();
-    }
+        // Register code page provider (required for some encodings in Aspose.Words).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Person
-    {
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
-    }
+        // -----------------------------------------------------------------
+        // 1. Create a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class Program
-    {
-        public static void Main()
+        // Begin a foreach loop over the collection "Persons".
+        builder.Writeln("<<foreach [person in Persons]>>");
+
+        // Create a bookmark whose name is the concatenation of FirstName and LastName.
+        // The expression inside the bookmark tag is evaluated for each item.
+        builder.Writeln("<<bookmark [person.FirstName + \" \" + person.LastName]>>");
+
+        // The visible content of the bookmark (optional, just for demonstration).
+        builder.Writeln("<<[person.FirstName]>> <<[person.LastName]>>");
+
+        // Close the bookmark and the foreach block.
+        builder.Writeln("<</bookmark>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk (required before building the report).
+        string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document report = new Document(templatePath);
+
+        // Prepare sample data.
+        ReportModel model = new ReportModel
         {
-            // 1. Prepare sample data.
-            var model = new ReportModel();
-            model.Persons.Add(new Person { FirstName = "John", LastName = "Doe" });
-            model.Persons.Add(new Person { FirstName = "Jane", LastName = "Smith" });
-            model.Persons.Add(new Person { FirstName = "Bob", LastName = "Johnson" });
-
-            // 2. Create a template document programmatically.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            // Begin a foreach loop over the Persons collection.
-            builder.Writeln("<<foreach [p in Persons]>>");
-
-            // Create a bookmark whose name is the concatenation of FirstName and LastName.
-            // The expression uses string.Concat to join the two fields with a space.
-            builder.Writeln("<<bookmark [string.Concat(p.FirstName, \" \", p.LastName)]>>");
-
-            // Content inside the bookmark – just display the person's full name.
-            builder.Writeln("Name: <<[p.FirstName]>> <<[p.LastName]>>");
-
-            // Close the bookmark and the foreach block.
-            builder.Writeln("<</bookmark>>");
-            builder.Writeln("<</foreach>>");
-
-            // 3. Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // 4. Save the generated document.
-            const string outputPath = "ReportWithBookmarks.docx";
-            doc.Save(outputPath);
-            Console.WriteLine($"Report saved to {outputPath}");
-
-            // 5. List the generated bookmark names to verify concatenation.
-            Console.WriteLine("Generated bookmark names:");
-            foreach (var bookmark in doc.Range.Bookmarks)
+            Persons = new List<Person>
             {
-                Console.WriteLine($"- {bookmark.Name}");
+                new Person { FirstName = "John",  LastName = "Doe" },
+                new Person { FirstName = "Jane",  LastName = "Smith" },
+                new Person { FirstName = "Alice", LastName = "Johnson" }
             }
-        }
+        };
+
+        // Create the reporting engine and build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, model, "model");
+
+        // -----------------------------------------------------------------
+        // 3. Save the generated report.
+        // -----------------------------------------------------------------
+        string outputPath = "Report.docx";
+        report.Save(outputPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes (public, non‑nullable properties are initialized).
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName  { get; set; } = string.Empty;
 }

@@ -11,44 +11,33 @@ public class Program
         // Register code page provider (required for some encodings).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare folders.
-        string workDir = Directory.GetCurrentDirectory();
-        string dataFile = Path.Combine(workDir, "people.json");
-        string templateFile = Path.Combine(workDir, "template.docx");
-        string resultFile = Path.Combine(workDir, "report.docx");
+        // Create sample JSON data file.
+        string jsonFile = Path.Combine(Directory.GetCurrentDirectory(), "people.json");
+        File.WriteAllText(jsonFile,
+            @"[
+  { ""Name"": ""Alice"",   ""Age"": 30 },
+  { ""Name"": ""Bob"",     ""Age"": 25 },
+  { ""Name"": ""Charlie"", ""Age"": 28 }
+]");
 
-        // 1. Create sample JSON data (array of objects).
-        string jsonContent = @"[
-  { ""Name"": ""Alice"", ""Age"": 30 },
-  { ""Name"": ""Bob"",   ""Age"": 25 },
-  { ""Name"": ""Carol"", ""Age"": 28 }
-]";
-        File.WriteAllText(dataFile, jsonContent, Encoding.UTF8);
+        // Build a template document containing LINQ Reporting tags.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // 2. Build the template document programmatically.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("People Report");
+        builder.Writeln("People List:");
         builder.Writeln("<<foreach [in jsonData]>>");
-        builder.Writeln("- <<[Name]>> (Age: <<[Age]>>)");
+        builder.Writeln("Name: <<[Name]>>, Age: <<[Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templateFile);
+        // Load the JSON data source.
+        var jsonDataSource = new JsonDataSource(jsonFile);
 
-        // 3. Load the template back (as required by the lifecycle rule).
-        Document loadedTemplate = new Document(templateFile);
+        // Generate the report by merging the template with the JSON data.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, jsonDataSource, "jsonData");
 
-        // 4. Create a JsonDataSource from the JSON file.
-        JsonDataSource jsonDataSource = new JsonDataSource(dataFile);
-
-        // 5. Build the report using ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(loadedTemplate, jsonDataSource, "jsonData");
-
-        // 6. Save the generated report.
-        loadedTemplate.Save(resultFile);
+        // Save the resulting document.
+        string outputFile = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        doc.Save(outputFile);
     }
 }

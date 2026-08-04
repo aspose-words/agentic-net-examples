@@ -3,56 +3,55 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // ---------- Create the template document ----------
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Sample JSON data representing an order.
+        string json = @"
+{
+    ""CustomerName"": ""John Doe"",
+    ""Items"": [
+        { ""Name"": ""Apple"",  ""Quantity"": 3 },
+        { ""Name"": ""Banana"", ""Quantity"": 5 },
+        { ""Name"": ""Orange"", ""Quantity"": 2 }
+    ]
+}";
+
+        // Write JSON to a temporary file because JsonDataSource expects a file path.
+        string jsonPath = Path.Combine(Path.GetTempPath(), "order.json");
+        File.WriteAllText(jsonPath, json);
+
+        // Create a template document in memory.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Simple report header.
-        builder.Writeln("People Report");
-        builder.Writeln();
-
-        // LINQ Reporting tags: iterate over the JSON array named "persons".
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Order Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to a memory stream.
-        using (MemoryStream templateStream = new MemoryStream())
-        {
-            templateDoc.Save(templateStream, SaveFormat.Docx);
-            templateStream.Position = 0; // Reset for reading.
+        using MemoryStream templateStream = new MemoryStream();
+        templateDoc.Save(templateStream, SaveFormat.Docx);
+        templateStream.Position = 0; // Reset stream for reading.
 
-            // ---------- Load the template from the stream ----------
-            Document reportDoc = new Document(templateStream);
+        // Load the template document from the stream.
+        Document doc = new Document(templateStream);
 
-            // ---------- Prepare JSON data ----------
-            string json = @"[
-                { ""Name"": ""John Doe"", ""Age"": 30 },
-                { ""Name"": ""Jane Smith"", ""Age"": 25 },
-                { ""Name"": ""Bob Johnson"", ""Age"": 40 }
-            ]";
+        // Create a JsonDataSource from the JSON file.
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
 
-            // Create a JsonDataSource from the JSON string via a memory stream.
-            using (MemoryStream jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json)))
-            {
-                jsonStream.Position = 0; // Ensure the stream is at the beginning.
+        // Build the report using the JSON data source.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, jsonDataSource, "order");
 
-                JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
-
-                // ---------- Build the report ----------
-                ReportingEngine engine = new ReportingEngine();
-                // The root name "persons" matches the tag used in the template.
-                engine.BuildReport(reportDoc, jsonDataSource, "persons");
-
-                // ---------- Save the generated report as RTF ----------
-                reportDoc.Save("PeopleReport.rtf", SaveFormat.Rtf);
-            }
-        }
+        // Save the generated report as RTF.
+        doc.Save("Report.rtf", SaveFormat.Rtf);
     }
 }

@@ -1,24 +1,25 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingDemo
 {
-    // Simple data model used by the LINQ Reporting engine.
+    // Simple data model used by the LINQ Reporting template.
     public class ReportModel
     {
-        // Color expression returned to the template. Any known color name or HTML code is accepted.
-        public string Color { get; set; } = "Blue";
+        // The color expression used by the <<textColor>> tag.
+        public string ColorName { get; set; } = "Blue";
 
-        // Text that will be displayed inside the colored region.
-        public string Status { get; set; } = "Dynamic Status";
+        // Any additional data can be added here.
+        public string Message { get; set; } = "Status Text";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
+            // Paths for the temporary template and final report.
             const string templatePath = "Template.docx";
             const string reportPath = "Report.docx";
 
@@ -29,9 +30,8 @@ namespace AsposeWordsLinqReportingDemo
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
             // Insert a LINQ Reporting tag that sets the text color dynamically.
-            // The color is taken from the model's Color property, and the inner text
-            // is taken from the model's Status property.
-            builder.Writeln("<<textColor [model.Color]>><<[model.Status]>> <</textColor>>");
+            // The tag uses the model's ColorName property to determine the color.
+            builder.Writeln("<<textColor [model.ColorName]>>Status Text<</textColor>>");
 
             // Save the template to disk.
             templateDoc.Save(templatePath);
@@ -39,17 +39,17 @@ namespace AsposeWordsLinqReportingDemo
             // -------------------------------------------------
             // 2. Load the template and build the report.
             // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
+            Document loadedTemplate = new Document(templatePath);
 
             // Prepare the data source.
-            ReportModel model = new ReportModel(); // Color = "Blue", Status = "Dynamic Status"
+            ReportModel model = new ReportModel();
 
-            // Create the reporting engine and generate the report.
+            // Create the reporting engine and build the report.
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
+            engine.BuildReport(loadedTemplate, model, "model");
 
-            // Save the final report.
-            reportDoc.Save(reportPath);
+            // Save the generated report.
+            loadedTemplate.Save(reportPath);
         }
     }
 }

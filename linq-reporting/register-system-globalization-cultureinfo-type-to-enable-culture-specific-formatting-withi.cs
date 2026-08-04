@@ -3,45 +3,45 @@ using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class ReportModel
+{
+    public DateTime Date { get; set; } = DateTime.Now;
+    public double Number { get; set; } = 12345.6789;
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document and a builder to insert the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a simple template document with LINQ Reporting tags.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Template uses LINQ Reporting tags.
-        // Date formatted using French culture.
-        builder.Writeln(
-            "Date (French): <<[model.Date.ToString(\"D\", CultureInfo.GetCultureInfo(\"fr-FR\"))]>>");
-        // Number formatted using German culture.
-        builder.Writeln(
-            "Amount (German): <<[model.Amount.ToString(\"N\", CultureInfo.GetCultureInfo(\"de-DE\"))]>>");
+        // Tag that formats a date using a specific culture (French).
+        builder.Writeln("Date (fr-FR): <<[model.Date.ToString(\"D\", CultureInfo.GetCultureInfo(\"fr-FR\"))]>>");
 
-        // Prepare the data model.
-        ReportModel model = new()
-        {
-            Date = new DateTime(2023, 12, 31),
-            Amount = 12345.67
-        };
+        // Tag that formats a number using a specific culture (German).
+        builder.Writeln("Number (de-DE): <<[model.Number.ToString(\"N\", CultureInfo.GetCultureInfo(\"de-DE\"))]>>");
 
-        // Configure the reporting engine.
-        ReportingEngine engine = new();
-        // Register System.Globalization.CultureInfo so its static members can be used in the template.
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
+
+        // Prepare the data source.
+        ReportModel model = new ReportModel();
+
+        // Create the reporting engine and register CultureInfo type.
+        ReportingEngine engine = new ReportingEngine();
         engine.KnownTypes.Add(typeof(CultureInfo));
 
-        // Build the report. The root object name must match the tag prefix used in the template.
+        // Build the report using the model as the root object named "model".
         engine.BuildReport(doc, model, "model");
 
-        // Save the result.
-        doc.Save("Report.docx");
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
-}
-
-// Simple data model used by the template.
-public class ReportModel
-{
-    public DateTime Date { get; set; }
-    public double Amount { get; set; }
 }

@@ -1,64 +1,57 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
+using System.Text;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReporting
 {
-    // Data model used by the LINQ Reporting engine.
-    public class ReportModel
-    {
-        // HTML snippet that will be inserted into the document at runtime.
-        public string HtmlSnippet { get; set; } = "<p style='color:blue;'>Hello <b>World</b> from HTML snippet!</p>";
-    }
-
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider for any required encodings.
+            // Register code page provider (required for some environments)
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Paths for the template and the final report
+            const string templatePath = "Template.docx";
+            const string outputPath = "Report.docx";
 
-            // Insert the LINQ Reporting tag that will render the HTML snippet.
-            // The tag uses the <<html>> syntax as required by the engine.
+            // -----------------------------------------------------------------
+            // Create the template document programmatically and insert the tag
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+            // The <<html>> tag will be replaced with the HTML snippet from the model
             builder.Writeln("<<html [model.HtmlSnippet]>>");
-
-            // Save the template to disk (required before building the report).
-            string templatePath = "Template.docx";
-            template.Save(templatePath);
+            templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template document.
+            // Load the template document for reporting
             // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+            var loadedTemplate = new Document(templatePath);
 
             // -----------------------------------------------------------------
-            // 3. Prepare the data source.
+            // Prepare the data model containing the HTML snippet
             // -----------------------------------------------------------------
-            ReportModel model = new ReportModel();
+            var model = new ReportModel();
 
             // -----------------------------------------------------------------
-            // 4. Build the report using the LINQ Reporting engine.
+            // Build the report using the LINQ Reporting engine
             // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
+            var engine = new ReportingEngine();
             engine.BuildReport(loadedTemplate, model, "model");
 
             // -----------------------------------------------------------------
-            // 5. Save the generated report.
+            // Save the generated report
             // -----------------------------------------------------------------
-            string outputPath = "Report.docx";
             loadedTemplate.Save(outputPath);
-
-            // Optional: inform the user that the process completed.
-            Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
         }
+    }
+
+    // Data model used by the template; property is initialized to avoid nullable warnings
+    public class ReportModel
+    {
+        public string HtmlSnippet { get; set; } = "<p style='color:blue;'>This is <b>HTML</b> snippet inserted at runtime.</p>";
     }
 }

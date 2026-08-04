@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq; // Needed for GroupBy
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -11,10 +12,9 @@ namespace LinqReportingGroupByExample
     {
         public string Name { get; set; } = "";
         public string Department { get; set; } = "";
-        public string Title { get; set; } = "";
     }
 
-    // Wrapper model that contains the collection used by the report.
+    // Wrapper class that will be passed to the reporting engine.
     public class ReportModel
     {
         public List<Employee> Employees { get; set; } = new();
@@ -24,46 +24,61 @@ namespace LinqReportingGroupByExample
     {
         public static void Main()
         {
-            // ---------- Prepare sample data ----------
+            // Prepare sample data.
             var model = new ReportModel
             {
                 Employees = new List<Employee>
                 {
-                    new Employee { Name = "John Doe", Department = "Sales", Title = "Sales Manager" },
-                    new Employee { Name = "Jane Smith", Department = "Sales", Title = "Sales Representative" },
-                    new Employee { Name = "Bob Johnson", Department = "HR", Title = "HR Specialist" },
-                    new Employee { Name = "Alice Brown", Department = "HR", Title = "Recruiter" },
-                    new Employee { Name = "Tom Clark", Department = "IT", Title = "Developer" }
+                    new Employee { Name = "Alice Johnson", Department = "HR" },
+                    new Employee { Name = "Bob Smith", Department = "IT" },
+                    new Employee { Name = "Carol White", Department = "HR" },
+                    new Employee { Name = "David Brown", Department = "Finance" },
+                    new Employee { Name = "Eve Davis", Department = "IT" }
                 }
             };
 
-            // ---------- Create the LINQ Reporting template ----------
-            const string templateFile = "Template.docx";
-            var templateDoc = new Document();               // Create a blank document
-            var builder = new DocumentBuilder(templateDoc); // Builder for the template
+            // -----------------------------------------------------------------
+            // Step 1: Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-            builder.Writeln("Employee Report");
-            // Group employees by Department using GroupBy in the foreach expression.
+            // Title.
+            builder.Writeln("Employees Report");
+            builder.Writeln();
+
+            // GroupBy expression: group employees by Department.
             builder.Writeln("<<foreach [dept in Employees.GroupBy(e => e.Department)]>>");
             builder.Writeln("Department: <<[dept.Key]>>");
+            builder.Writeln();
+
+            // List employees within the current department.
             builder.Writeln("<<foreach [emp in dept]>>");
-            builder.Writeln("- <<[emp.Name]>> (<<[emp.Title]>>)");
+            builder.Writeln("- <<[emp.Name]>>");
             builder.Writeln("<</foreach>>");
+            builder.Writeln();
+
+            // End of outer foreach.
             builder.Writeln("<</foreach>>");
 
-            // Save the template before building the report.
-            templateDoc.Save(templateFile);
+            // Save the template to disk.
+            doc.Save(templatePath);
 
-            // ---------- Load the template and generate the report ----------
-            var reportDoc = new Document(templateFile);
+            // -----------------------------------------------------------------
+            // Step 2: Load the template and build the report.
+            // -----------------------------------------------------------------
+            var reportDoc = new Document(templatePath);
             var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // default options
 
-            // Build the report using the model; no root name is needed.
-            engine.BuildReport(reportDoc, model);
+            // Build the report using the model; the root name is "model".
+            bool success = engine.BuildReport(reportDoc, model, "model");
 
+            // Optionally, you could check the success flag if InlineErrorMessages were enabled.
             // Save the generated report.
-            const string outputFile = "EmployeeReport.docx";
-            reportDoc.Save(outputFile);
+            var outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

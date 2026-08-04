@@ -6,63 +6,62 @@ using Aspose.Words.Reporting;
 public static class StringHelpers
 {
     // Converts a string to title case (first letter of each word capitalized).
-    public static string ToTitleCase(string input)
+    public static string ToTitleCase(string value)
     {
-        if (string.IsNullOrEmpty(input))
-            return string.Empty;
+        if (string.IsNullOrEmpty(value))
+            return value;
 
-        // Use the current culture for title casing.
-        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input.ToLower());
+        // Use the current culture for proper casing.
+        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value.ToLower());
     }
 }
 
-// Simple data model used by the report.
-public class Person
+public class Model
 {
-    public string Name { get; set; } = string.Empty;
+    // Sample property that will be transformed by the helper.
+    public string Name { get; set; } = "";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
+        // Paths for the temporary template and the final report.
         const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        const string resultPath = "Result.docx";
 
-        // -----------------------------------------------------------------
-        // Step 1: Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
         // Insert a LINQ Reporting tag that calls the static helper method.
-        // The tag will output the person's name in title case.
         builder.Writeln("Hello <<[StringHelpers.ToTitleCase(Name)]>>!");
 
-        // Save the template to disk.
+        // Save the template so it can be loaded for reporting.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // -------------------------------------------------
+        // 2. Load the template and prepare data source.
+        // -------------------------------------------------
+        var reportDoc = new Document(templatePath);
+        var model = new Model { Name = "john doe" };
 
-        // Prepare the data source.
-        Person person = new Person { Name = "john doe" };
+        // -------------------------------------------------
+        // 3. Configure the ReportingEngine.
+        // -------------------------------------------------
+        var engine = new ReportingEngine();
 
-        // Configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
         // Register the helper class so its static members can be used in the template.
         engine.KnownTypes.Add(typeof(StringHelpers));
 
-        // Build the report. No root name is needed because we reference members directly.
-        engine.BuildReport(reportDoc, person);
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        reportDoc.Save(reportPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {reportPath}");
+        // -------------------------------------------------
+        // 4. Save the generated report.
+        // -------------------------------------------------
+        reportDoc.Save(resultPath);
     }
 }

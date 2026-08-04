@@ -4,22 +4,6 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Lists;
 
-public class Service
-{
-    public string Name { get; set; } = "";
-}
-
-public class Order
-{
-    public string ClientName { get; set; } = "";
-    public List<Service> Services { get; set; } = new();
-}
-
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
 public class Program
 {
     public static void Main()
@@ -27,51 +11,54 @@ public class Program
         // Prepare sample data.
         var model = new ReportModel
         {
-            Orders = new List<Order>
+            Groups = new()
             {
-                new Order
+                new OrderGroup
                 {
-                    ClientName = "Acme Corp",
-                    Services = new List<Service>
+                    GroupName = "Electronics",
+                    Orders = new()
                     {
-                        new Service { Name = "Consulting" },
-                        new Service { Name = "Implementation" },
-                        new Service { Name = "Support" }
+                        new Order { Name = "Smartphone", Quantity = 5 },
+                        new Order { Name = "Laptop", Quantity = 2 }
                     }
                 },
-                new Order
+                new OrderGroup
                 {
-                    ClientName = "Globex Inc",
-                    Services = new List<Service>
+                    GroupName = "Books",
+                    Orders = new()
                     {
-                        new Service { Name = "Analysis" },
-                        new Service { Name = "Design" }
+                        new Order { Name = "C# in Depth", Quantity = 3 },
+                        new Order { Name = "ASP.NET Core Guide", Quantity = 4 }
                     }
                 }
             }
         };
 
-        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
         var template = new Document();
         var builder = new DocumentBuilder(template);
 
-        // Outer foreach over Orders.
-        builder.Writeln("<<foreach [order in Orders]>>");
-        // Write the client name.
-        builder.Writeln("Client: <<[order.ClientName]>>");
+        // Title.
+        builder.Writeln("Orders Report");
+        builder.Writeln();
 
-        // Start a numbered list for the services.
+        // Outer foreach over groups.
+        builder.Writeln("<<foreach [group in Model.Groups]>>");
+        // Group name.
+        builder.Writeln("<<[group.GroupName]>>");
+        builder.Writeln();
+
+        // Start a numbered list for the orders of the current group.
         builder.ListFormat.List = template.Lists.Add(ListTemplate.NumberDefault);
 
-        // Restart numbering for each order.
-        builder.Writeln("<<restartNum>>");
+        // Restart numbering for each group, then iterate over orders.
+        builder.Writeln("<<restartNum>><<foreach [order in group.Orders]>>" +
+                        "<<[order.Name]>> - <<[order.Quantity]>>" +
+                        "<</foreach>>");
 
-        // Inner foreach over Services.
-        builder.Writeln("<<foreach [service in order.Services]>>");
-        builder.Writeln("<<[service.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // End the list for this order.
+        // End the list for this group.
         builder.ListFormat.RemoveNumbers();
 
         // Close the outer foreach.
@@ -81,15 +68,45 @@ public class Program
         const string templatePath = "Template.docx";
         template.Save(templatePath);
 
-        // Load the template (simulating a separate load step).
-        var loadedTemplate = new Document(templatePath);
-
-        // Build the report.
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
         var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(loadedTemplate, model, "model");
+
+        // The root object name in the template is "Model".
+        bool success = engine.BuildReport(doc, model, "Model");
 
         // Save the generated report.
-        loadedTemplate.Save("Report.docx");
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+
+        // Optional: indicate success (no console interaction required).
+        // In a real scenario you might log this information.
+        if (!success)
+        {
+            throw new InvalidOperationException("Report generation failed.");
+        }
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<OrderGroup> Groups { get; set; } = new();
+}
+
+public class OrderGroup
+{
+    public string GroupName { get; set; } = "";
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Order
+{
+    public string Name { get; set; } = "";
+    public int Quantity { get; set; }
 }

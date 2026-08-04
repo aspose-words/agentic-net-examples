@@ -1,67 +1,57 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
+
+public class ReportModel
+{
+    // Current date formatted as a short date string.
+    public string CurrentDate { get; set; } = DateTime.Now.ToString("d");
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for Aspose.Words)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Paths for the template and the generated report
-        string templatePath = "template.docx";
-        string reportPath = "report.docx";
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
         // -----------------------------------------------------------------
-        // Create a template document with a footer that contains the date,
-        // current page number and total page count.
+        // Create the template document programmatically.
         // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Move to the primary footer
+        // Add a simple body paragraph (optional, just to have content).
+        builder.Writeln("This is a sample report generated with Aspose.Words LINQ Reporting.");
+
+        // Move the cursor to the primary footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
 
-        // Insert the date field
+        // Insert the current date using a LINQ Reporting expression tag.
         builder.Write("Date: ");
-        builder.InsertField("DATE \\@ \"MMMM d, yyyy\"");
+        builder.Writeln("<<[model.CurrentDate]>>");
 
-        // Insert page number fields
-        builder.Write("   Page ");
-        builder.InsertField("PAGE");
-        builder.Write(" of ");
-        builder.InsertField("NUMPAGES");
+        // Insert the page number using a Word field.
+        builder.Write("Page ");
+        builder.InsertField("PAGE \\* MERGEFORMAT");
+        builder.Writeln();
 
-        // Save the template
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // Load the template and generate the final report.
+        // Load the template and build the report.
         // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
 
-        // Dummy model – not used in this example but required by the engine
-        var model = new ReportModel();
+        // Build the report using the model instance.
+        engine.BuildReport(reportDoc, new ReportModel(), "model");
 
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-
-        // Build the report (no data source needed for the footer fields)
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the final report
+        // Save the final report.
         reportDoc.Save(reportPath);
     }
-}
-
-// Dummy model class required by the ReportingEngine (no properties needed for this scenario)
-public class ReportModel
-{
-    // Parameterless constructor to avoid nullable warnings
-    public ReportModel() { }
 }

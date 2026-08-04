@@ -4,94 +4,68 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
+using System.Text;
 
-namespace AsposeWordsLinqReportingBookmarks
+public class Program
 {
-    // Simple data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        // Initialize the collection to avoid nullable warnings.
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string BookmarkName { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data model with expected bookmark names.
+        var model = new ReportModel
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document that uses LINQ Reporting tags to
-            //    generate bookmarks.
-            // -----------------------------------------------------------------
-            var templatePath = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            Bookmarks = new List<string> { "FirstBookmark", "SecondBookmark", "ThirdBookmark" }
+        };
 
-            // Begin a foreach loop over the Items collection.
-            builder.Writeln("<<foreach [item in Items]>>");
-            // Open a bookmark whose name comes from the data source.
-            builder.Writeln("<<bookmark [item.BookmarkName]>>");
-            // Insert the title inside the bookmark.
-            builder.Writeln("<<[item.Title]>>");
-            // Close the bookmark.
-            builder.Writeln("<</bookmark>>");
-            // End the foreach loop.
-            builder.Writeln("<</foreach>>");
+        // Create a template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // LINQ Reporting tags: iterate over the Bookmarks collection and create a bookmark for each name.
+        builder.Writeln("<<foreach [b in Bookmarks]>>");
+        builder.Writeln("<<bookmark [b]>>");
+        builder.Writeln("<<[b]>>"); // Content inside the bookmark.
+        builder.Writeln("<</bookmark>>");
+        builder.Writeln("<</foreach>>");
 
-            // -----------------------------------------------------------------
-            // 2. Prepare sample data that will be merged into the template.
-            // -----------------------------------------------------------------
-            var model = new ReportModel();
-            model.Items.Add(new Item { BookmarkName = "FirstBookmark", Title = "First Item" });
-            model.Items.Add(new Item { BookmarkName = "SecondBookmark", Title = "Second Item" });
-            model.Items.Add(new Item { BookmarkName = "ThirdBookmark", Title = "Third Item" });
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report using the LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
-            // No special options are required for this scenario.
-            engine.BuildReport(reportDoc, model, "model");
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 4. Extract bookmark names from the generated document.
-            // -----------------------------------------------------------------
-            List<string> actualBookmarkNames = reportDoc.Range.Bookmarks
-                .Select(b => b.Name)
-                .ToList();
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model);
 
-            // Expected bookmark names come from the source data.
-            List<string> expectedBookmarkNames = model.Items
-                .Select(i => i.BookmarkName)
-                .ToList();
+        // Save the generated document.
+        const string outputPath = "GeneratedReport.docx";
+        reportDoc.Save(outputPath);
 
-            // -----------------------------------------------------------------
-            // 5. Verify that the extracted bookmark names match the expected ones.
-            // -----------------------------------------------------------------
-            bool match = actualBookmarkNames.SequenceEqual(expectedBookmarkNames);
+        // Extract bookmark names from the generated document.
+        List<string> actualBookmarkNames = reportDoc.Range.Bookmarks
+            .Select(b => b.Name)
+            .ToList();
 
-            Console.WriteLine("Expected bookmark names:");
-            foreach (var name in expectedBookmarkNames)
-                Console.WriteLine($"  {name}");
+        // Verify that the extracted bookmark names match the expected ones.
+        bool areEqual = actualBookmarkNames.SequenceEqual(model.Bookmarks);
+        Console.WriteLine(areEqual
+            ? "Success: Bookmark names match expected values."
+            : "Failure: Bookmark names do not match expected values.");
 
-            Console.WriteLine("\nActual bookmark names:");
-            foreach (var name in actualBookmarkNames)
-                Console.WriteLine($"  {name}");
-
-            Console.WriteLine($"\nVerification result: {(match ? "SUCCESS" : "FAILURE")}");
-
-            // Save the final document for inspection (optional).
-            var outputPath = "ReportWithBookmarks.docx";
-            reportDoc.Save(outputPath);
+        // Optionally, list the extracted bookmark names.
+        Console.WriteLine("Extracted bookmark names:");
+        foreach (var name in actualBookmarkNames)
+        {
+            Console.WriteLine($"- {name}");
         }
     }
+}
+
+// Public data model used by the LINQ Reporting engine.
+public class ReportModel
+{
+    // Collection of bookmark names to be generated.
+    public List<string> Bookmarks { get; set; } = new();
 }

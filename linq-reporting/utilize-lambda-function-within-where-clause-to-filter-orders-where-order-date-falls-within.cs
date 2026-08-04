@@ -7,73 +7,64 @@ using Aspose.Words.Reporting;
 
 public class Order
 {
-    public int Id { get; set; }
+    public string CustomerName { get; set; } = "";
     public DateTime OrderDate { get; set; }
-    public string CustomerName { get; set; } = string.Empty;
-}
 
-public class ReportModel
-{
-    // Full list of orders (sample data)
-    public List<Order> Orders { get; set; } = new();
-
-    // Orders filtered to the last month using a lambda in a Where clause
-    public List<Order> FilteredOrders => Orders
-        .Where(o => o.OrderDate >= DateTime.Now.AddMonths(-1))
-        .ToList();
+    public Order(string customerName, DateTime orderDate)
+    {
+        CustomerName = customerName;
+        OrderDate = orderDate;
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
-
-        // -------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically
-        // -------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Orders placed in the last month:");
-        // foreach over the filtered collection defined in the model
-        builder.Writeln("<<foreach [order in model.FilteredOrders]>>");
-        builder.Writeln("- Order ID: <<[order.Id]>>, Date: <<[order.OrderDate]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // 2. Load the template for report generation
-        // -------------------------------------------------
-        var doc = new Document(templatePath);
-
-        // -------------------------------------------------
-        // 3. Prepare sample data
-        // -------------------------------------------------
-        var model = new ReportModel
+        // Prepare sample data.
+        List<Order> allOrders = new List<Order>
         {
-            Orders = new List<Order>
-            {
-                new Order { Id = 1, OrderDate = DateTime.Now.AddDays(-5),  CustomerName = "Alice" },
-                new Order { Id = 2, OrderDate = DateTime.Now.AddDays(-20), CustomerName = "Bob"   },
-                new Order { Id = 3, OrderDate = DateTime.Now.AddMonths(-2), CustomerName = "Carol" },
-                new Order { Id = 4, OrderDate = DateTime.Now.AddDays(-2),  CustomerName = "Dave"  }
-            }
+            new Order("Alice", DateTime.Today.AddDays(-5)),          // within current month
+            new Order("Bob",   DateTime.Today.AddMonths(-1).AddDays(-2)), // within last month
+            new Order("Carol", DateTime.Today.AddMonths(-1).AddDays(-15)),// within last month
+            new Order("Dave",  DateTime.Today.AddMonths(-2)),       // older than last month
+            new Order("Eve",   DateTime.Today)                     // today
         };
 
-        // -------------------------------------------------
-        // 4. Build the report using the LINQ Reporting engine
-        // -------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Determine the date range for the previous month.
+        DateTime today = DateTime.Today;
+        DateTime firstDayOfCurrentMonth = new DateTime(today.Year, today.Month, 1);
+        DateTime startOfLastMonth = firstDayOfCurrentMonth.AddMonths(-1);
+        DateTime endOfLastMonth = firstDayOfCurrentMonth;
 
-        // -------------------------------------------------
-        // 5. Save the generated report
-        // -------------------------------------------------
-        doc.Save(reportPath);
+        // Filter orders using a lambda expression inside Where.
+        List<Order> filteredOrders = allOrders
+            .Where(o => o.OrderDate >= startOfLastMonth && o.OrderDate < endOfLastMonth)
+            .ToList();
+
+        // Create a template document programmatically.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Orders from the previous month:");
+        builder.Writeln("<<foreach [order in orders]>>");
+        builder.Writeln("- <<[order.CustomerName]>> placed on <<[order.OrderDate]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk as required by the workflow.
+        string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template back before building the report.
+        Document reportDoc = new Document(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        // The root object name must match the tag reference ("orders").
+        engine.BuildReport(reportDoc, filteredOrders, "orders");
+
+        // Save the final report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

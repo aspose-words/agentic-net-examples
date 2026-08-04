@@ -1,54 +1,79 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Item
+namespace AsposeWordsLinqReportingSqrt
 {
-    public string Name { get; set; } = string.Empty;
-    public double Number { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model containing a collection of numeric items.
+    public class ReportModel
     {
-        // 1. Create the template document programmatically.
-        const string templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Use Math.Sqrt within the expression to compute the square root of the numeric field.
-        builder.Writeln("Name: <<[item.Name]>>, Number: <<[item.Number]>>, Sqrt: <<[Math.Sqrt(item.Number)]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Document.Save(templatePath);
+        // Initialize the collection to avoid nullable warnings.
+        public List<Item> Items { get; set; } = new();
 
-        // 2. Load the template document.
-        var doc = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        var model = new ReportModel
+        // Sample data constructor.
+        public ReportModel()
         {
-            Items = new List<Item>
-            {
-                new Item { Name = "Alpha", Number = 4.0 },
-                new Item { Name = "Beta",  Number = 9.0 },
-                new Item { Name = "Gamma", Number = 16.0 }
-            }
-        };
+            Items.Add(new Item { Value = 4 });
+            Items.Add(new Item { Value = 9 });
+            Items.Add(new Item { Value = 16 });
+            Items.Add(new Item { Value = 25 });
+        }
+    }
 
-        // 4. Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        // Register System.Math so its static members can be used in template expressions.
-        engine.KnownTypes.Add(typeof(Math));
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(doc, model, "model");
+    public class Item
+    {
+        public double Value { get; set; }
+    }
 
-        // 5. Save the generated report.
-        doc.Save("Report.docx");
+    class Program
+    {
+        static void Main()
+        {
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
+
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Write a heading.
+            builder.Writeln("Square root calculation using Math.Sqrt in LINQ Reporting");
+            builder.Writeln();
+
+            // Begin a foreach loop over the Items collection.
+            builder.Writeln("<<foreach [item in Items]>>");
+            // Output the original value and its square root.
+            // Math.Sqrt is a static method; we add System.Math to KnownTypes later.
+            builder.Writeln("Value: <<[item.Value]>>, Sqrt: <<[Math.Sqrt(item.Value)]>>");
+            // End the foreach loop.
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // Prepare the data source.
+            ReportModel model = new();
+
+            // Configure the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            // Register System.Math so that static methods can be called from the template.
+            engine.KnownTypes.Add(typeof(Math));
+
+            // Build the report. No root name is supplied, so tags reference members directly.
+            engine.BuildReport(reportDoc, model);
+
+            // Save the generated report.
+            reportDoc.Save(reportPath);
+        }
     }
 }

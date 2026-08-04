@@ -2,61 +2,73 @@ using System;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;   // Required for Table type
 
-public class Program
+namespace AsposeWordsLinqReportingDemo
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare sample data in a DataTable.
-        DataTable table = new DataTable("Employees");
-        table.Columns.Add("FirstName", typeof(string));
-        table.Columns.Add("LastName", typeof(string));
-        table.Columns.Add("Age", typeof(int));
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        table.Rows.Add("John", "Doe", 30);
-        table.Rows.Add("Jane", "Smith", 28);
-        table.Rows.Add("Bob", "Johnson", 45);
+            // Title.
+            builder.Writeln("Customer Report");
+            builder.Writeln();
 
-        // -----------------------------------------------------------------
-        // Create a template document programmatically.
-        // The template contains a foreach loop that iterates over the rows
-        // of the DataTable (named "dt" in the report) and writes three
-        // fields for FirstName, LastName and Age.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+            // LINQ Reporting foreach tag – iterate over rows of the DataTable named "Data".
+            builder.Writeln("<<foreach [row in Data]>>");
 
-        builder.Writeln("Employee List:");
-        // Begin foreach block.
-        builder.Writeln("<<foreach [row in dt]>>");
+            // Build a simple table with headers.
+            Table table = builder.StartTable();
 
-        // Write the fields for each row.
-        builder.Write("<<[row.FirstName]>> ");
-        builder.Write("<<[row.LastName]>>");
-        builder.Write(", Age: ");
-        builder.Write("<<[row.Age]>>");
+            // Header row.
+            builder.InsertCell();
+            builder.Writeln("First Name");
+            builder.InsertCell();
+            builder.Writeln("Last Name");
+            builder.InsertCell();
+            builder.Writeln("Age");
+            builder.EndRow();
 
-        // End the paragraph for the current row.
-        builder.Writeln();
+            // Data row – each cell contains a LINQ Reporting expression.
+            builder.InsertCell();
+            builder.Writeln("<<[row.FirstName]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[row.LastName]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[row.Age]>>");
+            builder.EndRow();
 
-        // End foreach block.
-        builder.Writeln("<</foreach>>");
+            // Finish the table.
+            builder.EndTable();
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+            // Close the foreach block.
+            builder.Writeln("<</foreach>>");
 
-        // -----------------------------------------------------------------
-        // Load the template and build the report using the LINQ Reporting engine.
-        // -----------------------------------------------------------------
-        Document report = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
+            // -----------------------------------------------------------------
+            // Prepare sample data in a DataTable.
+            DataTable dataTable = new DataTable("Data");
+            dataTable.Columns.Add("FirstName", typeof(string));
+            dataTable.Columns.Add("LastName", typeof(string));
+            dataTable.Columns.Add("Age", typeof(int));
 
-        // The data source name used in the template tags is "dt".
-        engine.BuildReport(report, table, "dt");
+            dataTable.Rows.Add("John", "Doe", 30);
+            dataTable.Rows.Add("Jane", "Smith", 25);
+            dataTable.Rows.Add("Bob", "Johnson", 40);
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        report.Save(outputPath);
+            // -----------------------------------------------------------------
+            // Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // default options
+
+            // The root object name ("Data") must match the name used in the template tags.
+            engine.BuildReport(doc, dataTable, "Data");
+
+            // Save the generated report.
+            doc.Save("CustomerReport.docx");
+        }
     }
 }

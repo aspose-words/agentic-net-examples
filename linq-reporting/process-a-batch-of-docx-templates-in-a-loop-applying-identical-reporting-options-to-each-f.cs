@@ -3,96 +3,109 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsLinqReportingBatch
 {
-    public static void Main()
+    // Sample data model classes
+    public class Order
     {
-        // Ensure the required folders exist.
-        string templatesDir = Path.Combine(Directory.GetCurrentDirectory(), "Templates");
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(templatesDir);
-        Directory.CreateDirectory(outputDir);
+        public string CustomerName { get; set; } = "Acme Corp";
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Create sample data model.
-        var order = new Order
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = "";
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            CustomerName = "John Doe",
-            Items =
+            // Prepare folders
+            string baseDir = Directory.GetCurrentDirectory();
+            string templatesDir = Path.Combine(baseDir, "Templates");
+            string outputDir = Path.Combine(baseDir, "Output");
+            Directory.CreateDirectory(templatesDir);
+            Directory.CreateDirectory(outputDir);
+
+            // Create a few template files programmatically
+            for (int i = 1; i <= 3; i++)
             {
-                new Item { Index = 1, Name = "Apple" },
-                new Item { Index = 2, Name = "Banana" },
-                new Item { Index = 3, Name = "Cherry" }
+                string templatePath = Path.Combine(templatesDir, $"Template{i}.docx");
+                CreateTemplate(templatePath);
             }
-        };
 
-        // Create a few template files programmatically (only once).
-        for (int i = 1; i <= 3; i++)
-        {
-            string templatePath = Path.Combine(templatesDir, $"Template{i}.docx");
-            if (!File.Exists(templatePath))
+            // Prepare a single data source that will be used for all reports
+            Order sampleOrder = new Order
             {
-                var doc = new Document();
-                var builder = new DocumentBuilder(doc);
-
-                // Header with customer name.
-                builder.Writeln($"Report {i}");
-                builder.Writeln("Customer: <<[order.CustomerName]>>");
-                builder.Writeln();
-
-                // Table header.
-                builder.Writeln("<<foreach [item in order.Items]>>");
-                var table = builder.StartTable();
-                builder.InsertCell();
-                builder.Writeln("Index");
-                builder.InsertCell();
-                builder.Writeln("Product");
-                builder.EndRow();
-
-                // Data row.
-                builder.InsertCell();
-                builder.Writeln("<<[item.Index]>>");
-                builder.InsertCell();
-                builder.Writeln("<<[item.Name]>>");
-                builder.EndRow();
-                builder.EndTable();
-                builder.Writeln("<</foreach>>");
-
-                doc.Save(templatePath);
-            }
-        }
-
-        // Process each template file with identical reporting options.
-        foreach (string templateFile in Directory.GetFiles(templatesDir, "*.docx"))
-        {
-            var doc = new Document(templateFile);
-
-            // Configure the reporting engine.
-            var engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
+                CustomerName = "Acme Corporation",
+                Items = new List<Item>
+                {
+                    new Item { Index = 1, Name = "Widget A" },
+                    new Item { Index = 2, Name = "Widget B" },
+                    new Item { Index = 3, Name = "Widget C" }
+                }
             };
 
-            // Build the report using the same data model for every template.
-            engine.BuildReport(doc, order, "order");
+            // Process each template in the folder
+            foreach (string templateFile in Directory.GetFiles(templatesDir, "*.docx"))
+            {
+                // Load the template document
+                Document doc = new Document(templateFile);
 
-            // Save the generated report.
-            string outputPath = Path.Combine(outputDir,
-                Path.GetFileNameWithoutExtension(templateFile) + "_Report.docx");
-            doc.Save(outputPath);
+                // Configure the reporting engine
+                ReportingEngine engine = new ReportingEngine();
+                engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+
+                // Build the report using the same data source for every template
+                engine.BuildReport(doc, sampleOrder, "order");
+
+                // Save the generated report
+                string outputFileName = Path.GetFileNameWithoutExtension(templateFile) + "_Report.docx";
+                string outputPath = Path.Combine(outputDir, outputFileName);
+                doc.Save(outputPath);
+            }
+        }
+
+        // Creates a simple DOCX template with LINQ Reporting tags
+        private static void CreateTemplate(string filePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Header with customer name
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln();
+
+            // Begin foreach loop for items
+            builder.Writeln("<<foreach [item in order.Items]>>");
+
+            // Table with header and data rows
+            Table table = builder.StartTable();
+
+            // Header row
+            builder.InsertCell();
+            builder.Writeln("Index");
+            builder.InsertCell();
+            builder.Writeln("Item Name");
+            builder.EndRow();
+
+            // Data row (repeated for each item)
+            builder.InsertCell();
+            builder.Writeln("<<[item.Index]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Name]>>");
+            builder.EndRow();
+
+            // End of table and foreach block
+            builder.EndTable();
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            doc.Save(filePath);
         }
     }
-}
-
-// Data model classes used by the LINQ Reporting engine.
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = "";
 }

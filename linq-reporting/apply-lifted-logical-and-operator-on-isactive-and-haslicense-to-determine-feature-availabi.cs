@@ -2,61 +2,38 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingLiftedAndExample
+public class FeatureModel
 {
-    // Data model used by the LINQ Reporting template.
-    public class FeatureModel
-    {
-        // Nullable booleans to demonstrate lifted logical operators.
-        public bool? IsActive { get; set; } = false;
-        public bool? HasLicense { get; set; } = false;
-    }
+    public bool IsActive { get; set; }
+    public bool HasLicense { get; set; }
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Create a blank document that will serve as the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a paragraph with LINQ Reporting tags.
+        // The lifted logical AND operator (&&) works with nullable booleans,
+        // but here we use non‑nullable booleans for simplicity.
+        builder.Writeln("<<if [model.IsActive && model.HasLicense]>>Feature Available<</if>>");
+        builder.Writeln("<<if [! (model.IsActive && model.HasLicense)]>>Feature Unavailable<</if>>");
+
+        // Prepare the data source.
+        FeatureModel model = new FeatureModel
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            IsActive = true,
+            HasLicense = false
+        };
 
-            // Use explicit comparisons to avoid applying && directly to nullable booleans.
-            // The condition evaluates to true only when both values are true.
-            builder.Writeln("<<if [model.IsActive == true && model.HasLicense == true]>>Feature is AVAILABLE<</if>>");
-            // Show the alternative message when the condition is not met.
-            builder.Writeln("<<if [!(model.IsActive == true && model.HasLicense == true)]>>Feature is NOT AVAILABLE<</if>>");
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data source.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-
-            var data = new FeatureModel
-            {
-                IsActive = true,   // Both conditions are true → feature should be AVAILABLE.
-                HasLicense = true
-            };
-
-            // -----------------------------------------------------------------
-            // 3. Build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, data, "model");
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            const string reportPath = "Report.docx";
-            doc.Save(reportPath);
-
-            // Indicate completion (no interactive prompts).
-            Console.WriteLine($"Report generated: {reportPath}");
-        }
+        // Save the generated document.
+        doc.Save("FeatureReport.docx");
     }
 }

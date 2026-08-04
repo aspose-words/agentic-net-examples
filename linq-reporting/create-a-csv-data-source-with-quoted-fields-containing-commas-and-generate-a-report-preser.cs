@@ -4,72 +4,78 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsCsvReport
 {
-    public static void Main()
+    public class Program
     {
-        // Register code page provider for CSV parsing (required on .NET Core).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare folders.
-        string workDir = Directory.GetCurrentDirectory();
-        string csvPath = Path.Combine(workDir, "people.csv");
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string reportPath = Path.Combine(workDir, "report.docx");
-
-        // 1. Create a CSV file with quoted fields that contain commas.
-        // Header: Name,Address,Notes
-        // Sample row: "John Doe","123 Main St, Apt 4","He said, ""Hello, world!"""
-        string[] csvLines =
+        public static void Main()
         {
-            "Name,Address,Notes",
-            "\"John Doe\",\"123 Main St, Apt 4\",\"He said, \"\"Hello, world!\"\"\"",
-            "\"Jane Smith\",\"456 Oak Rd, Suite 5\",\"Note with, comma\""
-        };
-        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
+            // Register code page provider for CSV encoding support.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 2. Create a Word template programmatically.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Define file paths in the current working directory.
+            string workDir = Directory.GetCurrentDirectory();
+            string csvPath = Path.Combine(workDir, "data.csv");
+            string templatePath = Path.Combine(workDir, "template.docx");
+            string reportPath = Path.Combine(workDir, "Report.docx");
 
-        // Add a title.
-        builder.Writeln("People Report");
-        builder.Writeln();
+            // -----------------------------------------------------------------
+            // 1. Create a CSV file with quoted fields that contain commas.
+            // -----------------------------------------------------------------
+            // Header: Name,Address
+            // Data rows: "Doe, John","123 Main St, Apt 4"
+            // The quotes ensure commas inside the fields are preserved.
+            string[] csvLines =
+            {
+                "Name,Address",
+                "\"Doe, John\",\"123 Main St, Apt 4\"",
+                "\"Smith, Jane\",\"456 Oak Ave, Suite 12\""
+            };
+            File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
 
-        // Begin a foreach loop over the CSV rows (named "persons").
-        builder.Writeln("<<foreach [row in persons]>>");
-        builder.Writeln("Name: <<[row.Name]>>");
-        builder.Writeln("Address: <<[row.Address]>>");
-        builder.Writeln("Notes: <<[row.Notes]>>");
-        builder.Writeln("<</foreach>>");
+            // -----------------------------------------------------------------
+            // 2. Build a Word template programmatically with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+            builder.Writeln("CSV LINQ Reporting Example");
+            builder.Writeln("================================");
+            // Begin a foreach loop over the CSV rows (exposed as a collection named 'persons').
+            builder.Writeln("<<foreach [person in persons]>>");
+            builder.Writeln("Name   : <<[person.Name]>>");
+            builder.Writeln("Address: <<[person.Address]>>");
+            builder.Writeln("<</foreach>>");
 
-        // 3. Load the template back (demonstrating the load step).
-        Document loadedTemplate = new Document(templatePath);
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // 4. Configure CSV data load options.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true) // true => first line has headers
-        {
-            Delimiter = ',',          // default, but set explicitly
-            QuoteChar = '"',          // default, but set explicitly
-            CommentChar = '#',        // no comment lines in our file
-            HasHeaders = true
-        };
+            // -----------------------------------------------------------------
+            // 3. Load the template and prepare the CSV data source.
+            // -----------------------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
 
-        // 5. Create a CsvDataSource from the CSV file.
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+            // Configure CSV loading options: first line has headers, use double quotes for quoting.
+            CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true)
+            {
+                HasHeaders = true,
+                QuoteChar = '"'
+                // Delimiter defaults to ','; CommentChar defaults to '\0'.
+            };
 
-        // 6. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        // No special options required for this simple scenario.
-        engine.BuildReport(loadedTemplate, csvDataSource, "persons");
+            CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // 7. Save the generated report.
-        loadedTemplate.Save(reportPath);
+            // -----------------------------------------------------------------
+            // 4. Build the report using ReportingEngine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            // The root object name used in the template is "persons".
+            engine.BuildReport(loadedTemplate, csvDataSource, "persons");
 
-        // Inform the user (optional, no interactive input required).
-        Console.WriteLine($"Report generated: {reportPath}");
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            loadedTemplate.Save(reportPath);
+        }
     }
 }

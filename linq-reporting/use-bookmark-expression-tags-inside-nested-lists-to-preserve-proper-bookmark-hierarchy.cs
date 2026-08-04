@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
@@ -9,80 +8,103 @@ public class Program
 {
     public static void Main()
     {
+        // Create the template document.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Use a bullet list for the hierarchy.
+        builder.ListFormat.List = template.Lists.Add(ListTemplate.BulletDefault);
+
+        // Top‑level foreach over categories.
+        builder.Writeln("<<foreach [category in Model.Categories]>>");
+        builder.Writeln("<<bookmark [category.Bookmark]>>Category: <<[category.Name]>> <</bookmark>>");
+
+        // Indent for items.
+        builder.ListFormat.ListIndent();
+        builder.Writeln("<<foreach [item in category.Items]>>");
+        builder.Writeln("<<bookmark [item.Bookmark]>>Item: <<[item.Name]>> <</bookmark>>");
+
+        // Indent for sub‑items.
+        builder.ListFormat.ListIndent();
+        builder.Writeln("<<foreach [sub in item.SubItems]>>");
+        builder.Writeln("<<bookmark [sub.Bookmark]>>SubItem: <<[sub.Name]>> <</bookmark>>");
+        builder.Writeln("<</foreach>>"); // end sub‑items foreach
+        builder.ListFormat.ListOutdent(); // outdent sub‑items
+
+        builder.Writeln("<</foreach>>"); // end items foreach
+        builder.ListFormat.ListOutdent(); // outdent items
+
+        builder.Writeln("<</foreach>>"); // end categories foreach
+        builder.ListFormat.RemoveNumbers(); // stop list formatting
+
+        // Save the template (optional, shown for clarity).
+        const string templatePath = "BookmarkTemplate.docx";
+        template.Save(templatePath);
+
+        // Load the template (demonstrates the load step required before BuildReport).
+        Document doc = new Document(templatePath);
+
         // Prepare sample data.
-        var model = new ReportModel
+        ReportModel model = new ReportModel
         {
-            Categories = new()
+            Categories = new List<Category>
             {
                 new Category
                 {
                     Name = "Fruits",
-                    Items = new()
+                    Bookmark = "Bookmark_Fruits",
+                    Items = new List<Item>
                     {
-                        new Item { Title = "Apple",  BookmarkName = "bm_Apple" },
-                        new Item { Title = "Banana", BookmarkName = "bm_Banana" }
+                        new Item
+                        {
+                            Name = "Apple",
+                            Bookmark = "Bookmark_Apple",
+                            SubItems = new List<SubItem>
+                            {
+                                new SubItem { Name = "Red Apple", Bookmark = "Bookmark_RedApple" },
+                                new SubItem { Name = "Green Apple", Bookmark = "Bookmark_GreenApple" }
+                            }
+                        },
+                        new Item
+                        {
+                            Name = "Banana",
+                            Bookmark = "Bookmark_Banana",
+                            SubItems = new List<SubItem>
+                            {
+                                new SubItem { Name = "Ripe Banana", Bookmark = "Bookmark_RipeBanana" }
+                            }
+                        }
                     }
                 },
                 new Category
                 {
                     Name = "Vegetables",
-                    Items = new()
+                    Bookmark = "Bookmark_Vegetables",
+                    Items = new List<Item>
                     {
-                        new Item { Title = "Carrot",   BookmarkName = "bm_Carrot" },
-                        new Item { Title = "Tomato",   BookmarkName = "bm_Tomato" }
+                        new Item
+                        {
+                            Name = "Carrot",
+                            Bookmark = "Bookmark_Carrot",
+                            SubItems = new List<SubItem>()
+                        }
                     }
                 }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Define outer (numbered) and inner (bulleted) list styles.
-        List outerList = doc.Lists.Add(ListTemplate.NumberArabicDot);
-        List innerList = doc.Lists.Add(ListTemplate.BulletDefault);
-
-        // Begin outer foreach over Categories.
-        builder.Writeln("<<foreach [cat in Categories]>>");
-        builder.ListFormat.List = outerList;
-        builder.Writeln("<<[cat.Name]>>"); // Category name as outer list item.
-
-        // Begin inner foreach over Items of the current Category.
-        builder.Writeln("<<foreach [itm in cat.Items]>>");
-        builder.ListFormat.List = innerList;
-        // Bookmark tag preserving hierarchy.
-        builder.Writeln("<<bookmark [itm.BookmarkName]>><<[itm.Title]>><</bookmark>>");
-        builder.Writeln("<</foreach>>"); // End inner foreach.
-
-        // Reset to outer list for the next category.
-        builder.ListFormat.List = outerList;
-        builder.Writeln("<</foreach>>"); // End outer foreach.
-
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options.
-
-        // Build the report using the model as the root data source named "model".
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(doc, model, "Model");
 
         // Save the generated report.
-        reportDoc.Save("Report.docx");
+        const string outputPath = "BookmarkReport.docx";
+        doc.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes (public, non‑nullable properties are initialized).
-// ---------------------------------------------------------------------
+// Data model classes.
 public class ReportModel
 {
     public List<Category> Categories { get; set; } = new();
@@ -90,12 +112,20 @@ public class ReportModel
 
 public class Category
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public string Bookmark { get; set; } = "";
     public List<Item> Items { get; set; } = new();
 }
 
 public class Item
 {
-    public string Title { get; set; } = string.Empty;
-    public string BookmarkName { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public string Bookmark { get; set; } = "";
+    public List<SubItem> SubItems { get; set; } = new();
+}
+
+public class SubItem
+{
+    public string Name { get; set; } = "";
+    public string Bookmark { get; set; } = "";
 }

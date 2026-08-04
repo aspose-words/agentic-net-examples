@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using Aspose.Words;
@@ -8,41 +9,69 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing (required for .NET Core).
+        // Register code page provider for CSV parsing.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create sample CSV data.
+        // Prepare sample CSV data.
         string csvPath = "data.csv";
-        File.WriteAllText(csvPath,
-@"Name,Quantity,Price
-Apple,3,0.5
-Banana,2,0.3
-Orange,5,0.4");
+        File.WriteAllLines(csvPath, new[]
+        {
+            "Item,Quantity,Price",
+            "Apple,3,0.5",
+            "Banana,2,0.3",
+            "Orange,5,0.4"
+        });
 
-        // Build a template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a simple template with LINQ Reporting tags.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Item Report");
+        builder.Writeln("Product Report");
         builder.Writeln("-------------------------------------------------");
-        builder.Writeln("<<foreach [row in items]>>");
-        builder.Writeln("Item: <<[row.Name]>>\tQty: <<[row.Quantity]>>\tPrice: <<[row.Price]>>\tTotal: <<[row.Quantity * row.Price]>>");
+        builder.Writeln("<<foreach [row in data]>>");
+        builder.Writeln("Item: <<[row.Item]>>, Qty: <<[row.Quantity]>>, Price: <<[row.Price]>>, Total: <<[row.Quantity * row.Price]>>");
         builder.Writeln("<</foreach>>");
         builder.Writeln("-------------------------------------------------");
-        builder.Writeln("Grand Total: <<[items.Sum(r => r.Quantity * r.Price)]>>");
+        builder.Writeln("Grand Total: <<[summary.Total]>>");
 
-        // Load CSV data source with header row.
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Configure CSV data source.
         CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
         CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine
+        // Compute grand total by reading the CSV file.
+        double grandTotal = 0;
+        string[] lines = File.ReadAllLines(csvPath);
+        for (int i = 1; i < lines.Length; i++) // Skip header.
         {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(template, csvData, "items");
+            string[] parts = lines[i].Split(',');
+            if (parts.Length >= 3 &&
+                double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double qty) &&
+                double.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out double price))
+            {
+                grandTotal += qty * price;
+            }
+        }
 
-        // Save the generated report.
-        template.Save("Report.docx");
+        // Summary object to expose the total.
+        Summary summary = new Summary { Total = grandTotal };
+
+        // Build the report using two data sources: "data" (CSV) and "summary".
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, new object[] { csvData, summary }, new[] { "data", "summary" });
+
+        // Save the final report.
+        reportDoc.Save("report.docx");
     }
+}
+
+// Simple wrapper class for the grand total.
+public class Summary
+{
+    public double Total { get; set; } = 0;
 }

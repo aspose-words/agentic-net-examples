@@ -4,17 +4,18 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
 
-public class PdfAReportExample
+public class Program
 {
     public static void Main()
     {
-        // Working directory.
-        string workDir = Directory.GetCurrentDirectory();
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // 1. Create sample XML data.
-        string xmlPath = Path.Combine(workDir, "people.xml");
-        File.WriteAllText(xmlPath,
-@"<root>
+        // 1. Create sample XML data source.
+        string xmlPath = Path.Combine(outputDir, "persons.xml");
+        string xmlContent =
+@"<Persons>
     <Person>
         <Name>John Doe</Name>
         <Age>30</Age>
@@ -27,46 +28,46 @@ public class PdfAReportExample
         <Name>Bob Johnson</Name>
         <Age>40</Age>
     </Person>
-</root>");
+</Persons>";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // 2. Build a Word template with LINQ Reporting tags.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // 2. Build a template document with LINQ Reporting tags.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
         builder.Writeln("Persons Report");
-        builder.Writeln();
+        // Insert the current date/time directly; no need for a reporting tag.
+        builder.Writeln($"Generated on: {DateTime.Now}");
+        builder.Writeln(); // empty line
 
-        // Since the XML root element directly contains a list of Person nodes,
-        // the root object itself is the collection. Use it in the foreach tag.
-        builder.Writeln("<<foreach [person in root]>>");
+        // Begin foreach loop over the collection named "persons".
+        builder.Writeln("<<foreach [person in persons]>>");
         builder.Writeln("Name: <<[person.Name]>>");
         builder.Writeln("Age:  <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // 3. Load the template for report generation.
-        Document report = new Document(templatePath);
+        // 3. Load the template document.
+        Document doc = new Document(templatePath);
 
-        // 4. Create an XML data source.
+        // 4. Load XML data source.
         XmlDataSource dataSource = new XmlDataSource(xmlPath);
 
-        // 5. Build the report.
+        // 5. Build the report using ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        // The root object name used in the template tags is "root".
-        engine.BuildReport(report, dataSource, "root");
+        engine.BuildReport(doc, dataSource, "persons");
 
-        // 6. Save the populated document as PDF/A‑1b.
+        // 6. Save the result as PDF/A‑1b.
+        string pdfPath = Path.Combine(outputDir, "PersonsReport.pdf");
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA1b
         };
-        string outputPdf = Path.Combine(workDir, "PersonsReport.pdf");
-        report.Save(outputPdf, pdfOptions);
+        doc.Save(pdfPath, pdfOptions);
 
-        Console.WriteLine($"Report generated: {outputPdf}");
+        Console.WriteLine($"Report generated successfully: {pdfPath}");
     }
 }

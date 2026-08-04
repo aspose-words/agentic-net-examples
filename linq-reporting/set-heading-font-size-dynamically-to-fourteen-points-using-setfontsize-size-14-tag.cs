@@ -3,12 +3,11 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+namespace AsposeWordsLinqReportingExample
 {
-    // Simple data model used by the template.
+    // Simple data model for the report.
     public class ReportModel
     {
-        // Title of the heading.
         public string Title { get; set; } = "Dynamic Heading Example";
     }
 
@@ -16,9 +15,13 @@ namespace AsposeWordsLinqReportingDemo
     {
         public static void Main()
         {
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
             // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "template.docx");
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "report.docx");
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            string reportPath = Path.Combine(outputDir, "Report.docx");
 
             // -----------------------------------------------------------------
             // 1. Create the template document programmatically.
@@ -26,11 +29,11 @@ namespace AsposeWordsLinqReportingDemo
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Set the desired font size for the heading.
+            // Set the paragraph style to Heading1 and the font size to 14 points.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
             builder.Font.Size = 14;
 
-            // Insert a heading paragraph with a LINQ Reporting tag.
-            // The <<[model.Title]>> tag will be replaced with the Title property of the model at runtime.
+            // Insert the LINQ Reporting tag that will be replaced with the model's Title.
             builder.Writeln("<<[model.Title]>>");
 
             // Save the template to disk.
@@ -39,24 +42,19 @@ namespace AsposeWordsLinqReportingDemo
             // -----------------------------------------------------------------
             // 2. Prepare the data source.
             // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
-            {
-                Title = "Report Heading – Font Size 14pt"
-            };
+            ReportModel model = new ReportModel();
 
             // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
+            // 3. Build the report using the ReportingEngine.
             // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
+            Document reportDoc = new Document(templatePath);
             ReportingEngine engine = new ReportingEngine();
 
-            // Build the report using the model as the root data source named "model".
-            engine.BuildReport(doc, model, "model");
+            // BuildReport overload that takes the data source name ("model").
+            engine.BuildReport(reportDoc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            doc.Save(outputPath);
+            // Save the generated report.
+            reportDoc.Save(reportPath);
         }
     }
 }

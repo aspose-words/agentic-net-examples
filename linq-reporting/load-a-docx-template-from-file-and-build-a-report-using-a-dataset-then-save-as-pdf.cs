@@ -1,86 +1,52 @@
 using System;
+using System.IO;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+using System.Text;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the final PDF.
-        const string templatePath = "Template.docx";
-        const string outputPdfPath = "Report.pdf";
+        // Register code page provider for any required encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Create a DOCX template with LINQ Reporting tags.
-        // -----------------------------------------------------------------
+        // Prepare output directory.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
+
+        // Path for the template document.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+
+        // Create a DOCX template with LINQ Reporting tags.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Title
-        builder.Writeln("Orders Report");
-        builder.Writeln();
-
-        // Begin the data band.
-        builder.Writeln("<<foreach [row in Orders]>>");
-
-        // Start the table that will be repeated for each row.
-        Table table = builder.StartTable();
-
-        // Header row (once, outside the foreach loop).
-        builder.InsertCell();
-        builder.Writeln("Customer");
-        builder.InsertCell();
-        builder.Writeln("Date");
-        builder.InsertCell();
-        builder.Writeln("Amount");
-        builder.EndRow();
-
-        // Data row (inside the foreach loop).
-        builder.InsertCell();
-        builder.Writeln("<<[row.CustomerName]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[row.OrderDate]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[row.Amount]>>");
-        builder.EndRow();
-
-        // Close the table and the foreach block.
-        builder.EndTable();
+        builder.Writeln("Product Report");
+        builder.Writeln("<<foreach [row in ds.Products]>>");
+        builder.Writeln("Name: <<[row.Name]>>, Price: $<<[row.Price]>>");
         builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Prepare a DataSet with sample data.
-        // -----------------------------------------------------------------
-        DataSet dataSet = new DataSet();
-
-        DataTable ordersTable = new DataTable("Orders");
-        ordersTable.Columns.Add("CustomerName", typeof(string));
-        ordersTable.Columns.Add("OrderDate", typeof(DateTime));
-        ordersTable.Columns.Add("Amount", typeof(decimal));
-
-        ordersTable.Rows.Add("Alice Johnson", new DateTime(2023, 5, 12), 250.75m);
-        ordersTable.Rows.Add("Bob Smith", new DateTime(2023, 5, 13), 120.00m);
-        ordersTable.Rows.Add("Carol White", new DateTime(2023, 5, 14), 560.40m);
-
-        dataSet.Tables.Add(ordersTable);
-
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report.
-        // -----------------------------------------------------------------
+        // Load the template document.
         Document reportDoc = new Document(templatePath);
 
-        ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this simple example.
-        engine.BuildReport(reportDoc, dataSet, "");
+        // Create a DataSet with a sample DataTable.
+        DataSet ds = new DataSet();
+        DataTable productsTable = new DataTable("Products");
+        productsTable.Columns.Add("Name", typeof(string));
+        productsTable.Columns.Add("Price", typeof(decimal));
+        productsTable.Rows.Add("Apple", 0.5m);
+        productsTable.Rows.Add("Banana", 0.3m);
+        productsTable.Rows.Add("Cherry", 1.2m);
+        ds.Tables.Add(productsTable);
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report as PDF.
-        // -----------------------------------------------------------------
-        reportDoc.Save(outputPdfPath, SaveFormat.Pdf);
+        // Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, ds, "ds");
+
+        // Save the generated report as PDF.
+        string pdfPath = Path.Combine(outputDir, "report.pdf");
+        reportDoc.Save(pdfPath, SaveFormat.Pdf);
     }
 }

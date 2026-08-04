@@ -8,39 +8,7 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Outer loop over categories.
-        builder.Writeln("<<foreach [cat in Categories]>>");
-        builder.Writeln("Category: <<[cat.Name]>>");
-        builder.Writeln();
-
-        // Inner loop over items of the current category.
-        builder.Writeln("<<foreach [item in cat.Items]>>");
-        builder.Writeln("- <<[item.Name]>>: $<<[item.Price]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Subtotal for the current category (calculated in the data model).
-        builder.Writeln("Subtotal: $<<[cat.Subtotal]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and prepare the data model.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
+        // Prepare sample data.
         ReportModel model = new ReportModel
         {
             Categories = new List<Category>
@@ -61,31 +29,60 @@ public class Program
                     Items = new List<Item>
                     {
                         new Item { Name = "Carrot", Price = 0.60m },
-                        new Item { Name = "Broccoli", Price = 1.10m },
-                        new Item { Name = "Spinach", Price = 0.90m }
+                        new Item { Name = "Broccoli", Price = 1.10m }
                     }
                 }
             }
         };
 
-        // Compute subtotals for each category (redefining the variable per category).
+        // Calculate subtotals per category (redefining the variable inside nested loops conceptually).
         foreach (var cat in model.Categories)
         {
-            decimal subtotal = 0m;
+            decimal subtotal = 0;
             foreach (var itm in cat.Items)
                 subtotal += itm.Price;
             cat.Subtotal = subtotal;
         }
 
         // -----------------------------------------------------------------
-        // 3. Build the report using the ReportingEngine.
+        // Create the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
+        string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Title
+        builder.Writeln("Sales Report");
+        builder.Writeln();
+
+        // Outer foreach over categories.
+        builder.Writeln("<<foreach [cat in Categories]>>");
+        builder.Writeln("Category: <<[cat.Name]>>");
+        builder.Writeln();
+
+        // Inner foreach over items.
+        builder.Writeln("<<foreach [item in cat.Items]>>");
+        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Subtotal for the current category.
+        builder.Writeln("Subtotal: $<<[cat.Subtotal]>>");
+        builder.Writeln();
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        doc.Save(reportPath);
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 

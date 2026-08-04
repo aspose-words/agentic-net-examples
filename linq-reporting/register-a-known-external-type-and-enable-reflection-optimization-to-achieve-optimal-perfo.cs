@@ -1,78 +1,109 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReporting
 {
-    // Helper class with a static method that will be accessed from the template.
+    // Sample data entity.
+    public class Order
+    {
+        public string CustomerName { get; set; } = "";
+        public DateTime OrderDate { get; set; }
+    }
+
+    // Wrapper model that holds a collection of orders.
+    public class ReportModel
+    {
+        public List<Order> Orders { get; set; } = new();
+    }
+
+    // External type whose static members can be used inside the template.
     public static class Utils
     {
-        public static string Upper(string value) => value?.ToUpperInvariant() ?? string.Empty;
+        // Formats a DateTime value; will be called from the template.
+        public static string FormatDate(DateTime dt) => dt.ToString("yyyy-MM-dd");
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider for XML handling.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Ensure the working directory exists.
+            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+            Directory.CreateDirectory(workDir);
 
-            // Prepare sample XML data.
-            const string xmlFileName = "people.xml";
-            File.WriteAllText(xmlFileName,
-                @"<?xml version=""1.0"" encoding=""utf-8""?>
-                <persons>
-                    <person>
-                        <Name>John Doe</Name>
-                        <Age>30</Age>
-                    </person>
-                    <person>
-                        <Name>Jane Smith</Name>
-                        <Age>25</Age>
-                    </person>
-                    <person>
-                        <Name>Bob Johnson</Name>
-                        <Age>45</Age>
-                    </person>
-                </persons>");
+            // 1. Create a sample XML data file.
+            string xmlPath = Path.Combine(workDir, "Orders.xml");
+            string xmlContent =
+@"<Orders>
+    <Order>
+        <CustomerName>John Doe</CustomerName>
+        <OrderDate>2023-01-15T00:00:00</OrderDate>
+    </Order>
+    <Order>
+        <CustomerName>Jane Smith</CustomerName>
+        <OrderDate>2023-02-20T00:00:00</OrderDate>
+    </Order>
+    <Order>
+        <CustomerName>Bob Johnson</CustomerName>
+        <OrderDate>2023-03-05T00:00:00</OrderDate>
+    </Order>
+</Orders>";
+            File.WriteAllText(xmlPath, xmlContent);
 
-            // Create a template document with LINQ Reporting tags.
-            const string templateFileName = "template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // 2. Create the template document programmatically.
+            string templatePath = Path.Combine(workDir, "Template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("<<foreach [p in persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>");
-            builder.Writeln("Age: <<[p.Age]>>");
-            // Use a static member from a known external type (Math.PI) to demonstrate registration.
-            builder.Writeln("Pi: <<[Math.PI]>>");
-            // Use a static method from our custom Utils class (dot syntax works for static calls).
-            builder.Writeln("Upper Name: <<[Utils.Upper(p.Name)]>>");
+            // Insert LINQ Reporting tags.
+            builder.Writeln("<<foreach [order in model.Orders]>>");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Date: <<[Utils.FormatDate(order.OrderDate)]>>");
             builder.Writeln("<</foreach>>");
 
-            templateDoc.Save(templateFileName);
+            // Save the template.
+            templateDoc.Save(templatePath);
 
-            // Load the template for reporting.
-            var doc = new Document(templateFileName);
+            // 3. Load the template document.
+            Document doc = new Document(templatePath);
 
-            // Enable reflection optimization for large data sets.
+            // 4. Load XML data into a list of Order objects.
+            // For simplicity we parse the XML manually; in a real scenario the XML could be huge.
+            var orders = new List<Order>();
+            var xmlDoc = new System.Xml.XmlDocument();
+            xmlDoc.Load(xmlPath);
+            foreach (System.Xml.XmlNode node in xmlDoc.SelectNodes("//Order"))
+            {
+                var order = new Order
+                {
+                    CustomerName = node["CustomerName"]?.InnerText ?? "",
+                    OrderDate = DateTime.Parse(node["OrderDate"]?.InnerText ?? DateTime.MinValue.ToString())
+                };
+                orders.Add(order);
+            }
+
+            // 5. Prepare the model.
+            var model = new ReportModel { Orders = orders };
+
+            // 6. Enable reflection optimization (static property).
             ReportingEngine.UseReflectionOptimization = true;
 
-            // Create the reporting engine and register known external types.
-            var engine = new ReportingEngine();
-            engine.KnownTypes.Add(typeof(Math));   // System.Math for static members.
-            engine.KnownTypes.Add(typeof(Utils)); // Custom utility class.
+            // 7. Create the reporting engine and register the external type.
+            ReportingEngine engine = new ReportingEngine();
+            engine.KnownTypes.Add(typeof(Utils));
 
-            // Load XML data source.
-            var xmlDataSource = new XmlDataSource(File.OpenRead(xmlFileName));
+            // 8. Build the report.
+            engine.BuildReport(doc, model, "model");
 
-            // Build the report. The root object name is "persons" as used in the template.
-            engine.BuildReport(doc, xmlDataSource, "persons");
+            // 9. Save the generated report.
+            string outputPath = Path.Combine(workDir, "Report.docx");
+            doc.Save(outputPath);
 
-            // Save the generated report.
-            doc.Save("ReportOutput.docx");
+            // Indicate completion (no interactive prompts).
+            Console.WriteLine("Report generated at: " + outputPath);
         }
     }
 }

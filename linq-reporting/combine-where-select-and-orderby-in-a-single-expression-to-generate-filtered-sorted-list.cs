@@ -1,20 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+public class Product
 {
     public string Name { get; set; } = "";
-    public int Age { get; set; }
+    public decimal Price { get; set; }
 }
 
 public class ReportModel
 {
-    // Holds the filtered and sorted list of names.
-    public List<string> Names { get; set; } = new();
+    public List<Product> Products { get; set; } = new();
 }
 
 public class Program
@@ -22,46 +20,40 @@ public class Program
     public static void Main()
     {
         // Sample data.
-        List<Person> people = new()
+        var allProducts = new List<Product>
         {
-            new Person { Name = "Alice", Age = 28 },
-            new Person { Name = "Bob",   Age = 35 },
-            new Person { Name = "Carol", Age = 42 },
-            new Person { Name = "Dave",  Age = 31 },
-            new Person { Name = "Eve",   Age = 25 }
+            new() { Name = "Apple",  Price = 10m },
+            new() { Name = "Banana", Price = 25m },
+            new() { Name = "Cherry", Price = 30m },
+            new() { Name = "Date",   Price = 15m },
+            new() { Name = "Elderberry", Price = 50m }
         };
 
-        // LINQ: filter Age > 30, select Name, order alphabetically.
-        List<string> filteredNames = people
-            .Where(p => p.Age > 30)
-            .Select(p => p.Name)
-            .OrderBy(name => name)
+        // Combine Where, Select, and OrderBy in a single LINQ expression.
+        var filteredSorted = allProducts
+            .Where(p => p.Price > 20)                     // filter
+            .Select(p => new Product { Name = p.Name, Price = p.Price }) // project
+            .OrderByDescending(p => p.Price)             // sort
             .ToList();
 
         // Prepare the model for the reporting engine.
-        ReportModel model = new() { Names = filteredNames };
+        var model = new ReportModel { Products = filteredSorted };
 
-        // Create a template document with a foreach tag.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a Word document template programmatically.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Filtered and sorted names:");
-        builder.Writeln("<<foreach [n in Names]>>");
-        builder.Writeln(" - <<[n]>>");
+        builder.Writeln("Filtered and Sorted Products:");
+        // LINQ Reporting foreach tag iterating over the Products collection.
+        builder.Writeln("<<foreach [p in model.Products]>>");
+        builder.Writeln(" - <<[p.Name]>> : $<<[p.Price]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
         // Build the report using the model.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Save the final report.
-        reportDoc.Save("Report.docx");
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }

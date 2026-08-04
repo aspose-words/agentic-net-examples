@@ -1,16 +1,14 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+namespace LinqReportingConditionalBlock
 {
-    // Data model used by the LINQ Reporting template.
+    // Data model used as the root object for the report.
     public class Order
     {
-        public string CustomerName { get; set; } = "John Doe";
-        public double Total { get; set; } = 150.0;
-        public double Discount { get; set; } = 10.0; // Percentage; set to 0 to hide the block.
+        public string CustomerName { get; set; } = string.Empty;
+        public double Discount { get; set; }
     }
 
     public class Program
@@ -23,37 +21,39 @@ namespace AsposeWordsLinqReportingDemo
             Document template = new Document();
             DocumentBuilder builder = new DocumentBuilder(template);
 
+            // Insert a simple line with a placeholder for the customer's name.
             builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("Order total: $<<[order.Total]>>");
-            // Conditional block: show only when Discount > 0.
-            builder.Writeln("<<if [order.Discount > 0]>>Discount applied: <<[order.Discount]>>%<</if>>");
 
-            // Save the template to disk.
+            // Conditional block: show discount only when it is greater than zero.
+            builder.Writeln("<<if [order.Discount > 0]>>Discount: <<[order.Discount]>>%<</if>>");
+
+            // Save the template to disk (required before building the report).
             const string templatePath = "Template.docx";
             template.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template back (required by the workflow).
+            // 2. Prepare the data source.
             // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
+            Order order = new Order
+            {
+                CustomerName = "John Doe",
+                Discount = 15.0 // Change to 0 to see the block omitted.
+            };
 
             // -----------------------------------------------------------------
-            // 3. Prepare the data source.
+            // 3. Build the report using the LINQ Reporting engine.
             // -----------------------------------------------------------------
-            Order order = new Order(); // Discount is 10%, so the block will appear.
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using the LINQ Reporting engine.
-            // -----------------------------------------------------------------
+            Document report = new Document(templatePath);
             ReportingEngine engine = new ReportingEngine();
-            // No special options are needed for this simple scenario.
-            engine.BuildReport(doc, order, "order");
+
+            // The root object name in the template tags is "order".
+            engine.BuildReport(report, order, "order");
 
             // -----------------------------------------------------------------
-            // 5. Save the generated report.
+            // 4. Save the generated report.
             // -----------------------------------------------------------------
-            const string reportPath = "Report.docx";
-            doc.Save(reportPath);
+            const string outputPath = "Report.docx";
+            report.Save(outputPath);
         }
     }
 }

@@ -1,88 +1,94 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Simple data model with a sensitive Salary field.
+    // Data model with a sensitive field.
     public class Employee
     {
-        public string Name { get; set; } = "John Doe";
-        public decimal Salary { get; set; } = 75000m; // Sensitive information.
-        public string Position { get; set; } = "Software Engineer";
+        public string Name { get; set; } = string.Empty;
+        public string Position { get; set; } = string.Empty;
+        public decimal Salary { get; set; }
     }
 
     // Wrapper model used as the root object for the report.
     public class ReportModel
     {
-        public Employee Employee { get; set; } = new Employee();
+        public Employee Emp { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
+            // Register code page provider (required by Aspose.Words).
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            // Prepare folders.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
             // -----------------------------------------------------------------
             // 1. Create a template document with LINQ Reporting tags.
             // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
             builder.Writeln("Employee Report");
-            builder.Writeln("Name: <<[model.Employee.Name]>>");
-            builder.Writeln("Position: <<[model.Employee.Position]>>");
-            // Attempt to access the sensitive Salary field – this will be blocked.
-            builder.Writeln("Salary: <<[model.Employee.Salary]>>");
+            builder.Writeln("Name: <<[model.Emp.Name]>>");
+            builder.Writeln("Position: <<[model.Emp.Position]>>");
+            // Salary is a sensitive field that we want to hide.
+            builder.Writeln("Salary: <<[model.Emp.Salary]>>");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Configure restricted types before building the report.
-            //    Restrict the Decimal type so that any decimal members (e.g., Salary)
-            //    cannot be accessed from the template.
-            // -----------------------------------------------------------------
-            ReportingEngine.SetRestrictedTypes(typeof(decimal));
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 3. Prepare the data source.
+            // 2. Load the template back (required before building the report).
             // -----------------------------------------------------------------
-            var data = new ReportModel
+            Document doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Configure restricted types to block access to Employee members.
+            //    This will make all Employee members inaccessible in the template.
+            //    For demonstration we will allow missing members so the engine
+            //    does not throw an exception.
+            // -----------------------------------------------------------------
+            ReportingEngine.SetRestrictedTypes(typeof(Employee));
+
+            ReportingEngine engine = new ReportingEngine
             {
-                Employee = new Employee
-                {
-                    Name = "Alice Smith",
-                    Salary = 120000m, // This value should not appear in the output.
-                    Position = "Project Manager"
-                }
-            };
-
-            // -----------------------------------------------------------------
-            // 4. Build the report.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine
-            {
-                // Allow missing members so that blocked members are rendered as empty strings.
                 Options = ReportBuildOptions.AllowMissingMembers,
-                // Optional: customize the message shown for blocked members.
-                MissingMemberMessage = "[Restricted]"
+                MissingMemberMessage = string.Empty // hide missing member messages.
             };
 
-            // Load the template (could also reuse the in‑memory document, but the rule requires loading).
-            var doc = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // 4. Prepare the data source.
+            // -----------------------------------------------------------------
+            Employee employee = new Employee
+            {
+                Name = "John Doe",
+                Position = "Software Engineer",
+                Salary = 95000m
+            };
 
-            // Build the report using the root object name "model" as referenced in the template.
-            engine.BuildReport(doc, data, "model");
+            ReportModel model = new ReportModel { Emp = employee };
 
             // -----------------------------------------------------------------
-            // 5. Save the generated report.
+            // 5. Build the report. The root object name is "model".
             // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
+            engine.BuildReport(doc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 6. Save the generated report.
+            // -----------------------------------------------------------------
+            string outputPath = Path.Combine(outputDir, "Report.docx");
             doc.Save(outputPath);
 
-            // Output the plain text of the generated document to the console.
-            Console.WriteLine("Generated report text:");
+            // Optional: output the plain text to the console to verify the result.
+            Console.WriteLine("Report generated. Document text:");
             Console.WriteLine(doc.GetText());
         }
     }

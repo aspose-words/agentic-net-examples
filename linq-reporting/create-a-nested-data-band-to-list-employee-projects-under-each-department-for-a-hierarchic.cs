@@ -3,107 +3,89 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Project
-{
-    public string Name { get; set; } = "";
-    public string Description { get; set; } = "";
-}
-
-public class Department
-{
-    public string Name { get; set; } = "";
-    public List<Project> Projects { get; set; } = new();
-}
-
-public class ReportModel
-{
-    public List<Department> Departments { get; set; } = new();
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Create a blank document that will serve as the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Title.
+        builder.Writeln("Department Project Report");
+        builder.Writeln();
+
+        // Outer data band – iterate over departments.
+        builder.Writeln("<<foreach [dept in Departments]>>");
+        builder.Writeln("Department: <<[dept.Name]>>");
+        builder.Writeln();
+
+        // Inner data band – iterate over projects of the current department.
+        builder.Writeln("Projects:");
+        builder.Writeln("<<foreach [proj in dept.Projects]>>");
+        builder.Writeln("- <<[proj.Name]>> (Budget: <<[proj.Budget]>>)");
+        builder.Writeln("<</foreach>>"); // End inner foreach.
+        builder.Writeln(); // Blank line between departments.
+        builder.Writeln("<</foreach>>"); // End outer foreach.
+
+        // Build the data model.
+        ReportModel model = new()
         {
             Departments = new List<Department>
             {
-                new Department
+                new()
                 {
                     Name = "Research",
                     Projects = new List<Project>
                     {
-                        new Project { Name = "AI Platform", Description = "Develop AI services." },
-                        new Project { Name = "Quantum Study", Description = "Explore quantum algorithms." }
+                        new() { Name = "AI Platform", Budget = 150000m },
+                        new() { Name = "Quantum Computing", Budget = 250000m }
                     }
                 },
-                new Department
+                new()
                 {
                     Name = "Marketing",
                     Projects = new List<Project>
                     {
-                        new Project { Name = "Social Campaign", Description = "Increase brand awareness." },
-                        new Project { Name = "Product Launch", Description = "Launch new product line." }
+                        new() { Name = "Social Media Campaign", Budget = 50000m },
+                        new() { Name = "Product Launch", Budget = 80000m }
                     }
                 }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Create the template document programmatically.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        builder.Writeln("Company Projects Report");
-        builder.Writeln();
-
-        // Outer foreach for departments.
-        builder.Write("<<foreach [dept in Departments]>>");
-        builder.Writeln();
-        builder.Write("Department: <<[dept.Name]>>");
-        builder.Writeln();
-
-        // Table for projects – created inside the outer foreach so each department gets its own table.
-        builder.Write("<<foreach [proj in dept.Projects]>>");
-        // Start table header (only once per department).
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Project Name");
-        builder.InsertCell();
-        builder.Writeln("Description");
-        builder.EndRow();
-
-        // Project rows.
-        builder.InsertCell();
-        builder.Writeln("<<[proj.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[proj.Description]>>");
-        builder.EndRow();
-        builder.EndTable();
-        builder.Write("<</foreach>>"); // End inner foreach (projects)
-        builder.Writeln();
-
-        builder.Write("<</foreach>>"); // End outer foreach (departments)
-
-        // Save the template to disk.
-        const string templatePath = "ReportTemplate.docx";
-        template.Save(templatePath);
-
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
-
-        // Build the report.
-        var engine = new ReportingEngine();
+        // Generate the report.
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.None;
         bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "ReportOutput.docx";
-        doc.Save(outputPath);
+        // Save the result.
+        doc.Save("DepartmentProjectReport.docx");
 
-        // Indicate completion.
-        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
+        // Optional: indicate success (no console interaction required).
+        if (!success)
+        {
+            throw new InvalidOperationException("Report generation failed.");
+        }
     }
+}
+
+// Root wrapper class – must match the name used in BuildReport ("model").
+public class ReportModel
+{
+    public List<Department> Departments { get; set; } = new();
+}
+
+// Department class.
+public class Department
+{
+    public string Name { get; set; } = string.Empty;
+    public List<Project> Projects { get; set; } = new();
+}
+
+// Project class.
+public class Project
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Budget { get; set; }
 }

@@ -7,46 +7,63 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document in memory.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // LINQ Reporting tags: iterate over the Persons collection.
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        // Create a template document with LINQ Reporting tags.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("<<foreach [item in Persons]>>");
+        builder.Writeln("Name: <<[item.Name]>>");
+        builder.Writeln("Age: <<[item.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Prepare sample data. Person objects do NOT have an Age property.
-        var model = new ReportModel
+        // Save and reload the template to simulate a real file workflow.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model. The collection contains objects with and without the 'Age' member.
+        ReportModel model = new ReportModel
         {
-            Persons = new List<Person>
+            Persons = new List<object>
             {
-                new Person { Name = "Alice" },
-                new Person { Name = "Bob" }
+                new Person { Name = "John", Age = 30 },
+                new Dummy { Name = "Jane" },          // Missing 'Age' member.
+                new Person { Name = "Bob", Age = 25 }
             }
         };
 
         // Configure the reporting engine to treat missing members as null.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-        engine.MissingMemberMessage = "N/A";
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.AllowMissingMembers,
+            MissingMemberMessage = "" // Optional: suppress custom missing member text.
+        };
 
-        // Build the report. The root object name is "model".
+        // Build the report using the model as the root object named "model".
         engine.BuildReport(doc, model, "model");
 
-        // Save the resulting document.
-        doc.Save("ReportOutput.docx");
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }
 
-// Wrapper class that serves as the root data source.
+// Root data model.
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public List<object> Persons { get; set; } = new();
 }
 
-// Data class with only a Name property; Age is intentionally missing.
+// Object with both Name and Age members.
 public class Person
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+// Object missing the Age member.
+public class Dummy
+{
+    public string Name { get; set; } = "";
 }

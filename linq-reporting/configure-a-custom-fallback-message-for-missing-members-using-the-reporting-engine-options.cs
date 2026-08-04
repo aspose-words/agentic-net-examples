@@ -5,10 +5,10 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Simple data model – does NOT contain a 'customer' property.
-    public class ReportWrapper
+    // Simple data class without the expected member.
+    public class EmptyData
     {
-        public string Title { get; set; } = "Sample Report";
+        // No properties – the template will reference a missing member.
     }
 
     public class Program
@@ -16,8 +16,8 @@ namespace AsposeWordsLinqReportingExample
         public static void Main()
         {
             // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+            string templatePath = "Template.docx";
+            string reportPath = "Report.docx";
 
             // -----------------------------------------------------------------
             // 1. Create a template document programmatically.
@@ -25,39 +25,38 @@ namespace AsposeWordsLinqReportingExample
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // This tag references a missing member (customer.Name). It will be replaced
-            // by the custom fallback message configured later.
-            builder.Writeln("Customer: <<[customer.Name]>>");
+            // Insert a LINQ Reporting tag that references a non‑existent member.
+            // The tag uses the root name "data".
+            builder.Writeln("Hello <<[data.MissingMember]>>!");
 
             // Save the template to disk.
             templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template back for reporting.
+            // 2. Load the template back from disk (required by the workflow).
             // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
+            Document loadedTemplate = new Document(templatePath);
 
             // -----------------------------------------------------------------
             // 3. Configure the ReportingEngine.
             // -----------------------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
 
-            // Allow missing members to be treated as null and use the custom message.
+            // Allow missing members and provide a custom fallback message.
             engine.Options = ReportBuildOptions.AllowMissingMembers;
-            engine.MissingMemberMessage = "Data not available";
+            engine.MissingMemberMessage = "[Member not found]";
 
-            // Build the report using a data source that does NOT contain 'customer'.
-            // The overload without a data source name allows direct member access.
-            engine.BuildReport(reportDoc, new ReportWrapper());
+            // Build the report using an instance of EmptyData as the data source.
+            // The root name must match the one used in the template ("data").
+            engine.BuildReport(loadedTemplate, new EmptyData(), "data");
 
             // -----------------------------------------------------------------
             // 4. Save the generated report.
             // -----------------------------------------------------------------
-            reportDoc.Save(outputPath);
+            loadedTemplate.Save(reportPath);
 
-            // Inform the user where the files are located.
-            Console.WriteLine($"Template saved to: {templatePath}");
-            Console.WriteLine($"Report generated at: {outputPath}");
+            // Inform the user (no interactive input required).
+            Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
         }
     }
 }

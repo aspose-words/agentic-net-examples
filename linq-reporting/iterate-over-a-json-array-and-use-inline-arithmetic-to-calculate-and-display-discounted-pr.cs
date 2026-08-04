@@ -1,49 +1,50 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Register code page provider for Aspose.Words (required on .NET Core).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider for completeness.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-            // Prepare sample JSON data (an array of products with price and discount).
-            string jsonContent = @"
-[
-    { ""Name"": ""Widget"",      ""Price"": 100.0, ""Discount"": 0.10 },
-    { ""Name"": ""Gadget"",      ""Price"":  59.5, ""Discount"": 0.15 },
-    { ""Name"": ""Doohickey"",   ""Price"":  23.0, ""Discount"": 0.05 }
-]";
-            string jsonPath = "products.json";
-            File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+        // Prepare sample JSON data.
+        const string jsonFile = "products.json";
+        File.WriteAllText(jsonFile,
+            @"[
+                { ""Name"": ""Laptop"", ""Price"": 1200.00, ""Discount"": 0.15 },
+                { ""Name"": ""Smartphone"", ""Price"": 800.00, ""Discount"": 0.10 },
+                { ""Name"": ""Headphones"", ""Price"": 150.00, ""Discount"": 0.20 }
+            ]");
 
-            // Create a blank Word document that will serve as the template.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create the template document with LINQ Reporting tags.
+        const string templateFile = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            // LINQ Reporting template:
-            // Iterate over the JSON array (named 'items') and calculate discounted price inline.
-            builder.Writeln("<<foreach [item in items]>>");
-            builder.Writeln("Product: <<[item.Name]>>");
-            builder.Writeln("Original Price: $<<[item.Price]>>");
-            builder.Writeln("Discounted Price: $<<[item.Price * (1 - item.Discount)]>>");
-            builder.Writeln("<</foreach>>");
+        builder.Writeln("Product Price Report");
+        builder.Writeln("<<foreach [p in products]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Original Price: $<<[p.Price]>>");
+        builder.Writeln("Discount: <<[p.Discount * 100]>>%");
+        builder.Writeln("Discounted Price: $<<[p.Price * (1 - p.Discount)]>>");
+        builder.Writeln("<</foreach>>");
 
-            // Load the JSON data as a data source.
-            JsonDataSource dataSource = new JsonDataSource(jsonPath);
+        templateDoc.Save(templateFile);
 
-            // Build the report using the template and the JSON data source.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, dataSource, "items");
+        // Load the template for reporting.
+        var doc = new Document(templateFile);
 
-            // Save the generated report.
-            doc.Save("DiscountedPricesReport.docx");
-        }
+        // Load JSON data source.
+        var jsonDataSource = new JsonDataSource(jsonFile);
+
+        // Build the report using the JSON data source.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, jsonDataSource, "products");
+
+        // Save the final report.
+        doc.Save("Report.docx");
     }
 }

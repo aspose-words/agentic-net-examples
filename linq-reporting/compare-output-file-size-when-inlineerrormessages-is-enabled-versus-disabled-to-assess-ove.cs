@@ -1,90 +1,64 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-    public Person(string name, int age)
-    {
-        Name = name;
-        Age = age;
-    }
-}
-
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
-    public ReportModel() { }
+    // Initialize to avoid nullable warnings.
+    public string Name { get; set; } = string.Empty;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel();
-        model.Persons.Add(new Person("Alice", 30));
-        model.Persons.Add(new Person("Bob", 25));
-        model.Persons.Add(new Person("Charlie", 35));
+        // Paths for the template and generated reports.
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+        string reportWithInlinePath = Path.Combine(Environment.CurrentDirectory, "Report_WithInline.docx");
+        string reportWithoutInlinePath = Path.Combine(Environment.CurrentDirectory, "Report_WithoutInline.docx");
 
-        // Create a template document with LINQ Reporting tags.
-        string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // -----------------------------------------------------------------
+        // 1. Create a simple template document with a LINQ Reporting tag.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Hello <<[model.Name]>>!"); // LINQ Reporting tag.
+        templateDoc.Save(templatePath);
 
-        // Build report with InlineErrorMessages enabled.
-        string reportWithErrorsPath = "Report_WithInlineError.docx";
-        BuildReport(templatePath, model, "model", ReportBuildOptions.InlineErrorMessages, reportWithErrorsPath);
+        // -----------------------------------------------------------------
+        // 2. Prepare sample data.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel { Name = "World" };
 
-        // Build report with InlineErrorMessages disabled (default options).
-        string reportWithoutErrorsPath = "Report_WithoutInlineError.docx";
-        BuildReport(templatePath, model, "model", ReportBuildOptions.None, reportWithoutErrorsPath);
-
-        // Compare file sizes.
-        long sizeWithErrors = new FileInfo(reportWithErrorsPath).Length;
-        long sizeWithoutErrors = new FileInfo(reportWithoutErrorsPath).Length;
-
-        Console.WriteLine($"Report size with InlineErrorMessages: {sizeWithErrors} bytes");
-        Console.WriteLine($"Report size without InlineErrorMessages: {sizeWithoutErrors} bytes");
-        Console.WriteLine($"Size overhead: {sizeWithErrors - sizeWithoutErrors} bytes");
-    }
-
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Add a simple heading.
-        builder.Writeln("Person Report");
-        builder.Writeln();
-
-        // Insert a foreach loop to list persons.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(filePath);
-    }
-
-    private static void BuildReport(string templatePath, ReportModel model, string rootName, ReportBuildOptions options, string outputPath)
-    {
-        // Load a fresh copy of the template for each build.
-        var doc = new Document(templatePath);
-
-        var engine = new ReportingEngine
+        // -----------------------------------------------------------------
+        // 3. Generate report with InlineErrorMessages enabled.
+        // -----------------------------------------------------------------
+        Document docWithInline = new Document(templatePath);
+        ReportingEngine engineWithInline = new ReportingEngine
         {
-            Options = options
+            Options = ReportBuildOptions.InlineErrorMessages
         };
+        bool successWithInline = engineWithInline.BuildReport(docWithInline, model, "model");
+        // Save the generated document.
+        docWithInline.Save(reportWithInlinePath);
 
-        // Build the report.
-        bool success = engine.BuildReport(doc, model, rootName);
-        // success is only meaningful when InlineErrorMessages is set; we ignore it here.
+        // -----------------------------------------------------------------
+        // 4. Generate report with InlineErrorMessages disabled (default options).
+        // -----------------------------------------------------------------
+        Document docWithoutInline = new Document(templatePath);
+        ReportingEngine engineWithoutInline = new ReportingEngine(); // No InlineErrorMessages flag.
+        bool successWithoutInline = engineWithoutInline.BuildReport(docWithoutInline, model, "model");
+        docWithoutInline.Save(reportWithoutInlinePath);
 
-        // Save the generated report.
-        doc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 5. Compare file sizes and output the results.
+        // -----------------------------------------------------------------
+        long sizeWithInline = new FileInfo(reportWithInlinePath).Length;
+        long sizeWithoutInline = new FileInfo(reportWithoutInlinePath).Length;
+
+        Console.WriteLine($"Report with InlineErrorMessages:   Size = {sizeWithInline} bytes, Build success = {successWithInline}");
+        Console.WriteLine($"Report without InlineErrorMessages: Size = {sizeWithoutInline} bytes, Build success = {successWithoutInline}");
+        Console.WriteLine($"Size overhead introduced by InlineErrorMessages: {sizeWithInline - sizeWithoutInline} bytes");
     }
 }

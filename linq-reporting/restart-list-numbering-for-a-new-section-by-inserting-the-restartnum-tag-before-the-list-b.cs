@@ -1,70 +1,68 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    public List<string> Items { get; set; } = new();
-    public List<string> Items2 { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create a blank document that will serve as the LINQ Reporting template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Paths for template and output
-        string templatePath = "Template.docx";
-        string outputPath = "Report.docx";
+        // -----------------------------------------------------------------
+        // Template: iterate over sections.
+        // -----------------------------------------------------------------
+        builder.Writeln("<<foreach [sec in Sections]>>");
+        // Section title.
+        builder.Writeln("<<[sec.Title]>>");
+        // Start a numbered list for the items of the current section.
+        builder.ListFormat.ApplyNumberDefault();
+        // Restart numbering for each new section and iterate over its items.
+        builder.Writeln("<<restartNum>><<foreach [it in sec.Items]>><<[it]>><</foreach>>");
+        // End of outer foreach.
+        builder.Writeln("<</foreach>>");
 
-        // -------------------------------------------------
-        // Create the LINQ Reporting template programmatically
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // First section with a numbered list
-        builder.Writeln("First Section:");
-        builder.ListFormat.ApplyNumberDefault(); // start numbered list
-        builder.Writeln("<<foreach [item in Items]>><<[item]>> <</foreach>>");
-        builder.ListFormat.RemoveNumbers(); // end list
-
-        // Section break to start a new section
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Second section with a numbered list that restarts numbering
-        builder.Writeln("Second Section:");
-        builder.ListFormat.ApplyNumberDefault(); // start numbered list
-        // <<restartNum>> placed before the foreach tag restarts numbering for this list
-        builder.Writeln("<<restartNum>><<foreach [item in Items2]>><<[item]>> <</foreach>>");
-        builder.ListFormat.RemoveNumbers(); // end list
-
-        // Save the template to disk
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // Prepare sample data for the report
-        // -------------------------------------------------
-        ReportModel model = new ReportModel
+        // -----------------------------------------------------------------
+        // Prepare sample data.
+        // -----------------------------------------------------------------
+        ReportModel model = new()
         {
-            Items = new List<string> { "Apple", "Banana", "Cherry" },
-            Items2 = new List<string> { "Dog", "Elephant", "Frog" }
+            Sections = new List<Section>
+            {
+                new Section
+                {
+                    Title = "Fruits",
+                    Items = new List<string> { "Apple", "Banana", "Cherry" }
+                },
+                new Section
+                {
+                    Title = "Vegetables",
+                    Items = new List<string> { "Carrot", "Lettuce", "Tomato" }
+                }
+            }
         };
 
-        // -------------------------------------------------
-        // Load the template and build the report
-        // -------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated report
-        reportDoc.Save(outputPath);
+        // Save the generated document.
+        doc.Save("RestartNumberingReport.docx");
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model used by the LINQ Reporting template.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<Section> Sections { get; set; } = new();
+}
+
+public class Section
+{
+    public string Title { get; set; } = string.Empty;
+    public List<string> Items { get; set; } = new();
 }

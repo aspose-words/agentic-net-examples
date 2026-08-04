@@ -1,55 +1,53 @@
 using System;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+namespace AsposeWordsLinqReportingSecurity
 {
-    public string Name { get; set; } = "John Doe";
-    public int Age { get; set; } = 30;
-    public decimal Salary { get; set; } = 75000m; // This member will be hidden
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model.
+    public class Person
     {
-        // Prepare sample data
-        Person model = new Person();
-
-        // Create a template document with LINQ Reporting tags
-        string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
-
-        // Load the template
-        Document doc = new Document(templatePath);
-
-        // Configure the reporting engine
-        ReportingEngine engine = new ReportingEngine();
-
-        // Restrict the Person type so its members cannot be accessed.
-        // This will make the Salary tag unavailable while allowing other members.
-        ReportingEngine.SetRestrictedTypes(typeof(Person));
-
-        // Allow missing members so that the hidden tag does not cause an exception.
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-
-        // Build the report using the model object; root name is "person"
-        engine.BuildReport(doc, model, "person");
-
-        // Save the generated report
-        doc.Save("Report.docx");
+        public string Name { get; set; } = "";
+        public decimal Salary { get; set; }
     }
 
-    private static void CreateTemplate(string filePath)
+    public class Program
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Register code page provider (required for some Aspose.Words features).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Insert tags that reference the model's members
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("Salary: <<[person.Salary]>>"); // This will be hidden by the restriction
+            // Create a template document programmatically.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Salary: <<[person.Salary]>>");
 
-        doc.Save(filePath);
+            // Prepare the data source.
+            Person person = new Person
+            {
+                Name = "John Doe",
+                Salary = 12345.67m
+            };
+
+            // Restrict access to the Person type. All its members will be treated as missing.
+            // This is the supported way to enforce security restrictions in Aspose.Words LINQ Reporting.
+            ReportingEngine.SetRestrictedTypes(typeof(Person));
+
+            // Configure the reporting engine.
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.AllowMissingMembers,
+                MissingMemberMessage = "[Hidden]"
+            };
+
+            // Build the report. The root object name must match the tag prefix used in the template.
+            engine.BuildReport(doc, person, "person");
+
+            // Save the generated report.
+            doc.Save("Report.docx");
+        }
     }
 }

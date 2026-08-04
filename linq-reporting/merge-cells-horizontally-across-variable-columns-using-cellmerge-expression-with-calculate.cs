@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
@@ -9,90 +8,89 @@ public class Program
 {
     public static void Main()
     {
-        // Sample data model.
-        ReportModel model = new ReportModel
+        // Sample data model
+        var model = new ReportModel
         {
-            Groups = new List<Group>
+            Categories = new()
             {
-                new Group
-                {
-                    Name = "Group A",
-                    Columns = new List<string> { "C1", "C2", "C3" } // three columns
-                },
-                new Group
-                {
-                    Name = "Group B",
-                    Columns = new List<string> { "C1", "C2" } // two columns
-                },
-                new Group
-                {
-                    Name = "Group C",
-                    Columns = new List<string> { "C1", "C2", "C3", "C4" } // four columns
-                }
+                new Category { Name = "Group A", Span = 2 },
+                new Category { Name = "Group B", Span = 3 }
+            },
+            Rows = new()
+            {
+                new DataRow { Values = new() { "A1", "A2", "B1", "B2", "B3" } },
+                new DataRow { Values = new() { "A3", "A4", "B4", "B5", "B6" } }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create template document
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Outer foreach iterates over groups.
-        builder.Writeln("<<foreach [group in Groups]>>");
+        builder.Writeln("Table with merged header cells:");
 
-        // For each group we create a table that contains a single row.
-        // The row has a single cell that will be merged horizontally across
-        // the required number of columns at runtime using the <<cellMerge>> tag.
-        Table table = builder.StartTable();
+        // Start table
+        builder.StartTable();
 
-        // Insert the first cell – it will be the first cell of the merged range.
-        builder.InsertCell();
-        // The cell contains the merge tag and the group name.
-        builder.Write("<<cellMerge>>");
-        builder.Write("<<[group.Name]>>");
-
-        // Insert the remaining cells that belong to the same merged range.
-        // The number of additional cells equals (Columns.Count - 1).
-        // This logic is expressed with a LINQ Reporting foreach loop.
-        builder.Writeln("<<foreach [col in group.Columns]>>");
-        // Skip the first column because we already created a cell for it.
-        builder.Writeln("<</foreach>>"); // placeholder to keep the tag well‑formed.
-
-        // End the row and the table.
+        // First header row: merge cells horizontally using <<cellMerge>> tag
+        foreach (var cat in model.Categories)
+        {
+            for (int i = 0; i < cat.Span; i++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"<<cellMerge>>{cat.Name}");
+            }
+        }
         builder.EndRow();
+
+        // Second header row: sub‑column titles
+        int subIndex = 1;
+        foreach (var cat in model.Categories)
+        {
+            for (int i = 0; i < cat.Span; i++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"Sub {subIndex++}");
+            }
+        }
+        builder.EndRow();
+
+        // Data rows (filled directly, no LINQ tags needed)
+        foreach (var row in model.Rows)
+        {
+            foreach (var val in row.Values)
+            {
+                builder.InsertCell();
+                builder.Writeln(val);
+            }
+            builder.EndRow();
+        }
+
         builder.EndTable();
 
-        // Close the outer foreach.
-        builder.Writeln("<</foreach>>");
+        // Process the <<cellMerge>> tags
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "Model");
 
-        // Save the template (optional, shown for clarity).
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        template.Save(templatePath);
-
-        // Load the template (could reuse the same Document instance).
-        Document report = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, model, "model");
-
-        // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        report.Save(outputPath);
+        // Save the generated report
+        doc.Save("Report.docx");
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
+// Data model classes
 public class ReportModel
 {
-    public List<Group> Groups { get; set; } = new();
+    public List<Category> Categories { get; set; } = new();
+    public List<DataRow> Rows { get; set; } = new();
 }
 
-public class Group
+public class Category
 {
-    public string Name { get; set; } = string.Empty;
-    public List<string> Columns { get; set; } = new();
+    public string Name { get; set; } = "";
+    public int Span { get; set; }
+}
+
+public class DataRow
+{
+    public List<string> Values { get; set; } = new();
 }

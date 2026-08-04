@@ -4,65 +4,37 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Simple data model with only one property.
-    public class Customer
+    // Simple data model with a missing member (MissingInfo) to demonstrate AllowMissingMembers.
+    public class Order
     {
-        public string Name { get; set; } = string.Empty;
-        // Note: Age property is intentionally omitted to demonstrate missing member handling.
+        public string CustomerName { get; set; } = "John Doe";
+        // Note: No MissingInfo property – it will be treated as null by the engine.
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the temporary template and the final report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            // Create a template document programmatically.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-            // -------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Insert LINQ Reporting tags. The second tag references a missing member.
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Missing member value: <<[order.MissingInfo]>>");
 
-            // Insert LINQ Reporting tags. The second tag references a missing member (Age).
-            builder.Writeln("Customer Name: <<[model.Name]>>");
-            builder.Writeln("Customer Age: <<[model.Age]>>"); // Age does not exist in the model.
+            // Configure the reporting engine to treat missing members as null.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.AllowMissingMembers;
+            // Optional: customize the message shown for a plain missing member reference.
+            engine.MissingMemberMessage = "";
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+            // Build the report using the data source and the root name "order".
+            var order = new Order();
+            engine.BuildReport(doc, order, "order");
 
-            // -------------------------------------------------
-            // 2. Load the template for report generation.
-            // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine
-            {
-                // Treat missing members as null (or empty) values.
-                Options = ReportBuildOptions.AllowMissingMembers,
-                // Optional: custom text to display for missing members.
-                MissingMemberMessage = "N/A"
-            };
-
-            // -------------------------------------------------
-            // 4. Prepare the data source.
-            // -------------------------------------------------
-            Customer model = new Customer { Name = "John Doe" };
-
-            // -------------------------------------------------
-            // 5. Build the report.
-            // -------------------------------------------------
-            // The root object name used in the template tags is "model".
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // -------------------------------------------------
-            // 6. Save the generated report.
-            // -------------------------------------------------
-            loadedTemplate.Save(reportPath);
+            // Save the generated report.
+            doc.Save("Report.docx");
         }
     }
 }

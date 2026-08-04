@@ -1,40 +1,76 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simulate a type from an external assembly.
-    public static class Utils
+    // Simple data model used as the root object for the report.
+    public class Person
     {
-        public static string GetGreeting(string name) => $"Hello, {name}!";
+        public string Name { get; set; } = "John Doe";
+        public int Age { get; set; } = 30;
     }
 
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a blank template document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Register code page provider required by Aspose.Words for some encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Insert LINQ Reporting tags that use static members from external types.
-            // Correct syntax uses a dot (.) to separate type and member.
-            builder.Writeln("Value of PI: <<[Math.PI]>>");
-            builder.Writeln("Custom greeting: <<[Utils.GetGreeting(\"World\")]>>");
+        // -----------------------------------------------------------------
+        // 1. Create a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Initialize the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
+        // Plain data from the root object.
+        builder.Writeln("Name: <<[model.Name]>>");
+        builder.Writeln("Age: <<[model.Age]>>");
 
-            // Register external types so the template can reference them without full qualification.
-            engine.KnownTypes.Add(typeof(System.Math));
-            engine.KnownTypes.Add(typeof(Utils));
+        // Use a static method from System.Guid (built‑in assembly).
+        builder.Writeln("Generated GUID: <<[System.Guid.NewGuid()]>>");
 
-            // Build the report. No data source is required for this example.
-            engine.BuildReport(doc, new object(), "");
+        // Use a static method from Newtonsoft.Json (external assembly) to serialize the model.
+        builder.Writeln("JSON representation: <<[Newtonsoft.Json.JsonConvert.SerializeObject(model)]>>");
 
-            // Save the generated document.
-            doc.Save("ReportOutput.docx");
-        }
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template back (ensures the template is fully persisted before building).
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the root data object.
+        // -----------------------------------------------------------------
+        Person model = new Person();
+
+        // -----------------------------------------------------------------
+        // 4. Configure the ReportingEngine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+
+        // Register external types from multiple assemblies so that the template can access them.
+        engine.KnownTypes.Add(typeof(System.Guid));                     // mscorlib / System assembly
+        engine.KnownTypes.Add(typeof(Newtonsoft.Json.JsonConvert));    // Newtonsoft.Json assembly
+
+        // -----------------------------------------------------------------
+        // 5. Build the report.
+        // -----------------------------------------------------------------
+        // The root name used in the template tags is "model".
+        engine.BuildReport(loadedTemplate, model, "model");
+
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
+        const string outputPath = "Report.docx";
+        loadedTemplate.Save(outputPath);
+
+        // Inform the user (no interactive input required).
+        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
     }
 }

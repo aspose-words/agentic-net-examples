@@ -1,50 +1,53 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public static class AuthHelper
 {
-    // Simple data model for the report.
-    public class ReportModel
+    // Example static method that could represent a custom authentication lookup.
+    public static string GetUserName()
     {
-        public string Title { get; set; } = "Sample Report";
-        public List<Item> Items { get; set; } = new();
+        return "JohnDoe";
     }
+}
 
-    // Item class used in the collection.
-    public class Item
+public class Program
+{
+    public static void Main()
     {
-        public int Index { get; set; }
-        public string Name { get; set; } = string.Empty;
-    }
+        // Create a temporary folder for the example files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Create a blank template document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 1. Build the template document programmatically.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Insert LINQ Reporting tags.
-            builder.Writeln("<<[model.Title]>>");
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
+        // Insert a LINQ Reporting tag that calls the static method defined above.
+        builder.Writeln("Authenticated user: <<[AuthHelper.GetUserName()]>>");
 
-            // Prepare sample data.
-            ReportModel model = new ReportModel();
-            model.Items.Add(new Item { Index = 1, Name = "Apple" });
-            model.Items.Add(new Item { Index = 2, Name = "Banana" });
-            model.Items.Add(new Item { Index = 3, Name = "Cherry" });
+        // Save the template to disk.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
 
-            // Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // -----------------------------------------------------------------
+        // 2. Load the template and generate the report.
+        // -----------------------------------------------------------------
+        Document report = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
 
-            // Save the generated report.
-            doc.Save("Report.docx");
-        }
+        // Register the custom type with the reporting engine (instead of using the missing attribute).
+        engine.KnownTypes.Add(typeof(AuthHelper));
+
+        // No data source is required because the template only uses a static call.
+        // An empty anonymous object is supplied as the root data source.
+        engine.BuildReport(report, new object(), "");
+
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        report.Save(reportPath);
     }
 }

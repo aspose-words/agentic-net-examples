@@ -1,73 +1,73 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Data model classes
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
-
+    // Simple data model used by the template.
     public class ReportModel
     {
-        public List<Person> Persons { get; set; } = new();
+        // Non‑nullable properties are initialized to avoid warnings.
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            // 1. Create a template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
             Document template = new Document();
             DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Begin a foreach loop over the Persons collection.
-            builder.Writeln("<<foreach [p in Persons]>>");
-            // Correct tag – will be replaced with the person's name.
-            builder.Writeln("Name: <<[p.Name]>>");
-            // Incorrect tag – property 'Agee' does not exist, will trigger an inline error message.
-            builder.Writeln("Age: <<[p.Agee]>>");
-            // End the foreach loop.
-            builder.Writeln("<</foreach>>");
+            // Valid tags.
+            builder.Writeln("Customer Name: <<[model.Name]>>");
+            builder.Writeln("Customer Age: <<[model.Age]>>");
+
+            // Tag that references a missing member – will produce an inline error.
+            builder.Writeln("Missing Property: <<[model.Missing]>>");
+
+            // Malformed tag – also triggers an inline error.
+            builder.Writeln("Malformed Tag: <<[model.Age>>");
 
             // Save the template to disk.
-            const string templatePath = "template.docx";
+            const string templatePath = "Template.docx";
             template.Save(templatePath);
 
-            // Load the template for report generation.
-            Document report = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // 2. Load the template back (simulating a separate load step).
+            // -----------------------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
 
-            // Prepare sample data.
-            var model = new ReportModel
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel
             {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 25 }
-                }
+                Name = "John Doe",
+                Age = 30
             };
 
-            // Configure the reporting engine to inline error messages.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.InlineErrorMessages
-            };
+            // -----------------------------------------------------------------
+            // 4. Configure the ReportingEngine to inline error messages.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Build the report. The returned flag indicates whether parsing succeeded.
-            bool success = engine.BuildReport(report, model, "model");
+            // Build the report. The boolean indicates whether parsing succeeded.
+            bool success = engine.BuildReport(loadedTemplate, model, "model");
 
-            // Save the generated report.
-            const string outputPath = "output.docx";
-            report.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string reportPath = "Report.docx";
+            loadedTemplate.Save(reportPath);
 
-            // Output the success flag.
-            Console.WriteLine($"Report build success: {success}");
-            Console.WriteLine($"Template saved to: {templatePath}");
-            Console.WriteLine($"Report saved to: {outputPath}");
+            // Output the result status.
+            Console.WriteLine($"Report generation success flag: {success}");
+            Console.WriteLine($"Report saved to: {reportPath}");
         }
     }
 }

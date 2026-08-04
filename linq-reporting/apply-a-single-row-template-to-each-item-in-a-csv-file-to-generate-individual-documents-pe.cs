@@ -1,114 +1,100 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;   // Required for Table type
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model that matches the CSV columns.
-    public class Person
+    public static void Main()
     {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName  { get; set; } = string.Empty;
-        public string Email     { get; set; } = string.Empty;
-    }
+        // Enable code page provider for CSV parsing (required for non‑UTF8 encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Create an output folder relative to the current directory.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(workDir);
+
+        // -----------------------------------------------------------------
+        // 1. Create a sample CSV file that will be used as the data source.
+        // -----------------------------------------------------------------
+        string csvPath = Path.Combine(workDir, "data.csv");
+        File.WriteAllLines(csvPath, new[]
         {
-            // Ensure the output folder exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
+            "Name,Age,Email",
+            "Alice,30,alice@example.com",
+            "Bob,25,bob@example.com",
+            "Charlie,35,charlie@example.com"
+        });
 
-            // 1. Create a sample CSV file.
-            string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "people.csv");
-            CreateSampleCsv(csvPath);
+        // -----------------------------------------------------------------
+        // 2. Build a template document containing a foreach block and a table.
+        // -----------------------------------------------------------------
+        string templatePath = Path.Combine(workDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // 2. Read the CSV file into a list of Person objects.
-            List<Person> persons = LoadPersonsFromCsv(csvPath);
+        // Title.
+        builder.Writeln("People Report");
+        builder.Writeln();
 
-            // 3. Create a single‑row template programmatically and save it.
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-            CreateTemplateDocument(templatePath);
+        // Begin foreach block.
+        builder.Writeln("<<foreach [person in persons]>>");
 
-            // 4. For each person generate an individual document.
-            int index = 1;
-            foreach (Person person in persons)
-            {
-                // Load the template.
-                Document doc = new Document(templatePath);
+        // Table with placeholders for each CSV column.
+        Table table = builder.StartTable();
 
-                // Build the report using the person as the root object.
-                ReportingEngine engine = new ReportingEngine
-                {
-                    Options = ReportBuildOptions.None
-                };
-                // The template tags reference the root name "record".
-                engine.BuildReport(doc, person, "record");
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Age");
+        builder.InsertCell();
+        builder.Writeln("Email");
+        builder.EndRow();
 
-                // Save the generated document.
-                string outputPath = Path.Combine(outputDir, $"Person_{index}.docx");
-                doc.Save(outputPath);
-                index++;
-            }
-        }
+        // Data row – will be repeated for each CSV record.
+        builder.InsertCell();
+        builder.Writeln("<<[person.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[person.Age]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[person.Email]>>");
+        builder.EndRow();
 
-        // Creates a simple CSV file with a header row and a few sample records.
-        private static void CreateSampleCsv(string path)
+        builder.EndTable();
+
+        // End foreach block.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Load the template for reporting.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 4. Configure CSV data source (first line contains headers).
+        // -----------------------------------------------------------------
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
+        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
+
+        // -----------------------------------------------------------------
+        // 5. Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine
         {
-            string[] lines =
-            {
-                "FirstName,LastName,Email",
-                "John,Doe,john.doe@example.com",
-                "Jane,Smith,jane.smith@example.com",
-                "Bob,Johnson,bob.johnson@example.com"
-            };
-            File.WriteAllLines(path, lines);
-        }
+            Options = ReportBuildOptions.None   // default options
+        };
+        engine.BuildReport(reportDoc, csvData, "persons");
 
-        // Parses the CSV file into a list of Person objects.
-        private static List<Person> LoadPersonsFromCsv(string path)
-        {
-            var persons = new List<Person>();
-            string[] allLines = File.ReadAllLines(path);
-            if (allLines.Length < 2)
-                return persons; // No data.
-
-            // Assume first line contains headers.
-            for (int i = 1; i < allLines.Length; i++)
-            {
-                string line = allLines[i];
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
-
-                string[] parts = line.Split(',');
-                if (parts.Length != 3)
-                    continue; // Skip malformed lines.
-
-                persons.Add(new Person
-                {
-                    FirstName = parts[0].Trim(),
-                    LastName  = parts[1].Trim(),
-                    Email     = parts[2].Trim()
-                });
-            }
-            return persons;
-        }
-
-        // Builds a template document that contains LINQ Reporting tags.
-        private static void CreateTemplateDocument(string path)
-        {
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            // The root object name used in BuildReport will be "record".
-            builder.Writeln("<<[record.FirstName]>> <<[record.LastName]>>");
-            builder.Writeln("Email: <<[record.Email]>>");
-
-            // Save the template.
-            template.Save(path);
-        }
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine(workDir, "PeopleReport.docx");
+        reportDoc.Save(outputPath);
     }
 }

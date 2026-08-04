@@ -1,18 +1,20 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
+
+// Register code page provider (required for some Aspose.Words features)
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 namespace AsposeWordsLinqReporting
 {
     // Data model used by the LINQ Reporting engine.
     public class ReportModel
     {
-        // URL of the hyperlink.
+        // URL that the hyperlink will point to.
         public string Url { get; set; } = string.Empty;
 
-        // Text that will be displayed for the hyperlink.
+        // Text that will be displayed as the hyperlink.
         public string Text { get; set; } = string.Empty;
     }
 
@@ -20,46 +22,29 @@ namespace AsposeWordsLinqReporting
     {
         public static void Main()
         {
-            // Register code page provider for any legacy encodings Aspose.Words might need.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // 1. Create a blank Word document and a builder to edit it.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            string outputPath   = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+            // 2. Insert a paragraph that contains a LINQ Reporting link tag.
+            //    The tag will be replaced with a hyperlink whose URL and display text
+            //    come from the data model fields: Url and Text.
+            builder.Writeln("Please visit: <<link [model.Url] [model.Text]>>");
 
-            // -------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert a LINQ Reporting tag that creates a hyperlink.
-            // The tag uses the data fields Url and Text from the model.
-            builder.Writeln("<<link [model.Url] [model.Text]>>");
-
-            // Save the template to disk (required before building the report).
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template and build the report.
-            // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // Prepare sample data.
+            // 3. Prepare sample data.
             ReportModel model = new ReportModel
             {
-                Url  = "https://www.example.com",
-                Text = "Visit Example.com"
+                Url = "https://www.example.com",
+                Text = "Example Website"
             };
 
-            // Create the reporting engine and build the report.
+            // 4. Build the report using the LINQ Reporting engine.
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, model, "model");
+            // The root object name in the template is "model", so we pass it as the third argument.
+            engine.BuildReport(doc, model, "model");
 
-            // -------------------------------------------------
-            // 3. Save the generated report.
-            // -------------------------------------------------
-            loadedTemplate.Save(outputPath);
+            // 5. Save the resulting document.
+            doc.Save("HyperlinkReport.docx");
         }
     }
 }

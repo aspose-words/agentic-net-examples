@@ -1,36 +1,77 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model used by the template.
-    public class ReportModel
+    public static void Main()
     {
-        public string Name { get; set; } = "Default";
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Create a simple data model.
+        var model = new ReportModel
         {
-            // Create a blank document and add a LINQ Reporting tag.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Hello <<[model.Name]>>!");
+            Persons = new List<Person>
+            {
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 45 },
+                new Person { Name = "Charlie", Age = 25 }
+            }
+        };
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel { Name = "World" };
+        // Build the template document with LINQ Reporting tags.
+        var templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-            // Disable reflection optimization for this specific report.
-            ReportingEngine.UseReflectionOptimization = false;
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-            // Use ReportingEngine to build the report (no using statement because ReportingEngine is not IDisposable).
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // Disable reflection optimization for this report.
+        ReportingEngine.UseReflectionOptimization = false;
 
-            // Save the generated report.
-            doc.Save("ReportOutput.docx");
+        // Use a disposable wrapper to modify engine settings inside a using block.
+        using (var wrapper = new ReportingEngineWrapper())
+        {
+            // Example of modifying an engine option (optional).
+            wrapper.Engine.Options = ReportBuildOptions.None;
+
+            // Build the report.
+            wrapper.Engine.BuildReport(doc, model, "model");
         }
+
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
+}
+
+// Simple wrapper to allow a using block for ReportingEngine.
+public class ReportingEngineWrapper : IDisposable
+{
+    public ReportingEngine Engine { get; }
+
+    public ReportingEngineWrapper()
+    {
+        Engine = new ReportingEngine();
+    }
+
+    public void Dispose()
+    {
+        // No unmanaged resources to release.
+    }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

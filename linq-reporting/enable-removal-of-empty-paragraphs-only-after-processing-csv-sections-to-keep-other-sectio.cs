@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
@@ -12,55 +11,47 @@ public class Program
         // Register code page provider for CSV parsing.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample CSV file.
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.csv");
-        File.WriteAllText(csvPath, "Name,Comment\r\nAlice,Hello\r\nBob,\r\nCharlie,World");
+        // Prepare sample CSV data.
+        string csvPath = "people.csv";
+        File.WriteAllText(csvPath,
+            "Name,Age\r\n" +
+            "John Doe,30\r\n" +
+            ",\r\n" + // Empty row – will produce empty paragraphs.
+            "Jane Smith,25\r\n");
 
         // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // First section – will be populated from CSV and may contain empty paragraphs.
-        builder.Writeln("Section 1 – CSV data:");
-        builder.Writeln("<<foreach [row in data]>>");
-        // Paragraph that can become empty if Comment column is empty.
-        builder.Writeln("<<[row.Comment]>>");
+        // Static section – will remain unchanged.
+        builder.Writeln("=== Report Header ===");
+        builder.Writeln();
+
+        // CSV‑driven section.
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Start a new section that must stay unchanged.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 2 – static content that must remain.");
-        builder.Writeln("This paragraph should stay even if empty.");
-
         // Save the template.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
         // Load the template for reporting.
-        Document report = new Document(templatePath);
+        var doc = new Document(templatePath);
 
-        // Configure CSV data source with headers.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true); // first line contains column names
-        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
+        // Configure CSV loading options (first line contains headers).
+        var loadOptions = new CsvDataLoadOptions(true);
+        var csvDataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // Build the report without automatic empty‑paragraph removal.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(report, csvData, "data");
+        // Set up the reporting engine to remove empty paragraphs after processing.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // Remove empty paragraphs only from the first section (the CSV‑processed part).
-        Section firstSection = report.Sections[0];
-        List<Paragraph> emptyParagraphs = new();
-        foreach (Paragraph para in firstSection.Body.Paragraphs)
-        {
-            if (string.IsNullOrWhiteSpace(para.GetText()))
-                emptyParagraphs.Add(para);
-        }
-        foreach (Paragraph para in emptyParagraphs)
-            para.Remove();
+        // Build the report using the CSV data source.
+        engine.BuildReport(doc, csvDataSource, "persons");
 
         // Save the final document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        report.Save(outputPath);
+        doc.Save("Report_Output.docx");
     }
 }

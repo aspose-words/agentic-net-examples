@@ -1,56 +1,55 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Model
+{
+    // Nullable property to allow a null value for demonstration.
+    public string? Name { get; set; }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document and a builder to insert LINQ Reporting tags.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Prepare output folder.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputFolder);
 
-        // Template: iterate over the collection "customers".
-        builder.Writeln("<<foreach [c in customers]>>");
-        // Use the null‑coalescing operator to provide a fallback when Name is null.
-        builder.Writeln("Customer: <<[c.Name ?? \"(no name)\"]>>");
-        builder.Writeln("<</foreach>>");
+        // Paths for the template and the final report.
+        string templatePath = Path.Combine(outputFolder, "template.docx");
+        string resultPath = Path.Combine(outputFolder, "result.docx");
 
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Customers = new List<Customer>
-            {
-                new Customer { Name = "Alice" },
-                new Customer { Name = null } // This entry will trigger the fallback text.
-            }
-        };
+        // -------------------- Create template document --------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Configure the reporting engine.
-        var engine = new ReportingEngine
-        {
-            // Treat missing members as null (not strictly required here but safe).
-            Options = ReportBuildOptions.AllowMissingMembers
-        };
+        // Insert a LINQ Reporting tag that will be replaced by the model's Name.
+        // If Name is null, the fallback text set in MissingMemberMessage will be used.
+        builder.Writeln("Customer name: <<[model.Name]>>");
 
-        // Build the report using the root object name "model".
-        engine.BuildReport(doc, model, "model");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -------------------- Load template and build report --------------------
+        Document reportDoc = new Document(templatePath);
+
+        // Configure the reporting engine to treat missing members (null values) as empty literals.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
+        engine.MissingMemberMessage = "N/A"; // Fallback text for null expressions.
+
+        // Create a data model where Name is intentionally null.
+        Model model = new Model { Name = null };
+
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        reportDoc.Save(resultPath);
+
+        // Inform the user where the report was saved.
+        Console.WriteLine($"Report generated at: {resultPath}");
     }
-}
-
-// Root data model referenced by the template.
-public class ReportModel
-{
-    // The collection name must match the tag used in the template ("customers").
-    public List<Customer> Customers { get; set; } = new();
-}
-
-// Simple data entity with a nullable property.
-public class Customer
-{
-    public string? Name { get; set; }
 }
