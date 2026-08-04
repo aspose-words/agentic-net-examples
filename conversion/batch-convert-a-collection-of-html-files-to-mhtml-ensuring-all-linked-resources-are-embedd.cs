@@ -2,56 +2,78 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-public class BatchHtmlToMhtml
+public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputHtml");
-        string outputDir = Path.Combine(baseDir, "OutputMhtml");
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Prepare input and output folders.
+        string inputFolder = "InputHtml";
+        string outputFolder = "OutputMhtml";
 
-        // Create sample images (1x1 pixel PNG)
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=");
-        File.WriteAllBytes(Path.Combine(inputDir, "image1.png"), pngBytes);
-        File.WriteAllBytes(Path.Combine(inputDir, "image2.png"), pngBytes);
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Create sample HTML files that reference the images
-        string html1 = @"<html><body><h1>Sample 1</h1><p>Image below:</p><img src=""image1.png"" alt=""Image1""></body></html>";
-        string html2 = @"<html><body><h1>Sample 2</h1><p>Another image:</p><img src=""image2.png"" alt=""Image2""></body></html>";
-        File.WriteAllText(Path.Combine(inputDir, "sample1.html"), html1);
-        File.WriteAllText(Path.Combine(inputDir, "sample2.html"), html2);
-
-        // Batch conversion: each HTML file -> MHTML with embedded resources
-        foreach (string htmlPath in Directory.GetFiles(inputDir, "*.html"))
+        // Create a sample PNG image using Aspose.Drawing.
+        string imagePath = Path.Combine(inputFolder, "image.png");
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
-            // Load the HTML document
-            Document doc = new Document(htmlPath);
-
-            // Configure save options for MHTML
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+            // Fill the bitmap with a solid red color.
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                ExportCidUrlsForMhtmlResources = true, // Use CID URLs for resources
-                ExportFontResources = true               // Ensure fonts are embedded if any
-            };
+                graphics.Clear(Aspose.Drawing.Color.Red);
+            }
 
-            // Determine output file name
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(htmlPath);
-            string mhtmlPath = Path.Combine(outputDir, fileNameWithoutExt + ".mht");
-
-            // Save as MHTML
-            doc.Save(mhtmlPath, saveOptions);
-
-            // Validate that the MHTML file was created and contains data
-            if (!File.Exists(mhtmlPath) || new FileInfo(mhtmlPath).Length == 0)
-                throw new InvalidOperationException($"MHTML conversion failed for '{htmlPath}'.");
+            // Save the bitmap as PNG using Aspose.Drawing.Imaging.ImageFormat.
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // All conversions completed successfully
-        Console.WriteLine("Batch conversion completed. MHTML files are located in: " + outputDir);
+        // Write a sample HTML file that references the image.
+        string htmlFileName = "sample.html";
+        string htmlFilePath = Path.Combine(inputFolder, htmlFileName);
+        string htmlContent =
+            "<html>" +
+            "<body>" +
+            "<h1>Sample Document</h1>" +
+            "<p>Hello world!</p>" +
+            "<img src=\"image.png\" alt=\"Sample Image\"/>" +
+            "</body>" +
+            "</html>";
+        File.WriteAllText(htmlFilePath, htmlContent);
+
+        // Batch convert each HTML file in the input folder to MHTML.
+        string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
+        foreach (string htmlFile in htmlFiles)
+        {
+            // Load the HTML document.
+            Document doc = new Document(htmlFile);
+
+            // Configure save options for MHTML with embedded resources.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+            {
+                ExportCidUrlsForMhtmlResources = true, // Use CID URLs for resources.
+                ExportFontResources = true,            // Export fonts if any.
+                ExportImagesAsBase64 = false           // Keep images as separate parts.
+            };
+
+            // Determine the output MHTML file path.
+            string outputFileName = Path.GetFileNameWithoutExtension(htmlFile) + ".mht";
+            string outputPath = Path.Combine(outputFolder, outputFileName);
+
+            // Save the document as MHTML.
+            doc.Save(outputPath, saveOptions);
+
+            // Validate that the output file was created and is not empty.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Expected output MHTML file was not created: {outputPath}");
+
+            FileInfo info = new FileInfo(outputPath);
+            if (info.Length == 0)
+                throw new InvalidOperationException($"Output MHTML file is empty: {outputPath}");
+        }
+
+        Console.WriteLine("Batch conversion completed successfully.");
     }
 }

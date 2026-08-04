@@ -8,70 +8,68 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files.
-        string pdfPath = "sample.pdf";
-        string epubPath = "output.epub";
+        // Define file names.
+        const string pdfPath = "sample.pdf";
+        const string epubPath = "output.epub";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample PDF with a simple chapter hierarchy.
+        // Step 1: Create a sample Word document with heading styles.
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Chapter 1
+        // Chapter 1 (Heading 1)
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1");
 
-        // Section 1.1
+        // Section 1.1 (Heading 2)
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.Writeln("Section 1.1");
-        builder.Writeln("Content of section 1.1.");
 
-        // Section 1.2
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.2");
-        builder.Writeln("Content of section 1.2.");
+        // Subsection 1.1.1 (Heading 3)
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+        builder.Writeln("Subsection 1.1.1");
 
-        // Chapter 2
+        // Chapter 2 (Heading 1)
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 2");
 
-        // Section 2.1
+        // Section 2.1 (Heading 2)
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.Writeln("Section 2.1");
-        builder.Writeln("Content of section 2.1.");
 
         // Save the document as PDF.
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify PDF creation.
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the source PDF file.");
+            throw new InvalidOperationException("The PDF file was not created.");
 
         // -----------------------------------------------------------------
-        // 2. Load the PDF and convert it to EPUB while preserving hierarchy.
+        // Step 2: Load the PDF and convert it to EPUB.
         // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
 
-        HtmlSaveOptions epubOptions = new HtmlSaveOptions
+        // Configure EPUB save options.
+        HtmlSaveOptions epubSaveOptions = new HtmlSaveOptions
         {
             SaveFormat = SaveFormat.Epub,
             Encoding = Encoding.UTF8,
-            // Split the EPUB at heading paragraphs to keep chapter structure.
+            // Split the output at heading paragraphs to preserve chapter hierarchy.
             DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-            // Export document properties (optional, but useful for metadata).
+            // Export built‑in and custom document properties.
             ExportDocumentProperties = true,
-            // Include headings up to level 3 in the navigation map.
+            // Define how many heading levels appear in the navigation map.
             NavigationMapLevel = 3
         };
 
-        pdfDoc.Save(epubPath, epubOptions);
+        // Save as EPUB.
+        pdfDoc.Save(epubPath, epubSaveOptions);
 
-        // Verify EPUB creation.
+        // Verify that the EPUB was created.
         if (!File.Exists(epubPath))
-            throw new InvalidOperationException("EPUB conversion failed; output file not found.");
+            throw new InvalidOperationException("The EPUB file was not created.");
 
-        // Cleanup temporary PDF if desired.
-        // File.Delete(pdfPath);
+        // The example finishes without waiting for user input.
     }
 }

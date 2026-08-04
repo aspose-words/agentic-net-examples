@@ -3,64 +3,71 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class ExportPdfPagesToPng
+public class ExportPdfEvenPagesToPng
 {
     public static void Main()
     {
-        // Create a sample multi‑page document.
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // 1. Create a sample multi‑page document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        // Add five pages with simple text.
-        for (int i = 1; i <= 5; i++)
+        for (int i = 1; i <= 6; i++)
         {
             builder.Writeln($"This is page {i}.");
-            if (i < 5)
+            if (i < 6)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save the document as PDF – this will be the input for the conversion.
-        const string pdfPath = "sample.pdf";
+        // 2. Save the document as PDF (the source PDF).
+        string pdfPath = Path.Combine(outputDir, "Sample.pdf");
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the source PDF.");
-
-        // Load the PDF document.
+        // 3. Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Prepare output directory for PNG files.
-        const string outputFolder = "OutputImages";
-        Directory.CreateDirectory(outputFolder);
-
-        // Export only even‑numbered pages (page numbers 2,4,…) as separate PNG images.
-        // In zero‑based indexing, even pages have odd indices.
-        for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
+        // 4. Configure image save options to export only even‑numbered pages.
+        ImageSaveOptions imgOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            if (pageIndex % 2 == 1) // odd index => even page number
-            {
-                ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
-                {
-                    // Use a PageSet that contains only the current page.
-                    PageSet = new PageSet(pageIndex)
-                };
+            // PageSet.Even selects pages with even numbers (2,4,6,…).
+            PageSet = PageSet.Even,
+            // Use a callback to name each exported PNG file.
+            PageSavingCallback = new EvenPageSavingCallback(outputDir)
+        };
 
-                string pngPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
-                pdfDoc.Save(pngPath, pngOptions);
+        // 5. Save the selected pages. The file name supplied here is ignored because
+        //    the callback provides explicit names for each page.
+        pdfDoc.Save("unused.png", imgOptions);
 
-                // Validate that the PNG file was written.
-                if (!File.Exists(pngPath) || new FileInfo(pngPath).Length == 0)
-                    throw new InvalidOperationException($"PNG for page {pageIndex + 1} was not created.");
-            }
+        // 6. Validate that PNG files for even pages were created.
+        string[] pngFiles = Directory.GetFiles(outputDir, "EvenPage_*.png");
+        if (pngFiles.Length == 0)
+            throw new InvalidOperationException("No PNG files were generated for even pages.");
+
+        Console.WriteLine("Exported PNG files:");
+        foreach (string file in pngFiles)
+            Console.WriteLine(file);
+    }
+
+    // Callback that assigns a file name to each page being saved.
+    private class EvenPageSavingCallback : IPageSavingCallback
+    {
+        private readonly string _outputFolder;
+
+        public EvenPageSavingCallback(string outputFolder)
+        {
+            _outputFolder = outputFolder;
         }
 
-        // Final validation: at least one PNG should exist.
-        string[] generatedFiles = Directory.GetFiles(outputFolder, "*.png");
-        if (generatedFiles.Length == 0)
-            throw new InvalidOperationException("No PNG files were generated.");
-
-        // Example completed successfully.
-        Console.WriteLine($"Exported {generatedFiles.Length} even‑page PNG file(s) to '{outputFolder}'.");
+        public void PageSaving(PageSavingArgs args)
+        {
+            // PageIndex is zero‑based; add 1 for human‑readable page numbers.
+            string fileName = $"EvenPage_{args.PageIndex + 1}.png";
+            args.PageFileName = Path.Combine(_outputFolder, fileName);
+            // Keep the stream closed after each page is written (default behavior).
+            args.KeepPageStreamOpen = false;
+        }
     }
 }

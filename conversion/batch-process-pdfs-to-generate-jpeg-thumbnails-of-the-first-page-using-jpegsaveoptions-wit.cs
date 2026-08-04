@@ -11,54 +11,48 @@ public class Program
         string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
         string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Thumbnails");
 
-        // Ensure the folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create a few sample PDF files to work with.
+        // Create a few sample PDF files to act as the batch source.
         for (int i = 1; i <= 3; i++)
         {
-            string pdfPath = Path.Combine(inputFolder, $"Sample{i}.pdf");
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"This is sample PDF number {i}.");
-            // Save as PDF.
+            builder.Writeln($"Sample PDF document {i}");
+            string pdfPath = Path.Combine(inputFolder, $"sample{i}.pdf");
             sampleDoc.Save(pdfPath, SaveFormat.Pdf);
         }
 
         // Process each PDF in the input folder.
-        string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
-        foreach (string pdfFile in pdfFiles)
+        foreach (string pdfFile in Directory.GetFiles(inputFolder, "*.pdf"))
         {
             // Load the PDF document.
             Document pdfDoc = new Document(pdfFile);
 
-            // Configure image save options for JPEG with low quality.
+            // Configure image save options to render the first page as a low‑quality JPEG.
             ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
             {
                 // Render only the first page (zero‑based index).
                 PageSet = new PageSet(0),
+
                 // Low quality to increase compression (range 0‑100).
-                JpegQuality = 10,
-                // Optional: set a reasonable resolution.
-                Resolution = 150
+                JpegQuality = 10
             };
 
-            // Determine the output JPEG file path.
-            string outputFileName = Path.GetFileNameWithoutExtension(pdfFile) + ".jpg";
-            string outputPath = Path.Combine(outputFolder, outputFileName);
+            // Determine the output JPEG file name.
+            string jpegFile = Path.Combine(outputFolder,
+                Path.GetFileNameWithoutExtension(pdfFile) + ".jpg");
 
-            // Save the first page as a JPEG thumbnail.
-            pdfDoc.Save(outputPath, jpegOptions);
+            // Save the thumbnail.
+            pdfDoc.Save(jpegFile, jpegOptions);
 
             // Validate that the thumbnail was created.
-            if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
-            {
+            if (!File.Exists(jpegFile) || new FileInfo(jpegFile).Length == 0)
                 throw new InvalidOperationException($"Thumbnail was not created for '{pdfFile}'.");
-            }
         }
 
-        // Optionally, indicate completion (no interactive prompts).
-        Console.WriteLine($"Processed {pdfFiles.Length} PDF(s). Thumbnails are saved in '{outputFolder}'.");
+        // Optional: indicate completion.
+        Console.WriteLine("Batch thumbnail generation completed successfully.");
     }
 }

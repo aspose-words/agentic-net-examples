@@ -7,35 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names
-        const string inputPath = "sample.doc";
-        const string outputPath = "custom_page_size.pdf";
+        // Create a simple DOC file.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Sample DOC content.");
+        const string inputPath = "input.doc";
+        source.Save(inputPath, SaveFormat.Doc);
 
-        // Create a simple DOC file
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document with a custom PDF page size.");
-        sourceDoc.Save(inputPath, SaveFormat.Doc);
-
-        // Load the DOC file
+        // Load the DOC file.
         Document doc = new Document(inputPath);
 
-        // Set a custom page size (A4: 595 x 842 points) for the first section
-        Section firstSection = doc.FirstSection;
-        firstSection.PageSetup.PaperSize = PaperSize.Custom;
-        firstSection.PageSetup.PageWidth = 595f;   // Width in points
-        firstSection.PageSetup.PageHeight = 842f;  // Height in points
+        // Set a custom page size (500x700 points) for the first section.
+        // Points are the default unit for page dimensions in Aspose.Words.
+        doc.FirstSection.PageSetup.PageWidth = 500f;
+        doc.FirstSection.PageSetup.PageHeight = 700f;
 
-        // Configure PDF save options (no need to set PageSize here)
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Convert to PDF.
+        const string outputPath = "output.pdf";
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Save as PDF using the custom page size
-        doc.Save(outputPath, pdfOptions);
-
-        // Verify that the PDF was created
+        // Verify that the PDF was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+            throw new InvalidOperationException("Expected output PDF was not created.");
 
-        Console.WriteLine($"PDF successfully created at '{Path.GetFullPath(outputPath)}' with custom page size.");
+        // Clean up temporary files (optional).
+        File.Delete(inputPath);
     }
 }

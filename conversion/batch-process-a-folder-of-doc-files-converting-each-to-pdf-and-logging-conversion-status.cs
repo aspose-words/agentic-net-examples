@@ -1,52 +1,59 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-public class BatchDocToPdfConverter
+public class Program
 {
     public static void Main()
     {
-        // Prepare input folder and create sample DOC files.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        // Define input and output folders.
+        string inputFolder = "InputDocs";
+        string outputFolder = "OutputPdfs";
+
+        // Ensure the folders exist.
         Directory.CreateDirectory(inputFolder);
-
-        for (int i = 1; i <= 3; i++)
-        {
-            string docPath = Path.Combine(inputFolder, $"Sample{i}.doc");
-
-            // Create a blank document and add sample content.
-            Document source = new Document();
-            DocumentBuilder builder = new DocumentBuilder(source);
-            builder.Writeln($"Sample DOC content {i}.");
-
-            // Save the document as DOC.
-            source.Save(docPath, SaveFormat.Doc);
-        }
-
-        // Prepare output folder for PDFs.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdfs");
         Directory.CreateDirectory(outputFolder);
 
-        // Process each DOC file in the input folder.
-        foreach (string docFile in Directory.GetFiles(inputFolder, "*.doc"))
+        // Create sample DOC files using the provided creation pattern.
+        for (int i = 1; i <= 3; i++)
         {
+            // Create a blank document.
+            Document source = new Document();
+
+            // Add sample content.
+            DocumentBuilder builder = new DocumentBuilder(source);
+            builder.Writeln($"Sample content for document {i}.");
+
+            // Save as DOC.
+            string inputPath = Path.Combine(inputFolder, $"Sample{i}.doc");
+            source.Save(inputPath, SaveFormat.Doc);
+        }
+
+        // Batch process each DOC file in the input folder.
+        foreach (string docPath in Directory.GetFiles(inputFolder, "*.doc"))
+        {
+            // Determine the corresponding PDF output path.
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(docPath);
+            string pdfPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.pdf");
+
             // Load the DOC file.
-            Document doc = new Document(docFile);
+            Document doc = new Document(docPath);
 
-            // Determine the PDF output path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(docFile) + ".pdf";
-            string pdfPath = Path.Combine(outputFolder, pdfFileName);
-
-            // Convert and save as PDF.
+            // Convert and save to PDF using the provided conversion pattern.
             doc.Save(pdfPath, SaveFormat.Pdf);
 
             // Verify that the PDF was created.
-            if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Expected PDF was not created for '{docFile}'.");
-
-            // Log conversion status.
-            Console.WriteLine($"Converted '{docFile}' to '{pdfPath}'.");
+            if (File.Exists(pdfPath))
+            {
+                Console.WriteLine($"Converted '{docPath}' to '{pdfPath}'.");
+            }
+            else
+            {
+                throw new InvalidOperationException($"Failed to create PDF for '{docPath}'.");
+            }
         }
+
+        // Indicate completion.
+        Console.WriteLine("Batch conversion completed.");
     }
 }

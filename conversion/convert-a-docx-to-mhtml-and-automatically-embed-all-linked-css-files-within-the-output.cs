@@ -7,47 +7,50 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.mht");
+        // Define file names.
+        const string inputPath = "sample.docx";
+        const string outputPath = "sample.mht";
 
         // -----------------------------------------------------------------
-        // 1. Create a simple DOCX document to act as the source.
+        // 1. Create a simple DOCX document.
         // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document that will be converted to MHTML.");
-        builder.Writeln("The conversion will embed all CSS into the resulting file.");
-        sourceDoc.Save(inputPath, SaveFormat.Docx);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
+        builder.Writeln("This document will be converted to MHTML with embedded CSS.");
+        doc.Save(inputPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
         // 2. Load the DOCX document.
         // -----------------------------------------------------------------
-        Document doc = new Document(inputPath);
+        Document loadedDoc = new Document(inputPath);
 
         // -----------------------------------------------------------------
-        // 3. Configure save options for MHTML with embedded CSS.
+        // 3. Prepare save options for MHTML.
+        //    - Use HtmlSaveOptions with SaveFormat.Mhtml.
+        //    - Set CssStyleSheetType to Embedded so CSS is placed inside a <style> tag.
         // -----------------------------------------------------------------
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
-            // Embed CSS directly into the MHTML file instead of linking to external files.
-            CssStyleSheetType = CssStyleSheetType.Embedded,
-
-            // Optional: use CID URLs for resources; not required for CSS embedding but can improve compatibility.
-            ExportCidUrlsForMhtmlResources = false
+            CssStyleSheetType = CssStyleSheetType.Embedded
         };
 
         // -----------------------------------------------------------------
         // 4. Save the document as MHTML.
         // -----------------------------------------------------------------
-        doc.Save(outputPath, saveOptions);
+        loadedDoc.Save(outputPath, saveOptions);
 
         // -----------------------------------------------------------------
-        // 5. Validate that the output file was created.
+        // 5. Validate that the output file was created and contains data.
         // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The MHTML output file was not created.");
+            throw new InvalidOperationException("MHTML output file was not created.");
 
-        // The example finishes here; no interactive prompts are used.
+        FileInfo info = new FileInfo(outputPath);
+        if (info.Length == 0)
+            throw new InvalidOperationException("MHTML output file is empty.");
+
+        // Optional: indicate success.
+        Console.WriteLine($"Document successfully converted to MHTML: {outputPath}");
     }
 }

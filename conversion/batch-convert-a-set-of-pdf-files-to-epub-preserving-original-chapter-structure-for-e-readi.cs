@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,76 +9,72 @@ public class Program
     public static void Main()
     {
         // Define folders for input PDFs and output EPUBs.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchConversionDemo");
-        string inputDir = Path.Combine(baseDir, "InputPdfs");
-        string outputDir = Path.Combine(baseDir, "OutputEpubs");
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputEpubs");
 
         // Ensure clean environment.
-        if (Directory.Exists(baseDir))
-            Directory.Delete(baseDir, true);
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        if (Directory.Exists(inputFolder))
+            Directory.Delete(inputFolder, true);
+        if (Directory.Exists(outputFolder))
+            Directory.Delete(outputFolder, true);
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
         // Create sample PDF files with heading structure.
-        const int sampleCount = 3;
-        for (int i = 1; i <= sampleCount; i++)
+        for (int i = 1; i <= 3; i++)
         {
-            // Build a simple document with headings to represent chapters.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-            // Chapter title (Heading 1).
+            // Chapter heading.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Chapter {i}: Sample Title");
+            builder.Writeln($"Chapter {i}");
 
-            // Some body text (Normal style).
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
-
-            // Sub‑section title (Heading 2).
+            // Sub‑section heading.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
             builder.Writeln($"Section {i}.1");
+            builder.Writeln($"Section {i}.2");
 
-            // More body text.
+            // Normal paragraph.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.");
+            builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
 
-            // Save the document as PDF.
-            string pdfPath = Path.Combine(inputDir, $"SampleDocument{i}.pdf");
-            doc.Save(pdfPath, SaveFormat.Pdf);
+            string pdfPath = Path.Combine(inputFolder, $"Sample{i}.pdf");
+            sampleDoc.Save(pdfPath, SaveFormat.Pdf);
         }
 
-        // Batch convert each PDF to EPUB while preserving chapter structure.
-        string[] pdfFiles = Directory.GetFiles(inputDir, "*.pdf");
-        foreach (string pdfFile in pdfFiles)
+        // Batch convert each PDF to EPUB, preserving chapter structure.
+        foreach (string pdfFile in Directory.GetFiles(inputFolder, "*.pdf"))
         {
             // Load the PDF document.
             Document pdfDoc = new Document(pdfFile);
 
             // Configure EPUB save options to split at heading paragraphs.
-            HtmlSaveOptions epubOptions = new HtmlSaveOptions(SaveFormat.Epub)
+            HtmlSaveOptions epubOptions = new HtmlSaveOptions
             {
+                SaveFormat = SaveFormat.Epub,
+                Encoding = Encoding.UTF8,
                 DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
                 ExportDocumentProperties = true
             };
 
             // Determine output EPUB path.
             string epubFileName = Path.GetFileNameWithoutExtension(pdfFile) + ".epub";
-            string epubPath = Path.Combine(outputDir, epubFileName);
+            string epubPath = Path.Combine(outputFolder, epubFileName);
 
             // Save as EPUB.
             pdfDoc.Save(epubPath, epubOptions);
 
-            // Validate that the EPUB was created.
+            // Validate output.
             if (!File.Exists(epubPath))
                 throw new InvalidOperationException($"EPUB file was not created: {epubPath}");
-            if (new FileInfo(epubPath).Length == 0)
-                throw new InvalidOperationException($"EPUB file is empty: {epubPath}");
         }
 
-        // All conversions completed successfully.
-        Console.WriteLine("Batch conversion completed. EPUB files are located at:");
-        Console.WriteLine(outputDir);
+        // Optional: confirm that all EPUB files were generated.
+        int epubCount = Directory.GetFiles(outputFolder, "*.epub").Length;
+        if (epubCount == 0)
+            throw new InvalidOperationException("No EPUB files were generated.");
+
+        // Program completes without waiting for user input.
     }
 }

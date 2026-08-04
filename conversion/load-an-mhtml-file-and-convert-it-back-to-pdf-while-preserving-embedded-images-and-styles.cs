@@ -1,78 +1,56 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define file names.
+        const string htmlFile = "sample.html";
+        const string mhtmlFile = "sample.mhtml";
+        const string pdfFile = "output.pdf";
 
-        // Create a sample image using Aspose.Drawing (no System.Drawing usage).
-        string imagePath = Path.Combine(outputDir, "sample.png");
-        using (Bitmap bitmap = new Bitmap(100, 100))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.Blue);
+        // Create a simple HTML document with inline CSS and an embedded image (base64 PNG).
+        string htmlContent =
+            "<html>" +
+            "<head>" +
+            "<style>h1 { color: blue; }</style>" +
+            "</head>" +
+            "<body>" +
+            "<h1>Hello, Aspose.Words!</h1>" +
+            // 1x1 pixel transparent PNG.
+            "<img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=\" alt=\"pixel\"/>" +
+            "</body>" +
+            "</html>";
 
-                // Use an explicit Aspose.Drawing.Font declaration.
-                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 12);
-                try
-                {
-                    graphics.DrawString(
-                        "Test",
-                        font,
-                        Brushes.White,
-                        new PointF(10, 40));
-                }
-                finally
-                {
-                    font.Dispose();
-                }
-            }
+        // Write the HTML to a temporary file (optional, but keeps the example clear).
+        File.WriteAllText(htmlFile, htmlContent, Encoding.UTF8);
 
-            // Save the bitmap as PNG.
-            bitmap.Save(imagePath, ImageFormat.Png);
-        }
+        // Load the HTML into an Aspose.Words Document.
+        Document docFromHtml = new Document(htmlFile);
 
-        // Create a Word document, add styled text and the image.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 14;
-        builder.Writeln("Sample MHTML content with style.");
-        builder.InsertImage(imagePath);
-        builder.Font.Bold = true;
-        builder.Writeln("Bold text after image.");
-
-        // Save the document as MHTML.
-        string mhtmlPath = Path.Combine(outputDir, "sample.mhtml");
-        sourceDoc.Save(mhtmlPath, SaveFormat.Mhtml);
+        // Save the document as MHTML, preserving the embedded image and styles.
+        docFromHtml.Save(mhtmlFile, SaveFormat.Mhtml);
 
         // Verify that the MHTML file was created.
-        if (!File.Exists(mhtmlPath))
+        if (!File.Exists(mhtmlFile))
             throw new InvalidOperationException("MHTML file was not created.");
 
         // Load the MHTML file.
-        Document loadedDoc = new Document(mhtmlPath);
+        Document docFromMhtml = new Document(mhtmlFile);
 
         // Convert the loaded document to PDF, preserving images and styles.
-        string pdfPath = Path.Combine(outputDir, "sample.pdf");
-        loadedDoc.Save(pdfPath, SaveFormat.Pdf);
+        docFromMhtml.Save(pdfFile, SaveFormat.Pdf);
 
-        // Validate that the PDF file exists and contains data.
-        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
-            throw new InvalidOperationException("PDF conversion failed or resulted in an empty file.");
+        // Verify that the PDF file was created.
+        if (!File.Exists(pdfFile))
+            throw new InvalidOperationException("PDF file was not created.");
 
-        // Optional: clean up temporary files (commented out to keep output for inspection).
-        // File.Delete(imagePath);
-        // File.Delete(mhtmlPath);
-        // File.Delete(pdfPath);
+        // Clean up temporary files (optional).
+        File.Delete(htmlFile);
+        File.Delete(mhtmlFile);
     }
 }

@@ -120,7 +120,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Enable ExportRoundTripInfo when saving DOCX to HTML to retain editing capabilities after round-trip.
   - Workflow: input-bootstrap
   - Outputs: docx, html
-  - Selected engine: mcp
+  - Selected engine: llm
 - `export-fonts-as-separate-files-while-saving-a-document-to-html-by-setting-exportfontresour.cs`
   - Task: Export fonts as separate files while saving a document to HTML by setting ExportFontResources true.
   - Workflow: input-bootstrap
@@ -195,7 +195,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to HTML with external CSS files by disabling ExportEmbeddedCss in HtmlSaveOptions.
   - Workflow: input-bootstrap
   - Outputs: pdf, html
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `enable-exportembeddedimages-when-saving-pdf-to-html-to-embed-images-as-base64-data-uris.cs`
   - Task: Enable ExportEmbeddedImages when saving PDF to HTML to embed images as Base64 data URIs.
   - Workflow: input-bootstrap
@@ -310,7 +310,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Save a PDF as an image sequence in PNG format with transparent background using PngSaveOptions.
   - Workflow: save-options
   - Outputs: pdf, png
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-a-custom-page-size-when-converting-a-doc-to-pdf-by-setting-pdfsaveoptions-pagesize.cs`
   - Task: Apply a custom page size when converting a DOC to PDF by setting PdfSaveOptions.PageSize.
   - Workflow: save-options
@@ -340,7 +340,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to a searchable PDF/A-2b by enabling OCR during the save operation.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: llm
+  - Selected engine: mcp
 - `batch-process-a-folder-of-doc-files-converting-each-to-pdf-and-logging-conversion-status.cs`
   - Task: Batch process a folder of DOC files, converting each to PDF and logging conversion status.
   - Workflow: batch-bootstrap
@@ -365,7 +365,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Save a PDF as a PDF/A-1b compliant file with embedded ICC color profile using PdfSaveOptions.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `load-a-docx-from-a-cloud-storage-stream-and-convert-it-to-pdf-for-client-download.cs`
   - Task: Load a DOCX from a cloud storage stream and convert it to PDF for client download.
   - Workflow: stream-response
@@ -405,7 +405,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to HTML with embedded fonts as Base64 and images as external files for web use.
   - Workflow: input-bootstrap
   - Outputs: pdf, html
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `save-a-pdf-as-a-pdf-a-3u-document-and-embed-an-associated-xml-file-for-enhanced-metadata.cs`
   - Task: Save a PDF as a PDF/A-3u document and embed an associated XML file for enhanced metadata.
   - Workflow: input-bootstrap
@@ -495,7 +495,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a PDF and convert it to an XPS document while preserving annotations for review.
   - Workflow: native-conversion-api
   - Outputs: pdf, xps
-  - Selected engine: llm
+  - Selected engine: mcp
 - `convert-a-docx-to-mhtml-and-then-embed-it-in-an-email-body-using-aspose-email-html-body-su.cs`
   - Task: Convert a DOCX to MHTML and then embed it in an email body using Aspose.Email HTML body support.
   - Workflow: input-bootstrap
@@ -607,7 +607,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 - Package: `Aspose.Drawing.Common` `25.11.0`
 
 ## Command reference
@@ -622,7 +622,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 ```
 

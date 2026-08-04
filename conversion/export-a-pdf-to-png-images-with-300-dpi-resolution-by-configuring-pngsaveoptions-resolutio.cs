@@ -7,43 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document and save it as PDF (input PDF).
-        string pdfPath = "sample.pdf";
+        // Step 1: Create a sample document and save it as PDF (input.pdf).
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is page 1.");
+        builder.Writeln("This is page 1 of the PDF.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 2.");
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        builder.Writeln("This is page 2 of the PDF.");
+        sourceDoc.Save("input.pdf", SaveFormat.Pdf);
 
-        // Verify the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the source PDF.");
+        // Step 2: Load the PDF document we just created.
+        Document pdfDoc = new Document("input.pdf");
 
-        // Load the PDF document.
-        Document pdfDoc = new Document(pdfPath);
-
-        // Export each page of the PDF to a separate PNG image with 300 DPI resolution.
+        // Step 3: Export each page of the PDF to a separate PNG image at 300 DPI.
         for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            // Configure image save options for PNG format.
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
             {
-                // Render only the current page.
-                PageSet = new PageSet(pageIndex),
                 // Set both horizontal and vertical resolution to 300 DPI.
-                Resolution = 300
+                Resolution = 300f,
+                // Render only the current page.
+                PageSet = new PageSet(pageIndex)
             };
 
-            string pngPath = $"page_{pageIndex + 1}.png";
-            pdfDoc.Save(pngPath, options);
+            string outputFileName = $"page_{pageIndex + 1}.png";
+            pdfDoc.Save(outputFileName, pngOptions);
 
-            // Verify the PNG image was created.
-            if (!File.Exists(pngPath))
-                throw new InvalidOperationException($"Failed to create PNG for page {pageIndex + 1}.");
+            // Validate that the PNG file was created.
+            if (!File.Exists(outputFileName))
+                throw new InvalidOperationException($"Failed to create image file: {outputFileName}");
         }
 
-        // Clean up: optional deletion of the temporary PDF.
-        // File.Delete(pdfPath);
+        // All pages have been exported successfully.
+        Console.WriteLine("PDF has been exported to PNG images at 300 DPI.");
     }
 }

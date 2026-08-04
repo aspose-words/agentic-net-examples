@@ -1,48 +1,37 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names.
+        // Path for the temporary PNG image.
         const string pngPath = "sample.png";
-        const string pdfPath = "output.pdf";
 
-        // Create a simple PNG image using Aspose.Drawing.
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                // Fill the image with a solid color.
-                graphics.Clear(Color.CornflowerBlue);
-            }
+        // Base64‑encoded 1×1 red PNG image.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/6ZcKAAAAAElFTkSuQmCC";
 
-            // Save the bitmap as a PNG file.
-            bitmap.Save(pngPath, ImageFormat.Png);
-        }
+        // Write the PNG file to disk.
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(pngPath, pngBytes);
 
-        // Verify that the PNG file was created.
-        if (!File.Exists(pngPath))
-            throw new InvalidOperationException("Failed to create the PNG image.");
-
-        // Create a new Word document and insert the PNG image.
+        // Create a new blank Word document.
         Document doc = new Document();
+
+        // Insert the PNG image into the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(pngPath);
 
-        // Save the document as a PDF.
+        // Save the document as PDF.
+        const string pdfPath = "output.pdf";
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF conversion was not successful.");
+            throw new InvalidOperationException("The PDF file was not created.");
 
-        // Clean up the temporary PNG file (optional).
+        // Clean up temporary files (optional).
         File.Delete(pngPath);
     }
 }

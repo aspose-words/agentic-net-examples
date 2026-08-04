@@ -3,11 +3,11 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class BatchDocxToPdf
 {
     public static void Main()
     {
-        // Define folders for input DOCX files and output PDF files.
+        // Define input and output folders relative to the current directory.
         string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
         string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdfs");
 
@@ -15,44 +15,55 @@ public class Program
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create a few sample DOCX files.
-        for (int i = 1; i <= 3; i++)
+        // Create sample DOCX files if the input folder is empty.
+        string[] sampleNames = { "Sample1.docx", "Sample2.docx", "Sample3.docx" };
+        foreach (string fileName in sampleNames)
         {
-            // Create a blank document and add some sample text.
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"Sample content for document {i}.");
-
-            // Save the document as DOCX using the provided pattern.
-            string docxPath = Path.Combine(inputFolder, $"Doc{i}.docx");
-            sampleDoc.Save(docxPath, SaveFormat.Docx);
+            string filePath = Path.Combine(inputFolder, fileName);
+            if (!File.Exists(filePath))
+            {
+                Document sampleDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+                builder.Writeln($"This is the content of {Path.GetFileNameWithoutExtension(fileName)}.");
+                sampleDoc.Save(filePath, SaveFormat.Docx);
+            }
         }
 
         // Process each DOCX file: add a company‑wide header and convert to PDF.
         string[] docxFiles = Directory.GetFiles(inputFolder, "*.docx");
-        foreach (string docxFile in docxFiles)
+        foreach (string docxPath in docxFiles)
         {
-            // Load the existing DOCX file.
-            Document doc = new Document(docxFile);
+            // Load the DOCX document.
+            Document doc = new Document(docxPath);
 
-            // Insert a primary header with the company text.
-            DocumentBuilder headerBuilder = new DocumentBuilder(doc);
-            headerBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            headerBuilder.Writeln("Company Confidential");
+            // Add a company‑wide header to every section.
+            foreach (Section section in doc.Sections)
+            {
+                // Retrieve the primary header; create it if it does not exist.
+                HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
+                if (header == null)
+                {
+                    header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+                    section.HeadersFooters.Add(header);
+                }
+
+                // Append the header text.
+                header.AppendParagraph("Company Confidential – Header");
+            }
 
             // Determine the output PDF path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(docxFile) + ".pdf";
+            string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
             string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Save the document as PDF using the provided pattern.
+            // Save the document as PDF.
             doc.Save(pdfPath, SaveFormat.Pdf);
 
             // Verify that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"PDF conversion failed for '{docxFile}'.");
+                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
         }
 
-        // Optional: indicate completion.
+        // Indicate completion.
         Console.WriteLine("Batch processing completed successfully.");
     }
 }

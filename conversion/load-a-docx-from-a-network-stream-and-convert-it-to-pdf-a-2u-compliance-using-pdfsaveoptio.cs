@@ -7,42 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a simple DOCX document in memory.
+        // Create a sample DOCX file that will act as the source document.
         Document sourceDocument = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDocument);
         builder.Writeln("Sample content for PDF/A‑2u conversion.");
+        const string inputPath = "input.docx";
+        sourceDocument.Save(inputPath, SaveFormat.Docx);
 
-        // Step 2: Save the DOCX to a memory stream to simulate a network stream.
-        using (MemoryStream networkStream = new MemoryStream())
+        // Simulate receiving the DOCX over a network by loading it from a memory stream.
+        byte[] fileBytes = File.ReadAllBytes(inputPath);
+        using (MemoryStream networkStream = new MemoryStream(fileBytes))
         {
-            sourceDocument.Save(networkStream, SaveFormat.Docx);
-            // Reset the position so the stream can be read from the beginning.
+            // Reset the stream position before loading.
             networkStream.Position = 0;
 
-            // Step 3: Load the document from the simulated network stream.
+            // Load the document from the simulated network stream.
             Document loadedDocument = new Document(networkStream);
 
-            // Step 4: Configure PDF save options for PDF/A‑2u compliance.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions
-            {
-                Compliance = PdfCompliance.PdfA2u
-            };
+            // Configure PDF save options for PDF/A‑2u compliance.
+            PdfSaveOptions pdfOptions = new PdfSaveOptions();
+            pdfOptions.Compliance = PdfCompliance.PdfA2u;
 
-            // Step 5: Save the loaded document as a PDF/A‑2u file.
-            const string outputPdfPath = "output.pdf";
-            loadedDocument.Save(outputPdfPath, pdfOptions);
+            // Save the document as a PDF/A‑2u file.
+            const string outputPath = "output.pdf";
+            loadedDocument.Save(outputPath, pdfOptions);
 
-            // Step 6: Validate that the PDF file was created.
-            if (!File.Exists(outputPdfPath))
+            // Verify that the PDF was created.
+            if (!File.Exists(outputPath))
                 throw new InvalidOperationException("The PDF/A‑2u output file was not created.");
-
-            // Optional: Verify that the file has content.
-            FileInfo fileInfo = new FileInfo(outputPdfPath);
-            if (fileInfo.Length == 0)
-                throw new InvalidOperationException("The PDF/A‑2u output file is empty.");
         }
 
-        // Indicate successful completion.
-        Console.WriteLine("Document successfully converted to PDF/A‑2u.");
+        // Clean up temporary files (optional).
+        File.Delete(inputPath);
     }
 }

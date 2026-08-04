@@ -1,70 +1,78 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Drawing;                 // Aspose.Drawing types for bitmap, graphics, colors, etc.
-using Aspose.Drawing.Imaging;        // ImageFormat, PixelFormat
+using Aspose.Words.Saving;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary images and final PDF.
-        const string pngPath = "sample_image.png";
-        const string jpegPath = "sample_image.jpg";
-        const string outputPdf = "combined_images.pdf";
+        // Prepare a folder for temporary image files.
+        string imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputImages");
+        Directory.CreateDirectory(imagesFolder);
 
         // Create a PNG image.
-        using (Bitmap pngBitmap = new Bitmap(200, 200, PixelFormat.Format24bppRgb))
+        string pngPath = Path.Combine(imagesFolder, "sample.png");
+        using (Bitmap pngBitmap = new Bitmap(200, 200))
         {
             using (Graphics graphics = Graphics.FromImage(pngBitmap))
             {
                 graphics.Clear(Color.LightBlue);
-                using (SolidBrush brush = new SolidBrush(Color.DarkBlue))
+                using (Pen pen = new Pen(Color.Red, 5))
                 {
-                    // Use fully qualified Aspose.Drawing.Font to avoid ambiguity with Aspose.Words.Font.
-                    using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-                    {
-                        graphics.DrawString("PNG", font, brush, new PointF(50, 80));
-                    }
+                    graphics.DrawEllipse(pen, 20, 20, 160, 160);
                 }
             }
             pngBitmap.Save(pngPath, ImageFormat.Png);
         }
 
         // Create a JPEG image.
-        using (Bitmap jpegBitmap = new Bitmap(200, 200, PixelFormat.Format24bppRgb))
+        string jpegPath = Path.Combine(imagesFolder, "sample.jpg");
+        using (Bitmap jpegBitmap = new Bitmap(200, 200))
         {
             using (Graphics graphics = Graphics.FromImage(jpegBitmap))
             {
-                graphics.Clear(Color.LightCoral);
-                using (SolidBrush brush = new SolidBrush(Color.White))
+                graphics.Clear(Color.LightGreen);
+                using (Pen pen = new Pen(Color.Blue, 5))
                 {
-                    using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-                    {
-                        graphics.DrawString("JPG", font, brush, new PointF(50, 80));
-                    }
+                    graphics.DrawRectangle(pen, 30, 30, 140, 140);
                 }
             }
             jpegBitmap.Save(jpegPath, ImageFormat.Jpeg);
         }
 
-        // Build a Word document and insert the images.
+        // Create a new Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Insert the PNG image.
         builder.InsertImage(pngPath);
-        builder.InsertParagraph(); // Add spacing between images.
+        // Insert a page break between images.
+        builder.InsertBreak(BreakType.PageBreak);
+        // Insert the JPEG image.
         builder.InsertImage(jpegPath);
 
         // Save the document as a PDF.
+        string outputPdf = Path.Combine(Directory.GetCurrentDirectory(), "ImagesCombined.pdf");
         doc.Save(outputPdf, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // Validate that the PDF was created.
         if (!File.Exists(outputPdf))
             throw new InvalidOperationException("The PDF file was not created.");
 
-        // Clean up temporary image files.
-        File.Delete(pngPath);
-        File.Delete(jpegPath);
+        // Clean up temporary images (optional).
+        try
+        {
+            File.Delete(pngPath);
+            File.Delete(jpegPath);
+            Directory.Delete(imagesFolder);
+        }
+        catch
+        {
+            // Ignored – cleanup is not critical for the example.
+        }
     }
 }

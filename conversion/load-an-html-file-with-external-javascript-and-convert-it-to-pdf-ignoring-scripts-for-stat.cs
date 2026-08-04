@@ -8,48 +8,46 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        string htmlFile = "input.html";
-        string jsFile = "script.js";
-        string pdfFile = "output.pdf";
+        // Define file paths in the current working directory.
+        string baseDir = Directory.GetCurrentDirectory();
+        string htmlPath = Path.Combine(baseDir, "input.html");
+        string jsPath = Path.Combine(baseDir, "script.js");
+        string pdfPath = Path.Combine(baseDir, "output.pdf");
 
         // Create a simple external JavaScript file.
-        File.WriteAllText(jsFile, "function hello() { alert('Hello from external script!'); }");
+        string jsContent = "function greet() { console.log('Hello from external script'); }";
+        File.WriteAllText(jsPath, jsContent);
 
         // Create an HTML file that references the external JavaScript.
-        string htmlContent = @"<!DOCTYPE html>
+        string htmlContent = $@"<!DOCTYPE html>
 <html>
 <head>
     <title>Sample HTML</title>
-    <script src=""script.js""></script>
+    <script src=""{Path.GetFileName(jsPath)}""></script>
 </head>
 <body>
     <h1>Hello World</h1>
     <p>This document is converted to PDF while ignoring scripts.</p>
 </body>
 </html>";
-        File.WriteAllText(htmlFile, htmlContent);
+        File.WriteAllText(htmlPath, htmlContent);
 
-        // Load the HTML document. Scripts are not executed by Aspose.Words.
+        // Load the HTML document. Scripts are not executed by Aspose.Words,
+        // but we set IgnoreNoscriptElements to true to demonstrate ignoring
+        // any <noscript> content that might be present.
         HtmlLoadOptions loadOptions = new HtmlLoadOptions
         {
-            // BaseUri helps resolve relative paths (e.g., the script file).
-            BaseUri = Directory.GetCurrentDirectory(),
-            // Optional: ignore <noscript> elements if present.
             IgnoreNoscriptElements = true
         };
-
-        Document doc = new Document(htmlFile, loadOptions);
+        Document doc = new Document(htmlPath, loadOptions);
 
         // Convert the loaded document to PDF.
-        doc.Save(pdfFile, SaveFormat.Pdf);
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfFile))
-            throw new InvalidOperationException("The PDF file was not created.");
-
-        // Clean up temporary files (optional).
-        File.Delete(htmlFile);
-        File.Delete(jsFile);
+        // Verify that the PDF file was created.
+        if (!File.Exists(pdfPath))
+        {
+            throw new InvalidOperationException("The PDF output file was not created.");
+        }
     }
 }

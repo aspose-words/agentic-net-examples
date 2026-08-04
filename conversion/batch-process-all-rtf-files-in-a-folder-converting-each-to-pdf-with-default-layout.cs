@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
@@ -15,17 +14,20 @@ public class Program
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Seed the input folder with a few sample RTF documents.
-        for (int i = 1; i <= 3; i++)
+        // Create sample RTF files if the input folder is empty.
+        if (Directory.GetFiles(inputFolder, "*.rtf").Length == 0)
         {
-            // Create a new blank document.
-            Document source = new Document();
-            DocumentBuilder builder = new DocumentBuilder(source);
-            builder.Writeln($"Sample content for file {i}.");
+            for (int i = 1; i <= 3; i++)
+            {
+                // Create a blank document and add some text.
+                Document sampleDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+                builder.Writeln($"Sample RTF content for file {i}.");
 
-            // Save the document as RTF using the default layout.
-            string rtfPath = Path.Combine(inputFolder, $"Sample{i}.rtf");
-            source.Save(rtfPath, SaveFormat.Rtf);
+                // Save the document as RTF in the input folder.
+                string rtfPath = Path.Combine(inputFolder, $"Sample{i}.rtf");
+                sampleDoc.Save(rtfPath, SaveFormat.Rtf);
+            }
         }
 
         // Process each RTF file in the input folder.
@@ -35,19 +37,16 @@ public class Program
             // Load the RTF document.
             Document doc = new Document(rtfFile);
 
-            // Determine the corresponding PDF output path.
+            // Determine the output PDF path.
             string pdfFileName = Path.GetFileNameWithoutExtension(rtfFile) + ".pdf";
             string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Convert and save the document as PDF with default layout.
+            // Convert and save as PDF using the default layout.
             doc.Save(pdfPath, SaveFormat.Pdf);
 
             // Verify that the PDF was created.
             if (!File.Exists(pdfPath))
                 throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
         }
-
-        // Optional: indicate completion (no interactive input).
-        Console.WriteLine($"Converted {rtfFiles.Length} RTF file(s) to PDF in '{outputFolder}'.");
     }
 }

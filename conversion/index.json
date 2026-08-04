@@ -10,7 +10,7 @@
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0",
+      "Aspose.Words": "26.7.0",
       "Aspose.Drawing.Common": "25.11.0"
     },
     "required_namespaces": [
@@ -21,14 +21,20 @@
       "System.Net.Http",
       "Aspose.Drawing",
       "Aspose.Drawing.Imaging",
+      "Aspose.Drawing.Drawing2D",
       "System.Linq",
+      "System.Net",
       "System.Net.Mail",
       "System.Text",
-      "Aspose.Drawing.Drawing2D",
-      "System.Net.Mime",
+      "Aspose.Words.Loading",
+      "Aspose.Words.Fields",
       "Aspose.Words.Replacing",
       "Aspose.Words.Drawing",
-      "Aspose.Words.Loading"
+      "System.Text.RegularExpressions",
+      "Aspose.Words.BuildingBlocks",
+      "Aspose.Words.Tables",
+      "Aspose.Words.Layout",
+      "System.Collections.Generic"
     ],
     "key_apis": [
       "Document",
@@ -42,11 +48,12 @@
       "ImageSaveOptions",
       "HtmlSaveOptions",
       "Font",
+      "Cell",
       "Range",
-      "Paragraph",
       "StyleIdentifier",
       "FindReplaceOptions",
-      "Row"
+      "Row",
+      "Table"
     ]
   },
   "stats": {
@@ -296,8 +303,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 17,
@@ -470,8 +477,8 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 32,
@@ -748,8 +755,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 55,
@@ -818,8 +825,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 61,
@@ -877,8 +884,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 66,
@@ -972,8 +979,8 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 74,
@@ -1184,8 +1191,8 @@
         "pdf",
         "xps"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 92,

@@ -7,32 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX file.
+        // Define file names.
+        const string inputPath = "sample.docx";
+        const string outputPath = "sample.pdf";
+
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOCX document.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Font.Name = "Arial";
-        builder.Writeln("This is a sample document with the Arial font.");
-        const string inputPath = "sample.docx";
+        builder.Writeln("This paragraph uses the Arial font.");
+        builder.Font.Name = "Times New Roman";
+        builder.Writeln("This paragraph uses the Times New Roman font.");
         sourceDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Load the DOCX file.
-        Document doc = new Document(inputPath);
+        // -----------------------------------------------------------------
+        // 2. Load the DOCX document.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(inputPath);
 
-        // Configure PDF save options to embed all fonts.
+        // -----------------------------------------------------------------
+        // 3. Configure PDF save options to embed all fonts.
+        // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll
         };
 
-        // Save as PDF with embedded fonts.
-        const string outputPath = "output.pdf";
-        doc.Save(outputPath, pdfOptions);
+        // -----------------------------------------------------------------
+        // 4. Save the document as PDF with the specified options.
+        // -----------------------------------------------------------------
+        loadedDoc.Save(outputPath, pdfOptions);
 
-        // Verify that the PDF was created.
+        // -----------------------------------------------------------------
+        // 5. Verify that the PDF file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The PDF file was not created.");
 
-        // Optional: clean up temporary files.
+        // Optional: clean up generated files (comment out if you want to keep them).
         // File.Delete(inputPath);
+        // File.Delete(outputPath);
     }
 }

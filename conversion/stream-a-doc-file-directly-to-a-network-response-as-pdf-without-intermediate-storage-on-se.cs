@@ -6,32 +6,27 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOC document.
+        // Create a sample DOC document in memory.
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOC content for PDF conversion.");
+        builder.Writeln("Sample DOC content.");
 
-        // Save the sample as a DOC file (required by the workflow).
+        // Save the document to a local DOC file (bootstrap step).
         const string inputPath = "input.doc";
         source.Save(inputPath, SaveFormat.Doc);
 
         // Load the DOC file.
         Document doc = new Document(inputPath);
 
-        // Simulate a network response using a MemoryStream.
+        // Simulate a network response by writing the PDF directly to a MemoryStream.
         using MemoryStream responseStream = new MemoryStream();
         doc.Save(responseStream, SaveFormat.Pdf);
 
-        // Verify that PDF data was written to the simulated response.
+        // Validate that data was written to the simulated response.
         if (responseStream.Length == 0)
             throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
 
-        // Optionally, write the PDF to a file to inspect the result.
-        const string outputPath = "output.pdf";
-        File.WriteAllBytes(outputPath, responseStream.ToArray());
-
-        // Clean up the temporary DOC file.
-        if (File.Exists(inputPath))
-            File.Delete(inputPath);
+        // (Optional) Write the PDF to a file for manual inspection.
+        // File.WriteAllBytes("output.pdf", responseStream.ToArray());
     }
 }

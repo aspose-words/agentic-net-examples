@@ -12,18 +12,21 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Sample content for PDF/UA compliance.");
 
-        // Set PDF save options to PDF/UA compliance.
+        // Set up PDF save options to enforce PDF/UA-1 compliance.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfUa1
         };
 
-        // Save the document as a PDF/UA compliant file.
         string outputPath = "output_pdfua.pdf";
+
+        // Save the document as a PDF using the configured options.
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the file was created.
+        // Verify that the PDF file was created.
         if (!File.Exists(outputPath))
+        {
             throw new InvalidOperationException("The PDF/UA file was not created.");
+        }
     }
 }

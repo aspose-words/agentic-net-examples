@@ -7,59 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Define paths.
-        string samplePdfPath = "sample.pdf";
-        string outputFolder = "OutputImages";
-
-        // Ensure the output folder exists.
-        if (!Directory.Exists(outputFolder))
-            Directory.CreateDirectory(outputFolder);
+        // Define the folder where the PDF and PNG images will be stored.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "PdfToPngOutput");
+        Directory.CreateDirectory(outputFolder);
 
         // -----------------------------------------------------------------
-        // Create a sample PDF document (required because we cannot assume an
-        // external file exists). The document will have two pages.
+        // Step 1: Create a sample PDF document with multiple pages.
         // -----------------------------------------------------------------
         Document sampleDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("Sample PDF page 1.");
+
+        builder.Writeln("This is page 1.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Sample PDF page 2.");
-        sampleDoc.Save(samplePdfPath, SaveFormat.Pdf);
+        builder.Writeln("This is page 2.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is page 3.");
+
+        string pdfPath = Path.Combine(outputFolder, "sample.pdf");
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
-        if (!File.Exists(samplePdfPath))
+        if (!File.Exists(pdfPath))
             throw new InvalidOperationException("Failed to create the sample PDF file.");
 
         // -----------------------------------------------------------------
-        // Load the PDF and convert each page to a separate PNG image.
+        // Step 2: Load the PDF document.
         // -----------------------------------------------------------------
-        Document pdfDocument = new Document(samplePdfPath);
+        Document pdfDocument = new Document(pdfPath);
+
+        // -----------------------------------------------------------------
+        // Step 3: Convert each page of the PDF to a separate PNG image.
+        // -----------------------------------------------------------------
+        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
 
         for (int pageIndex = 0; pageIndex < pdfDocument.PageCount; pageIndex++)
         {
-            // Configure image save options for PNG and select the current page.
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
-            {
-                PageSet = new PageSet(pageIndex),
-                // Optional: increase resolution for higher quality output.
-                Resolution = 300
-            };
+            // Configure the options to render only the current page.
+            pngOptions.PageSet = new PageSet(pageIndex);
 
-            string outputFile = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
-            pdfDocument.Save(outputFile, options);
+            string pngPath = Path.Combine(outputFolder, $"page_{pageIndex + 1}.png");
+            pdfDocument.Save(pngPath, pngOptions);
+
+            // Validate that the PNG file was created.
+            if (!File.Exists(pngPath))
+                throw new InvalidOperationException($"Failed to create PNG for page {pageIndex + 1}.");
         }
 
         // -----------------------------------------------------------------
-        // Validate that each PNG file was created.
+        // Completion message (optional, not required for non‑interactive run).
         // -----------------------------------------------------------------
-        for (int i = 0; i < pdfDocument.PageCount; i++)
-        {
-            string expectedPath = Path.Combine(outputFolder, $"Page_{i + 1}.png");
-            if (!File.Exists(expectedPath))
-                throw new InvalidOperationException($"Expected image file was not created: {expectedPath}");
-        }
-
-        // All pages have been successfully converted.
-        Console.WriteLine("PDF conversion to PNG completed successfully.");
+        Console.WriteLine($"PDF converted to PNG images successfully. Files are located in: {outputFolder}");
     }
 }

@@ -1,8 +1,9 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 
-public class Program
+public class PdfBatchToDocxConverter
 {
     public static void Main()
     {
@@ -14,38 +15,55 @@ public class Program
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample PDF files.
-        for (int i = 1; i <= 3; i++)
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"Sample PDF content {i}");
-            string pdfPath = Path.Combine(inputFolder, $"sample{i}.pdf");
-            sampleDoc.Save(pdfPath, SaveFormat.Pdf);
-        }
+        // Create sample PDF files to demonstrate the conversion.
+        CreateSamplePdfFiles(inputFolder, count: 3);
 
         // Get all PDF files from the input folder.
         string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
 
         // Convert each PDF to DOCX and save to the output folder.
-        foreach (string pdfFilePath in pdfFiles)
+        foreach (string pdfPath in pdfFiles)
         {
             // Load the PDF document.
-            Document pdfDocument = new Document(pdfFilePath);
+            Document pdfDocument = new Document(pdfPath);
 
-            // Determine the output DOCX path.
-            string docxFileName = Path.GetFileNameWithoutExtension(pdfFilePath) + ".docx";
+            // Determine the output DOCX file path.
+            string docxFileName = Path.GetFileNameWithoutExtension(pdfPath) + ".docx";
             string docxPath = Path.Combine(outputFolder, docxFileName);
 
-            // Save as DOCX.
+            // Save the document as DOCX.
             pdfDocument.Save(docxPath, SaveFormat.Docx);
 
-            // Verify that the DOCX file was created.
+            // Validate that the DOCX file was created.
             if (!File.Exists(docxPath))
-                throw new InvalidOperationException($"Expected output DOCX was not created: {docxPath}");
+                throw new InvalidOperationException($"Conversion failed: '{docxPath}' was not created.");
         }
 
-        // Optional: indicate completion (no interactive prompts).
-        Console.WriteLine("PDF to DOCX conversion completed successfully.");
+        // Optional: indicate completion.
+        Console.WriteLine("All PDF files have been converted to DOCX.");
+    }
+
+    // Helper method to create a specified number of sample PDF files.
+    private static void CreateSamplePdfFiles(string folderPath, int count)
+    {
+        for (int i = 1; i <= count; i++)
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+
+            // Add sample text.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is sample PDF document number {i}.");
+
+            // Define the PDF file path.
+            string pdfPath = Path.Combine(folderPath, $"sample{i}.pdf");
+
+            // Save the document as PDF.
+            doc.Save(pdfPath, SaveFormat.Pdf);
+
+            // Verify that the PDF file was created.
+            if (!File.Exists(pdfPath))
+                throw new InvalidOperationException($"Failed to create sample PDF: '{pdfPath}'.");
+        }
     }
 }

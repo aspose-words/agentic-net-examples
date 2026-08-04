@@ -7,38 +7,56 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample multi‑page document.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3.");
+        // Define an output folder for all generated files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Save the document as PDF (the input file for the conversion).
-        const string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample PDF document with three pages.
+        // -----------------------------------------------------------------
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
+        builder.Writeln("This is page 1.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is page 2.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is page 3.");
+
+        string pdfPath = Path.Combine(outputDir, "sample.pdf");
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+            throw new InvalidOperationException("Failed to create the sample PDF file.");
 
-        // Load the PDF document.
+        // -----------------------------------------------------------------
+        // Step 2: Load the PDF and export each page as a separate PNG.
+        // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
 
-        // Export each page of the PDF as a separate PNG image.
+        // Prepare ImageSaveOptions for PNG output.
+        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+        {
+            // Optional: set a higher resolution for better quality.
+            Resolution = 300
+        };
+
+        // Export each page.
         for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
-            {
-                PageSet = new PageSet(pageIndex)
-            };
+            // Configure the page to render.
+            pngOptions.PageSet = new PageSet(pageIndex);
 
-            string pngPath = $"page_{pageIndex + 1}.png";
-            pdfDoc.Save(pngPath, options);
+            string pngPath = Path.Combine(outputDir, $"page_{pageIndex + 1}.png");
+            pdfDoc.Save(pngPath, pngOptions);
 
-            if (!File.Exists(pngPath))
-                throw new InvalidOperationException($"The PNG file for page {pageIndex + 1} was not created.");
+            // Validate that the PNG file was written.
+            if (!File.Exists(pngPath) || new FileInfo(pngPath).Length == 0)
+                throw new InvalidOperationException($"PNG for page {pageIndex + 1} was not created.");
         }
+
+        // All pages have been exported successfully.
+        Console.WriteLine($"PDF converted to PNG images. Files are located in: {outputDir}");
     }
 }
