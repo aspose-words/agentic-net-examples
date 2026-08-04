@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
@@ -17,28 +17,28 @@
       "Aspose.Words",
       "Aspose.Words.Fields",
       "Aspose.Words.Math",
-      "Aspose.Words.Saving",
-      "System.Collections.Generic",
       "System.Linq",
-      "Aspose.Words.Rendering"
+      "Aspose.Words.Saving",
+      "Aspose.Words.Rendering",
+      "System.Collections.Generic",
+      "System.Text",
+      "Aspose.Words.Tables"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "NodeType",
-      "File",
-      "FieldType",
       "SaveFormat",
       "Directory",
+      "File",
       "Path",
-      "CompositeNode",
+      "FieldType",
+      "Paragraph",
       "Field",
       "Node",
-      "Paragraph",
-      "StyleIdentifier",
-      "Font",
+      "CompositeNode",
       "Range",
-      "PdfSaveOptions"
+      "StyleIdentifier"
     ]
   },
   "stats": {
@@ -124,7 +124,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -135,8 +135,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 4,
@@ -146,7 +146,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -157,8 +157,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
@@ -179,7 +179,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -201,8 +201,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 10,
@@ -212,8 +212,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 11,
@@ -391,7 +391,7 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -414,8 +414,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 29,

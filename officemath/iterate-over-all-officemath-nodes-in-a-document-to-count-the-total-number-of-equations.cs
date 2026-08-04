@@ -1,7 +1,10 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Saving;
 
 public class OfficeMathCounter
 {
@@ -11,19 +14,30 @@ public class OfficeMathCounter
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert several equations using the deterministic EQ‑field bootstrap workflow.
-        InsertEquation(builder, @"\f(1,2)");   // Simple fraction 1/2
-        InsertEquation(builder, @"\r(3,x)");   // Cube root of x
-        InsertEquation(builder, @"\i \su(n=1,5,n)"); // Integral with summation
+        // Insert several EQ fields with simple equations.
+        InsertFieldEQ(builder, @"\f(1,2)"); // Fraction 1/2
+        InsertFieldEQ(builder, @"\r(3,x)"); // Cube root of x
+        InsertFieldEQ(builder, @"\i \su(n=1,5,n)"); // Integral with summation
+        InsertFieldEQ(builder, @"\s \up8(Sup) \s \do8(Sub)"); // Superscript and subscript
 
-        // Save the document (optional, demonstrates the save rule).
-        const string outputPath = "OfficeMathCount.docx";
-        doc.Save(outputPath);
+        // Convert each EQ field to a real OfficeMath node.
+        var eqFields = doc.Range.Fields.OfType<FieldEQ>().ToList();
+        foreach (FieldEQ eqField in eqFields)
+        {
+            OfficeMath officeMath = eqField.AsOfficeMath();
+            if (officeMath != null)
+            {
+                // Insert the OfficeMath node before the field start.
+                eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
+                // Remove the original field.
+                eqField.Remove();
+            }
+        }
 
-        // Count top‑level OfficeMath nodes (MathObjectType == OMathPara) – these represent equations.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        // Count top‑level OfficeMath paragraph nodes (actual equations).
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
         int equationCount = 0;
-        foreach (OfficeMath om in mathNodes)
+        foreach (OfficeMath om in officeMathNodes)
         {
             if (om.MathObjectType == MathObjectType.OMathPara)
                 equationCount++;
@@ -31,29 +45,24 @@ public class OfficeMathCounter
 
         // Output the result.
         Console.WriteLine($"Total number of equations: {equationCount}");
+
+        // Save the document (optional, demonstrates that the file was created).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Equations.docx");
+        doc.Save(outputPath, SaveFormat.Docx);
     }
 
-    // Helper that inserts an EQ field, converts it to a real OfficeMath node, and removes the field.
-    private static void InsertEquation(DocumentBuilder builder, string eqArgs)
+    // Helper method to insert an EQ field with the specified arguments.
+    private static FieldEQ InsertFieldEQ(DocumentBuilder builder, string args)
     {
-        // Insert an empty EQ field.
+        // Insert the EQ field.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the EQ arguments into the field separator.
+        // Move to the field separator and write the equation arguments.
         builder.MoveTo(field.Separator);
-        builder.Write(eqArgs);
-
-        // Return the cursor to the paragraph containing the field.
+        builder.Write(args);
+        // Move back to the field start's parent node to continue building.
         builder.MoveTo(field.Start.ParentNode);
+        // Insert a paragraph break after each equation for readability.
         builder.InsertParagraph();
-
-        // Convert the field to an OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-        if (officeMath != null)
-        {
-            // Insert the OfficeMath node before the field start and remove the field.
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            field.Remove();
-        }
+        return field;
     }
 }

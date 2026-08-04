@@ -3,78 +3,78 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
-using Aspose.Words.Saving;
 
 public class ApplyOfficeMathJustification
 {
     public static void Main()
     {
+        // Folder for output files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a sample document with several sections, each containing a few equations.
-        for (int sec = 1; sec <= 3; sec++)
+        // Insert three sections, each containing two simple equations.
+        for (int sectionIndex = 0; sectionIndex < 3; sectionIndex++)
         {
             // Add a heading for the section.
+            builder.Writeln($"Section {sectionIndex + 1}");
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Section {sec}");
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
 
-            // Insert three simple equations in the current section.
-            InsertEquation(builder, @"\f(1,2)");   // fraction 1/2
-            InsertEquation(builder, @"\r(3,x)");   // cubic root of x
-            InsertEquation(builder, @"\i \su(n=1,5,n)"); // integral with summation
+            // Insert two equations in the current section.
+            for (int eqIndex = 0; eqIndex < 2; eqIndex++)
+            {
+                // Insert an EQ field.
+                Field field = builder.InsertField(FieldType.FieldEquation, true);
+                FieldEQ fieldEQ = (FieldEQ)field;
 
-            // Insert a section break after the last section.
-            if (sec < 3)
+                // Write a simple fraction as the equation argument.
+                builder.MoveTo(fieldEQ.Separator);
+                builder.Write(@"\f(1,2)"); // fraction 1/2
+                builder.MoveTo(fieldEQ.Start.ParentNode);
+
+                // Convert the field to a real OfficeMath object.
+                OfficeMath officeMath = fieldEQ.AsOfficeMath();
+                if (officeMath != null)
+                {
+                    // Insert the OfficeMath node before the field start and remove the field.
+                    fieldEQ.Start.ParentNode.InsertBefore(officeMath, fieldEQ.Start);
+                    fieldEQ.Remove();
+                }
+
+                // Add a paragraph break after the equation.
+                builder.Writeln();
+            }
+
+            // Insert a section break after each section except the last.
+            if (sectionIndex < 2)
                 builder.InsertBreak(BreakType.SectionBreakNewPage);
         }
 
+        // Save the document containing the equations.
+        string initialPath = Path.Combine(outputDir, "Initial.docx");
+        doc.Save(initialPath, SaveFormat.Docx);
+
         // Apply a uniform justification to all top‑level OfficeMath equations.
-        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath om in officeMathNodes)
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        foreach (OfficeMath om in mathNodes)
         {
             if (om.MathObjectType == MathObjectType.OMathPara)
             {
-                // Display type must be set before justification.
+                // Set display type before justification (required by the API).
                 om.DisplayType = OfficeMathDisplayType.Display;
                 om.Justification = OfficeMathJustification.Center;
             }
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Output.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
+        // Save the modified document.
+        string finalPath = Path.Combine(outputDir, "Justified.docx");
+        doc.Save(finalPath, SaveFormat.Docx);
 
-        // Simple validation – ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
-    }
-
-    // Helper that inserts an EQ field, converts it to a real OfficeMath node, and removes the field.
-    private static void InsertEquation(DocumentBuilder builder, string eqArguments)
-    {
-        // Insert an EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the EQ arguments.
-        builder.MoveTo(field.Separator);
-        builder.Write(eqArguments);
-
-        // Return the builder to the paragraph containing the field.
-        builder.MoveTo(field.Start.ParentNode);
-
-        // Convert the field to an OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-        if (officeMath != null)
-        {
-            // Insert the OfficeMath node before the field start and remove the field.
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            field.Remove();
-        }
-
-        // Add a line break after the equation for readability.
-        builder.Writeln();
+        // Simple validation that the output file was created.
+        if (!File.Exists(finalPath))
+            throw new InvalidOperationException("The justified document was not saved correctly.");
     }
 }

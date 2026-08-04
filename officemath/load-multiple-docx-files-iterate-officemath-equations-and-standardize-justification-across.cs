@@ -1,90 +1,93 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 using Aspose.Words.Saving;
 
-public class OfficeMathJustificationBatch
+public class Program
 {
     public static void Main()
     {
-        // Folder for input and output documents.
-        string inputFolder = "InputDocs";
-        string outputFolder = "OutputDocs";
+        // Prepare input and output folders.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Define sample equations for each document.
-        var docEquations = new Dictionary<string, string[]>
+        // Create sample DOCX files with simple equations.
+        for (int i = 1; i <= 2; i++)
         {
-            { Path.Combine(inputFolder, "Sample1.docx"), new[] { @"\f(1,2)", @"\r(3,x)" } },
-            { Path.Combine(inputFolder, "Sample2.docx"), new[] { @"\i", @"\s \up5(Sup)", @"\b \bc\[ (\a \al \co2 \vs2 \hs2(1,0,0,0,1,0,0,0,1))" } }
-        };
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln($"Sample document {i}");
 
-        // Create sample documents with equations.
-        foreach (var kvp in docEquations)
-        {
-            CreateDocumentWithEquations(kvp.Key, kvp.Value);
+            // Insert a safe EQ field that will be converted to a real OfficeMath node.
+            InsertEquation(builder, @"\f(1,2)"); // Simple fraction equation.
+
+            string inputPath = Path.Combine(inputFolder, $"Doc{i}.docx");
+            sampleDoc.Save(inputPath, SaveFormat.Docx);
         }
 
-        // Process each document: standardize OfficeMath justification.
+        // Process each DOCX: standardize justification of top‑level OfficeMath nodes.
         foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
             Document doc = new Document(filePath);
 
-            // Get all OfficeMath nodes in the document.
-            NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+            var topLevelMath = doc.GetChildNodes(NodeType.OfficeMath, true)
+                                  .OfType<OfficeMath>()
+                                  .Where(om => om.MathObjectType == MathObjectType.OMathPara);
 
-            foreach (OfficeMath officeMath in officeMathNodes)
+            foreach (OfficeMath om in topLevelMath)
             {
-                // Only modify top‑level equations (MathObjectType.OMathPara).
-                if (officeMath.MathObjectType == MathObjectType.OMathPara)
-                {
-                    // Ensure the equation is displayed on its own line before setting justification.
-                    officeMath.DisplayType = OfficeMathDisplayType.Display;
-                    officeMath.Justification = OfficeMathJustification.Center;
-                }
+                // Ensure the equation is displayed on its own line before setting justification.
+                om.DisplayType = OfficeMathDisplayType.Display;
+                om.Justification = OfficeMathJustification.Center;
             }
 
             // Save the modified document.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(filePath) + "_out.docx");
+            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
             doc.Save(outputPath, SaveFormat.Docx);
+
+            // Validation: reload and verify justification.
+            Document verifyDoc = new Document(outputPath);
+            OfficeMath firstMath = verifyDoc.GetChildNodes(NodeType.OfficeMath, true)
+                                           .OfType<OfficeMath>()
+                                           .FirstOrDefault(om => om.MathObjectType == MathObjectType.OMathPara);
+
+            if (firstMath == null)
+                throw new InvalidOperationException($"No top‑level OfficeMath found in '{outputPath}'.");
+
+            if (firstMath.Justification != OfficeMathJustification.Center)
+                throw new InvalidOperationException($"Justification was not set correctly in '{outputPath}'.");
         }
+
+        // Ensure output files exist.
+        if (!Directory.GetFiles(outputFolder, "*.docx").Any())
+            throw new InvalidOperationException("No output documents were created.");
     }
 
-    // Creates a DOCX file containing the specified equations, each placed in its own paragraph.
-    private static void CreateDocumentWithEquations(string filePath, string[] equations)
+    // Inserts an EQ field, converts it to a real OfficeMath node, and removes the field.
+    private static void InsertEquation(DocumentBuilder builder, string eqArgs)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert an EQ field.
+        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        foreach (string eqArgs in equations)
-        {
-            // Insert an EQ field.
-            FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-            // Write the equation arguments into the field separator.
-            builder.MoveTo(field.Separator);
-            builder.Write(eqArgs);
-            // Return the builder to the paragraph containing the field.
-            builder.MoveTo(field.Start.ParentNode);
+        // Write the equation arguments into the field separator.
+        builder.MoveTo(field.Separator);
+        builder.Write(eqArgs);
 
-            // Convert the field to a real OfficeMath object.
-            OfficeMath officeMath = field.AsOfficeMath();
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start.
-                field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-                // Remove the original field.
-                field.Remove();
-            }
+        // Update the field so that Aspose.Words parses the EQ code.
+        field.Update();
 
-            // Start a new paragraph for the next equation.
-            builder.Writeln();
-        }
+        // Convert the field to OfficeMath.
+        OfficeMath officeMath = field.AsOfficeMath();
+        if (officeMath == null)
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
 
-        // Save the sample document.
-        doc.Save(filePath, SaveFormat.Docx);
+        // Insert the OfficeMath before the field and remove the field.
+        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+        field.Remove();
     }
 }

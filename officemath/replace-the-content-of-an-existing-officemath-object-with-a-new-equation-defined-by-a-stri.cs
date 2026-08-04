@@ -1,81 +1,133 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Saving;
 
 public class ReplaceOfficeMathExample
 {
     public static void Main()
     {
-        // Output folder.
-        string outputDir = Directory.GetCurrentDirectory();
+        // Paths for the sample and output documents.
+        string samplePath = "Sample.docx";
+        string outputPath = "Output.docx";
 
-        // -------------------------------------------------
-        // 1. Create a sample document with an initial equation.
-        // -------------------------------------------------
+        // 1. Create a sample DOCX with a bookmarked OfficeMath equation.
+        CreateSampleDocument(samplePath);
+
+        // 2. Load the sample document.
+        Document doc = new Document(samplePath);
+
+        // 3. Locate the bookmark that identifies the equation to replace.
+        const string bookmarkName = "eq1";
+        Bookmark bookmark = doc.Range.Bookmarks[bookmarkName];
+        if (bookmark == null)
+            throw new InvalidOperationException($"Bookmark '{bookmarkName}' not found.");
+
+        // 4. Find the containing paragraph of the bookmark.
+        Node node = bookmark.BookmarkStart;
+        while (node != null && node.NodeType != NodeType.Paragraph)
+            node = node.ParentNode;
+        if (node == null)
+            throw new InvalidOperationException("Containing paragraph not found.");
+        Paragraph paragraph = (Paragraph)node;
+
+        // 5. Locate the top‑level OfficeMath node inside that paragraph.
+        OfficeMath targetMath = paragraph.GetChildNodes(NodeType.OfficeMath, false)
+                                         .OfType<OfficeMath>()
+                                         .FirstOrDefault(m => m.MathObjectType == MathObjectType.OMathPara);
+        if (targetMath == null)
+            throw new InvalidOperationException("Target OfficeMath node not found.");
+
+        // 6. Create a replacement OfficeMath node by cloning the original.
+        //    Cloning is the safest way to obtain a new OfficeMath instance in this workflow.
+        OfficeMath replacementMath = (OfficeMath)targetMath.Clone(true);
+        if (replacementMath == null)
+            throw new InvalidOperationException("Failed to clone OfficeMath.");
+
+        // 7. Insert the replacement before the old node and then remove the old node.
+        CompositeNode parent = (CompositeNode)targetMath.ParentNode;
+        parent.InsertBefore(replacementMath, targetMath);
+        targetMath.Remove();
+
+        // 8. Save the modified document.
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // 9. Reload the saved document and verify the replacement.
+        Document resultDoc = new Document(outputPath);
+        Bookmark resultBookmark = resultDoc.Range.Bookmarks[bookmarkName];
+        if (resultBookmark == null)
+            throw new InvalidOperationException("Bookmark missing after save.");
+
+        // Find the paragraph again.
+        Node resultNode = resultBookmark.BookmarkStart;
+        while (resultNode != null && resultNode.NodeType != NodeType.Paragraph)
+            resultNode = resultNode.ParentNode;
+        if (resultNode == null)
+            throw new InvalidOperationException("Paragraph missing after save.");
+
+        Paragraph resultParagraph = (Paragraph)resultNode;
+        OfficeMath finalMath = resultParagraph.GetChildNodes(NodeType.OfficeMath, false)
+                                             .OfType<OfficeMath>()
+                                             .FirstOrDefault(m => m.MathObjectType == MathObjectType.OMathPara);
+        if (finalMath == null)
+            throw new InvalidOperationException("Replaced OfficeMath not found after save.");
+
+        // Demonstrate that the OfficeMath node is present.
+        Console.WriteLine("Replacement successful. OfficeMath text: " + finalMath.GetText().Trim());
+    }
+
+    // Creates a sample document containing a single bookmarked OfficeMath equation.
+    private static void CreateSampleDocument(string filePath)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Original equation:");
+        // Start a bookmark that will surround the equation.
+        builder.StartBookmark("eq1");
 
-        // Insert an EQ field that will be turned into OfficeMath.
-        FieldEQ originalField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        // Write the EQ argument (a simple fraction 1/2) after the field separator.
-        builder.MoveTo(originalField.Separator);
-        builder.Write(@"\f(1,2)");
-        // Update the field so that Aspose.Words parses the argument.
-        originalField.Update();
+        // Insert a simple EQ field and convert it to a real OfficeMath node.
+        // Use a fraction switch which is known to convert reliably.
+        OfficeMath math = CreateOfficeMathFromEq(builder, @"\f(1,2)");
+        if (math == null)
+            throw new InvalidOperationException("Failed to create initial OfficeMath.");
 
-        // Convert the EQ field to a real OfficeMath node.
-        OfficeMath originalMath = originalField.AsOfficeMath();
-        if (originalMath == null)
-            throw new InvalidOperationException("Failed to convert the original EQ field to OfficeMath.");
+        // End the bookmark after the equation.
+        builder.EndBookmark("eq1");
 
-        // Replace the field with the OfficeMath node.
-        originalField.Start.ParentNode.InsertBefore(originalMath, originalField.Start);
-        originalField.Remove();
+        // Add a new paragraph so the document is well‑formed.
+        builder.Writeln();
 
-        // Save the intermediate document (optional).
-        string originalPath = Path.Combine(outputDir, "Original.docx");
-        doc.Save(originalPath);
+        doc.Save(filePath, SaveFormat.Docx);
+    }
 
-        // -------------------------------------------------
-        // 2. Replace the content of the existing OfficeMath with a new equation.
-        // -------------------------------------------------
-        // Locate the top‑level OfficeMath node that we just created.
-        OfficeMath targetMath = (OfficeMath)doc.GetChild(NodeType.OfficeMath, 0, true);
-        if (targetMath == null)
-            throw new InvalidOperationException("No OfficeMath node found to replace.");
+    // Inserts an EQ field with the specified arguments, converts it to OfficeMath, and returns the OfficeMath node.
+    private static OfficeMath CreateOfficeMathFromEq(DocumentBuilder builder, string eqArgs)
+    {
+        // Insert an EQ field.
+        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Create a new EQ field that defines the replacement equation.
-        builder.MoveToDocumentEnd();
-        FieldEQ replacementField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        builder.MoveTo(replacementField.Separator);
-        // Example replacement: cube root of x.
-        builder.Write(@"\r(3,x)");
-        replacementField.Update();
+        // Write the EQ arguments into the field separator.
+        builder.MoveTo(field.Separator);
+        builder.Write(eqArgs);
 
-        // Convert the replacement field to OfficeMath.
-        OfficeMath replacementMath = replacementField.AsOfficeMath();
-        if (replacementMath == null)
-            throw new InvalidOperationException("Failed to convert the replacement EQ field to OfficeMath.");
+        // Return the builder to the field start position.
+        builder.MoveTo(field.Start);
 
-        // Insert the new OfficeMath before the temporary field and remove the field.
-        replacementField.Start.ParentNode.InsertBefore(replacementMath, replacementField.Start);
-        replacementField.Remove();
+        // Ensure the field is up‑to‑date so that AsOfficeMath can generate the object.
+        field.Update();
 
-        // Replace the original OfficeMath with the new one.
-        targetMath.ParentNode.InsertBefore(replacementMath, targetMath);
-        targetMath.Remove();
+        // Convert the field to an OfficeMath object.
+        OfficeMath officeMath = field.AsOfficeMath();
+        if (officeMath == null)
+            return null;
 
-        // -------------------------------------------------
-        // 3. Save the final document.
-        // -------------------------------------------------
-        string resultPath = Path.Combine(outputDir, "Result.docx");
-        doc.Save(resultPath);
+        // Insert the OfficeMath node before the field and remove the field.
+        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+        field.Remove();
 
-        Console.WriteLine($"Document created: {resultPath}");
-        Console.WriteLine("The original equation has been replaced with the new one.");
+        return officeMath;
     }
 }

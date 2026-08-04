@@ -50,22 +50,22 @@ Use the simplest workflow that satisfies the task.
   - Task: Load multiple DOCX files, iterate OfficeMath equations, and standardize justification across all documents.
   - Workflow: formatting-display
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: mcp_secondary
 - `create-a-new-officemath-object-with-documentbuilder-and-insert-it-as-an-inline-equation.cs`
   - Task: Create a new OfficeMath object with DocumentBuilder and insert it as an inline equation.
   - Workflow: formatting-display
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `insert-an-officemath-equation-from-a-latex-string-representation-into-a-specific-document.cs`
   - Task: Insert an OfficeMath equation from a LaTeX string representation into a specific document location.
   - Workflow: creation-modification
   - Outputs: docx
-  - Selected engine: mcp_secondary
+  - Selected engine: mcp
 - `insert-an-officemath-equation-from-a-mathml-string-into-a-paragraph-using-documentbuilder.cs`
   - Task: Insert an OfficeMath equation from a MathML string into a paragraph using DocumentBuilder.
   - Workflow: creation-modification
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-batch-process-that-inserts-a-predefined-officemath-equation-into-each-paragraph-o.cs`
   - Task: Create a batch process that inserts a predefined OfficeMath equation into each paragraph of a document.
   - Workflow: creation-modification
@@ -75,7 +75,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Replace the content of an existing OfficeMath object with a new equation defined by a string.
   - Workflow: creation-modification
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: mcp_secondary
 - `load-a-docx-file-replace-specific-officemath-equations-based-on-identifier-and-save-as-doc.cs`
   - Task: Load a DOCX file, replace specific OfficeMath equations based on identifier, and save as DOCX.
   - Workflow: creation-modification
@@ -85,12 +85,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Delete an unwanted OfficeMath node from the document and adjust surrounding paragraph spacing.
   - Workflow: creation-modification
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `clone-an-existing-officemath-object-and-insert-the-clone-at-a-new-location.cs`
   - Task: Clone an existing OfficeMath object and insert the clone at a new location.
   - Workflow: creation-modification
   - Outputs: docx
-  - Selected engine: mcp_secondary
+  - Selected engine: existing_repo
 - `set-the-justification-of-an-officemath-equation-to-center-alignment-using-the-justificatio.cs`
   - Task: Set the justification of an OfficeMath equation to center alignment using the Justification property.
   - Workflow: formatting-display
@@ -170,7 +170,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that exported PDF retains the exact positioning of OfficeMath equations as in the source DOCX.
   - Workflow: export-validation
   - Outputs: docx, pdf
-  - Selected engine: mcp
+  - Selected engine: mcp_secondary
 - `batch-convert-a-collection-of-docx-files-containing-officemath-to-pdf-while-preserving-equ.cs`
   - Task: Batch convert a collection of DOCX files containing OfficeMath to PDF while preserving equation fidelity.
   - Workflow: export-validation
@@ -180,7 +180,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that each OfficeMath object conforms to expected MathObjectType after performing bulk updates.
   - Workflow: native-officemath
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-macro-that-toggles-the-display-mode-of-selected-officemath-equations-between-inli.cs`
   - Task: Create a macro that toggles the display mode of selected OfficeMath equations between inline and separate line.
   - Workflow: formatting-display
@@ -221,7 +221,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.6.0`
+- Package: `Aspose.Words` `26.7.0`
 
 ## Command reference
 
@@ -235,7 +235,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 ```
 
 ### Copy a category example into the temp project

@@ -1,79 +1,87 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Fields;
 
-public class Program
+public class OfficeMathBulkValidation
 {
     public static void Main()
     {
-        // Create a new document and builder.
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "OfficeMathBulkUpdate.docx");
+
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three simple equations using the deterministic EQ-field bootstrap workflow.
-        for (int i = 0; i < 3; i++)
+        // Simple EQ field arguments that reliably convert to OfficeMath.
+        List<string> equations = new List<string>
         {
-            // Add a paragraph label.
-            builder.Writeln($"Equation {i + 1}:");
+            @"\f(1,2)",   // fraction 1/2
+            @"\r(3,x)",   // cube root of x
+            @"\i"         // integral symbol
+        };
 
-            // Insert an EQ field.
-            Field field = builder.InsertField(FieldType.FieldEquation, true);
-            FieldEQ fieldEq = (FieldEQ)field;
+        // Insert each equation, convert the field to a real OfficeMath node, and remove the field.
+        foreach (string eq in equations)
+        {
+            // Insert an empty EQ field.
+            FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-            // Write a simple EQ argument.
-            builder.MoveTo(fieldEq.Separator);
-            builder.Write(@"\f(1,2)"); // simple fraction 1/2
+            // Write the equation arguments into the field separator.
+            builder.MoveTo(field.Separator);
+            builder.Write(eq);
 
-            // Convert the field to a real OfficeMath node.
-            OfficeMath officeMath = fieldEq.AsOfficeMath();
+            // Return the builder to the field start's parent (the paragraph).
+            builder.MoveTo(field.Start.ParentNode);
+
+            // Convert the field to OfficeMath.
+            OfficeMath officeMath = field.AsOfficeMath();
             if (officeMath != null)
             {
                 // Insert the OfficeMath node before the field start.
-                fieldEq.Start.ParentNode.InsertBefore(officeMath, fieldEq.Start);
+                field.Start.ParentNode.InsertBefore(officeMath, field.Start);
                 // Remove the original field.
-                fieldEq.Remove();
-                // Move the builder after the inserted OfficeMath node.
-                builder.MoveTo(officeMath);
+                field.Remove();
             }
 
-            // Ensure the next equation starts on a new line.
+            // Start a new paragraph for the next equation.
             builder.Writeln();
         }
 
-        // Save the initial document.
-        string initialPath = "BulkUpdate.docx";
-        doc.Save(initialPath);
-        if (!File.Exists(initialPath))
-            throw new InvalidOperationException($"Failed to create the initial document at '{initialPath}'.");
-
-        // Perform bulk updates: set DisplayType to Display for all top‑level OfficeMath nodes.
-        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath om in officeMathNodes)
+        // Bulk update: set display type and justification for all top‑level equations.
+        foreach (OfficeMath om in doc.GetChildNodes(NodeType.OfficeMath, true))
         {
             if (om.MathObjectType == MathObjectType.OMathPara)
             {
                 om.DisplayType = OfficeMathDisplayType.Display;
+                om.Justification = OfficeMathJustification.Left;
             }
         }
 
-        // Validate that each OfficeMath node still has the expected MathObjectType.
-        foreach (OfficeMath om in officeMathNodes)
+        // Validation: ensure every OfficeMath node is of the expected type (OMathPara for top‑level).
+        foreach (OfficeMath om in doc.GetChildNodes(NodeType.OfficeMath, true))
         {
             if (om.MathObjectType != MathObjectType.OMathPara)
-                throw new InvalidOperationException("An OfficeMath node does not have the expected MathObjectType OMathPara.");
+            {
+                throw new Exception($"Unexpected MathObjectType detected: {om.MathObjectType}");
+            }
         }
 
-        // Save the updated document.
-        string updatedPath = "BulkUpdateUpdated.docx";
-        doc.Save(updatedPath);
-        if (!File.Exists(updatedPath))
-            throw new InvalidOperationException($"Failed to create the updated document at '{updatedPath}'.");
+        // Save the document.
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception("The output document was not saved correctly.");
+        }
 
         // Indicate successful completion.
-        Console.WriteLine("Bulk update completed successfully. Documents saved:");
-        Console.WriteLine($"- {Path.GetFullPath(initialPath)}");
-        Console.WriteLine($"- {Path.GetFullPath(updatedPath)}");
+        Console.WriteLine("OfficeMath bulk update and validation completed successfully.");
     }
 }

@@ -1,76 +1,74 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Math;
 using Aspose.Words.Fields;
-using Aspose.Words.Saving;
+using Aspose.Words.Math;
 
-public class OfficeMathTypeLogger
+public class OfficeMathInspector
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string docPath = Path.Combine(artifactsDir, "OfficeMathSample.docx");
+
+        // Create a new document and insert a few simple equations using the EQ field bootstrap workflow.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert several equations using the deterministic EQ‑field bootstrap workflow.
-        InsertEquation(builder, @"\f(1,2)");                     // Fraction
-        InsertEquation(builder, @"\r(3,x)");                     // Radical
-        InsertEquation(builder, @"\a \al \co2 \vs3 \hs3(4x,-4y,-4x,+y)"); // Array (matrix‑like)
-        InsertEquation(builder, @"\i \su(n=1,5,n)");            // Integral with summation
-        InsertEquation(builder, @"\s \up8(Superscript) \s \do8(Subscript)"); // Superscript & subscript
+        InsertAndConvert(builder, @"\f(1,2)");               // Fraction 1/2
+        InsertAndConvert(builder, @"\r(3,x)");               // Cube root of x
+        InsertAndConvert(builder, @"\i \su(n=1,5,n)");       // Integral with summation
 
-        // Save the document (optional, demonstrates that the file was created).
-        const string outputPath = "OfficeMathSample.docx";
-        doc.Save(outputPath, SaveFormat.Docx);
+        // Save the document.
+        doc.Save(docPath);
 
-        // Enumerate all OfficeMath nodes in the document.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        // Reload the document to simulate a typical load‑process scenario.
+        Document loadedDoc = new Document(docPath);
 
-        // Define which MathObjectTypes are considered supported.
-        var supportedTypes = new HashSet<MathObjectType>
+        // Collect all OfficeMath nodes.
+        NodeCollection officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        List<string> unsupported = new List<string>();
+
+        for (int i = 0; i < officeMathNodes.Count; i++)
         {
-            MathObjectType.OMathPara   // Top‑level equation paragraph.
-        };
+            OfficeMath om = (OfficeMath)officeMathNodes[i];
 
-        // Log any unsupported MathObjectTypes.
-        for (int i = 0; i < mathNodes.Count; i++)
-        {
-            OfficeMath om = (OfficeMath)mathNodes[i];
-            MathObjectType type = om.MathObjectType;
-
-            if (!supportedTypes.Contains(type))
+            // Consider only OMathPara (top‑level equations) as supported.
+            if (om.MathObjectType != MathObjectType.OMathPara)
             {
-                Console.WriteLine($"Unsupported MathObjectType: {type} (Node index {i})");
+                string message = $"Unsupported MathObjectType: {om.MathObjectType} (Node index {i})";
+                Console.WriteLine(message);
+                unsupported.Add(message);
             }
         }
+
+        // Write a simple report file with the unsupported types.
+        string reportPath = Path.Combine(artifactsDir, "UnsupportedMathTypes.txt");
+        File.WriteAllLines(reportPath, unsupported);
+        Console.WriteLine($"Report written to {reportPath}");
     }
 
-    // Helper that inserts an EQ field, writes its arguments, converts it to OfficeMath,
-    // inserts the resulting OfficeMath node, and removes the original field.
-    private static void InsertEquation(DocumentBuilder builder, string eqArguments)
+    // Inserts an EQ field with the given arguments, converts it to a real OfficeMath node,
+    // and removes the original field.
+    private static void InsertAndConvert(DocumentBuilder builder, string args)
     {
-        // Insert an empty EQ field.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the EQ arguments after the field separator.
         builder.MoveTo(field.Separator);
-        builder.Write(eqArguments);
+        builder.Write(args);
+        builder.MoveTo(field.Start.ParentNode);
 
-        // Convert the field to a real OfficeMath object.
         OfficeMath officeMath = field.AsOfficeMath();
-
-        // If conversion succeeded, replace the field with the OfficeMath node.
         if (officeMath != null)
         {
-            // Insert the OfficeMath node before the field start.
+            // Insert the OfficeMath node before the field start and then delete the field.
             field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            // Remove the original field from the document.
             field.Remove();
         }
 
-        // Move the builder to the end of the paragraph to start a new one for the next equation.
-        builder.MoveTo(officeMath?.ParentParagraph ?? field.Start.ParentNode);
-        builder.Writeln(); // Ensure the next equation starts on a new line.
+        // Add a paragraph break after each equation for readability.
+        builder.InsertParagraph();
     }
 }

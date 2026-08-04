@@ -12,91 +12,92 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a regular paragraph before the equations.
-        builder.Writeln("Paragraph before equations.");
+        // First paragraph.
+        builder.Writeln("Paragraph before the first equation.");
 
-        // Insert three equations. The second one will be removed later.
-        OfficeMath eq1 = InsertEquation(builder, @"\f(1,2)"); // 1/2
-        OfficeMath eq2 = InsertEquation(builder, @"\r(3,x)"); // cube root of x (unwanted)
-        OfficeMath eq3 = InsertEquation(builder, @"\i \su(n=1,5,n)"); // integral with summation
+        // Insert the first (wanted) equation.
+        InsertEquation(builder, @"\f(1,2)");
 
-        // Insert a paragraph after the equations.
+        // Paragraph between equations.
+        builder.Writeln("Paragraph between equations.");
+
+        // Insert the second equation which we will delete later.
+        InsertEquation(builder, @"\r(2,x)");
+
+        // Paragraph after equations.
         builder.Writeln("Paragraph after equations.");
 
-        // Delete the unwanted equation (eq2) and adjust surrounding paragraph spacing.
-        DeleteOfficeMath(eq2);
+        // -----------------------------------------------------------------
+        // Delete the unwanted OfficeMath node (the second equation).
+        // -----------------------------------------------------------------
+        NodeCollection officeMaths = doc.GetChildNodes(NodeType.OfficeMath, true);
+        if (officeMaths.Count > 1)
+        {
+            // The second equation is at index 1.
+            OfficeMath unwantedMath = (OfficeMath)officeMaths[1];
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+            // Keep a reference to its parent paragraph before removal.
+            Paragraph parentParagraph = unwantedMath.ParentParagraph;
+
+            // Remove the OfficeMath node.
+            unwantedMath.Remove();
+
+            // If the paragraph became empty, remove it; otherwise adjust its spacing.
+            if (!parentParagraph.HasChildNodes)
+            {
+                parentParagraph.Remove();
+            }
+            else
+            {
+                // Add some space after the paragraph that contained the deleted equation.
+                parentParagraph.ParagraphFormat.SpaceAfter = 12; // points
+            }
+
+            // Optionally adjust spacing of the preceding paragraph.
+            Paragraph previousParagraph = parentParagraph.PreviousSibling as Paragraph;
+            if (previousParagraph != null)
+            {
+                previousParagraph.ParagraphFormat.SpaceAfter = 6; // points
+            }
+        }
+
+        // Save the resulting document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The output document was not saved correctly.");
     }
 
-    // Inserts an EQ field, converts it to a real OfficeMath node, and returns the OfficeMath.
-    private static OfficeMath InsertEquation(DocumentBuilder builder, string eqCode)
+    // Helper method that creates a real OfficeMath node using the deterministic EQ-field bootstrap workflow.
+    private static OfficeMath InsertEquation(DocumentBuilder builder, string eqArguments)
     {
         // Insert an EQ field.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Write the EQ switch arguments.
+        // Write the EQ arguments into the field separator.
         builder.MoveTo(field.Separator);
-        builder.Write(eqCode);
+        builder.Write(eqArguments);
 
-        // Update the field so that the EQ code is processed.
-        field.Update();
-
-        // Move back to the field start's parent (the paragraph) and start a new paragraph for the next content.
+        // Return to the paragraph that contains the field.
         builder.MoveTo(field.Start.ParentNode);
-        builder.InsertParagraph();
 
-        // Convert the field to OfficeMath.
+        // Convert the field to an OfficeMath object.
         OfficeMath officeMath = field.AsOfficeMath();
-        if (officeMath == null)
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
 
-        // Insert the OfficeMath node before the field start and remove the field.
-        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-        field.Remove();
-
-        return officeMath;
-    }
-
-    // Removes the specified OfficeMath node and adjusts spacing of surrounding paragraphs.
-    private static void DeleteOfficeMath(OfficeMath officeMath)
-    {
-        if (officeMath == null)
-            return;
-
-        // Get the paragraph that contains the OfficeMath.
-        Paragraph para = officeMath.ParentParagraph;
-
-        // Remove the OfficeMath node.
-        officeMath.Remove();
-
-        // If the paragraph becomes empty after removal, delete it.
-        if (!para.HasChildNodes)
+        // Replace the field with the real OfficeMath node if conversion succeeded.
+        if (officeMath != null)
         {
-            // Keep references to neighboring paragraphs before removing.
-            Paragraph prevPara = para.PreviousSibling as Paragraph;
-            Paragraph nextPara = para.NextSibling as Paragraph;
-
-            para.Remove();
-
-            // Adjust spacing of neighboring paragraphs if they exist.
-            if (prevPara != null)
-                prevPara.ParagraphFormat.SpaceAfter = 12; // 12 points after previous paragraph.
-
-            if (nextPara != null)
-                nextPara.ParagraphFormat.SpaceBefore = 12; // 12 points before next paragraph.
+            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+            field.Remove();
         }
         else
         {
-            // If the paragraph still has content, just adjust its spacing.
-            para.ParagraphFormat.SpaceAfter = 12;
-            para.ParagraphFormat.SpaceBefore = 12;
+            // If conversion failed, just remove the field to keep the document clean.
+            field.Remove();
         }
+
+        return officeMath;
     }
 }
