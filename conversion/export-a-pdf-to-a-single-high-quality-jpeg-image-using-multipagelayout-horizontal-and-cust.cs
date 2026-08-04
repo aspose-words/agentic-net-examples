@@ -3,63 +3,49 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class ExportPdfToJpeg
+public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files.
+        // Paths for the intermediate PDF and final JPEG.
         const string pdfPath = "sample.pdf";
         const string jpegPath = "output.jpg";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample multi‑page document and save it as PDF.
+        // 1. Create a simple Word document and save it as PDF.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add three pages with simple text.
-        builder.Writeln("Page 1: Hello World!");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2: Aspose.Words conversion example.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3: Exporting PDF to a single JPEG image.");
-
-        // Save the document as PDF.
+        builder.Writeln("Sample PDF content for JPEG conversion.");
+        builder.Writeln("This document will be rendered as a single high‑quality JPEG image.");
         doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
-        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
-            throw new InvalidOperationException("Failed to create the source PDF file.");
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("PDF file was not created.");
 
         // -----------------------------------------------------------------
-        // 2. Load the PDF and export it to a single high‑quality JPEG.
+        // 2. Load the PDF and export it to a single JPEG image.
         // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
 
         // Configure image save options.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Jpeg)
         {
-            // High JPEG quality (0‑100). 100 = best quality, larger file size.
-            JpegQuality = 100,
-
-            // Render all pages side by side horizontally.
+            // Render all pages side‑by‑side horizontally with a 10‑point spacing.
             PageLayout = MultiPageLayout.Horizontal(10f),
-
-            // Optional: improve rendering quality.
+            // Set JPEG quality to the maximum (100) for high quality.
+            JpegQuality = 100,
+            // Improve rendering quality.
             UseAntiAliasing = true,
             UseHighQualityRendering = true
         };
 
-        // Save the rendered image.
+        // Save the PDF as a JPEG image.
         pdfDoc.Save(jpegPath, options);
 
-        // -----------------------------------------------------------------
-        // 3. Validate the output JPEG.
-        // -----------------------------------------------------------------
+        // Verify that the JPEG was created.
         if (!File.Exists(jpegPath) || new FileInfo(jpegPath).Length == 0)
-            throw new InvalidOperationException("The JPEG image was not created successfully.");
-
-        // Indicate success (no interactive output required).
-        Console.WriteLine("PDF successfully exported to JPEG: " + jpegPath);
+            throw new InvalidOperationException("JPEG image was not created or is empty.");
     }
 }

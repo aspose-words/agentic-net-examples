@@ -12,49 +12,44 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This PDF is saved as PDF/A‑2u with image compression and optimized output.");
+        builder.Writeln("Sample document for PDF/A-2u conversion with image compression.");
 
-        // Create a simple bitmap using Aspose.Drawing (no System.Drawing usage).
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        // Generate a simple image using Aspose.Drawing and insert it into the document.
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.CornflowerBlue);
-                graphics.DrawEllipse(new Pen(Color.White, 5), 20, 20, 160, 160);
+                graphics.Clear(Color.Blue);
             }
 
-            // Save the bitmap to a memory stream.
             using (MemoryStream imageStream = new MemoryStream())
             {
                 bitmap.Save(imageStream, ImageFormat.Png);
                 imageStream.Position = 0;
-
-                // Insert the image into the document.
                 builder.InsertImage(imageStream);
             }
         }
 
-        // Configure PDF save options for PDF/A‑2u compliance, image compression, and output optimization.
+        // Configure PDF save options:
+        // - PDF/A-2u compliance
+        // - Automatic image compression
+        // - JPEG quality for compressed images
+        // - Optimize output to remove unused objects.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA2u,                 // PDF/A‑2u compliance.
-            ImageCompression = PdfImageCompression.Jpeg,      // Compress images using JPEG.
-            JpegQuality = 70,                                 // JPEG quality (0‑100, lower = higher compression).
-            OptimizeOutput = true                             // Remove unused objects and optimize the PDF.
+            Compliance = PdfCompliance.PdfA2u,
+            ImageCompression = PdfImageCompression.Auto,
+            JpegQuality = 80,
+            OptimizeOutput = true
         };
 
-        // Define the output file path.
-        string outputPath = "CompressedPdfA2u.pdf";
-
-        // Save the document as a compressed PDF/A‑2u file.
+        string outputPath = "output_pdfa2u.pdf";
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The PDF/A‑2u file was not created.");
-
-        // Optionally, you could check the file size to ensure compression took effect.
-        long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"PDF/A‑2u file created successfully. Size: {fileSize} bytes.");
+        // Verify that the file was created and is not empty.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        {
+            throw new InvalidOperationException("Failed to create the compressed PDF/A-2u file.");
+        }
     }
 }

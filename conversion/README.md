@@ -1,6 +1,6 @@
 # Conversion Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Conversion category. Each file is a standalone console example selected from the verified 26.6.0 run.
+This folder contains the live, publish-ready C# examples for the Conversion category. Each file is a standalone console example selected from the verified 26.7.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Conversion cate
 - Slug: conversion
 - Total examples: 108
 - Publish-ready successful examples: 108 / 108
-- Source run: 20260711_192617_b9179d
+- Source run: 20260802_190455_803b68
 - Input Bootstrap examples: 30
 - Stream Response examples: 8
 - Batch Bootstrap examples: 24
@@ -32,7 +32,7 @@ This folder contains the live, publish-ready C# examples for the Conversion cate
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.6.0
+- Aspose.Words 26.7.0
 - Aspose.Drawing.Common 25.11.0
 
 ## Running Examples
@@ -42,7 +42,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 
 # Copy one example from this folder into the project as Program.cs
@@ -64,7 +64,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.6.0
+dotnet add package Aspose.Words --version 26.7.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 
 # PowerShell example
@@ -93,7 +93,7 @@ dotnet run --configuration Release --no-build
 | 13 | `convert-an-html-file-to-pdf-while-preserving-css-styles-by-loading-html-and-using-saveform.cs` | Convert an HTML file to PDF while preserving CSS styles by loading HTML and using SaveFormat.Pdf. | input-bootstrap | pdf, html | mcp |
 | 14 | `batch-convert-all-docx-files-in-a-directory-to-html-with-round-trip-information-enabled.cs` | Batch convert all DOCX files in a directory to HTML with round-trip information enabled. | batch-bootstrap | docx, html | mcp |
 | 15 | `save-a-word-document-as-html-with-embedded-fonts-exported-as-base64-using-htmlsaveoptions.cs` | Save a Word document as HTML with embedded fonts exported as Base64 using HtmlSaveOptions. | input-bootstrap | docx, html | mcp |
-| 16 | `enable-exportroundtripinfo-when-saving-docx-to-html-to-retain-editing-capabilities-after-r.cs` | Enable ExportRoundTripInfo when saving DOCX to HTML to retain editing capabilities after round-trip. | input-bootstrap | docx, html | mcp |
+| 16 | `enable-exportroundtripinfo-when-saving-docx-to-html-to-retain-editing-capabilities-after-r.cs` | Enable ExportRoundTripInfo when saving DOCX to HTML to retain editing capabilities after round-trip. | input-bootstrap | docx, html | llm |
 | 17 | `export-fonts-as-separate-files-while-saving-a-document-to-html-by-setting-exportfontresour.cs` | Export fonts as separate files while saving a document to HTML by setting ExportFontResources true. | input-bootstrap | html | mcp |
 | 18 | `convert-a-docx-file-to-mhtml-format-automatically-embedding-images-and-fonts-within-the-ou.cs` | Convert a DOCX file to MHTML format, automatically embedding images and fonts within the output. | input-bootstrap | docx, mhtml | mcp |
 | 19 | `create-an-email-message-attach-an-mhtml-file-and-send-it-via-smtp-server.cs` | Create an email message, attach an MHTML file, and send it via SMTP server. | input-bootstrap | mhtml | mcp |
@@ -108,7 +108,7 @@ dotnet run --configuration Release --no-build
 | 28 | `convert-an-xps-document-to-pdf-by-loading-xps-and-saving-with-saveformat-pdf.cs` | Convert an XPS document to PDF by loading XPS and saving with SaveFormat.Pdf. | native-conversion-api | pdf, xps | existing_repo |
 | 29 | `batch-convert-all-html-files-in-a-directory-to-mhtml-embedding-resources-automatically-for.cs` | Batch convert all HTML files in a directory to MHTML, embedding resources automatically for each file. | batch-bootstrap | html, mhtml | mcp |
 | 30 | `load-a-docx-from-a-network-stream-and-convert-it-to-pdf-a-2u-compliance-using-pdfsaveoptio.cs` | Load a DOCX from a network stream and convert it to PDF/A-2u compliance using PdfSaveOptions. | stream-response | pdf, docx | mcp |
-| 31 | `convert-a-pdf-to-html-with-external-css-files-by-disabling-exportembeddedcss-in-htmlsaveop.cs` | Convert a PDF to HTML with external CSS files by disabling ExportEmbeddedCss in HtmlSaveOptions. | input-bootstrap | pdf, html | mcp |
+| 31 | `convert-a-pdf-to-html-with-external-css-files-by-disabling-exportembeddedcss-in-htmlsaveop.cs` | Convert a PDF to HTML with external CSS files by disabling ExportEmbeddedCss in HtmlSaveOptions. | input-bootstrap | pdf, html | existing_repo |
 | 32 | `enable-exportembeddedimages-when-saving-pdf-to-html-to-embed-images-as-base64-data-uris.cs` | Enable ExportEmbeddedImages when saving PDF to HTML to embed images as Base64 data URIs. | input-bootstrap | pdf, html | mcp |
 | 33 | `save-a-word-document-as-html-with-css-class-prefixes-to-avoid-style-conflicts-using-htmlsa.cs` | Save a Word document as HTML with CSS class prefixes to avoid style conflicts using HtmlSaveOptions. | input-bootstrap | docx, html | mcp |
 | 34 | `convert-a-pdf-to-mhtml-and-then-send-it-via-email-with-custom-mime-type-using-aspose-email.cs` | Convert a PDF to MHTML and then send it via email with custom MIME type using Aspose.Email. | input-bootstrap | pdf, mhtml | mcp |
@@ -131,18 +131,18 @@ dotnet run --configuration Release --no-build
 | 51 | `batch-convert-a-collection-of-png-images-into-a-single-pdf-document-with-each-image-on-sep.cs` | Batch convert a collection of PNG images into a single PDF document with each image on separate page. | batch-bootstrap | pdf, png | mcp |
 | 52 | `load-a-pdf-and-extract-its-text-content-to-a-plain-txt-file-using-document-gettext.cs` | Load a PDF and extract its text content to a plain TXT file using Document.GetText. | input-bootstrap | pdf, txt | mcp |
 | 53 | `convert-a-docx-to-mhtml-and-automatically-embed-all-linked-css-files-within-the-output.cs` | Convert a DOCX to MHTML and automatically embed all linked CSS files within the output. | input-bootstrap | docx, mhtml | mcp |
-| 54 | `save-a-pdf-as-an-image-sequence-in-png-format-with-transparent-background-using-pngsaveopt.cs` | Save a PDF as an image sequence in PNG format with transparent background using PngSaveOptions. | save-options | pdf, png | mcp |
+| 54 | `save-a-pdf-as-an-image-sequence-in-png-format-with-transparent-background-using-pngsaveopt.cs` | Save a PDF as an image sequence in PNG format with transparent background using PngSaveOptions. | save-options | pdf, png | existing_repo |
 | 55 | `apply-a-custom-page-size-when-converting-a-doc-to-pdf-by-setting-pdfsaveoptions-pagesize.cs` | Apply a custom page size when converting a DOC to PDF by setting PdfSaveOptions.PageSize. | save-options | pdf | mcp |
 | 56 | `convert-a-pdf-to-an-xps-file-for-printing-on-windows-printers-that-require-xps-input.cs` | Convert a PDF to an XPS file for printing on Windows printers that require XPS input. | native-conversion-api | pdf, xps | mcp |
 | 57 | `batch-convert-multiple-pdfs-to-html-files-preserving-original-layout-and-fonts-using-htmls.cs` | Batch convert multiple PDFs to HTML files, preserving original layout and fonts using HtmlSaveOptions. | batch-bootstrap | pdf, html | mcp |
 | 58 | `load-an-epub-and-convert-it-to-mhtml-embedding-all-resources-for-offline-viewing.cs` | Load an EPUB and convert it to MHTML, embedding all resources for offline viewing. | input-bootstrap | epub, mhtml | mcp |
 | 59 | `save-a-docx-as-pdf-with-image-compression-level-set-to-high-to-reduce-file-size.cs` | Save a DOCX as PDF with image compression level set to High to reduce file size. | native-conversion-api | pdf, docx | mcp |
-| 60 | `convert-a-pdf-to-a-searchable-pdf-a-2b-by-enabling-ocr-during-the-save-operation.cs` | Convert a PDF to a searchable PDF/A-2b by enabling OCR during the save operation. | save-options | pdf | llm |
+| 60 | `convert-a-pdf-to-a-searchable-pdf-a-2b-by-enabling-ocr-during-the-save-operation.cs` | Convert a PDF to a searchable PDF/A-2b by enabling OCR during the save operation. | save-options | pdf | mcp |
 | 61 | `batch-process-a-folder-of-doc-files-converting-each-to-pdf-and-logging-conversion-status.cs` | Batch process a folder of DOC files, converting each to PDF and logging conversion status. | batch-bootstrap | pdf, doc | mcp |
 | 62 | `load-a-pdf-and-convert-it-to-a-high-resolution-png-image-for-detailed-graphical-analysis.cs` | Load a PDF and convert it to a high-resolution PNG image for detailed graphical analysis. | native-conversion-api | pdf, png | mcp |
 | 63 | `export-a-word-document-to-html-with-external-css-files-by-disabling-exportembeddedcss-opti.cs` | Export a Word document to HTML with external CSS files by disabling ExportEmbeddedCss option. | input-bootstrap | docx, html | mcp |
 | 64 | `convert-a-pdf-to-an-epub-while-preserving-chapter-hierarchy-and-navigation-metadata.cs` | Convert a PDF to an EPUB while preserving chapter hierarchy and navigation metadata. | native-conversion-api | pdf, epub | mcp |
-| 65 | `save-a-pdf-as-a-pdf-a-1b-compliant-file-with-embedded-icc-color-profile-using-pdfsaveoptio.cs` | Save a PDF as a PDF/A-1b compliant file with embedded ICC color profile using PdfSaveOptions. | save-options | pdf | existing_repo |
+| 65 | `save-a-pdf-as-a-pdf-a-1b-compliant-file-with-embedded-icc-color-profile-using-pdfsaveoptio.cs` | Save a PDF as a PDF/A-1b compliant file with embedded ICC color profile using PdfSaveOptions. | save-options | pdf | llm |
 | 66 | `load-a-docx-from-a-cloud-storage-stream-and-convert-it-to-pdf-for-client-download.cs` | Load a DOCX from a cloud storage stream and convert it to PDF for client download. | stream-response | pdf, docx | mcp |
 | 67 | `batch-convert-html-files-to-pdf-with-custom-page-margins-defined-in-pdfsaveoptions.cs` | Batch convert HTML files to PDF with custom page margins defined in PdfSaveOptions. | batch-bootstrap | pdf, html | mcp |
 | 68 | `convert-a-pdf-containing-vector-graphics-to-high-resolution-png-to-retain-visual-fidelity.cs` | Convert a PDF containing vector graphics to high-resolution PNG to retain visual fidelity. | native-conversion-api | pdf, png | mcp |
@@ -150,7 +150,7 @@ dotnet run --configuration Release --no-build
 | 70 | `convert-a-pdf-to-a-docx-and-then-to-xlsx-to-extract-tables-into-spreadsheet-format.cs` | Convert a PDF to a DOCX and then to XLSX to extract tables into spreadsheet format. | native-conversion-api | pdf, docx | mcp |
 | 71 | `apply-compression-to-an-xlsx-file-generated-from-a-docx-by-setting-xlsxsaveoptions-compres.cs` | Apply compression to an XLSX file generated from a DOCX by setting XlsxSaveOptions.CompressionLevel to Fast. | save-options | docx | mcp |
 | 72 | `load-a-docx-replace-all-occurrences-of-a-placeholder-with-actual-data-then-save-as-pdf.cs` | Load a DOCX, replace all occurrences of a placeholder with actual data, then save as PDF. | native-conversion-api | pdf, docx | mcp |
-| 73 | `convert-a-pdf-to-html-with-embedded-fonts-as-base64-and-images-as-external-files-for-web-u.cs` | Convert a PDF to HTML with embedded fonts as Base64 and images as external files for web use. | input-bootstrap | pdf, html | llm |
+| 73 | `convert-a-pdf-to-html-with-embedded-fonts-as-base64-and-images-as-external-files-for-web-u.cs` | Convert a PDF to HTML with embedded fonts as Base64 and images as external files for web use. | input-bootstrap | pdf, html | existing_repo |
 | 74 | `save-a-pdf-as-a-pdf-a-3u-document-and-embed-an-associated-xml-file-for-enhanced-metadata.cs` | Save a PDF as a PDF/A-3u document and embed an associated XML file for enhanced metadata. | input-bootstrap | pdf, xml | mcp |
 | 75 | `batch-convert-a-collection-of-html-files-to-mhtml-ensuring-all-linked-resources-are-embedd.cs` | Batch convert a collection of HTML files to MHTML, ensuring all linked resources are embedded automatically. | batch-bootstrap | html, mhtml | mcp |
 | 76 | `load-a-pdf-and-convert-it-to-a-docx-while-preserving-original-layout-using-layout-preserva.cs` | Load a PDF and convert it to a DOCX while preserving original layout using layout preservation options. | save-options | pdf, docx | mcp |
@@ -168,7 +168,7 @@ dotnet run --configuration Release --no-build
 | 88 | `convert-a-pdf-to-a-searchable-pdf-a-1a-by-enabling-ocr-and-setting-appropriate-compliance.cs` | Convert a PDF to a searchable PDF/A-1a by enabling OCR and setting appropriate compliance. | save-options | pdf | mcp |
 | 89 | `save-a-docx-as-html-with-external-javascript-disabled-to-improve-security-of-the-generated.cs` | Save a DOCX as HTML with external JavaScript disabled to improve security of the generated page. | input-bootstrap | docx, html | mcp |
 | 90 | `batch-convert-multiple-png-images-to-a-single-pdf-arranging-each-image-on-a-separate-page.cs` | Batch convert multiple PNG images to a single PDF, arranging each image on a separate page. | batch-bootstrap | pdf, png | mcp |
-| 91 | `load-a-pdf-and-convert-it-to-an-xps-document-while-preserving-annotations-for-review.cs` | Load a PDF and convert it to an XPS document while preserving annotations for review. | native-conversion-api | pdf, xps | llm |
+| 91 | `load-a-pdf-and-convert-it-to-an-xps-document-while-preserving-annotations-for-review.cs` | Load a PDF and convert it to an XPS document while preserving annotations for review. | native-conversion-api | pdf, xps | mcp |
 | 92 | `convert-a-docx-to-mhtml-and-then-embed-it-in-an-email-body-using-aspose-email-html-body-su.cs` | Convert a DOCX to MHTML and then embed it in an email body using Aspose.Email HTML body support. | input-bootstrap | docx, html, mhtml | mcp |
 | 93 | `save-a-pdf-as-a-pdf-a-3u-file-and-attach-an-associated-xml-metadata-file-for-compliance.cs` | Save a PDF as a PDF/A-3u file and attach an associated XML metadata file for compliance. | input-bootstrap | pdf, xml | mcp |
 | 94 | `batch-process-html-files-converting-each-to-pdf-with-custom-page-size-defined-in-pdfsaveop.cs` | Batch process HTML files, converting each to PDF with custom page size defined in PdfSaveOptions. | batch-bootstrap | pdf, html | mcp |
@@ -225,6 +225,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.6.0 run.
+- This category is 100% publish-ready for the 26.7.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

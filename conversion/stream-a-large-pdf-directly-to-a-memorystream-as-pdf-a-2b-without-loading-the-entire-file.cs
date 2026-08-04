@@ -7,19 +7,23 @@ public class Program
 {
     public static void Main()
     {
-        // Create a large document with many paragraphs.
+        // Create a large Word document in memory.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 0; i < 5000; i++)
+
+        // Generate many pages to simulate a large document.
+        const int pageCount = 1000;
+        for (int i = 0; i < pageCount; i++)
         {
-            builder.Writeln($"Paragraph {i + 1}: The quick brown fox jumps over the lazy dog.");
+            builder.Writeln($"This is page {i + 1} of a large document.");
+            if (i < pageCount - 1)
+                builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Configure PDF/A‑2b (baseline) compliance.
-        // In Aspose.Words, PDF/A‑2b is represented by PdfA2u.
+        // Configure PDF/A‑2u save options (PDF/A‑2b is represented by PdfA2u in Aspose.Words).
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA2u,
+            Compliance = PdfCompliance.PdfA2u, // PDF/A‑2b compliance
             MemoryOptimization = true
         };
 
@@ -27,11 +31,24 @@ public class Program
         using (MemoryStream pdfStream = new MemoryStream())
         {
             doc.Save(pdfStream, saveOptions);
-            pdfStream.Position = 0; // Reset for any subsequent reading.
 
-            // Verify that the stream contains data.
+            // Verify that data was written.
             if (pdfStream.Length == 0)
                 throw new InvalidOperationException("The PDF/A‑2b stream is empty.");
+
+            // Reset position for any further reading.
+            pdfStream.Position = 0;
+
+            // Optional: write the stream to a file to inspect the result.
+            const string outputPath = "LargeDocument_PdfA2b.pdf";
+            using (FileStream file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+            {
+                pdfStream.CopyTo(file);
+            }
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output PDF/A‑2b file was not created.");
         }
     }
 }

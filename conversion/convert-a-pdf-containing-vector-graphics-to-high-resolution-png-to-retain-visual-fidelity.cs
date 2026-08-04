@@ -8,50 +8,47 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary PDF and the resulting PNG.
-        const string pdfPath = "input.pdf";
-        const string pngPath = "output.png";
+        // Paths for the temporary PDF and the final PNG.
+        const string inputPdfPath = "input.pdf";
+        const string outputPngPath = "output.png";
 
         // -----------------------------------------------------------------
-        // Step 1: Create a sample Word document with vector graphics.
+        // Step 1: Create a sample PDF that contains vector graphics.
         // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Insert a rectangle shape (vector graphic) into the document.
-        // Width and height are specified in points (1 point = 1/72 inch).
-        builder.InsertShape(ShapeType.Rectangle, 200, 100);
-        builder.Writeln(); // Add a line break after the shape.
+        // Add some text.
+        builder.Writeln("Sample PDF with vector graphics:");
 
-        // Save the document as a PDF – this PDF now contains vector graphics.
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // Insert a vector shape (a 5‑point star). Use a shape type that exists in the API.
+        // ShapeType.Star5 is not available; use ShapeType.Star5 (fallback to a regular star shape).
+        builder.InsertShape(ShapeType.Star, 200, 200);
+
+        // Save the document as PDF – this PDF now contains vector graphics.
+        sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
 
         // -----------------------------------------------------------------
-        // Step 2: Load the PDF and convert it to a high‑resolution PNG.
+        // Step 2: Load the PDF and convert the first page to a high‑resolution PNG.
         // -----------------------------------------------------------------
-        Document pdfDoc = new Document(pdfPath);
+        Document pdfDoc = new Document(inputPdfPath);
 
-        // Configure image save options for PNG with high DPI (e.g., 300).
+        // Configure image save options for high quality.
         ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            Resolution = 300 // Dots per inch for both horizontal and vertical resolution.
+            // Render at 300 DPI to retain visual fidelity.
+            Resolution = 300,
+            // Use the high‑quality rendering algorithm.
+            UseHighQualityRendering = true
         };
 
         // Save the first page of the PDF as a PNG image.
-        // (Aspose.Words renders only the first page when saving to an image format.)
-        pdfDoc.Save(pngPath, pngOptions);
+        pdfDoc.Save(outputPngPath, pngOptions);
 
         // -----------------------------------------------------------------
-        // Step 3: Validate that the PNG file was created successfully.
+        // Step 3: Verify that the PNG file was created.
         // -----------------------------------------------------------------
-        if (!File.Exists(pngPath))
-            throw new InvalidOperationException("The PNG output file was not created.");
-
-        FileInfo pngInfo = new FileInfo(pngPath);
-        if (pngInfo.Length == 0)
-            throw new InvalidOperationException("The PNG output file is empty.");
-
-        // Optional: Inform the user (no interactive input required).
-        Console.WriteLine($"Conversion completed. PNG saved to '{pngPath}' ({pngInfo.Length} bytes).");
+        if (!File.Exists(outputPngPath))
+            throw new InvalidOperationException("Expected output PNG was not created.");
     }
 }

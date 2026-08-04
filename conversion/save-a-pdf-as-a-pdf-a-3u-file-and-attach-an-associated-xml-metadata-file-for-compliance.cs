@@ -8,39 +8,33 @@ public class Program
     public static void Main()
     {
         // Create a simple Word document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("This document will be saved as PDF/A‑3u with an attached XML file.");
-        source.Save("input.docx", SaveFormat.Docx);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document for PDF/A‑3u with XML attachment.");
 
-        // Load the document we just created.
-        Document doc = new Document("input.docx");
+        // Create a deterministic XML metadata file.
+        const string xmlFileName = "metadata.xml";
+        File.WriteAllText(xmlFileName, "<metadata><author>John Doe</author></metadata>");
 
-        // Create a sample XML metadata file.
-        string xmlContent = "<metadata><author>John Doe</author><created>2026-07-11</created></metadata>";
-        File.WriteAllText("metadata.xml", xmlContent);
+        // Embed the XML file as an OLE object so it can be attached to the PDF.
+        // The progId "Package" is a generic container for arbitrary files.
+        builder.InsertOleObject(xmlFileName, "Package", false, true, null);
 
-        // Embed the XML file as an OLE object (it will become an attachment in PDF/A‑3u).
-        DocumentBuilder oleBuilder = new DocumentBuilder(doc);
-        // "Package" progId allows embedding arbitrary files.
-        oleBuilder.InsertOleObject("metadata.xml", "Package", false, false, null);
-
-        // Configure PDF save options for PDF/A‑3u compliance and enable attachment embedding.
+        // Configure PDF save options for PDF/A‑3u compliance and embed attachments.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA3u,
             AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations
         };
 
-        // Save the document as PDF/A‑3u.
-        doc.Save("output.pdf", saveOptions);
+        const string pdfFileName = "output_pdfa3u.pdf";
+        doc.Save(pdfFileName, saveOptions);
 
         // Verify that the PDF file was created.
-        if (!File.Exists("output.pdf"))
+        if (!File.Exists(pdfFileName))
             throw new InvalidOperationException("The PDF/A‑3u file was not created.");
 
         // Clean up temporary files (optional).
-        File.Delete("input.docx");
-        File.Delete("metadata.xml");
+        File.Delete(xmlFileName);
     }
 }

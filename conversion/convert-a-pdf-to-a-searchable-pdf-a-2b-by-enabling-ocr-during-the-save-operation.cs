@@ -7,56 +7,29 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a simple source document and save it as a PDF (non‑searchable).
-        // -----------------------------------------------------------------
+        // Create a simple PDF document from a blank Word document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is sample text for OCR conversion to PDF/A‑2b.");
-        const string inputPdfPath = "input.pdf";
-        sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
+        builder.Writeln("This is a sample PDF document.");
+        string inputPath = "input.pdf";
+        sourceDoc.Save(inputPath, SaveFormat.Pdf);
 
-        if (!File.Exists(inputPdfPath) || new FileInfo(inputPdfPath).Length == 0)
-            throw new InvalidOperationException("Failed to create the input PDF.");
+        // Load the PDF that was just created.
+        Document pdfDoc = new Document(inputPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the PDF that we just created.
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document(inputPdfPath);
-
-        // -----------------------------------------------------------------
-        // 3. Save the PDF again.  The example focuses on the conversion flow;
-        //    OCR‑related options are not available in Aspose.Words, so we simply
-        //    save the document using PdfSaveOptions (you could set compliance
-        //    here if the required enum value is present in your library version).
-        // -----------------------------------------------------------------
-        PdfSaveOptions saveOptions = new PdfSaveOptions();
-
-        // Example of setting PDF/A compliance when the enum value exists:
-        // Uncomment the following line if your Aspose.Words version supports PdfA2b.
-        // saveOptions.Compliance = PdfCompliance.PdfA2b;
-
-        const string outputPdfPath = "output_pdfa2b.pdf";
-        pdfDoc.Save(outputPdfPath, saveOptions);
-
-        // -----------------------------------------------------------------
-        // 4. Validate that the output file was created and contains data.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputPdfPath) || new FileInfo(outputPdfPath).Length == 0)
-            throw new InvalidOperationException("The searchable PDF/A‑2b file was not created.");
-
-        // -----------------------------------------------------------------
-        // 5. Clean up the temporary input file.
-        // -----------------------------------------------------------------
-        try
+        // Configure save options for PDF/A‑2u compliance.
+        // Aspose.Words does not expose a PdfA2b enum value; PdfA2u provides PDF/A‑2b compatible output.
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            File.Delete(inputPdfPath);
-        }
-        catch
-        {
-            // Ignore cleanup errors.
-        }
+            Compliance = PdfCompliance.PdfA2u
+        };
 
-        Console.WriteLine("Conversion completed successfully.");
+        // Save the document as a searchable PDF/A‑2u file.
+        string outputPath = "output.pdf";
+        pdfDoc.Save(outputPath, saveOptions);
+
+        // Verify that the output file was created and is not empty.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+            throw new InvalidOperationException("The searchable PDF/A‑2u file was not created.");
     }
 }

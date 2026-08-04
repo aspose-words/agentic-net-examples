@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,43 +8,62 @@ public class ExportWordToHtmlWithExternalCss
 {
     public static void Main()
     {
-        // Create a sample Word document in memory.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
-        builder.Writeln("This document will be exported to HTML with an external CSS file.");
+        // Define file and folder names.
+        string workDir = Directory.GetCurrentDirectory();
+        string docPath = Path.Combine(workDir, "sample.docx");
+        string htmlPath = Path.Combine(workDir, "sample.html");
 
-        // Configure HtmlFixedSaveOptions to disable embedded CSS (i.e., use external CSS).
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOCX document.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Hello Aspose.Words!");
+        sourceDoc.Save(docPath, SaveFormat.Docx);
+
+        // -----------------------------------------------------------------
+        // 2. Load the created document.
+        // -----------------------------------------------------------------
+        Document doc = new Document(docPath);
+
+        // -----------------------------------------------------------------
+        // 3. Configure HtmlFixedSaveOptions to disable embedded CSS.
+        //    This causes the CSS to be saved as an external .css file.
+        // -----------------------------------------------------------------
         HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
         {
-            ExportEmbeddedCss = false // false => CSS will be saved to an external file.
+            ExportEmbeddedCss = false // Disable embedding => external CSS file.
         };
 
-        // Define output paths.
-        string outputHtmlPath = Path.Combine(Directory.GetCurrentDirectory(), "ExportedDocument.html");
+        // -----------------------------------------------------------------
+        // 4. Save the document as HTML.
+        // -----------------------------------------------------------------
+        doc.Save(htmlPath, htmlOptions);
 
-        // Save the document as HTML using the configured options.
-        doc.Save(outputHtmlPath, htmlOptions);
-
-        // Validate that the HTML file was created.
-        if (!File.Exists(outputHtmlPath))
+        // -----------------------------------------------------------------
+        // 5. Validate that the HTML file and the external CSS file were created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(htmlPath))
             throw new InvalidOperationException("HTML output file was not created.");
 
-        // The external CSS file is saved in a folder named after the HTML file (without extension).
-        string cssFolder = Path.Combine(Path.GetDirectoryName(outputHtmlPath) ?? string.Empty,
-                                        Path.GetFileNameWithoutExtension(outputHtmlPath));
-        string cssFilePath = Path.Combine(cssFolder, "styles.css");
+        // The external CSS is placed in a folder with the same name as the HTML file (without extension).
+        string cssFolder = Path.Combine(workDir, Path.GetFileNameWithoutExtension(htmlPath));
+        if (!Directory.Exists(cssFolder))
+            throw new InvalidOperationException("CSS folder was not created.");
 
-        // Validate that the CSS file exists.
-        if (!File.Exists(cssFilePath))
+        // Find a .css file inside the folder.
+        string[] cssFiles = Directory.GetFiles(cssFolder, "*.css");
+        if (cssFiles.Length == 0)
             throw new InvalidOperationException("External CSS file was not created.");
 
-        // Optionally, verify that the HTML references the external CSS file.
-        string htmlContent = File.ReadAllText(outputHtmlPath);
-        if (!htmlContent.Contains("<link rel=\"stylesheet\""))
-            throw new InvalidOperationException("HTML does not contain a link to the external CSS file.");
+        // Optional: verify that the HTML references the external CSS file.
+        string htmlContent = File.ReadAllText(htmlPath);
+        string cssFileName = Path.GetFileName(cssFiles[0]);
+        string expectedLinkPattern = $"<link rel=\"stylesheet\" type=\"text/css\" href=\"{Path.GetFileNameWithoutExtension(htmlPath)}/{cssFileName}\"";
+        if (!Regex.IsMatch(htmlContent, Regex.Escape(expectedLinkPattern), RegexOptions.IgnoreCase))
+            throw new InvalidOperationException("HTML does not reference the external CSS file.");
 
-        // Example completed successfully.
-        Console.WriteLine("Document exported to HTML with external CSS successfully.");
+        // All checks passed.
+        Console.WriteLine("HTML and external CSS files were successfully created.");
     }
 }

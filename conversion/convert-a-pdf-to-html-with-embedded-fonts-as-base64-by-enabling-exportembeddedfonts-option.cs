@@ -7,33 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample document and save it as PDF.
+        // Create a sample document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Font.Name = "Arial"; // Use a common font to demonstrate embedding.
-        builder.Writeln("Sample PDF content with embedded fonts.");
-        string pdfPath = "sample.pdf";
+        builder.Writeln("Sample text for PDF to HTML conversion.");
+        // Save the document as PDF – this will be the input file.
+        const string pdfPath = "input.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Step 2: Load the generated PDF.
+        // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Step 3: Configure HtmlFixedSaveOptions to embed fonts as Base64.
+        // Configure HTML save options to embed fonts as Base64.
         HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
         {
             ExportEmbeddedFonts = true,   // Embed fonts in Base64.
-            ExportEmbeddedCss = true,    // Optional: embed CSS to keep a single file.
+            ExportEmbeddedCss = true,    // Embed CSS to keep a single file.
             PrettyFormat = true
         };
 
-        // Step 4: Save the PDF as HTML using the configured options.
-        string htmlPath = "output.html";
+        // Save the PDF as HTML with the specified options.
+        const string htmlPath = "output.html";
         pdfDoc.Save(htmlPath, htmlOptions);
 
-        // Step 5: Validate that the HTML file was created and is not empty.
+        // Validate that the HTML file was created and contains Base64 data.
         if (!File.Exists(htmlPath) || new FileInfo(htmlPath).Length == 0)
-        {
-            throw new InvalidOperationException("HTML conversion failed: output file is missing or empty.");
-        }
+            throw new InvalidOperationException("The HTML output file was not created.");
+
+        string htmlContent = File.ReadAllText(htmlPath);
+        if (!htmlContent.Contains("base64"))
+            throw new InvalidOperationException("Fonts were not embedded as Base64 in the HTML output.");
     }
 }

@@ -7,17 +7,17 @@ public class Program
 {
     public static void Main()
     {
-        // URL of the HTML page to be converted.
+        // URL of the HTML page to convert.
         const string url = "https://www.example.com";
 
-        // Download the HTML content into a byte array.
-        using (HttpClient httpClient = new HttpClient())
+        // Download the HTML content.
+        using (HttpClient client = new HttpClient())
         {
-            HttpResponseMessage response = httpClient.GetAsync(url).Result;
+            HttpResponseMessage response = client.GetAsync(url).Result;
             response.EnsureSuccessStatusCode();
             byte[] htmlBytes = response.Content.ReadAsByteArrayAsync().Result;
 
-            // Load the HTML into an Aspose.Words Document via a memory stream.
+            // Load the HTML into an Aspose.Words Document.
             using (MemoryStream htmlStream = new MemoryStream(htmlBytes))
             {
                 Document doc = new Document(htmlStream);
@@ -26,7 +26,7 @@ public class Program
                 const string outputPath = "output.pdf";
                 doc.Save(outputPath, SaveFormat.Pdf);
 
-                // Verify that the PDF was created.
+                // Verify that the PDF file was created.
                 if (!File.Exists(outputPath))
                     throw new InvalidOperationException("The PDF file was not created.");
             }

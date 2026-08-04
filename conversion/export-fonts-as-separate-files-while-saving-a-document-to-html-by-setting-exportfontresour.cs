@@ -4,66 +4,54 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class ExportFontsExample
+public class Program
 {
     public static void Main()
     {
         // Prepare output folder.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "ExportedFonts");
-        Directory.CreateDirectory(outputFolder);
-
-        // Path for the resulting HTML file.
-        string htmlPath = Path.Combine(outputFolder, "document.html");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = "Arial";
-        builder.Writeln("Sample text using Arial font.");
+        builder.Writeln("Sample text for font export demonstration.");
 
         // Configure HTML save options to export fonts as separate files.
         HtmlSaveOptions options = new HtmlSaveOptions
         {
             ExportFontResources = true,
-            FontSavingCallback = new HandleFontSaving(outputFolder)
+            FontsFolder = outputDir,               // Folder where fonts will be written.
+            FontSavingCallback = new HandleFontSaving()
         };
 
-        // Save the document to HTML.
+        // Save the document to HTML using the configured options.
+        string htmlPath = Path.Combine(outputDir, "output.html");
         doc.Save(htmlPath, options);
 
-        // Validate that the HTML file was created.
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML file was not created.");
-
-        // Validate that at least one font file was exported.
-        string[] exportedFonts = Directory.GetFiles(outputFolder, "*.ttf");
-        if (exportedFonts.Length == 0)
+        // Verify that at least one font file was exported.
+        string[] fontFiles = Directory.GetFiles(outputDir, "*.ttf");
+        if (fontFiles.Length == 0)
             throw new InvalidOperationException("No font files were exported.");
 
         // List exported font files.
-        foreach (string fontFile in exportedFonts)
-            Console.WriteLine($"Exported font: {fontFile}");
+        foreach (string fontFile in fontFiles)
+            Console.WriteLine($"Exported font: {Path.GetFileName(fontFile)}");
     }
 
     // Callback that controls how each font resource is saved.
     private class HandleFontSaving : IFontSavingCallback
     {
-        private readonly string _outputFolder;
-
-        public HandleFontSaving(string outputFolder)
-        {
-            _outputFolder = outputFolder;
-        }
-
         void IFontSavingCallback.FontSaving(FontSavingArgs args)
         {
             // Use the original font file name for the exported file.
-            string fileName = args.OriginalFileName.Split(Path.DirectorySeparatorChar).Last();
-            args.FontFileName = fileName;
+            string fontFileName = args.OriginalFileName.Split(Path.DirectorySeparatorChar).Last();
+            args.FontFileName = fontFileName;
 
-            // Save the font to a file in the output folder.
-            string fullPath = Path.Combine(_outputFolder, fileName);
-            args.FontStream = new FileStream(fullPath, FileMode.Create);
+            // Save the font to a file in the same output folder.
+            string fontPath = Path.Combine(Directory.GetCurrentDirectory(), "Output", fontFileName);
+            args.FontStream = new FileStream(fontPath, FileMode.Create);
             args.KeepFontStreamOpen = false;
         }
     }

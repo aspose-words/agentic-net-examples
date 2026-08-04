@@ -9,61 +9,64 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(baseDir);
+        // Define file and folder paths.
+        string inputPdfPath = "input.pdf";
+        string markdownPath = "output.md";
+        string imagesFolder = "Images";
+        string imageFileName = "sample.png";
 
-        string imagesFolder = Path.Combine(baseDir, "Images");
+        // Ensure the images folder exists.
         Directory.CreateDirectory(imagesFolder);
 
-        // Create a simple PNG image using Aspose.Drawing.
-        string imagePath = Path.Combine(baseDir, "sample.png");
+        // Step 1: Create a sample image using Aspose.Drawing.
         using (Bitmap bitmap = new Bitmap(100, 100))
         {
+            // Obtain a Graphics object for the bitmap.
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.LightBlue);
-                graphics.DrawEllipse(new Pen(Color.DarkBlue, 3), 10, 10, 80, 80);
+                // Fill the bitmap with a solid red color.
+                graphics.Clear(Color.Red);
             }
-            bitmap.Save(imagePath, ImageFormat.Png);
+
+            // Save the bitmap as a PNG file.
+            bitmap.Save(imageFileName, ImageFormat.Png);
         }
 
-        // Create a source document, insert the image, and save it as PDF.
-        string pdfPath = Path.Combine(baseDir, "input.pdf");
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample PDF containing an image.");
-        builder.InsertImage(imagePath);
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Step 2: Create a Word document, insert text and the sample image,
+        // then save it as a PDF file (input.pdf).
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document containing an image.");
+        builder.InsertImage(imageFileName);
+        doc.Save(inputPdfPath, SaveFormat.Pdf);
 
-        // Load the PDF document.
-        Document pdfDoc = new Document(pdfPath);
+        // Step 3: Load the PDF document.
+        Document pdfDoc = new Document(inputPdfPath);
 
-        // Configure Markdown save options to extract images to a folder
-        // and use a relative path (alias) in the generated Markdown.
-        MarkdownSaveOptions mdOptions = new MarkdownSaveOptions
+        // Step 4: Configure MarkdownSaveOptions to extract images to a folder
+        // and embed relative paths in the Markdown output.
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
         {
             ImagesFolder = imagesFolder,
-            ImagesFolderAlias = "images",
-            SaveFormat = SaveFormat.Markdown
+            ImagesFolderAlias = "./Images"
         };
 
-        // Save the PDF as Markdown.
-        string markdownPath = Path.Combine(baseDir, "output.md");
-        pdfDoc.Save(markdownPath, mdOptions);
+        // Step 5: Save the PDF as a Markdown file using the configured options.
+        pdfDoc.Save(markdownPath, saveOptions);
 
-        // Validation.
+        // Step 6: Validation - ensure the Markdown file and extracted images exist.
         if (!File.Exists(markdownPath))
-            throw new InvalidOperationException("Markdown file was not created.");
+            throw new InvalidOperationException("Markdown output file was not created.");
+
+        if (!Directory.Exists(imagesFolder))
+            throw new InvalidOperationException("Images folder was not created.");
 
         string[] extractedImages = Directory.GetFiles(imagesFolder);
         if (extractedImages.Length == 0)
-            throw new InvalidOperationException("No images were extracted during conversion.");
+            throw new InvalidOperationException("No images were extracted to the images folder.");
 
-        // Optional: display the result paths.
-        Console.WriteLine("Markdown file created at: " + markdownPath);
-        Console.WriteLine("Extracted images:");
-        foreach (string img in extractedImages)
-            Console.WriteLine(" - " + img);
+        // Output paths for verification.
+        Console.WriteLine($"Markdown file created at: {Path.GetFullPath(markdownPath)}");
+        Console.WriteLine($"Extracted images are located in: {Path.GetFullPath(imagesFolder)}");
     }
 }

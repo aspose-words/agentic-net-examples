@@ -1,25 +1,22 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple Word document that will be saved as PDF.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample PDF content for EPUB conversion.");
+        // Create a simple PDF document as the source.
+        Document sourcePdf = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourcePdf);
+        builder.Writeln("This is a sample PDF that will be converted to EPUB.");
+        const string pdfPath = "input.pdf";
+        sourcePdf.Save(pdfPath, SaveFormat.Pdf);
 
-        // Save the document as PDF – this will be the input for the conversion.
-        const string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Load the previously saved PDF.
+        // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Convert the PDF to EPUB.
+        // Convert and save the document as EPUB.
         const string epubPath = "output.epub";
         pdfDoc.Save(epubPath, SaveFormat.Epub);
 
@@ -27,8 +24,7 @@ public class Program
         if (!File.Exists(epubPath))
             throw new InvalidOperationException("The EPUB file was not created.");
 
-        // Optional cleanup of the intermediate PDF.
-        if (File.Exists(pdfPath))
-            File.Delete(pdfPath);
+        // Optional: indicate success (no console interaction required).
+        // The program will exit automatically.
     }
 }

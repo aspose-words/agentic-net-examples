@@ -2,23 +2,20 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;   // Needed for the Table class
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names for the sample PDF and the resulting XLSX.
-        const string pdfPath = "sample_input.pdf";
-        const string xlsxPath = "extracted_tables.xlsx";
-
         // -----------------------------------------------------------------
-        // Step 1: Create a sample PDF containing a table.
+        // 1. Create a sample PDF containing a simple 2x2 table.
         // -----------------------------------------------------------------
-        Document pdfSource = new Document();
-        DocumentBuilder builder = new DocumentBuilder(pdfSource);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Insert a simple 2x3 table with deterministic content.
-        builder.StartTable();
+        // Build a 2x2 table.
+        Table table = builder.StartTable();   // StartTable returns a Table object
         builder.InsertCell();
         builder.Write("Header 1");
         builder.InsertCell();
@@ -26,46 +23,42 @@ public class Program
         builder.EndRow();
 
         builder.InsertCell();
-        builder.Write("Row 1, Col 1");
+        builder.Write("Value 1");
         builder.InsertCell();
-        builder.Write("Row 1, Col 2");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Row 2, Col 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Col 2");
-        builder.EndRow();
-
+        builder.Write("Value 2");
         builder.EndTable();
 
-        // Save the document as PDF.
-        pdfSource.Save(pdfPath, SaveFormat.Pdf);
-
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException($"Failed to create the PDF file at '{pdfPath}'.");
+        // Save the document as PDF – this will be the input file for conversion.
+        string pdfPath = "sample.pdf";
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
         // -----------------------------------------------------------------
-        // Step 2: Load the PDF and convert it to XLSX.
+        // 2. Load the PDF document.
         // -----------------------------------------------------------------
-        Document pdfDocument = new Document(pdfPath);
+        Document pdfDoc = new Document(pdfPath);
 
-        // Configure XLSX save options to place each section on a separate worksheet.
+        // -----------------------------------------------------------------
+        // 3. Configure XLSX save options to create a separate worksheet for each section.
+        // -----------------------------------------------------------------
         XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
         {
-            SectionMode = XlsxSectionMode.MultipleWorksheets,
-            SaveFormat = SaveFormat.Xlsx
+            SectionMode = XlsxSectionMode.MultipleWorksheets
         };
 
-        // Save the loaded PDF as an XLSX spreadsheet.
-        pdfDocument.Save(xlsxPath, xlsxOptions);
+        // -----------------------------------------------------------------
+        // 4. Convert the PDF to XLSX.
+        // -----------------------------------------------------------------
+        string xlsxPath = "output.xlsx";
+        pdfDoc.Save(xlsxPath, xlsxOptions);
 
-        // Verify that the XLSX file was created.
+        // -----------------------------------------------------------------
+        // 5. Validate that the XLSX file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(xlsxPath))
-            throw new InvalidOperationException($"Failed to create the XLSX file at '{xlsxPath}'.");
+        {
+            throw new InvalidOperationException("Expected XLSX output was not created.");
+        }
 
-        // Indicate successful completion.
-        Console.WriteLine("PDF successfully converted to XLSX with tables extracted to worksheets.");
+        Console.WriteLine("Conversion succeeded. XLSX file created at: " + Path.GetFullPath(xlsxPath));
     }
 }

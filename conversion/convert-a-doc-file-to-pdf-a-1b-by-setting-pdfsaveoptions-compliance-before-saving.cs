@@ -7,31 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOC file.
+        // Define file names.
         const string inputPath = "sample.doc";
+        const string outputPath = "sample_pdfa1b.pdf";
+
+        // -----------------------------------------------------------------
+        // Create a simple DOC file.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document for PDF/A‑1b conversion.");
+        builder.Writeln("This is a sample DOC file for PDF/A-1b conversion.");
         sourceDoc.Save(inputPath, SaveFormat.Doc);
 
+        // -----------------------------------------------------------------
         // Load the DOC file.
+        // -----------------------------------------------------------------
         Document doc = new Document(inputPath);
 
-        // Configure PDF save options for PDF/A‑1b compliance.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // -----------------------------------------------------------------
+        // Configure PDF save options for PDF/A-1b compliance.
+        // -----------------------------------------------------------------
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA1b
         };
 
-        // Save the document as PDF/A‑1b.
-        const string outputPath = "output.pdf";
-        doc.Save(outputPath, pdfOptions);
+        // -----------------------------------------------------------------
+        // Save the document as PDF/A-1b.
+        // -----------------------------------------------------------------
+        doc.Save(outputPath, saveOptions);
 
+        // -----------------------------------------------------------------
         // Verify that the output file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The PDF/A‑1b file was not created.");
+            throw new InvalidOperationException($"The expected output file '{outputPath}' was not created.");
 
-        // Optional: clean up the sample input file.
-        // File.Delete(inputPath);
+        // Optional: indicate success (no interactive prompts required).
+        Console.WriteLine("Conversion to PDF/A-1b completed successfully.");
     }
 }
