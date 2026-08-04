@@ -11,33 +11,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a temporary text file to embed as an OLE object.
-        string tempFilePath = Path.Combine(Path.GetTempPath(), "SampleText.txt");
-        File.WriteAllText(tempFilePath, "This is a sample text file for OLE embedding.");
+        // Prepare some dummy data to embed as an OLE package.
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Hello, Aspose.Words OLE object!");
+        using (MemoryStream oleStream = new MemoryStream(dummyData))
+        {
+            // Insert the OLE object into the document.
+            // Parameters: stream, progId ("Package" for generic OLE package), asIcon = false, presentation = null.
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
 
-        // Insert the OLE object (embedded, not as an icon).
-        // Parameters: file name, isLinked = false, asIcon = false, presentation = null.
-        Shape oleShape = builder.InsertOleObject(tempFilePath, false, false, null);
+            // Retrieve the current display size of the OLE object (in points).
+            double originalWidth = oleShape.Width;
+            double originalHeight = oleShape.Height;
 
-        // Retrieve the display width and height of the OLE object (in points).
-        double originalWidth = oleShape.Width;
-        double originalHeight = oleShape.Height;
+            Console.WriteLine($"Original OLE size: Width = {originalWidth} pt, Height = {originalHeight} pt");
 
-        // Output the original dimensions.
-        Console.WriteLine($"Original OLE display size: Width = {originalWidth} pt, Height = {originalHeight} pt");
+            // Adjust the size of the OLE object – for example, increase both dimensions by 50%.
+            oleShape.Width = originalWidth * 1.5;
+            oleShape.Height = originalHeight * 1.5;
 
-        // Adjust the size of the OLE object – for example, increase both dimensions by 50%.
-        oleShape.Width = originalWidth * 1.5;
-        oleShape.Height = originalHeight * 1.5;
+            Console.WriteLine($"Adjusted OLE size: Width = {oleShape.Width} pt, Height = {oleShape.Height} pt");
+        }
 
-        // Output the new dimensions.
-        Console.WriteLine($"Adjusted OLE display size: Width = {oleShape.Width} pt, Height = {oleShape.Height} pt");
-
-        // Save the document to a temporary location.
-        string outputPath = Path.Combine(Path.GetTempPath(), "OleObjectDemo.docx");
+        // Save the document to the file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectAdjusted.docx");
         doc.Save(outputPath);
-
-        // Clean up the temporary text file.
-        File.Delete(tempFilePath);
     }
 }

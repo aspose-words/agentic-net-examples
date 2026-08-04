@@ -3,56 +3,40 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class ExtractOleObject
 {
     public static void Main()
     {
-        // Paths for the temporary document and the extracted OLE binary file.
-        const string docPath = "OleDocument.docx";
-        const string extractedPath = "ExtractedOle.bin";
-
-        // -------------------------------------------------
-        // 1. Create a new document and embed a simple OLE package.
-        // -------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Sample data that will be stored inside the OLE object.
-        byte[] oleData = System.Text.Encoding.UTF8.GetBytes("This is the content of the embedded OLE object.");
-
-        using (MemoryStream oleStream = new MemoryStream(oleData))
+        // Create a simple text file in memory to embed as an OLE package.
+        byte[] fileBytes = System.Text.Encoding.UTF8.GetBytes("This is the content of the embedded file.");
+        using (MemoryStream embedStream = new MemoryStream(fileBytes))
         {
-            // Insert the OLE object as a generic package.
-            // Parameters: data stream, progId ("Package"), display as content (false), no custom icon (null).
-            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Optional: give the package a file name and display name.
-            oleShape.OleFormat.OlePackage.FileName = "Sample.txt";
-            oleShape.OleFormat.OlePackage.DisplayName = "Sample.txt";
+            // Insert the OLE object from the stream.
+            // progId "Package" denotes a generic OLE package.
+            // asIcon = true to display it as an icon (optional).
+            // presentation = null to use the default icon.
+            Shape oleShape = builder.InsertOleObject(embedStream, "Package", true, null);
+
+            // Access the OleFormat of the inserted shape.
+            OleFormat oleFormat = oleShape.OleFormat;
+
+            // Determine a file name for the extracted OLE data.
+            string suggestedExtension = oleFormat.SuggestedExtension ?? ".bin";
+            string outputFile = Path.Combine(Directory.GetCurrentDirectory(),
+                                             "ExtractedOleObject" + suggestedExtension);
+
+            // Save the OLE object's binary data to the file via a stream.
+            using (FileStream fileStream = new FileStream(outputFile, FileMode.Create))
+            {
+                oleFormat.Save(fileStream);
+            }
+
+            // Optional: indicate completion (no interactive input required).
+            Console.WriteLine("OLE object extracted to: " + outputFile);
         }
-
-        // Save the document that now contains the OLE object.
-        doc.Save(docPath);
-
-        // -------------------------------------------------
-        // 2. Load the document (demonstrating the load rule).
-        // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-
-        // Locate the first shape that holds an OLE object.
-        Shape shape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
-        OleFormat oleFormat = shape.OleFormat;
-
-        // -------------------------------------------------
-        // 3. Extract the OLE object data to a binary file.
-        // -------------------------------------------------
-        using (FileStream fileStream = new FileStream(extractedPath, FileMode.Create))
-        {
-            // The OleFormat.Save method writes the embedded object's raw stream.
-            oleFormat.Save(fileStream);
-        }
-
-        // Indicate that the operation has completed.
-        Console.WriteLine("OLE object extracted to: " + Path.GetFullPath(extractedPath));
     }
 }

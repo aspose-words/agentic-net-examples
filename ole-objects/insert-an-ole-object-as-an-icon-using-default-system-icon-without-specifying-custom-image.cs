@@ -7,21 +7,20 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a simple text file that will be embedded as an OLE object.
+        string tempFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.txt");
+        File.WriteAllText(tempFilePath, "This is a sample text file for OLE embedding.");
+
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a sample file to embed as an OLE object.
-        string tempDir = Path.GetTempPath();
-        string sampleFilePath = Path.Combine(tempDir, "SampleTextFile.txt");
-        File.WriteAllText(sampleFilePath, "This is a sample text file embedded as an OLE icon.");
-
-        // Insert the OLE object as an icon.
-        // Passing null for iconFile and iconCaption makes Aspose.Words use the default system icon and file name as caption.
-        builder.InsertOleObjectAsIcon(sampleFilePath, false, null, null);
+        // Insert the text file as an OLE object displayed as an icon.
+        // Pass null for iconFile and iconCaption to use the default system icon and file name as caption.
+        builder.InsertOleObjectAsIcon(tempFilePath, false, null, null);
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "OleObjectIcon.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectIcon.docx");
         doc.Save(outputPath);
     }
 }

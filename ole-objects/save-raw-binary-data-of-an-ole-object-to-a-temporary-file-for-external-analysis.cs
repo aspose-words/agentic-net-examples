@@ -7,62 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a simple file that will be embedded as an OLE package.
-        string sourceFilePath = Path.Combine(Path.GetTempPath(), "SampleData.txt");
-        File.WriteAllText(sourceFilePath, "This is sample data for OLE embedding.");
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Load the file bytes into a memory stream.
-        byte[] sourceBytes = File.ReadAllBytes(sourceFilePath);
-        using (MemoryStream sourceStream = new MemoryStream(sourceBytes))
+        // Prepare some sample data to embed as an OLE package (a simple text file).
+        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("Sample OLE package content.");
+        using (MemoryStream dataStream = new MemoryStream(sampleData))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert the OLE object (as a package) into the document.
-            // progId "Package" indicates a generic OLE package.
-            // asIcon = true makes it appear as an icon.
-            Shape oleShape = builder.InsertOleObject(sourceStream, "Package", true, null);
-
-            // Optionally set a display name for the package.
-            oleShape.OleFormat.OlePackage.FileName = "SampleData.txt";
-            oleShape.OleFormat.OlePackage.DisplayName = "SampleData.txt";
-
-            // Save the document to a temporary location (not strictly required for extraction).
-            string docPath = Path.Combine(Path.GetTempPath(), "OleDocument.docx");
-            doc.Save(docPath);
+            // Insert the OLE object into the document as an icon.
+            // The progId "Package" indicates a generic OLE package.
+            builder.InsertOleObject(dataStream, "Package", true, null);
         }
 
-        // Load the document we just created.
-        Document loadedDoc = new Document(sourceFilePath.Replace("SampleData.txt", "OleDocument.docx"));
+        // Save the document to a temporary location (optional, just to have a file on disk).
+        string docPath = Path.Combine(Path.GetTempPath(), "OleDocument.docx");
+        doc.Save(docPath);
 
-        // Iterate through all shapes to find OLE objects.
+        // Reload the document to simulate a typical load scenario.
+        Document loadedDoc = new Document(docPath);
+
+        // Iterate through all shapes in the document.
         foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
         {
+            // Check if the shape contains an OLE object.
             OleFormat oleFormat = shape.OleFormat;
             if (oleFormat == null)
-                continue; // Not an OLE object.
+                continue;
 
             // Retrieve the raw binary data of the OLE object.
             byte[] rawData = oleFormat.GetRawData();
 
-            // Determine a file extension for the extracted data.
-            // If the OLE object suggests an extension, use it; otherwise default to .bin.
+            // Determine a suitable file extension using the SuggestedExtension property.
             string extension = oleFormat.SuggestedExtension ?? ".bin";
 
-            // Build a temporary file name for the extracted data.
-            string tempFileName = Path.Combine(Path.GetTempPath(),
+            // Create a temporary file name for the extracted OLE data.
+            string tempFilePath = Path.Combine(Path.GetTempPath(),
                 $"ExtractedOle_{Guid.NewGuid()}{extension}");
 
             // Write the raw data to the temporary file.
-            File.WriteAllBytes(tempFileName, rawData);
+            File.WriteAllBytes(tempFilePath, rawData);
 
-            // Output the location of the extracted file.
-            Console.WriteLine($"OLE object extracted to: {tempFileName}");
+            // The temporary file now contains the OLE object's binary data and can be
+            // used for external analysis. No further action is required.
         }
 
-        // Clean up the temporary source file.
-        if (File.Exists(sourceFilePath))
-            File.Delete(sourceFilePath);
+        // Clean up the temporary document file.
+        if (File.Exists(docPath))
+            File.Delete(docPath);
     }
 }

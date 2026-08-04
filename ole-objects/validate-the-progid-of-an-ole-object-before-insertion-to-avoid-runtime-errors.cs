@@ -11,43 +11,60 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Dummy data to embed as an OLE object (e.g., a simple text file content).
-        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Sample OLE content");
-        using (MemoryStream oleStream = new MemoryStream(dummyData))
+        // Define the ProgID we intend to use for the OLE object.
+        string progId = "Package"; // Example of a known ProgID.
+
+        // Validate the ProgID before insertion.
+        if (!IsProgIdValid(progId))
         {
-            // Define the ProgID we intend to use.
-            string progId = "Package"; // Example ProgID for a generic OLE package.
-
-            // Validate the ProgID before attempting insertion.
-            if (IsValidProgId(progId))
-            {
-                // Insert the OLE object as an embedded object (not as an icon).
-                // Presentation stream is null, so Aspose.Words will use a default icon if needed.
-                Shape oleShape = builder.InsertOleObject(oleStream, progId, asIcon: false, presentation: null);
-
-                // After insertion, we can read back the ProgID to confirm it was set correctly.
-                string insertedProgId = oleShape.OleFormat.ProgId;
-                Console.WriteLine($"OLE object inserted with ProgID: {insertedProgId}");
-            }
-            else
-            {
-                Console.WriteLine($"Invalid ProgID '{progId}'. OLE object was not inserted.");
-            }
+            // If the ProgID is not valid, skip insertion and finish.
+            Console.WriteLine($"ProgID \"{progId}\" is not valid. Skipping OLE insertion.");
+            doc.Save("ValidatedOleObject.docx");
+            return;
         }
 
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ValidatedOleObject.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Prepare dummy data for the OLE object (e.g., a simple byte array).
+        byte[] dummyData = new byte[] { 0x50, 0x4B, 0x03, 0x04 }; // Beginning of a ZIP file header.
+        using (MemoryStream stream = new MemoryStream(dummyData))
+        {
+            // Insert the OLE object using the validated ProgID.
+            // Parameters: stream, progId, asIcon (false), presentation (null).
+            Shape oleShape = builder.InsertOleObject(stream, progId, false, null);
+
+            // Optional: verify that the inserted object's ProgID matches the expected value.
+            string insertedProgId = oleShape.OleFormat.ProgId;
+            Console.WriteLine($"Inserted OLE object ProgID: {insertedProgId}");
+        }
+
+        // Save the document to the file system.
+        doc.Save("ValidatedOleObject.docx");
     }
 
-    // Simple validation: ProgID must be non‑empty and contain at least one dot (e.g., "Excel.Sheet").
-    private static bool IsValidProgId(string progId)
+    // Simple validation method for ProgID strings.
+    private static bool IsProgIdValid(string progId)
     {
+        // ProgID must not be null or empty.
         if (string.IsNullOrEmpty(progId))
             return false;
 
-        // Basic pattern check – most ProgIDs contain a period separating the application name and type.
-        return progId.Contains(".");
+        // Example whitelist of known safe ProgIDs.
+        string[] allowedProgIds = new string[]
+        {
+            "Package",          // Generic OLE package.
+            "Excel.Sheet",      // Microsoft Excel.
+            "Word.Document",    // Microsoft Word.
+            "PowerPoint.Show",  // Microsoft PowerPoint.
+            "Visio.Drawing"     // Microsoft Visio.
+        };
+
+        // Check if the provided ProgID is in the whitelist.
+        foreach (string allowed in allowedProgIds)
+        {
+            if (string.Equals(progId, allowed, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        // If not found in the whitelist, consider it invalid.
+        return false;
     }
 }

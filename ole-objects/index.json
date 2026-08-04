@@ -9,22 +9,28 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.6.0"
+      "Aspose.Words": "26.7.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
+      "System.Runtime.InteropServices",
       "Aspose.Words.Drawing",
-      "System.Linq"
+      "System.Text",
+      "System.IO.Compression",
+      "System.Linq",
+      "System.Collections.Generic"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "MemoryStream",
       "Directory",
-      "Path",
       "File",
+      "Path",
+      "Range",
+      "Font",
+      "MemoryStream",
       "Shape",
       "NodeType"
     ]
@@ -94,8 +100,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 3,

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -8,43 +7,40 @@ public class RetrieveOleRawData
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare some dummy data to embed as an OLE package.
-        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Hello, OLE object!");
-        using (MemoryStream dataStream = new MemoryStream(dummyData))
+        // Prepare some sample binary data to embed as an OLE package.
+        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("Hello, this is sample OLE data.");
+        using (MemoryStream dataStream = new MemoryStream(sampleData))
         {
-            // Insert the OLE object into the document.
-            // progId "Package" indicates a generic OLE package.
-            // asIcon = false to display the content directly.
-            // presentation = null (default icon will be used if needed).
-            builder.InsertOleObject(dataStream, "Package", false, null);
+            // Insert the binary data as an OLE object (Package) displayed as an icon.
+            // Parameters: stream, progId ("Package"), asIcon = true, presentation = null.
+            builder.InsertOleObject(dataStream, "Package", true, null);
         }
 
-        // Locate the first shape that contains the OLE object.
-        Shape oleShape = doc.GetChildNodes(NodeType.Shape, true)
-                            .OfType<Shape>()
-                            .FirstOrDefault(s => s.OleFormat != null);
-
-        if (oleShape != null && oleShape.OleFormat != null)
+        // Retrieve the first shape which should contain the OLE object we just inserted.
+        Shape oleShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
+        if (oleShape?.OleFormat != null)
         {
-            // Retrieve the raw binary data of the OLE object.
-            byte[] rawData = oleShape.OleFormat.GetRawData();
+            OleFormat oleFormat = oleShape.OleFormat;
 
-            // Example custom processing: output the size of the raw data.
-            Console.WriteLine($"OLE raw data length: {rawData.Length} bytes");
+            // Get the raw binary data of the OLE object.
+            byte[] rawData = oleFormat.GetRawData();
 
-            // Optional: write the raw data to a file for verification.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "OleRawData.bin");
-            File.WriteAllBytes(outputPath, rawData);
-            Console.WriteLine($"Raw data saved to: {outputPath}");
+            // Example custom processing: write the raw data length and its first few bytes to console.
+            Console.WriteLine($"OLE raw data length: {rawData.Length}");
+            int previewLength = Math.Min(20, rawData.Length);
+            string preview = BitConverter.ToString(rawData, 0, previewLength);
+            Console.WriteLine($"First {previewLength} bytes: {preview}");
+        }
+        else
+        {
+            Console.WriteLine("No OLE object found in the document.");
         }
 
-        // Save the document (optional, demonstrates usage of the Save method).
-        string docPath = Path.Combine(Environment.CurrentDirectory, "OleDocument.docx");
-        doc.Save(docPath);
-        Console.WriteLine($"Document saved to: {docPath}");
+        // Optionally save the document to verify the OLE object persists.
+        doc.Save("OleObjectDocument.docx");
     }
 }

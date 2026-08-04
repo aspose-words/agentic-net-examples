@@ -3,23 +3,29 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class InsertOnlineVideoExample
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // URL of the online video to embed.
-        string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        string videoUrl = "https://vimeo.com/52477838";
 
-        // Insert the online video with precise placement.
-        // Position: left margin, top margin, no offset.
-        // Size: 320 points wide by 180 points high (16:9 aspect ratio).
-        // Wrap type: square (text wraps around the video shape).
+        // Insert the online video with explicit positioning and size.
+        // Parameters:
+        // - videoUrl: URL of the video.
+        // - RelativeHorizontalPosition.LeftMargin: distance measured from the left margin.
+        // - left: 0 points from the left margin.
+        // - RelativeVerticalPosition.TopMargin: distance measured from the top margin.
+        // - top: 0 points from the top margin.
+        // - width: 320 points (approx. 4.44 inches).
+        // - height: 180 points (approx. 2.5 inches).
+        // - WrapType.Square: text wraps around the video shape.
         builder.InsertOnlineVideo(
             videoUrl,
             RelativeHorizontalPosition.LeftMargin, 0,
@@ -27,10 +33,10 @@ public class Program
             320, 180,
             WrapType.Square);
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OnlineVideo.docx");
+        // Define the output path (in the current working directory).
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "OnlineVideo.docx");
 
-        // Save the document to the specified file.
+        // Save the document.
         doc.Save(outputPath);
     }
 }

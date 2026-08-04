@@ -3,38 +3,34 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class OleObjectInsertionDemo
+public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a temporary file that will be embedded as an OLE object.
+        string tempFilePath = Path.Combine(Path.GetTempPath(), "Sample.txt");
+        File.WriteAllText(tempFilePath, "Sample content for OLE object.");
+
+        // Initialize a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a simple text file in memory to be inserted as an OLE package.
-        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("Sample OLE package content");
-        using (MemoryStream oleStream = new MemoryStream(sampleData))
-        {
-            // Insert the OLE object from the stream.
-            // Parameters: stream, progId ("Package"), asIcon = false, presentation = null.
-            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
+        // Insert the OLE object (embedded, not as an icon) from the temporary file.
+        // The method returns a Shape that contains the OLE object.
+        Shape oleShape = builder.InsertOleObject(tempFilePath, "Package", false, false, null);
 
-            // Verify that the insertion returned a non‑null Shape.
-            if (oleShape == null)
-                throw new InvalidOperationException("InsertOleObject returned null.");
+        // Verify that the insertion succeeded by checking the returned references.
+        if (oleShape == null)
+            throw new InvalidOperationException("InsertOleObject returned a null Shape.");
 
-            // Verify that the Shape contains a valid OleFormat object.
-            OleFormat oleFormat = oleShape.OleFormat;
-            if (oleFormat == null)
-                throw new InvalidOperationException("OleFormat is null after insertion.");
+        OleFormat oleFormat = oleShape.OleFormat;
+        if (oleFormat == null)
+            throw new InvalidOperationException("OleFormat property is null.");
 
-            // Optional: output some properties to confirm successful insertion.
-            Console.WriteLine($"OLE object inserted. IsLink: {oleFormat.IsLink}, OleIcon: {oleFormat.OleIcon}");
-        }
+        // Optionally, you could inspect properties such as IsLink or OleIcon here.
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "OleObjectDemo.docx");
+        // Save the document to a temporary location to complete the lifecycle.
+        string outputPath = Path.Combine(Path.GetTempPath(), "OleInsertionDemo.docx");
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }
