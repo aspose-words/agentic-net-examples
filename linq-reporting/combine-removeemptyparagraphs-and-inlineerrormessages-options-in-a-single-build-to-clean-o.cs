@@ -1,54 +1,79 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+namespace AsposeWordsLinqReporting
 {
     // Simple data model used by the template.
-    public class ReportModel
+    public class Person
     {
-        // Regular property with a value.
-        public string Name { get; set; } = "John Doe";
+        // Name may be null to demonstrate empty paragraph removal.
+        public string? Name { get; set; }
 
-        // Property that returns an empty string – the paragraph will become empty after processing.
-        public string Empty { get; set; } = string.Empty;
+        // This property intentionally does not exist in the template to trigger an error.
+        // It is used only to show inline error messages.
+        public int Age { get; set; }
+
+        // Returns an empty string so the paragraph containing only this tag becomes empty.
+        public string Empty => string.Empty;
+    }
+
+    public class Wrapper
+    {
+        // Collection referenced by the template.
+        public List<Person> Persons { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // 1. Create a template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Build a template that contains:
-            // 1. A valid expression.
-            // 2. An expression referencing a missing member (will generate an inline error).
-            // 3. An expression that evaluates to an empty string (will produce an empty paragraph).
-            builder.Writeln("Customer: <<[model.Name]>>");
-            builder.Writeln("Missing member: <<[model.Missing]>>");
-            builder.Writeln("Empty value: <<[model.Empty]>>");
+            // Begin a foreach loop over the collection "persons".
+            builder.Writeln("<<foreach [person in persons]>>");
 
-            // Configure the reporting engine to:
-            // - Remove paragraphs that become empty after tag processing.
-            // - Inline any syntax errors directly into the output document.
+            // Paragraph that will contain a value; if Name is null the paragraph becomes "Name: ".
+            builder.Writeln("Name: <<[person.Name]>>");
+
+            // Paragraph that contains only an empty tag – it will be removed by RemoveEmptyParagraphs.
+            builder.Writeln("<<[person.Empty]>>");
+
+            // This tag references a non‑existent member and will cause an inline error message.
+            builder.Writeln("Missing: <<[person.NonExisting]>>");
+
+            // End of the foreach block.
+            builder.Writeln("<</foreach>>");
+
+            // 2. Prepare sample data.
+            var data = new Wrapper
+            {
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = null, Age = 25 }, // Name is null → empty paragraph after removal.
+                    new Person { Name = "Bob", Age = 40 }
+                }
+            };
+
+            // 3. Configure the ReportingEngine with both options.
             ReportingEngine engine = new ReportingEngine
             {
                 Options = ReportBuildOptions.RemoveEmptyParagraphs | ReportBuildOptions.InlineErrorMessages
             };
 
-            // Build the report using the model as the data source.
-            // The third parameter ("model") matches the root name used in the template tags.
-            bool success = engine.BuildReport(doc, new ReportModel(), "model");
+            // Build the report. The returned flag indicates whether parsing succeeded (true when InlineErrorMessages is set).
+            bool success = engine.BuildReport(template, data, "persons");
 
-            // Output the result of the build (true = no parsing errors, false = errors were inlined).
-            Console.WriteLine($"Report build successful: {success}");
+            Console.WriteLine($"Report build success flag: {success}");
 
-            // Save the generated document.
-            const string outputPath = "output.docx";
-            doc.Save(outputPath);
-            Console.WriteLine($"Document saved to: {outputPath}");
+            // 4. Save the generated document.
+            const string outputPath = "Report_Output.docx";
+            template.Save(outputPath);
+            Console.WriteLine($"Report saved to: {outputPath}");
         }
     }
 }

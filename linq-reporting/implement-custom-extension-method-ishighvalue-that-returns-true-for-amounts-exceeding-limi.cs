@@ -1,71 +1,51 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class Extensions
+namespace LinqReportingExtensionDemo
 {
-    // Returns true if the transaction amount exceeds the specified limit.
-    public static bool IsHighValue(this Transaction transaction, decimal limit)
+    // Extension methods must be defined in a static class.
+    public static class DecimalExtensions
     {
-        return transaction.Amount > limit;
+        // Returns true if the amount exceeds the specified limit.
+        public static bool IsHighValue(this decimal amount, decimal limit) => amount > limit;
     }
-}
 
-// Data model for the report.
-public class ReportModel
-{
-    public List<Transaction> Items { get; set; } = new();
-}
-
-// Simple transaction class.
-public class Transaction
-{
-    public decimal Amount { get; set; }
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model used as the root object for the report.
+    public class Order
     {
-        // 1. Create the template document programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Sample amount property.
+        public decimal Amount { get; set; } = 0m;
+    }
 
-        // LINQ Reporting tags: iterate over Items and display amount and high‑value flag.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Amount: <<[item.Amount]>>  High: <<[item.IsHighValue(100)]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // 2. Load the template for reporting.
-        var reportDoc = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        var model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Items = new List<Transaction>
+            // 1. Create a template document programmatically.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a LINQ Reporting tag that calls the extension method on the Amount property.
+            // The tag will output "True" or "False" depending on the limit (100 in this case).
+            builder.Writeln("Amount: <<[order.Amount]>>");
+            builder.Writeln("Is high (limit 100): <<[order.Amount.IsHighValue(100)]>>");
+
+            // 2. Prepare the data source.
+            Order order = new Order { Amount = 150m };
+
+            // 3. Configure the reporting engine.
+            ReportingEngine engine = new ReportingEngine
             {
-                new Transaction { Amount = 50m },
-                new Transaction { Amount = 150m },
-                new Transaction { Amount = 75m },
-                new Transaction { Amount = 200m }
-            }
-        };
+                // Allow the engine to use extension methods.
+                Options = ReportBuildOptions.AllowMissingMembers
+            };
 
-        // 4. Build the report using the ReportingEngine.
-        var engine = new ReportingEngine
-        {
-            // Allow the engine to call extension methods like IsHighValue.
-            Options = ReportBuildOptions.AllowMissingMembers
-        };
+            // 4. Build the report using the template, data source, and root name.
+            engine.BuildReport(doc, order, "order");
 
-        engine.BuildReport(reportDoc, model, "model");
-
-        // 5. Save the generated report.
-        reportDoc.Save("ReportOutput.docx");
+            // 5. Save the generated report.
+            doc.Save("Report_Output.docx");
+        }
     }
 }

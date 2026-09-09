@@ -1,66 +1,74 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class DateHelper
+namespace AsposeWordsLinqReportingExample
 {
-    // Calculates age based on the provided birth date.
-    public static int CalculateAge(DateTime birthDate)
+    // Helper class containing the custom static method.
+    public static class DateHelper
     {
-        var today = DateTime.Today;
-        int age = today.Year - birthDate.Year;
-        if (birthDate > today.AddYears(-age))
-            age--;
-        return age;
-    }
-}
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public DateTime BirthDate { get; set; }
-}
-
-// Wrapper class required for LINQ Reporting (cannot use anonymous types).
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
-    {
-        // Sample data.
-        var persons = new List<Person>
+        // Calculates age based on the provided birth date.
+        public static int CalculateAge(DateTime birthDate)
         {
-            new Person { Name = "Alice", BirthDate = new DateTime(1990, 5, 12) },
-            new Person { Name = "Bob",   BirthDate = new DateTime(1985, 11, 23) }
-        };
+            var today = DateTime.Today;
+            int age = today.Year - birthDate.Year;
+            if (birthDate > today.AddYears(-age)) age--;
+            return age;
+        }
+    }
 
-        // Create a template document with LINQ Reporting tags.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Age: <<[DateHelper.CalculateAge(p.BirthDate)]>>");
-        builder.Writeln("<</foreach>>");
+    // Simple data model used as the root object for the report.
+    public class Person
+    {
+        // Sample birth date property.
+        public DateTime BirthDate { get; set; } = DateTime.MinValue;
+    }
 
-        // Save and reload the template to satisfy the lifecycle rule.
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
-        var doc = new Document(templatePath);
+    class Program
+    {
+        static void Main()
+        {
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-        // Prepare the reporting engine.
-        var engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(DateHelper));
+            // Insert a LINQ Reporting tag that calls the static method.
+            // The tag uses the root object's BirthDate property.
+            builder.Writeln("Age: <<[DateHelper.CalculateAge(BirthDate)]>>");
 
-        // Build the report using a non‑anonymous root data source.
-        var model = new ReportModel { Persons = persons };
-        engine.BuildReport(doc, model, "model");
+            // Save the template locally.
+            const string templatePath = "template.docx";
+            template.Save(templatePath);
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+            // -----------------------------------------------------------------
+            // 2. Load the template and prepare the data source.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+
+            var person = new Person
+            {
+                // Example birth date.
+                BirthDate = new DateTime(1990, 5, 15)
+            };
+
+            // -----------------------------------------------------------------
+            // 3. Configure the ReportingEngine.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
+
+            // Register the helper type so its static members can be used in tags.
+            engine.KnownTypes.Add(typeof(DateHelper));
+
+            // Build the report using the root object name "person".
+            engine.BuildReport(doc, person, "person");
+
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "output.docx";
+            doc.Save(outputPath);
+        }
     }
 }

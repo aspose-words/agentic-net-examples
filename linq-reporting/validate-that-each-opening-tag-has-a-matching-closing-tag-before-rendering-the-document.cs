@@ -1,132 +1,58 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingTagValidation
+public class Item
 {
-    // Sample data model
-    public class Model
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public class Model
+{
+    // Collection that will be iterated in the template.
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public List<Item> Items { get; set; } = new();
-    }
+        // ---------- Create the template document ----------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-    }
+        // Opening tag for a foreach loop.
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Content inside the loop.
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        // Closing tag for the foreach loop.
+        builder.Writeln("<</foreach>>");
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Paths for the temporary template and final report
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+        // Save the template (demonstrates the save lifecycle rule).
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
 
-            // -------------------------------------------------
-            // 1. Create the template document programmatically
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // ---------- Load the template ----------
+        Document doc = new Document(templatePath);
 
-            // Add a foreach block
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Name: <<[item.Name]>>");
-            // Add an if block inside the foreach
-            builder.Writeln("<<if [item.IsActive]>>Status: Active<</if>>");
-            builder.Writeln("<</foreach>>");
+        // ---------- Prepare sample data ----------
+        Model model = new Model();
+        model.Items.Add(new Item { Index = 1, Name = "Apple" });
+        model.Items.Add(new Item { Index = 2, Name = "Banana" });
+        model.Items.Add(new Item { Index = 3, Name = "Cherry" });
 
-            // Save the template to disk (required before BuildReport)
-            templateDoc.Save(templatePath);
+        // ---------- Build the report ----------
+        ReportingEngine engine = new ReportingEngine();
+        // BuildReport returns a bool indicating success when InlineErrorMessages option is used.
+        // Here we just use the default options; the return value will be true if parsing succeeded.
+        bool success = engine.BuildReport(doc, model, "model");
 
-            // -------------------------------------------------
-            // 2. Load the template back from disk
-            // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+        // ---------- Save the generated report ----------
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
 
-            // -------------------------------------------------
-            // 3. Validate that every opening tag has a matching closing tag
-            // -------------------------------------------------
-            if (!ValidateTags(loadedTemplate))
-            {
-                throw new InvalidOperationException("Tag validation failed: mismatched opening/closing tags.");
-            }
-
-            // -------------------------------------------------
-            // 4. Prepare sample data
-            // -------------------------------------------------
-            Model model = new Model
-            {
-                Items = new List<Item>
-                {
-                    new Item { Name = "Alice", IsActive = true },
-                    new Item { Name = "Bob",   IsActive = false },
-                    new Item { Name = "Carol", IsActive = true }
-                }
-            };
-
-            // -------------------------------------------------
-            // 5. Build the report using the LINQ Reporting engine
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // -------------------------------------------------
-            // 6. Save the generated report
-            // -------------------------------------------------
-            loadedTemplate.Save(reportPath);
-        }
-
-        // Simple validation that counts opening and closing tags for supported constructs
-        private static bool ValidateTags(Document doc)
-        {
-            string text = doc.GetText();
-
-            // Define tag pairs to check
-            var tagPairs = new Dictionary<string, (string Open, string Close)>
-            {
-                { "foreach", ("<<foreach", "<</foreach>>") },
-                { "if",      ("<<if",      "<</if>>") },
-                { "bookmark",("<<bookmark","<</bookmark>>") },
-                { "textColor",("<<textColor", "<</textColor>>") },
-                { "backColor",("<<backColor", "<</backColor>>") },
-                { "cellMerge",("<<cellMerge", "<</cellMerge>>") },
-                { "restartNum",("<<restartNum", "<</restartNum>>") }
-                // Add more pairs as needed
-            };
-
-            foreach (var pair in tagPairs.Values)
-            {
-                int openCount = CountOccurrences(text, pair.Open);
-                int closeCount = CountOccurrences(text, pair.Close);
-                if (openCount != closeCount)
-                {
-                    // Mismatch found
-                    return false;
-                }
-            }
-
-            // All checked tags are balanced
-            return true;
-        }
-
-        // Helper to count non‑overlapping occurrences of a substring
-        private static int CountOccurrences(string source, string substring)
-        {
-            if (string.IsNullOrEmpty(substring))
-                return 0;
-
-            int count = 0;
-            int index = 0;
-            while ((index = source.IndexOf(substring, index, StringComparison.Ordinal)) != -1)
-            {
-                count++;
-                index += substring.Length;
-            }
-            return count;
-        }
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
     }
 }

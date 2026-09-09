@@ -1,59 +1,96 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
 
-public class ReportModel
-{
-    public string Title { get; set; } = "Dynamic Title";
-    public string ColorName { get; set; } = "Blue";
-    public string Content { get; set; } = "This paragraph demonstrates a dynamic text color applied via LINQ Reporting tags.";
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel();
+        // Folder for generated files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
+        // 1. Create a Word template with LINQ Reporting tags.
         // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Title with dynamic text color.
-        builder.Writeln("<<textColor [model.ColorName]>><<[model.Title]>><</textColor>>");
-        // Regular content.
-        builder.Writeln("<<[model.Content]>>");
+        // Begin a foreach loop over the Items collection.
+        builder.Writeln("<<foreach [item in Items]>>");
 
-        // Save the template to disk (required by the workflow).
-        const string templatePath = "Template.docx";
+        // Apply a dynamic text color using the <<textColor>> tag.
+        // The color expression will be taken from item.Color.
+        builder.Writeln("<<textColor [item.Color]>>");
+        builder.Writeln("<<[item.Text]>>");
+        builder.Writeln("<</textColor>>");
+
+        // End the foreach block.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
+        // 2. Load the template and prepare the data model.
         // -----------------------------------------------------------------
-        var loadedTemplate = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
+        Document doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Export the populated document to HTML, preserving colors.
-        // -----------------------------------------------------------------
-        var htmlOptions = new HtmlSaveOptions
+        // Sample data model.
+        ReportModel model = new()
         {
-            // Ensure that the generated HTML keeps the original styling.
-            ExportFontResources = true,
-            ExportImagesAsBase64 = true,
-            ExportTextInputFormFieldAsText = true
+            Items = new()
+            {
+                new Item { Text = "First line - red",   Color = "Red" },
+                new Item { Text = "Second line - green", Color = "Green" },
+                new Item { Text = "Third line - blue",  Color = "Blue" }
+            }
         };
 
-        const string htmlPath = "Report.html";
-        loadedTemplate.Save(htmlPath, htmlOptions);
+        // -----------------------------------------------------------------
+        // 3. Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
+        engine.BuildReport(doc, model, "model");
 
-        // The example finishes without waiting for user input.
+        // -----------------------------------------------------------------
+        // 4. Save the final document as HTML, preserving the colors.
+        // -----------------------------------------------------------------
+        HtmlSaveOptions htmlOptions = new()
+        {
+            // Export colors as they appear in the document.
+            ExportFontResources = true,
+            ExportImagesAsBase64 = true,
+            // Optional: specify a folder for external resources (not needed for base64).
+            ImagesFolder = Path.Combine(outputDir, "Images")
+        };
+
+        string htmlPath = Path.Combine(outputDir, "Report.html");
+        doc.Save(htmlPath, htmlOptions);
+
+        Console.WriteLine($"Report generated: {htmlPath}");
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes used by the LINQ Reporting engine.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    // Collection referenced by the template's foreach tag.
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    // Text to display.
+    public string Text { get; set; } = string.Empty;
+
+    // Color name or HTML color code used by the <<textColor>> tag.
+    public string Color { get; set; } = string.Empty;
 }

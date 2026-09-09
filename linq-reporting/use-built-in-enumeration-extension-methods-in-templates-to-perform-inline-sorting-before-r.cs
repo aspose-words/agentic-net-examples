@@ -1,63 +1,59 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingSortingExample
+public class Person
 {
-    // Simple data model.
-    public class Person
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
+}
 
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data (unsorted).
+        var model = new ReportModel
         {
-            // Prepare sample data (unsorted).
-            var model = new ReportModel
+            Persons = new List<Person>
             {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 34 },
-                    new Person { Name = "Bob",   Age = 28 },
-                    new Person { Name = "Carol", Age = 45 },
-                    new Person { Name = "Dave",  Age = 22 }
-                }
-            };
+                new Person { Name = "Charlie", Age = 30 },
+                new Person { Name = "Alice",   Age = 25 },
+                new Person { Name = "Bob",     Age = 28 }
+            }
+        };
 
-            // Create a template document programmatically.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+        // Create the LINQ Reporting template.
+        var templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("People sorted by Age (ascending):");
-            // Inline sorting using LINQ OrderBy extension method.
-            builder.Writeln("<<foreach [p in Persons.OrderBy(person => person.Age)]>>");
-            builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
-            builder.Writeln("<</foreach>>");
+        builder.Writeln("People sorted by name (inline sorting):");
+        builder.Writeln("<<foreach [p in Persons.OrderBy(p => p.Name)]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
 
-            // Save the template (optional, just to illustrate the lifecycle).
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-            // Load the template (demonstrating load step).
-            var loadedTemplate = new Document(templatePath);
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
 
-            // Build the report using the ReportingEngine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, model, "model");
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "model");
 
-            // Save the final report.
-            const string reportPath = "Report.docx";
-            loadedTemplate.Save(reportPath);
-        }
+        // Save the final report.
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

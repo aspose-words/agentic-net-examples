@@ -1,68 +1,51 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-    public string Department { get; set; } = "";
-}
-
-// Wrapper class required by the ReportingEngine (cannot be anonymous).
-public class ReportData
-{
-    // Property name must match the name used inside the template tags.
-    public List<Person> persons { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
         // Sample data.
-        var persons = new List<Person>
+        List<Person> persons = new()
         {
-            new() { Name = "Alice",   Age = 30, Department = "HR" },
-            new() { Name = "Bob",     Age = 45, Department = "Finance" },
-            new() { Name = "Charlie", Age = 28, Department = "HR" },
-            new() { Name = "Diana",   Age = 35, Department = "IT" },
-            new() { Name = "Evan",    Age = 40, Department = "Finance" }
+            new Person { Name = "Alice", Age = 30, Department = "HR" },
+            new Person { Name = "Bob", Age = 45, Department = "IT" },
+            new Person { Name = "Charlie", Age = 28, Department = "HR" },
+            new Person { Name = "Diana", Age = 35, Department = "Finance" },
+            new Person { Name = "Evan", Age = 40, Department = "IT" }
         };
 
-        // Create a template document programmatically.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Create a template document.
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
 
-        // Outer foreach – groups by department.
+        builder.Writeln("Report grouped by Department:");
+        // Outer loop – groups by Department.
         builder.Writeln("<<foreach [deptGroup in persons.GroupBy(p => p.Department)]>>");
         builder.Writeln("Department: <<[deptGroup.Key]>>");
-
-        // Inner foreach – iterates over persons in the current group.
+        // Inner loop – persons inside the current group.
         builder.Writeln("<<foreach [p in deptGroup]>>");
         builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
         builder.Writeln("<</foreach>>");
-
-        // Close the outer foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
-
-        // Prepare the data source wrapper.
-        var data = new ReportData { persons = persons };
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, data);
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new();
+        // Pass the collection as a data source named "persons".
+        engine.BuildReport(doc, persons, "persons");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        doc.Save("Report.docx");
     }
+}
+
+// Simple data model.
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+    public string Department { get; set; } = "";
 }

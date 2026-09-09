@@ -1,48 +1,52 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
+public class Person
+{
+    public string Name { get; set; } = "John Doe";
+    public int Age { get; set; } = 30;
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Prepare directories.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare sample data.
+        var model = new Person();
 
         // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Square root of 16: <<[Math.Sqrt(16)]>>");
-        builder.Writeln("JSON representation: <<[JsonConvert.SerializeObject(model)]>>");
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Save and reload the template to simulate typical workflow.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
-        Document loadedTemplate = new Document(templatePath);
+        // Insert LINQ Reporting tags.
+        builder.Writeln("Static Math.PI value: <<[Math.PI]>>");
+        builder.Writeln("Person name: <<[model.Name]>>");
+        builder.Writeln("Person age: <<[model.Age]>>");
+        builder.Writeln("Serialized JSON (HTML escaped): <<[JsonConvert.SerializeObject(model)] -html>>");
 
-        // Prepare the data model.
-        var model = new SampleModel { Name = "Alice" };
+        // Save the template.
+        doc.Save(templatePath);
 
-        // Configure the reporting engine and register external types.
-        ReportingEngine engine = new ReportingEngine();
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+
+        // Configure the reporting engine.
+        var engine = new ReportingEngine();
+
+        // Register core and third‑party types for static member access.
         engine.KnownTypes.Add(typeof(Math));               // Core .NET type.
         engine.KnownTypes.Add(typeof(JsonConvert));        // Third‑party type from Newtonsoft.Json.
 
-        // Build the report.
-        engine.BuildReport(loadedTemplate, model, "model");
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        loadedTemplate.Save(reportPath);
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Sample data model with a non‑nullable property.
-public class SampleModel
-{
-    public string Name { get; set; } = string.Empty;
 }

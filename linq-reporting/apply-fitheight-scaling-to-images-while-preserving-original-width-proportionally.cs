@@ -1,58 +1,69 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the working directory exists.
-        string workDir = Directory.GetCurrentDirectory();
+        // Prepare output folder.
+        string outDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outDir);
 
-        // 1. Create a simple image file (1x1 pixel PNG) from a Base64 string.
-        string imagePath = Path.Combine(workDir, "sample.png");
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9YVh3V8AAAAASUVORK5CYII=";
-        File.WriteAllBytes(imagePath, Convert.FromBase64String(base64Png));
+        // -----------------------------------------------------------------
+        // 1. Create a sample image file (a tiny red PNG).
+        // -----------------------------------------------------------------
+        string imagePath = Path.Combine(outDir, "sample.png");
+        // PNG data for a 2x2 red image.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQImWNgYGD4z0AEYBxVSFIAAQAB" +
+            "JwABX6Z1WQAAAABJRU5ErkJggg==");
+        File.WriteAllBytes(imagePath, pngBytes);
 
-        // 2. Build the LINQ Reporting template programmatically.
-        string templatePath = Path.Combine(workDir, "Template.docx");
+        // -----------------------------------------------------------------
+        // 2. Create the LINQ Reporting template.
+        // -----------------------------------------------------------------
+        string templatePath = Path.Combine(outDir, "Template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Add a title.
-        builder.Writeln("Image scaling with -fitHeight:");
 
         // Insert a textbox that will host the image tag.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
         builder.MoveTo(textBox.FirstParagraph);
-        // The image tag uses -fitHeight to fit the image height while preserving width proportionally.
+        // Image tag with -fitHeight switch. Width will be kept proportional.
         builder.Write("<<image [model.ImagePath] -fitHeight>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
+        // 3. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // Data model exposing the image path.
         ReportModel model = new ReportModel
         {
             ImagePath = imagePath
         };
 
-        // 4. Load the template and build the report.
-        Document reportDoc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
-        // 5. Save the generated report.
-        string reportPath = Path.Combine(workDir, "Report.docx");
-        reportDoc.Save(reportPath);
+        // -----------------------------------------------------------------
+        // 4. Save the generated report.
+        // -----------------------------------------------------------------
+        string resultPath = Path.Combine(outDir, "Report.docx");
+        reportDoc.Save(resultPath);
     }
 }
 
-// Simple data model used by the LINQ Reporting engine.
+// Data model used by the template.
 public class ReportModel
 {
-    // Path to the image that will be inserted into the document.
+    // Path to the image file that will be inserted.
     public string ImagePath { get; set; } = string.Empty;
 }

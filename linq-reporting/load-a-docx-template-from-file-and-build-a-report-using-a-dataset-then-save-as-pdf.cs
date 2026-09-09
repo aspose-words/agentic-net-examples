@@ -1,52 +1,68 @@
 using System;
-using System.IO;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
-public class Program
+public class LinqReportingExample
 {
     public static void Main()
     {
-        // Register code page provider for any required encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Paths for the template and the final PDF.
+        const string templatePath = "Template.docx";
+        const string outputPdfPath = "Report.pdf";
 
-        // Prepare output directory.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
-
-        // Path for the template document.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-
-        // Create a DOCX template with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        // 1. Create a DOCX template with LINQ Reporting tags.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Product Report");
-        builder.Writeln("<<foreach [row in ds.Products]>>");
-        builder.Writeln("Name: <<[row.Name]>>, Price: $<<[row.Price]>>");
+
+        // Add a title.
+        builder.Writeln("People Report");
+        builder.Writeln();
+
+        // Begin a foreach loop over the DataSet's table "People".
+        // The root object name is "ds" (for DataSet) and the table name is "People".
+        builder.Writeln("<<foreach [person in ds.People]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age:  <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template document.
+        // -----------------------------------------------------------------
+        // 2. Prepare a DataSet with sample data.
+        // -----------------------------------------------------------------
+        DataSet dataSet = new DataSet();
+
+        DataTable peopleTable = new DataTable("People");
+        peopleTable.Columns.Add("Name", typeof(string));
+        peopleTable.Columns.Add("Age", typeof(int));
+
+        peopleTable.Rows.Add("Alice", 30);
+        peopleTable.Rows.Add("Bob",   45);
+        peopleTable.Rows.Add("Carol", 27);
+
+        dataSet.Tables.Add(peopleTable);
+
+        // -----------------------------------------------------------------
+        // 3. Load the template and build the report.
+        // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
 
-        // Create a DataSet with a sample DataTable.
-        DataSet ds = new DataSet();
-        DataTable productsTable = new DataTable("Products");
-        productsTable.Columns.Add("Name", typeof(string));
-        productsTable.Columns.Add("Price", typeof(decimal));
-        productsTable.Rows.Add("Apple", 0.5m);
-        productsTable.Rows.Add("Banana", 0.3m);
-        productsTable.Rows.Add("Cherry", 1.2m);
-        ds.Tables.Add(productsTable);
-
-        // Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, ds, "ds");
+        // No special options are required for this simple example.
+        engine.Options = ReportBuildOptions.None;
 
-        // Save the generated report as PDF.
-        string pdfPath = Path.Combine(outputDir, "report.pdf");
-        reportDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Build the report using the DataSet as the data source.
+        // The root name "ds" must match the name used in the template tags.
+        engine.BuildReport(reportDoc, dataSet, "ds");
+
+        // -----------------------------------------------------------------
+        // 4. Save the generated report as PDF.
+        // -----------------------------------------------------------------
+        reportDoc.Save(outputPdfPath, SaveFormat.Pdf);
     }
 }

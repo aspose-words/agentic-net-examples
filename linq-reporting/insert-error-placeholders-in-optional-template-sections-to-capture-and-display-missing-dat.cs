@@ -3,73 +3,72 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingErrorPlaceholders
+public class Program
 {
-    // Simple data model for the report.
-    public class ReportModel
+    // Simple data model – only Name is defined.
+    public class Model
     {
-        // Initialized to avoid nullable warnings.
         public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
-        // Note: No property named 'NonExistent' – this will trigger a missing‑member warning.
+        // Age is intentionally omitted to trigger a missing‑member warning.
     }
 
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Paths for the temporary template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath   = "Report.docx";
+
+        // -------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Normal field – will be filled correctly.
+        builder.Writeln("Name: <<[model.Name]>>");
+
+        // Missing field – there is no Age property in Model.
+        // This will cause a warning/error during report generation.
+        builder.Writeln("Age: <<[model.Age]>>");
+
+        // The <<error>> tag will be replaced with the inline error message
+        // when the ReportingEngine is configured with InlineErrorMessages.
+        builder.Writeln("<<error>>");
+
+        // Save the template to disk (required by the lifecycle rule).
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // 2. Load the template back before building the report.
+        // -------------------------------------------------
+        var doc = new Document(templatePath);
+
+        // -------------------------------------------------
+        // 3. Prepare the data source.
+        // -------------------------------------------------
+        var model = new Model();
+
+        // -------------------------------------------------
+        // 4. Configure and run the ReportingEngine.
+        // -------------------------------------------------
+        var engine = new ReportingEngine
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            // InlineErrorMessages makes the engine insert error messages
+            // directly into the document where parsing problems occur.
+            Options = ReportBuildOptions.InlineErrorMessages
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // BuildReport returns a bool indicating success when InlineErrorMessages is set.
+        bool success = engine.BuildReport(doc, model, "model");
 
-            // Insert LINQ Reporting tags. The <<error>> tag will display any inline error messages.
-            builder.Writeln("Customer Name: <<[model.Name]>>");
-            builder.Writeln("<<error>>"); // Placeholder for potential errors on the previous line.
+        // -------------------------------------------------
+        // 5. Save the generated report.
+        // -------------------------------------------------
+        doc.Save(reportPath);
 
-            builder.Writeln("Customer Age: <<[model.Age]>>");
-            builder.Writeln("<<error>>"); // Placeholder for potential errors on the previous line.
-
-            // This field does not exist in the model and will generate a missing‑member warning.
-            builder.Writeln("Missing Field: <<[model.NonExistent]>>");
-            builder.Writeln("<<error>>"); // Capture the warning for the missing field.
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back (simulating a real‑world scenario where the template is stored).
-            // -----------------------------------------------------------------
-            var loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            var model = new ReportModel(); // All required properties are initialized.
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using the ReportingEngine with InlineErrorMessages enabled.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.InlineErrorMessages
-            };
-
-            // BuildReport returns a bool indicating success when InlineErrorMessages is set.
-            bool success = engine.BuildReport(loadedTemplate, model, "model");
-
-            // Save the generated report.
-            loadedTemplate.Save(reportPath);
-
-            // Output the success flag to the console (no interactive prompts).
-            Console.WriteLine($"Report generation successful: {success}");
-            Console.WriteLine($"Template saved to: {Path.GetFullPath(templatePath)}");
-            Console.WriteLine($"Report saved to: {Path.GetFullPath(reportPath)}");
-        }
+        // Output the result to the console.
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
+        Console.WriteLine($"Template:  {Path.GetFullPath(templatePath)}");
+        Console.WriteLine($"Report:    {Path.GetFullPath(reportPath)}");
     }
 }

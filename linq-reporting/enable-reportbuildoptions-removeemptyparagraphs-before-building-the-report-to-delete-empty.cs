@@ -1,69 +1,48 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model used as the root object for the report.
-    public class Person
+    public static void Main()
     {
-        // Non‑nullable properties must be initialized to avoid warnings.
-        public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
+        // Create a blank document and a builder to add content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // This property returns null, causing the corresponding paragraph to become empty.
-        public string? Empty { get; set; } = null;
-    }
+        // Add a paragraph with a value that will be replaced.
+        builder.Writeln("Hello <<[model.Name]>>");
 
-    public class Program
-    {
-        public static void Main()
+        // This tag resolves to an empty string, resulting in an empty paragraph.
+        builder.Writeln("<<[model.Empty]>>");
+
+        // Add another paragraph after the empty one.
+        builder.Writeln("World");
+
+        // Prepare the data model.
+        ReportModel model = new ReportModel
         {
-            // Prepare file paths.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            string resultPath = Path.Combine(outputDir, "Result.docx");
+            Name = "John",
+            Empty = string.Empty // will produce an empty paragraph.
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Configure the reporting engine to remove empty paragraphs.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.RemoveEmptyParagraphs
+        };
 
-            // Insert LINQ Reporting tags.
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
-            // This line will become empty after processing because the tag resolves to null.
-            builder.Writeln("<<[person.Empty]>>");
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(doc, model, "model");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template document for reporting.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine to remove empty paragraphs.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
-            };
-
-            // Root data object.
-            Person model = new Person();
-
-            // Build the report. The root name in the template is "person".
-            engine.BuildReport(doc, model, "person");
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            doc.Save(resultPath);
-        }
+        // Save the resulting document.
+        doc.Save("ReportWithRemovedEmptyParagraphs.docx");
     }
+}
+
+// Simple data model used by the template.
+public class ReportModel
+{
+    public string Name { get; set; } = string.Empty;
+    public string Empty { get; set; } = string.Empty;
 }

@@ -5,67 +5,66 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-public class Person
+public class Item
 {
+    public int Index { get; set; }
     public string Name { get; set; } = "";
-    public int Age { get; set; }
 }
 
-public class ReportModel
+public class Order
 {
-    public List<Person> Persons { get; set; } = new();
+    public string CustomerName { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
 }
 
-public partial class Program
+public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Paths for template and output.
         string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        string outputPath = "Report.docx";
 
-        // -------------------------------------------------
-        // Create the LINQ Reporting template programmatically
-        // -------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Persons Report");
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // Load the template for report generation
-        // -------------------------------------------------
-        var doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // Load the template document.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // Prepare sample data
-        // -------------------------------------------------
-        var model = new ReportModel();
-        model.Persons.Add(new Person { Name = "Alice", Age = 30 });
-        model.Persons.Add(new Person { Name = "Bob", Age = 25 });
-        model.Persons.Add(new Person { Name = "Charlie", Age = 28 });
+        // -----------------------------------------------------------------
+        // Prepare sample data.
+        // -----------------------------------------------------------------
+        Order order = new Order { CustomerName = "John Doe" };
 
-        // Demonstrate a foreach loop without explicit type (using var)
-        foreach (var person in model.Persons)
+        // Use a foreach loop with 'var' to let the compiler infer the type.
+        foreach (var i in Enumerable.Range(1, 5))
         {
-            Console.WriteLine($"{person.Name} is {person.Age} years old.");
+            order.Items.Add(new Item { Index = i, Name = $"Product {i}" });
         }
 
-        // -------------------------------------------------
-        // Build the report using Aspose.Words LINQ Reporting Engine
-        // -------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // -----------------------------------------------------------------
+        // Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, order, "order");
 
-        // Save the generated report
-        doc.Save(reportPath);
+        // Save the generated report.
+        doc.Save(outputPath);
     }
 }

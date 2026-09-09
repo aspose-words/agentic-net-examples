@@ -7,58 +7,56 @@ public class Program
 {
     public static void Main()
     {
+        // Create the template document programmatically.
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        // Begin a foreach loop over the Items collection.
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Conditionally create a bookmark only when the name is not empty.
+        builder.Writeln("<<if [item.BookmarkName != \"\"]>>");
+        builder.Writeln("<<bookmark [item.BookmarkName]>>");
+        builder.Writeln("<<[item.Title]>>");
+        builder.Writeln("<</bookmark>>");
+        builder.Writeln("<</if>>");
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
+        // Save the template.
+        builder.Document.Save(templatePath);
+
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+
         // Prepare sample data.
         var model = new ReportModel
         {
-            Items = new List<Item>
+            Items = new List<ReportItem>
             {
-                new Item { Title = "First Section", BookmarkName = "FirstSec" },
-                new Item { Title = "Second Section", BookmarkName = "" }, // No bookmark.
-                new Item { Title = "Third Section", BookmarkName = "ThirdSec" }
+                new ReportItem { Title = "First Item", BookmarkName = "FirstBookmark" },
+                new ReportItem { Title = "Second Item", BookmarkName = "" } // Empty name – bookmark will be skipped.
             }
         };
-
-        // Create a template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Begin a foreach loop over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // If the bookmark name is not empty, create a bookmark around the title.
-        builder.Writeln("<<if [item.BookmarkName != \"\"]>><<bookmark [item.BookmarkName]>>");
-        builder.Writeln("<<[item.Title]>>");
-        builder.Writeln("<</bookmark>><</if>>");
-
-        // If the bookmark name is empty, just write the title without a bookmark.
-        builder.Writeln("<<if [item.BookmarkName == \"\"]>><<[item.Title]>>");
-        builder.Writeln("<</if>>");
-
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
 
         // Build the report.
         var engine = new ReportingEngine
         {
-            // Remove empty paragraphs that may appear after tags are omitted.
             Options = ReportBuildOptions.RemoveEmptyParagraphs
         };
         engine.BuildReport(doc, model, "model");
 
-        // Save the result.
-        doc.Save("ReportWithConditionalBookmarks.docx");
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }
 
-// Root data model referenced by the template.
+// Root data model.
 public class ReportModel
 {
-    public List<Item> Items { get; set; } = new();
+    public List<ReportItem> Items { get; set; } = new();
 }
 
-// Individual item used in the foreach loop.
-public class Item
+// Item model used in the foreach loop.
+public class ReportItem
 {
-    public string Title { get; set; } = "";
-    public string BookmarkName { get; set; } = "";
+    public string Title { get; set; } = string.Empty;
+    public string BookmarkName { get; set; } = string.Empty;
 }

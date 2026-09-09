@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,7 +7,7 @@ namespace AsposeWordsLinqReportingExample
     // Model class representing data that would normally come from a database.
     public class ReportModel
     {
-        // HTML fragment stored in a database field.
+        // HTML content stored in a database field.
         public string HtmlContent { get; set; } = string.Empty;
     }
 
@@ -16,45 +15,52 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Register code page provider (required for some Aspose.Words features).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
             // -----------------------------------------------------------------
-            // 1. Create the template document with a LINQ Reporting HTML tag.
+            // 1. Create a template document with a LINQ Reporting tag that
+            //    inserts HTML using the "-html" switch.
             // -----------------------------------------------------------------
-            var templatePath = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            builder.Writeln("Report generated with HTML content from a data source:");
-            // The -html switch tells the engine to treat the expression result as HTML.
+            builder.Writeln("=== LINQ Reporting HTML Insertion Example ===");
+            // The tag below will be replaced with the HTML from the data source.
             builder.Writeln("<<[model.HtmlContent] -html>>");
 
             // Save the template to disk.
-            templateDoc.Save(templatePath);
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data source.
+            // 2. Load the template document (simulating a separate load step).
             // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
+            var document = new Document(templatePath);
 
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source. In a real scenario this would be read
+            //    from a database; here we use a hard‑coded HTML snippet.
+            // -----------------------------------------------------------------
             var model = new ReportModel
             {
-                HtmlContent = "<p style='color:blue;'>This is <b>HTML</b> inserted from a database field.</p>"
+                HtmlContent = "<p style='color:blue; font-size:14pt;'>" +
+                              "This is <b>HTML</b> content inserted from a data source." +
+                              "</p>"
             };
 
             // -----------------------------------------------------------------
-            // 3. Build the report using the ReportingEngine.
+            // 4. Build the report using Aspose.Words LINQ ReportingEngine.
             // -----------------------------------------------------------------
             var engine = new ReportingEngine();
-            // The root object name in the template is "model", matching the third argument.
-            engine.BuildReport(reportDoc, model, "model");
+            // The root object name in the template is "model".
+            engine.BuildReport(document, model, "model");
 
             // -----------------------------------------------------------------
-            // 4. Save the final document.
+            // 5. Save the generated report.
             // -----------------------------------------------------------------
-            var outputPath = "ReportOutput.docx";
-            reportDoc.Save(outputPath);
+            const string outputPath = "Report.docx";
+            document.Save(outputPath);
+
+            // Indicate successful completion (no interactive prompts).
+            Console.WriteLine("Report generated successfully.");
         }
     }
 }

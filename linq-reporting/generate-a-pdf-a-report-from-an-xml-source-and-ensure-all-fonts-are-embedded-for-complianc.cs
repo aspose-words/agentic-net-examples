@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
@@ -8,56 +9,53 @@ public class Program
 {
     public static void Main()
     {
+        // Register code page provider for XML parsing (required on .NET Core).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         // Prepare sample XML data.
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Report>
+        const string xmlFileName = "order.xml";
+        File.WriteAllText(xmlFileName,
+@"<order>
     <CustomerName>John Doe</CustomerName>
-    <OrderDate>2023-01-15</OrderDate>
     <Items>
         <Item>
-            <Name>Apple</Name>
-            <Quantity>5</Quantity>
+            <Name>Product A</Name>
+            <Price>10.5</Price>
         </Item>
         <Item>
-            <Name>Banana</Name>
-            <Quantity>3</Quantity>
-        </Item>
-        <Item>
-            <Name>Orange</Name>
-            <Quantity>7</Quantity>
+            <Name>Product B</Name>
+            <Price>20</Price>
         </Item>
     </Items>
-</Report>";
-        string xmlPath = "ReportData.xml";
-        File.WriteAllText(xmlPath, xmlContent);
+</order>");
 
-        // Create a blank Word document and insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a template document with LINQ Reporting tags.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        builder.Writeln("Customer: <<[data.CustomerName]>>");
-        builder.Writeln("Order Date: <<[data.OrderDate]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
         builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in data.Items.Item]>>");
-        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
+        builder.Writeln("<<foreach [item in order.Items.Item]>>");
+        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
         builder.Writeln("<</foreach>>");
 
         // Load the XML data source.
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
+        var xmlDataSource = new XmlDataSource(xmlFileName);
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, xmlDataSource, "data");
+        // Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, xmlDataSource, "order");
 
         // Configure PDF/A save options with full font embedding.
-        PdfSaveOptions saveOptions = new PdfSaveOptions
+        var pdfOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA1b,
             EmbedFullFonts = true,
-            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll
+            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll,
+            Compliance = PdfCompliance.PdfA1b
         };
 
-        // Save the final document as PDF/A.
-        doc.Save("Report.pdf", saveOptions);
+        // Save the generated report as PDF/A.
+        const string outputPdf = "Report.pdf";
+        template.Save(outputPdf, pdfOptions);
     }
 }

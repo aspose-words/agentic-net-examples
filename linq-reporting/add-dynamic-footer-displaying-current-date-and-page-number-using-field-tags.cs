@@ -1,57 +1,65 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
-
-public class ReportModel
-{
-    // Current date formatted as a short date string.
-    public string CurrentDate { get; set; } = DateTime.Now.ToString("d");
-}
 
 public class Program
 {
+    // Simple data model – no fields are required for this example.
+    public class ReportModel { }
+
     public static void Main()
     {
         // Paths for the template and the generated report.
         const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        const string outputPath = "ReportWithFooter.docx";
 
         // -----------------------------------------------------------------
-        // Create the template document programmatically.
+        // 1. Create the template document programmatically.
         // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Add a simple body paragraph (optional, just to have content).
-        builder.Writeln("This is a sample report generated with Aspose.Words LINQ Reporting.");
+        // Ensure the document has at least one section.
+        builder.MoveToSection(0);
 
-        // Move the cursor to the primary footer.
+        // Create a primary footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
 
-        // Insert the current date using a LINQ Reporting expression tag.
-        builder.Write("Date: ");
-        builder.Writeln("<<[model.CurrentDate]>>");
+        // Insert a page number field (current page).
+        builder.InsertField("PAGE");
 
-        // Insert the page number using a Word field.
-        builder.Write("Page ");
-        builder.InsertField("PAGE \\* MERGEFORMAT");
-        builder.Writeln();
+        // Add static text separator.
+        builder.Write(" of ");
+
+        // Insert a total pages field.
+        builder.InsertField("NUMPAGES");
+
+        // Add a separator before the date.
+        builder.Write(" - ");
+
+        // Insert the current date field with a custom format.
+        builder.InsertField(@"DATE \@ ""MMMM d, yyyy""");
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        template.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // Load the template and build the report.
+        // 2. Load the template and build the report.
         // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
+        Document doc = new Document(templatePath);
 
-        // Build the report using the model instance.
-        engine.BuildReport(reportDoc, new ReportModel(), "model");
+        // Configure the reporting engine to update Word fields after the report is built.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.UpdateFieldsSyntaxAware
+        };
 
-        // Save the final report.
-        reportDoc.Save(reportPath);
+        // Build the report using an empty data source (the model has no members).
+        engine.BuildReport(doc, new ReportModel(), "model");
+
+        // -----------------------------------------------------------------
+        // 3. Save the final document.
+        // -----------------------------------------------------------------
+        doc.Save(outputPath);
     }
 }

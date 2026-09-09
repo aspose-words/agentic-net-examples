@@ -6,50 +6,62 @@ using Aspose.Words.Reporting;
 
 public class Program
 {
+    // Simple data model.
+    public class Order
+    {
+        public List<Customer> Customers { get; set; } = new();
+    }
+
+    public class Customer
+    {
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+    }
+
     public static void Main()
     {
         // Prepare sample data.
         var order = new Order
         {
-            CustomerName = "John Doe",
-            Items = new List<Item>
+            Customers = new List<Customer>
             {
-                new Item { Name = "Apple", Price = 1.20m },
-                new Item { Name = "Banana", Price = 0.80m },
-                new Item { Name = "Cherry", Price = 2.50m }
+                new Customer { Name = "Alice", Age = 30 },
+                new Customer { Name = "Bob",   Age = 45 },
+                new Customer { Name = "Carol", Age = 27 }
             }
         };
 
-        // Create a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
         var templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("Customer: <<[CustomerName]>>");
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln(" - <<[Name]>> : $<<[Price]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Document.Save(templatePath);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Load the template and build the report.
-        var doc = new Document(templatePath);
+        // Data band (foreach) that iterates over Order.Customers.
+        // Inside the band we refer to member names directly (Name, Age)
+        // without specifying the object reference (c.).
+        builder.Writeln("<<foreach [c in Customers]>>");
+        builder.Writeln("Name: <<[Name]>>   Age: <<[Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        doc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        var loadedDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, order, "order");
+
+        // The root object is 'order' and its name in the template is "order".
+        // The template uses the property 'Customers' of the root object.
+        engine.BuildReport(loadedDoc, order, "order");
 
         // Save the generated report.
-        var reportPath = "Report.docx";
-        doc.Save(reportPath);
+        var outputPath = "Report.docx";
+        loadedDoc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
-}
-
-// Data model classes.
-public class Order
-{
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
 }

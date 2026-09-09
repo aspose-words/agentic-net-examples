@@ -2,43 +2,62 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+namespace AsposeWordsLinqReportingDemo
 {
-    // Total amount of the order.
-    public double Total { get; set; } = 0;
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model with a Total property.
+    public class Order
     {
-        // Step 1: Create a template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        public decimal Total { get; set; } = 0m;
+    }
 
-        // Write the total amount placeholder.
-        builder.Writeln("Order Total: <<[order.Total]>>");
+    public class Program
+    {
+        public static void Main()
+        {
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Compute discount using conditional and arithmetic operators.
-        // If Total > 500, discount = Total * 0.1, otherwise 0.
-        builder.Writeln("Discount: <<[order.Total > 500 ? order.Total * 0.1 : 0]>>");
+            // Write a line showing the order total.
+            builder.Writeln("Order total: <<[order.Total]>>");
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+            // Write a line showing the discount.
+            // If Total > 500, display Total * 0.1m, otherwise display 0.
+            // Note the use of the decimal literal (0.1m) to avoid type mismatch.
+            builder.Writeln("Discount: " +
+                "<<if [order.Total > 500]>>" +
+                "<<[order.Total * 0.1m]>>" +
+                "<</if>>" +
+                "<<if [order.Total <= 500]>>0<</if>>");
 
-        // Step 2: Load the template for report generation.
-        Document report = new Document(templatePath);
+            // Save the template to disk (required before building the report).
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
 
-        // Step 3: Prepare the data model.
-        Order order = new Order { Total = 750 }; // Example total exceeding 500.
+            // -----------------------------------------------------------------
+            // 2. Load the template document.
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
 
-        // Step 4: Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, order, "order");
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            Order order = new Order { Total = 620m }; // Example total > 500
 
-        // Step 5: Save the generated report.
-        const string outputPath = "Report.docx";
-        report.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 4. Build the report using Aspose.Words LINQ Reporting Engine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            // The root object name in the template is "order".
+            engine.BuildReport(doc, order, "order");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string reportPath = "Report.docx";
+            doc.Save(reportPath);
+        }
     }
 }

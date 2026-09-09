@@ -2,47 +2,43 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace InlineErrorReportingExample
+namespace AsposeWordsLinqReporting
 {
     // Simple data model used by the template.
-    public class Model
+    public class ReportModel
     {
-        // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = "World";
+        public string Name { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Create a blank document that will serve as the template.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Correct tag – will be replaced with the model's Name value.
-            builder.Writeln("Hello <<[model.Name]>>!");
+            // Valid tag – will be replaced with the value of ReportModel.Name.
+            builder.Writeln("Customer: <<[model.Name]>>");
 
-            // Intentionally malformed tag – extra '>' creates a syntax error.
-            // With InlineErrorMessages enabled the engine will insert an error message in place of this tag.
-            builder.Writeln("This line contains a bad tag: <<[model.Name]>>>>>");
+            // Invalid tag – the property does not exist on ReportModel.
+            // With InlineErrorMessages enabled the engine will insert "<<error>>" at this location.
+            builder.Writeln("Missing property: <<[model.NonExistent]>>");
 
             // Prepare the data source.
-            Model model = new Model();
+            ReportModel model = new ReportModel { Name = "John Doe" };
 
             // Configure the reporting engine to inline error messages.
             ReportingEngine engine = new ReportingEngine();
             engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Build the report. The returned flag indicates whether parsing succeeded.
-            bool success = engine.BuildReport(doc, model, "model");
+            // Build the report. The boolean indicates whether parsing succeeded.
+            bool success = engine.BuildReport(template, model, "model");
 
-            // Save the resulting document.
-            string outputPath = "ReportWithInlineErrors.docx";
-            doc.Save(outputPath);
+            Console.WriteLine($"Report build success: {success}");
 
-            // Output the result status – useful for debugging but not required for the example.
-            Console.WriteLine($"Report built successfully: {success}");
-            Console.WriteLine($"Output saved to: {outputPath}");
+            // Save the generated document. It will contain "<<error>>" where the syntax error occurred.
+            template.Save("ReportWithInlineErrors.docx");
         }
     }
 }

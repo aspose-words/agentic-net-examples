@@ -12,10 +12,9 @@ namespace AsposeWordsLinqReportingExample
         public string Name { get; set; } = string.Empty;
     }
 
-    // Root model that will be passed to the reporting engine.
+    // Root model containing a collection of items.
     public class ReportModel
     {
-        // Collection of items; initialized to avoid nullable warnings.
         public List<Item> Items { get; set; } = new();
     }
 
@@ -23,53 +22,41 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Create a Word template that contains a LINQ Reporting tag.
-            //    The tag uses ElementAt to fetch the fifth element (index 4).
-            // -----------------------------------------------------------------
-            const string templateFile = "Template.docx";
-
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // The expression will be evaluated by the ReportingEngine.
-            builder.Writeln("Fifth item: <<[model.Items.ElementAt(4).Name]>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templateFile);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back (required by the workflow rules).
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templateFile);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare sample data with at least five items.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
+            // Prepare sample data with at least five items.
+            var model = new ReportModel
             {
                 Items = new List<Item>
                 {
-                    new() { Name = "Item 1" },
-                    new() { Name = "Item 2" },
-                    new() { Name = "Item 3" },
-                    new() { Name = "Item 4" },
-                    new() { Name = "Item 5" }, // This is the fifth item.
-                    new() { Name = "Item 6" }
+                    new Item { Name = "Item 1" },
+                    new Item { Name = "Item 2" },
+                    new Item { Name = "Item 3" },
+                    new Item { Name = "Item 4" },
+                    new Item { Name = "Item 5" }, // Fifth item (index 4)
+                    new Item { Name = "Item 6" }
                 }
             };
 
-            // -----------------------------------------------------------------
-            // 4. Build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
+            // Create a template document programmatically.
+            const string templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Insert a LINQ Reporting tag that uses ElementAt to fetch the fifth item.
+            builder.Writeln("Fifth item: <<[model.Items.ElementAt(4).Name]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // Load the template for report generation.
+            var reportDoc = new Document(templatePath);
+
+            // Build the report using the ReportingEngine.
+            var engine = new ReportingEngine();
             engine.BuildReport(reportDoc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputFile = "Report.docx";
-            reportDoc.Save(outputFile);
+            // Save the generated report.
+            const string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

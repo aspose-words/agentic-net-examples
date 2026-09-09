@@ -1,49 +1,45 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    // Model class with a Unicode character in the property name.
+    public class ReportModel
     {
-        // Register code page provider for any required encodings.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-        // -------------------- Create template --------------------
-        // The template contains a LINQ Reporting tag that references a Unicode property directly.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Customer name: <<[model.名字]>>");
-
-        // Save the template to disk (demonstrates the create‑save lifecycle).
-        const string templatePath = "Template.docx";
-        doc.Save(templatePath);
-
-        // -------------------- Load template --------------------
-        Document template = new Document(templatePath);
-
-        // -------------------- Prepare data model --------------------
-        // The model uses a literal Unicode identifier for the property name.
-        var model = new ReportModel
-        {
-            名字 = "张三"
-        };
-
-        // -------------------- Build report --------------------
-        ReportingEngine engine = new ReportingEngine();
-        // The root object name in the template is "model", so we pass it explicitly.
-        engine.BuildReport(template, model, "model");
-
-        // -------------------- Save result --------------------
-        const string outputPath = "Report.docx";
-        template.Save(outputPath);
+        // Property name contains the character 'é'.
+        public string Café { get; set; } = "Café au lait";
     }
-}
 
-// Data model with a Unicode property name written directly (no escape sequences).
-public class ReportModel
-{
-    // Initialize to avoid nullable warnings.
-    public string 名字 { get; set; } = string.Empty;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert a LINQ Reporting tag that references the Unicode property directly.
+            builder.Writeln("Product description: <<[model.Café]>>");
+
+            // Save the template to disk.
+            const string templatePath = "template.docx";
+            templateDoc.Save(templatePath);
+
+            // Load the template back (required before building the report).
+            Document loadedTemplate = new Document(templatePath);
+
+            // Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            ReportModel model = new ReportModel();
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // Save the generated report.
+            const string reportPath = "report.docx";
+            loadedTemplate.Save(reportPath);
+
+            // Indicate completion (no interactive input).
+            Console.WriteLine($"Report generated: {reportPath}");
+        }
+    }
 }

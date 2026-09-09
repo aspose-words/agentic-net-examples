@@ -1,59 +1,87 @@
 using System;
-using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Model
-{
-    public int Value { get; set; } = 10;
-    public int Divisor { get; set; } = 0; // Will cause division by zero
-}
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a template document with a LINQ Reporting tag that will cause an exception.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-        builder.Writeln("Result: <<[model.Value / model.Divisor]>>");
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        const string templatePath = "Template.docx";
-        template.Save(templatePath); // Save the template to disk.
+        // Simple data fields.
+        builder.Writeln("Customer: <<[model.CustomerName]>>");
+        builder.Writeln("Items:");
 
-        // 2. Load the template for reporting.
-        var doc = new Document(templatePath);
+        // Loop over the collection.
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        // Faulty expression (division by zero) – will generate an inline error message.
+        builder.Writeln(" - <<[item.Index]>>: <<[item.Name]>> - Price: <<[item.Price]>> - Faulty: <<[item.Price / 0]>>");
+        builder.Writeln("<</foreach>>");
 
-        // 3. Prepare the data model.
-        var model = new Model();
-
-        // 4. Configure the reporting engine to inline error messages.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
-
-        // 5. Build the report. Catch any evaluation exceptions.
-        bool success;
-        try
+        // -----------------------------------------------------------------
+        // 2. Prepare the data model.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
         {
-            success = engine.BuildReport(doc, model, "model");
-        }
-        catch (Exception ex)
+            CustomerName = "Acme Corp",
+            Items = new List<Item>
+            {
+                new Item { Index = 1, Name = "Widget", Price = 9.99 },
+                new Item { Index = 2, Name = "Gadget", Price = 19.99 }
+            }
+        };
+
+        // -----------------------------------------------------------------
+        // 3. Build the report with inline error messages enabled.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine
         {
-            // If an exception occurs, treat the build as failed.
-            Console.WriteLine($"Report generation error: {ex.Message}");
-            success = false;
+            Options = ReportBuildOptions.InlineErrorMessages
+        };
+
+        // Returns false because the template contains an expression error.
+        bool success = engine.BuildReport(doc, model, "model");
+
+        // -----------------------------------------------------------------
+        // 4. If errors occurred, replace the inline error text with a placeholder.
+        // -----------------------------------------------------------------
+        if (!success)
+        {
+            // The engine inserts messages that contain the word "Error".
+            // Use FindReplaceOptions to perform a case‑insensitive replace.
+            FindReplaceOptions replaceOptions = new FindReplaceOptions
+            {
+                MatchCase = false // ignore case
+            };
+
+            doc.Range.Replace("Error", "[Error]", replaceOptions);
         }
 
-        // 6. Replace any inline error messages with a placeholder text.
-        // Aspose.Words inserts the error message as plain text, e.g., "Error evaluating expression".
-        // The regular expression removes the whole error line.
-        doc.Range.Replace(new Regex(@"Error.*?(?=\r|\n|$)"), "[Invalid]");
-
-        // 7. Save the final report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
-
-        // 8. Output simple status (no interactive input).
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "had errors")}. Output saved to {outputPath}");
+        // -----------------------------------------------------------------
+        // 5. Save the resulting document.
+        // -----------------------------------------------------------------
+        doc.Save("Report.docx");
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes (public, non‑nullable members are initialized).
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public double Price { get; set; }
 }

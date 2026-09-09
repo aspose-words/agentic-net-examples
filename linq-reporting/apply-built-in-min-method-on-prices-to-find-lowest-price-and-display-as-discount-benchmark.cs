@@ -6,10 +6,10 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Collection of price values.
+    // Collection of prices.
     public List<decimal> Prices { get; set; } = new();
 
-    // Returns the lowest price – calculated once and used in the template.
+    // Lowest price calculated using LINQ.
     public decimal DiscountBenchmark => Prices.Min();
 }
 
@@ -18,29 +18,25 @@ public class Program
     public static void Main()
     {
         // Prepare sample data.
-        var model = new ReportModel();
-        model.Prices.AddRange(new[] { 199.99m, 149.50m, 179.75m, 129.99m });
+        var model = new ReportModel
+        {
+            Prices = new List<decimal> { 199.99m, 149.50m, 179.75m, 129.99m }
+        };
 
         // Create a template document programmatically.
-        var templatePath = "Template.docx";
+        const string templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
-        // Insert a tag that references the pre‑computed lowest price.
-        builder.Writeln("Discount Benchmark: <<[model.DiscountBenchmark]>>");
+        // Use the calculated property in the template.
+        builder.Writeln("Discount benchmark price: <<[model.DiscountBenchmark]>>");
         doc.Save(templatePath);
 
-        // Load the template for reporting.
-        var template = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting engine.
+        // Load the template and build the report.
+        var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        var outputPath = "Report.docx";
-        template.Save(outputPath);
-
-        // Indicate completion (no interactive prompts).
-        Console.WriteLine($"Report generated: {outputPath}");
+        reportDoc.Save("Report.docx");
     }
 }

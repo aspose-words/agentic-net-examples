@@ -1,59 +1,63 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingConditionalBlock
+namespace LinqReportingConditionalDiscount
 {
-    // Data model used as the root object for the report.
+    // Data model for the report.
     public class Order
     {
-        public string CustomerName { get; set; } = string.Empty;
-        public double Discount { get; set; }
+        public string CustomerName { get; set; } = "John Doe";
+        public double Total { get; set; } = 250.0;
+        public double DiscountPercentage { get; set; } = 15.0; // Set to 0 to hide discount block.
     }
 
     public class Program
     {
         public static void Main()
         {
+            // Paths for the template and the generated report.
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "DiscountTemplate.docx");
+            string reportPath   = Path.Combine(Environment.CurrentDirectory, "DiscountReport.docx");
+
             // -----------------------------------------------------------------
             // 1. Create the template document programmatically.
             // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Insert a simple line with a placeholder for the customer's name.
+            // Simple report layout with a conditional block that shows discount only when > 0.
             builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Total: <<[order.Total]>>");
+            builder.Writeln("<<if [order.DiscountPercentage > 0]>>Discount: <<[order.DiscountPercentage]>>%<</if>>");
 
-            // Conditional block: show discount only when it is greater than zero.
-            builder.Writeln("<<if [order.Discount > 0]>>Discount: <<[order.Discount]>>%<</if>>");
-
-            // Save the template to disk (required before building the report).
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Prepare the data source.
+            // 2. Load the template back (required by the workflow).
             // -----------------------------------------------------------------
-            Order order = new Order
-            {
-                CustomerName = "John Doe",
-                Discount = 15.0 // Change to 0 to see the block omitted.
-            };
+            Document loadedTemplate = new Document(templatePath);
 
             // -----------------------------------------------------------------
-            // 3. Build the report using the LINQ Reporting engine.
+            // 3. Prepare the data source.
             // -----------------------------------------------------------------
-            Document report = new Document(templatePath);
+            Order sampleOrder = new Order(); // Uses the default values defined above.
+
+            // -----------------------------------------------------------------
+            // 4. Build the report using the LINQ Reporting engine.
+            // -----------------------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
-
-            // The root object name in the template tags is "order".
-            engine.BuildReport(report, order, "order");
+            // No special options are needed for this example.
+            engine.BuildReport(loadedTemplate, sampleOrder, "order");
 
             // -----------------------------------------------------------------
-            // 4. Save the generated report.
+            // 5. Save the generated report.
             // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            report.Save(outputPath);
+            loadedTemplate.Save(reportPath);
+
+            // The example finishes without waiting for user input.
         }
     }
 }

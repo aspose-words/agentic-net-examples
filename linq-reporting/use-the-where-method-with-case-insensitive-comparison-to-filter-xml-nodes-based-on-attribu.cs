@@ -6,67 +6,60 @@ using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
-{
-    public string Name { get; set; } = "";
-    public string City { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
 public class Program
 {
+    // Simple data model for the report.
+    public class Person
+    {
+        public string Name { get; set; } = "";
+        public string Role { get; set; } = "";
+    }
+
     public static void Main()
     {
-        // Sample XML data with a "city" attribute.
-        string xmlContent = @"
-<people>
-    <person name='Alice' city='London' />
-    <person name='Bob' city='Paris' />
-    <person name='Charlie' city='london' />
-    <person name='Diana' city='New York' />
-</people>";
+        // Prepare sample XML data.
+        const string xmlFile = "people.xml";
+        File.WriteAllText(xmlFile,
+@"<people>
+    <person name='John Doe' role='Admin' />
+    <person name='Jane Smith' role='User' />
+    <person name='Bob Johnson' role='admin' />
+    <person name='Alice Brown' role='Guest' />
+</people>");
 
-        // Load XML into XDocument.
-        XDocument xdoc = XDocument.Parse(xmlContent);
-
-        // Filter persons where the city attribute equals "London" (case‑insensitive).
-        var filtered = xdoc.Root!
+        // Load XML and filter nodes where the 'role' attribute equals "admin" (case‑insensitive).
+        XDocument xDoc = XDocument.Load(xmlFile);
+        List<Person> filteredPersons = xDoc.Root!
             .Elements("person")
-            .Where(p => string.Equals((string?)p.Attribute("city"), "London", StringComparison.OrdinalIgnoreCase))
+            .Where(p => string.Equals((string?)p.Attribute("role"), "admin", StringComparison.OrdinalIgnoreCase))
             .Select(p => new Person
             {
                 Name = (string?)p.Attribute("name") ?? "",
-                City = (string?)p.Attribute("city") ?? ""
+                Role = (string?)p.Attribute("role") ?? ""
             })
             .ToList();
 
-        // Prepare the model for the reporting engine.
-        ReportModel model = new ReportModel { Persons = filtered };
-
-        // Create a template document programmatically.
-        string templatePath = "Template.docx";
+        // Create a template document with LINQ Reporting tags.
+        const string templateFile = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("People filtered by city (case‑insensitive):");
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.City]>>");
-        builder.Writeln("<</foreach>>");
-        templateDoc.Save(templatePath);
 
-        // Load the template and build the report.
-        Document reportDoc = new Document(templatePath);
+        builder.Writeln("Filtered persons (role = admin):");
+        builder.Writeln("<<foreach [p in persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Role: <<[p.Role]>>");
+        builder.Writeln("<</foreach>>");
+
+        templateDoc.Save(templateFile);
+
+        // Load the template and build the report using the filtered data.
+        Document reportDoc = new Document(templateFile);
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+
+        // The root object name must match the tag reference ("persons").
+        engine.BuildReport(reportDoc, filteredPersons, "persons");
 
         // Save the final report.
-        string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
+        const string outputFile = "report.docx";
+        reportDoc.Save(outputFile);
     }
 }

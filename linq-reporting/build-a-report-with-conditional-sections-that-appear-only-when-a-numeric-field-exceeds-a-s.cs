@@ -1,79 +1,64 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Simple data model used as the root object for the report.
+    public class Order
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "ReportOutput.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("=== Sample Report ===");
-        // Start a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Always show the item name.
-        builder.Writeln("Item: <<[item.Name]>>");
-        // Show the value only when it exceeds the threshold (100).
-        builder.Writeln("<<if [item.Value > 100]>>Value exceeds threshold: <<[item.Value]>> <</if>>");
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Prepare the data model.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
-        {
-            Items = new()
-            {
-                new Item { Name = "Alpha",   Value = 75 },
-                new Item { Name = "Beta",    Value = 120 },
-                new Item { Name = "Gamma",   Value = 95 },
-                new Item { Name = "Delta",   Value = 180 }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-
-        // The root object is 'model', and the template references its Items collection directly.
-        engine.BuildReport(reportDoc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(outputPath);
+        // Total amount of the order.
+        public decimal Total { get; set; } = 0m;
     }
-}
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    // Collection of items to be displayed in the report.
-    public List<Item> Items { get; set; } = new();
-}
+    public class Program
+    {
+        public static void Main()
+        {
+            // Paths for the template and the generated report.
+            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "OrderTemplate.docx");
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OrderReport.docx");
 
-public class Item
-{
-    // Name of the item.
-    public string Name { get; set; } = string.Empty;
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    // Numeric value associated with the item.
-    public double Value { get; set; }
+            // Static text.
+            builder.Writeln("Order Summary");
+            builder.Writeln("----------------");
+
+            // Insert the total amount.
+            builder.Writeln("Total: <<[order.Total]>>");
+
+            // Conditional section – appears only when Total > 100.
+            builder.Writeln("<<if [order.Total > 100]>>");
+            builder.Writeln("Congratulations! This order qualifies for free shipping.");
+            builder.Writeln("<</if>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
+
+            // Sample data: an order with a total that exceeds the threshold.
+            Order sampleOrder = new Order { Total = 150m };
+
+            // Create the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+
+            // Build the report. The root object name in the template is "order".
+            engine.BuildReport(doc, sampleOrder, "order");
+
+            // Save the generated report.
+            doc.Save(outputPath);
+
+            Console.WriteLine($"Report generated successfully: {outputPath}");
+        }
+    }
 }

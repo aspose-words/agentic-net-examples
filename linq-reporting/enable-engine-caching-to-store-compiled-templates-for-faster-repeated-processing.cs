@@ -1,79 +1,59 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingCaching
 {
-    public static void Main()
+    // Simple data model used by the template.
+    public class Person
     {
-        // Register code page provider (required for some encodings).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        public string Name { get; set; } = "John Doe";
+    }
 
-        // Path for the template document.
-        const string templatePath = "template.docx";
-
-        // Create the template with LINQ Reporting tags.
-        CreateTemplate(templatePath);
-
-        // First data set.
-        var model1 = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Items = new List<Item>
-            {
-                new Item { Name = "Apple", Price = 1.20 },
-                new Item { Name = "Banana", Price = 0.80 }
-            }
-        };
+            // -----------------------------------------------------------------
+            // 1. Create a template document with a LINQ Reporting tag.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Hello <<[person.Name]>>!"); // LINQ Reporting tag.
 
-        // Second data set.
-        var model2 = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Carrot", Price = 0.50 },
-                new Item { Name = "Date", Price = 2.00 }
-            }
-        };
+            // Save the template to disk (required before building a report).
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
 
-        // Single ReportingEngine instance enables caching of the compiled template.
-        var engine = new ReportingEngine();
+            // -----------------------------------------------------------------
+            // 2. Load the template document.
+            // -----------------------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
 
-        // Build first report.
-        var doc1 = new Document(templatePath);
-        engine.BuildReport(doc1, model1, "model");
-        doc1.Save("Report1.docx");
+            // -----------------------------------------------------------------
+            // 3. Create the ReportingEngine instance.
+            //    The engine automatically caches compiled templates internally,
+            //    so no explicit UseCache property is required.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
 
-        // Build second report using the same engine (cached template is reused).
-        var doc2 = new Document(templatePath);
-        engine.BuildReport(doc2, model2, "model");
-        doc2.Save("Report2.docx");
-    }
+            // -----------------------------------------------------------------
+            // 4. Build the report the first time.
+            // -----------------------------------------------------------------
+            Person firstModel = new Person { Name = "Alice" };
+            engine.BuildReport(loadedTemplate, firstModel, "person");
+            const string firstReportPath = "Report1.docx";
+            loadedTemplate.Save(firstReportPath);
 
-    // Creates a simple Word template containing a foreach loop.
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Items Report");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(path);
-    }
-
-    // Root data model referenced in the template as <<[model]>>.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    // Simple item class used in the collection.
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public double Price { get; set; }
+            // -----------------------------------------------------------------
+            // 5. Build the report a second time with different data.
+            //    The engine reuses the compiled template from its internal cache.
+            // -----------------------------------------------------------------
+            Document secondRunTemplate = new Document(templatePath);
+            Person secondModel = new Person { Name = "Bob" };
+            engine.BuildReport(secondRunTemplate, secondModel, "person");
+            const string secondReportPath = "Report2.docx";
+            secondRunTemplate.Save(secondReportPath);
+        }
     }
 }

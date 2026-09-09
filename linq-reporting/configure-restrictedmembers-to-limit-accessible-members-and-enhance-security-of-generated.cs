@@ -1,15 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingRestrictedMembers
 {
-    // Simple data model.
-    public class Person
+    // Simple data model used by the report.
+    public class Model
     {
         public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
         public string Secret { get; set; } = "TopSecret";
     }
 
@@ -17,62 +17,64 @@ namespace AsposeWordsLinqReportingRestrictedMembers
     {
         public static void Main()
         {
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
             // Paths for the template and the generated report.
-            const string templatePath = "template.docx";
-            const string outputPath = "report.docx";
+            string templatePath = Path.Combine(outputDir, "template.docx");
+            string reportPath = Path.Combine(outputDir, "report.docx");
 
-            // -------------------------------------------------
-            // 1. Create a template document with LINQ Reporting tags.
-            // -------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // -----------------------------------------------------------------
+            // 1. Create a Word template containing LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("Name: <<[Name]>>");
-            builder.Writeln("Age: <<[Age]>>");
-            builder.Writeln("Secret: <<[Secret]>>");
-            // Attempt to access the System.Type of the object.
-            // This will be blocked after we restrict System.Type.
-            builder.Writeln("Type: <<[GetType().FullName]>>");
+            // Normal property access – allowed.
+            builder.Writeln("Name: <<[model.Name]>>");
+
+            // Accessing a member of System.Type – will be restricted.
+            builder.Writeln("Type: <<[model.GetType().FullName]>>");
+
+            // Another normal property – allowed.
+            builder.Writeln("Secret: <<[model.Secret]>>");
 
             // Save the template to disk.
             templateDoc.Save(templatePath);
 
-            // -------------------------------------------------
-            // 2. Load the template for reporting.
-            // -------------------------------------------------
-            var reportDoc = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // 2. Load the template and configure the ReportingEngine.
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
 
-            // -------------------------------------------------
-            // 3. Configure restricted members.
-            //    Restrict System.Type so its members cannot be accessed from the template.
-            // -------------------------------------------------
+            // Restrict access to System.Type and its members.
             ReportingEngine.SetRestrictedTypes(typeof(System.Type));
 
-            // -------------------------------------------------
-            // 4. Prepare the reporting engine.
-            //    Allow missing members to avoid exceptions when a restricted member is accessed.
-            // -------------------------------------------------
-            var engine = new ReportingEngine
+            ReportingEngine engine = new ReportingEngine
             {
+                // Allow missing members so the engine does not throw an exception
+                // when a restricted member is accessed.
                 Options = ReportBuildOptions.AllowMissingMembers,
-                MissingMemberMessage = "Restricted"
+                MissingMemberMessage = "[Restricted]"
             };
 
-            // -------------------------------------------------
-            // 5. Create the data source.
-            // -------------------------------------------------
-            var person = new Person();
+            // -----------------------------------------------------------------
+            // 3. Build the report using a model instance.
+            // -----------------------------------------------------------------
+            Model model = new Model();
 
-            // -------------------------------------------------
-            // 6. Build the report.
-            //    Use the overload without a data source name; the root object is the data source itself.
-            // -------------------------------------------------
-            engine.BuildReport(reportDoc, person);
+            // The root object name used in the template tags is "model".
+            engine.BuildReport(doc, model, "model");
 
-            // -------------------------------------------------
-            // 7. Save the generated report.
-            // -------------------------------------------------
-            reportDoc.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            doc.Save(reportPath);
+
+            // Inform the user where the files are located.
+            Console.WriteLine($"Template saved to: {templatePath}");
+            Console.WriteLine($"Report saved to:   {reportPath}");
         }
     }
 }

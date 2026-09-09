@@ -2,37 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Model
-{
-    public string Duration { get; set; } = "01:02:03";
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Create a template document with a LINQ Reporting tag that parses a duration string.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Parsed duration (hh:mm:ss): <<[TimeSpan.Parse(Duration)]>>");
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Create a blank document and a builder to insert LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        // Insert a tag that calls the static TimeSpan.Parse method.
+        // The engine will evaluate this expression and output the resulting TimeSpan.
+        builder.Writeln("Parsed duration: <<[TimeSpan.Parse(\"01:30:00\")]>>");
 
-        // Prepare the data model.
-        Model model = new Model();
-
-        // Configure the reporting engine.
+        // Initialize the reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        // Register System.TimeSpan to allow static method calls like TimeSpan.Parse in the template.
+
+        // Register System.TimeSpan so that static members (e.g., Parse) can be used in templates.
         engine.KnownTypes.Add(typeof(TimeSpan));
 
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
+        // Build the report. No data source is required for this example, so we pass an empty object.
+        engine.BuildReport(doc, new object());
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        // Save the resulting document.
+        doc.Save("Output.docx");
     }
 }

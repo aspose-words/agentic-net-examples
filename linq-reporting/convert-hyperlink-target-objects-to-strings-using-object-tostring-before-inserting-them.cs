@@ -3,48 +3,45 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+public class HyperlinkModel
 {
-    // Hyperlink target as an object (e.g., Uri). Initialized to avoid nullable warnings.
-    public Uri LinkTarget { get; set; } = new Uri("https://www.example.com");
-    // Display text for the hyperlink.
-    public string LinkText { get; set; } = "Visit Example";
+    // Original target object (Uri)
+    public Uri Url { get; set; } = new Uri("https://example.com");
+
+    // Text that will be displayed for the hyperlink
+    public string DisplayText { get; set; } = "Example Site";
+
+    // Convert the Uri to string before the engine processes it
+    public string UrlString => Url.ToString();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        // Register code page provider (required for some environments)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // ---------- Create the template ----------
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        // Insert a LINQ Reporting link tag.
-        // The first expression converts the Uri object to a string via ToString().
-        builder.Writeln("<<link [model.LinkTarget.ToString()] [model.LinkText]>>");
+        // Insert a link tag that uses the string representation of the Uri
+        builder.Writeln("<<link [model.UrlString] [model.DisplayText]>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Save the template locally
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        template.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the template and build the report.
-        // -------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
+        // ---------- Load the template and build the report ----------
+        var doc = new Document(templatePath);
+        var model = new HyperlinkModel();
 
-        // Prepare the data source.
-        ReportModel model = new ReportModel();
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report using the root name "model" as referenced in the template.
-        engine.BuildReport(loadedTemplate, model, "model");
-
-        // Save the final report.
-        loadedTemplate.Save(reportPath);
+        // Save the generated report
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        doc.Save(outputPath);
     }
 }

@@ -1,64 +1,62 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Model
+{
+    // Sample property used in the template.
+    public string Name { get; set; } = string.Empty;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a simple data model.
-        ReportModel model = new ReportModel
-        {
-            Name = "John Doe"
-        };
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a template document programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = "Template.docx";
+        // -------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Correct tag – will be replaced with the model's Name.
+        // Correct tag – will be replaced with the actual value.
         builder.Writeln("Customer: <<[model.Name]>>");
 
-        // Incorrect tag – the property Age does not exist in ReportModel.
-        // This will generate a syntax error.
-        builder.Writeln("Age: <<[model.Age]>>");
-
-        // Placeholder where inline error messages will be inserted.
-        builder.Writeln("<<error>>");
+        // Incorrect tag – references a non‑existent member.
+        // The <<error>> placeholder will be replaced with the inline error message.
+        builder.Writeln("Invalid reference: <<[model.Unknown]>> <<error>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the template and build the report.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 2. Load the template for report generation.
+        // -------------------------------------------------
         Document reportDoc = new Document(templatePath);
 
+        // Sample data model.
+        Model data = new Model { Name = "John Doe" };
+
+        // -------------------------------------------------
+        // 3. Build the report with inline error messages enabled.
+        // -------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        // Enable inline error messages.
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // BuildReport returns a flag indicating whether parsing succeeded.
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        // BuildReport returns a bool indicating success when InlineErrorMessages is set.
+        bool success = engine.BuildReport(reportDoc, data, "model");
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // -------------------------------------------------
+        // 4. Save the generated report.
+        // -------------------------------------------------
+        reportDoc.Save(reportPath);
 
-        // Output the result to the console.
-        Console.WriteLine($"Report generation success flag: {success}");
-        Console.WriteLine($"Template file: {Path.GetFullPath(templatePath)}");
-        Console.WriteLine($"Report file:   {Path.GetFullPath(outputPath)}");
+        // Output the result status to the console (no user interaction required).
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
+        Console.WriteLine($"Template: {templatePath}");
+        Console.WriteLine($"Report:   {reportPath}");
     }
-}
-
-// Simple data model used by the template.
-public class ReportModel
-{
-    // The only property that actually exists.
-    public string Name { get; set; } = string.Empty;
 }
