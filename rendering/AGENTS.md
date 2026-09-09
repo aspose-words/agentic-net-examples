@@ -405,7 +405,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.7.0`
+- Package: `Aspose.Words` `26.8.0`
 - Package: `Aspose.Drawing.Common` `25.11.0`
 
 ## Command reference
@@ -420,7 +420,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.7.0
+dotnet add package Aspose.Words --version 26.8.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 ```
 
