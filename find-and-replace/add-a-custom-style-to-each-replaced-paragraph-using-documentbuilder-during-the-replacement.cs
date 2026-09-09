@@ -1,32 +1,31 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Words.Drawing; // For Aspose.Words drawing types if needed
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document and add sample paragraphs containing the text to be replaced.
+        // Create a blank document and add some paragraphs containing the word "old".
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First paragraph with PLACEHOLDER text.");
-        builder.Writeln("Second paragraph also has PLACEHOLDER inside.");
-        builder.Writeln("Third paragraph without the keyword.");
+        builder.Writeln("This is the first old paragraph.");
+        builder.Writeln("Another old paragraph follows.");
+        builder.Writeln("No match here.");
+        builder.Writeln("The last old paragraph.");
 
-        // Define a custom paragraph style that will be applied to each replaced paragraph.
-        const string customStyleName = "MyCustomStyle";
-        Style customStyle = doc.Styles.Add(StyleType.Paragraph, customStyleName);
-        customStyle.Font.Name = "Arial";
+        // Define a custom paragraph style.
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+        // Font color is optional; omitted to avoid System.Drawing usage.
         customStyle.Font.Size = 14;
         customStyle.Font.Bold = true;
 
         // Set up find-and-replace with a callback that applies the custom style.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new ParagraphStyleCallback(doc, customStyleName)
-        };
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new ParagraphStyler();
 
-        int replacedCount = doc.Range.Replace("PLACEHOLDER", "REPLACED", options);
+        int replacedCount = doc.Range.Replace("old", "new", options);
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement.");
 
@@ -34,33 +33,21 @@ public class Program
         doc.Save("output.docx");
     }
 
-    // Callback that replaces the matched text and applies the custom style to the containing paragraph.
-    private class ParagraphStyleCallback : IReplacingCallback
+    private class ParagraphStyler : IReplacingCallback
     {
-        private readonly Document _document;
-        private readonly string _styleName;
-
-        public ParagraphStyleCallback(Document document, string styleName)
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            _document = document ?? throw new ArgumentNullException(nameof(document));
-            _styleName = styleName ?? throw new ArgumentNullException(nameof(styleName));
-        }
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Replace the found text.
-            args.Replacement = "REPLACED";
-
-            // Locate the paragraph that contains the match.
-            Paragraph paragraph = args.MatchNode.GetAncestor(NodeType.Paragraph) as Paragraph;
-            if (paragraph != null)
+            // Apply the custom style to the paragraph that contains the match.
+            if (args.MatchNode?.ParentNode is Paragraph paragraph)
             {
-                // Use DocumentBuilder to move to the paragraph and apply the custom style.
-                DocumentBuilder builder = new DocumentBuilder(_document);
-                builder.MoveTo(paragraph);
-                builder.ParagraphFormat.StyleName = _styleName;
+                // Cast DocumentBase to Document for the builder.
+                DocumentBuilder cb = new DocumentBuilder((Document)args.MatchNode.Document);
+                cb.MoveTo(paragraph);
+                cb.ParagraphFormat.StyleName = "MyCustomStyle";
             }
 
+            // Perform the standard replacement.
+            args.Replacement = args.Match.Value.Replace("old", "new");
             return ReplaceAction.Replace;
         }
     }

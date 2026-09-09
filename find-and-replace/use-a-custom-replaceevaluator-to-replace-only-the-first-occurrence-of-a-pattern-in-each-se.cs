@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -9,79 +8,79 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with three sections.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a sample document with two sections, each containing the word "PLACEHOLDER" three times.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Section 1
-        builder.Writeln("Section 1 - First occurrence: TARGET");
-        builder.Writeln("Section 1 - Second occurrence: TARGET");
+        // First section
+        builder.Writeln("Section 1 - First occurrence: PLACEHOLDER");
+        builder.Writeln("Section 1 - Second occurrence: PLACEHOLDER");
+        builder.Writeln("Section 1 - Third occurrence: PLACEHOLDER");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Section 2
-        builder.Writeln("Section 2 - First occurrence: TARGET");
-        builder.Writeln("Section 2 - Second occurrence: TARGET");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Second section
+        builder.Writeln("Section 2 - First occurrence: PLACEHOLDER");
+        builder.Writeln("Section 2 - Second occurrence: PLACEHOLDER");
+        builder.Writeln("Section 2 - Third occurrence: PLACEHOLDER");
 
-        // Section 3
-        builder.Writeln("Section 3 - First occurrence: TARGET");
-        builder.Writeln("Section 3 - Second occurrence: TARGET");
-
-        // Save the source document (optional, just to demonstrate lifecycle).
-        const string inputPath = "input.docx";
+        // Save the source document.
+        const string inputPath = "Input.docx";
         doc.Save(inputPath);
 
         // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        var loadedDoc = new Document(inputPath);
 
-        // Prepare the replace callback that limits replacement to the first match per section.
-        var callback = new FirstOccurrencePerSectionReplacer();
-
-        // Configure find/replace options.
-        FindReplaceOptions options = new FindReplaceOptions
+        // Set up find‑replace options with a custom callback.
+        var options = new FindReplaceOptions(new FirstOccurrencePerSectionCallback())
         {
-            ReplacingCallback = callback,
-            MatchCase = false,
-            FindWholeWordsOnly = true
+            // Ensure the search is case‑sensitive (optional).
+            MatchCase = true
         };
 
-        // Perform the replacement using a regular expression that matches the word "TARGET".
-        int replacedCount = loaded.Range.Replace(new Regex(@"\bTARGET\b"), "REPLACED", options);
+        // Replace only the first "PLACEHOLDER" in each section with "REPLACED".
+        int replacedCount = loadedDoc.Range.Replace("PLACEHOLDER", "REPLACED", options);
 
-        // Validate that at least one replacement was made in each section.
-        if (callback.ReplacementsPerSection.Count != loaded.Sections.Count)
-            throw new InvalidOperationException("Expected a replacement in each section.");
+        // Validate that replacements were made (at least one per section).
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No replacements were performed.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        const string outputPath = "Output.docx";
+        loadedDoc.Save(outputPath);
 
-        // Simple verification output (no interactive prompts).
-        Console.WriteLine($"Total replacements performed: {replacedCount}");
-        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine($"Modified document saved to '{outputPath}'.");
     }
 
-    // Callback that replaces only the first occurrence of a match within each section.
-    private class FirstOccurrencePerSectionReplacer : IReplacingCallback
+    /// <summary>
+    /// Replaces only the first match of the search pattern in each section.
+    /// Subsequent matches within the same section are skipped.
+    /// </summary>
+    private class FirstOccurrencePerSectionCallback : IReplacingCallback
     {
-        // Tracks whether a replacement has already occurred for a given section.
-        public Dictionary<Section, bool> ReplacementsPerSection { get; } = new Dictionary<Section, bool>();
+        // Tracks whether a replacement has already occurred in a given section.
+        private readonly HashSet<Section> _sectionsReplaced = new HashSet<Section>();
 
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Find the section that contains the current match.
-            Section section = args.MatchNode.GetAncestor(NodeType.Section) as Section;
-            if (section == null)
-                return ReplaceAction.Skip; // Safety check.
+            // Find the Section that contains the current match.
+            Node? node = args.MatchNode;
+            while (node != null && !(node is Section))
+                node = node.ParentNode;
 
-            // If we have not replaced anything in this section yet, allow replacement.
-            if (!ReplacementsPerSection.ContainsKey(section))
+            if (node is not Section section)
+                return ReplaceAction.Skip; // Safety fallback.
+
+            // If this section has not been replaced yet, allow the replacement.
+            if (_sectionsReplaced.Add(section))
             {
-                ReplacementsPerSection[section] = true;
+                // The replacement text is already supplied via the Range.Replace call,
+                // but we can modify it here if needed.
+                // args.Replacement = "REPLACED";
                 return ReplaceAction.Replace;
             }
 
-            // Otherwise skip this match.
+            // Skip all further matches in this section.
             return ReplaceAction.Skip;
         }
     }

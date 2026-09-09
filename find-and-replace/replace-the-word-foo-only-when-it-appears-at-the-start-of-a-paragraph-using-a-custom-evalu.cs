@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -7,62 +8,56 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-
-        // -----------------------------------------------------------------
-        // Create a sample document with several paragraphs.
-        // -----------------------------------------------------------------
+        // Create a sample document with various occurrences of the word "foo".
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("foo is at the start of this paragraph.");          // Should be replaced.
-        builder.Writeln("This line contains foo but not at the start.");   // Should stay unchanged.
-        builder.Writeln("foo appears again at the beginning.");            // Should be replaced.
-        builder.Writeln("No occurrence here.");                            // No match.
+        builder.Writeln("foo appears at the start of this paragraph.");
+        builder.Writeln("This paragraph contains foo in the middle.");
+        builder.Writeln("Another line with foo at the start.");
+        builder.Writeln("No match here.");
+        builder.Writeln("foo"); // paragraph that only contains the word
 
-        // Save the document so that we can demonstrate loading it later.
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
+
         doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Load the document and perform a conditional replace.
-        // -----------------------------------------------------------------
+        // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new StartOfParagraphReplacer()
-        };
+        // Set up find/replace options with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new StartOfParagraphReplacer();
 
         // Replace the word "foo" with "bar" only when it is at the start of a paragraph.
         int replacedCount = loaded.Range.Replace("foo", "bar", options);
 
-        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the modified document.
         loaded.Save(outputPath);
     }
 
-    // -----------------------------------------------------------------
-    // Callback that replaces a match only if it occurs at the start of a paragraph.
-    // -----------------------------------------------------------------
+    // Callback that replaces only matches that start a paragraph.
     private class StartOfParagraphReplacer : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // The match is at the start of its containing node when the offset is zero.
-            // Additionally, ensure the match resides within a paragraph.
-            if (args.MatchOffset == 0 && args.MatchNode?.ParentNode is Paragraph)
-            {
-                args.Replacement = "bar";
-                return ReplaceAction.Replace;
-            }
+            // Determine the paragraph that contains the match.
+            Paragraph paragraph = args.MatchNode.GetAncestor(NodeType.Paragraph) as Paragraph;
+            if (paragraph == null)
+                return ReplaceAction.Skip;
 
-            // Skip any matches that are not at the beginning of a paragraph.
-            return ReplaceAction.Skip;
+            // Find the first Run node in the paragraph.
+            Run firstRun = paragraph.GetChildNodes(NodeType.Run, true)[0] as Run;
+            if (firstRun == null)
+                return ReplaceAction.Skip;
+
+            // The match must start at the very beginning of the first Run.
+            bool isAtParagraphStart = args.MatchNode == firstRun && args.MatchOffset == 0;
+
+            return isAtParagraphStart ? ReplaceAction.Replace : ReplaceAction.Skip;
         }
     }
 }

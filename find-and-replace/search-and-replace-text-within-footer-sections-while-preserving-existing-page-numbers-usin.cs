@@ -1,7 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
 
 public class Program
 {
@@ -11,35 +11,42 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some body content spanning two pages.
-        builder.Writeln("First page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page content.");
+        // Ensure the document has at least one section.
+        doc.EnsureMinimum();
 
-        // Create a primary footer with static text and a PAGE field.
+        // Add a primary footer to the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Confidential - ");
-        builder.InsertField("PAGE", "?");
-        builder.Write(" - Draft");
 
-        // Replace the word "Confidential" in the footer while keeping the PAGE field intact.
+        // Write some placeholder text in the footer.
+        builder.Write("Company XYZ - Confidential ");
+
+        // Insert a page number field; this will be preserved during replacement.
+        builder.InsertField("PAGE", "?");
+
+        // Return to the main body for any further content (optional).
+        builder.MoveToDocumentEnd();
+
+        // Access the primary footer.
         HeaderFooter footer = doc.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary];
+
+        // Set up find-and-replace options (case‑insensitive, replace whole words not required).
         FindReplaceOptions options = new FindReplaceOptions
         {
             MatchCase = false,
             FindWholeWordsOnly = false
         };
-        int replaced = footer.Range.Replace("Confidential", "Public", options);
-        if (replaced == 0)
+
+        // Replace the placeholder company name while leaving the page number untouched.
+        int replacedCount = footer.Range.Replace("Company XYZ", "Acme Corp", options);
+
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement in the footer.");
 
-        // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        // Define output path relative to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FooterReplaced.docx");
 
-        // Optional: write a simple JSON log to demonstrate the required Newtonsoft.Json package.
-        var log = new { File = outputPath, ReplacementsMade = replaced };
-        string jsonLog = JsonConvert.SerializeObject(log);
-        Console.WriteLine(jsonLog);
+        // Save the modified document.
+        doc.Save(outputPath);
     }
 }

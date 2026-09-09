@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -6,38 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Paths for the sample input and output documents.
+        string inputPath = "sample.docx";
+        string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with a primary header containing text.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a primary header and write placeholder text.
+        // Move the cursor to the primary header of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Company: OldName");
+        builder.Write("Company: _CompanyName_");
 
-        // Add a simple body paragraph.
-        builder.MoveToDocumentEnd();
-        builder.Writeln("Body content.");
-
-        // Save the initial document to the local file system.
-        const string inputPath = "input.docx";
+        // Save the document so it can be re‑loaded for the replace operation.
         doc.Save(inputPath);
 
-        // Load the document from the saved file.
+        // ---------------------------------------------------------------
+        // 2. Load the document and replace text inside the header section.
+        // ---------------------------------------------------------------
         Document loadedDoc = new Document(inputPath);
 
         // Retrieve the primary header from the first section.
         HeaderFooter header = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
         if (header == null)
-            throw new InvalidOperationException("Header not found.");
+            throw new InvalidOperationException("The document does not contain a primary header.");
 
-        // Perform a find-and-replace operation within the header's range.
+        // Perform a find‑and‑replace on the header's range.
         FindReplaceOptions options = new FindReplaceOptions();
-        int replaced = header.Range.Replace("OldName", "NewName", options);
-        if (replaced == 0)
-            throw new InvalidOperationException("No replacements were made in the header.");
+        int replacedCount = header.Range.Replace("_CompanyName_", "Aspose Ltd.", options);
 
-        // Save the modified document.
-        const string outputPath = "output.docx";
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement in the header.");
+
+        // ---------------------------------------------------------------
+        // 3. Save the modified document.
+        // ---------------------------------------------------------------
         loadedDoc.Save(outputPath);
+
+        // Optional: output the result count to the console.
+        Console.WriteLine($"Replacements performed in header: {replacedCount}");
     }
 }

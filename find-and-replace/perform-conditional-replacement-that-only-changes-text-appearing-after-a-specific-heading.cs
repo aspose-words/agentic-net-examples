@@ -1,6 +1,6 @@
 using System;
-using System.Text;
-using System.Text.RegularExpressions;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -8,84 +8,93 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and populate it with sample content.
+        // Create a sample document with a heading and placeholders before and after it.
+        string inputPath = "input.docx";
+        string outputPath = "output.docx";
+
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Text before the target heading – should NOT be replaced.
-        builder.Writeln("Before heading placeholder: PLACEHOLDER");
-        builder.Writeln("Another before: PLACEHOLDER");
+        // Text before the heading (should NOT be replaced).
+        builder.Writeln("Intro paragraph with a placeholder:");
+        builder.Writeln("PLACEHOLDER");
 
-        // Insert the target heading.
-        builder.Font.Size = 16;
-        builder.Font.Bold = true;
+        // The target heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Target Heading");
-        // Return to normal style for following paragraphs.
-        builder.Font.Size = 12;
-        builder.Font.Bold = false;
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
 
-        // Text after the target heading – should be replaced.
-        builder.Writeln("After heading placeholder: PLACEHOLDER");
-        builder.Writeln("More text with PLACEHOLDER inside.");
+        // Text after the heading (should be replaced).
+        builder.Writeln("Paragraph after heading with a placeholder:");
+        builder.Writeln("PLACEHOLDER");
+
+        // Save the source document.
+        doc.Save(inputPath);
+
+        // Reload the document to simulate a real‑world scenario.
+        Document loaded = new Document(inputPath);
+
+        // Locate the heading paragraph that marks the start of the replacement region.
+        Paragraph headingParagraph = loaded.GetChildNodes(NodeType.Paragraph, true)
+            .Cast<Paragraph>()
+            .FirstOrDefault(p => p.GetText().Trim() == "Target Heading");
+
+        if (headingParagraph == null)
+            throw new InvalidOperationException("Heading not found in the document.");
 
         // Set up the find‑replace options with a custom callback.
-        var options = new FindReplaceOptions
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new ConditionalReplacer("Target Heading")
+            ReplacingCallback = new ConditionalReplacer(headingParagraph)
         };
 
-        // Perform the replacement.
-        int replacedCount = doc.Range.Replace("PLACEHOLDER", "REPLACED", options);
+        // Perform the replacement; only matches after the heading will be changed.
+        int replacedCount = loaded.Range.Replace("PLACEHOLDER", "REPLACED", options);
 
-        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement after the heading.");
 
         // Save the modified document.
-        doc.Save("output.docx");
+        loaded.Save(outputPath);
+
+        // Output the result count (optional, just to demonstrate execution).
+        Console.WriteLine($"Replacements performed: {replacedCount}");
     }
 
-    // Callback that replaces only when the match occurs after a specific heading.
+    // Callback that replaces matches only if they appear after a specific heading.
     private class ConditionalReplacer : IReplacingCallback
     {
-        private readonly string _headingText;
+        private readonly Paragraph _headingParagraph;
+        private readonly Paragraph[] _allParagraphs;
 
-        public ConditionalReplacer(string headingText)
+        public ConditionalReplacer(Paragraph headingParagraph)
         {
-            _headingText = headingText;
+            _headingParagraph = headingParagraph ?? throw new ArgumentNullException(nameof(headingParagraph));
+            // Cache the ordered list of all paragraphs for index comparison.
+            _allParagraphs = headingParagraph.Document
+                .GetChildNodes(NodeType.Paragraph, true)
+                .Cast<Paragraph>()
+                .ToArray();
         }
 
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Locate the paragraph that contains the start of the match.
-            Node matchNode = args.MatchNode;
-            while (matchNode != null && matchNode.NodeType != NodeType.Paragraph)
-                matchNode = matchNode.ParentNode;
+            // Determine the paragraph that contains the current match.
+            Paragraph matchParagraph = args.MatchNode.GetAncestor(NodeType.Paragraph) as Paragraph;
+            if (matchParagraph == null)
+                return ReplaceAction.Skip;
 
-            if (matchNode == null)
-                return ReplaceAction.Skip; // Safety check.
+            // Compare the positions of the match paragraph and the heading paragraph.
+            int headingIndex = Array.IndexOf(_allParagraphs, _headingParagraph);
+            int matchIndex = Array.IndexOf(_allParagraphs, matchParagraph);
 
-            // Walk backwards through preceding siblings to find the heading.
-            Node current = matchNode.PreviousSibling;
-            while (current != null)
+            // Replace only if the match occurs after the heading.
+            if (matchIndex > headingIndex)
             {
-                if (current.NodeType == NodeType.Paragraph)
-                {
-                    Paragraph para = (Paragraph)current;
-                    if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1 &&
-                        para.GetText().Trim().Equals(_headingText, StringComparison.Ordinal))
-                    {
-                        // Heading found before the match – perform replacement.
-                        args.Replacement = "REPLACED";
-                        return ReplaceAction.Replace;
-                    }
-                }
-                current = current.PreviousSibling;
+                args.Replacement = "REPLACED";
+                return ReplaceAction.Replace;
             }
 
-            // No preceding heading found – skip this match.
             return ReplaceAction.Skip;
         }
     }
