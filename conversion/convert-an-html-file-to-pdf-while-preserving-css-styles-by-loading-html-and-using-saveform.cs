@@ -2,48 +2,44 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class HtmlToPdfConverter
 {
     public static void Main()
     {
-        // Define file names.
-        const string htmlFile = "input.html";
-        const string pdfFile = "output.pdf";
+        // Paths for the temporary HTML input and PDF output files.
+        string inputPath = "input.html";
+        string outputPath = "output.pdf";
 
-        // Create a simple HTML document with CSS styling.
-        string htmlContent = @"
-<!DOCTYPE html>
+        // Create a simple HTML document that contains embedded CSS styles.
+        string htmlContent = @"<!DOCTYPE html>
 <html>
 <head>
-    <meta charset=""UTF-8"">
-    <title>Sample HTML</title>
+    <meta charset='UTF-8'>
+    <title>Sample</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f0f0f0; }
-        h1 { color: #2e6c80; }
-        p { color: #333333; }
-        .highlight { background-color: yellow; }
+        .title { color: blue; font-size: 24px; }
+        .paragraph { color: green; font-family: Arial; }
     </style>
 </head>
 <body>
-    <h1>HTML to PDF Conversion</h1>
-    <p>This paragraph demonstrates <span class=""highlight"">CSS styling</span> preservation.</p>
+    <h1 class='title'>Hello World</h1>
+    <p class='paragraph'>This is a paragraph with CSS styling.</p>
 </body>
 </html>";
 
-        // Write the HTML content to a local file.
-        File.WriteAllText(htmlFile, htmlContent);
+        // Write the HTML string to a local file.
+        File.WriteAllText(inputPath, htmlContent);
 
         // Load the HTML file into an Aspose.Words Document.
-        Document doc = new Document(htmlFile);
+        Document doc = new Document(inputPath);
 
-        // Save the document as PDF, preserving the CSS styles.
-        doc.Save(pdfFile, SaveFormat.Pdf);
+        // Convert the document to PDF while preserving the CSS formatting.
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfFile))
-            throw new InvalidOperationException("The PDF file was not created.");
-
-        // Optional: Inform the user (no interactive input required).
-        Console.WriteLine($"Conversion completed. PDF saved to '{pdfFile}'.");
+        // Validate that the PDF file was created successfully.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("The PDF conversion failed; output file not found.");
+        }
     }
 }

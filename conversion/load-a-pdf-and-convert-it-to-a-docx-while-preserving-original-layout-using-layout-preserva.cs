@@ -7,23 +7,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample PDF content.");
-        source.Save("sample.pdf", SaveFormat.Pdf);
+        // Step 1: Create a sample PDF document.
+        Document sourcePdf = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourcePdf);
+        builder.Writeln("Sample PDF content for conversion.");
+        sourcePdf.Save("sample.pdf", SaveFormat.Pdf);
 
-        // Load the PDF document that was just created.
-        Document pdfDoc = new Document("sample.pdf");
+        // Step 2: Load the PDF that was just created.
+        Document pdfDocument = new Document("sample.pdf");
 
-        // Ensure the layout is up‑to‑date before conversion.
-        pdfDoc.UpdatePageLayout();
+        // Optional: Ensure the layout is up‑to‑date before conversion.
+        pdfDocument.UpdatePageLayout();
 
-        // Convert the PDF to DOCX while preserving the original layout.
-        pdfDoc.Save("output.docx", SaveFormat.Docx);
+        // Step 3: Convert the PDF to DOCX while preserving layout.
+        // No special save options are required for layout preservation in this scenario.
+        pdfDocument.Save("converted.docx", SaveFormat.Docx);
 
-        // Verify that the DOCX file was created.
-        if (!File.Exists("output.docx"))
+        // Step 4: Validate that the DOCX file was created.
+        if (!File.Exists("converted.docx"))
             throw new InvalidOperationException("The DOCX output file was not created.");
+
+        // The program finishes automatically.
     }
 }

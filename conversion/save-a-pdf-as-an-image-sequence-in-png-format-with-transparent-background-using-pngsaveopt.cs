@@ -3,6 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
+using System.Drawing; // For Color
 
 public class Program
 {
@@ -11,39 +12,32 @@ public class Program
         // Create a sample document with three pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Page 1 content.");
+        builder.Writeln("This is page 1.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 content.");
+        builder.Writeln("This is page 2.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 content.");
+        builder.Writeln("This is page 3.");
 
-        // Save the document as PDF (required step before conversion).
-        const string pdfPath = "sample.pdf";
-        doc.Save(pdfPath, SaveFormat.Pdf);
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
-
-        // Load the PDF for conversion.
-        Document pdfDoc = new Document(pdfPath);
-
-        // Prepare ImageSaveOptions for PNG with a transparent background.
-        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+        // Export each page to a separate PNG image with a transparent background.
+        for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
         {
-            // Use System.Drawing.Color for the PaperColor property (required by the API).
-            PaperColor = System.Drawing.Color.Transparent
-        };
+            // Configure image save options.
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
+            options.PaperColor = Color.Transparent; // Transparent background.
+            options.PageSet = new PageSet(pageIndex); // Render only the current page.
 
-        // Export each page to a separate PNG file.
-        for (int i = 0; i < pdfDoc.PageCount; i++)
-        {
-            pngOptions.PageSet = new PageSet(i); // Zero‑based page index.
-            string pngPath = $"page_{i + 1}.png";
-            pdfDoc.Save(pngPath, pngOptions);
+            // Define output file name.
+            string outputFileName = $"Page_{pageIndex + 1}.png";
 
-            if (!File.Exists(pngPath))
-                throw new InvalidOperationException($"PNG file '{pngPath}' was not created.");
+            // Save the page as an image.
+            doc.Save(outputFileName, options);
+
+            // Validate that the image was created.
+            if (!File.Exists(outputFileName))
+                throw new InvalidOperationException($"Failed to create image file: {outputFileName}");
         }
 
-        Console.WriteLine("PDF successfully converted to PNG images with transparent background.");
+        // All pages have been saved successfully.
+        Console.WriteLine("PDF pages have been exported to PNG images with transparent backgrounds.");
     }
 }

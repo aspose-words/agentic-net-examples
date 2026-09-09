@@ -11,7 +11,7 @@ public class Program
         string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
         string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdf");
 
-        // Ensure clean start.
+        // Ensure clean state.
         if (Directory.Exists(inputFolder))
             Directory.Delete(inputFolder, true);
         if (Directory.Exists(outputFolder))
@@ -21,31 +21,31 @@ public class Program
         Directory.CreateDirectory(outputFolder);
 
         // Create sample HTML files.
-        CreateSampleHtml(Path.Combine(inputFolder, "Sample1.html"), "<h1>First Document</h1><p>Hello from HTML 1.</p>");
-        CreateSampleHtml(Path.Combine(inputFolder, "Sample2.html"), "<h1>Second Document</h1><p>Hello from HTML 2.</p>");
+        CreateSampleHtml(Path.Combine(inputFolder, "Sample1.html"), "<html><body><h1>First Document</h1><p>Hello from HTML 1.</p></body></html>");
+        CreateSampleHtml(Path.Combine(inputFolder, "Sample2.html"), "<html><body><h1>Second Document</h1><p>Hello from HTML 2.</p></body></html>");
 
-        // Define custom margins (in points). 72 points = 1 inch.
-        const double marginTop = 72;
-        const double marginBottom = 72;
-        const double marginLeft = 72;
-        const double marginRight = 72;
+        // Define custom margins (in points). 1 inch = 72 points.
+        const double leftMargin = 72;   // 1 inch
+        const double rightMargin = 72;  // 1 inch
+        const double topMargin = 72;    // 1 inch
+        const double bottomMargin = 72; // 1 inch
 
-        // Process each HTML file.
+        // Process each HTML file in the input folder.
         foreach (string htmlPath in Directory.GetFiles(inputFolder, "*.html"))
         {
             // Load the HTML document.
             Document doc = new Document(htmlPath);
 
-            // Apply custom margins to every section.
+            // Apply custom page margins to each section.
             foreach (Section section in doc.Sections)
             {
-                section.PageSetup.TopMargin = marginTop;
-                section.PageSetup.BottomMargin = marginBottom;
-                section.PageSetup.LeftMargin = marginLeft;
-                section.PageSetup.RightMargin = marginRight;
+                section.PageSetup.LeftMargin = leftMargin;
+                section.PageSetup.RightMargin = rightMargin;
+                section.PageSetup.TopMargin = topMargin;
+                section.PageSetup.BottomMargin = bottomMargin;
             }
 
-            // Prepare PDF save options (optional customizations can be added here).
+            // Prepare PDF save options (no special options required for margins).
             PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
             // Determine output PDF path.
@@ -55,19 +55,17 @@ public class Program
             // Save as PDF.
             doc.Save(pdfPath, pdfOptions);
 
-            // Verify that the PDF was created.
+            // Validate that the PDF was created.
             if (!File.Exists(pdfPath))
                 throw new InvalidOperationException($"Failed to create PDF file: {pdfPath}");
         }
 
-        // Optional: indicate successful completion.
-        Console.WriteLine("Batch conversion completed successfully.");
+        // All conversions completed successfully.
+        Console.WriteLine("Batch conversion completed. PDFs are located in: " + outputFolder);
     }
 
     private static void CreateSampleHtml(string filePath, string htmlContent)
     {
-        // Write a simple HTML document to the specified path.
-        string fullHtml = $"<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Sample</title></head><body>{htmlContent}</body></html>";
-        File.WriteAllText(filePath, fullHtml);
+        File.WriteAllText(filePath, htmlContent);
     }
 }

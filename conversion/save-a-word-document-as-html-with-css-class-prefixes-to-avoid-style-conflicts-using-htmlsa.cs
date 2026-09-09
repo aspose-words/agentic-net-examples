@@ -3,44 +3,47 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class HtmlConversionWithCssPrefix
+public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string docFileName = "sample.docx";
-        const string htmlFileName = "sample.html";
-
-        // Create a simple Word document.
+        // Create a sample Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello World!");
-        doc.Save(docFileName, SaveFormat.Docx);
+        builder.Writeln("This is a sample paragraph.");
 
-        // Load the document we just created.
-        Document loadedDoc = new Document(docFileName);
-
-        // Configure HTML save options with a CSS class name prefix.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
+        // Configure HTML save options:
+        // - Export CSS to an external file.
+        // - Add a prefix to all generated CSS class names to avoid conflicts.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            CssStyleSheetType = CssStyleSheetType.External, // Export CSS to an external file.
-            CssClassNamePrefix = "myPrefix-"               // Prefix added to all generated CSS classes.
+            CssStyleSheetType = CssStyleSheetType.External,
+            CssClassNamePrefix = "myPrefix-"
         };
 
+        // Prepare output paths.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string htmlPath = Path.Combine(outputDir, "Sample.html");
+        string expectedCssPath = Path.ChangeExtension(htmlPath, ".css");
+
         // Save the document as HTML using the configured options.
-        loadedDoc.Save(htmlFileName, htmlOptions);
+        doc.Save(htmlPath, saveOptions);
 
-        // Verify that the HTML file was created.
-        if (!File.Exists(htmlFileName))
-            throw new InvalidOperationException($"HTML file '{htmlFileName}' was not created.");
+        // Validate that the HTML file was created.
+        if (!File.Exists(htmlPath))
+            throw new InvalidOperationException("The HTML output file was not created.");
 
-        // Verify that the external CSS file was also created.
-        string cssFileName = Path.ChangeExtension(htmlFileName, ".css");
-        if (!File.Exists(cssFileName))
-            throw new InvalidOperationException($"CSS file '{cssFileName}' was not created.");
+        // Validate that the external CSS file was created.
+        if (!File.Exists(expectedCssPath))
+            throw new InvalidOperationException("The CSS output file was not created.");
 
-        // Optional: output the locations of the generated files.
-        Console.WriteLine($"HTML saved to: {Path.GetFullPath(htmlFileName)}");
-        Console.WriteLine($"CSS saved to: {Path.GetFullPath(cssFileName)}");
+        // Verify that the CSS class prefix appears in the HTML content.
+        string htmlContent = File.ReadAllText(htmlPath);
+        if (!htmlContent.Contains("class=\"myPrefix-"))
+            throw new InvalidOperationException("The CSS class prefix was not applied to the HTML.");
+
+        // Example completed successfully.
     }
 }

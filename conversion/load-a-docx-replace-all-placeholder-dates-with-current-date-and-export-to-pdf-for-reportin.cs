@@ -1,33 +1,35 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX with a date placeholder.
-        Document sample = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sample);
-        builder.Writeln("Monthly Report");
-        builder.Writeln("Generated on <<Date>>.");
-        sample.Save("input.docx", SaveFormat.Docx);
+        // Paths for the temporary input DOCX and the final PDF output.
+        const string inputPath = "input.docx";
+        const string outputPath = "report.pdf";
 
-        // Step 2: Load the DOCX that was just created.
-        Document doc = new Document("input.docx");
+        // 1. Create a sample DOCX containing a date placeholder.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Report generated on <<Date>>.");
+        builder.Writeln("Additional line with the same placeholder: <<Date>>.");
+        source.Save(inputPath, SaveFormat.Docx);
 
-        // Step 3: Replace all occurrences of the placeholder with the current date.
+        // 2. Load the DOCX and replace all placeholders with the current date.
+        Document doc = new Document(inputPath);
         string placeholder = "<<Date>>";
-        string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
+        string currentDate = DateTime.Now.ToString("D"); // e.g., "Monday, 30 August 2026"
         doc.Range.Replace(placeholder, currentDate, new FindReplaceOptions());
 
-        // Step 4: Export the updated document to PDF.
-        string pdfPath = "output.pdf";
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // 3. Export the updated document to PDF.
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Step 5: Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF output file was not created.");
+        // 4. Verify that the PDF was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Expected output PDF was not created.");
     }
 }

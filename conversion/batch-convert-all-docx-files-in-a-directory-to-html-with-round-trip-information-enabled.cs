@@ -7,7 +7,7 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input DOCX files and output HTML files.
+        // Define input and output folders.
         string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
         string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputHtml");
 
@@ -15,44 +15,50 @@ public class Program
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample DOCX files if the input folder is empty.
-        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
+        // Create a few sample DOCX files.
+        for (int i = 1; i <= 3; i++)
         {
-            CreateSampleDocx(Path.Combine(inputFolder, "Sample1.docx"), "First sample document.");
-            CreateSampleDocx(Path.Combine(inputFolder, "Sample2.docx"), "Second sample document with more text.\nLine two.\nLine three.");
+            string docxPath = Path.Combine(inputFolder, $"Sample{i}.docx");
+
+            // Create a blank document and add some text.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is sample document #{i}.");
+
+            // Save the document as DOCX.
+            doc.Save(docxPath, SaveFormat.Docx);
+
+            // Verify the DOCX was created.
+            if (!File.Exists(docxPath))
+                throw new InvalidOperationException($"Failed to create sample DOCX: {docxPath}");
         }
 
-        // Process each DOCX file in the input folder.
-        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Batch convert each DOCX file to HTML with round‑trip information enabled.
+        string[] docxFiles = Directory.GetFiles(inputFolder, "*.docx");
+        foreach (string docxFile in docxFiles)
         {
-            // Load the DOCX document.
-            Document doc = new Document(docxPath);
+            // Load the DOCX file.
+            Document document = new Document(docxFile);
 
             // Configure HTML save options to export round‑trip information.
-            HtmlSaveOptions htmlOptions = new HtmlSaveOptions
+            HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
             {
                 ExportRoundtripInformation = true
             };
 
             // Determine the output HTML file path.
-            string htmlFileName = Path.GetFileNameWithoutExtension(docxPath) + ".html";
+            string htmlFileName = Path.GetFileNameWithoutExtension(docxFile) + ".html";
             string htmlPath = Path.Combine(outputFolder, htmlFileName);
 
             // Save the document as HTML.
-            doc.Save(htmlPath, htmlOptions);
+            document.Save(htmlPath, htmlOptions);
 
-            // Verify that the HTML file was created.
+            // Verify the HTML file was created.
             if (!File.Exists(htmlPath))
-                throw new InvalidOperationException($"Expected output HTML was not created: {htmlPath}");
+                throw new InvalidOperationException($"Failed to create HTML file: {htmlPath}");
         }
-    }
 
-    // Helper method to create a simple DOCX file with given content.
-    private static void CreateSampleDocx(string filePath, string content)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(content);
-        doc.Save(filePath, SaveFormat.Docx);
+        // Indicate successful conversion.
+        Console.WriteLine($"Converted {docxFiles.Length} DOCX file(s) to HTML in '{outputFolder}'.");
     }
 }

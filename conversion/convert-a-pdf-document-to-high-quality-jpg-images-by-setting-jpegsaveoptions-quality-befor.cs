@@ -7,40 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF document with two pages.
+        // Create a sample document with two pages.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is the first page of the sample PDF.");
+        builder.Writeln("First page of the sample PDF.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is the second page of the sample PDF.");
+        builder.Writeln("Second page of the sample PDF.");
+
+        // Save the sample as PDF.
         const string pdfPath = "sample.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF document we just created.
+        // Load the PDF we just created.
         Document pdfDoc = new Document(pdfPath);
 
-        // Prepare image save options for high‑quality JPEG output.
-        ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
-        {
-            JpegQuality = 100,                 // Maximum quality.
-            UseHighQualityRendering = true,    // Enable high‑quality rendering algorithms.
-            UseAntiAliasing = true             // Enable anti‑aliasing for smoother edges.
-        };
-
-        // Export each page of the PDF as a separate JPEG image.
+        // Convert each page of the PDF to a high‑quality JPEG image.
         for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            jpegOptions.PageSet = new PageSet(pageIndex);
-            string outputFile = $"page_{pageIndex + 1}.jpg";
-            pdfDoc.Save(outputFile, jpegOptions);
+            // Configure image save options.
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Jpeg)
+            {
+                // Highest quality (0‑100). 100 means no compression loss.
+                JpegQuality = 100,
+                // Use slower but higher‑quality rendering algorithms.
+                UseHighQualityRendering = true,
+                // Render only the current page.
+                PageSet = new PageSet(pageIndex)
+            };
 
-            // Verify that the image file was created.
-            if (!File.Exists(outputFile))
-                throw new InvalidOperationException($"Failed to create JPEG image: {outputFile}");
+            string jpegPath = $"output_page_{pageIndex + 1}.jpg";
+            pdfDoc.Save(jpegPath, options);
+
+            // Verify that the image was created.
+            if (!File.Exists(jpegPath) || new FileInfo(jpegPath).Length == 0)
+                throw new InvalidOperationException($"Failed to create JPEG image for page {pageIndex + 1}.");
         }
 
-        // Verify that the source PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the source PDF document.");
+        Console.WriteLine("PDF successfully converted to high‑quality JPEG images.");
     }
 }

@@ -7,27 +7,29 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX file containing placeholders.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Report for {{CustomerName}}");
-        builder.Writeln("Date: {{ReportDate}}");
-        const string inputFile = "input.docx";
-        sourceDoc.Save(inputFile, SaveFormat.Docx);
+        // Step 1: Create a sample DOCX with a placeholder.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Dear <<Name>>,");
+        builder.Writeln("Thank you for your business.");
+        const string templatePath = "template.docx";
+        template.Save(templatePath, SaveFormat.Docx);
 
-        // Step 2: Load the DOCX file.
-        Document doc = new Document(inputFile);
+        // Step 2: Load the DOCX we just created.
+        Document doc = new Document(templatePath);
 
-        // Step 3: Replace placeholders with actual values.
-        doc.Range.Replace("{{CustomerName}}", "Acme Corp", new FindReplaceOptions(FindReplaceDirection.Forward));
-        doc.Range.Replace("{{ReportDate}}", DateTime.Now.ToString("yyyy-MM-dd"), new FindReplaceOptions(FindReplaceDirection.Forward));
+        // Step 3: Replace the placeholder with an actual value.
+        doc.Range.Replace("<<Name>>", "John Doe", new FindReplaceOptions());
 
-        // Step 4: Export the modified document to PDF.
-        const string outputFile = "output.pdf";
-        doc.Save(outputFile, SaveFormat.Pdf);
+        // Step 4: Export the populated document to PDF.
+        const string pdfPath = "report.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Step 5: Verify that the PDF was created.
-        if (!File.Exists(outputFile))
+        // Step 5: Validate that the PDF was created.
+        if (!File.Exists(pdfPath))
             throw new InvalidOperationException("Expected output PDF was not created.");
+
+        // Optional: Clean up temporary files (not required, but keeps the folder tidy).
+        File.Delete(templatePath);
     }
 }

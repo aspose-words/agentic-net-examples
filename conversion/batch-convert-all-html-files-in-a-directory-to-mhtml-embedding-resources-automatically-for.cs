@@ -1,48 +1,57 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-public class BatchHtmlToMhtmlConverter
+public class Program
 {
     public static void Main()
     {
-        // Define the input folder that will contain the sample HTML files.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
-        Directory.CreateDirectory(inputFolder);
+        // Prepare input and output directories.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputHtml");
+        string outputDir = Path.Combine(baseDir, "OutputMhtml");
 
-        // Create a couple of sample HTML files.
-        string htmlFile1 = Path.Combine(inputFolder, "Sample1.html");
-        string htmlFile2 = Path.Combine(inputFolder, "Sample2.html");
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        File.WriteAllText(htmlFile1,
-            "<html><body><h1>First Sample</h1><p>This is the first HTML file.</p></body></html>");
-        File.WriteAllText(htmlFile2,
-            "<html><body><h1>Second Sample</h1><p>This is the second HTML file.</p></body></html>");
-
-        // Define the output folder for the generated MHTML files.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputMhtml");
-        Directory.CreateDirectory(outputFolder);
-
-        // Process each HTML file in the input folder.
-        string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
-        foreach (string htmlPath in htmlFiles)
+        // Create a few sample HTML files.
+        for (int i = 1; i <= 3; i++)
         {
-            // Load the HTML document.
-            Document doc = new Document(htmlPath);
-
-            // Determine the output MHTML file name (same base name, .mht extension).
-            string outputFileName = Path.GetFileNameWithoutExtension(htmlPath) + ".mht";
-            string outputPath = Path.Combine(outputFolder, outputFileName);
-
-            // Save the document as MHTML. Resources (images, CSS, etc.) are embedded automatically.
-            doc.Save(outputPath, SaveFormat.Mhtml);
-
-            // Verify that the output file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"MHTML file was not created: {outputPath}");
+            string htmlPath = Path.Combine(inputDir, $"sample{i}.html");
+            File.WriteAllText(htmlPath,
+                $"<html><body><h1>Sample {i}</h1><p>This is a test HTML file.</p></body></html>");
         }
 
-        // Optionally, indicate completion (no interactive prompts required).
+        // Convert each HTML file to MHTML with embedded resources.
+        string[] htmlFiles = Directory.GetFiles(inputDir, "*.html");
+        foreach (string htmlFile in htmlFiles)
+        {
+            // Load the HTML document.
+            Document doc = new Document(htmlFile);
+
+            // Configure save options for MHTML.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+            {
+                // Use CID URLs for resources (optional, ensures better compatibility).
+                ExportCidUrlsForMhtmlResources = true,
+                // Export font resources so that the MHTML is fully self‑contained.
+                ExportFontResources = true
+            };
+
+            // Determine the output file name.
+            string outputFileName = Path.GetFileNameWithoutExtension(htmlFile) + ".mht";
+            string outputPath = Path.Combine(outputDir, outputFileName);
+
+            // Save the document as MHTML.
+            doc.Save(outputPath, saveOptions);
+
+            // Validate that the output file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create MHTML file: {outputPath}");
+        }
+
+        // Indicate successful completion.
         Console.WriteLine("Batch conversion completed successfully.");
     }
 }

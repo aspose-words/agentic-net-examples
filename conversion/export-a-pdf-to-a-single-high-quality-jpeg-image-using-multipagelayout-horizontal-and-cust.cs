@@ -7,45 +7,59 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the intermediate PDF and final JPEG.
+        // Paths for temporary files.
         const string pdfPath = "sample.pdf";
         const string jpegPath = "output.jpg";
 
         // -----------------------------------------------------------------
-        // 1. Create a simple Word document and save it as PDF.
+        // 1. Create a sample multi‑page document.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample PDF content for JPEG conversion.");
-        builder.Writeln("This document will be rendered as a single high‑quality JPEG image.");
+
+        builder.Writeln("Page 1: Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 2: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 3: Ut enim ad minim veniam, quis nostrud exercitation ullamco.");
+
+        // Save the document as PDF (bootstrap input file).
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
-
         // -----------------------------------------------------------------
-        // 2. Load the PDF and export it to a single JPEG image.
+        // 2. Load the PDF that we just created.
         // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
 
-        // Configure image save options.
+        // -----------------------------------------------------------------
+        // 3. Configure image save options for a high‑quality JPEG.
+        // -----------------------------------------------------------------
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Jpeg)
         {
-            // Render all pages side‑by‑side horizontally with a 10‑point spacing.
-            PageLayout = MultiPageLayout.Horizontal(10f),
-            // Set JPEG quality to the maximum (100) for high quality.
+            // Highest JPEG quality (0‑100).
             JpegQuality = 100,
-            // Improve rendering quality.
+
+            // Render all pages side by side in a single image.
+            PageLayout = MultiPageLayout.Horizontal(10f),
+
+            // Optional: improve rendering quality.
             UseAntiAliasing = true,
             UseHighQualityRendering = true
         };
 
-        // Save the PDF as a JPEG image.
+        // Save the PDF as a single JPEG image.
         pdfDoc.Save(jpegPath, options);
 
-        // Verify that the JPEG was created.
+        // -----------------------------------------------------------------
+        // 4. Validate that the output file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(jpegPath) || new FileInfo(jpegPath).Length == 0)
-            throw new InvalidOperationException("JPEG image was not created or is empty.");
+        {
+            throw new InvalidOperationException("The JPEG image was not created successfully.");
+        }
+
+        // Cleanup temporary files (optional).
+        // File.Delete(pdfPath);
+        // File.Delete(jpegPath);
     }
 }

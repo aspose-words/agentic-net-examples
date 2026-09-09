@@ -7,17 +7,20 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
-        const string inputPath = "sample.docx";
+        // Paths for the intermediate DOCX and final XLSX files.
+        const string docxPath = "sample.docx";
+        const string xlsxPath = "compressed.xlsx";
+
+        // Create a simple DOCX document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("This is a sample document for XLSX conversion.");
-        doc.Save(inputPath, SaveFormat.Docx);
+        doc.Save(docxPath, SaveFormat.Docx);
 
-        // Load the DOCX document.
-        Document loadedDoc = new Document(inputPath);
+        // Load the DOCX document we just created.
+        Document loadedDoc = new Document(docxPath);
 
-        // Set up XlsxSaveOptions with Fast compression.
+        // Set up XLSX save options with fast compression.
         XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
         {
             CompressionLevel = CompressionLevel.Fast,
@@ -25,15 +28,12 @@ public class Program
         };
 
         // Save the document as XLSX using the specified options.
-        const string outputPath = "output.xlsx";
-        loadedDoc.Save(outputPath, xlsxOptions);
+        loadedDoc.Save(xlsxPath, xlsxOptions);
 
         // Verify that the XLSX file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("XLSX file was not created.");
+        if (!File.Exists(xlsxPath))
+            throw new InvalidOperationException("The XLSX file was not created.");
 
-        // Output the size of the generated file.
-        FileInfo fileInfo = new FileInfo(outputPath);
-        Console.WriteLine($"XLSX saved with Fast compression. Size: {fileInfo.Length} bytes.");
+        Console.WriteLine($"XLSX file saved with Fast compression: {xlsxPath}");
     }
 }

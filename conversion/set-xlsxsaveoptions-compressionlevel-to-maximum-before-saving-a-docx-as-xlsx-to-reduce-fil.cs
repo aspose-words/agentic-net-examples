@@ -8,30 +8,32 @@ public class Program
     public static void Main()
     {
         // Create a sample DOCX document.
-        const string inputPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Sample content for XLSX conversion.");
-        doc.Save(inputPath, SaveFormat.Docx);
 
-        // Load the DOCX document.
-        Document loadedDoc = new Document(inputPath);
+        // Save the document as DOCX (bootstrap step).
+        string docxPath = "sample.docx";
+        doc.Save(docxPath, SaveFormat.Docx);
 
-        // Set up XlsxSaveOptions with maximum compression.
-        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
-        {
-            CompressionLevel = CompressionLevel.Maximum,
-            SaveFormat = SaveFormat.Xlsx
-        };
+        // Load the DOCX file.
+        Document loadedDoc = new Document(docxPath);
+
+        // Configure XlsxSaveOptions with maximum compression.
+        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions();
+        xlsxOptions.CompressionLevel = CompressionLevel.Maximum;
+        xlsxOptions.SaveFormat = SaveFormat.Xlsx;
 
         // Save the document as XLSX using the configured options.
-        const string outputPath = "output.xlsx";
-        loadedDoc.Save(outputPath, xlsxOptions);
+        string xlsxPath = "output.xlsx";
+        loadedDoc.Save(xlsxPath, xlsxOptions);
 
         // Verify that the XLSX file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("Expected output XLSX was not created.");
-        }
+        if (!File.Exists(xlsxPath))
+            throw new InvalidOperationException("Expected XLSX output file was not created.");
+
+        // Output the size of the compressed file.
+        long fileSize = new FileInfo(xlsxPath).Length;
+        Console.WriteLine($"XLSX saved with maximum compression. Size: {fileSize} bytes.");
     }
 }

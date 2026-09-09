@@ -8,32 +8,46 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF with two pages.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("This is page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 2.");
+        // Define file names.
         const string pdfPath = "sample.pdf";
-        source.Save(pdfPath, SaveFormat.Pdf);
+        const string docxPath = "output.docx";
 
-        // Load the PDF while ignoring recoverable errors.
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample PDF document with page breaks.
+        // -----------------------------------------------------------------
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("First page content.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Second page content.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Third page content.");
+        // Save as PDF.
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // -----------------------------------------------------------------
+        // Step 2: Load the PDF with PdfLoadOptions that ignore errors.
+        // -----------------------------------------------------------------
         PdfLoadOptions loadOptions = new PdfLoadOptions
         {
-            // Use TryRecover to attempt recovery and ignore recoverable issues.
+            // Use the default recovery mode (TryRecover) to ignore errors.
             RecoveryMode = DocumentRecoveryMode.TryRecover
         };
         Document pdfDoc = new Document(pdfPath, loadOptions);
 
-        // Save the loaded document as DOCX. Page breaks are preserved automatically.
-        const string docxPath = "output.docx";
+        // -----------------------------------------------------------------
+        // Step 3: Save the loaded document as DOCX, preserving page breaks.
+        // -----------------------------------------------------------------
         pdfDoc.Save(docxPath, SaveFormat.Docx);
 
-        // Verify that the output file was created.
+        // -----------------------------------------------------------------
+        // Validation: ensure the DOCX file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(docxPath))
-            throw new InvalidOperationException("The DOCX file was not created.");
+            throw new InvalidOperationException("The DOCX output file was not created.");
 
-        // Clean up temporary files (optional).
-        File.Delete(pdfPath);
+        // Optional: clean up sample files (comment out if you want to keep them).
+        // File.Delete(pdfPath);
+        // File.Delete(docxPath);
     }
 }

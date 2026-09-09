@@ -10,7 +10,7 @@
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.7.0",
+      "Aspose.Words": "26.8.0",
       "Aspose.Drawing.Common": "25.11.0"
     },
     "required_namespaces": [
@@ -291,8 +291,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 16,
@@ -303,8 +303,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 17,
@@ -755,8 +755,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 55,
@@ -825,8 +825,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 61,
@@ -884,8 +884,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 66,
@@ -979,8 +979,8 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 74,
@@ -1085,8 +1085,8 @@
         "pdf",
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 83,
@@ -1155,8 +1155,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 89,
@@ -1179,8 +1179,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 91,
