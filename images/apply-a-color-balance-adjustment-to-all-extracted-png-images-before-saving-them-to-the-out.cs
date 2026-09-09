@@ -1,10 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
@@ -17,87 +16,84 @@ public class Program
         Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample PNG image using Aspose.Drawing
+        // 1. Create a sample PNG image (a simple gradient) using Aspose.Drawing
         // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+        string inputImagePath = Path.Combine(artifactsDir, "input.png");
         const int imgWidth = 200;
         const int imgHeight = 200;
-
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
-        using (Graphics g = Graphics.FromImage(bitmap))
+        using (var bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
+        using (var graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
         {
-            // Fill background with white
-            g.Clear(Color.White);
-
-            // Draw a simple red rectangle
-            using (SolidBrush brush = new SolidBrush(Color.Red))
-            {
-                g.FillRectangle(brush, 20, 20, imgWidth - 40, imgHeight - 40);
-            }
-
+            // Fill with a light gray background
+            graphics.Clear(Aspose.Drawing.Color.LightGray);
+            // Draw a red rectangle
+            var redBrush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red);
+            graphics.FillRectangle(redBrush, 50, 50, 100, 100);
             // Save the bitmap as PNG
-            bitmap.Save(sampleImagePath);
+            bitmap.Save(inputImagePath);
         }
 
         // -----------------------------------------------------------------
-        // 2. Create a Word document and insert the PNG image several times
+        // 2. Insert the sample image into a Word document
         // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the image three times
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertImage(sampleImagePath);
-            builder.Writeln(); // add a line break between images
-        }
-
-        // Save the document
-        string docPath = Path.Combine(artifactsDir, "SampleDocument.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.InsertImage(inputImagePath);
+        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
         doc.Save(docPath);
 
         // -----------------------------------------------------------------
-        // 3. Load the document, adjust color balance of each PNG image,
-        //    and save the adjusted images to the output folder
+        // 3. Load the document and process each PNG image
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        var loadedDoc = new Document(docPath);
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                              .OfType<Shape>()
+                              .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Png)
+                              .ToList();
 
-        int extractedCount = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        if (!shapes.Any())
+            throw new InvalidOperationException("No PNG images were found in the document.");
+
+        int imageIndex = 0;
+        foreach (var shape in shapes)
         {
-            if (!shape.HasImage)
-                continue;
+            // Extract image bytes from the shape
+            byte[] imageBytes = shape.ImageData.ToByteArray();
 
-            // Process only PNG images
-            if (shape.ImageData.ImageType != ImageType.Png)
-                continue;
+            // Load the bytes into an Aspose.Drawing.Bitmap
+            using (var ms = new MemoryStream(imageBytes))
+            using (var bitmap = new Aspose.Drawing.Bitmap(ms))
+            {
+                // ---------------------------------------------------------
+                // Apply a simple color‑balance adjustment:
+                //   - Increase the red channel
+                //   - Decrease the blue channel
+                // ---------------------------------------------------------
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    for (int x = 0; x < bitmap.Width; x++)
+                    {
+                        var pixel = bitmap.GetPixel(x, y);
+                        int r = Math.Min(255, pixel.R + 30); // boost red
+                        int g = pixel.G;                     // keep green unchanged
+                        int b = Math.Max(0, pixel.B - 30);   // reduce blue
+                        var newColor = Aspose.Drawing.Color.FromArgb(pixel.A, r, g, b);
+                        bitmap.SetPixel(x, y, newColor);
+                    }
+                }
 
-            // Apply a simple color‑balance‑like adjustment.
-            // Here we modify brightness and contrast as a proxy for color balance.
-            shape.ImageData.Brightness = 0.8f; // brighter
-            shape.ImageData.Contrast = 0.6f;   // slightly higher contrast
-
-            // Save the adjusted image
-            string outFile = Path.Combine(outputDir, $"Extracted_{extractedCount}.png");
-            shape.ImageData.Save(outFile);
-            extractedCount++;
+                // Save the adjusted image to the output folder
+                string adjustedPath = Path.Combine(outputDir, $"adjusted_{imageIndex}.png");
+                bitmap.Save(adjustedPath);
+                imageIndex++;
+            }
         }
 
-        // -----------------------------------------------------------------
-        // 4. Validation – ensure at least one image was saved
-        // -----------------------------------------------------------------
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No PNG images were extracted and saved.");
+        // Verify that at least one adjusted image was written
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No adjusted images were saved.");
 
-        // Optional: verify that files exist (throws if any missing)
-        for (int i = 0; i < extractedCount; i++)
-        {
-            string filePath = Path.Combine(outputDir, $"Extracted_{i}.png");
-            if (!File.Exists(filePath))
-                throw new FileNotFoundException($"Expected output file not found: {filePath}");
-        }
-
-        // Program completes without requiring user interaction.
+        // Optional: clean up the temporary document (not required for the example)
+        // File.Delete(docPath);
     }
 }

@@ -1,160 +1,138 @@
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
-using Newtonsoft.Json;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
-    public static void Main(string[] args)
+    // Entry point of the console application.
+    public static void Main()
     {
-        // Define folders and files
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string imageOutputFolder = Path.Combine(baseDir, "ExtractedImages");
-        string reportPath = Path.Combine(baseDir, "ImageReport.csv");
+        // Base working directory.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string imageOutputDir = Path.Combine(baseDir, "ExtractedImages");
+        string csvReportPath = Path.Combine(baseDir, "ImageReport.csv");
 
-        // Prepare folders
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(imageOutputFolder);
+        // Ensure all directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(imageOutputDir);
 
-        // Create sample images
-        string sampleImage1 = Path.Combine(baseDir, "sample1.png");
-        string sampleImage2 = Path.Combine(baseDir, "sample2.png");
-        CreateSamplePng(sampleImage1, 200, 150, Aspose.Drawing.Color.LightBlue);
-        CreateSamplePng(sampleImage2, 120, 180, Aspose.Drawing.Color.LightCoral);
+        // -----------------------------------------------------------------
+        // 1. Create deterministic sample images (PNG) that will be inserted.
+        // -----------------------------------------------------------------
+        string sampleImagePath1 = Path.Combine(baseDir, "sample1.png");
+        string sampleImagePath2 = Path.Combine(baseDir, "sample2.png");
 
-        // Create sample DOCX files with images
-        for (int i = 1; i <= 3; i++)
+        CreateSamplePng(sampleImagePath1, 200, 200, Aspose.Drawing.Color.Red);
+        CreateSamplePng(sampleImagePath2, 150, 150, Aspose.Drawing.Color.Blue);
+
+        // ---------------------------------------------------------------
+        // 2. Create a few sample DOCX files that contain the images above.
+        // ---------------------------------------------------------------
+        for (int docIndex = 1; docIndex <= 3; docIndex++)
         {
-            string docPath = Path.Combine(inputFolder, $"Doc{i}.docx");
-            CreateSampleDocumentWithImages(docPath, new[] { sampleImage1, sampleImage2 });
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert both sample images into each document.
+            builder.InsertParagraph();
+            builder.Writeln($"Document {docIndex} - first image:");
+            builder.InsertImage(sampleImagePath1);
+
+            builder.InsertParagraph();
+            builder.Writeln($"Document {docIndex} - second image:");
+            builder.InsertImage(sampleImagePath2);
+
+            string docPath = Path.Combine(inputDir, $"SampleDoc{docIndex}.docx");
+            doc.Save(docPath);
         }
 
-        // Process documents: extract images and collect metadata
-        var records = new List<ImageRecord>();
-        foreach (string docFile in Directory.GetFiles(inputFolder, "*.docx"))
+        // ---------------------------------------------------------------
+        // 3. Batch process all DOCX files: extract images and collect metadata.
+        // ---------------------------------------------------------------
+        var csvLines = new List<string>();
+        // Header for CSV.
+        csvLines.Add("DocumentName,ImageFileName,ImageType,WidthPoints,HeightPoints,WidthPixels,HeightPixels,HorizontalResolutionDPI,VerticalResolutionDPI");
+
+        bool anyImageExtracted = false;
+
+        foreach (string docFilePath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            Document doc = new Document(docFile);
-            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 1;
-            foreach (Shape shape in shapes)
+            Document doc = new Document(docFilePath);
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            int imageIndex = 0;
+
+            foreach (Shape shape in shapeNodes.OfType<Shape>())
             {
-                if (shape.HasImage)
-                {
-                    // Determine image file extension based on image type
-                    string ext = GetExtensionFromImageType(shape.ImageData.ImageType);
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_Image{imageIndex}{ext}";
-                    string imagePath = Path.Combine(imageOutputFolder, imageFileName);
+                if (!shape.HasImage)
+                    continue;
 
-                    // Save image
-                    shape.ImageData.Save(imagePath);
+                // Determine image type and appropriate file extension.
+                ImageType imgType = shape.ImageData.ImageType;
+                string extension = FileFormatUtil.ImageTypeToExtension(imgType); // includes leading dot.
 
-                    // Gather metadata
-                    FileInfo fi = new FileInfo(imagePath);
-                    var record = new ImageRecord
-                    {
-                        DocumentName = Path.GetFileName(docFile),
-                        ImageFileName = imageFileName,
-                        ImageFormat = shape.ImageData.ImageType.ToString(),
-                        ImageSizeBytes = fi.Length,
-                        WidthPoints = shape.Width,
-                        HeightPoints = shape.Height
-                    };
-                    records.Add(record);
-                    imageIndex++;
-                }
+                // Build deterministic image file name.
+                string imageFileName = $"{Path.GetFileNameWithoutExtension(docFilePath)}_Image{imageIndex}{extension}";
+                string imageFullPath = Path.Combine(imageOutputDir, imageFileName);
+
+                // Save the image to disk.
+                shape.ImageData.Save(imageFullPath);
+                anyImageExtracted = true;
+
+                // Retrieve image size information.
+                ImageSize imgSize = shape.ImageData.ImageSize;
+
+                // Prepare CSV line.
+                string csvLine = string.Join(",",
+                    Path.GetFileName(docFilePath),
+                    imageFileName,
+                    imgType,
+                    imgSize.WidthPoints,
+                    imgSize.HeightPoints,
+                    imgSize.WidthPixels,
+                    imgSize.HeightPixels,
+                    imgSize.HorizontalResolution,
+                    imgSize.VerticalResolution);
+
+                csvLines.Add(csvLine);
+                imageIndex++;
             }
         }
 
-        // Validate that images were extracted
-        if (records.Count == 0)
-        {
-            throw new InvalidOperationException("No images were extracted from the documents.");
-        }
+        // Validate that at least one image was extracted.
+        if (!anyImageExtracted)
+            throw new InvalidOperationException("No images were extracted from the processed documents.");
 
-        // Write CSV report
-        using (var writer = new StreamWriter(reportPath, false, System.Text.Encoding.UTF8))
+        // ---------------------------------------------------------------
+        // 4. Write CSV report.
+        // ---------------------------------------------------------------
+        File.WriteAllLines(csvReportPath, csvLines);
+
+        Console.WriteLine($"Processing complete. Extracted images are in: {imageOutputDir}");
+        Console.WriteLine($"CSV report generated at: {csvReportPath}");
+    }
+
+    // Helper method to create a deterministic PNG image using Aspose.Drawing.
+    private static void CreateSamplePng(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
+    {
+        // Create bitmap.
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            writer.WriteLine("DocumentName,ImageFileName,ImageFormat,ImageSizeBytes,WidthPoints,HeightPoints");
-            foreach (var rec in records)
+            // Obtain graphics object.
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                writer.WriteLine(string.Join(",",
-                    EscapeCsv(rec.DocumentName),
-                    EscapeCsv(rec.ImageFileName),
-                    EscapeCsv(rec.ImageFormat),
-                    rec.ImageSizeBytes.ToString(CultureInfo.InvariantCulture),
-                    rec.WidthPoints.ToString(CultureInfo.InvariantCulture),
-                    rec.HeightPoints.ToString(CultureInfo.InvariantCulture)));
+                // Fill background with the specified color.
+                graphics.Clear(fillColor);
             }
-        }
 
-        // Simple validation that report was created
-        if (!File.Exists(reportPath) || new FileInfo(reportPath).Length == 0)
-        {
-            throw new InvalidOperationException("CSV report was not created successfully.");
+            // Save bitmap as PNG.
+            bitmap.Save(filePath, ImageFormat.Png);
         }
-    }
-
-    private static void CreateSamplePng(string path, int width, int height, Aspose.Drawing.Color backColor)
-    {
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
-        {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                g.Clear(backColor);
-            }
-            bitmap.Save(path);
-        }
-    }
-
-    private static void CreateSampleDocumentWithImages(string docPath, string[] imagePaths)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln($"Sample document: {Path.GetFileName(docPath)}");
-        foreach (string imgPath in imagePaths)
-        {
-            builder.InsertImage(imgPath);
-            builder.Writeln(); // add a line break after each image
-        }
-        doc.Save(docPath);
-    }
-
-    private static string GetExtensionFromImageType(ImageType type)
-    {
-        switch (type)
-        {
-            case ImageType.Jpeg: return ".jpg";
-            case ImageType.Png: return ".png";
-            case ImageType.Gif: return ".gif";
-            case ImageType.Bmp: return ".bmp";
-            case ImageType.Emf: return ".emf";
-            case ImageType.Wmf: return ".wmf";
-            default: return ".img";
-        }
-    }
-
-    private static string EscapeCsv(string field)
-    {
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-        {
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        }
-        return field;
-    }
-
-    private class ImageRecord
-    {
-        public string DocumentName { get; set; }
-        public string ImageFileName { get; set; }
-        public string ImageFormat { get; set; }
-        public long ImageSizeBytes { get; set; }
-        public double WidthPoints { get; set; }
-        public double HeightPoints { get; set; }
     }
 }

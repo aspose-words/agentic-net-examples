@@ -3,81 +3,72 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Words.Loading;
-using Aspose.Drawing; // Aspose.Drawing.Common namespace
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-public class ExtractVideoFrameImages
+namespace ExtractVideoFrameImages
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare folders
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // 1. Create a sample high‑resolution image that will act as a video frame.
-        string sampleImagePath = Path.Combine(artifactsDir, "frame.png");
-        CreateSampleImage(sampleImagePath, 1920, 1080); // 1080p PNG
-
-        // 2. Build a DOCX document and insert the sample image.
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
-        CreateDocumentWithImage(docPath, sampleImagePath);
-
-        // 3. Load the document and extract all images (including video frame images).
-        Document doc = new Document(docPath);
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
-        int extractedCount = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        public static void Main()
         {
-            if (!shape.HasImage)
-                continue;
+            // Prepare output folder.
+            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+            Directory.CreateDirectory(artifactsDir);
 
-            // Determine a PNG file name for the extracted image.
-            string outFileName = $"extracted_{extractedCount}.png";
-            string outPath = Path.Combine(artifactsDir, outFileName);
-
-            // Save the image data. If the original format is not PNG, Aspose.Words will
-            // convert it to PNG because we specify the .png extension.
-            shape.ImageData.Save(outPath);
-            extractedCount++;
-        }
-
-        // Validate that at least one image was extracted.
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        Console.WriteLine($"Extracted {extractedCount} image(s) to folder: {artifactsDir}");
-    }
-
-    // Creates a deterministic PNG image using Aspose.Drawing.
-    private static void CreateSampleImage(string filePath, int width, int height)
-    {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
+            // -----------------------------------------------------------------
+            // 1. Create a sample high‑resolution image that will act as a video frame.
+            // -----------------------------------------------------------------
+            string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+            using (Bitmap bitmap = new Bitmap(800, 600))
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background with white.
-                graphics.Clear(Color.White);
-                // Optionally draw a simple rectangle to make the image visible.
-                graphics.DrawRectangle(new Pen(Color.Black, 5), 10, 10, width - 20, height - 20);
+                graphics.Clear(Color.CornflowerBlue);
+                // Additional deterministic drawing can be added here if needed.
+                bitmap.Save(sampleImagePath, ImageFormat.Png);
             }
 
-            // Save as PNG.
-            bitmap.Save(filePath);
+            // -----------------------------------------------------------------
+            // 2. Create a DOCX document and insert the sample image.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertImage(sampleImagePath);
+            string docPath = Path.Combine(artifactsDir, "VideoFrames.docx");
+            doc.Save(docPath);
+
+            // -----------------------------------------------------------------
+            // 3. Load the document and extract all images (video frames) as PNG.
+            // -----------------------------------------------------------------
+            Document loadedDoc = new Document(docPath);
+            NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
+            int extractedCount = 0;
+            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            {
+                if (shape.HasImage)
+                {
+                    // Force PNG output regardless of original format.
+                    string outputPath = Path.Combine(artifactsDir, $"extracted_{extractedCount}.png");
+
+                    // Get the image bytes from the shape.
+                    byte[] imageBytes = shape.ImageData.ToByteArray();
+
+                    // Load the bytes into an Aspose.Drawing.Image and save as PNG.
+                    using (MemoryStream ms = new MemoryStream(imageBytes))
+                    using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(ms))
+                    using (Bitmap bmp = new Bitmap(img))
+                    {
+                        bmp.Save(outputPath, ImageFormat.Png);
+                    }
+
+                    extractedCount++;
+                }
+            }
+
+            // Validate that at least one image was extracted.
+            if (extractedCount == 0)
+                throw new InvalidOperationException("No images were extracted from the document.");
         }
-    }
-
-    // Creates a DOCX file and inserts the provided image.
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the image as an inline shape.
-        builder.InsertImage(imagePath);
-
-        // Save the document.
-        doc.Save(docPath);
     }
 }

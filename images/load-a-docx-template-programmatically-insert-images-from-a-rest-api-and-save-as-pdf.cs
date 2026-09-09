@@ -8,70 +8,79 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
+        // Prepare output folder.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Define file paths
-        string templatePath = Path.Combine(artifactsDir, "template.docx");
-        string imagePath = Path.Combine(artifactsDir, "apiImage.png");
-        string outputPdfPath = Path.Combine(artifactsDir, "result.pdf");
-
-        // 1. Create a sample image (simulating a REST API response)
-        CreateSampleImage(imagePath);
-
-        // 2. Create a simple DOCX template
+        // -----------------------------------------------------------------
+        // 1. Create a simple DOCX template that will be loaded later.
+        // -----------------------------------------------------------------
+        string templatePath = Path.Combine(artifactsDir, "Template.docx");
         CreateTemplateDocument(templatePath);
 
-        // 3. Load the template document
+        // -----------------------------------------------------------------
+        // 2. Simulate images retrieved from a REST API by creating local files.
+        // -----------------------------------------------------------------
+        string imagePath1 = Path.Combine(artifactsDir, "ApiImage1.png");
+        string imagePath2 = Path.Combine(artifactsDir, "ApiImage2.png");
+        CreateSampleImage(imagePath1, Aspose.Drawing.Color.LightBlue);
+        CreateSampleImage(imagePath2, Aspose.Drawing.Color.LightGreen);
+
+        // -----------------------------------------------------------------
+        // 3. Load the template, insert the images, and save as PDF.
+        // -----------------------------------------------------------------
         Document doc = new Document(templatePath);
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // 4. Insert the image into the document
-        builder.InsertParagraph(); // ensure a new paragraph before the image
-        builder.InsertImage(imagePath);
+        // Insert first image.
+        builder.InsertImage(imagePath1);
+        builder.Writeln(); // Add a line break between images.
 
-        // 5. Save the document as PDF
-        doc.Save(outputPdfPath, SaveFormat.Pdf);
+        // Insert second image.
+        builder.InsertImage(imagePath2);
+        builder.Writeln();
 
-        // 6. Validate that the PDF was created
-        if (!File.Exists(outputPdfPath))
-        {
-            throw new InvalidOperationException("PDF output was not created.");
-        }
+        // Save the resulting document as PDF.
+        string pdfPath = Path.Combine(artifactsDir, "Result.pdf");
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        // -----------------------------------------------------------------
+        // 4. Validate that the PDF was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The PDF file was not created.");
+
+        // (Optional) Output paths for verification when running locally.
+        Console.WriteLine("Template created at: " + templatePath);
+        Console.WriteLine("Image 1 created at: " + imagePath1);
+        Console.WriteLine("Image 2 created at: " + imagePath2);
+        Console.WriteLine("PDF saved at: " + pdfPath);
     }
 
-    private static void CreateSampleImage(string filePath)
-    {
-        // Create a 200x200 bitmap
-        Bitmap bitmap = new Bitmap(200, 200);
-        Graphics graphics = Graphics.FromImage(bitmap);
-
-        // Fill background with white
-        graphics.Clear(Color.White);
-
-        // Draw a simple red rectangle
-        using (Pen pen = new Pen(Color.Red, 5))
-        {
-            graphics.DrawRectangle(pen, 20, 20, 160, 160);
-        }
-
-        // Save the bitmap to a PNG file
-        bitmap.Save(filePath);
-
-        // Clean up resources
-        graphics.Dispose();
-        bitmap.Dispose();
-    }
-
+    // Creates a minimal DOCX file containing a single line of text.
     private static void CreateTemplateDocument(string filePath)
     {
-        // Create a blank document and add a placeholder paragraph
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("This is a template document.");
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a template document. Images will be inserted below:");
+        doc.Save(filePath);
+    }
 
-        // Save the template
-        template.Save(filePath);
+    // Generates a simple PNG image with a solid background color.
+    private static void CreateSampleImage(string filePath, Aspose.Drawing.Color backgroundColor)
+    {
+        const int width = 200;
+        const int height = 150;
+
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(backgroundColor);
+            }
+
+            // Ensure the bitmap is saved before disposing.
+            bitmap.Save(filePath);
+        }
     }
 }

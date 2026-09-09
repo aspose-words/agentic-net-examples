@@ -1,74 +1,95 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
+using Aspose.Words.Saving;
+using Aspose.Drawing; // For Bitmap, Graphics, Color
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define deterministic file names.
+        const string sampleImagePath = "sample.png";
+        const string docPath = "sample.docx";
+        const string latexPath = "output.tex";
 
-        // ---------- Create a sample image ----------
-        string sampleImagePath = Path.Combine(outputDir, "sample.png");
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
+        // -----------------------------------------------------------------
+        // 1. Create a sample image (100x100 white bitmap) using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(100, 100);
         Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.LightBlue);
-        // Additional deterministic drawing can be added here if desired
+        graphics.Clear(Aspose.Drawing.Color.White);
+        // (Optional) draw something deterministic here if desired.
         bitmap.Save(sampleImagePath);
         graphics.Dispose();
         bitmap.Dispose();
 
-        // ---------- Create a Word document and insert the image ----------
+        // -----------------------------------------------------------------
+        // 2. Create a Word document and insert the sample image twice.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleImagePath);
-        builder.Writeln();
+        builder.InsertParagraph(); // separate the images
         builder.InsertImage(sampleImagePath);
-        string docPath = Path.Combine(outputDir, "sample.docx");
         doc.Save(docPath);
 
-        // ---------- Load the document ----------
+        // -----------------------------------------------------------------
+        // 3. Load the document and extract all images.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
+        List<Shape> shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                                          .Cast<Shape>()
+                                          .Where(s => s.HasImage)
+                                          .ToList();
 
-        // ---------- Extract images ----------
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        if (!shapeNodes.Any())
+            throw new InvalidOperationException("No images were found in the document.");
+
+        List<string> extractedImageFiles = new List<string>();
         int imageIndex = 0;
-        List<string> latexLines = new List<string>();
-
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        foreach (Shape shape in shapeNodes)
         {
-            if (shape.HasImage)
+            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+            string imageFileName = $"image_{imageIndex}{extension}";
+            shape.ImageData.Save(imageFileName);
+            extractedImageFiles.Add(imageFileName);
+            imageIndex++;
+        }
+
+        // -----------------------------------------------------------------
+        // 4. Generate a simple LaTeX file that includes each extracted image.
+        // -----------------------------------------------------------------
+        using (StreamWriter writer = new StreamWriter(latexPath, false))
+        {
+            writer.WriteLine(@"\documentclass{article}");
+            writer.WriteLine(@"\usepackage{graphicx}");
+            writer.WriteLine(@"\begin{document}");
+            writer.WriteLine();
+
+            for (int i = 0; i < extractedImageFiles.Count; i++)
             {
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imageFileName = $"image_{imageIndex}{extension}";
-                string imageFullPath = Path.Combine(outputDir, imageFileName);
-                shape.ImageData.Save(imageFullPath);
-                latexLines.Add($"\\includegraphics{{{imageFileName}}}");
-                imageIndex++;
+                string imgFile = extractedImageFiles[i];
+                writer.WriteLine(@"\begin{figure}[h]");
+                writer.WriteLine(@"\centering");
+                writer.WriteLine($@"\includegraphics[width=0.8\textwidth]{{{imgFile}}}");
+                writer.WriteLine($@"\caption{{Image {i}}}");
+                writer.WriteLine(@"\end{figure}");
+                writer.WriteLine();
             }
+
+            writer.WriteLine(@"\end{document}");
         }
 
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
+        // -----------------------------------------------------------------
+        // 5. Validation: ensure LaTeX file was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(latexPath))
+            throw new InvalidOperationException("LaTeX file was not created.");
 
-        // ---------- Generate LaTeX file ----------
-        string texPath = Path.Combine(outputDir, "document.tex");
-        using (StreamWriter writer = new StreamWriter(texPath))
-        {
-            writer.WriteLine("\\documentclass{article}");
-            writer.WriteLine("\\usepackage{graphicx}");
-            writer.WriteLine("\\begin{document}");
-            foreach (string line in latexLines)
-                writer.WriteLine(line);
-            writer.WriteLine("\\end{document}");
-        }
-
-        // Optional: indicate completion
-        Console.WriteLine($"Extraction complete. Files are located in: {outputDir}");
+        // Program completed successfully.
     }
 }

@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,76 +10,95 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Folder for generated artifacts
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create sample TIFF images
+        // -----------------------------------------------------------------
+        // 1. Create sample TIFF images (deterministic local files)
+        // -----------------------------------------------------------------
         string[] tiffFiles = new string[2];
         for (int i = 0; i < tiffFiles.Length; i++)
         {
-            string tiffPath = Path.Combine(outputDir, $"sample{i + 1}.tiff");
-            CreateSampleTiff(tiffPath, i);
-            tiffFiles[i] = tiffPath;
+            string filePath = Path.Combine(artifactsDir, $"sample{i + 1}.tiff");
+            CreateSampleTiff(filePath, $"Page {i + 1}");
+            tiffFiles[i] = filePath;
         }
 
-        // Create a new Word document
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 2. Build a new document where each TIFF occupies a full page
+        // -----------------------------------------------------------------
+        Document pdfDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(pdfDoc);
 
-        // Insert each TIFF image on a separate full page
+        // Retrieve page dimensions (in points) from the document's first section
+        double pageWidth = pdfDoc.FirstSection.PageSetup.PageWidth;
+        double pageHeight = pdfDoc.FirstSection.PageSetup.PageHeight;
+
         for (int i = 0; i < tiffFiles.Length; i++)
         {
-            Shape shape = builder.InsertImage(tiffFiles[i]);
+            if (i > 0)
+                builder.InsertBreak(BreakType.PageBreak); // start a new page for subsequent images
 
-            // Make the image fill the page
-            shape.WrapType = WrapType.None;
-            shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-            shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-            shape.HorizontalAlignment = HorizontalAlignment.Center;
-            shape.VerticalAlignment = VerticalAlignment.Center;
+            // Insert the TIFF image
+            Shape imageShape = builder.InsertImage(tiffFiles[i]);
 
-            // Set size to page dimensions (including margins)
-            shape.Width = doc.FirstSection.PageSetup.PageWidth;
-            shape.Height = doc.FirstSection.PageSetup.PageHeight;
-
-            // Add a page break after each image except the last one
-            if (i < tiffFiles.Length - 1)
-                builder.InsertBreak(BreakType.PageBreak);
+            // Ensure the image fills the whole page
+            imageShape.WrapType = WrapType.None;
+            imageShape.BehindText = false;
+            imageShape.Width = pageWidth;
+            imageShape.Height = pageHeight;
         }
 
-        // Save the document as PDF
-        string pdfPath = Path.Combine(outputDir, "ImagesToPdf.pdf");
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // -----------------------------------------------------------------
+        // 3. Save the document as PDF
+        // -----------------------------------------------------------------
+        string pdfPath = Path.Combine(artifactsDir, "ImagesToPdf.pdf");
+        pdfDoc.Save(pdfPath, SaveFormat.Pdf);
 
         // Validate that the PDF was created
-        if (!File.Exists(pdfPath))
-            throw new Exception("PDF file was not created.");
+        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
+            throw new InvalidOperationException("PDF output was not created successfully.");
+
+        // Cleanup: optional removal of temporary TIFF files
+        foreach (string tiff in tiffFiles)
+        {
+            if (File.Exists(tiff))
+                File.Delete(tiff);
+        }
     }
 
-    private static void CreateSampleTiff(string filePath, int index)
+    // Helper method to create a simple single‑frame TIFF image with text
+    private static void CreateSampleTiff(string filePath, string caption)
     {
-        // Create a bitmap with deterministic size
-        int width = 600;
-        int height = 800;
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        const int width = 600;
+        const int height = 800;
 
-        // Fill background with a different color per image
-        Aspose.Drawing.Color background = (index % 2 == 0) ? Aspose.Drawing.Color.LightBlue : Aspose.Drawing.Color.LightGreen;
-        graphics.Clear(background);
-
-        // Draw a semi‑transparent rectangle
-        using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.FromArgb(128, Aspose.Drawing.Color.Red)))
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
         {
-            graphics.FillRectangle(brush, 100, 100, 400, 600);
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                // Fill background
+                g.Clear(Aspose.Drawing.Color.White);
+
+                // Draw a rectangle border
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
+                {
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+
+                // Draw caption text
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 48, Aspose.Drawing.FontStyle.Bold))
+                {
+                    SizeF textSize = g.MeasureString(caption, font);
+                    float x = (width - textSize.Width) / 2;
+                    float y = (height - textSize.Height) / 2;
+                    g.DrawString(caption, font, Aspose.Drawing.Brushes.Black, x, y);
+                }
+            }
+
+            // Save as TIFF (single frame)
+            bitmap.Save(filePath, ImageFormat.Tiff);
         }
-
-        // Save as TIFF
-        bitmap.Save(filePath, ImageFormat.Tiff);
-
-        // Clean up drawing objects
-        graphics.Dispose();
-        bitmap.Dispose();
     }
 }

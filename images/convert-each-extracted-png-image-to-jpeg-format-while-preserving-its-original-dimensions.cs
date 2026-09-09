@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
@@ -10,59 +11,79 @@ public class Program
 {
     public static void Main()
     {
-        // Create a deterministic PNG sample image.
-        const string pngPath = "sample.png";
-        const int imgWidth = 200;
-        const int imgHeight = 100;
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        // Directories for artifacts
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // 1. Create a deterministic PNG sample image.
+        string pngPath = Path.Combine(artifactsDir, "sample.png");
+        CreateSamplePng(pngPath, 200, 100);
+
+        // 2. Insert the PNG into a Word document.
+        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
+        InsertImageIntoDocument(pngPath, docPath);
+
+        // 3. Load the document and convert each extracted PNG to JPEG.
+        ConvertExtractedPngsToJpeg(docPath, artifactsDir);
+
+        // 4. Validation – ensure at least one JPEG was produced.
+        int jpegCount = Directory.GetFiles(artifactsDir, "*.jpg").Length;
+        if (jpegCount == 0)
+            throw new InvalidOperationException("No JPEG files were created.");
+
+        Console.WriteLine($"Conversion completed. {jpegCount} JPEG file(s) saved to '{artifactsDir}'.");
+    }
+
+    // Creates a simple PNG image using Aspose.Drawing.
+    private static void CreateSamplePng(string filePath, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
         using (Graphics g = Graphics.FromImage(bitmap))
         {
-            g.Clear(Color.LightBlue);
-            bitmap.Save(pngPath, ImageFormat.Png);
+            g.Clear(Aspose.Drawing.Color.White);
+            using (Brush brush = new SolidBrush(Aspose.Drawing.Color.Red))
+            {
+                g.FillRectangle(brush, 10, 10, width - 20, height - 20);
+            }
+            bitmap.Save(filePath, ImageFormat.Png);
         }
+    }
 
-        // Build a document that contains the PNG image twice.
+    // Inserts the given image file into a new document and saves it.
+    private static void InsertImageIntoDocument(string imagePath, string docPath)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(pngPath);
-        builder.Writeln(); // separate the images
-        builder.InsertImage(pngPath);
-        const string docPath = "DocWithImages.docx";
+        builder.InsertImage(imagePath);
         doc.Save(docPath);
+    }
 
-        // Reload the document (optional, demonstrates load usage).
-        Document loadedDoc = new Document(docPath);
+    // Extracts PNG images from the document, converts each to JPEG, and saves them.
+    private static void ConvertExtractedPngsToJpeg(string docPath, string outputDir)
+    {
+        Document doc = new Document(docPath);
+        var shapes = doc.GetChildNodes(NodeType.Shape, true)
+                        .Cast<Shape>()
+                        .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Png)
+                        .ToList();
 
-        // Extract each PNG image, convert to JPEG while preserving dimensions.
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int jpegIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        int index = 0;
+        foreach (var shape in shapes)
         {
-            if (!shape.HasImage) continue;
-            if (shape.ImageData.ImageType != ImageType.Png) continue;
-
-            // Save the PNG image to a memory stream.
-            using (MemoryStream pngStream = new MemoryStream())
+            // Save the shape's image data to a memory stream.
+            using (MemoryStream ms = new MemoryStream())
             {
-                shape.ImageData.Save(pngStream);
-                pngStream.Position = 0;
+                shape.ImageData.Save(ms);
+                ms.Position = 0; // Reset before reading.
 
-                // Load the PNG into a bitmap and save as JPEG.
-                using (Bitmap bitmap = new Bitmap(pngStream))
+                // Load the image via Aspose.Drawing.
+                using (Image img = Image.FromStream(ms))
                 {
-                    string jpegPath = $"extracted_{jpegIndex}.jpg";
-                    bitmap.Save(jpegPath, ImageFormat.Jpeg);
-                    jpegIndex++;
+                    string jpegPath = Path.Combine(outputDir, $"extracted_{index}.jpg");
+                    img.Save(jpegPath, ImageFormat.Jpeg);
                 }
             }
+            index++;
         }
-
-        // Validation: ensure at least one JPEG was created.
-        if (jpegIndex == 0)
-            throw new InvalidOperationException("No PNG images were found to convert.");
-
-        // Cleanup sample files (optional).
-        // File.Delete(pngPath);
-        // File.Delete(docPath);
     }
 }

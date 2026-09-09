@@ -1,111 +1,100 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class ApplyVignetteToJpegImages
+public class Program
 {
+    // Entry point
     public static void Main()
     {
-        // Directories for temporary files.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        string docsDir = Path.Combine(baseDir, "Docs");
-        string outputDir = Path.Combine(baseDir, "Output");
-        Directory.CreateDirectory(docsDir);
+        // Prepare folders
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // 1. Create a sample JPEG image that will be inserted into the documents.
-        string sampleJpegPath = Path.Combine(baseDir, "sample.jpg");
-        CreateSampleJpeg(sampleJpegPath, 300, 200);
+        // Create a sample JPEG image
+        string sampleImagePath = Path.Combine(baseDir, "sample.jpg");
+        CreateSampleJpeg(sampleImagePath, 200, 200);
 
-        // 2. Create a few Word documents and insert the sample JPEG image.
-        int documentCount = 2;
-        List<string> docPaths = new List<string>();
-        for (int i = 0; i < documentCount; i++)
+        // Create sample Word documents containing the JPEG image
+        for (int i = 1; i <= 2; i++)
         {
-            string docPath = Path.Combine(docsDir, $"Document_{i + 1}.docx");
-            CreateDocumentWithJpeg(docPath, sampleJpegPath);
-            docPaths.Add(docPath);
+            string docPath = Path.Combine(inputDir, $"Document{i}.docx");
+            CreateDocumentWithImage(docPath, sampleImagePath);
         }
 
-        // 3. Process each document: extract JPEG images, apply vignette, replace them, and save results.
-        int totalProcessedImages = 0;
-        for (int docIndex = 0; docIndex < docPaths.Count; docIndex++)
+        // Process each document: apply vignette to all JPEG images
+        foreach (string docFile in Directory.GetFiles(inputDir, "*.docx"))
         {
-            string docPath = docPaths[docIndex];
-            Document doc = new Document(docPath);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            Document doc = new Document(docFile);
+            var shapeNodes = doc.GetChildNodes(NodeType.Shape, true)
+                                .Cast<Shape>()
+                                .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Jpeg)
+                                .ToList();
 
-            int imageIndex = 0;
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            if (!shapeNodes.Any())
+                throw new InvalidOperationException($"No JPEG images found in document '{docFile}'.");
+
+            foreach (Shape shape in shapeNodes)
             {
-                if (!shape.HasImage) continue;
-                if (shape.ImageData.ImageType != ImageType.Jpeg) continue;
-
-                // Extract the JPEG image to a memory stream.
+                // Extract original JPEG image to a memory stream
                 using (MemoryStream originalStream = new MemoryStream())
                 {
                     shape.ImageData.Save(originalStream);
                     originalStream.Position = 0;
 
-                    // Apply vignette effect.
-                    using (Bitmap originalBitmap = new Bitmap(originalStream))
+                    // Load bitmap from stream
+                    using (Bitmap bitmap = new Bitmap(originalStream))
                     {
-                        ApplyVignette(originalBitmap);
+                        // Apply vignette effect
+                        ApplyVignette(bitmap, 0.5f);
 
-                        // Save the modified image to a deterministic file name.
-                        string vignetteFileName = Path.Combine(
-                            outputDir,
-                            $"vignette_doc{docIndex + 1}_img{imageIndex + 1}.jpg");
-                        originalBitmap.Save(vignetteFileName, ImageFormat.Jpeg);
-
-                        // Replace the image inside the shape with the modified one.
-                        using (MemoryStream modifiedStream = new MemoryStream())
+                        // Save processed bitmap back to a new stream as JPEG
+                        using (MemoryStream processedStream = new MemoryStream())
                         {
-                            originalBitmap.Save(modifiedStream, ImageFormat.Jpeg);
-                            modifiedStream.Position = 0;
-                            shape.ImageData.SetImage(modifiedStream);
-                        }
+                            bitmap.Save(processedStream, ImageFormat.Jpeg);
+                            processedStream.Position = 0;
 
-                        totalProcessedImages++;
+                            // Replace image in the shape
+                            shape.ImageData.SetImage(processedStream);
+                        }
                     }
                 }
-
-                imageIndex++;
             }
 
-            // Save the modified document.
-            string modifiedDocPath = Path.Combine(docsDir, $"Document_{docIndex + 1}_Modified.docx");
-            doc.Save(modifiedDocPath);
+            // Save the modified document
+            string outputPath = Path.Combine(outputDir, Path.GetFileName(docFile));
+            doc.Save(outputPath);
         }
-
-        // Validation: ensure at least one image was processed.
-        if (totalProcessedImages == 0)
-            throw new InvalidOperationException("No JPEG images were found and processed.");
-
-        // The program finishes automatically; no user interaction required.
     }
 
-    // Creates a simple JPEG image with a solid background and a colored rectangle.
+    // Creates a deterministic JPEG image using Aspose.Drawing
     private static void CreateSampleJpeg(string filePath, int width, int height)
     {
         using (Bitmap bitmap = new Bitmap(width, height))
         using (Graphics g = Graphics.FromImage(bitmap))
         {
-            g.Clear(Color.LightBlue);
-            using (Brush brush = new SolidBrush(Color.Orange))
+            g.Clear(Aspose.Drawing.Color.LightBlue);
+            // Draw a simple red ellipse in the center
+            using (Brush brush = new SolidBrush(Aspose.Drawing.Color.Red))
             {
-                g.FillRectangle(brush, width / 4, height / 4, width / 2, height / 2);
+                int ellipseSize = Math.Min(width, height) / 2;
+                int x = (width - ellipseSize) / 2;
+                int y = (height - ellipseSize) / 2;
+                g.FillEllipse(brush, x, y, ellipseSize, ellipseSize);
             }
             bitmap.Save(filePath, ImageFormat.Jpeg);
         }
     }
 
-    // Creates a new Word document and inserts the specified JPEG image.
-    private static void CreateDocumentWithJpeg(string docPath, string imagePath)
+    // Creates a Word document with the specified image inserted
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
@@ -114,32 +103,34 @@ public class ApplyVignetteToJpegImages
         doc.Save(docPath);
     }
 
-    // Applies a simple vignette effect by drawing concentric semi‑transparent black ellipses.
-    private static void ApplyVignette(Bitmap bitmap)
+    // Applies a simple vignette effect to the bitmap
+    private static void ApplyVignette(Bitmap bitmap, float strength)
     {
         int width = bitmap.Width;
         int height = bitmap.Height;
-        using (Graphics g = Graphics.FromImage(bitmap))
-        {
-            // Number of concentric ellipses.
-            int steps = 10;
-            // Maximum opacity (0‑255). 150 gives a noticeable darkening.
-            int maxAlpha = 150;
+        float centerX = width / 2f;
+        float centerY = height / 2f;
+        float maxDist = (float)Math.Sqrt(centerX * centerX + centerY * centerY);
 
-            for (int i = 0; i < steps; i++)
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
             {
-                float progress = (float)i / steps;
-                int alpha = (int)(maxAlpha * progress);
-                Color vignetteColor = Color.FromArgb(alpha, 0, 0, 0);
-                using (Brush brush = new SolidBrush(vignetteColor))
-                {
-                    // Shrink the ellipse size on each step.
-                    float insetX = width * progress * 0.5f;
-                    float insetY = height * progress * 0.5f;
-                    RectangleF rect = new RectangleF(insetX, insetY,
-                        width - 2 * insetX, height - 2 * insetY);
-                    g.FillEllipse(brush, rect);
-                }
+                // Distance from center normalized [0,1]
+                float dx = x - centerX;
+                float dy = y - centerY;
+                float dist = (float)Math.Sqrt(dx * dx + dy * dy);
+                float factor = 1f - (dist / maxDist);
+                factor = Math.Max(0f, factor);
+                // Apply strength (the farther from center, the darker)
+                float vignette = (float)Math.Pow(factor, 2) * (1 - strength) + strength;
+                // Get original color
+                Aspose.Drawing.Color orig = bitmap.GetPixel(x, y);
+                // Apply vignette factor to each channel
+                int r = (int)(orig.R * vignette);
+                int g = (int)(orig.G * vignette);
+                int b = (int)(orig.B * vignette);
+                bitmap.SetPixel(x, y, Aspose.Drawing.Color.FromArgb(r, g, b));
             }
         }
     }
