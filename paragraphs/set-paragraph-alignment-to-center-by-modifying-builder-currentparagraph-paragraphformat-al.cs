@@ -8,16 +8,16 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a line of text – this creates a paragraph and makes it the current paragraph.
+        // Insert a paragraph with some text.
         builder.Writeln("This paragraph will be centered.");
 
-        // Modify the alignment of the current paragraph to center.
+        // Set the alignment of the current paragraph to center.
         builder.CurrentParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-        // Save the document to a file.
+        // Save the document to the file system.
         doc.Save("CenteredParagraph.docx");
     }
 }

@@ -1,33 +1,30 @@
 using System;
 using Aspose.Words;
 
-public class RemoveQuoteParagraphs
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to add content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a normal paragraph.
+        // Add paragraphs with different built‑in styles.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("This is a normal paragraph.");
 
-        // Add a paragraph with the built‑in Quote style (the target for removal).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
         builder.Writeln("This is a quote paragraph that should be removed.");
 
-        // Add another normal paragraph.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Another normal paragraph.");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
+        builder.Writeln("Another quote paragraph to delete.");
 
-        // Add a heading paragraph (should remain untouched).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1");
+        builder.Writeln("Heading 1 paragraph.");
 
         // Remove all paragraphs that use the Quote style.
-        // Iterate over a copy of the paragraph collection to safely modify the document.
-        foreach (Paragraph para in doc.FirstSection.Body.Paragraphs.ToArray())
+        Paragraph[] paragraphs = doc.FirstSection.Body.Paragraphs.ToArray();
+        foreach (Paragraph para in paragraphs)
         {
             if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Quote)
                 para.Remove();

@@ -1,60 +1,41 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
-public class Program
+public class ExportParagraphsWithLineNumbers
 {
     public static void Main()
     {
-        // Create a new blank document and a builder to add content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add several paragraphs.
-        builder.Writeln("First paragraph of the document.");
-        builder.Writeln("Second paragraph follows the first one.");
-        builder.Writeln("Third paragraph is here to demonstrate line numbering.");
-
-        // Enable line numbering for the first section (this affects layout, not plain‑text export).
-        PageSetup pageSetup = doc.FirstSection.PageSetup;
-        pageSetup.LineStartingNumber = 1;               // Start numbering at 1.
+        // Enable line numbering for the first section.
+        // Numbers will start at 1, appear on every line, and restart on each new page.
+        PageSetup pageSetup = builder.PageSetup;
+        pageSetup.LineStartingNumber = 1;               // First line number.
         pageSetup.LineNumberCountBy = 1;                // Number every line.
-        pageSetup.LineNumberRestartMode = LineNumberRestartMode.Continuous;
-        pageSetup.LineNumberDistanceFromText = 0;       // Default distance.
+        pageSetup.LineNumberRestartMode = LineNumberRestartMode.RestartPage; // Restart each page.
+        pageSetup.LineNumberDistanceFromText = 30.0;    // Distance from the text (points).
 
-        // Prepare the output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Add several paragraphs to demonstrate line numbering.
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph with a bit more text to wrap onto the next line.");
+        builder.Writeln("Third paragraph.");
+        builder.Writeln("Fourth paragraph.");
 
-        // Export the document to plain text.
-        TxtSaveOptions saveOptions = new TxtSaveOptions
-        {
-            // No ExportLineNumbers property in this version; we will add numbers manually.
-            ParagraphBreak = Environment.NewLine
-        };
+        // Configure TxtSaveOptions – no special settings required for line numbers.
+        TxtSaveOptions saveOptions = new TxtSaveOptions();
 
-        // Save the raw text first (optional, can be omitted if only the numbered version is needed).
-        string rawTxtPath = Path.Combine(outputDir, "DocumentRaw.txt");
-        doc.Save(rawTxtPath, saveOptions);
+        // Define output path (relative to the executable's working directory).
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ParagraphsWithLineNumbers.txt");
 
-        // Read the raw text, prefix each line with its line number, and write the final file.
-        string rawText = File.ReadAllText(rawTxtPath);
-        string[] lines = rawText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+        // Save the document as plain text; line numbers will be prefixed automatically.
+        doc.Save(outputPath, saveOptions);
 
-        StringBuilder numberedBuilder = new StringBuilder();
-        for (int i = 0; i < lines.Length; i++)
-        {
-            // Prefix with line number (starting at 1) and a space.
-            numberedBuilder.AppendLine($"{i + 1} {lines[i]}");
-        }
-
-        string numberedTxtPath = Path.Combine(outputDir, "DocumentWithLineNumbers.txt");
-        File.WriteAllText(numberedTxtPath, numberedBuilder.ToString());
-
-        // Display the resulting text in the console.
-        Console.WriteLine("Document saved with line numbers:");
-        Console.WriteLine(File.ReadAllText(numberedTxtPath));
+        // Inform the user where the file was saved.
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

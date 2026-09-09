@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
@@ -8,31 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Sample plain‑text that contains numbered list items.
-        const string plainText = 
-            "1. First item\n" +
-            "2. Second item\n" +
-            "3. Third item\n\n" +
-            "1 Fourth item\n" +
-            "2 Fourth item\n" +
-            "3 Fourth item";
+        // Plain‑text source containing numbered items.
+        string plainText = 
+            "Shopping List:\n" +
+            "1 Milk\n" +
+            "2 Eggs\n" +
+            "3 Bread\n\n" +
+            "Tasks:\n" +
+            "1) Finish report\n" +
+            "2) Call client\n" +
+            "3) Schedule meeting\n";
 
-        // Configure loading options to detect list numbering, including whitespace delimiters.
+        // Load the text with options that recognise list numbering (including whitespace delimiters).
         TxtLoadOptions loadOptions = new TxtLoadOptions
         {
             DetectNumberingWithWhitespaces = true
         };
 
-        // Load the plain‑text into a Word document using the configured options.
-        using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(plainText)))
+        // The constructor overload loads from a stream using the specified options.
+        Document doc = new Document(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(plainText)), loadOptions);
+
+        // Update list labels so that Word list numbers are correctly stored.
+        doc.UpdateListLabels();
+
+        // (Optional) Count how many paragraphs were recognised as list items.
+        int detectedListItems = 0;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            Document doc = new Document(stream, loadOptions);
-
-            // Ensure that list labels are up‑to‑date after loading.
-            doc.UpdateListLabels();
-
-            // Save the resulting document with proper Word list structures.
-            doc.Save("ConvertedList.docx");
+            if (para.ListFormat.IsListItem)
+                detectedListItems++;
         }
+
+        // Save the document with proper Word list structures.
+        doc.Save("ConvertedLists.docx");
     }
 }

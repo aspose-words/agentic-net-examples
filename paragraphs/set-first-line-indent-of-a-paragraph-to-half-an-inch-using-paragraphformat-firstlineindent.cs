@@ -1,21 +1,26 @@
 using System;
 using Aspose.Words;
 
-public class Program
+namespace ParagraphFirstLineIndentExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Set the first line indent to half an inch (36 points).
-        builder.ParagraphFormat.FirstLineIndent = 36;
+            // Initialize a DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph to demonstrate the indent.
-        builder.Writeln("This paragraph has a first line indent of half an inch.");
+            // Set the first line indent to half an inch (36 points).
+            builder.ParagraphFormat.FirstLineIndent = 36.0;
 
-        // Save the document to the current directory.
-        doc.Save("FirstLineIndentHalfInch.docx");
+            // Add a paragraph to demonstrate the indent.
+            builder.Writeln("This paragraph has a first line indent of half an inch.");
+
+            // Save the document.
+            doc.Save("FirstLineIndent.docx");
+        }
     }
 }

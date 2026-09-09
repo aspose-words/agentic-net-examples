@@ -8,38 +8,34 @@ public class Program
 {
     public static void Main()
     {
-        // Sample plain‑text containing list items separated by whitespace.
-        const string text = 
-            "Shopping list:\n" +
-            "1 Milk\n" +
-            "2 Bread\n" +
-            "3 Eggs\n\n" +
-            "Tasks:\n" +
-            "1 Finish report\n" +
-            "2 Call client\n" +
-            "3 Schedule meeting";
+        // Sample plain‑text containing list items where numbers are followed by a whitespace.
+        const string text = "Shopping list:\n" +
+                            "1 Milk\n" +
+                            "2 Bread\n" +
+                            "3 Eggs\n\n" +
+                            "Tasks:\n" +
+                            "1 Finish report\n" +
+                            "2 Call client\n" +
+                            "3 Schedule meeting";
 
-        // Prepare load options with whitespace‑based list detection enabled.
+        // Enable detection of list items that use whitespace as a delimiter.
         TxtLoadOptions loadOptions = new TxtLoadOptions
         {
             DetectNumberingWithWhitespaces = true
         };
 
-        // Load the text into a Word document using a memory stream.
+        // Load the plain‑text into a Document via a memory stream.
         using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(text)))
         {
             Document doc = new Document(stream, loadOptions);
 
-            // Output the number of detected lists (should be 2 in this example).
+            // Output the number of lists detected (for demonstration purposes).
             Console.WriteLine($"Detected lists: {doc.Lists.Count}");
 
-            // Verify that a paragraph from the second list is recognized as a list item.
-            bool isListItem = doc.FirstSection.Body.Paragraphs
-                .Any(p => p.GetText().Contains("Finish report") && ((Paragraph)p).IsListItem);
-            Console.WriteLine($"\"Finish report\" is a list item: {isListItem}");
-
-            // Save the resulting document.
-            doc.Save("Output.docx");
+            // Save the resulting Word document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

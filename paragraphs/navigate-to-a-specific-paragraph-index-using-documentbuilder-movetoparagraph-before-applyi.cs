@@ -10,29 +10,26 @@ namespace ParagraphNavigationExample
             // Create a new blank document.
             Document doc = new Document();
 
-            // Initialize a DocumentBuilder for the document.
+            // Use DocumentBuilder to add several paragraphs.
             DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Paragraph 0: This is the first paragraph.");
+            builder.Writeln("Paragraph 1: This is the second paragraph.");
+            builder.Writeln("Paragraph 2: This is the third paragraph.");
+            builder.Writeln("Paragraph 3: This is the fourth paragraph.");
 
-            // Add a few sample paragraphs.
-            builder.Writeln("Paragraph 0: Introduction.");
-            builder.Writeln("Paragraph 1: Overview.");
-            builder.Writeln("Paragraph 2: Details.");
-            builder.Writeln("Paragraph 3: Conclusion.");
-
-            // Move the builder's cursor to the third paragraph (index 2, zero‑based).
-            // characterIndex = 0 positions the cursor at the start of the paragraph.
+            // Move the builder's cursor to the third paragraph (index 2) at the start of the paragraph.
+            // The second parameter (characterIndex) is set to 0 to position at the beginning.
             builder.MoveToParagraph(2, 0);
 
-            // Apply formatting to the paragraph we have moved to.
-            // Here we center‑align the paragraph text.
-            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            // Apply formatting changes to the selected paragraph.
+            // For example, center-align the paragraph text.
+            builder.CurrentParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-            // Optionally, insert a new line after the formatted paragraph.
-            builder.Writeln("This line was added after moving to paragraph index 2.");
+            // Optionally, add additional text to the formatted paragraph.
+            builder.Write(" (center-aligned)");
 
-            // Save the document to the current directory.
-            string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "Result.docx");
-            doc.Save(outputPath);
+            // Save the modified document to a file.
+            doc.Save("Output.docx");
         }
     }
 }

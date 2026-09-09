@@ -1,36 +1,42 @@
 using System;
-using System.Linq;
 using Aspose.Words;
 
-public class Program
+public class ParagraphLineCountExample
 {
     public static void Main()
     {
-        // Create a new document and add several paragraphs.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("First paragraph – single line.");
-        builder.Writeln("Second paragraph – line one.\nLine two.");
-        builder.Writeln("Third paragraph – line one.\nLine two.\nLine three.");
+        // Add sample paragraphs of varying lengths.
+        builder.Writeln("Short paragraph.");
+        builder.Writeln("This is a medium length paragraph that contains a few more words to demonstrate line counting.");
+        builder.Writeln("This is a long paragraph intended to simulate a situation where the text might wrap onto multiple visual lines in the layout. " +
+                        "It contains many sentences, commas, and other punctuation marks to increase its length and complexity.");
 
         // Save the document (optional, just to have an output file).
-        doc.Save("SampleOutput.docx");
+        doc.Save("ParagraphLineCounts.docx");
 
         // Retrieve all paragraph nodes in the document.
-        var paragraphs = doc.GetChildNodes(NodeType.Paragraph, true)
-                           .OfType<Paragraph>()
-                           .ToList();
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
 
-        // Log an approximate line count for each paragraph.
-        for (int i = 0; i < paragraphs.Count; i++)
+        // Iterate through each paragraph and log an approximate line count.
+        // Since Aspose.Words does not expose a direct line‑count API for a paragraph,
+        // we use a simple approximation based on the length of the paragraph text.
+        int index = 1;
+        foreach (Paragraph para in paragraphs)
         {
-            // Approximate line count by counting newline characters in the paragraph text.
-            // This is a safe compile‑time approximation because Aspose.Words does not expose a direct line‑count API.
-            string text = paragraphs[i].GetText(); // Includes the paragraph break character at the end.
-            int lineCount = text.Count(c => c == '\n') + 1; // Add 1 for the last line (or the only line).
+            // Get the raw text of the paragraph (includes the paragraph break character).
+            string text = para.GetText();
 
-            Console.WriteLine($"Paragraph {i + 1}: Approximate line count = {lineCount}");
+            // Approximate line count: treat any non‑empty paragraph as at least one line.
+            // For a rougher estimate you could divide the character count by a constant,
+            // but here we keep it simple and deterministic.
+            int approxLineCount = string.IsNullOrWhiteSpace(text) ? 0 : 1;
+
+            Console.WriteLine($"Paragraph {index}: Approximate line count = {approxLineCount}, Text length = {text.Length}");
+            index++;
         }
     }
 }

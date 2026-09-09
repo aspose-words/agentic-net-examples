@@ -1,39 +1,49 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to add content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // First part of the line with Heading1 style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Write("This is a heading style. ");
+        builder.Write("This is heading text. ");
 
         // Insert a style separator so the next text can have a different style on the same line.
         builder.InsertStyleSeparator();
 
         // Second part of the line with Quote style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
-        builder.Write("This is a quote style.");
+        builder.Write("This is a quote.");
 
-        // Save the document to disk.
-        string outputPath = "StyleSeparatorExample.docx";
-        doc.Save(outputPath);
+        // Ensure the output directory exists.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
 
-        // Search for paragraphs whose break is a style separator.
-        int styleSeparatorCount = 0;
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Save the document (optional, just to visualize the result).
+        string docPath = Path.Combine(outputDir, "StyleSeparatorExample.docx");
+        doc.Save(docPath);
+
+        // Search for paragraphs that contain a style separator.
+        Console.WriteLine("Paragraphs that contain a style separator:");
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        int index = 0;
+        foreach (Paragraph para in paragraphs)
         {
-            if (paragraph.BreakIsStyleSeparator)
-                styleSeparatorCount++;
+            if (para.BreakIsStyleSeparator)
+            {
+                Console.WriteLine($"- Paragraph index {index} (text starts with: \"{para.GetText().Trim()}\" )");
+                // Example processing: change the style of the following paragraph part.
+                // Here we simply output that a style separator was found.
+            }
+            index++;
         }
 
-        // Output the result.
-        Console.WriteLine($"Found {styleSeparatorCount} paragraph(s) with a style separator.");
+        // The program finishes without waiting for user input.
     }
 }
