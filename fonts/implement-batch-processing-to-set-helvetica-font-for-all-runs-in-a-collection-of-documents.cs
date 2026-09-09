@@ -4,64 +4,58 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-public class Program
+namespace FontBatchProcessor
 {
-    public static void Main()
+    public class Program
     {
-        // Define folders for source and processed documents.
-        string baseDir = Directory.GetCurrentDirectory();
-        string sourceDir = Path.Combine(baseDir, "SourceDocs");
-        string outputDir = Path.Combine(baseDir, "ProcessedDocs");
-
-        Directory.CreateDirectory(sourceDir);
-        Directory.CreateDirectory(outputDir);
-
-        // Create a few sample documents.
-        List<string> sourceFiles = new List<string>();
-        for (int i = 1; i <= 3; i++)
+        public static void Main()
         {
-            string filePath = Path.Combine(sourceDir, $"Doc{i}.docx");
-            CreateSampleDocument(filePath, $"This is sample document {i}.");
-            sourceFiles.Add(filePath);
-        }
+            // Define input and output directories (relative to the executable location).
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string inputDir = Path.Combine(baseDir, "InputDocs");
+            string outputDir = Path.Combine(baseDir, "OutputDocs");
 
-        // Process each document: set all Run fonts to Helvetica.
-        foreach (string srcPath in sourceFiles)
-        {
-            // Load the document.
-            Document doc = new Document(srcPath);
+            // Ensure the directories exist.
+            Directory.CreateDirectory(inputDir);
+            Directory.CreateDirectory(outputDir);
 
-            // Iterate over all Run nodes and set the font name.
-            NodeCollection runs = doc.GetChildNodes(NodeType.Run, true);
-            foreach (Run run in runs)
+            // Collect all .docx files from the input directory.
+            string[] docFiles = Directory.GetFiles(inputDir, "*.docx", SearchOption.TopDirectoryOnly);
+
+            // Process each document.
+            foreach (string filePath in docFiles)
             {
-                run.Font.Name = "Helvetica";
-                // Simple validation that the font name was set.
-                if (run.Font.Name != "Helvetica")
+                // Load the document.
+                Document doc = new Document(filePath);
+
+                // Iterate over all Run nodes and set the font to Helvetica.
+                NodeCollection runs = doc.GetChildNodes(NodeType.Run, true);
+                foreach (Run run in runs)
                 {
-                    throw new InvalidOperationException("Failed to set font to Helvetica.");
+                    // Set the font name.
+                    run.Font.Name = "Helvetica";
+
+                    // Validate that the font name was set correctly.
+                    if (!string.Equals(run.Font.Name, "Helvetica", StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException($"Failed to set font for run in document '{filePath}'.");
+                    }
                 }
+
+                // Save the modified document to the output directory.
+                string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
+                doc.Save(outputPath);
+
+                // Verify that the file was created.
+                if (!File.Exists(outputPath))
+                {
+                    throw new FileNotFoundException($"The output file was not created: {outputPath}");
+                }
+
+                Console.WriteLine($"Processed '{Path.GetFileName(filePath)}' and saved to output folder.");
             }
 
-            // Save the modified document.
-            string fileName = Path.GetFileNameWithoutExtension(srcPath);
-            string outPath = Path.Combine(outputDir, $"{fileName}_Processed.docx");
-            doc.Save(outPath);
+            Console.WriteLine("Batch processing completed.");
         }
-
-        // Optional: confirm that processed files exist.
-        foreach (string file in Directory.GetFiles(outputDir, "*.docx"))
-        {
-            Console.WriteLine($"Processed file created: {file}");
-        }
-    }
-
-    // Helper method to create a simple document with some text.
-    private static void CreateSampleDocument(string path, string text)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(text);
-        doc.Save(path);
     }
 }

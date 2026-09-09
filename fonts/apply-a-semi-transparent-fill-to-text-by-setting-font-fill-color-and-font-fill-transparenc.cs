@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
+using Aspose.Drawing; // For Aspose.Drawing.Color
 
 public class Program
 {
@@ -10,44 +10,41 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add a paragraph with a run of text.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This text has a semi‑transparent fill.");
 
-        // Access the Font of the last run (the one just added).
+        // Insert a line of text.
+        builder.Writeln("Hello, semi‑transparent fill!");
+
+        // Access the font of the last inserted run.
         Aspose.Words.Font font = builder.Font;
 
-        // Ensure the fill is a solid fill.
-        font.Fill.Solid();
+        // Define a solid fill color (red) using Aspose.Drawing.Color.
+        Aspose.Drawing.Color fillColor = Aspose.Drawing.Color.Red;
 
-        // Create an Aspose.Drawing.Color and convert it to System.Drawing.Color for the Fill.
-        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Blue;
-        System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
+        // Apply the fill color to the font. The Solid method expects System.Drawing.Color,
+        // so convert the Aspose.Drawing.Color to System.Drawing.Color.
+        font.Fill.Solid(System.Drawing.Color.FromArgb(fillColor.ToArgb()));
 
-        // Set the fill color and transparency.
-        font.Fill.Color = sysColor;
+        // Set the fill transparency to 50% (0.5).
         font.Fill.Transparency = 0.5;
 
-        // Validate the applied properties.
-        if (Math.Abs(font.Fill.Transparency - 0.5) > 0.0001 ||
-            font.Fill.Color.ToArgb() != sysColor.ToArgb())
+        // Validate that the properties were set correctly.
+        if (font.Fill.Color.ToArgb() != fillColor.ToArgb() ||
+            Math.Abs(font.Fill.Transparency - 0.5) > 0.0001)
         {
-            throw new InvalidOperationException("Font fill properties were not set correctly.");
+            throw new InvalidOperationException("Fill properties were not applied as expected.");
         }
 
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Ensure the output directory exists.
+        string outputDir = "Output";
         Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "SemiTransparentFill.docx");
 
         // Save the document.
-        string outputPath = Path.Combine(outputDir, "SemiTransparentFill.docx");
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
-        }
+            throw new FileNotFoundException("The document was not saved.", outputPath);
     }
 }

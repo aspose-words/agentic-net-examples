@@ -7,27 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "CustomFontSubstitution.pdf");
+
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize FontSettings for the document.
+        // Configure font settings.
         FontSettings fontSettings = new FontSettings();
         doc.FontSettings = fontSettings;
 
         // Add a custom substitution: replace missing "Times New Roman" with "Calibri".
-        // This uses the table substitution rule.
-        fontSettings.SubstitutionSettings.TableSubstitution.AddSubstitutes(
-            "Times New Roman", "Calibri");
+        TableSubstitutionRule tableRule = fontSettings.SubstitutionSettings.TableSubstitution;
+        tableRule.AddSubstitutes("Times New Roman", "Calibri");
 
-        // Build document content using a font that may be missing.
+        // Validate that the substitution was added.
+        var substitutes = tableRule.GetSubstitutes("Times New Roman");
+        if (substitutes == null || !substitutes.Contains("Calibri"))
+            throw new InvalidOperationException("Failed to add Calibri as a substitute for Times New Roman.");
+
+        // Write some text using the font that we want to substitute.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = "Times New Roman";
-        builder.Writeln("This line uses Times New Roman, which will be substituted with Calibri if unavailable.");
+        builder.Writeln("This line is formatted with Times New Roman, which will be rendered using Calibri.");
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontSubstitution.pdf");
-
-        // Save the document as PDF.
+        // Save the document to PDF.
         doc.Save(outputPath);
+
+        // Ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output PDF was not created.", outputPath);
     }
 }
