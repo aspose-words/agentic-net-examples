@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -7,20 +8,23 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing text that matches a regex pattern.
+        // Create a sample document with text that matches a regular expression pattern.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Order 123 and Order 456");
-        doc.Save("input.docx");
+        builder.Writeln("Order 123 has been shipped.");
+        builder.Writeln("Order 456 is pending.");
+
+        // Save the source document.
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
         // Load the document we just created.
-        Document loaded = new Document("input.docx");
+        Document loaded = new Document(inputPath);
 
-        // Prepare find‑replace options (no special flags are required for regex usage).
+        // Configure FindReplaceOptions (no special settings needed for regex).
         FindReplaceOptions options = new FindReplaceOptions();
 
-        // Replace all occurrences of the pattern "Order <number>" with "Order ###".
-        // Use the Regex overload of Range.Replace to enable regular‑expression matching.
+        // Replace any occurrence of "Order <number>" with "Order ###" using a regex pattern.
         int replacedCount = loaded.Range.Replace(new Regex(@"Order \d+"), "Order ###", options);
 
         // Verify that at least one replacement was performed.
@@ -28,9 +32,7 @@ public class Program
             throw new InvalidOperationException("Expected at least one replacement.");
 
         // Save the modified document.
-        loaded.Save("output.docx");
-
-        // Indicate success (no interactive input required).
-        Console.WriteLine($"Replacements made: {replacedCount}");
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 }

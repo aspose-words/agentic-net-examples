@@ -1,42 +1,34 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-
-public class ReplaceLogger : IReplacingCallback
-{
-    private readonly StringBuilder _log = new StringBuilder();
-
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        _log.AppendLine($"Match \"{args.Match.Value}\" at offset {args.MatchOffset} in node {args.MatchNode.NodeType}");
-        return ReplaceAction.Replace;
-    }
-
-    public string GetLog() => _log.ToString();
-}
+using Aspose.Drawing;          // Required package reference
+using Newtonsoft.Json;        // Required package reference
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample files.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-        const string logPath = "replace_log.txt";
+        // Prepare a folder for all temporary files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
-        // Create a sample document.
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with text that will be replaced.
+        // -----------------------------------------------------------------
+        string inputPath = Path.Combine(workDir, "input.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("alpha beta alpha gamma");
+        builder.Writeln("alpha beta alpha gamma alpha");
         doc.Save(inputPath);
 
-        // Load the document for processing.
+        // -----------------------------------------------------------------
+        // 2. Load the document and configure the replacement callback.
+        // -----------------------------------------------------------------
         Document loaded = new Document(inputPath);
+        var logger = new ReplaceLogger();
 
-        // Configure the find‑replace options with a custom logger.
-        ReplaceLogger logger = new ReplaceLogger();
         FindReplaceOptions options = new FindReplaceOptions
         {
             ReplacingCallback = logger
@@ -47,10 +39,36 @@ public class Program
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement.");
 
-        // Save the modified document.
+        // -----------------------------------------------------------------
+        // 3. Save the modified document.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine(workDir, "output.docx");
         loaded.Save(outputPath);
 
-        // Write the replacement log to a file.
-        File.WriteAllText(logPath, logger.GetLog());
+        // -----------------------------------------------------------------
+        // 4. Write the log of replacements to a text file.
+        // -----------------------------------------------------------------
+        string logPath = Path.Combine(workDir, "replace_log.txt");
+        File.WriteAllLines(logPath, logger.Matches);
+
+        // Validate that the log file was created.
+        if (!File.Exists(logPath))
+            throw new FileNotFoundException("Log file was not created.", logPath);
+    }
+
+    // -----------------------------------------------------------------
+    // Custom logger that records each match found during replacement.
+    // -----------------------------------------------------------------
+    private class ReplaceLogger : IReplacingCallback
+    {
+        public List<string> Matches { get; } = new List<string>();
+
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        {
+            // Record the original matched text.
+            Matches.Add(args.Match.Value);
+            // Proceed with the replacement.
+            return ReplaceAction.Replace;
+        }
     }
 }

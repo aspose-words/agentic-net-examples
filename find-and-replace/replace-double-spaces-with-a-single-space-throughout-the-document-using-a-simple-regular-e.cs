@@ -3,36 +3,45 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing; // Required package reference
+using Newtonsoft.Json; // Required package reference
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with double spaces.
+        // Paths for the temporary input and output files.
+        string inputPath = "input.docx";
+        string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // Create a sample document containing double spaces.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("This  is  a  sample  text  with  double  spaces.");
-        builder.Writeln("Another   line   with   triple   spaces.");
-
-        // Save the source document locally.
-        const string inputPath = "input.docx";
+        builder.Writeln("Another  line  with  double  spaces.");
         doc.Save(inputPath);
 
-        // Load the document for processing.
+        // -----------------------------------------------------------------
+        // Load the document we just created.
+        // -----------------------------------------------------------------
         Document loaded = new Document(inputPath);
 
-        // Regular expression that matches two or more consecutive spaces.
-        Regex doubleSpaceRegex = new Regex(@" {2,}");
+        // -----------------------------------------------------------------
+        // Replace any occurrence of two or more spaces with a single space.
+        // -----------------------------------------------------------------
+        Regex doubleSpacePattern = new Regex(@" {2,}");
+        FindReplaceOptions options = new FindReplaceOptions();
+        int replacedCount = loaded.Range.Replace(doubleSpacePattern, " ", options);
 
-        // Perform the replacement: replace each match with a single space.
-        int replacementCount = loaded.Range.Replace(doubleSpaceRegex, " ", new FindReplaceOptions());
+        // Validate that at least one replacement was performed.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement.");
 
-        // Ensure that at least one replacement was made.
-        if (replacementCount == 0)
-            throw new InvalidOperationException("Expected at least one double‑space replacement.");
-
+        // -----------------------------------------------------------------
         // Save the modified document.
-        const string outputPath = "output.docx";
+        // -----------------------------------------------------------------
         loaded.Save(outputPath);
     }
 }

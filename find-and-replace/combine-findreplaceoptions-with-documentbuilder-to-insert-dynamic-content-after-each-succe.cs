@@ -1,4 +1,6 @@
 using System;
+using System.Text;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -6,63 +8,62 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document in memory.
+        // Create a sample document with placeholders.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First placeholder text.");
-        builder.Writeln("Second placeholder appears here.");
-        builder.Writeln("No match on this line.");
+        builder.Writeln("Product: {Item}");
+        builder.Writeln("Price: {Item}");
+        builder.Writeln("Description: {Item}");
 
-        // Save the sample document locally (optional, just for demonstration).
+        // Save the source document locally.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document that will be processed.
-        Document loadedDoc = new Document(inputPath);
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
-        // Configure find‑replace options with a custom callback.
+        // Set up find‑replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new InsertDynamicContentCallback()
+            ReplacingCallback = new InsertAfterReplacementCallback()
         };
 
-        // Replace the word "placeholder" with "value".
-        int replacementCount = loadedDoc.Range.Replace("placeholder", "value", options);
+        // Perform the replacement.
+        int replacedCount = loaded.Range.Replace("{Item}", "Widget", options);
 
-        // Verify that at least one replacement was performed.
-        if (replacementCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+        // Ensure that at least one replacement was made.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No replacements were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        loaded.Save(outputPath);
     }
 
-    // Callback that inserts a new paragraph with dynamic content after each replacement.
-    private class InsertDynamicContentCallback : IReplacingCallback
+    // Callback that inserts a new paragraph after each replacement.
+    private class InsertAfterReplacementCallback : IReplacingCallback
     {
+        private int _matchIndex = 0;
+
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // The node that contains the start of the match.
-            var matchNode = args.MatchNode;
+            _matchIndex++;
 
-            // Its parent paragraph.
-            var paragraph = (Paragraph)matchNode.ParentNode;
+            // Set the replacement text.
+            args.Replacement = "Widget";
 
-            // Create a DocumentBuilder for the same document.
-            // The Document property returns DocumentBase, so cast to Document.
-            var builder = new DocumentBuilder((Document)matchNode.Document);
+            // Find the paragraph that contains the match.
+            if (args.MatchNode?.ParentNode is Paragraph paragraph)
+            {
+                // Use a DocumentBuilder positioned at the found paragraph.
+                DocumentBuilder cb = new DocumentBuilder((Document)paragraph.Document);
+                cb.MoveTo(paragraph);
+                // Insert a new paragraph after the current one.
+                cb.InsertParagraph();
+                cb.Writeln($"[Inserted after replacement #{_matchIndex}]");
+            }
 
-            // Move the builder to the paragraph that contains the match.
-            builder.MoveTo(paragraph);
-
-            // Insert a new paragraph after the current one.
-            builder.InsertParagraph();
-
-            // Write dynamic content into the newly inserted paragraph.
-            builder.Writeln($"[Inserted after replacement at {DateTime.Now:HH:mm:ss}]");
-
-            // Continue with the normal replacement.
+            // Continue with the replacement.
             return ReplaceAction.Replace;
         }
     }

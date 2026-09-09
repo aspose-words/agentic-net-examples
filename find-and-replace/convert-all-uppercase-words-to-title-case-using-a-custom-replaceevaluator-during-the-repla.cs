@@ -1,73 +1,64 @@
 using System;
-using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing; // Required package reference
 
-namespace AsposeWordsFindReplaceExample
+namespace UppercaseToTitleCaseExample
 {
+    // Callback that converts each matched uppercase word to title case.
+    public class UppercaseToTitleCaseReplacer : IReplacingCallback
+    {
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Original matched text (e.g., "EXAMPLE")
+            string original = args.Match.Value;
+
+            // Convert to title case: first letter upper, the rest lower.
+            string titleCase = char.ToUpper(original[0]) + original.Substring(1).ToLower();
+
+            // Set the replacement text.
+            args.Replacement = titleCase;
+
+            return ReplaceAction.Replace;
+        }
+    }
+
     public class Program
     {
         public static void Main()
         {
-            // Prepare file paths.
-            string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-
             // Create a sample document with uppercase words.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("THIS IS A TEST. Another line with UPPERCASE WORDS like EXAMPLE and SAMPLE.");
-            builder.Writeln("MIXED case WORDS should stay unchanged.");
-            doc.Save(inputPath);
+            builder.Writeln("THIS is a TEST document. ASP.NET CORE and C# are mentioned.");
+            builder.Writeln("ANOTHER LINE WITH UPPERCASE WORDS LIKE EXAMPLE AND SAMPLE.");
 
-            // Load the document we just created.
-            Document loadedDoc = new Document(inputPath);
+            // Define a regex that matches whole words consisting of two or more uppercase letters.
+            Regex uppercaseWordPattern = new Regex(@"\b[A-Z]{2,}\b");
 
-            // Define a regex that matches whole words consisting of only uppercase letters.
-            Regex uppercaseWordRegex = new Regex(@"\b[A-Z]{2,}\b");
-
-            // Set up find/replace options with a custom callback.
+            // Set up find-and-replace options with the custom callback.
             FindReplaceOptions options = new FindReplaceOptions
             {
                 ReplacingCallback = new UppercaseToTitleCaseReplacer()
             };
 
-            // Perform the replacement. The replacement string is ignored because the callback supplies it.
-            int replacedCount = loadedDoc.Range.Replace(uppercaseWordRegex, string.Empty, options);
+            // Perform the replace operation. The replacement string is ignored because the callback sets it.
+            int replacedCount = doc.Range.Replace(uppercaseWordPattern, string.Empty, options);
 
-            // Validate that at least one replacement occurred.
+            // Ensure that at least one replacement occurred.
             if (replacedCount == 0)
                 throw new InvalidOperationException("Expected at least one uppercase word to be replaced.");
 
             // Save the modified document.
-            loadedDoc.Save(outputPath);
+            const string outputPath = "UppercaseToTitleCaseOutput.docx";
+            doc.Save(outputPath);
 
-            // Output the result count (optional, not required for the task).
-            Console.WriteLine($"Replaced {replacedCount} uppercase word(s).");
-        }
-
-        // Callback that converts each matched uppercase word to title case.
-        private class UppercaseToTitleCaseReplacer : IReplacingCallback
-        {
-            public ReplaceAction Replacing(ReplacingArgs args)
-            {
-                string original = args.Match.Value;
-                if (!string.IsNullOrEmpty(original))
-                {
-                    // Convert to title case: first letter uppercase, the rest lowercase.
-                    string titleCase = char.ToUpper(original[0], CultureInfo.InvariantCulture) +
-                                       original.Substring(1).ToLower(CultureInfo.InvariantCulture);
-                    args.Replacement = titleCase;
-                }
-                else
-                {
-                    args.Replacement = original;
-                }
-
-                return ReplaceAction.Replace;
-            }
+            // Optional: write a simple confirmation to the console.
+            Console.WriteLine($"Replacements performed: {replacedCount}");
+            Console.WriteLine($"Modified document saved to: {Path.GetFullPath(outputPath)}");
         }
     }
 }

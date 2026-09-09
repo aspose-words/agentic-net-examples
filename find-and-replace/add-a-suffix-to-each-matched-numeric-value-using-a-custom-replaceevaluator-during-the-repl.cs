@@ -11,31 +11,41 @@ public class Program
         // Create a sample document with numeric values.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The package weighs 12 and the box 34.");
-        doc.Save("input.docx");
+        builder.Writeln("Invoice numbers: 1001, 1002, 1003.");
+        builder.Writeln("Reference IDs: A-200, B-300.");
 
-        // Load the document for processing.
-        Document loaded = new Document("input.docx");
+        // Save the source document locally.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        doc.Save(inputPath);
 
-        // Set up find-and-replace options with a custom callback that adds a suffix.
+        // Load the document back from the file system.
+        Document loadedDoc = new Document(inputPath);
+
+        // Set up find-and-replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new NumericSuffixAppender("kg");
+        options.ReplacingCallback = new NumericSuffixReplacer("_SUFFIX");
 
-        // Replace every numeric match with the original number plus the suffix.
-        int replacedCount = loaded.Range.Replace(new Regex(@"\d+"), string.Empty, options);
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+        // Use a regular expression to locate numeric values.
+        Regex numericPattern = new Regex(@"\d+");
+
+        // Perform the replace operation. The replacement string is ignored because the callback sets it.
+        int replacementCount = loadedDoc.Range.Replace(numericPattern, string.Empty, options);
+
+        // Ensure that at least one replacement occurred.
+        if (replacementCount == 0)
+            throw new InvalidOperationException("Expected at least one numeric replacement.");
 
         // Save the modified document.
-        loaded.Save("output.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        loadedDoc.Save(outputPath);
     }
 
-    // Callback that appends a suffix to each matched numeric value.
-    private class NumericSuffixAppender : IReplacingCallback
+    // Custom callback that appends a suffix to each matched numeric value.
+    private class NumericSuffixReplacer : IReplacingCallback
     {
         private readonly string _suffix;
 
-        public NumericSuffixAppender(string suffix)
+        public NumericSuffixReplacer(string suffix)
         {
             _suffix = suffix ?? string.Empty;
         }

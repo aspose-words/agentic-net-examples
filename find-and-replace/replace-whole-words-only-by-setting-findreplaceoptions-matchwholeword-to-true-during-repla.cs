@@ -1,24 +1,22 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json; // Required package reference
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a word that appears both as a whole word and as part of another word.
+        // Create a sample document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Jackson will meet you in Jacksonville.");
 
-        // Save the source document locally.
+        // Save the sample document to the local file system.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        // Load the document we just saved.
+        Document loadedDoc = new Document(inputPath);
 
         // Configure find-and-replace to match whole words only.
         FindReplaceOptions options = new FindReplaceOptions
@@ -27,18 +25,19 @@ public class Program
         };
 
         // Perform the replacement.
-        int replacedCount = loaded.Range.Replace("Jackson", "Louis", options);
+        int replacedCount = loadedDoc.Range.Replace("Jackson", "Louis", options);
 
-        // Validate that a replacement occurred.
+        // Ensure that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one whole-word replacement.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        loadedDoc.Save(outputPath);
 
-        // Indicate success.
-        Console.WriteLine($"Replacements made: {replacedCount}");
-        Console.WriteLine($"Output saved to: {Path.GetFullPath(outputPath)}");
+        // Output the resulting text to the console (optional verification).
+        Console.WriteLine("Replacement count: " + replacedCount);
+        Console.WriteLine("Resulting text:");
+        Console.WriteLine(loadedDoc.GetText().Trim());
     }
 }

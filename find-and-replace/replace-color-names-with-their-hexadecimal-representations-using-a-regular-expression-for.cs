@@ -4,17 +4,18 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with some color names.
+        // Create a sample document with color names.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The sky is blue, the grass is green, and the fire is red.");
-        builder.Writeln("A light gray cat sits on a black mat.");
-        builder.Writeln("Sunset colors: orange, pink, and yellow.");
+        builder.Writeln("The sky is blue and the grass is green.");
+        builder.Writeln("Red apples, black night, and white snow.");
+        builder.Writeln("Gray clouds drift by.");
 
         // Save the source document.
         const string inputPath = "input.docx";
@@ -23,20 +24,18 @@ public class Program
         // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        // Regular expression to find color names (case‑insensitive).
-        Regex colorRegex = new Regex(@"\b(red|green|blue|light gray|gray|black|white|yellow|orange|purple|pink)\b",
-                                      RegexOptions.IgnoreCase);
-
         // Set up find‑replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new ColorHexReplacer()
+            ReplacingCallback = new ColorNameHexReplacer()
         };
 
-        // Perform the replacement. The callback supplies the hexadecimal value.
+        // Regular expression to match color names (case‑insensitive).
+        Regex colorRegex = new Regex(@"\b(red|green|blue|black|white|gray)\b", RegexOptions.IgnoreCase);
+
+        // Perform the replacement. The callback supplies the actual replacement text.
         int replacedCount = loaded.Range.Replace(colorRegex, string.Empty, options);
 
-        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("No color names were replaced.");
 
@@ -46,34 +45,30 @@ public class Program
     }
 
     // Callback that converts a matched color name to its hexadecimal representation.
-    private class ColorHexReplacer : IReplacingCallback
+    private class ColorNameHexReplacer : IReplacingCallback
     {
         private static readonly Dictionary<string, string> ColorMap = new()
         {
-            { "red", "#FF0000" },
+            { "red",   "#FF0000" },
             { "green", "#008000" },
-            { "blue", "#0000FF" },
-            { "light gray", "#D3D3D3" },
-            { "gray", "#808080" },
+            { "blue",  "#0000FF" },
             { "black", "#000000" },
             { "white", "#FFFFFF" },
-            { "yellow", "#FFFF00" },
-            { "orange", "#FFA500" },
-            { "purple", "#800080" },
-            { "pink", "#FFC0CB" }
+            { "gray",  "#808080" }
         };
 
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Normalise the matched value for dictionary lookup.
-            string key = args.Match.Value.ToLowerInvariant();
+            string matchedName = args.Match.Value.ToLowerInvariant();
 
-            if (ColorMap.TryGetValue(key, out string hex))
+            if (ColorMap.TryGetValue(matchedName, out string hex))
+            {
                 args.Replacement = hex;
-            else
-                args.Replacement = args.Match.Value; // Fallback – should not happen.
+                return ReplaceAction.Replace;
+            }
 
-            return ReplaceAction.Replace;
+            // If the color is not in the map, leave it unchanged.
+            return ReplaceAction.Skip;
         }
     }
 }

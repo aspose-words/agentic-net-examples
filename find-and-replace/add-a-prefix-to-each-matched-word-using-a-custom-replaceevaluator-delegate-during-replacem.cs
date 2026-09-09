@@ -1,59 +1,57 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
 public class Program
 {
+    // Callback that adds a prefix to each matched word.
+    private class PrefixCallback : IReplacingCallback
+    {
+        private readonly string _prefix;
+
+        public PrefixCallback(string prefix) => _prefix = prefix;
+
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Build the replacement text: prefix + original matched word.
+            args.Replacement = _prefix + args.Match.Value;
+            return ReplaceAction.Replace;
+        }
+    }
+
     public static void Main()
     {
-        // Create a sample document with some text.
+        // Create a new blank document and add sample text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Apple banana apple Banana APPLE.");
 
-        // Save the source document locally.
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        const string prefix = "PRE_";
 
-        // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
-
-        // Set up a callback that adds a prefix to each matched word.
+        // Configure find‑replace options: case‑insensitive, whole‑word matches.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            MatchCase = false, // Case‑insensitive search.
-            ReplacingCallback = new PrefixAddingCallback("Fruit_")
+            MatchCase = false,
+            FindWholeWordsOnly = true,
+            ReplacingCallback = new PrefixCallback(prefix)
         };
 
-        // Replace all occurrences of the word "apple" using the callback.
-        int replacedCount = loadedDoc.Range.Replace("apple", string.Empty, options);
+        // Perform the replacement for the word "apple".
+        // The replacement string is ignored because the callback supplies the actual text.
+        int replacedCount = doc.Range.Replace("apple", string.Empty, options);
 
-        // Ensure that at least one replacement occurred.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+            throw new InvalidOperationException("No occurrences of the target word were replaced.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        doc.Save(outputPath);
 
-        // Inform the user about the operation.
-        Console.WriteLine($"Replacements made: {replacedCount}");
-        Console.WriteLine($"Modified document saved as: {outputPath}");
-    }
-
-    // Callback that prefixes each matched word with a custom string.
-    private class PrefixAddingCallback : IReplacingCallback
-    {
-        private readonly string _prefix;
-
-        public PrefixAddingCallback(string prefix) => _prefix = prefix;
-
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
-        {
-            args.Replacement = _prefix + args.Match.Value;
-            return ReplaceAction.Replace;
-        }
+        // Output the result to the console for verification.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine("Resulting document text:");
+        Console.WriteLine(doc.GetText().Trim());
     }
 }
