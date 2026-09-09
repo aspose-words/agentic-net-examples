@@ -7,64 +7,75 @@ public class Program
 {
     public static void Main()
     {
-        // 1. Create a sample document with several paragraphs.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample document with two bookmarks.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Paragraph 1");
+        builder.StartBookmark("Start");
         builder.Writeln("Paragraph 2");
+        builder.EndBookmark("Start");
+        builder.StartBookmark("End");
         builder.Writeln("Paragraph 3");
-        builder.Writeln("Paragraph 4");
-        sourceDoc.Save("source.docx");
+        builder.EndBookmark("End");
 
-        // 2. Load the document for extraction.
-        Document loadedDoc = new Document("source.docx");
+        string sourcePath = "sample.docx";
+        doc.Save(sourcePath);
 
-        // 3. Define start and end paragraphs (intentionally reversed).
-        Paragraph startParagraph = loadedDoc.FirstSection.Body.Paragraphs[2]; // "Paragraph 3"
-        Paragraph endParagraph   = loadedDoc.FirstSection.Body.Paragraphs[1]; // "Paragraph 2"
+        // Load the document for extraction.
+        Document loaded = new Document(sourcePath);
 
-        // 4. Validate node order and swap if necessary.
-        int startIndex = loadedDoc.FirstSection.Body.Paragraphs.IndexOf(startParagraph);
-        int endIndex   = loadedDoc.FirstSection.Body.Paragraphs.IndexOf(endParagraph);
+        // Retrieve the bookmarks that define the extraction boundaries.
+        Bookmark startBookmark = loaded.Range.Bookmarks["Start"];
+        Bookmark endBookmark = loaded.Range.Bookmarks["End"];
+        if (startBookmark == null || endBookmark == null)
+            throw new InvalidOperationException("Required bookmarks not found.");
 
+        // Determine the paragraphs that contain the bookmark starts.
+        Paragraph startParagraph = startBookmark.BookmarkStart.ParentNode as Paragraph;
+        Paragraph endParagraph = endBookmark.BookmarkStart.ParentNode as Paragraph;
+        if (startParagraph == null || endParagraph == null)
+            throw new InvalidOperationException("Bookmarks are not located inside paragraphs.");
+
+        // Find the positions of the start and end paragraphs within the body.
+        Body body = loaded.FirstSection.Body;
+        NodeCollection paragraphs = body.GetChildNodes(NodeType.Paragraph, true);
+        int startIndex = paragraphs.IndexOf(startParagraph);
+        int endIndex = paragraphs.IndexOf(endParagraph);
+
+        // Validate ordering: start must precede end.
         if (startIndex > endIndex)
         {
-            Console.WriteLine(
-                $"Warning: start paragraph index ({startIndex}) is after end paragraph index ({endIndex}). " +
-                "Swapping the boundaries to continue extraction.");
-
-            int temp = startIndex;
-            startIndex = endIndex;
-            endIndex = temp;
+            Console.WriteLine("Error: The start node appears after the end node. Extraction aborted.");
+            return;
         }
 
-        // 5. Prepare the result document (empty structure).
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren();
+        // Build a new document containing the extracted range.
+        Document result = new Document();
+        result.RemoveAllChildren();
 
-        Section resultSection = new Section(resultDoc);
-        resultDoc.AppendChild(resultSection);
+        Section resultSection = new Section(result);
+        result.AppendChild(resultSection);
 
-        Body resultBody = new Body(resultDoc);
+        Body resultBody = new Body(result);
         resultSection.AppendChild(resultBody);
 
-        // 6. Import and append each paragraph from start to end (inclusive).
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        // Use NodeImporter to import nodes from the source document into the result document.
+        NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
 
         for (int i = startIndex; i <= endIndex; i++)
         {
-            Paragraph srcPara = loadedDoc.FirstSection.Body.Paragraphs[i];
-            Node importedNode = importer.ImportNode(srcPara, true);
+            Paragraph srcParagraph = (Paragraph)paragraphs[i];
+            Node importedNode = importer.ImportNode(srcParagraph, true);
             resultBody.AppendChild(importedNode);
         }
 
-        // 7. Save the extracted content.
+        // Save the extracted content.
         string outputPath = "extracted.docx";
-        resultDoc.Save(outputPath);
+        result.Save(outputPath);
 
-        // 8. Verify that the output file was created.
+        // Verify that the output file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The extracted document was not created.");
+            throw new InvalidOperationException("Extraction output file was not created.");
 
         Console.WriteLine("Extraction completed successfully.");
     }

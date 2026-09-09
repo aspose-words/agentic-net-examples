@@ -1,102 +1,111 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // Create a sample source document with a comment.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 1. Create a sample source document with a comment.
+        // -----------------------------------------------------------------
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
 
         builder.Writeln("Paragraph 1");
-        builder.Writeln("Paragraph 2"); // Start extraction here.
+        builder.Writeln("Paragraph 2 with comment");
 
-        // Add a comment attached to the next run.
+        // Add a comment anchored to the second paragraph.
         Comment comment = new Comment(source, "Alice", "A", DateTime.Today);
+        comment.SetText("This is a comment.");
         builder.CurrentParagraph.AppendChild(comment);
-        // The comment contains its own paragraph where we write the commented text.
-        Paragraph commentParagraph = (Paragraph)comment.AppendChild(new Paragraph(source));
-        builder.MoveTo(commentParagraph);
-        builder.Write("Commented text.");
-        builder.MoveToDocumentEnd(); // Return cursor after the comment.
 
         builder.Writeln("Paragraph 3");
-        builder.Writeln("Paragraph 4"); // End extraction here.
+        builder.Writeln("Paragraph 4");
 
-        // Save the source document locally.
         const string sourcePath = "source.docx";
         source.Save(sourcePath);
 
-        // -------------------------------------------------
-        // Load the document for extraction.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 2. Load the document for processing.
+        // -----------------------------------------------------------------
         Document loaded = new Document(sourcePath);
 
-        // Identify the start and end paragraphs (inclusive).
-        // Paragraph indices are zero‑based.
-        Paragraph startParagraph = loaded.FirstSection.Body.Paragraphs[1]; // "Paragraph 2"
-        Paragraph endParagraph = loaded.FirstSection.Body.Paragraphs[3];   // "Paragraph 4"
+        // Identify the start and end paragraphs (inclusive range).
+        Paragraph startParagraph = loaded.FirstSection.Body.Paragraphs[1]; // "Paragraph 2 with comment"
+        Paragraph endParagraph = loaded.FirstSection.Body.Paragraphs[2];   // "Paragraph 3"
 
         if (startParagraph == null || endParagraph == null)
             throw new InvalidOperationException("Boundary paragraphs not found.");
 
-        // -------------------------------------------------
-        // Prepare the result document.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 3. Prepare the result document (empty structure).
+        // -----------------------------------------------------------------
         Document result = new Document();
         result.RemoveAllChildren();
+
         Section resultSection = new Section(result);
         result.AppendChild(resultSection);
+
         Body resultBody = new Body(result);
         resultSection.AppendChild(resultBody);
 
-        // Use a NodeImporter to keep source formatting when cloning nodes.
+        // -----------------------------------------------------------------
+        // 4. Determine the indices of the start and end paragraphs.
+        // -----------------------------------------------------------------
+        int startIndex = loaded.FirstSection.Body.Paragraphs.IndexOf(startParagraph);
+        int endIndex = loaded.FirstSection.Body.Paragraphs.IndexOf(endParagraph);
+
+        if (startIndex < 0 || endIndex < 0 || startIndex > endIndex)
+            throw new InvalidOperationException("Invalid paragraph range.");
+
+        // -----------------------------------------------------------------
+        // 5. Import paragraphs into the result document and strip comments.
+        // -----------------------------------------------------------------
+        // NodeImporter handles the document ownership transition.
         NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
 
-        // Walk from startParagraph to endParagraph, cloning block‑level nodes.
-        Node current = startParagraph;
-        while (current != null)
+        for (int i = startIndex; i <= endIndex; i++)
         {
-            // Clone only Paragraph or Table nodes.
-            if (current.NodeType == NodeType.Paragraph || current.NodeType == NodeType.Table)
+            Paragraph srcPara = loaded.FirstSection.Body.Paragraphs[i];
+
+            // Import the paragraph (deep clone) into the destination document.
+            Paragraph importedPara = (Paragraph)importer.ImportNode(srcPara, true);
+
+            // Remove any comment-related nodes from the imported paragraph.
+            NodeCollection children = importedPara.GetChildNodes(NodeType.Any, true);
+            for (int j = children.Count - 1; j >= 0; j--)
             {
-                Node importedNode = importer.ImportNode(current, true);
-
-                // If the node is a paragraph, remove any comment‑related child nodes.
-                if (importedNode is Paragraph para)
+                Node child = children[j];
+                if (child.NodeType == NodeType.Comment ||
+                    child.NodeType == NodeType.CommentRangeStart ||
+                    child.NodeType == NodeType.CommentRangeEnd)
                 {
-                    foreach (Node commentNode in para.GetChildNodes(NodeType.Comment, true).ToList())
-                        commentNode.Remove();
-
-                    foreach (Node rangeStart in para.GetChildNodes(NodeType.CommentRangeStart, true).ToList())
-                        rangeStart.Remove();
-
-                    foreach (Node rangeEnd in para.GetChildNodes(NodeType.CommentRangeEnd, true).ToList())
-                        rangeEnd.Remove();
+                    child.Remove();
                 }
-
-                resultBody.AppendChild(importedNode);
             }
 
-            if (current == endParagraph)
-                break;
-
-            current = current.NextSibling;
+            resultBody.AppendChild(importedPara);
         }
 
-        // Save the extracted content.
-        const string resultPath = "extracted.docx";
-        result.Save(resultPath);
+        // -----------------------------------------------------------------
+        // 6. Save the extracted document and its plain‑text representation.
+        // -----------------------------------------------------------------
+        const string resultDocPath = "extracted.docx";
+        result.Save(resultDocPath);
 
-        // Validate that the output file was created.
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException("Extraction failed – output file not found.");
+        string extractedText = result.GetText();
+        const string resultTxtPath = "extracted.txt";
+        File.WriteAllText(resultTxtPath, extractedText);
+
+        // -----------------------------------------------------------------
+        // 7. Validate that the output files were created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(resultDocPath))
+            throw new InvalidOperationException("Extracted document was not created.");
+
+        if (!File.Exists(resultTxtPath))
+            throw new InvalidOperationException("Extracted text file was not created.");
 
         Console.WriteLine("Extraction completed successfully.");
     }

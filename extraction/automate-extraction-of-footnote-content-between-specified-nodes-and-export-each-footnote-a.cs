@@ -1,66 +1,74 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Notes;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with several paragraphs and footnotes.
+        // Create a sample document with bookmarks and footnotes.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Paragraph 0 (no footnote)
-        builder.Writeln("Paragraph 0 - introductory text.");
+        // Start of the range.
+        builder.StartBookmark("StartRange");
+        builder.Writeln("Paragraph inside range with footnote 1.");
+        builder.InsertFootnote(FootnoteType.Footnote, "Footnote 1 content.");
+        builder.Writeln("Paragraph inside range without footnote.");
+        builder.EndBookmark("StartRange");
 
-        // Paragraph 1 (footnote A)
-        builder.Writeln("Paragraph 1 - contains footnote A.");
-        Footnote footnoteA = builder.InsertFootnote(FootnoteType.Footnote, "Footnote A content.");
+        // Paragraph outside the range (should not be extracted).
+        builder.Writeln("Paragraph outside range with footnote 2.");
+        builder.InsertFootnote(FootnoteType.Footnote, "Footnote 2 content.");
 
-        // Paragraph 2 (no footnote)
-        builder.Writeln("Paragraph 2 - plain text.");
-
-        // Paragraph 3 (footnote B)
-        builder.Writeln("Paragraph 3 - contains footnote B.");
-        Footnote footnoteB = builder.InsertFootnote(FootnoteType.Footnote, "Footnote B content.");
-
-        // Paragraph 4 (footnote C)
-        builder.Writeln("Paragraph 4 - contains footnote C.");
-        Footnote footnoteC = builder.InsertFootnote(FootnoteType.Footnote, "Footnote C content.");
+        // End of the range.
+        builder.StartBookmark("EndRange");
+        builder.Writeln("Paragraph inside range with footnote 3.");
+        builder.InsertFootnote(FootnoteType.Footnote, "Footnote 3 content.");
+        builder.EndBookmark("EndRange");
 
         // Save the sample document.
-        const string inputPath = "footnote-input.docx";
+        const string inputPath = "sample.docx";
         doc.Save(inputPath);
 
         // Load the document for extraction.
         Document loaded = new Document(inputPath);
 
-        // Define the range: from Paragraph 1 to Paragraph 3 inclusive.
-        Body body = loaded.FirstSection.Body;
-        Paragraph startParagraph = body.Paragraphs[1];
-        Paragraph endParagraph = body.Paragraphs[3];
+        // Retrieve the start and end bookmarks.
+        Bookmark startBookmark = loaded.Range.Bookmarks["StartRange"];
+        Bookmark endBookmark = loaded.Range.Bookmarks["EndRange"];
+        if (startBookmark == null || endBookmark == null)
+            throw new InvalidOperationException("Required bookmarks were not found.");
 
+        // Determine the paragraphs that bound the range.
+        Paragraph startParagraph = startBookmark.BookmarkStart.ParentNode as Paragraph;
+        Paragraph endParagraph = endBookmark.BookmarkEnd.ParentNode as Paragraph;
         if (startParagraph == null || endParagraph == null)
-            throw new InvalidOperationException("Start or end paragraph not found.");
+            throw new InvalidOperationException("Bookmark boundaries are not paragraphs.");
 
-        // Determine the indexes of the boundary paragraphs.
-        int startIndex = body.Paragraphs.IndexOf(startParagraph);
-        int endIndex = body.Paragraphs.IndexOf(endParagraph);
-        if (startIndex < 0 || endIndex < 0 || startIndex > endIndex)
-            throw new InvalidOperationException("Invalid paragraph range.");
-
-        // Extract footnotes whose parent paragraph lies within the specified range.
-        int footnoteCounter = 0;
-        foreach (Footnote footnote in loaded.GetChildNodes(NodeType.Footnote, true))
+        // Collect all paragraphs in document order.
+        NodeCollection allParagraphs = loaded.GetChildNodes(NodeType.Paragraph, true);
+        int startIndex = -1;
+        int endIndex = -1;
+        for (int i = 0; i < allParagraphs.Count; i++)
         {
-            Paragraph parentPara = footnote.ParentParagraph;
-            if (parentPara == null)
-                continue;
+            if (allParagraphs[i] == startParagraph) startIndex = i;
+            if (allParagraphs[i] == endParagraph) endIndex = i;
+        }
+        if (startIndex == -1 || endIndex == -1 || startIndex > endIndex)
+            throw new InvalidOperationException("Invalid bookmark range.");
 
-            int paraIndex = body.Paragraphs.IndexOf(parentPara);
-            if (paraIndex >= startIndex && paraIndex <= endIndex)
+        // Extract footnotes that belong to paragraphs within the range.
+        int footnoteCounter = 0;
+        for (int i = startIndex; i <= endIndex; i++)
+        {
+            Paragraph para = allParagraphs[i] as Paragraph;
+            if (para == null) continue;
+
+            NodeCollection footnotes = para.GetChildNodes(NodeType.Footnote, true);
+            foreach (Footnote footnote in footnotes.OfType<Footnote>())
             {
                 string fileName = $"footnote-{footnoteCounter}.txt";
                 File.WriteAllText(fileName, footnote.GetText().Trim());
@@ -68,11 +76,7 @@ public class Program
             }
         }
 
-        // Validate that at least one footnote file was generated.
         if (footnoteCounter == 0)
             throw new InvalidOperationException("No footnote files were generated.");
-
-        // Optional: clean up the sample document file (not required).
-        // File.Delete(inputPath);
     }
 }

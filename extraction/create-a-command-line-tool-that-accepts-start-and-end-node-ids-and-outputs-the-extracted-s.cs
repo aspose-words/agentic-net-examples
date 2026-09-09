@@ -2,99 +2,107 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using Newtonsoft.Json;
+using Aspose.Words.Saving;
 
 public class Program
 {
+    // Entry point of the console application.
+    // Expects two integer arguments: startNodeId endNodeId
     public static void Main(string[] args)
     {
-        // Determine bookmark names from command‑line arguments or use defaults.
-        string startBookmarkName = args.Length > 0 ? args[0] : "Start";
-        string endBookmarkName = args.Length > 1 ? args[1] : "End";
+        // Validate command‑line arguments.
+        if (args.Length < 2 ||
+            !int.TryParse(args[0], out int startNodeId) ||
+            !int.TryParse(args[1], out int endNodeId))
+        {
+            Console.WriteLine("Usage: dotnet run <startNodeId> <endNodeId>");
+            return;
+        }
 
         // -----------------------------------------------------------------
-        // 1. Create a sample source document containing the two bookmarks.
+        // 1. Create a sample source document with identifiable nodes.
         // -----------------------------------------------------------------
+        const string sourcePath = "sample.docx";
+
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Paragraph before start bookmark.");
+        // Create five paragraphs and assign a deterministic CustomNodeId to each.
+        for (int i = 1; i <= 5; i++)
+        {
+            builder.Writeln($"Paragraph {i}");
+            // The paragraph just created is the last paragraph in the body.
+            Paragraph para = sourceDoc.FirstSection.Body.Paragraphs[sourceDoc.FirstSection.Body.Paragraphs.Count - 1];
+            para.CustomNodeId = i; // Use the loop index as the node identifier.
+        }
 
-        builder.StartBookmark(startBookmarkName);
-        builder.Writeln("This is the first paragraph inside the start bookmark.");
-        builder.Writeln("This is the second paragraph inside the start bookmark.");
-        builder.EndBookmark(startBookmarkName);
-
-        builder.Writeln("Paragraph between bookmarks.");
-
-        builder.StartBookmark(endBookmarkName);
-        builder.Writeln("This is the first paragraph inside the end bookmark.");
-        builder.Writeln("This is the second paragraph inside the end bookmark.");
-        builder.EndBookmark(endBookmarkName);
-
-        builder.Writeln("Paragraph after end bookmark.");
-
-        // Save the source document (optional, helps debugging).
-        const string sourcePath = "source.docx";
+        // Persist the sample document to disk.
         sourceDoc.Save(sourcePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the document and locate the start and end bookmarks.
+        // 2. Load the document and locate the start and end nodes by ID.
         // -----------------------------------------------------------------
         Document loadedDoc = new Document(sourcePath);
 
-        Bookmark startBookmark = loadedDoc.Range.Bookmarks[startBookmarkName];
-        Bookmark endBookmark = loadedDoc.Range.Bookmarks[endBookmarkName];
+        NodeCollection allNodes = loadedDoc.GetChildNodes(NodeType.Any, true);
+        int startIndex = -1;
+        int endIndex = -1;
 
-        if (startBookmark == null)
-            throw new InvalidOperationException($"Start bookmark \"{startBookmarkName}\" not found.");
-        if (endBookmark == null)
-            throw new InvalidOperationException($"End bookmark \"{endBookmarkName}\" not found.");
-
-        // The bookmark start and end nodes are children of paragraphs.
-        Paragraph startParagraph = startBookmark.BookmarkStart.ParentNode as Paragraph;
-        Paragraph endParagraph = endBookmark.BookmarkEnd.ParentNode as Paragraph;
-
-        if (startParagraph == null)
-            throw new InvalidOperationException("Start bookmark is not inside a paragraph.");
-        if (endParagraph == null)
-            throw new InvalidOperationException("End bookmark is not inside a paragraph.");
-
-        // -----------------------------------------------------------------
-        // 3. Clone the nodes between the two bookmarks (inclusive) into a new document.
-        // -----------------------------------------------------------------
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren();
-
-        Section resultSection = new Section(resultDoc);
-        resultDoc.AppendChild(resultSection);
-        Body resultBody = new Body(resultDoc);
-        resultSection.AppendChild(resultBody);
-
-        // Use NodeImporter to import nodes from the source document into the result document.
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-
-        Node currentNode = startParagraph;
-        while (currentNode != null)
+        for (int i = 0; i < allNodes.Count; i++)
         {
-            Node importedNode = importer.ImportNode(currentNode, true);
-            resultBody.AppendChild(importedNode);
+            Node node = allNodes[i];
+            if (node.CustomNodeId == startNodeId)
+                startIndex = i;
+            if (node.CustomNodeId == endNodeId)
+                endIndex = i;
+        }
 
-            if (currentNode == endParagraph)
-                break;
+        if (startIndex == -1)
+            throw new InvalidOperationException($"Start node with CustomNodeId {startNodeId} not found.");
+        if (endIndex == -1)
+            throw new InvalidOperationException($"End node with CustomNodeId {endNodeId} not found.");
+        if (startIndex > endIndex)
+            throw new InvalidOperationException("Start node appears after end node in the document order.");
 
-            currentNode = currentNode.NextSibling;
+        // -----------------------------------------------------------------
+        // 3. Build a new document containing the extracted segment.
+        // -----------------------------------------------------------------
+        Document extractedDoc = new Document();
+        extractedDoc.RemoveAllChildren(); // Start with an empty document.
+
+        Section section = new Section(extractedDoc);
+        extractedDoc.AppendChild(section);
+        Body body = new Body(extractedDoc);
+        section.AppendChild(body);
+
+        for (int i = startIndex; i <= endIndex; i++)
+        {
+            Node node = allNodes[i];
+
+            // Only block‑level nodes (Paragraph, Table, etc.) can be appended directly to Body.
+            // Inline nodes must be wrapped inside a Paragraph.
+            if (node.NodeType == NodeType.Paragraph || node.NodeType == NodeType.Table)
+            {
+                body.AppendChild(node.Clone(true));
+            }
+            else
+            {
+                Paragraph wrapper = new Paragraph(extractedDoc);
+                wrapper.AppendChild(node.Clone(true));
+                body.AppendChild(wrapper);
+            }
         }
 
         // -----------------------------------------------------------------
         // 4. Save the extracted segment as PDF.
         // -----------------------------------------------------------------
-        const string outputPdfPath = "extracted.pdf";
-        resultDoc.Save(outputPdfPath, SaveFormat.Pdf);
+        const string outputPdf = "extracted.pdf";
+        extractedDoc.Save(outputPdf, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
-        if (!File.Exists(outputPdfPath))
-            throw new InvalidOperationException("Failed to create the extracted PDF file.");
+        if (!File.Exists(outputPdf))
+            throw new InvalidOperationException("Failed to create the PDF output file.");
+
+        Console.WriteLine($"Extraction complete. PDF saved to '{outputPdf}'.");
     }
 }
