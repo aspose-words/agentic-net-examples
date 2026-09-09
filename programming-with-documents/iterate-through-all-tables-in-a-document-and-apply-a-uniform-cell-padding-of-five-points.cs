@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,7 +10,7 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a sample table with two rows and two columns.
+        // Build a simple 2x2 table as sample content.
         Table table = builder.StartTable();
         builder.InsertCell();
         builder.Write("Cell 1");
@@ -29,22 +28,19 @@ public class Program
         NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
         foreach (Table tbl in tables)
         {
-            // Iterate through each cell of the current table and set uniform padding of 5 points.
+            // Iterate through each row in the current table.
             foreach (Row row in tbl.Rows)
             {
+                // Iterate through each cell in the current row.
                 foreach (Cell cell in row.Cells)
                 {
+                    // Apply uniform padding of 5 points on all sides.
                     cell.CellFormat.SetPaddings(5, 5, 5, 5);
                 }
             }
         }
 
-        // Define an output path and ensure the directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "PaddedTables.docx");
-
         // Save the modified document.
-        doc.Save(outputPath);
+        doc.Save("Output.docx");
     }
 }

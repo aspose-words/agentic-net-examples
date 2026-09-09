@@ -1,9 +1,8 @@
 using System;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Notes;
 
-namespace AsposeWordsFootnoteRemoval
+namespace RemoveFootnotesExample
 {
     public class Program
     {
@@ -13,32 +12,31 @@ namespace AsposeWordsFootnoteRemoval
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add paragraphs with footnotes.
-            builder.Writeln("First paragraph with a footnote.");
-            builder.InsertFootnote(FootnoteType.Footnote, "Footnote 1 content.");
+            // Insert some footnotes.
+            builder.Write("This is some text with a footnote.");
+            builder.InsertFootnote(FootnoteType.Footnote, "First footnote.");
+            builder.Write(" More text with another footnote.");
+            builder.InsertFootnote(FootnoteType.Footnote, "Second footnote.");
 
-            builder.Writeln("Second paragraph with a footnote.");
-            builder.InsertFootnote(FootnoteType.Footnote, "Footnote 2 content.");
+            // Insert some endnotes (these should be preserved).
+            builder.Write(" This is text with an endnote.");
+            builder.InsertFootnote(FootnoteType.Endnote, "First endnote.");
+            builder.Write(" More text with another endnote.");
+            builder.InsertFootnote(FootnoteType.Endnote, "Second endnote.");
 
-            // Add paragraphs with endnotes.
-            builder.Writeln("First paragraph with an endnote.");
-            builder.InsertFootnote(FootnoteType.Endnote, "Endnote 1 content.");
+            // Remove all footnotes while keeping endnotes.
+            // Get all footnote/endnote nodes in the document.
+            NodeCollection footnoteNodes = doc.GetChildNodes(NodeType.Footnote, true);
+            // Iterate backwards to safely remove nodes.
+            for (int i = footnoteNodes.Count - 1; i >= 0; i--)
+            {
+                Footnote footnote = (Footnote)footnoteNodes[i];
+                if (footnote.FootnoteType == FootnoteType.Footnote)
+                    footnote.Remove();
+            }
 
-            builder.Writeln("Second paragraph with an endnote.");
-            builder.InsertFootnote(FootnoteType.Endnote, "Endnote 2 content.");
-
-            // Remove all footnotes while preserving endnotes.
-            var footnotes = doc.GetChildNodes(NodeType.Footnote, true)
-                               .Cast<Footnote>()
-                               .Where(fn => fn.FootnoteType == FootnoteType.Footnote)
-                               .ToList();
-
-            foreach (var footnote in footnotes)
-                footnote.Remove();
-
-            // Save the modified document.
-            string outputFile = "Result.docx";
-            doc.Save(outputFile);
+            // Save the resulting document.
+            doc.Save("Result.docx");
         }
     }
 }

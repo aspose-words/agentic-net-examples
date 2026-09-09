@@ -1,39 +1,42 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and builder
+        // Define the output file path in the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ParagraphLineHeight.docx");
+
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add content and formatting.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set line spacing to 150% (multiple line spacing)
+        // Set line spacing to 150 % of the default (default is 12 pt, so 1.5 × 12 pt = 18 pt).
         builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 1.5; // 150%
+        builder.ParagraphFormat.LineSpacing = 18; // 18 points = 150 % line height.
 
-        // Insert a paragraph with sample text
-        builder.Writeln("This paragraph has a line height of 150 percent.");
+        // Insert a paragraph with some sample text.
+        builder.Writeln("This paragraph has a custom line height of 150 %.");
 
-        // Save the document
-        string outputPath = "Output.docx";
+        // Save the document.
         doc.Save(outputPath);
 
-        // Reload the document to verify the line spacing
+        // Reload the document to verify that the formatting was saved correctly.
         Document loadedDoc = new Document(outputPath);
-        Paragraph paragraph = loadedDoc.FirstSection.Body.FirstParagraph;
+        Paragraph firstParagraph = loadedDoc.FirstSection.Body.FirstParagraph;
 
-        bool ruleIsMultiple = paragraph.ParagraphFormat.LineSpacingRule == LineSpacingRule.Multiple;
-        bool spacingIs150 = Math.Abs(paragraph.ParagraphFormat.LineSpacing - 1.5) < 0.001;
+        // Verify the line spacing rule and value.
+        bool isCorrectRule = firstParagraph.ParagraphFormat.LineSpacingRule == LineSpacingRule.Multiple;
+        bool isCorrectSpacing = Math.Abs(firstParagraph.ParagraphFormat.LineSpacing - 18) < 0.01;
 
-        if (ruleIsMultiple && spacingIs150)
-        {
-            Console.WriteLine("Verification passed: Paragraph line spacing is set to 150%.");
-        }
-        else
-        {
-            Console.WriteLine("Verification failed: Paragraph line spacing is not as expected.");
-        }
+        // Output verification result.
+        Console.WriteLine(isCorrectRule && isCorrectSpacing
+            ? "Line height set correctly to 150 %."
+            : "Line height verification failed.");
     }
 }

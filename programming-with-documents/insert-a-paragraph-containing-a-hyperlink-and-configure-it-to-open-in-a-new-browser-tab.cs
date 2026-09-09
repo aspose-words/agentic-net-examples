@@ -9,33 +9,31 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Write some introductory text.
-        builder.Write("Please visit ");
+        builder.Write("Please click the following link: ");
 
-        // Apply hyperlink styling (blue and underlined).
+        // Apply hyperlink formatting (blue color, single underline).
         builder.Font.Color = Color.Blue;
         builder.Font.Underline = Underline.Single;
 
         // Insert the hyperlink. The method returns a Field object.
-        Field field = builder.InsertHyperlink("Aspose", "https://www.aspose.com", false);
+        Field field = builder.InsertHyperlink("Aspose.Words", "https://www.aspose.com/words", false);
 
-        // Cast to FieldHyperlink to set the OpenInNewWindow property.
+        // Cast to FieldHyperlink to enable opening in a new browser tab/window.
         if (field is FieldHyperlink hyperlink)
         {
-            hyperlink.OpenInNewWindow = true; // Open the link in a new browser tab/window.
+            hyperlink.OpenInNewWindow = true;
         }
 
-        // Reset font formatting to default for the rest of the paragraph.
+        // Reset font formatting to default for subsequent text.
         builder.Font.ClearFormatting();
 
-        // Complete the paragraph.
-        builder.Writeln(" for more info.");
+        // End the paragraph.
+        builder.Writeln();
 
         // Save the document to the local file system.
-        doc.Save("HyperlinkParagraph.docx");
+        doc.Save("HyperlinkNewTab.docx");
     }
 }

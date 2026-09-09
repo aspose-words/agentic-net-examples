@@ -1,53 +1,65 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableHeaderStyle
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple table with a header row and a few data rows.
-        Table table = builder.StartTable();
-
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Product");
-        builder.InsertCell();
-        builder.Writeln("Quantity");
-        builder.EndRow();
-
-        // Data rows.
-        for (int i = 1; i <= 3; i++)
+        public static void Main()
         {
+            // Create a new blank document.
+            Document doc = new Document();
+
+            // Initialize DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start a new table.
+            Table table = builder.StartTable();
+
+            // ----- Header row -----
+            // First header cell.
             builder.InsertCell();
-            builder.Writeln($"Item {i}");
+            builder.Write("Product");
+            // Second header cell.
             builder.InsertCell();
-            builder.Writeln((i * 10).ToString());
+            builder.Write("Quantity");
+            // End the header row.
             builder.EndRow();
+
+            // ----- Data rows -----
+            // First data row.
+            builder.InsertCell();
+            builder.Write("Apples");
+            builder.InsertCell();
+            builder.Write("10");
+            builder.EndRow();
+
+            // Second data row.
+            builder.InsertCell();
+            builder.Write("Bananas");
+            builder.InsertCell();
+            builder.Write("20");
+            builder.EndRow();
+
+            // Finish the table.
+            builder.EndTable();
+
+            // Create a custom table style.
+            TableStyle headerStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "HeaderRowStyle");
+
+            // Set the background color for the first row (header) using conditional style.
+            headerStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightBlue;
+
+            // Apply the style to the table.
+            table.Style = headerStyle;
+
+            // Ensure the style is applied to the first row.
+            table.StyleOptions = TableStyleOptions.FirstRow;
+
+            // Save the document to a file.
+            doc.Save("HeaderRowStyle.docx");
         }
-
-        builder.EndTable();
-
-        // Create a custom table style.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyHeaderStyle");
-
-        // Set the background color for the first row (header) via conditional style.
-        customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightBlue;
-
-        // Apply the style to the table.
-        table.Style = customStyle;
-
-        // Enable the FirstRow conditional formatting.
-        table.StyleOptions = TableStyleOptions.FirstRow;
-
-        // Save the document to the output folder.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderRowStyle.docx");
-        doc.Save(outputPath);
     }
 }

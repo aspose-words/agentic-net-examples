@@ -9,17 +9,17 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document for easy content insertion.
+        // Initialize a DocumentBuilder which will be used to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the paragraph shading to a light yellow color.
-        // This will highlight the paragraph background.
+        // Apply light yellow background shading to the current paragraph.
         builder.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightYellow;
 
         // Write the highlighted paragraph.
-        builder.Writeln("This is an important paragraph highlighted with a light yellow background.");
+        builder.Writeln("Important information highlighted with light yellow shading.");
 
         // Save the document to the local file system.
-        doc.Save("HighlightedParagraph.docx");
+        string outputPath = "HighlightedParagraph.docx";
+        doc.Save(outputPath);
     }
 }

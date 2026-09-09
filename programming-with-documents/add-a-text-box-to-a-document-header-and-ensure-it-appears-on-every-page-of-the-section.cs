@@ -11,38 +11,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder's cursor to the primary header of the first section.
+        // Move the cursor to the primary header of the first (and only) section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
         // Create a floating text box shape.
         Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.WrapType = WrapType.None;          // No text wrapping – the box stays in the header.
-        textBox.Height = 50;                       // Height in points.
-        textBox.Width = 200;                       // Width in points.
+        textBox.WrapType = WrapType.None;
+        textBox.Width = 200;
+        textBox.Height = 50;
         textBox.HorizontalAlignment = HorizontalAlignment.Center;
         textBox.VerticalAlignment = VerticalAlignment.Top;
 
-        // Add a paragraph with a run of text inside the text box.
+        // Add a paragraph with centered text inside the text box.
         textBox.AppendChild(new Paragraph(doc));
-        Paragraph para = (Paragraph)textBox.FirstParagraph;
+        Paragraph para = textBox.FirstParagraph;
         para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        Run run = new Run(doc, "Header Text Box");
+        Run run = new Run(doc, "Header TextBox");
         para.AppendChild(run);
 
         // Insert the text box into the header.
         builder.InsertNode(textBox);
 
-        // Return the cursor to the main document body.
+        // Add some body content spanning multiple pages to demonstrate the header repeats.
         builder.MoveToSection(0);
-
-        // Add enough content to generate multiple pages.
         builder.Writeln("Page 1");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Page 2");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Page 3");
 
-        // Save the document. The text box will appear in the header on every page.
+        // Save the document.
         doc.Save("HeaderWithTextBox.docx");
     }
 }

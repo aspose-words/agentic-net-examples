@@ -8,30 +8,26 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text box shape with specific dimensions.
+        // Insert a textbox shape (width: 200 points, height: 100 points).
         Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 200, 100);
 
-        // Access the TextBox object to set internal margins (in points).
+        // Set internal margins of the textbox (in points).
         TextBox textBox = textBoxShape.TextBox;
         textBox.InternalMarginTop = 10;
         textBox.InternalMarginBottom = 10;
         textBox.InternalMarginLeft = 10;
         textBox.InternalMarginRight = 10;
 
-        // Move the builder's cursor inside the text box.
+        // Move the builder cursor inside the textbox.
         builder.MoveTo(textBoxShape.LastParagraph);
 
-        // Set the font to bold.
-        builder.Font.Bold = true;
-
         // Insert a paragraph with bold text.
-        builder.Writeln("This is bold text inside a text box.");
+        builder.Font.Bold = true;
+        builder.Writeln("Bold text inside the textbox.");
 
-        // Save the document to a file in the current directory.
+        // Save the document.
         doc.Save("TextBoxMargins.docx");
     }
 }
