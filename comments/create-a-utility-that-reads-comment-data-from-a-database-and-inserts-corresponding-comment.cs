@@ -1,112 +1,129 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 
-namespace CommentInsertionUtility
+namespace CommentInsertionExample
 {
-    // Simple data model representing a comment record that could come from a database.
-    public class CommentRecord
+    // Simple POCO representing a comment record that might come from a database.
+    public class CommentData
     {
         public string Author { get; set; } = "";
         public string Initial { get; set; } = "";
         public DateTime DateTime { get; set; }
         public string Text { get; set; } = "";
-        // Zero‑based index of the paragraph in the template where the comment will be attached.
-        public int ParagraphIndex { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Simulate reading comment data from a database.
-            List<CommentRecord> commentData = GetSampleCommentData();
+            // Simulate retrieving comment data from a database.
+            List<CommentData> commentRecords = GetSampleCommentData();
 
-            // Create a simple template document with a few paragraphs.
+            // Create a template document with a few paragraphs.
             Document template = CreateTemplateDocument();
 
-            // Insert comments into the template based on the simulated data.
-            InsertCommentsIntoDocument(template, commentData);
+            // Insert comments from the simulated database into the template.
+            InsertCommentsIntoDocument(template, commentRecords);
 
             // Save the resulting document.
-            const string outputPath = "TemplateWithComments.docx";
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DocumentWithComments.docx");
             template.Save(outputPath);
+
+            // Load the saved document and enumerate the comments to verify insertion.
+            Document loadedDoc = new Document(outputPath);
+            EnumerateComments(loadedDoc);
         }
 
-        // Returns a hard‑coded list of comment records.
-        private static List<CommentRecord> GetSampleCommentData()
+        // Returns a list of sample comment data.
+        private static List<CommentData> GetSampleCommentData()
         {
-            return new List<CommentRecord>
+            return new List<CommentData>
             {
-                new CommentRecord
+                new CommentData
                 {
                     Author = "Alice Johnson",
                     Initial = "AJ",
                     DateTime = DateTime.Now.AddDays(-2),
-                    Text = "Please verify the figures in this paragraph.",
-                    ParagraphIndex = 0
+                    Text = "Review the introduction."
                 },
-                new CommentRecord
+                new CommentData
                 {
                     Author = "Bob Smith",
                     Initial = "BS",
                     DateTime = DateTime.Now.AddDays(-1),
-                    Text = "Consider rephrasing this sentence for clarity.",
-                    ParagraphIndex = 1
+                    Text = "Consider adding more examples here."
                 },
-                new CommentRecord
+                new CommentData
                 {
                     Author = "Carol Lee",
                     Initial = "CL",
                     DateTime = DateTime.Now,
-                    Text = "Add a reference to the source material.",
-                    ParagraphIndex = 2
+                    Text = "Check the formatting of this section."
                 }
             };
         }
 
-        // Creates a basic document that will serve as the template.
+        // Creates a simple template document with three paragraphs.
         private static Document CreateTemplateDocument()
         {
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            builder.Writeln("Paragraph 1: Introduction to the report.");
-            builder.Writeln("Paragraph 2: Detailed analysis of the data.");
-            builder.Writeln("Paragraph 3: Conclusions and recommendations.");
+            builder.Writeln("Paragraph 1: This is the first paragraph of the template.");
+            builder.Writeln("Paragraph 2: This is the second paragraph of the template.");
+            builder.Writeln("Paragraph 3: This is the third paragraph of the template.");
 
             return doc;
         }
 
-        // Inserts comments into the specified document according to the provided records.
-        private static void InsertCommentsIntoDocument(Document doc, List<CommentRecord> records)
+        // Inserts each comment into a corresponding paragraph of the document.
+        private static void InsertCommentsIntoDocument(Document doc, List<CommentData> comments)
         {
-            // Ensure the document has at least one section and a body.
-            if (doc.FirstSection?.Body == null)
-                return;
-
-            // Iterate over each comment record.
-            foreach (CommentRecord record in records)
+            // Ensure the document has at least as many paragraphs as comments.
+            int paragraphCount = doc.FirstSection?.Body?.Paragraphs?.Count ?? 0;
+            int requiredCount = comments.Count;
+            if (paragraphCount < requiredCount)
             {
-                // Validate the paragraph index.
-                if (record.ParagraphIndex < 0 ||
-                    record.ParagraphIndex >= doc.FirstSection.Body.Paragraphs.Count)
+                DocumentBuilder extraBuilder = new DocumentBuilder(doc);
+                for (int i = paragraphCount; i < requiredCount; i++)
                 {
-                    // Skip invalid indices.
-                    continue;
+                    extraBuilder.Writeln($"Additional paragraph {i + 1}.");
                 }
+            }
 
-                // Retrieve the target paragraph.
-                Paragraph? targetParagraph = doc.FirstSection.Body.Paragraphs[record.ParagraphIndex];
-                if (targetParagraph == null)
-                    continue;
+            // Attach each comment to the paragraph with the same index.
+            for (int i = 0; i < comments.Count; i++)
+            {
+                CommentData data = comments[i];
+                Paragraph? paragraph = doc.FirstSection?.Body?.Paragraphs[i];
+                if (paragraph == null)
+                    continue; // Safety check; should not happen.
 
-                // Create a new comment node with the required metadata.
-                Comment comment = new Comment(doc, record.Author, record.Initial, record.DateTime);
-                comment.SetText(record.Text);
+                // Create a new comment node.
+                Comment comment = new Comment(doc, data.Author, data.Initial, data.DateTime);
+                comment.SetText(data.Text);
 
                 // Append the comment to the paragraph.
-                targetParagraph.AppendChild(comment);
+                paragraph.AppendChild(comment);
+            }
+        }
+
+        // Enumerates all comments in the document and writes their details to the console.
+        private static void EnumerateComments(Document doc)
+        {
+            var commentNodes = doc.GetChildNodes(NodeType.Comment, true)
+                                  .OfType<Comment>()
+                                  .ToList();
+
+            foreach (Comment c in commentNodes)
+            {
+                string author = c.Author ?? "Unknown";
+                string text = c.GetText().Trim();
+                DateTime date = c.DateTime;
+                Console.WriteLine($"Comment by {author} on {date:G}: \"{text}\"");
             }
         }
     }

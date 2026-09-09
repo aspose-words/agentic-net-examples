@@ -1,49 +1,39 @@
 using System;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will contain the comment.
-        builder.Writeln("This is a sample paragraph that will have a comment.");
+        // Write a paragraph that will contain the comment.
+        builder.Writeln("This paragraph will have a custom comment.");
 
-        // Create a comment with custom author name and initials.
-        Comment comment = new Comment(doc, "Jane Smith", "JS", DateTime.Now);
-        // Set the visible text of the comment.
-        comment.SetText("Please review this paragraph for accuracy.");
+        // Define custom author metadata.
+        const string customAuthor = "Alice Example";
+        const string customInitials = "AE";
+
+        // Create a comment with the custom author, initials, and current date/time.
+        Comment comment = new Comment(doc, customAuthor, customInitials, DateTime.Now);
+        comment.SetText("Please review this paragraph.");
 
         // Attach the comment to the current paragraph.
-        Paragraph? currentParagraph = builder.CurrentParagraph;
-        if (currentParagraph != null)
-        {
-            currentParagraph.AppendChild(comment);
-        }
-
-        // Add a second comment to demonstrate multiple entries.
-        Comment secondComment = new Comment(doc, "Bob Johnson", "BJ", DateTime.Now);
-        secondComment.SetText("Consider rephrasing the first sentence.");
-        if (currentParagraph != null)
-        {
-            currentParagraph.AppendChild(secondComment);
-        }
-
-        // Enumerate all comments and output their author, initials, and text.
-        var comments = doc.GetChildNodes(NodeType.Comment, true)
-            .OfType<Comment>()
-            .ToList();
-
-        foreach (Comment c in comments)
-        {
-            Console.WriteLine($"{c.Author} ({c.Initial}): {c.GetText().Trim()}");
-        }
+        builder.CurrentParagraph.AppendChild(comment);
 
         // Save the document to the working directory.
-        doc.Save("CustomComment.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Comments.docx");
+        doc.Save(outputPath);
+
+        // Enumerate all comments and write their metadata to the console.
+        var comments = doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>();
+        foreach (Comment c in comments)
+        {
+            Console.WriteLine($"Author: {c.Author}, Initials: {c.Initial}, Date: {c.DateTime}");
+            Console.WriteLine($"Text: {c.GetText().Trim()}");
+        }
     }
 }
