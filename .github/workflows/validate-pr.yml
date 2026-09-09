@@ -371,11 +371,12 @@ jobs:
       - name: Merge PR
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
         shell: bash
         run: |
-          HEAD_REF=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
-          IS_DRAFT=$(gh pr view "$PR_NUMBER" --json isDraft --jq '.isDraft')
+          HEAD_REF=$(gh pr view "$PR_NUMBER" --repo "$GH_REPO" --json headRefName --jq '.headRefName')
+          IS_DRAFT=$(gh pr view "$PR_NUMBER" --repo "$GH_REPO" --json isDraft --jq '.isDraft')
 
           if [ "$IS_DRAFT" = "true" ]; then
             echo "PR is draft, skipping auto-merge."
@@ -387,4 +388,4 @@ jobs:
             exit 0
           fi
 
-          gh pr merge "$PR_NUMBER" --squash --delete-branch
+          gh pr merge "$PR_NUMBER" --repo "$GH_REPO" --squash --delete-branch
