@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -8,7 +10,7 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add a custom paragraph style named "MyCustomStyle".
+        // Add a custom paragraph style.
         Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
 
         // Set left indent to 0.5 inches (36 points).
@@ -16,15 +18,15 @@ public class Program
 
         // Set line spacing to 1.5 lines.
         customStyle.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        customStyle.ParagraphFormat.LineSpacing = 18.0; // 1.5 * 12 points (default line height)
+        customStyle.ParagraphFormat.LineSpacing = 18.0; // 12 points * 1.5 = 18 points
 
-        // Use DocumentBuilder to write a paragraph that uses the custom style.
+        // Use DocumentBuilder to write a paragraph with the custom style.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ParagraphFormat.StyleName = "MyCustomStyle";
+        builder.ParagraphFormat.StyleName = customStyle.Name;
         builder.Writeln("This paragraph uses a custom style with a left indent of 0.5 inches and line spacing of 1.5.");
 
-        // Save the document to a file.
-        string outputPath = "CustomParagraphStyle.docx";
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "CustomParagraphStyle.docx");
         doc.Save(outputPath);
     }
 }

@@ -1,43 +1,46 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
 
-public class Program
+namespace AsposeWordsEvenFooterExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Set a title for the document – this will be displayed by the TITLE field.
-        doc.BuiltInDocumentProperties.Title = "My Document Title";
+            // Set the document title – this value will be displayed by the TITLE field.
+            doc.BuiltInDocumentProperties.Title = "Sample Document Title";
 
-        // Enable different footers for odd and even pages.
-        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
+            // Use DocumentBuilder to add content and configure page setup.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder cursor to the even-page footer.
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
+            // Enable different footers for odd and even pages.
+            builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // Align the paragraph to the left.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
+            // Create an even‑page footer.
+            builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
 
-        // Insert a TITLE field that displays the document title.
-        // The field is updated immediately (second argument = true).
-        builder.InsertField(FieldType.FieldTitle, true);
+            // Align the footer text to the left.
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
 
-        // Return to the main body of the document.
-        builder.MoveToSection(0);
+            // Insert a TITLE field that displays the document title.
+            // The field is updated immediately.
+            builder.InsertField(FieldType.FieldTitle, true);
 
-        // Add a few pages to demonstrate the even-page footer.
-        builder.Writeln("Page 1");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3");
+            // Return to the main body of the document.
+            builder.MoveToSection(0);
+            builder.Writeln("Page 1 – odd page.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("Page 2 – even page (footer shows title).");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("Page 3 – odd page.");
 
-        // Save the document to the local file system.
-        doc.Save("EvenFooter.docx");
+            // Save the document to the local file system.
+            doc.Save("EvenPageFooter.docx");
+        }
     }
 }

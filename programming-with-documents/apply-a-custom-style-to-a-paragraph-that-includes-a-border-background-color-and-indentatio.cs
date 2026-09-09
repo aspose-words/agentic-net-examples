@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -14,25 +13,26 @@ public class Program
         // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure paragraph formatting: left indent, border, and background shading.
-        ParagraphFormat paraFormat = builder.ParagraphFormat;
+        // Configure paragraph formatting.
 
-        // Indentation (20 points from the left margin).
-        paraFormat.LeftIndent = 20;
+        // 1. Add a solid border around the paragraph.
+        // The Borders property returns a BorderCollection; set its properties to affect all sides.
+        BorderCollection borders = builder.ParagraphFormat.Borders;
+        borders.LineStyle = LineStyle.Single;
+        borders.Color = Color.DarkBlue;
+        borders.LineWidth = 2.0; // points
 
-        // Apply a single line border to all sides.
-        paraFormat.Borders.LineStyle = LineStyle.Single;
-        paraFormat.Borders.Color = Color.DarkBlue;
-        paraFormat.Borders.LineWidth = 2.0;
+        // 2. Set a background shading color.
+        builder.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightYellow;
 
-        // Set background color (light yellow).
-        paraFormat.Shading.BackgroundPatternColor = Color.LightYellow;
+        // 3. Apply left and right indentation (points).
+        builder.ParagraphFormat.LeftIndent = 30;
+        builder.ParagraphFormat.RightIndent = 30;
 
         // Write the paragraph text.
         builder.Writeln("This paragraph has a custom style with a border, background color, and indentation.");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "CustomStyledParagraph.docx");
-        doc.Save(outputPath);
+        // Save the document.
+        doc.Save("CustomStyledParagraph.docx");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,33 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Use DocumentBuilder to simplify inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a table.
         builder.StartTable();
 
-        // Build a table with 5 rows and 3 columns.
+        // Insert 5 rows and 3 columns.
         for (int row = 1; row <= 5; row++)
         {
             for (int col = 1; col <= 3; col++)
             {
-                // Insert a cell and write some sample text.
+                // Insert a new cell and write sample text.
                 builder.InsertCell();
                 builder.Write($"Row {row}, Col {col}");
             }
 
-            // End the current row before starting the next one.
+            // End the current row.
             builder.EndRow();
         }
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file in the same folder as the executable.
-        doc.Save("TableExample.docx");
+        // Define the output file path (in the current working directory).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Table.docx");
+
+        // Save the document to disk.
+        doc.Save(outputPath);
     }
 }

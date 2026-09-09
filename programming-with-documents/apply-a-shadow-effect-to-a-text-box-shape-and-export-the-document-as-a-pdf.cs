@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 public class Program
 {
@@ -11,35 +12,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a floating text box shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox)
-        {
-            WrapType = WrapType.None,
-            Width = 300,
-            Height = 100,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Top
-        };
+        // Insert a floating text box shape.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.WrapType = WrapType.None;
+        textBox.Width = 300;
+        textBox.Height = 100;
+        textBox.HorizontalAlignment = HorizontalAlignment.Center;
+        textBox.VerticalAlignment = VerticalAlignment.Top;
 
-        // Add a paragraph with a run of text inside the text box.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Text box with shadow effect");
+        // Add a paragraph with some text inside the text box.
+        textBox.AppendChild(new Paragraph(doc));
+        Paragraph para = textBox.FirstParagraph;
+        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        Run run = new Run(doc, "Shadowed Text Box");
         para.AppendChild(run);
-        textBox.AppendChild(para);
 
         // Apply a shadow effect to the shape.
         textBox.ShadowFormat.Type = ShadowType.Shadow1; // preset shadow
-        // The preset automatically makes the shadow visible.
+        textBox.ShadowFormat.Color = Color.Gray;       // shadow color
+        textBox.ShadowFormat.Transparency = 0.3;       // optional transparency
 
         // Insert the shape into the document.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(textBox);
+        builder.InsertNode(textBox);
 
         // Ensure the output directory exists.
-        string outputDir = "Output";
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
         // Save the document as PDF.
-        string pdfPath = Path.Combine(outputDir, "ShadowTextBox.pdf");
+        string pdfPath = Path.Combine(outputDir, "TextBoxWithShadow.pdf");
         doc.Save(pdfPath, SaveFormat.Pdf);
     }
 }

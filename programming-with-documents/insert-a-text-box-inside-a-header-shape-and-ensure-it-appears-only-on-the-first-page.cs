@@ -14,7 +14,7 @@ public class Program
         // Enable a different header for the first page.
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // Move the cursor to the first‑page header.
+        // Move the cursor to the first page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
         // Create a floating text box shape.
@@ -25,7 +25,7 @@ public class Program
         textBox.HorizontalAlignment = HorizontalAlignment.Center;
         textBox.VerticalAlignment = VerticalAlignment.Top;
 
-        // Add a paragraph inside the text box and put some text.
+        // Add a paragraph and a run of text inside the text box.
         textBox.AppendChild(new Paragraph(doc));
         Paragraph para = textBox.FirstParagraph;
         para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
@@ -33,18 +33,19 @@ public class Program
         para.AppendChild(run);
 
         // Insert the text box into the header.
-        builder.CurrentParagraph.AppendChild(textBox);
+        builder.InsertNode(textBox);
 
-        // Return to the main document body.
+        // Add content to generate multiple pages.
         builder.MoveToSection(0);
-        builder.Writeln("Page 1");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3");
+        for (int i = 1; i <= 3; i++)
+        {
+            builder.Writeln($"Page {i}");
+            if (i < 3)
+                builder.InsertBreak(BreakType.PageBreak);
+        }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FirstPageHeaderTextBox.docx");
+        // Save the document.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "FirstPageHeaderTextBox.docx");
         doc.Save(outputPath);
     }
 }

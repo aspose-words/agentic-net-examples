@@ -1,75 +1,60 @@
 using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
-using System.Drawing;
 
-namespace AsposeWordsConditionalFormatting
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a table and add a header row.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Item");
+        builder.InsertCell();
+        builder.Write("Quantity");
+        builder.EndRow();
+
+        // Add sample data rows.
+        AddDataRow(builder, "Apples", 20);
+        AddDataRow(builder, "Bananas", 40);
+        AddDataRow(builder, "Carrots", 50);
+        builder.EndTable();
+
+        // Define the threshold value.
+        const int threshold = 30;
+
+        // Apply conditional formatting: highlight cells with values above the threshold.
+        // Skip the header row (row index 0).
+        for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
         {
-            // Define the output file path.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "ConditionalFormattingTable.docx");
+            Row row = table.Rows[rowIndex];
+            // Quantity is in the second cell (index 1).
+            Cell quantityCell = row.Cells[1];
+            string text = quantityCell.ToString(SaveFormat.Text).Trim();
 
-            // Threshold for highlighting.
-            const int threshold = 30;
-
-            // Create a new blank document and a DocumentBuilder.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table.
-            Table table = builder.StartTable();
-
-            // Header row.
-            builder.InsertCell();
-            builder.Writeln("Item");
-            builder.InsertCell();
-            builder.Writeln("Quantity");
-            builder.EndRow();
-
-            // Data rows.
-            InsertDataRow(builder, "Apples", "20");
-            InsertDataRow(builder, "Bananas", "40");
-            InsertDataRow(builder, "Carrots", "50");
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Apply conditional formatting: highlight quantity cells with values above the threshold.
-            // Use index-based loop because Row does not have a RowIndex property.
-            for (int i = 1; i < table.Rows.Count; i++) // start from 1 to skip header row
+            if (int.TryParse(text, out int value) && value > threshold)
             {
-                Row row = table.Rows[i];
-                // The quantity is in the second cell (index 1).
-                Cell quantityCell = row.Cells[1];
-
-                // Extract the cell text.
-                string cellText = quantityCell.ToString(SaveFormat.Text).Trim();
-
-                // Try to parse the numeric value.
-                if (int.TryParse(cellText, out int value) && value > threshold)
-                {
-                    // Highlight the cell background.
-                    quantityCell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
-                }
+                // Highlight the cell background.
+                quantityCell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
             }
-
-            // Save the document.
-            doc.Save(outputPath);
         }
 
-        // Helper method to insert a data row into the table.
-        private static void InsertDataRow(DocumentBuilder builder, string item, string quantity)
-        {
-            builder.InsertCell();
-            builder.Writeln(item);
-            builder.InsertCell();
-            builder.Writeln(quantity);
-            builder.EndRow();
-        }
+        // Save the document to the local file system.
+        doc.Save("ConditionalFormattingTable.docx");
+    }
+
+    // Helper method to add a data row to the table.
+    private static void AddDataRow(DocumentBuilder builder, string item, int quantity)
+    {
+        builder.InsertCell();
+        builder.Write(item);
+        builder.InsertCell();
+        builder.Write(quantity.ToString());
+        builder.EndRow();
     }
 }

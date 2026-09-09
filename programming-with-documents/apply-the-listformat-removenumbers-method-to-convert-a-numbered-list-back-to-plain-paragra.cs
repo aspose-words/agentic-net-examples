@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -12,7 +11,7 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a default numbered list and add a few items.
+        // Start a default numbered list and add three items.
         builder.ListFormat.ApplyNumberDefault();
         builder.Writeln("Numbered list item 1");
         builder.Writeln("Numbered list item 2");
@@ -20,18 +19,13 @@ public class Program
 
         // Convert each list item back to a plain paragraph by removing its list formatting.
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph paragraph in paragraphs.OfType<Paragraph>())
+        foreach (Paragraph paragraph in paragraphs)
         {
-            if (paragraph.ListFormat.IsListItem)
-                paragraph.ListFormat.RemoveNumbers();
+            paragraph.ListFormat.RemoveNumbers();
         }
 
-        // Ensure the output folder exists.
-        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
         // Save the resulting document.
-        string outputPath = Path.Combine(artifactsDir, "ListRemoved.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ListRemoved.docx");
         doc.Save(outputPath);
     }
 }

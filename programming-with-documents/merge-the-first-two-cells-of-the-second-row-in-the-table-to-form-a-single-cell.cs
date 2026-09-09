@@ -22,19 +22,23 @@ public class Program
         builder.EndRow();
 
         // ---------- Second row ----------
-        // First cell of the second row will be the start of a horizontally merged range.
+        // First cell of the second row – mark it as the first cell in a merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged cells (Row 2, Cells 1-2)");
+        builder.Write("Merged cells (first + second)");
 
-        // Second cell merges with the previous cell.
+        // Second cell of the second row – merge it with the previous cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text needed for the merged cell.
+        // No text is written to this cell because it is merged.
 
+        // End the second row.
         builder.EndRow();
 
-        // End the table.
+        // Reset merge settings for any subsequent cells (good practice).
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+
+        // Finish the table.
         builder.EndTable();
 
         // Save the document to the current directory.

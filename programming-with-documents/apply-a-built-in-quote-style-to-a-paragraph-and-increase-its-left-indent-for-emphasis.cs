@@ -8,20 +8,19 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the built‑in "Quote" style to the current paragraph.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
+        // Apply the built‑in "Quote" style to the upcoming paragraph.
+        builder.ParagraphFormat.StyleName = "Quote";
 
-        // Increase the left indent (in points) for visual emphasis.
-        builder.ParagraphFormat.LeftIndent = 30; // 30 points
+        // Increase the left indent (in points) for emphasis.
+        builder.ParagraphFormat.LeftIndent = 20.0;
 
-        // Add some quoted text.
-        builder.Writeln("“The only limit to our realization of tomorrow is our doubts of today.” – Franklin D. Roosevelt");
+        // Write the paragraph text.
+        builder.Writeln("This paragraph uses the built‑in Quote style and has an increased left indent.");
 
-        // Save the document.
-        const string outputFile = "QuoteStyleExample.docx";
-        doc.Save(outputFile);
+        // Save the document to the local file system.
+        doc.Save("QuoteStyle.docx");
     }
 }
