@@ -1,64 +1,72 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
 
-public class ContentControlXmlBindingExample
+public class Program
 {
     public static void Main()
     {
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add a custom XML part that contains some sample data.
+        // Add a custom XML part with sample data.
         string xmlPartId = Guid.NewGuid().ToString("B");
-        string xmlContent = "<root><name>John Doe</name></root>";
+        string xmlContent = "<root><name>Contoso</name></root>";
         CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
 
-        // Prepare a plain‑text content control (SDT) that will be bound to XML data.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Create a plain text content control and map it to an existing XML node.
+        StructuredDocumentTag existingNodeSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "PersonName",
-            Tag = "person-name"
+            Title = "ExistingNode",
+            Tag = "existing-node"
         };
-
-        // Attempt to map the content control to an existing XML node.
-        bool nameMapped = sdt.XmlMapping.SetMapping(xmlPart, "/root[1]/name[1]", string.Empty);
-
-        // Attempt to map the same content control to a missing XML node.
-        // This will fail, and we will handle the situation gracefully.
-        bool addressMapped = sdt.XmlMapping.SetMapping(xmlPart, "/root[1]/address[1]", string.Empty);
-
-        // If the mapping to the address node failed, replace the content with a placeholder message.
-        if (!addressMapped)
+        // Attempt to map to a valid XPath.
+        bool mappingResult = existingNodeSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/name[1]", string.Empty);
+        if (!mappingResult || !existingNodeSdt.XmlMapping.IsMapped)
         {
-            sdt.RemoveAllChildren();
-            sdt.AppendChild(new Run(doc, "[Address not available]"));
+            Console.WriteLine("Failed to map existingNodeSdt to the XML node.");
         }
 
-        // Insert the content control into the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Customer Information:");
-        builder.InsertNode(sdt);
-        builder.Writeln(); // Add a line break after the control.
+        // Insert the content control into the first paragraph.
+        Paragraph para = doc.FirstSection.Body.FirstParagraph;
+        para.AppendChild(existingNodeSdt);
 
-        // Save the resulting document.
-        string outputDocPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        doc.Save(outputDocPath);
-
-        // Prepare a simple status object to demonstrate JSON serialization.
-        var mappingStatus = new
+        // Create another plain text content control and attempt to map it to a missing XML node.
+        StructuredDocumentTag missingNodeSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            NameMappingSuccessful = nameMapped,
-            AddressMappingSuccessful = addressMapped,
-            OutputDocument = outputDocPath
+            Title = "MissingNode",
+            Tag = "missing-node"
+        };
+        // This XPath does not exist in the XML part.
+        bool missingMappingResult = missingNodeSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/missing[1]", string.Empty);
+
+        // Prepare an error report object.
+        var errorReport = new
+        {
+            ControlTitle = missingNodeSdt.Title,
+            ControlTag = missingNodeSdt.Tag,
+            XPath = "/root[1]/missing[1]",
+            MappingSuccessful = missingMappingResult && missingNodeSdt.XmlMapping.IsMapped,
+            Message = missingMappingResult && missingNodeSdt.XmlMapping.IsMapped
+                ? "Mapping succeeded."
+                : "Mapping failed: XML node not found."
         };
 
-        // Serialize the status to JSON and write it to a file.
-        string json = JsonConvert.SerializeObject(mappingStatus, Formatting.Indented);
-        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "mapping_status.json");
-        File.WriteAllText(jsonPath, json, Encoding.UTF8);
+        // Serialize the error report to JSON and save it.
+        string jsonReport = JsonConvert.SerializeObject(errorReport, Formatting.Indented);
+        File.WriteAllText(Path.Combine(outputDir, "errorReport.json"), jsonReport);
+
+        // Insert the second content control into the document (even if mapping failed).
+        para.AppendChild(missingNodeSdt);
+
+        // Save the resulting document.
+        string docPath = Path.Combine(outputDir, "MappedContentControls.docx");
+        doc.Save(docPath);
     }
 }

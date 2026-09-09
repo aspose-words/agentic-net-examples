@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Newtonsoft.Json; // Included as per required packages
+using Newtonsoft.Json;
 
 namespace ContentControlTagUpdater
 {
@@ -11,17 +12,11 @@ namespace ContentControlTagUpdater
     {
         public static void Main()
         {
-            // Paths for the sample input and output documents.
-            const string inputPath = "input.docx";
-            const string outputPath = "output.docx";
-
-            // -----------------------------------------------------------------
             // Step 1: Create a sample document with several content controls.
-            // -----------------------------------------------------------------
             Document seedDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(seedDoc);
 
-            // Plain‑text content control.
+            // Plain text content control.
             StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(seedDoc, SdtType.PlainText, MarkupLevel.Inline)
             {
                 Title = "CustomerName",
@@ -30,55 +25,66 @@ namespace ContentControlTagUpdater
             plainTextSdt.RemoveAllChildren();
             plainTextSdt.AppendChild(new Run(seedDoc, "Alice"));
             builder.InsertNode(plainTextSdt);
-            builder.Writeln(); // Move to next line.
+            builder.Writeln();
 
-            // Rich‑text (block‑level) content control.
+            // Rich text content control.
             StructuredDocumentTag richTextSdt = new StructuredDocumentTag(seedDoc, SdtType.RichText, MarkupLevel.Block)
             {
-                Title = "AddressBlock",
+                Title = "Address",
                 Tag = "old-tag-rich"
             };
             Paragraph para = new Paragraph(seedDoc);
-            para.AppendChild(new Run(seedDoc, "123 Main St, Springfield"));
+            para.AppendChild(new Run(seedDoc, "123 Main St"));
             richTextSdt.AppendChild(para);
             seedDoc.FirstSection.Body.AppendChild(richTextSdt);
-            builder.Writeln(); // Ensure separation.
+            builder.Writeln();
 
             // Checkbox content control.
             StructuredDocumentTag checkboxSdt = new StructuredDocumentTag(seedDoc, SdtType.Checkbox, MarkupLevel.Inline)
             {
                 Title = "Subscribe",
                 Tag = "old-tag-checkbox",
-                Checked = false
+                Checked = true
             };
             builder.InsertNode(checkboxSdt);
             builder.Writeln();
 
+            // Drop‑down list content control.
+            StructuredDocumentTag dropdownSdt = new StructuredDocumentTag(seedDoc, SdtType.DropDownList, MarkupLevel.Inline)
+            {
+                Title = "Country",
+                Tag = "old-tag-dropdown"
+            };
+            dropdownSdt.ListItems.Add(new SdtListItem("USA", "US"));
+            dropdownSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
+            builder.InsertNode(dropdownSdt);
+            builder.Writeln();
+
             // Save the seed document.
+            const string inputPath = "input.docx";
             seedDoc.Save(inputPath);
 
-            // -----------------------------------------------------------------
             // Step 2: Load the document and update all content control tags.
-            // -----------------------------------------------------------------
             Document doc = new Document(inputPath);
+            NodeCollection sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
+            var sdts = sdtNodes.OfType<StructuredDocumentTag>().ToList();
 
-            // Retrieve all StructuredDocumentTag nodes in the document.
-            var sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                              .OfType<StructuredDocumentTag>()
-                              .ToList();
-
-            // Apply a standardized naming convention: "Tag_1", "Tag_2", ...
-            int index = 1;
-            foreach (var sdt in sdtNodes)
+            for (int i = 0; i < sdts.Count; i++)
             {
-                sdt.Tag = $"Tag_{index}";
-                index++;
+                StructuredDocumentTag sdt = sdts[i];
+                // Standardized naming: "Tag_{Title}_{Index}"
+                string sanitizedTitle = string.IsNullOrWhiteSpace(sdt.Title) ? "Untitled" : sdt.Title.Replace(" ", "_");
+                sdt.Tag = $"Tag_{sanitizedTitle}_{i + 1}";
             }
 
-            // -----------------------------------------------------------------
-            // Step 3: Save the updated document.
-            // -----------------------------------------------------------------
+            // Save the updated document.
+            const string outputPath = "output.docx";
             doc.Save(outputPath);
+
+            // Optional: Export the updated tags to a JSON file for verification.
+            var tagInfo = sdts.Select(s => new { s.Title, s.Tag, Type = s.SdtType.ToString() }).ToList();
+            string json = JsonConvert.SerializeObject(tagInfo, Formatting.Indented);
+            File.WriteAllText("updated_tags.json", json);
         }
     }
 }

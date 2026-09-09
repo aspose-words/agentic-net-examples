@@ -10,104 +10,92 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a sample document with various content controls.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-        // ---------- Plain text inline content control ----------
-        builder.Writeln("Plain text content control:");
-        // Create an inline plain‑text SDT and add it to the current paragraph.
-        StructuredDocumentTag plain = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Ensure the document has at least one paragraph.
+        builder.Writeln("Document with several content controls:");
+        Paragraph firstParagraph = sampleDoc.FirstSection.Body.FirstParagraph;
+
+        // Inline plain‑text content control.
+        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(sampleDoc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "PlainText",
-            Tag = "plain"
+            Title = "CustomerName",
+            Tag = "customer-name"
         };
-        plain.AppendChild(new Run(doc, "Sample plain text"));
-        builder.CurrentParagraph.AppendChild(plain);
+        plainTextSdt.RemoveAllChildren();
+        plainTextSdt.AppendChild(new Run(sampleDoc, "Contoso"));
+        firstParagraph.AppendChild(plainTextSdt);
+        firstParagraph.AppendChild(new Run(sampleDoc, " "));
 
-        // ---------- Rich text block content control ----------
-        builder.Writeln("Rich text content control:");
-        // Create a block‑level rich‑text SDT and add a paragraph with text inside it.
-        StructuredDocumentTag rich = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        // Inline checkbox content control.
+        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(sampleDoc, SdtType.Checkbox, MarkupLevel.Inline)
         {
-            Title = "RichText",
-            Tag = "rich"
-        };
-        Paragraph richParagraph = new Paragraph(doc);
-        richParagraph.AppendChild(new Run(doc, "Sample rich text"));
-        rich.AppendChild(richParagraph);
-        // Block‑level SDTs are children of the document body.
-        doc.FirstSection.Body.AppendChild(rich);
-
-        // ---------- Checkbox inline content control ----------
-        builder.Writeln("Checkbox content control:");
-        StructuredDocumentTag check = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
-        {
-            Title = "CheckBox",
-            Tag = "checkbox",
+            Title = "AcceptTerms",
+            Tag = "accept-terms",
             Checked = true
         };
-        builder.CurrentParagraph.AppendChild(check);
+        firstParagraph.AppendChild(checkBoxSdt);
+        firstParagraph.AppendChild(new Run(sampleDoc, " "));
 
-        // ---------- Drop‑down list inline content control ----------
-        builder.Writeln("Drop‑down list content control:");
-        StructuredDocumentTag dropdown = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
+        // Inline drop‑down list content control.
+        StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(sampleDoc, SdtType.DropDownList, MarkupLevel.Inline)
         {
-            Title = "DropDown",
-            Tag = "dropdown"
+            Title = "Country",
+            Tag = "country"
         };
-        dropdown.ListItems.Add(new SdtListItem("Option 1", "1"));
-        dropdown.ListItems.Add(new SdtListItem("Option 2", "2"));
-        dropdown.ListItems.Add(new SdtListItem("Option 3", "3"));
-        builder.CurrentParagraph.AppendChild(dropdown);
+        dropDownSdt.ListItems.Add(new SdtListItem("USA", "US"));
+        dropDownSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
+        firstParagraph.AppendChild(dropDownSdt);
+        firstParagraph.AppendChild(new Run(sampleDoc, " "));
 
-        // ---------- Date picker inline content control ----------
-        builder.Writeln("Date picker content control:");
-        StructuredDocumentTag date = new StructuredDocumentTag(doc, SdtType.Date, MarkupLevel.Inline)
+        // Inline date picker content control.
+        StructuredDocumentTag dateSdt = new StructuredDocumentTag(sampleDoc, SdtType.Date, MarkupLevel.Inline)
         {
-            Title = "DatePicker",
-            Tag = "date"
+            Title = "BirthDate",
+            Tag = "birth-date",
+            DateDisplayFormat = "yyyy-MM-dd"
         };
-        builder.CurrentParagraph.AppendChild(date);
+        firstParagraph.AppendChild(dateSdt);
+        firstParagraph.AppendChild(new Run(sampleDoc, " "));
 
-        // ---------- Picture inline content control ----------
-        builder.Writeln("Picture content control:");
-        StructuredDocumentTag picture = new StructuredDocumentTag(doc, SdtType.Picture, MarkupLevel.Inline)
+        // Block‑level rich‑text content control.
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(sampleDoc, SdtType.RichText, MarkupLevel.Block)
         {
-            Title = "Picture",
-            Tag = "picture"
+            Title = "Comments",
+            Tag = "comments"
         };
-        builder.CurrentParagraph.AppendChild(picture);
+        Paragraph blockParagraph = new Paragraph(sampleDoc);
+        blockParagraph.AppendChild(new Run(sampleDoc, "Enter your comments here."));
+        richTextSdt.AppendChild(blockParagraph);
+        sampleDoc.FirstSection.Body.AppendChild(richTextSdt);
 
         // Save the sample document.
-        const string docPath = "sample.docx";
-        doc.Save(docPath);
+        const string samplePath = "sample.docx";
+        sampleDoc.Save(samplePath);
 
-        // Load the document (demonstrates iteration on a separate instance).
-        Document loadedDoc = new Document(docPath);
+        // Load the document (simulating a separate processing step).
+        Document doc = new Document(samplePath);
 
         // Collect information about each content control.
-        NodeCollection sdtNodes = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true);
-        var reportItems = new List<object>();
+        var controlsInfo = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+                              .OfType<StructuredDocumentTag>()
+                              .Select(sdt => new
+                              {
+                                  Type = sdt.SdtType.ToString(),
+                                  Title = sdt.Title,
+                                  Tag = sdt.Tag
+                              })
+                              .ToList();
 
-        foreach (StructuredDocumentTag sdt in sdtNodes.OfType<StructuredDocumentTag>())
-        {
-            reportItems.Add(new
-            {
-                Title = sdt.Title ?? string.Empty,
-                Tag = sdt.Tag ?? string.Empty,
-                Type = sdt.SdtType.ToString(),
-                Content = sdt.GetText().Trim()
-            });
-        }
+        // Serialize the summary to JSON.
+        string jsonReport = JsonConvert.SerializeObject(controlsInfo, Formatting.Indented);
+        const string reportPath = "content_controls_report.json";
+        File.WriteAllText(reportPath, jsonReport);
 
-        // Serialize the report to JSON.
-        string jsonReport = JsonConvert.SerializeObject(reportItems, Formatting.Indented);
-        const string jsonPath = "content-controls-report.json";
-        File.WriteAllText(jsonPath, jsonReport);
-
-        // Write a brief summary to the console.
-        Console.WriteLine($"Processed {reportItems.Count} content controls.");
-        Console.WriteLine($"Report saved to '{jsonPath}'.");
+        // Output the JSON to the console (no interactive prompts).
+        Console.WriteLine("Content Control Summary:");
+        Console.WriteLine(jsonReport);
     }
 }

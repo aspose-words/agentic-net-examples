@@ -1,93 +1,84 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
 
-public class Program
+namespace ContentControlMetadataExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // -----------------------------------------------------------------
-        // 1. Add a plain‑text content control that holds a product name.
-        // -----------------------------------------------------------------
-        StructuredDocumentTag productNameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        public static void Main()
         {
-            Title = "ProductName",
-            Tag = "product-name"
-        };
-        productNameSdt.RemoveAllChildren();
-        productNameSdt.AppendChild(new Run(doc, "Aspose.Words"));
-        // Insert the control into the first paragraph.
-        Paragraph firstPara = doc.FirstSection.Body.FirstParagraph;
-        firstPara.AppendChild(productNameSdt);
+            // Path for the generated files.
+            const string docPath = "metadata.docx";
+            const string jsonPath = "metadata.json";
 
-        // -----------------------------------------------------------------
-        // 2. Create a custom XML part that stores additional metadata.
-        // -----------------------------------------------------------------
-        string xmlContent = "<metadata><keywords>content control,metadata,search</keywords></metadata>";
-        string xmlPartId = Guid.NewGuid().ToString("B");
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
+            // 1. Create a new blank document.
+            Document doc = new Document();
 
-        // -----------------------------------------------------------------
-        // 3. Add a content control that is mapped to the XML part.
-        // -----------------------------------------------------------------
-        StructuredDocumentTag keywordsSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "Keywords",
-            Tag = "keywords"
-        };
-        // Map the control to the <keywords> element inside the custom XML part.
-        keywordsSdt.XmlMapping.SetMapping(xmlPart, "/metadata[1]/keywords[1]", string.Empty);
-        // Insert after the first control.
-        firstPara.AppendChild(new Run(doc, " "));
-        firstPara.AppendChild(keywordsSdt);
+            // 2. Prepare a paragraph to host the content controls.
+            Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // -----------------------------------------------------------------
-        // 4. Save the document.
-        // -----------------------------------------------------------------
-        string docPath = "output.docx";
-        doc.Save(docPath);
-
-        // -----------------------------------------------------------------
-        // 5. Extract metadata from all content controls for indexing.
-        // -----------------------------------------------------------------
-        List<MetadataItem> extracted = new List<MetadataItem>();
-
-        // Enumerate all StructuredDocumentTag nodes in the document.
-        NodeCollection sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
-        foreach (StructuredDocumentTag sdt in sdtNodes.OfType<StructuredDocumentTag>())
-        {
-            // Retrieve the displayed text of the control.
-            string text = sdt.GetText().Trim();
-
-            // If the control is mapped to XML, the text reflects the mapped value.
-            extracted.Add(new MetadataItem
+            // 3. Define metadata items to store.
+            var metadataItems = new Dictionary<string, string>
             {
-                Title = sdt.Title,
-                Tag = sdt.Tag,
-                Text = text
-            });
+                { "ProductId", "12345" },
+                { "Category", "Electronics" },
+                { "Price", "199.99" }
+            };
+
+            // 4. Insert a plain‑text content control for each metadata item.
+            foreach (var kvp in metadataItems)
+            {
+                // Create an inline plain‑text StructuredDocumentTag.
+                StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+                {
+                    Title = kvp.Key,          // Use the key as the title (friendly name).
+                    Tag = kvp.Key.ToLower()   // Use a lowercase tag for easy lookup.
+                };
+
+                // Clear any default children and set the initial value.
+                sdt.RemoveAllChildren();
+                sdt.AppendChild(new Run(doc, kvp.Value));
+
+                // Append the content control to the paragraph.
+                paragraph.AppendChild(sdt);
+
+                // Add a space after each control for readability.
+                paragraph.AppendChild(new Run(doc, " "));
+            }
+
+            // 5. Save the document containing the metadata.
+            doc.Save(docPath);
+
+            // -----------------------------------------------------------------
+            // 6. Load the document back and extract the metadata from the controls.
+            Document loadedDoc = new Document(docPath);
+
+            // Collect metadata from all StructuredDocumentTag nodes that have a Title.
+            var extractedMetadata = new Dictionary<string, string>();
+            NodeCollection sdtNodes = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true);
+            foreach (StructuredDocumentTag sdt in sdtNodes)
+            {
+                if (!string.IsNullOrEmpty(sdt.Title))
+                {
+                    // Get the text inside the content control and trim whitespace.
+                    string value = sdt.GetText().Trim();
+                    extractedMetadata[sdt.Title] = value;
+                }
+            }
+
+            // 7. Serialize the extracted metadata to JSON.
+            string json = JsonConvert.SerializeObject(extractedMetadata, Formatting.Indented);
+
+            // 8. Save the JSON to a file.
+            File.WriteAllText(jsonPath, json);
+
+            // Optional: write the JSON to console (no interactive input required).
+            Console.WriteLine("Extracted metadata JSON:");
+            Console.WriteLine(json);
         }
-
-        // -----------------------------------------------------------------
-        // 6. Serialize the extracted metadata to JSON for a search engine.
-        // -----------------------------------------------------------------
-        string json = JsonConvert.SerializeObject(extracted, Formatting.Indented);
-        File.WriteAllText("metadata.json", json);
-    }
-
-    // Simple DTO for JSON output.
-    private class MetadataItem
-    {
-        public string Title { get; set; }
-        public string Tag { get; set; }
-        public string Text { get; set; }
     }
 }

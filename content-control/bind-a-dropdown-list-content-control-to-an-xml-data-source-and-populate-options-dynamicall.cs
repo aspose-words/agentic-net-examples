@@ -1,9 +1,7 @@
 using System;
-using System.IO;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Newtonsoft.Json;
 
 public class Program
 {
@@ -12,52 +10,43 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Define XML that will serve as the data source for the dropdown list.
-        // Each <item> element contains a display text and a value attribute.
-        string xmlContent = @"
-            <root>
-                <item value='A'>Option A</item>
-                <item value='B'>Option B</item>
-                <item value='C'>Option C</item>
-            </root>";
+        // XML that defines the dropdown options.
+        string xml = @"<options>
+                         <option value='A'>Option A</option>
+                         <option value='B'>Option B</option>
+                         <option value='C'>Option C</option>
+                       </options>";
 
-        // Add the XML as a custom XML part to the document.
-        // The part ID can be any GUID string.
-        string partId = Guid.NewGuid().ToString("B");
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(partId, xmlContent);
+        // Add the XML as a custom XML part (optional, shows how to embed XML in the document).
+        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(Guid.NewGuid().ToString("B"), xml);
 
-        // Parse the XML to extract the items for the dropdown.
-        XDocument xDoc = XDocument.Parse(xmlContent);
-        var items = xDoc.Root?.Elements("item");
+        // Parse the XML to retrieve the option elements.
+        XDocument xDoc = XDocument.Parse(xml);
+        var optionElements = xDoc.Root?.Elements("option");
 
-        // Create a dropdown list content control (inline level).
+        // Create a drop‑down list content control (inline level).
         StructuredDocumentTag dropdown = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
         {
             Title = "SampleDropdown",
             Tag = "sample-dropdown"
         };
 
-        // Populate the dropdown list with items from the XML.
-        if (items != null)
+        // Populate the dropdown list items from the XML data.
+        if (optionElements != null)
         {
-            foreach (var elem in items)
+            foreach (var opt in optionElements)
             {
-                string displayText = elem.Value;
-                string value = elem.Attribute("value")?.Value ?? displayText;
+                string displayText = opt.Value;
+                string value = (string)opt.Attribute("value") ?? displayText;
                 dropdown.ListItems.Add(new SdtListItem(displayText, value));
             }
-
-            // Optionally set the selected value to the first item.
-            if (dropdown.ListItems.Count > 0)
-                dropdown.ListItems.SelectedValue = dropdown.ListItems[0];
         }
 
-        // Insert the dropdown into the first paragraph of the document.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
-        para.AppendChild(dropdown);
+        // Insert the content control into the first paragraph of the document.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(dropdown);
 
         // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DropdownMapped.docx");
-        doc.Save(outputPath);
+        doc.Save("DropdownBound.docx");
     }
 }
