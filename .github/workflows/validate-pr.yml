@@ -151,6 +151,21 @@ jobs:
               "System.Text.Encoding.CodePages": "9.0.2",
           }
 
+          def version_tuple(value):
+              parts = []
+              for part in str(value or "").split("."):
+                  try:
+                      parts.append(int(part))
+                  except ValueError:
+                      break
+              return tuple(parts)
+
+          barcode_version = versions.get("Aspose.BarCode")
+          drawing_version = versions.get("Aspose.Drawing.Common") or fallback_versions.get("Aspose.Drawing.Common")
+          if "Aspose.BarCode" in packages and "Aspose.Drawing.Common" in packages and barcode_version:
+              if version_tuple(drawing_version) < version_tuple(barcode_version):
+                  versions["Aspose.Drawing.Common"] = barcode_version
+
           print('<Project Sdk="Microsoft.NET.Sdk">')
           print('  <PropertyGroup>')
           print('    <OutputType>Exe</OutputType>')
