@@ -3,89 +3,95 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingDemo
 {
-    public static void Main()
+    // Data model classes
+    public class Project
     {
-        // Create a blank document that will serve as the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+    }
 
-        // Title.
-        builder.Writeln("Department Project Report");
-        builder.Writeln();
+    public class Department
+    {
+        public string Name { get; set; } = "";
+        public List<Project> Projects { get; set; } = new();
+    }
 
-        // Outer data band – iterate over departments.
-        builder.Writeln("<<foreach [dept in Departments]>>");
-        builder.Writeln("Department: <<[dept.Name]>>");
-        builder.Writeln();
+    public class ReportModel
+    {
+        public List<Department> Departments { get; set; } = new();
+    }
 
-        // Inner data band – iterate over projects of the current department.
-        builder.Writeln("Projects:");
-        builder.Writeln("<<foreach [proj in dept.Projects]>>");
-        builder.Writeln("- <<[proj.Name]>> (Budget: <<[proj.Budget]>>)");
-        builder.Writeln("<</foreach>>"); // End inner foreach.
-        builder.Writeln(); // Blank line between departments.
-        builder.Writeln("<</foreach>>"); // End outer foreach.
-
-        // Build the data model.
-        ReportModel model = new()
+    public class Program
+    {
+        public static void Main()
         {
-            Departments = new List<Department>
+            // Paths for the template and the generated report
+            string templatePath = "Template.docx";
+            string reportPath = "Report.docx";
+
+            // -------------------------------------------------
+            // 1. Create the template document programmatically
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Outer data band – iterate over departments
+            builder.Writeln("<<foreach [dept in Departments]>>");
+            builder.Writeln("Department: <<[dept.Name]>>");
+            builder.Writeln();
+
+            // Inner data band – iterate over projects of the current department
+            builder.Writeln("Projects:");
+            builder.Writeln("<<foreach [proj in dept.Projects]>>");
+            builder.Writeln("- <<[proj.Name]>>: <<[proj.Description]>>");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln();
+
+            // End of the outer foreach
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // 2. Load the template and prepare the data source
+            // -------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // Sample hierarchical data: departments with their projects
+            ReportModel model = new ReportModel();
+            model.Departments.Add(new Department
             {
-                new()
+                Name = "Human Resources",
+                Projects = new List<Project>
                 {
-                    Name = "Research",
-                    Projects = new List<Project>
-                    {
-                        new() { Name = "AI Platform", Budget = 150000m },
-                        new() { Name = "Quantum Computing", Budget = 250000m }
-                    }
-                },
-                new()
-                {
-                    Name = "Marketing",
-                    Projects = new List<Project>
-                    {
-                        new() { Name = "Social Media Campaign", Budget = 50000m },
-                        new() { Name = "Product Launch", Budget = 80000m }
-                    }
+                    new Project { Name = "Recruitment", Description = "Hiring new staff members" },
+                    new Project { Name = "Training", Description = "Employee development programs" }
                 }
-            }
-        };
+            });
+            model.Departments.Add(new Department
+            {
+                Name = "Information Technology",
+                Projects = new List<Project>
+                {
+                    new Project { Name = "Infrastructure", Description = "Server and network maintenance" },
+                    new Project { Name = "Software Development", Description = "Internal application development" }
+                }
+            });
 
-        // Generate the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(doc, model, "model");
+            // -------------------------------------------------
+            // 3. Build the report using the LINQ Reporting engine
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // default options
+            engine.BuildReport(reportDoc, model, "model");
 
-        // Save the result.
-        doc.Save("DepartmentProjectReport.docx");
-
-        // Optional: indicate success (no console interaction required).
-        if (!success)
-        {
-            throw new InvalidOperationException("Report generation failed.");
+            // -------------------------------------------------
+            // 4. Save the generated report
+            // -------------------------------------------------
+            reportDoc.Save(reportPath);
         }
     }
-}
-
-// Root wrapper class – must match the name used in BuildReport ("model").
-public class ReportModel
-{
-    public List<Department> Departments { get; set; } = new();
-}
-
-// Department class.
-public class Department
-{
-    public string Name { get; set; } = string.Empty;
-    public List<Project> Projects { get; set; } = new();
-}
-
-// Project class.
-public class Project
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Budget { get; set; }
 }

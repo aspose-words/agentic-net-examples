@@ -8,11 +8,31 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
+        // Register code page provider (required for some environments)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample CSV data with boolean values.
-        string csvPath = "people.csv";
+        // Define file paths in the current working directory
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string csvPath = Path.Combine(workDir, "Data.csv");
+        string outputPath = Path.Combine(workDir, "Report.docx");
+
+        // -------------------- Create template document --------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Person Report");
+        // Use a foreach block to iterate over the CSV rows (treated as a collection named "persons")
+        builder.Writeln("<<foreach [p in persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Active: <<[p.IsActive]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template so it can be loaded later
+        templateDoc.Save(templatePath);
+
+        // -------------------- Create CSV data source --------------------
+        // CSV content with a header row and boolean values as true/false strings
         string[] csvLines =
         {
             "Name,IsActive",
@@ -20,43 +40,22 @@ public class Program
             "Bob,false",
             "Charlie,true"
         };
-        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
+        File.WriteAllLines(csvPath, csvLines);
 
-        // Create a simple Word template containing LINQ Reporting tags.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Configure CSV load options: first line contains headers
+        var loadOptions = new CsvDataLoadOptions(true);
 
-        // Use a foreach block to iterate over the CSV rows.
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Active: <<[p.IsActive]>>");
-        builder.Writeln("<</foreach>>");
+        // Create the CSV data source using the configured options
+        var csvDataSource = new CsvDataSource(csvPath, loadOptions);
 
-        templateDoc.Save(templatePath);
+        // -------------------- Load template and build report --------------------
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
-        // Load the template document.
-        Document reportDoc = new Document(templatePath);
+        // The root object name "persons" matches the name used in the template tags
+        engine.BuildReport(doc, csvDataSource, "persons");
 
-        // Configure CSV load options to treat the first row as headers.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true)
-        {
-            Delimiter = ',',
-            QuoteChar = '"',
-            CommentChar = '#'
-        };
-
-        // Create a CSV data source using the configured options.
-        CsvDataSource dataSource = new CsvDataSource(csvPath, loadOptions);
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, dataSource, "persons");
-
-        // Save the generated report.
-        string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
-
-        Console.WriteLine("Report generated: " + Path.GetFullPath(outputPath));
+        // -------------------- Save the generated report --------------------
+        doc.Save(outputPath);
     }
 }

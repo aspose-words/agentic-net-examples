@@ -1,76 +1,70 @@
 using System;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
-using Aspose.Words.Drawing.Charts; // ChartType resides in this namespace
+using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model used by the LINQ Reporting engine.
-    public class ReportModel
+    public static void Main()
     {
-        // URL that the link will point to.
-        public string Url { get; set; } = "https://example.com";
+        // Paths for the temporary template and the final report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-        // Text displayed for the link.
-        public string Text { get; set; } = "Visit Example.com";
-    }
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    public class Program
-    {
-        public static void Main()
+        // Paragraph that will contain the link tag.
+        builder.Writeln("<<link [Url] [Text]>>");
+
+        // Insert a chart – the link tag must NOT be placed inside the chart.
+        // The ChartType enum is defined in Aspose.Words.Drawing.Charts.
+        builder.InsertChart(ChartType.Column, 400, 300);
+        // (No LINQ Reporting tags are added inside the chart.)
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template back for reporting.
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
         {
-            // Register code page provider (required for some Aspose.Words features).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Url = "https://example.com",
+            Text = "Example Site"
+        };
 
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+        // -----------------------------------------------------------------
+        // 4. Build the report using Aspose.Words LINQ Reporting Engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        // The template uses <<link [Url] [Text]>>, so we pass the root name "model".
+        engine.BuildReport(loadedTemplate, model, "model");
 
-            // -------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Paragraph that will contain the link tag.
-            builder.Writeln("Please click the following link:");
-            // Write the link tag inside the same paragraph run (no line break).
-            builder.Write("<<link [model.Url] [model.Text]>>");
-
-            // Insert a chart after the paragraph to demonstrate that the link is NOT inside a chart.
-            // The chart itself does not contain any LINQ Reporting tags.
-            builder.Writeln(); // Ensure the chart starts on a new paragraph.
-            builder.InsertChart(ChartType.Column, 400, 300);
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template and build the report.
-            // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Prepare the data source.
-            ReportModel model = new ReportModel();
-
-            // Configure and execute the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.None
-            };
-            bool success = engine.BuildReport(reportDoc, model, "model");
-
-            // (Optional) You can check the success flag if InlineErrorMessages were enabled.
-            if (!success)
-            {
-                Console.WriteLine("Report generation encountered errors.");
-            }
-
-            // -------------------------------------------------
-            // 3. Save the generated report.
-            // -------------------------------------------------
-            reportDoc.Save(reportPath, SaveFormat.Docx);
-        }
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        loadedTemplate.Save(reportPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model referenced by the template.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    // URL for the hyperlink.
+    public string Url { get; set; } = string.Empty;
+
+    // Display text for the hyperlink.
+    public string Text { get; set; } = string.Empty;
 }

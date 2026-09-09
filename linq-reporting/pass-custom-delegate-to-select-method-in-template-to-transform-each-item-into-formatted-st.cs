@@ -7,55 +7,56 @@ public class Program
 {
     public static void Main()
     {
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // The template iterates over a transformed collection using LINQ Select.
+        // The lambda concatenates FirstName and LastName into a formatted string.
+        builder.Writeln("<<foreach [fullName in Persons.Select(p => p.FirstName + \" \" + p.LastName)]>>");
+        builder.Writeln("Name: <<[fullName]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to a local file.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting.
+        Document report = new Document(templatePath);
+
         // Prepare sample data.
         var model = new ReportModel
         {
             Persons = new List<Person>
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 35 }
+                new Person { FirstName = "John", LastName = "Doe" },
+                new Person { FirstName = "Jane", LastName = "Smith" },
+                new Person { FirstName = "Bob",  LastName = "Johnson" }
             }
         };
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // LINQ Reporting tags.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        // Call the custom delegate (method) defined on the root model.
-        builder.Writeln("<<[model.Format(p)]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(templatePath);
-
-        // Load the template for reporting.
-        var loadedDoc = new Document(templatePath);
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(loadedDoc, model, "model");
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(report, model, "model");
 
         // Save the final report.
-        loadedDoc.Save("Report.docx");
+        const string outputPath = "Report.docx";
+        report.Save(outputPath);
     }
 }
 
-// Root data model.
+// Root data model referenced in the template as "model".
 public class ReportModel
 {
     public List<Person> Persons { get; set; } = new();
-
-    // Custom delegate method used in the template to format a Person.
-    public string Format(Person p) => $"{p.Name} (Age: {p.Age})";
 }
 
 // Simple data entity.
 public class Person
 {
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
 }

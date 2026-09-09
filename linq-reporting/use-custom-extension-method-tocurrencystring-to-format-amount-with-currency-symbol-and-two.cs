@@ -1,23 +1,19 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReporting
 {
-    // Extension method to format a decimal as currency (e.g., $1234.56)
-    public static class CurrencyExtensions
+    // Extension method to format a decimal as currency with a dollar sign and two decimal places.
+    public static class Extensions
     {
-        public static string ToCurrencyString(this decimal amount)
-        {
-            // Ensure two decimal places and prepend the dollar sign.
-            return $"${amount:F2}";
-        }
+        public static string ToCurrencyString(this decimal amount) => $"${amount:0.00}";
     }
 
-    // Simple data model used by the LINQ Reporting template.
-    public class ReportModel
+    // Simple data model used as the root object for the report.
+    public class Order
     {
-        // Initialize to avoid nullable warnings.
         public decimal Amount { get; set; } = 0m;
     }
 
@@ -25,52 +21,47 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            // Prepare sample data.
+            var order = new Order { Amount = 1234.567m };
+
+            // Create a temporary folder for the template and output files.
+            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "LinqReportingDemo");
+            Directory.CreateDirectory(workDir);
 
             // -----------------------------------------------------------------
-            // 1. Create the template document with a LINQ Reporting tag.
+            // 1. Create the template document programmatically.
             // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            string templatePath = Path.Combine(workDir, "Template.docx");
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // The tag uses the custom extension method ToCurrencyString().
-            builder.Writeln("Amount: <<[model.Amount.ToCurrencyString()]>>");
+            // Insert a LINQ Reporting tag that calls the custom extension method.
+            // The tag references the root object name "order".
+            builder.Writeln("Amount: <<[order.Amount.ToCurrencyString()]>>");
 
-            // Save the template to disk before building the report.
+            // Save the template to disk.
             templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template document (required before BuildReport).
+            // 2. Load the template and build the report.
             // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
+            var doc = new Document(templatePath);
+            var engine = new ReportingEngine
             {
-                Amount = 1234.56m
+                // Allow the engine to use extension methods defined in the project.
+                Options = ReportBuildOptions.AllowMissingMembers
             };
 
-            // -----------------------------------------------------------------
-            // 4. Build the report using Aspose.Words LINQ Reporting Engine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-
-            // Allow the engine to resolve the extension method.
-            engine.Options = ReportBuildOptions.AllowMissingMembers;
-            // Register the static class that contains the extension method.
-            engine.KnownTypes.Add(typeof(CurrencyExtensions));
-
-            // The root object name in the template is "model".
-            engine.BuildReport(reportDoc, model, "model");
+            // Build the report using the "order" root name.
+            engine.BuildReport(doc, order, "order");
 
             // -----------------------------------------------------------------
-            // 5. Save the generated report.
+            // 3. Save the generated report.
             // -----------------------------------------------------------------
-            reportDoc.Save(reportPath);
+            string outputPath = Path.Combine(workDir, "Report.docx");
+            doc.Save(outputPath);
+
+            Console.WriteLine($"Report generated successfully: {outputPath}");
         }
     }
 }

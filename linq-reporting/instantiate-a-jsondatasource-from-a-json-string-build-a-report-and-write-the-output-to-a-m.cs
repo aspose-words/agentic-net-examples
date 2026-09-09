@@ -1,19 +1,23 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
+using Aspose.Words.Reporting;   // JsonDataSource resides in this namespace
 
-public class Program
+class Program
 {
-    public static void Main()
+    static void Main()
     {
-        // Sample JSON data.
-        string json = @"{ ""Name"": ""John Doe"", ""Age"": 30 }";
+        // Sample JSON data representing a list of persons.
+        string json = @"{
+            ""persons"": [
+                { ""Name"": ""Alice"", ""Age"": 30 },
+                { ""Name"": ""Bob"",   ""Age"": 25 },
+                { ""Name"": ""Carol"", ""Age"": 28 }
+            ]
+        }";
 
         // Convert the JSON string to a memory stream.
-        using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        using var jsonStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
 
         // Create a JsonDataSource from the stream.
         var jsonDataSource = new JsonDataSource(jsonStream);
@@ -21,21 +25,24 @@ public class Program
         // Build a simple template document with LINQ Reporting tags.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Age: <<[model.Age]>>");
 
-        // Populate the template using the ReportingEngine.
+        // Template: iterate over the "persons" collection and output each person's data.
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Populate the template with the JSON data.
         var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(doc, jsonDataSource, "model");
+        engine.BuildReport(doc, jsonDataSource, "persons");
 
-        // Write the generated report to a memory stream.
+        // Save the generated report to a memory stream.
         using var outputStream = new MemoryStream();
         doc.Save(outputStream, SaveFormat.Docx);
-        outputStream.Position = 0; // Reset for potential further reading.
 
-        // Output basic information (no interactive prompts).
-        Console.WriteLine($"Report generated successfully: {success}");
-        Console.WriteLine($"Output size (bytes): {outputStream.Length}");
+        // Reset the stream position for potential further use.
+        outputStream.Position = 0;
+
+        // For demonstration, write the size of the generated document.
+        Console.WriteLine($"Report generated. Size: {outputStream.Length} bytes.");
     }
 }

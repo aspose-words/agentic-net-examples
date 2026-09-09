@@ -9,85 +9,74 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Create output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a tiny PNG image (1x1 pixel) to be used as a valid image.
-        // -----------------------------------------------------------------
-        string validImagePath = Path.Combine(workDir, "validImage.png");
-        // Base64 for a 1x1 transparent PNG.
+        // Create a tiny red PNG image (1x1 pixel) and save it locally.
+        string validImagePath = Path.Combine(outputDir, "valid.png");
         byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=");
         File.WriteAllBytes(validImagePath, pngBytes);
 
-        // -----------------------------------------------------------------
-        // 2. Build the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(workDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Report with images (invalid URIs will show error messages):");
-        // Begin a foreach block over Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Insert a textbox that will host the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-        builder.MoveTo(textBox.FirstParagraph);
-        // Image tag – the expression returns a string (file path or URI).
-        builder.Write("<<image [item.ImageUri] -fitSize>>");
-
-        // End the foreach block.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model with one valid and one invalid image URI.
-        // -----------------------------------------------------------------
-        var data = new ReportData();
-        data.Items.Add(new ReportItem { ImageUri = validImagePath }); // valid local file.
-        data.Items.Add(new ReportItem { ImageUri = "http://nonexistent.example.com/missing.png" }); // invalid URI.
-
-        // -----------------------------------------------------------------
-        // 4. Load the template and build the report with inline error messages.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine
+        // Prepare the data model.
+        var model = new ReportModel
         {
-            // InlineErrorMessages makes the engine insert error text instead of throwing.
-            Options = ReportBuildOptions.InlineErrorMessages
+            Title = "Image URI Error Handling Demo",
+            Items = new List<ReportItem>
+            {
+                new ReportItem { ImageUri = validImagePath },                                 // Valid local file.
+                new ReportItem { ImageUri = "https://example.com/missing.jpg" }, // Invalid remote URI.
+                new ReportItem { ImageUri = @"C:\nonexistent\image.png" }      // Invalid local path.
+            }
         };
 
-        // BuildReport returns true if parsing succeeded (errors are inlined).
-        bool success = engine.BuildReport(reportDoc, data, "data");
+        // Build the template document programmatically.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(workDir, "ReportOutput.docx");
-        reportDoc.Save(outputPath);
+        // Title.
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln();
 
-        // Indicate completion (no interactive prompts).
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
-        Console.WriteLine($"Output saved to: {outputPath}");
+        // Begin foreach over Items.
+        builder.Writeln("<<foreach [item in model.Items]>>");
+
+        // Insert a textbox that will hold the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        builder.MoveTo(textBox.FirstParagraph);
+        // Image tag inside the textbox. Use -fitSize to keep original dimensions.
+        builder.Write("<<image [item.ImageUri] -fitSize>>");
+
+        // End foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Configure the reporting engine to inline error messages.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // Build the report.
+        bool success = engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string outputPath = Path.Combine(outputDir, "ReportWithImages.docx");
+        doc.Save(outputPath);
+
+        // Output the result.
+        Console.WriteLine($"Report generation success flag: {success}");
+        Console.WriteLine($"Report saved to: {outputPath}");
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model definitions.
-// ---------------------------------------------------------------------
-public class ReportItem
+// Root data model.
+public class ReportModel
 {
-    // ImageUri can be a file path or a web URL.
-    public string ImageUri { get; set; } = "";
+    public string Title { get; set; } = string.Empty;
+    public List<ReportItem> Items { get; set; } = new();
 }
 
-public class ReportData
+// Item containing an image URI (could be a file path or a web URL).
+public class ReportItem
 {
-    // Collection that the template iterates over.
-    public List<ReportItem> Items { get; set; } = new();
+    public string ImageUri { get; set; } = string.Empty;
 }

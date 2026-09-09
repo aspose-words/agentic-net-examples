@@ -1,66 +1,70 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace RemoveEmptyParagraphsDemo
 {
     // Simple data model used by the LINQ Reporting template.
     public class ReportModel
     {
-        // Title will be displayed in the report.
-        public string Title { get; set; } = string.Empty;
+        // This property will be empty, causing the paragraph that contains only its tag to be removed.
+        public string EmptyTag { get; set; } = string.Empty;
 
-        // This property is intentionally left null to demonstrate removal of empty paragraphs.
-        public string? EmptyTag { get; set; }
+        // Additional property to demonstrate that the report still contains content.
+        public string Greeting { get; set; } = "Hello, Aspose.Words!";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document that contains LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // Paths for the template and the generated report.
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+            string reportPath   = Path.Combine(Environment.CurrentDirectory, "Report.docx");
 
-            // Paragraph that will be kept (contains a non‑empty value).
-            builder.Writeln("<<[model.Title]>>");
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Paragraph that contains only a tag whose value is null/empty.
-            // After the report is built this paragraph becomes empty and should be removed.
+            // Paragraph that contains only a tag which resolves to an empty string.
             builder.Writeln("<<[model.EmptyTag]>>");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            // Paragraph with a normal tag – this will remain in the final report.
+            builder.Writeln("<<[model.Greeting]>>");
+
+            // Save the template to disk before loading it for the report generation.
+            templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
+            // 2. Load the template document.
             // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
+            Document doc = new Document(templatePath);
 
-            // Configure the reporting engine to remove empty paragraphs.
-            var engine = new ReportingEngine
+            // -----------------------------------------------------------------
+            // 3. Configure the ReportingEngine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine
             {
+                // Enable removal of paragraphs that become empty after tag processing.
                 Options = ReportBuildOptions.RemoveEmptyParagraphs
             };
 
-            // Prepare the data source.
-            var model = new ReportModel
-            {
-                Title = "Sample Report"
-                // EmptyTag remains null.
-            };
-
-            // Build the report. The root object name must match the tag prefix ("model").
+            // -----------------------------------------------------------------
+            // 4. Build the report.
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel(); // EmptyTag is empty, Greeting has a value.
             engine.BuildReport(doc, model, "model");
 
             // -----------------------------------------------------------------
-            // 3. Save the generated report.
+            // 5. Save the generated report.
             // -----------------------------------------------------------------
-            const string outputPath = "ReportOutput.docx";
-            doc.Save(outputPath);
+            doc.Save(reportPath);
+
+            // Optional: indicate completion (no interactive input required).
+            Console.WriteLine("Report generated successfully at: " + reportPath);
         }
     }
 }

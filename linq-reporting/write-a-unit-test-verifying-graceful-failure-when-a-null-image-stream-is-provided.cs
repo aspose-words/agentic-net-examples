@@ -2,46 +2,75 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
 
 #nullable enable
 
 public class ReportModel
 {
-    // The image stream is intentionally left null to test graceful failure.
-    public Stream? ImageStream { get; set; } = null;
+    // The image stream may be null to simulate a missing image.
+    public Stream? ImageStream { get; set; }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank Word document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Paths for the temporary template and output documents.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Output.docx";
 
-        // Insert a textbox that will host the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        // -------------------------------------------------
+        // 1. Create a template document containing an image tag.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Image tags must be placed inside a textbox.
+        var textBox = builder.InsertShape(Aspose.Words.Drawing.ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-
-        // LINQ Reporting tag that tries to render an image from a null stream.
+        // The tag references the ImageStream property of the model.
         builder.Write("<<image [model.ImageStream]>>");
 
-        // Prepare the data model with a null image stream.
-        ReportModel model = new ReportModel();
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Configure the reporting engine to inline error messages instead of throwing.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+        // -------------------------------------------------
+        // 2. Load the template back (required by the workflow).
+        // -------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
 
-        // Build the report. The method should return false indicating a parsing error,
-        // but it must not throw an exception.
-        bool success = engine.BuildReport(doc, model, "model");
+        // -------------------------------------------------
+        // 3. Prepare the data model with a null image stream.
+        // -------------------------------------------------
+        var model = new ReportModel
+        {
+            ImageStream = null // Intentionally null to test graceful failure.
+        };
 
-        // Output the result of the build operation.
+        // -------------------------------------------------
+        // 4. Build the report using InlineErrorMessages option.
+        // -------------------------------------------------
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.InlineErrorMessages
+        };
+
+        // BuildReport returns false when an error occurs and InlineErrorMessages is set.
+        bool success = engine.BuildReport(loadedTemplate, model, "model");
+
+        // -------------------------------------------------
+        // 5. Verify the result and output information.
+        // -------------------------------------------------
         Console.WriteLine($"BuildReport succeeded: {success}");
+        if (!success)
+        {
+            // The engine should have inserted an error message into the document.
+            string documentText = loadedTemplate.GetText();
+            Console.WriteLine("Document contains error message:");
+            Console.WriteLine(documentText);
+        }
 
-        // Save the resulting document for manual inspection if needed.
-        doc.Save("Output.docx");
+        // Save the resulting document for inspection.
+        loadedTemplate.Save(outputPath);
     }
 }

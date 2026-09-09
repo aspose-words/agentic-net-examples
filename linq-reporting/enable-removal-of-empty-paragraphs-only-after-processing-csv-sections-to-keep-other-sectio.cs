@@ -1,57 +1,80 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
+using Aspose.Words.Reporting;          // ReportingEngine, CsvDataLoadOptions, CsvDataSource
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Prepare sample CSV data.
-        string csvPath = "people.csv";
-        File.WriteAllText(csvPath,
-            "Name,Age\r\n" +
-            "John Doe,30\r\n" +
-            ",\r\n" + // Empty row – will produce empty paragraphs.
-            "Jane Smith,25\r\n");
+        // 1. Create a sample CSV file.
+        string csvPath = Path.Combine(outputDir, "people.csv");
+        File.WriteAllLines(csvPath, new[]
+        {
+            "Name,Age",
+            "Alice,30",
+            "Bob,25"
+        });
 
-        // Create a template document programmatically.
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // 2. Build a template document programmatically.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Static section – will remain unchanged.
-        builder.Writeln("=== Report Header ===");
-        builder.Writeln();
+        // Static section – should stay unchanged.
+        builder.Writeln("=== Static Section ===");
+        builder.Writeln("This paragraph must remain even if empty after processing.");
 
-        // CSV‑driven section.
+        // Start a new section that will be populated from CSV.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("=== CSV Section ===");
+        // Insert LINQ Reporting tags.
         builder.Writeln("<<foreach [person in persons]>>");
         builder.Writeln("Name: <<[person.Name]>>");
         builder.Writeln("Age: <<[person.Age]>>");
+        // Intentionally add an empty paragraph that should be removed after the report.
+        builder.Writeln();
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        templateDoc.Save(templatePath);
+        template.Save(templatePath);
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
+        // 3. Load the template for reporting.
+        Document doc = new Document(templatePath);
 
-        // Configure CSV loading options (first line contains headers).
-        var loadOptions = new CsvDataLoadOptions(true);
-        var csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // 4. Create CSV data source with headers.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
+        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
 
-        // Set up the reporting engine to remove empty paragraphs after processing.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        // 5. Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        // Do NOT set RemoveEmptyParagraphs globally – we will handle it manually for the CSV section.
+        engine.BuildReport(doc, csvData, "persons");
 
-        // Build the report using the CSV data source.
-        engine.BuildReport(doc, csvDataSource, "persons");
+        // 6. Remove empty paragraphs only from the CSV section (the second section).
+        if (doc.Sections.Count > 1)
+        {
+            Section csvSection = doc.Sections[1];
+            List<Paragraph> emptyParagraphs = new();
 
-        // Save the final document.
-        doc.Save("Report_Output.docx");
+            foreach (Paragraph para in csvSection.Body.Paragraphs)
+            {
+                // GetText includes the paragraph break; trim to check for emptiness.
+                if (string.IsNullOrWhiteSpace(para.GetText()))
+                    emptyParagraphs.Add(para);
+            }
+
+            foreach (Paragraph para in emptyParagraphs)
+                para.Remove();
+        }
+
+        // 7. Save the final document.
+        string resultPath = Path.Combine(outputDir, "Result.docx");
+        doc.Save(resultPath);
     }
 }

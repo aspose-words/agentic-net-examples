@@ -7,81 +7,64 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the template, XML data source and the final report.
-        string templatePath = "Template.docx";
-        string xmlDataPath = "Orders.xml";
-        string reportPath = "Report.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Title.
-        builder.Writeln("Orders Report");
-        builder.Writeln();
-
-        // Outer foreach – iterate over each Order element.
-        // The XML data source is named "orders", which represents a collection of Order rows.
-        builder.Writeln("<<foreach [order in orders]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Order ID: <<[order.OrderId]>>");
-        builder.Writeln("Items:");
-        // Inner foreach – iterate over each Item within the current Order.
-        builder.Writeln("<<foreach [item in order.Items.Item]>>");
-        builder.Writeln("- <<[item.ProductName]>>: <<[item.Quantity]>>");
-        builder.Writeln("<</foreach>>"); // End inner foreach.
-        builder.Writeln("<</foreach>>"); // End outer foreach.
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Create a sample XML data source file.
-        // -----------------------------------------------------------------
-        string xmlContent =
+        // Create sample XML data source file.
+        const string xmlFileName = "Orders.xml";
+        File.WriteAllText(xmlFileName,
 @"<Orders>
     <Order>
-        <CustomerName>John Doe</CustomerName>
         <OrderId>1001</OrderId>
+        <CustomerName>John Doe</CustomerName>
         <Items>
             <Item>
                 <ProductName>Widget A</ProductName>
-                <Quantity>2</Quantity>
+                <Quantity>3</Quantity>
             </Item>
             <Item>
-                <ProductName>Widget B</ProductName>
-                <Quantity>5</Quantity>
-            </Item>
-        </Items>
-    </Order>
-    <Order>
-        <CustomerName>Jane Smith</CustomerName>
-        <OrderId>1002</OrderId>
-        <Items>
-            <Item>
-                <ProductName>Gadget X</ProductName>
+                <ProductName>Gadget B</ProductName>
                 <Quantity>1</Quantity>
             </Item>
         </Items>
     </Order>
-</Orders>";
-        File.WriteAllText(xmlDataPath, xmlContent);
+    <Order>
+        <OrderId>1002</OrderId>
+        <CustomerName>Jane Smith</CustomerName>
+        <Items>
+            <Item>
+                <ProductName>Widget C</ProductName>
+                <Quantity>2</Quantity>
+            </Item>
+        </Items>
+    </Order>
+</Orders>");
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report using the XML data source.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlDataPath);
+        // Build the template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
+        builder.Writeln("Orders Report");
+        builder.Writeln();
+
+        // Outer foreach – iterate over orders.
+        builder.Writeln("<<foreach [order in orders]>>");
+        builder.Writeln("Order ID: <<[order.OrderId]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Items:");
+        // Inner foreach – iterate over line items of the current order.
+        // For XML data source the collection of items is accessed via order.Items.Item
+        builder.Writeln("<<foreach [item in order.Items.Item]>>");
+        builder.Writeln("- <<[item.ProductName]>> x <<[item.Quantity]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
+
+        // Load the XML data source.
+        XmlDataSource dataSource = new XmlDataSource(xmlFileName);
+
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // Default options.
-
-        // Build the report. The data source name ("orders") must match the name used in the template tags.
-        engine.BuildReport(loadedTemplate, xmlDataSource, "orders");
+        engine.BuildReport(template, dataSource, "orders");
 
         // Save the generated report.
-        loadedTemplate.Save(reportPath);
+        const string outputFileName = "OrdersReport.docx";
+        template.Save(outputFileName);
     }
 }

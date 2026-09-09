@@ -1,63 +1,85 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Program
 {
-    // Simple data model matching the template.
-    public class Item
-    {
-        public string Category { get; set; } = "";
-        public int Amount { get; set; }
-    }
-
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
     public static void Main()
     {
-        // Paths for temporary files.
-        string templatePath = "template.docx";
-        string outputPath = "Report.docx";
+        // Register code page provider for XML loading on .NET Core.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Build the LINQ Reporting template.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // 1. Create sample XML data file.
+        // -----------------------------------------------------------------
+        const string xmlPath = "data.xml";
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<persons>
+    <person>
+        <Category>Food</Category>
+        <Amount>10</Amount>
+    </person>
+    <person>
+        <Category>Food</Category>
+        <Amount>20</Amount>
+    </person>
+    <person>
+        <Category>Travel</Category>
+        <Amount>15</Amount>
+    </person>
+    <person>
+        <Category>Travel</Category>
+        <Amount>5</Amount>
+    </person>
+    <person>
+        <Category>Supplies</Category>
+        <Amount>12</Amount>
+    </person>
+</persons>";
+        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
 
-        builder.Writeln("Category Summary Report");
-        // Loop over groups of items grouped by Category.
-        builder.Writeln("<<foreach [g in Items.GroupBy(i => i.Category)]>>");
+        // -----------------------------------------------------------------
+        // 2. Build a template document programmatically.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Title
+        builder.Writeln("Summary of amounts by category:");
+        builder.Writeln();
+
+        // GroupBy expression inside a foreach loop.
+        // The expression groups the collection 'persons' by the 'Category' element.
+        builder.Writeln("<<foreach [g in persons.GroupBy(p => p.Category)]>>");
         builder.Writeln("Category: <<[g.Key]>>");
-        builder.Writeln("Total Amount: <<[g.Sum(i => i.Amount)]>>");
+        // Sum the Amount values directly; the engine automatically converts string values to numbers.
+        builder.Writeln("Total Amount: <<[g.Sum(p => p.Amount)]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template and reload it (required before building the report).
-        templateDoc.Save(templatePath);
-        var reportDoc = new Document(templatePath);
+        // Save the template (optional, just to visualize the tags if needed).
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
 
-        // Prepare sample data.
-        var model = new ReportModel();
-        model.Items.AddRange(new[]
-        {
-            new Item { Category = "Food",   Amount = 10 },
-            new Item { Category = "Food",   Amount = 20 },
-            new Item { Category = "Drink",  Amount = 5 },
-            new Item { Category = "Drink",  Amount = 15 },
-            new Item { Category = "Other",  Amount = 7 }
-        });
+        // -----------------------------------------------------------------
+        // 3. Load the template and bind the XML data source.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+        XmlDataSource dataSource = new XmlDataSource(xmlPath);
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        // The root object name is "model" and must match the name used in BuildReport.
-        engine.BuildReport(reportDoc, model, "model");
+        // -----------------------------------------------------------------
+        // 4. Build the report.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, dataSource, "persons");
 
-        // Save the final report.
-        reportDoc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

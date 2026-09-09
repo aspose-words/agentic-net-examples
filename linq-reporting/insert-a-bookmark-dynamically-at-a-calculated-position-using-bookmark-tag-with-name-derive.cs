@@ -1,77 +1,73 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqBookmarkExample
+namespace AsposeWordsLinqReportingBookmark
 {
+    // Simple data model used as the root object for the LINQ Reporting engine.
+    public class Order
+    {
+        // Sample fields.
+        public int Id { get; set; } = 0;
+        public string CustomerName { get; set; } = string.Empty;
+
+        // The bookmark name is calculated from other fields.
+        // Example: "BM_1", "BM_2", etc.
+        public string BookmarkName => $"BM_{Id}";
+    }
+
     public class Program
     {
         public static void Main()
         {
-            // Register code pages provider (required for some Aspose.Words features).
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            // -------------------------------------------------
-            // 1. Create a template document with LINQ Reporting tags.
-            // -------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // Write some static text and a field that shows the order Id.
+            builder.Writeln("Order report");
+            builder.Writeln("Order Id: <<[order.Id]>>");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
 
-            // Define a foreach loop that creates a bookmark for each item.
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("<<bookmark [item.BookmarkName]>>");
-            builder.Writeln("<<[item.Title]>>");
+            // Insert a bookmark tag whose name is derived from the data model.
+            // The content inside the bookmark can be any text; here we use a placeholder.
+            builder.Writeln("<<bookmark [order.BookmarkName]>>");
+            builder.Writeln("This text is inside the dynamically named bookmark.");
             builder.Writeln("<</bookmark>>");
-            builder.Writeln("<</foreach>>");
 
+            // Save the template to disk (required before building the report).
             const string templatePath = "Template.docx";
             template.Save(templatePath);
 
-            // -------------------------------------------------
-            // 2. Load the template and build the report.
-            // -------------------------------------------------
-            var doc = new Document(templatePath);
-
-            var model = new ReportModel
+            // -----------------------------------------------------------------
+            // 2. Prepare the data source.
+            // -----------------------------------------------------------------
+            Order order = new Order
             {
-                Items = new List<Item>
-                {
-                    new Item { Id = 1, Title = "First Item" },
-                    new Item { Id = 2, Title = "Second Item" },
-                    new Item { Id = 3, Title = "Third Item" }
-                }
+                Id = 123,
+                CustomerName = "John Doe"
+                // BookmarkName is calculated automatically.
             };
 
-            var engine = new ReportingEngine();
-            // The root object name in the template is "model".
-            engine.BuildReport(doc, model, "model");
+            // -----------------------------------------------------------------
+            // 3. Load the template and build the report.
+            // -----------------------------------------------------------------
+            Document report = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
 
-            const string reportPath = "Report.docx";
-            doc.Save(reportPath);
+            // BuildReport expects the root object name to match the tag prefix ("order").
+            engine.BuildReport(report, order, "order");
 
-            // -------------------------------------------------
-            // 3. Output created bookmark names (optional verification).
-            // -------------------------------------------------
-            foreach (Bookmark bookmark in doc.Range.Bookmarks)
-            {
-                Console.WriteLine($"Bookmark: {bookmark.Name}, Text: {bookmark.Text.Trim()}");
-            }
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "ReportWithDynamicBookmark.docx";
+            report.Save(outputPath);
+
+            // Inform the user (optional, does not affect the example logic).
+            Console.WriteLine($"Report generated: {outputPath}");
         }
-    }
-
-    // Root data model for the report.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    // Individual item that provides a dynamic bookmark name.
-    public class Item
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = "";
-        // Bookmark name derived from the Id field.
-        public string BookmarkName => $"Item_{Id}";
     }
 }

@@ -3,47 +3,44 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Model
+public class Person
 {
-    // Public property accessed by the template tag <<[model.Name]>>
-    public string Name { get; set; } = "World";
+    public string Name { get; set; } = "John Doe";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-        // Path to the template file in the project directory
+        // Define template file path in the project directory.
         string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
 
-        // Create the template if it does not already exist
+        // Create a simple template if it does not exist.
         if (!File.Exists(templatePath))
         {
-            // Create a blank document and add a simple LINQ Reporting tag
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Hello, <<[model.Name]>>!");
-            // Save the template to disk
+            // Insert a LINQ Reporting tag that references the model.
+            builder.Writeln("Hello, <<[person.Name]>>!");
             templateDoc.Save(templatePath);
         }
 
-        // Load the template document
+        // Load the template document.
         Document doc = new Document(templatePath);
 
-        // Prepare the data source
-        Model model = new Model { Name = "Aspose" };
-
-        // Instantiate the reporting engine
+        // Instantiate the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
 
-        // Build the report using the model as the root object named "model"
-        engine.BuildReport(doc, model, "model");
+        // Prepare a data source.
+        Person person = new Person();
 
-        // Save the generated report
+        // Build the report using the loaded template and the data source.
+        engine.BuildReport(doc, person, "person");
+
+        // Save the generated report.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
         doc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

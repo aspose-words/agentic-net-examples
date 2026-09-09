@@ -1,18 +1,18 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReporting
 {
     // Custom helper class placed in a separate namespace.
-    namespace Helpers
+    // The static method will be accessed from the template via ReportingEngine.KnownTypes.
+    namespace MyNamespace
     {
-        public static class MyHelper
+        public static class CustomHelper
         {
             public static string GetMessage()
             {
-                return "Hello from MyHelper!";
+                return "Hello from CustomHelper!";
             }
         }
     }
@@ -21,47 +21,27 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Ensure the output folder exists.
-            const string outputFolder = "Output";
-            Directory.CreateDirectory(outputFolder);
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Insert LINQ Reporting tags that reference static members from different namespaces.
+            builder.Writeln("Value of Math.PI: <<[Math.PI]>>");
+            builder.Writeln("Custom message: <<[MyNamespace.CustomHelper.GetMessage()]>>");
 
-            // Insert a tag that accesses a static field from System.Math.
-            builder.Writeln("PI value: <<[Math.PI]>>");
-
-            // Insert a tag that calls a static method from the custom helper class.
-            builder.Writeln("Custom message: <<[Helpers.MyHelper.GetMessage()]>>");
-
-            // Save the template to disk.
-            string templatePath = Path.Combine(outputFolder, "Template.docx");
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and configure the ReportingEngine.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
+            // Initialize the reporting engine.
             ReportingEngine engine = new ReportingEngine();
 
-            // Register external types so that the template can reference them.
+            // Register external types so that the template can access their static members.
             engine.KnownTypes.Add(typeof(System.Math));
-            engine.KnownTypes.Add(typeof(Helpers.MyHelper));
+            engine.KnownTypes.Add(typeof(MyNamespace.CustomHelper));
 
-            // No data source is required for this example; an empty object is sufficient.
-            object dummyRoot = new object();
+            // Build the report. No root data object is required for this example,
+            // so we pass an empty object and an empty data source name.
+            engine.BuildReport(doc, new object(), string.Empty);
 
-            // Build the report. The root name is irrelevant because the template does not reference it.
-            engine.BuildReport(doc, dummyRoot, "root");
-
-            // -----------------------------------------------------------------
-            // 3. Save the generated report.
-            // -----------------------------------------------------------------
-            string resultPath = Path.Combine(outputFolder, "Result.docx");
-            doc.Save(resultPath);
+            // Save the generated document.
+            doc.Save("Report.docx");
         }
     }
 }

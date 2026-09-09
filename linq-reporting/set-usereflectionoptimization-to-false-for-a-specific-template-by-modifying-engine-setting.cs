@@ -1,77 +1,58 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    public class Program
     {
-        // Create a simple data model.
-        var model = new ReportModel
+        public static void Main()
         {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 45 },
-                new Person { Name = "Charlie", Age = 25 }
-            }
-        };
+            // -----------------------------------------------------------------
+            // 1. Create a simple template document with a LINQ Reporting tag.
+            // -----------------------------------------------------------------
+            const string templateFile = "Template.docx";
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Hello <<[model.Name]>>!"); // tag will be replaced by the model data.
+            templateDoc.Save(templateFile);
 
-        // Build the template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
-        templateDoc.Save(templatePath);
+            // -----------------------------------------------------------------
+            // 2. Load the template back from disk.
+            // -----------------------------------------------------------------
+            Document loadedTemplate = new Document(templateFile);
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // 3. Prepare the data model that matches the tag in the template.
+            // -----------------------------------------------------------------
+            var model = new ReportModel { Name = "World" };
 
-        // Disable reflection optimization for this report.
-        ReportingEngine.UseReflectionOptimization = false;
+            // -----------------------------------------------------------------
+            // 4. Build the report using ReportingEngine.
+            //    The static property UseReflectionOptimization is set to false
+            //    for this template.
+            // -----------------------------------------------------------------
+            // ReportingEngine does not implement IDisposable, so we instantiate it
+            // without a using block.
+            ReportingEngine.UseReflectionOptimization = false; // Disable reflection optimization.
+            ReportingEngine engine = new ReportingEngine();
 
-        // Use a disposable wrapper to modify engine settings inside a using block.
-        using (var wrapper = new ReportingEngineWrapper())
-        {
-            // Example of modifying an engine option (optional).
-            wrapper.Engine.Options = ReportBuildOptions.None;
+            // Populate the template with the model data.
+            engine.BuildReport(loadedTemplate, model, "model");
 
-            // Build the report.
-            wrapper.Engine.BuildReport(doc, model, "model");
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            loadedTemplate.Save("Report.docx");
         }
-
-        // Save the generated report.
-        doc.Save("Report.docx");
     }
-}
 
-// Simple wrapper to allow a using block for ReportingEngine.
-public class ReportingEngineWrapper : IDisposable
-{
-    public ReportingEngine Engine { get; }
-
-    public ReportingEngineWrapper()
+    // -----------------------------------------------------------------
+    // Simple data model used by the template.
+    // -----------------------------------------------------------------
+    public class ReportModel
     {
-        Engine = new ReportingEngine();
+        // Initialise to avoid nullable warnings.
+        public string Name { get; set; } = string.Empty;
     }
-
-    public void Dispose()
-    {
-        // No unmanaged resources to release.
-    }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

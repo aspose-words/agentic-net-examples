@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -22,48 +22,48 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider (required for some environments)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Step 1: Create the template document programmatically
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // ---------- Create template ----------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach loop over the Tasks collection
+        // Begin foreach over Tasks
         builder.Writeln("<<foreach [task in Tasks]>>");
-        // Output the task name
+        // Write task name
         builder.Writeln("Task: <<[task.Name]>>");
-        // Conditional block: flag tasks with a deadline less than 7 days
+        // Conditional block: flag tasks with deadline less than 7 days
         builder.Writeln("<<if [task.IsUpcoming]>>");
-        builder.Writeln(" - Upcoming (deadline in <<[task.Deadline]>>)");
+        builder.Writeln(" - Upcoming!");
         builder.Writeln("<</if>>");
-        // End the foreach loop
+        // End foreach
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk
-        doc.Save(templatePath);
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-        // Step 2: Load the template document for reporting
-        var templateDoc = new Document(templatePath);
+        // ---------- Load template ----------
+        var doc = new Document(templatePath);
 
-        // Step 3: Prepare sample data
+        // ---------- Prepare data ----------
         var model = new ReportModel
         {
             Tasks = new List<TaskItem>
             {
-                new TaskItem { Name = "Prepare presentation", Deadline = TimeSpan.FromDays(3) },
-                new TaskItem { Name = "Submit report", Deadline = TimeSpan.FromDays(10) },
-                new TaskItem { Name = "Team meeting", Deadline = TimeSpan.FromDays(5) }
+                new TaskItem { Name = "Prepare report", Deadline = TimeSpan.FromDays(5) },
+                new TaskItem { Name = "Finalize budget", Deadline = TimeSpan.FromDays(10) },
+                new TaskItem { Name = "Team meeting", Deadline = TimeSpan.FromDays(2) }
             }
         };
 
-        // Step 4: Build the report using the LINQ Reporting engine
+        // ---------- Build report ----------
         var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // Step 5: Save the generated report
-        var outputPath = "Report.docx";
-        templateDoc.Save(outputPath);
+        // ---------- Save output ----------
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

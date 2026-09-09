@@ -1,78 +1,70 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Customer
+{
+    // Sample properties – initialize to avoid nullable warnings
+    public string Name { get; set; } = "John Doe";
+    public bool IsLoyal { get; set; } = true;
+    public string LoyaltyLevel { get; set; } = "Gold";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
         // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
+        // 1. Create a template document with a conditional block.
         // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Begin a foreach loop over the collection "Customers".
-        builder.Writeln("<<foreach [c in Customers]>>");
-        // Output the customer's name.
-        builder.Writeln("Customer: <<[c.Name]>>");
-        // Conditional block: show a promotional banner only for loyal customers.
-        builder.Writeln("<<if [c.IsLoyal]>>");
-        // The banner text is highlighted in green.
-        builder.Writeln("<<textColor [\"Green\"]>>Loyalty Promotion!<</textColor>>");
+        // Greeting
+        builder.Writeln("Dear <<[customer.Name]>>,");
+        builder.Writeln();
+
+        // Conditional promotional banner – shown only when IsLoyal is true
+        builder.Writeln("<<if [customer.IsLoyal]>>");
+        builder.Writeln("=== Exclusive Offer for <<[customer.LoyaltyLevel]>> Members! ===");
+        builder.Writeln("Get 20% off on your next purchase.");
         builder.Writeln("<</if>>");
-        // End of the foreach loop.
-        builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        templateDoc.Save(templatePath);
+        builder.Writeln();
+        builder.Writeln("Thank you for being with us.");
+
+        // Save the template to disk (required by the workflow)
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and prepare the data model.
+        // 2. Load the template back (simulating a real‑world scenario)
         // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        Document doc = new Document(templatePath);
 
-        // Build a realistic data source.
-        ReportModel model = new ReportModel
+        // -----------------------------------------------------------------
+        // 3. Prepare sample data
+        // -----------------------------------------------------------------
+        Customer customer = new Customer
         {
-            Customers = new List<Customer>
-            {
-                new Customer { Name = "Alice", IsLoyal = true },
-                new Customer { Name = "Bob", IsLoyal = false },
-                new Customer { Name = "Charlie", IsLoyal = true }
-            }
+            Name = "Alice Smith",
+            IsLoyal = true,               // Change to false to hide the banner
+            LoyaltyLevel = "Platinum"
         };
 
         // -----------------------------------------------------------------
-        // 3. Build the report using Aspose.Words LINQ Reporting Engine.
+        // 4. Build the report using ReportingEngine
         // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // No special options required.
-        engine.BuildReport(loadedTemplate, model, "model");
+        // No special options are needed for this simple example
+        engine.BuildReport(doc, customer, "customer");
 
-        // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        loadedTemplate.Save(reportPath);
+        // -----------------------------------------------------------------
+        // 5. Save the generated report
+        // -----------------------------------------------------------------
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model classes (public, non‑nullable properties initialized).
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public List<Customer> Customers { get; set; } = new();
-}
-
-public class Customer
-{
-    public string Name { get; set; } = string.Empty;
-    public bool IsLoyal { get; set; }
 }

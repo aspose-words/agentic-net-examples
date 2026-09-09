@@ -2,75 +2,64 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Required for Table type
 
-namespace AsposeWordsLinqReportingMergeCells
+public class Program
 {
-    // Simple data model used as the root object for the report.
-    public class ReportModel
+    public static void Main()
     {
-        // Title displayed in the report.
-        public string Title { get; set; } = "Sample Report";
-    }
+        // Paths for the template and the final report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-            string reportPath   = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        // -------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Build a simple 2‑column table.
+        // The first row will have horizontally merged cells using the <<cellMerge>> tag.
+        builder.StartTable();
 
-            // Insert a title that will be filled from the data model.
-            builder.Writeln("<<[model.Title]>>");
-            builder.Writeln();
+        // First cell – contains the merge tag and the text that will be shared.
+        builder.InsertCell();
+        builder.Write("<<cellMerge>>Group A");
 
-            // Create a table where the first two cells of the first row will be merged horizontally.
-            builder.Writeln("Table with horizontally merged cells:");
-            Table table = builder.StartTable();
+        // Second cell – same merge tag and identical text.
+        builder.InsertCell();
+        builder.Write("<<cellMerge>>Group A");
 
-            // First row – cells to be merged.
-            builder.InsertCell();
-            // The <<cellMerge>> tag tells the LINQ Reporting engine to merge this cell horizontally.
-            builder.Writeln("<<cellMerge>>Group");
+        // End the first row.
+        builder.EndRow();
 
-            builder.InsertCell();
-            builder.Writeln("<<cellMerge>>Group"); // Same content and tag as the previous cell.
+        // Add a normal row to demonstrate that only the first row is merged.
+        builder.InsertCell();
+        builder.Write("Item 1");
+        builder.InsertCell();
+        builder.Write("Item 2");
+        builder.EndRow();
 
-            builder.EndRow();
+        // Finish the table.
+        builder.EndTable();
 
-            // Second row – regular cells (no merging).
-            builder.InsertCell();
-            builder.Writeln("Cell 1");
+        // Save the template to disk.
+        template.Save(templatePath);
 
-            builder.InsertCell();
-            builder.Writeln("Cell 2");
+        // -------------------------------------------------
+        // 2. Load the template and build the report.
+        // -------------------------------------------------
+        Document report = new Document(templatePath);
 
-            builder.EndRow();
-            builder.EndTable();
+        // The template does not reference any data, so an empty object is sufficient.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, new object());
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // -------------------------------------------------
+        // 3. Save the generated report.
+        // -------------------------------------------------
+        report.Save(outputPath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Create the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-
-            // Build the report using the model as the root data source.
-            engine.BuildReport(reportDoc, new ReportModel(), "model");
-
-            // Save the generated report.
-            reportDoc.Save(reportPath);
-        }
+        // Inform the user (optional, no interactive wait).
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

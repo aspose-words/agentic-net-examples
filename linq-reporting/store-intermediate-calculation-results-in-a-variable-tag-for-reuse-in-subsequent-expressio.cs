@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -8,64 +9,53 @@ public class Program
 {
     public static void Main()
     {
+        // Create a blank document that will serve as the template.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Iterate over the collection "Items" of the root object "order".
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        // Output each item's name and price.
+        builder.Writeln("Item: <<[item.Name]>> - Price: <<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
+
+        // After the loop, display the accumulated total using a property on the root object.
+        builder.Writeln("Total: <<[order.Total]>>");
+
         // Prepare sample data.
-        ReportModel model = new()
+        Order sampleOrder = new()
         {
-            Items = new()
+            Items = new List<Item>
             {
-                new Item { Name = "Apple",  Price = 1.20 },
-                new Item { Name = "Banana", Price = 0.80 },
-                new Item { Name = "Cherry", Price = 2.50 }
+                new Item { Name = "Apple",  Price = 1.20m },
+                new Item { Name = "Banana", Price = 0.80m },
+                new Item { Name = "Cherry", Price = 2.50m }
             }
         };
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        const string templatePath = "Template.docx";
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(template, sampleOrder, "order");
 
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
-        // Iterate over the collection 'Items'.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Output each item's details.
-        builder.Writeln("Item: <<[item.Name]>>  Price: <<[item.Price]>>");
-
-        // End of the foreach block.
-        builder.Writeln("<</foreach>>");
-
-        // Display the accumulated total using a LINQ expression.
-        builder.Writeln("Total: <<[Items.Sum(p => p.Price)]>>");
-
-        // Save the template to disk (required before building the report).
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new(templatePath);
-        ReportingEngine engine = new();
-
-        // The root object name must match the name used in the template tags.
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        reportDoc.Save("Report.docx");
+        // Save the generated document.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+        template.Save(outputPath);
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes (public with public properties, no nullable warnings)
-// ---------------------------------------------------------------------
-public class ReportModel
+// Root data model.
+public class Order
 {
     public List<Item> Items { get; set; } = new();
+
+    // Calculated total price of all items.
+    public decimal Total => Items.Sum(i => i.Price);
 }
 
+// Item model used inside the foreach loop.
 public class Item
 {
     public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
+    public decimal Price { get; set; }
 }

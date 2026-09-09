@@ -1,61 +1,49 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class OrderItem
-{
-    // Quantity is stored as double to demonstrate explicit casting in the template.
-    public double Quantity { get; set; }
-    public string Name { get; set; }
-
-    // Method expects an integer parameter.
-    public string GetQuantityMessage(int qty)
-    {
-        return $"Quantity is {qty}";
-    }
-}
-
 public class ReportModel
 {
-    public List<OrderItem> Items { get; set; } = new List<OrderItem>();
+    // Quantity is a double to demonstrate the need for an explicit cast to int.
+    public double Quantity { get; set; } = 0;
+
+    // This method expects an integer parameter.
+    public string GetMessage(int qty)
+    {
+        return $"The quantity (cast to int) is {qty}.";
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document and a builder to insert content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Insert a simple title.
-        builder.Writeln("Order Report");
-        builder.Writeln();
+        // Insert a LINQ Reporting tag that calls GetMessage with an explicit cast to int.
+        builder.Writeln("<<[model.GetMessage((int)model.Quantity)]>>");
 
-        // Insert LINQ Reporting tags.
-        // The foreach iterates over Items, and the method call casts Quantity to int.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Product: <<[item.Name]>>");
-        builder.Writeln("Quantity Message: <<[item.GetQuantityMessage((int)item.Quantity)]>>");
-        builder.Writeln("<</foreach>>");
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // Prepare sample data.
+        // Load the template back for reporting.
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model.
         ReportModel model = new ReportModel
         {
-            Items = new List<OrderItem>
-            {
-                new OrderItem { Name = "Apple", Quantity = 5.7 },
-                new OrderItem { Name = "Banana", Quantity = 3.0 },
-                new OrderItem { Name = "Cherry", Quantity = 12.4 }
-            }
+            Quantity = 7.9 // Example value that will be cast to int (7).
         };
 
-        // Build the report. No root name is needed because we reference members directly.
+        // Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, null);
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
 }

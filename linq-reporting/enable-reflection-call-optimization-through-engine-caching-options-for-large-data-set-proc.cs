@@ -1,79 +1,73 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Program
 {
-    // Data model for the report.
-    public class Item
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-    }
-
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        var templatePath = "Template.docx";
+        // Register code page provider for legacy encodings (required by Aspose.Words).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
+        // Prepare a large data set.
+        var model = new ReportModel
+        {
+            Items = new List<Item>()
+        };
+        for (int i = 1; i <= 1000; i++)
+        {
+            model.Items.Add(new Item { Index = i, Name = $"Item {i}" });
+        }
+
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // Load the template.
+        var doc = new Document(templatePath);
+
+        // Enable reflection optimization (caching of generated dynamic types).
+        ReportingEngine.UseReflectionOptimization = true;
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        doc.Save("Report.docx");
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Simple foreach loop that will list all items.
-        builder.Writeln("Report of Items:");
+        // Write a heading.
+        builder.Writeln("Large Data Set Report");
+        builder.Writeln();
+
+        // Begin a foreach loop over Items.
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>");
+        builder.Writeln("Index: <<[item.Index]>> - Name: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template for report generation.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare a large data set.
-        // -----------------------------------------------------------------
-        var model = new ReportModel();
-
-        const int itemCount = 10000; // Simulate a large collection.
-        for (int i = 1; i <= itemCount; i++)
-        {
-            model.Items.Add(new Item
-            {
-                Id = i,
-                Name = $"Item #{i}"
-            });
-        }
-
-        // -----------------------------------------------------------------
-        // 4. Enable reflection optimization (engine caching) and build the report.
-        // -----------------------------------------------------------------
-        ReportingEngine.UseReflectionOptimization = true; // Enable caching of reflection calls.
-
-        var engine = new ReportingEngine();
-        // No special options are required for this scenario, but the property is set explicitly.
-        engine.Options = ReportBuildOptions.None;
-
-        // Build the report using the root object name "model" to match the tags.
-        engine.BuildReport(templateDoc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        var outputPath = "ReportOutput.docx";
-        templateDoc.Save(outputPath);
-
-        Console.WriteLine($"Report generated successfully: {outputPath}");
+        // Save the template.
+        doc.Save(filePath);
     }
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+// Item model used in the foreach loop.
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

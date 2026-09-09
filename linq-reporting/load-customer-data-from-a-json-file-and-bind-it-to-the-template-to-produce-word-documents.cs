@@ -2,69 +2,85 @@ using System;
 using System.IO;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting; // JsonDataSource resides in this namespace
+using Aspose.Words.Reporting;
+using Aspose.Words.Tables;   // Required for Table type
 
-public class Program
+public class LinqReportingExample
 {
     public static void Main()
     {
-        // Register code page provider for proper encoding handling.
+        // Register code page provider for Aspose.Words (required for some encodings).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare file paths in the current working directory.
-        string workDir = Directory.GetCurrentDirectory();
-        string dataFile = Path.Combine(workDir, "customers.json");
-        string templateFile = Path.Combine(workDir, "template.docx");
-        string outputFile = Path.Combine(workDir, "CustomerReport.docx");
+        // -----------------------------------------------------------------
+        // 1. Create sample JSON data file (customers.json) in the working directory.
+        // -----------------------------------------------------------------
+        string jsonPath = "customers.json";
+        string jsonContent = @"[
+  { ""Name"": ""John Doe"", ""Address"": ""123 Main St, Anytown"", ""Email"": ""john.doe@example.com"" },
+  { ""Name"": ""Jane Smith"", ""Address"": ""456 Oak Ave, Othertown"", ""Email"": ""jane.smith@example.com"" },
+  { ""Name"": ""Bob Johnson"", ""Address"": ""789 Pine Rd, Sometown"", ""Email"": ""bob.johnson@example.com"" }
+]";
+        File.WriteAllText(jsonPath, jsonContent);
 
         // -----------------------------------------------------------------
-        // 1. Create sample JSON data file.
+        // 2. Create a Word template programmatically and save it (template.docx).
         // -----------------------------------------------------------------
-        string jsonContent = @"{
-  ""Customers"": [
-    { ""Name"": ""John Doe"", ""Email"": ""john.doe@example.com"" },
-    { ""Name"": ""Jane Smith"", ""Email"": ""jane.smith@example.com"" }
-  ]
-}";
-        File.WriteAllText(dataFile, jsonContent, Encoding.UTF8);
-
-        // -----------------------------------------------------------------
-        // 2. Build a template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
+        string templatePath = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
+        // Title
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
         builder.Writeln("Customer Report");
-        builder.Writeln("<<foreach [c in Customers]>>");
-        builder.Writeln("Name : <<[c.Name]>>");
-        builder.Writeln("Email: <<[c.Email]>>");
+
+        // Begin foreach loop over the JSON root array named "customers".
+        builder.Writeln("<<foreach [c in customers]>>");
+
+        // Create a table header.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Address");
+        builder.InsertCell();
+        builder.Writeln("Email");
+        builder.EndRow();
+
+        // Table row bound to each customer.
+        builder.InsertCell();
+        builder.Writeln("<<[c.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[c.Address]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[c.Email]>>");
+        builder.EndRow();
+
+        // End the table and the foreach block.
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templateFile);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 3. Load the template and the JSON data source.
+        // 3. Load the template and bind the JSON data using ReportingEngine.
         // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templateFile);
+        Document reportDoc = new Document(templatePath);
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
 
-        // Configure JSON loading to keep the root object so that the "Customers" collection is accessible.
-        JsonDataLoadOptions jsonOptions = new JsonDataLoadOptions
+        ReportingEngine engine = new ReportingEngine
         {
-            AlwaysGenerateRootObject = true
+            Options = ReportBuildOptions.None
         };
-        JsonDataSource jsonData = new JsonDataSource(dataFile, jsonOptions);
+
+        // Build the report. The root name "customers" must match the name used in the template tags.
+        engine.BuildReport(reportDoc, jsonDataSource, "customers");
 
         // -----------------------------------------------------------------
-        // 4. Build the report.
+        // 4. Save the generated report.
         // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // No root name is required because the template accesses members directly.
-        engine.BuildReport(loadedTemplate, jsonData, "");
-
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        loadedTemplate.Save(outputFile);
+        string outputPath = "CustomerReport.docx";
+        reportDoc.Save(outputPath);
     }
 }

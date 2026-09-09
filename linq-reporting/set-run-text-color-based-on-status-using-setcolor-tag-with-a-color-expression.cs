@@ -18,50 +18,44 @@ public class Program
             }
         };
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
+        // Create the template document programmatically.
         var template = new Document();
         var builder = new DocumentBuilder(template);
 
-        // Begin a foreach loop over the Items collection.
+        // Begin a foreach loop over Items.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Use the textColor tag. The color expression is taken from the item's Color property.
-        // The content inside the tag will be displayed in the chosen color.
+        // Use textColor tag with a color expression based on the item's status.
+        // The Color property of Item returns a color name string.
         builder.Writeln("<<textColor [item.Color]>>Status: <<[item.Status]>> <</textColor>>");
 
-        // End the foreach block.
+        // End the foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template to a temporary file.
         const string templatePath = "template.docx";
         template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // Load the template for reporting.
+        var loadedTemplate = new Document(templatePath);
 
-        // Build the report using the model as the data source.
-        engine.BuildReport(doc, model);
+        // Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
 
         // Save the generated report.
-        const string reportPath = "report.docx";
-        doc.Save(reportPath);
+        const string outputPath = "report.docx";
+        loadedTemplate.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
+// Root data model.
 public class ReportModel
 {
-    // Initialize the collection to avoid nullable warnings.
     public List<Item> Items { get; set; } = new();
 }
 
+// Item model with a computed Color property.
 public class Item
 {
     public string Status { get; set; } = string.Empty;
@@ -71,7 +65,8 @@ public class Item
         Status switch
         {
             "Success" => "Green",
-            "Failed"  => "Red",
-            _         => "Gray"
+            "Failed" => "Red",
+            "Pending" => "Orange",
+            _ => "Black"
         };
 }

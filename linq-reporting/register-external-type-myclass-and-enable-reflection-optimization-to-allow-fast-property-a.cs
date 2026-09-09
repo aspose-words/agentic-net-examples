@@ -2,68 +2,64 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace AsposeWordsLinqReportingExample
 {
-    // Sample external type to be used in the template.
+    // External type that will be accessed from the template.
     public class MyClass
     {
-        // Static property accessed via reflection optimization.
-        public static string Greeting => "Hello";
+        // Static property accessed via the template.
+        public static string Greeting => "Hello from MyClass";
+
+        // Static method accessed via the template.
+        public static int GetNumber()
+        {
+            return 42;
+        }
     }
 
-    // Simple data model used as the root object for the report.
-    public class Person
+    // Root data model for the report.
+    public class Model
     {
-        public string Name { get; set; } = string.Empty;
+        // Instance property accessed via the template.
+        public string PersonName { get; set; } = "John Doe";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the temporary template and final report.
+            // Create a new blank document and a builder to insert content.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert LINQ Reporting tags that reference the external type and the model.
+            builder.Writeln("Greeting: <<[MyClass.Greeting]>>");
+            builder.Writeln("Number: <<[MyClass.GetNumber()]>>");
+            builder.Writeln("Name: <<[model.PersonName]>>");
+
+            // Save the template to a local file (optional, demonstrates load/save lifecycle).
             const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            doc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Load the template back (simulating a separate load step).
+            Document template = new Document(templatePath);
 
-            // Insert a line that uses a static member of MyClass and an instance member of Person.
-            builder.Writeln("<<[MyClass.Greeting]>> <<[person.Name]>>!");
-
-            // Save the template to disk before building the report.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare data.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-            Person person = new Person { Name = "Alice" };
-
-            // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            // -----------------------------------------------------------------
-            // Enable reflection optimization (static property for faster access).
+            // Enable reflection optimization for faster property access.
             ReportingEngine.UseReflectionOptimization = true;
 
+            // Create the reporting engine and register the external type.
             ReportingEngine engine = new ReportingEngine();
-
-            // Register the external type so its static members can be used in the template.
             engine.KnownTypes.Add(typeof(MyClass));
 
-            // Build the report. The root object name must match the tag used in the template.
-            engine.BuildReport(doc, person, "person");
+            // Prepare the root data object.
+            Model model = new Model();
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            doc.Save(reportPath);
+            // Build the report using the template, the model, and the root name "model".
+            engine.BuildReport(template, model, "model");
 
-            // Optional: indicate completion.
-            Console.WriteLine($"Report generated: {reportPath}");
+            // Save the generated report.
+            const string outputPath = "Report.docx";
+            template.Save(outputPath);
         }
     }
 }

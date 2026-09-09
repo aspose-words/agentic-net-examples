@@ -1,73 +1,68 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Model
+{
+    public string Name { get; set; } = "Aspose";
+}
+
 public class Program
 {
-    // Simple data model used in the template.
-    public class Model
-    {
-        public string Name { get; set; } = "Aspose";
-    }
-
     public static void Main()
     {
         // -----------------------------------------------------------------
-        // 0. Set restricted types BEFORE any Aspose.Words or ReportingEngine usage.
+        // 1. Create a simple template with a LINQ Reporting tag.
         // -----------------------------------------------------------------
-        // This must be done at application startup to avoid the engine
-        // marking the restricted‑type list as immutable.
-        ReportingEngine.SetRestrictedTypes(typeof(System.Type));
-
-        // Paths for the temporary template and output documents.
-        string templatePath = "template.docx";
-        string outputPath = "output.docx";
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("<<[model.Name]>>");
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 1. Create a template document programmatically.
+        // 2. Load the template for reporting.
         // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        // Insert a LINQ Reporting tag that references the model's Name property.
-        builder.Writeln("Hello, <<[model.Name]>>!");
-        // Save the template so it can be loaded later (required by the lifecycle rule).
-        templateDoc.Save(templatePath);
+        var doc = new Document(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the saved template document.
+        // 3. Define restricted types BEFORE the first BuildReport call.
         // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
+        ReportingEngine.SetRestrictedTypes(typeof(Environment));
 
         // -----------------------------------------------------------------
-        // 3. Build the report for the first time.
+        // 4. Build the first report.
         // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        Model model = new Model();
-        // The root object name must match the tag prefix used in the template.
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        doc.Save(outputPath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(doc, new Model(), "model");
 
         // -----------------------------------------------------------------
-        // 4. Attempt to modify the restricted type list AFTER the first BuildReport.
-        //    This should throw an exception because the list becomes immutable.
+        // 5. Verify that the restricted type list is now immutable.
         // -----------------------------------------------------------------
+        bool isImmutable = false;
         try
         {
-            // Trying to set another restricted type should fail.
-            ReportingEngine.SetRestrictedTypes(typeof(System.IO.FileInfo));
-            Console.WriteLine("Restricted types were modified after BuildReport (unexpected).");
+            // Attempt to modify the restricted types after BuildReport.
+            ReportingEngine.SetRestrictedTypes(typeof(System.IO.File));
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            // Expected outcome: the list is immutable.
-            Console.WriteLine("Expected exception caught: " + ex.Message);
+            // Expected exception indicates immutability.
+            isImmutable = true;
         }
 
-        // Clean up temporary files (optional).
-        // File.Delete(templatePath);
-        // File.Delete(outputPath);
+        // -----------------------------------------------------------------
+        // 6. Output verification result.
+        // -----------------------------------------------------------------
+        Console.WriteLine(isImmutable
+            ? "Restricted type list is immutable after first BuildReport."
+            : "Restricted type list is still mutable (unexpected).");
+
+        // -----------------------------------------------------------------
+        // 7. Save the generated report.
+        // -----------------------------------------------------------------
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
 }

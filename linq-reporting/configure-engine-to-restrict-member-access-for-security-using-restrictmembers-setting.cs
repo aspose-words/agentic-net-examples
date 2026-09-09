@@ -2,47 +2,55 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
+}
+
+public class Model
+{
+    public Person Person { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document and a builder to insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a template document. The <<restrictMembers>> tag is not required;
+        // restricted types are enforced by the engine configuration.
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("Name: <<[model.Person.Name]>>");
+        builder.Writeln("Age: <<[model.Person.Age]>>");
+        builder.Document.Save(templatePath);
 
-        // Template: output a public member (Name) and a member we intend to restrict (Secret).
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Secret: <<[model.Secret]>>");
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // Prepare the data model.
-        var model = new Person
-        {
-            Name = "John Doe",
-            Secret = "TopSecret"
-        };
-
-        // Restrict access to the Person type (all its members become inaccessible in the template).
-        // This must be done before any report is built.
+        // Restrict access to the Person type members.
         ReportingEngine.SetRestrictedTypes(typeof(Person));
 
-        // Configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine
+        // Prepare data.
+        var model = new Model
         {
-            // Missing members (e.g., restricted members) will be treated as null instead of throwing.
-            Options = ReportBuildOptions.AllowMissingMembers
+            Person = new Person { Name = "John Doe", Age = 30 }
         };
 
-        // Build the report using the model as the root object named "model".
+        // Configure the reporting engine.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.AllowMissingMembers,
+            MissingMemberMessage = "Restricted"
+        };
+
+        // Build the report.
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
-    }
-}
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-// Simple data model with a public property (Name) and a property we intend to restrict (Secret).
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public string Secret { get; set; } = string.Empty;
+        Console.WriteLine($"Report generated: {outputPath}");
+    }
 }

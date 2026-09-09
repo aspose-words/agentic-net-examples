@@ -2,46 +2,36 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class TaxReportModel
 {
-    // Simple data model that will be used as the root object for the report.
-    public class Order
+    // Sample data – initialize to avoid nullable warnings.
+    public decimal Price { get; set; } = 100m;
+    public decimal TaxRate { get; set; } = 0.07m; // 7 %
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Price of the item.
-        public double Price { get; set; } = 0;
+        // 1. Prepare the data source.
+        var model = new TaxReportModel();
 
-        // Tax rate expressed as a decimal (e.g., 0.20 for 20%).
-        public double TaxRate { get; set; } = 0;
-    }
+        // 2. Create a blank Word document and insert LINQ Reporting tags.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // 1. Create a blank document and a builder to compose the template.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Write a simple report layout.
+        builder.Writeln("Price: <<[model.Price]>>");
+        builder.Writeln("Tax Rate: <<[model.TaxRate]>>");
+        // The expression below calculates the tax amount (price * taxRate).
+        builder.Writeln("Calculated Tax: <<[model.Price * model.TaxRate]>>");
 
-            // 2. Write static text and a LINQ Reporting tag that calculates price * taxRate.
-            // The tag uses the root name "order" which will be supplied when building the report.
-            builder.Writeln("Price: $<<[order.Price]>>");
-            builder.Writeln("Tax Rate: <<[order.TaxRate]>> (as decimal)");
-            builder.Writeln("Calculated Tax: $<<[order.Price * order.TaxRate]>>");
+        // 3. Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        // The root object name must match the name used in the tags ("model").
+        engine.BuildReport(doc, model, "model");
 
-            // 3. Prepare sample data.
-            Order sampleOrder = new Order
-            {
-                Price = 199.99,
-                TaxRate = 0.07 // 7% tax
-            };
-
-            // 4. Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            // The template references the root object as "order", so we pass the name accordingly.
-            engine.BuildReport(doc, sampleOrder, "order");
-
-            // 5. Save the generated document.
-            doc.Save("CalculatedTaxReport.docx");
-        }
+        // 4. Save the generated document.
+        doc.Save("TaxReport.docx");
     }
 }

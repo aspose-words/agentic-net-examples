@@ -4,60 +4,63 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+namespace AsposeWordsLinqReportingExample
 {
-    public string CustomerName { get; set; } = "";
-    public decimal TotalAmount { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-    public decimal Threshold { get; set; }
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model representing an order.
+    public class Order
     {
-        // Step 1: Create the template document with LINQ Reporting tags.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        public int Id { get; set; } = 0;
+        public string CustomerName { get; set; } = string.Empty;
+        public decimal TotalAmount { get; set; } = 0m;
+    }
 
-        // Header showing the threshold value.
-        builder.Writeln("Orders with total greater than <<[model.Threshold]>>:");
+    // Wrapper class that will be passed to the reporting engine.
+    public class ReportModel
+    {
+        public List<Order> Orders { get; set; } = new();
+        public decimal Threshold { get; set; } = 0m;
+    }
 
-        // Use a lambda expression inside the foreach tag to filter orders.
-        builder.Writeln("<<foreach [order in model.Orders.Where(o => o.TotalAmount > model.Threshold)]>>");
-        builder.Writeln("- <<[order.CustomerName]>>: $<<[order.TotalAmount]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Step 2: Load the template for report generation.
-        var doc = new Document(templatePath);
-
-        // Step 3: Prepare sample data.
-        var model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Threshold = 100m,
-            Orders = new List<Order>
+            // 1. Prepare sample data.
+            var model = new ReportModel
             {
-                new Order { CustomerName = "Alice", TotalAmount = 75m },
-                new Order { CustomerName = "Bob",   TotalAmount = 150m },
-                new Order { CustomerName = "Carol", TotalAmount = 200m },
-                new Order { CustomerName = "Dave",  TotalAmount = 50m }
-            }
-        };
+                Threshold = 150m,
+                Orders = new List<Order>
+                {
+                    new Order { Id = 1, CustomerName = "Alice",   TotalAmount = 120m },
+                    new Order { Id = 2, CustomerName = "Bob",     TotalAmount = 200m },
+                    new Order { Id = 3, CustomerName = "Charlie", TotalAmount = 350m },
+                    new Order { Id = 4, CustomerName = "Diana",   TotalAmount = 80m }
+                }
+            };
 
-        // Step 4: Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // 2. Create the template document programmatically.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-        // Step 5: Save the generated report.
-        const string reportPath = "Report.docx";
-        doc.Save(reportPath);
+            // LINQ Reporting tag with a lambda expression that filters orders.
+            builder.Writeln("<<foreach [order in model.Orders.Where(o => o.TotalAmount > model.Threshold)]>>");
+            builder.Writeln("Order ID: <<[order.Id]>>, Customer: <<[order.CustomerName]>>, Total: <<[order.TotalAmount]>>");
+            builder.Writeln("<</foreach>>");
+
+            // 3. Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // 4. Load the template back (required by the workflow).
+            var loadedTemplate = new Document(templatePath);
+
+            // 5. Build the report using the LINQ Reporting engine.
+            var engine = new ReportingEngine();
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // 6. Save the generated report.
+            const string reportPath = "Report.docx";
+            loadedTemplate.Save(reportPath);
+        }
     }
 }

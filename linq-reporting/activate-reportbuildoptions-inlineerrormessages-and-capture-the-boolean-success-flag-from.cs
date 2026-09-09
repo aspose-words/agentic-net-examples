@@ -2,35 +2,44 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Simple data model used as the root object for the report.
+    public class Person
     {
-        // Create a template document with a LINQ Reporting tag.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello <<[model.Name]>>!");
-
-        // Prepare the data model.
-        var model = new ReportModel { Name = "World" };
-
-        // Configure the reporting engine to inline error messages.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
-
-        // Build the report and capture the success flag.
-        bool success = engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        doc.Save("ReportOutput.docx");
-
-        // Output the success flag.
-        Console.WriteLine($"BuildReport success: {success}");
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
 
-    // Simple data model class used by the template.
-    public class ReportModel
+    public class Program
     {
-        public string Name { get; set; } = "";
+        public static void Main()
+        {
+            // Create a sample data object.
+            var person = new Person
+            {
+                Name = "John Doe",
+                Age = 30
+            };
+
+            // Create a new blank document and insert a LINQ Reporting tag.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            // The tag references the root object name "person".
+            builder.Writeln("<<[person.Name]>> is <<[person.Age]>> years old.");
+
+            // Configure the reporting engine to inline error messages.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+            // Build the report and capture the success flag.
+            bool success = engine.BuildReport(doc, person, "person");
+
+            // Save the resulting document.
+            doc.Save("ReportOutput.docx");
+
+            // Output the success flag (no interactive input required).
+            Console.WriteLine($"Report build success: {success}");
+        }
     }
 }

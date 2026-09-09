@@ -1,18 +1,37 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace AsposeWordsLinqReportingDemo
 {
+    // Data model for the report
+    public class Category
+    {
+        public string Name { get; set; } = string.Empty;
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+    public class ReportModel
+    {
+        // Optional title used in the template – provide a default value to avoid missing‑member errors.
+        public string Title { get; set; } = "Sample Report";
+
+        public List<Category> Categories { get; set; } = new();
+    }
+
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider (required for some environments)
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-            // Prepare sample hierarchical data
+            // 1. Prepare sample data
             var model = new ReportModel
             {
                 Categories = new List<Category>
@@ -22,8 +41,8 @@ namespace AsposeWordsLinqReporting
                         Name = "Fruits",
                         Items = new List<Item>
                         {
-                            new Item { Name = "Apple", Price = 1.20 },
-                            new Item { Name = "Banana", Price = 0.80 }
+                            new Item { Name = "Apple",  Price = 0.5m },
+                            new Item { Name = "Banana", Price = 0.3m }
                         }
                     },
                     new Category
@@ -31,65 +50,51 @@ namespace AsposeWordsLinqReporting
                         Name = "Vegetables",
                         Items = new List<Item>
                         {
-                            new Item { Name = "Carrot", Price = 0.50 },
-                            new Item { Name = "Tomato", Price = 0.90 }
+                            new Item { Name = "Carrot", Price = 0.2m },
+                            new Item { Name = "Tomato", Price = 0.4m }
                         }
                     }
                 }
             };
 
-            // Create the template document with LINQ Reporting tags
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // 2. Create a template document programmatically
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+            CreateTemplate(templatePath);
 
-            builder.Writeln("Product Catalog");
-            builder.Writeln();
-
-            // Outer foreach for categories
-            builder.Writeln("<<foreach [category in Categories]>>");
-            builder.Writeln("Category: <<[category.Name]>>");
-            builder.Writeln();
-
-            // Inner foreach for items within each category
-            builder.Writeln("<<foreach [item in category.Items]>>");
-            builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
-            builder.Writeln("<</foreach>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to a file
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // Load the template for report generation
-            var doc = new Document(templatePath);
-
-            // Build the report using the data model
-            var engine = new ReportingEngine();
+            // 3. Load the template and build the report
+            Document doc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(doc, model, "model");
 
-            // Save the final report
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
+            // 4. Save the generated report
+            string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+            doc.Save(reportPath);
+
+            Console.WriteLine($"Report generated: {reportPath}");
         }
-    }
 
-    // Root data model
-    public class ReportModel
-    {
-        public List<Category> Categories { get; set; } = new();
-    }
+        private static void CreateTemplate(string filePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-    // Category containing a collection of items
-    public class Category
-    {
-        public string Name { get; set; } = "";
-        public List<Item> Items { get; set; } = new();
-    }
+            // Title (optional)
+            builder.Writeln("<<[model.Title]>>");
 
-    // Individual item
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public double Price { get; set; }
+            // Begin outer foreach over categories
+            builder.Writeln("<<foreach [category in Categories]>>");
+            builder.Writeln("Category: <<[category.Name]>>");
+            builder.Writeln(""); // empty line for readability
+
+            // Begin inner foreach over items of the current category
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+            builder.Writeln("<</foreach>>"); // end inner foreach
+
+            builder.Writeln("<</foreach>>"); // end outer foreach
+
+            // Save the template
+            doc.Save(filePath);
+        }
     }
 }

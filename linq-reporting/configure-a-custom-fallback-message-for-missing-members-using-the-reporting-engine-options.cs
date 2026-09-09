@@ -1,62 +1,59 @@
 using System;
+using System.Data;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data class without the expected member.
-    public class EmptyData
+    public static void Main()
     {
-        // No properties – the template will reference a missing member.
-    }
+        // Prepare folders.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string resultPath = Path.Combine(workDir, "Result.docx");
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
+        // -------------------------------------------------
+        // 1. Create a template document with tags that refer to a missing member.
+        // -------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Tag that tries to access a missing object's property.
+        builder.Writeln("<<[missingObject.First().Id]>>");
 
-            // Insert a LINQ Reporting tag that references a non‑existent member.
-            // The tag uses the root name "data".
-            builder.Writeln("Hello <<[data.MissingMember]>>!");
+        // Foreach loop over a missing collection.
+        builder.Writeln("<<foreach [in missingObject]>><<[Id]>><</foreach>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Save the template to disk (required by the lifecycle rule).
+        template.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template back from disk (required by the workflow).
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+        // -------------------------------------------------
+        // 2. Load the template back (simulating a real scenario).
+        // -------------------------------------------------
+        Document doc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
+        // -------------------------------------------------
+        // 3. Configure the ReportingEngine to allow missing members
+        //    and provide a custom fallback message.
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
+        engine.MissingMemberMessage = "Member not found";
 
-            // Allow missing members and provide a custom fallback message.
-            engine.Options = ReportBuildOptions.AllowMissingMembers;
-            engine.MissingMemberMessage = "[Member not found]";
+        // Use an empty DataSet as the data source because the template
+        // does not need any real data.
+        DataSet emptyData = new DataSet();
 
-            // Build the report using an instance of EmptyData as the data source.
-            // The root name must match the one used in the template ("data").
-            engine.BuildReport(loadedTemplate, new EmptyData(), "data");
+        // Build the report. The third parameter (data source name) is optional
+        // when we do not reference the data source object itself in the template.
+        engine.BuildReport(doc, emptyData, "");
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            loadedTemplate.Save(reportPath);
+        // -------------------------------------------------
+        // 4. Save the generated report.
+        // -------------------------------------------------
+        doc.Save(resultPath);
 
-            // Inform the user (no interactive input required).
-            Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
-        }
+        Console.WriteLine($"Report generated: {resultPath}");
     }
 }

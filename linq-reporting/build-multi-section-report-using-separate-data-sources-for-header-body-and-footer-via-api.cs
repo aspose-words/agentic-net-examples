@@ -1,89 +1,108 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace MultiSectionReport
 {
-    public static void Main()
+    // Data model for the header section.
+    public class HeaderModel
     {
-        // Create a blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // ---------- Header section ----------
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("<<[header.Title]>>");
-        builder.Writeln("Date: <<[header.Date]>>");
-
-        // ---------- Body section ----------
-        builder.MoveToDocumentEnd();
-        builder.Writeln("<<foreach [item in body.Items]>>");
-        builder.Writeln("Product: <<[item.Name]>> - Qty: <<[item.Quantity]>>");
-        builder.Writeln("<</foreach>>");
-
-        // ---------- Footer section ----------
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("Page <<[footer.PageNumber]>> of <<[footer.TotalPages]>>");
-
-        // Prepare data sources.
-        HeaderModel header = new HeaderModel
-        {
-            Title = "Sales Report",
-            Date = DateTime.Now.ToString("d")
-        };
-
-        BodyModel body = new BodyModel
-        {
-            Items = new()
-            {
-                new Item { Name = "Apple", Quantity = 10 },
-                new Item { Name = "Banana", Quantity = 20 },
-                new Item { Name = "Cherry", Quantity = 15 }
-            }
-        };
-
-        FooterModel footer = new FooterModel
-        {
-            PageNumber = 1,
-            TotalPages = 1
-        };
-
-        // Build the report using three separate data sources.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        engine.BuildReport(doc,
-            new object[] { header, body, footer },
-            new string[] { "header", "body", "footer" });
-
-        // Save the generated report.
-        doc.Save("MultiSectionReport.docx");
+        public string Title { get; set; } = "Monthly Sales Report";
     }
-}
 
-// Header data model.
-public class HeaderModel
-{
-    public string Title { get; set; } = string.Empty;
-    public string Date { get; set; } = string.Empty;
-}
+    // Data model for a single item in the body section.
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 
-// Body data model containing a collection of items.
-public class BodyModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    // Data model for the body section.
+    public class BodyModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
 
-// Individual item used in the body collection.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public int Quantity { get; set; }
-}
+    // Data model for the footer section.
+    public class FooterModel
+    {
+        public int PageNumber { get; set; } = 1;
+    }
 
-// Footer data model.
-public class FooterModel
-{
-    public int PageNumber { get; set; }
-    public int TotalPages { get; set; }
+    class Program
+    {
+        static void Main()
+        {
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            string templatePath = "MultiSectionTemplate.docx";
+
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Header section.
+            builder.Writeln("Header:");
+            builder.Writeln("<<[header.Title]>>");
+            builder.Writeln();
+
+            // Body section with a foreach loop over body.Items.
+            builder.Writeln("Body:");
+            builder.Writeln("<<foreach [item in body.Items]>>");
+            builder.Writeln("- <<[item.Index]>>: <<[item.Name]>>");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln();
+
+            // Footer section.
+            builder.Writeln("Footer:");
+            builder.Writeln("Page <<[footer.PageNumber]>>");
+            builder.Writeln();
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Prepare realistic sample data for each section.
+            // -----------------------------------------------------------------
+            HeaderModel header = new HeaderModel
+            {
+                Title = "Quarterly Revenue Summary"
+            };
+
+            BodyModel body = new BodyModel();
+            body.Items.Add(new Item { Index = 1, Name = "North America" });
+            body.Items.Add(new Item { Index = 2, Name = "Europe" });
+            body.Items.Add(new Item { Index = 3, Name = "Asia-Pacific" });
+
+            FooterModel footer = new FooterModel
+            {
+                PageNumber = 5
+            };
+
+            // -----------------------------------------------------------------
+            // 3. Load the template and build the report using multiple data sources.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            ReportingEngine engine = new ReportingEngine();
+            // No special options are required for this simple example.
+            engine.Options = ReportBuildOptions.None;
+
+            // Pass the three data sources together with their names.
+            object[] dataSources = { header, body, footer };
+            string[] dataSourceNames = { "header", "body", "footer" };
+
+            engine.BuildReport(reportDoc, dataSources, dataSourceNames);
+
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            string outputPath = "MultiSectionReport.docx";
+            reportDoc.Save(outputPath);
+
+            Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
+        }
+    }
 }

@@ -1,73 +1,81 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeWordsLinqReportingPdfA
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        public static void Main()
+        {
+            // Register code page provider for XML encoding support.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample XML data source.
-        string xmlPath = Path.Combine(outputDir, "persons.xml");
-        string xmlContent =
-@"<Persons>
-    <Person>
+            // Define file names.
+            const string templatePath = "Template.docx";
+            const string xmlDataPath = "Data.xml";
+            const string outputPdfPath = "Report.pdf";
+
+            // -----------------------------------------------------------------
+            // 1. Create a simple XML data source file.
+            // -----------------------------------------------------------------
+            const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<persons>
+    <person>
         <Name>John Doe</Name>
         <Age>30</Age>
-    </Person>
-    <Person>
+    </person>
+    <person>
         <Name>Jane Smith</Name>
         <Age>25</Age>
-    </Person>
-    <Person>
+    </person>
+    <person>
         <Name>Bob Johnson</Name>
         <Age>40</Age>
-    </Person>
-</Persons>";
-        File.WriteAllText(xmlPath, xmlContent);
+    </person>
+</persons>";
+            File.WriteAllText(xmlDataPath, xmlContent, Encoding.UTF8);
 
-        // 2. Build a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // -----------------------------------------------------------------
+            // 2. Build the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Persons Report");
-        // Insert the current date/time directly; no need for a reporting tag.
-        builder.Writeln($"Generated on: {DateTime.Now}");
-        builder.Writeln(); // empty line
+            builder.Writeln("People Report");
+            builder.Writeln("==============");
+            builder.Writeln();
+            // LINQ Reporting foreach tag.
+            builder.Writeln("<<foreach [person in persons]>>");
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Age: <<[person.Age]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Begin foreach loop over the collection named "persons".
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age:  <<[person.Age]>>");
-        builder.Writeln("<</foreach>>");
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+            // -----------------------------------------------------------------
+            // 3. Load the template and bind the XML data source.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+            XmlDataSource xmlDataSource = new XmlDataSource(xmlDataPath);
 
-        // 3. Load the template document.
-        Document doc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
+            // Build the report; the data source name must match the tag reference ("persons").
+            engine.BuildReport(reportDoc, xmlDataSource, "persons");
 
-        // 4. Load XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
-
-        // 5. Build the report using ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource, "persons");
-
-        // 6. Save the result as PDF/A‑1b.
-        string pdfPath = Path.Combine(outputDir, "PersonsReport.pdf");
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            Compliance = PdfCompliance.PdfA1b
-        };
-        doc.Save(pdfPath, pdfOptions);
-
-        Console.WriteLine($"Report generated successfully: {pdfPath}");
+            // -----------------------------------------------------------------
+            // 4. Save the generated report as PDF/A compliant document.
+            // -----------------------------------------------------------------
+            PdfSaveOptions pdfOptions = new PdfSaveOptions
+            {
+                // PDF/A-1b compliance.
+                Compliance = PdfCompliance.PdfA1b
+            };
+            reportDoc.Save(outputPdfPath, pdfOptions);
+        }
     }
 }

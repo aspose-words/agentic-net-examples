@@ -1,19 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+namespace AsposeWordsLinqReporting
 {
-    // Simple data entity.
+    // Simple data model.
     public class Person
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 
-    // Wrapper model that matches the template root name.
-    public class ReportModel
+    // Wrapper class that holds the collection referenced by the template.
+    public class DataRoot
     {
         public List<Person> Persons { get; set; } = new();
     }
@@ -22,41 +22,43 @@ namespace LinqReportingExample
     {
         public static void Main()
         {
-            // Prepare sample data (fewer than 1000 records).
-            var model = new ReportModel
-            {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 45 },
-                    new Person { Name = "Charlie", Age = 28 }
-                }
-            };
+            // Prepare sample data.
+            var data = new DataRoot();
+            for (int i = 1; i <= 5; i++) // fewer than 1000 records
+                data.Persons.Add(new Person { Name = $"Person {i}" });
 
-            // Create a template document with LINQ Reporting tags.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
-            doc.Save(templatePath);
+            // Create a template document programmatically.
+            string templatePath = "Template.docx";
+            CreateTemplate(templatePath);
 
-            // Load the template for reporting.
-            var template = new Document(templatePath);
+            // Load the template.
+            Document doc = new Document(templatePath);
 
-            // Disable reflection optimization when processing fewer than 1000 records.
-            if (model.Persons.Count < 1000)
-                ReportingEngine.UseReflectionOptimization = false;
-            else
-                ReportingEngine.UseReflectionOptimization = true; // default behavior
+            // Disable reflection optimization when the record count is less than 1000.
+            ReportingEngine.UseReflectionOptimization = data.Persons.Count >= 1000;
 
             // Build the report.
-            var engine = new ReportingEngine();
-            engine.BuildReport(template, model, "model");
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, data, "data");
 
             // Save the generated report.
-            template.Save("Report.docx");
+            string outputPath = "Report.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        }
+
+        // Creates a simple LINQ Reporting template with a foreach loop.
+        private static void CreateTemplate(string filePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Template tags.
+            builder.Writeln("<<foreach [person in Persons]>>");
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("<</foreach>>");
+
+            doc.Save(filePath);
         }
     }
 }

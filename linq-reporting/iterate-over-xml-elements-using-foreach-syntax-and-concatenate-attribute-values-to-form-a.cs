@@ -3,71 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Simple data model is not required because we use XmlDataSource directly.
+    class Program
     {
-        // File names for the template, data source and the generated report.
-        const string templatePath = "Template.docx";
-        const string xmlDataPath = "Data.xml";
-        const string outputPath = "Report.docx";
+        static void Main()
+        {
+            // Prepare sample XML data with attributes.
+            const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<items>
+    <item name=""Apple"" value=""10"" />
+    <item name=""Banana"" value=""20"" />
+    <item name=""Cherry"" value=""30"" />
+</items>";
+            const string xmlPath = "data.xml";
+            File.WriteAllText(xmlPath, xmlContent);
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple XML data source with element values.
-        // -----------------------------------------------------------------
-        string xmlContent =
-            @"<?xml version=""1.0"" encoding=""utf-8""?>"
-          + "<persons>"
-          + "  <person>"
-          + "    <Name>John</Name>"
-          + "    <Age>30</Age>"
-          + "  </person>"
-          + "  <person>"
-          + "    <Name>Anna</Name>"
-          + "    <Age>25</Age>"
-          + "  </person>"
-          + "  <person>"
-          + "    <Name>Mike</Name>"
-          + "    <Age>40</Age>"
-          + "  </person>"
-          + "</persons>";
-        File.WriteAllText(xmlDataPath, xmlContent);
+            // Create a template document programmatically.
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // -----------------------------------------------------------------
-        // 2. Build a Word template that uses LINQ Reporting foreach tag.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Insert LINQ Reporting tags.
+            // The foreach tag iterates over each <item> element.
+            // Inside the loop we output the attribute values concatenated with a space.
+            builder.Writeln("<<foreach [item in items]>>");
+            builder.Writeln("<<[item.name]>> <<[item.value]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Begin foreach over the collection 'persons'.
-        builder.Writeln("<<foreach [p in persons]>>");
-        // Concatenate the element values 'Name' and 'Age' with a hyphen.
-        builder.Writeln("<<[p.Name]>>-<<[p.Age]>>");
-        // End foreach.
-        builder.Writeln("<</foreach>>");
+            // Save the template to disk.
+            const string templatePath = "template.docx";
+            templateDoc.Save(templatePath);
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+            // Load the template for report generation.
+            Document reportDoc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and the XML data source.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlDataPath);
+            // Load XML data source from the file.
+            XmlDataSource dataSource = new XmlDataSource(xmlPath);
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using ReportingEngine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // The data source name must match the name used in the template tags.
-        engine.BuildReport(loadedTemplate, xmlDataSource, "persons");
+            // Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            // The root object name in the template is "items", matching the top‑level XML element.
+            engine.BuildReport(reportDoc, dataSource, "items");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        loadedTemplate.Save(outputPath);
+            // Save the generated report.
+            const string outputPath = "output.docx";
+            reportDoc.Save(outputPath);
 
-        // Inform the user where the report was saved.
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+            Console.WriteLine("Report generated successfully: " + Path.GetFullPath(outputPath));
+        }
     }
 }

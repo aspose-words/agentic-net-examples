@@ -1,70 +1,71 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReportingDemo
 {
     // Data model used by the LINQ Reporting engine.
     public class ReportModel
     {
-        // Name of the bookmark that will be created in the document.
-        public string BookmarkName { get; set; } = "MyBookmark";
+        // Title displayed inside the bookmark.
+        public string Title { get; set; } = string.Empty;
 
-        // Text that will appear inside the bookmark.
-        public string Title { get; set; } = "This is the bookmarked content.";
+        // Name of the bookmark that will be created.
+        public string BookmarkName { get; set; } = string.Empty;
 
-        // Text displayed for the hyperlink that points to the bookmark.
-        public string LinkText { get; set; } = "Go to bookmark";
+        // Text shown for the hyperlink that points to the bookmark.
+        public string LinkText { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the final report.
-            const string templatePath = "Template.docx";
-            const string outputPath = "Report.docx";
+            // Register code page provider (required for some Aspose.Words features).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // -------------------------------------------------
+            // Prepare sample data.
+            var model = new ReportModel
+            {
+                Title = "Section 1 – Introduction",
+                BookmarkName = "Section1",
+                LinkText = "Jump to Section 1"
+            };
+
+            // -----------------------------------------------------------------
             // 1. Create the template document programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Introductory paragraph.
-            builder.Writeln("Document demonstrating internal links with LINQ Reporting.");
-
-            // Bookmark tag: creates a bookmark whose name is taken from the model.
+            // Define a bookmark whose name comes from the model.
             builder.Writeln("<<bookmark [model.BookmarkName]>>");
             // Content inside the bookmark.
             builder.Writeln("<<[model.Title]>>");
-            // Closing tag for the bookmark.
             builder.Writeln("<</bookmark>>");
 
-            // Add an empty paragraph for visual separation.
-            builder.Writeln();
+            builder.Writeln(); // Empty paragraph.
 
-            // Link tag: creates a hyperlink that points to the bookmark name from the model.
-            // The first expression is the bookmark name, the second is the display text.
-            builder.Writeln("<<link [model.BookmarkName] [model.LinkText]>>");
+            // Hyperlink that points to the same bookmark.
+            builder.Writeln("See details: <<link [model.BookmarkName] [model.LinkText]>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+            // Save the template to disk (required before BuildReport according to rules).
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-            // -------------------------------------------------
+            // -----------------------------------------------------------------
             // 2. Load the template and build the report.
-            // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            ReportModel model = new ReportModel();
+            // -----------------------------------------------------------------
+            var document = new Document(templatePath);
+            var engine = new ReportingEngine();
 
-            ReportingEngine engine = new ReportingEngine();
             // Build the report using the model; the root object name is "model".
-            engine.BuildReport(reportDoc, model, "model");
+            engine.BuildReport(document, model, "model");
 
-            // -------------------------------------------------
-            // 3. Save the generated report.
-            // -------------------------------------------------
-            reportDoc.Save(outputPath);
+            // Save the final document.
+            const string outputPath = "Report.docx";
+            document.Save(outputPath);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,57 +8,52 @@ namespace AsposeWordsLinqReporting
     // Simple data model used by the template.
     public class Person
     {
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = "";
         public int Age { get; set; }
+    }
+
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
+            // Prepare sample data.
+            var model = new ReportModel
+            {
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 25 },
+                    new Person { Name = "Charlie", Age = 35 }
+                }
+            };
+
+            // Create a template document with LINQ Reporting tags.
+            const string templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("People List:");
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+            templateDoc.Save(templatePath);
+
+            // Load the template for reporting.
+            var doc = new Document(templatePath);
+
             // Disable reflection optimization for small data sets.
             ReportingEngine.UseReflectionOptimization = false;
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var templatePath = "template.docx";
-            var reportPath = "report.docx";
-
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("Person Report");
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
-
-            // Save the template so that it can be loaded before building the report.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data source.
-            // -----------------------------------------------------------------
-            var loadedTemplate = new Document(templatePath);
-
-            var person = new Person
-            {
-                Name = "John Doe",
-                Age = 30
-            };
-
-            // -----------------------------------------------------------------
-            // 3. Build the report using ReportingEngine.
-            // -----------------------------------------------------------------
+            // Build the report using the model as the root data source.
             var engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, person, "person");
+            engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            loadedTemplate.Save(reportPath);
-
-            // Inform that the process completed (no interactive input required).
-            Console.WriteLine($"Report generated: {reportPath}");
+            // Save the generated report.
+            doc.Save("Report.docx");
         }
     }
 }

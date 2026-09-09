@@ -8,70 +8,62 @@ using Newtonsoft.Json;
 
 public class Program
 {
-    // Simple data model for JSON serialization.
-    public class Item
+    // Simple data model that matches the JSON structure.
+    public class Person
     {
-        public string Name { get; set; } = string.Empty;
-        public int Value { get; set; }
-    }
-
-    // Wrapper object that holds the collection; required for proper JSON structure.
-    public class RootObject
-    {
-        public List<Item> items { get; set; } = new();
+        public int Index { get; set; }
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
     }
 
     public static void Main()
     {
-        // Paths for temporary files.
-        const string jsonPath = "Data.json";
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
+        // Paths for the temporary files.
+        const string jsonPath = "persons.json";
+        const string templatePath = "template.docx";
+        const string outputPath = "report.docx";
 
         // 1. Generate a large JSON dataset.
-        const int itemCount = 50000; // Adjust for desired size.
-        var root = new RootObject();
+        const int itemCount = 50000;
+        var persons = new List<Person>(itemCount);
         for (int i = 0; i < itemCount; i++)
         {
-            root.items.Add(new Item { Name = $"Item {i}", Value = i });
+            persons.Add(new Person
+            {
+                Index = i + 1,
+                Name = $"Person_{i + 1}",
+                Age = 20 + (i % 50)
+            });
         }
-
-        // Serialize to JSON and write to file.
-        string json = JsonConvert.SerializeObject(root);
-        File.WriteAllText(jsonPath, json);
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(persons));
 
         // 2. Create a LINQ Reporting template programmatically.
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Report generated with Aspose.Words LINQ Reporting");
-        builder.Writeln("<<foreach [item in items]>>");
-        builder.Writeln("<<[item.Name]>> - <<[item.Value]>>");
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("<<[person.Index]>> - <<[person.Name]>> - <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
         templateDoc.Save(templatePath);
 
-        // 3. Load the template.
-        var doc = new Document(templatePath);
+        // 3. Load the template document.
+        var reportDoc = new Document(templatePath);
 
-        // 4. Prepare JSON data source with options.
-        var jsonOptions = new JsonDataLoadOptions
-        {
-            AlwaysGenerateRootObject = true
-        };
-        var jsonDataSource = new JsonDataSource(jsonPath, jsonOptions);
-
-        // 5. Enable reflection optimization.
+        // 4. Enable reflection optimization.
         ReportingEngine.UseReflectionOptimization = true;
+
+        // 5. Prepare the JSON data source.
+        var jsonDataSource = new JsonDataSource(jsonPath);
 
         // 6. Build the report and benchmark the processing time.
         var engine = new ReportingEngine();
         var stopwatch = Stopwatch.StartNew();
-        engine.BuildReport(doc, jsonDataSource);
+        engine.BuildReport(reportDoc, jsonDataSource, "persons");
         stopwatch.Stop();
 
         // 7. Save the generated report.
-        doc.Save(outputPath);
+        reportDoc.Save(outputPath);
 
         // Output the elapsed time.
-        Console.WriteLine($"Report generation time with reflection optimization: {stopwatch.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Report generation time: {stopwatch.ElapsedMilliseconds} ms");
     }
 }

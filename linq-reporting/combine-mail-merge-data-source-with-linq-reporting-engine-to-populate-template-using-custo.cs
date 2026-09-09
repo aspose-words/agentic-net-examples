@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,47 +8,69 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required by Aspose.Words for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
         // Prepare sample data.
-        Customer customer = new Customer
+        var model = new ReportModel
         {
-            Name = "John Doe",
-            Address = "123 Main St, Anytown",
-            Email = "john.doe@example.com"
+            Customers = new List<Customer>
+            {
+                new Customer { Name = "John Doe", Address = "123 Main St, Anytown" },
+                new Customer { Name = "Jane Smith", Address = "456 Oak Ave, Othertown" }
+            }
         };
 
         // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
 
-        builder.Writeln("Customer Report");
-        builder.Writeln("Name: <<[customer.Name]>>");
-        builder.Writeln("Address: <<[customer.Address]>>");
-        builder.Writeln("Email: <<[customer.Email]>>");
-
-        // Save the template to disk (optional, demonstrates load‑save workflow).
-        const string templatePath = "CustomerTemplate.docx";
-        template.Save(templatePath);
-
-        // Load the template back (simulating a real‑world scenario where the template exists on disk).
-        Document loadedTemplate = new Document(templatePath);
+        // Load the template.
+        Document doc = new Document(templatePath);
 
         // Build the report using LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, customer, "customer");
+        // No special options required for this simple example.
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "CustomerReport.docx";
-        loadedTemplate.Save(outputPath);
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+    }
+
+    // Creates a simple Word template containing LINQ Reporting tags.
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add a title.
+        builder.Writeln("Customer Report");
+        builder.Writeln("----------------");
+
+        // Begin a foreach loop over the Customers collection.
+        builder.Writeln("<<foreach [c in Customers]>>");
+
+        // Insert fields for each customer's data.
+        builder.Writeln("Name   : <<[c.Name]>>");
+        builder.Writeln("Address: <<[c.Address]>>");
+        builder.Writeln(""); // Empty line between records.
+
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(filePath);
     }
 }
 
-// Public data model used by the template.
+// Wrapper class that will be passed as the root data source.
+public class ReportModel
+{
+    public List<Customer> Customers { get; set; } = new();
+}
+
+// Simple data model representing a customer.
 public class Customer
 {
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
 }

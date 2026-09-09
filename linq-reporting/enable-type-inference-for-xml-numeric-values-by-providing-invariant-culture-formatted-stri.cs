@@ -1,6 +1,6 @@
 using System;
+using System.Globalization;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,79 +8,50 @@ public class Program
 {
     public static void Main()
     {
-        // Enable code page provider for XML encoding support.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // 1. Create sample XML data with numeric values formatted using invariant culture.
+        // Prepare XML data with numeric values formatted using invariant culture.
+        // Invariant culture ensures that numbers are represented with '.' as decimal separator,
+        // which allows Aspose.Words LINQ Reporting to infer the correct numeric type.
         string xmlContent =
             @"<?xml version=""1.0"" encoding=""utf-8""?>
-<People>
-    <Person>
-        <Name>John Doe</Name>
-        <Age>30</Age>
-        <Salary>1234.56</Salary>
-    </Person>
-    <Person>
-        <Name>Jane Smith</Name>
-        <Age>27</Age>
-        <Salary>9876.54</Salary>
-    </Person>
-</People>";
+<persons>
+    <person>
+        <Name>John</Name>
+        <Age>" + 30.ToString(CultureInfo.InvariantCulture) + @"</Age>
+        <Salary>" + (12345.67m).ToString(CultureInfo.InvariantCulture) + @"</Salary>
+    </person>
+    <person>
+        <Name>Jane</Name>
+        <Age>" + 25.ToString(CultureInfo.InvariantCulture) + @"</Age>
+        <Salary>" + (9876.54m).ToString(CultureInfo.InvariantCulture) + @"</Salary>
+    </person>
+</persons>";
 
-        string xmlPath = "people.xml";
+        // Write the XML to a temporary file.
+        string xmlPath = Path.Combine(Environment.CurrentDirectory, "persons.xml");
         File.WriteAllText(xmlPath, xmlContent);
 
-        // 2. Create a LINQ Reporting template programmatically.
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a template document programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Begin the foreach block before the table.
+        // Insert LINQ Reporting tags.
         builder.Writeln("<<foreach [person in persons]>>");
-
-        // Insert table header.
-        var table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Age");
-        builder.InsertCell();
-        builder.Writeln("Salary");
-        builder.EndRow();
-
-        // Insert data row placeholders.
-        builder.InsertCell();
-        builder.Writeln("<<[person.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[person.Age]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[person.Salary]>>");
-        builder.EndRow();
-
-        // Finish the table and the foreach block.
-        builder.EndTable();
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
+        builder.Writeln("Salary: <<[person.Salary]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Load the XML data source.
+        XmlDataSource dataSource = new XmlDataSource(xmlPath);
 
-        // 3. Load the template document.
-        var doc = new Document(templatePath);
+        // Build the report. The root object name must match the top‑level XML element ("persons").
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, dataSource, "persons");
 
-        // 4. Load the XML data source using a stream.
-        using (FileStream xmlStream = File.OpenRead(xmlPath))
-        {
-            var xmlDataSource = new XmlDataSource(xmlStream);
-            var engine = new ReportingEngine();
-
-            // Build the report. The root object name must match the tag reference ("persons").
-            engine.BuildReport(doc, xmlDataSource, "persons");
-        }
-
-        // 5. Save the generated report.
-        string outputPath = "report.docx";
+        // Save the generated report.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
         doc.Save(outputPath);
 
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

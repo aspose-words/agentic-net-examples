@@ -1,50 +1,42 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public static class Logger
 {
-    private static readonly List<string> _entries = new();
+    // Simple logger that writes to console and stores messages.
+    private static readonly List<string> _messages = new();
 
-    public static void Log(string message) => _entries.Add($"{DateTime.Now:O} - {message}");
-
-    public static void Save(string filePath)
+    public static void Log(string message)
     {
-        File.WriteAllLines(filePath, _entries);
+        _messages.Add(message);
+        Console.WriteLine(message);
     }
+
+    public static IReadOnlyList<string> Messages => _messages;
 }
 
+// Data model used by the LINQ Reporting engine.
 public class ReportModel
 {
-    private string _customerName = string.Empty;
-    private double _amount;
+    public List<Item> Items { get; set; } = new();
+}
 
-    public ReportModel(string customerName, double amount)
-    {
-        _customerName = customerName;
-        _amount = amount;
-    }
+// Each item logs when its Value property is accessed.
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
 
-    public string CustomerName
-    {
-        get
-        {
-            Logger.Log($"CustomerName evaluated: {_customerName}");
-            return _customerName;
-        }
-        set => _customerName = value;
-    }
-
-    public double Amount
+    private int _value;
+    public int Value
     {
         get
         {
-            Logger.Log($"Amount evaluated: {_amount}");
-            return _amount;
+            Logger.Log($"Evaluating Value for item '{Name}': {_value}");
+            return _value;
         }
-        set => _amount = value;
+        set => _value = value;
     }
 }
 
@@ -52,33 +44,47 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for files.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
-        const string logPath = "EvaluationLog.txt";
+        // 1. Create a template document with LINQ Reporting tags.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        // 1. Create the template document programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Customer: <<[model.CustomerName]>>");
-        builder.Writeln("Amount: <<[model.Amount]>>");
-        templateDoc.Save(templatePath);
+        // Header.
+        builder.Writeln("Report generated with expression logging:");
+        builder.Writeln();
 
-        // 2. Load the template for reporting.
+        // foreach over Items.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item: <<[item.Name]>>, Value: <<[item.Value]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to a temporary file.
+        const string templatePath = "ReportTemplate.docx";
+        template.Save(templatePath);
+
+        // 2. Prepare sample data.
+        var model = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Name = "Alpha", Value = 10 },
+                new Item { Name = "Beta", Value = 20 },
+                new Item { Name = "Gamma", Value = 30 }
+            }
+        };
+
+        // 3. Load the template (simulating a separate load step).
         var doc = new Document(templatePath);
 
-        // 3. Prepare the data model.
-        var model = new ReportModel("John Doe", 1234.56);
-
-        // 4. Build the report using LINQ Reporting Engine.
+        // 4. Build the report using the ReportingEngine.
         var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
+        // No special options needed for logging; the property getters perform logging.
         engine.BuildReport(doc, model, "model");
 
         // 5. Save the generated report.
-        doc.Save(reportPath);
+        const string outputPath = "ReportResult.docx";
+        doc.Save(outputPath);
 
-        // 6. Persist the evaluation log.
-        Logger.Save(logPath);
+        // Optional: indicate completion.
+        Console.WriteLine($"Report generated and saved to '{outputPath}'.");
     }
 }

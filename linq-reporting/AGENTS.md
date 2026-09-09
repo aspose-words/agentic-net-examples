@@ -2085,7 +2085,7 @@ Use the simplest workflow that satisfies the task.
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.7.0`
+- Package: `Aspose.Words` `26.8.0`
 - Package: `Newtonsoft.Json`
 - Package: `System.Text.Encoding.CodePages` `9.0.2`
 
@@ -2101,7 +2101,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.7.0
+dotnet add package Aspose.Words --version 26.8.0
 dotnet add package Newtonsoft.Json
 dotnet add package System.Text.Encoding.CodePages --version 9.0.2
 ```
