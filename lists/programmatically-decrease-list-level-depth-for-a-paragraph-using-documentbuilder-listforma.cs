@@ -2,33 +2,42 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace ListIndentExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a default numbered list.
-        builder.ListFormat.ApplyNumberDefault();
-        builder.Writeln("Item 1");
-
-        // Increase the list level (create a sub‑item).
-        builder.ListFormat.ListIndent();
-        builder.Writeln("Subitem 1.1");
-
-        // Decrease the list level only if we are not already at the top level.
-        if (builder.ListFormat.ListLevelNumber > 0)
+        public static void Main()
         {
-            builder.ListFormat.ListOutdent(); // Decrease indent.
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start a default numbered list.
+            builder.ListFormat.ApplyNumberDefault();
+
+            // First list item at level 0.
+            builder.Writeln("Item 1");
+
+            // Increase the list level to create a sub‑list.
+            builder.ListFormat.ListIndent();
+            builder.Writeln("Sub‑item 1");
+            builder.Writeln("Sub‑item 2");
+
+            // Decrease the list level only if we are deeper than the top level.
+            if (builder.ListFormat.ListLevelNumber > 0)
+            {
+                // Decrease list level by one.
+                builder.ListFormat.ListOutdent();
+            }
+
+            // Continue with items at the original level.
+            builder.Writeln("Item 2");
+
+            // End the list formatting.
+            builder.ListFormat.RemoveNumbers();
+
+            // Save the document to disk.
+            doc.Save("ListOutdentExample.docx");
         }
-        builder.Writeln("Back to level 1");
-
-        // End the list formatting.
-        builder.ListFormat.RemoveNumbers();
-
-        // Save the document to disk.
-        doc.Save("Lists_DecreaseIndent.docx");
     }
 }

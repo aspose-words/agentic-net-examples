@@ -6,28 +6,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a new list to the document's ListCollection using a predefined template.
         List sharedList = doc.Lists.Add(ListTemplate.BulletDefault);
 
-        // Apply the same list to multiple paragraphs.
-        builder.ListFormat.List = sharedList;
-        builder.ListFormat.ListLevelNumber = 0; // Use the first level of the list.
+        // Write a normal paragraph (no list formatting).
+        builder.Writeln("Paragraph without list.");
 
-        builder.Writeln("First shared list item");
-        builder.Writeln("Second shared list item");
-        builder.Writeln("Third shared list item");
+        // Add several paragraphs that share the same list formatting.
+        for (int i = 1; i <= 3; i++)
+        {
+            // Assign the shared list to the current paragraph.
+            builder.ListFormat.List = sharedList;
+            // Use the first level of the list (level 0).
+            builder.ListFormat.ListLevelNumber = 0;
+            builder.Writeln($"List item {i}");
+        }
 
-        // Stop list formatting for any following paragraphs.
-        builder.ListFormat.RemoveNumbers();
+        // Stop applying list formatting for any following paragraphs.
+        builder.ListFormat.List = null;
+        builder.Writeln("Paragraph after list.");
 
-        // Add a regular paragraph without list formatting.
-        builder.Writeln("A normal paragraph without list formatting.");
-
-        // Save the document to disk.
+        // Save the document to a file in the current directory.
         doc.Save("SharedListExample.docx");
     }
 }

@@ -7,42 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
-
-        // Create a DocumentBuilder to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a multi‑level list based on the built‑in NumberDefault template.
+        // Add a list based on the default numbered template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Adjust the indentation of each list level to 36 points (0.5 inch).
+        // Adjust the indentation of the first two list levels to 36 points.
         // The ListLevel class does not have an Indentation property.
-        // Instead, set NumberPosition, TextPosition and TabPosition to control the left indent.
-        foreach (ListLevel level in list.ListLevels)
-        {
-            level.NumberPosition = 36.0; // Position of the number/bullet.
-            level.TextPosition = 36.0;   // Position where the text starts.
-            level.TabPosition = 36.0;    // Tab stop for the level.
-        }
+        // Use NumberPosition (position of the bullet/number) and TextPosition (position of the text)
+        // to achieve the desired left indent.
+        ListLevel level0 = list.ListLevels[0];
+        level0.NumberPosition = 36; // points
+        level0.TextPosition = 36;   // points
 
-        // Apply the list to the builder and add a few items.
+        ListLevel level1 = list.ListLevels[1];
+        level1.NumberPosition = 36; // points
+        level1.TextPosition = 36;   // points
+
+        // Apply the list to some paragraphs.
         builder.ListFormat.List = list;
-        builder.Writeln("First level item");
-        builder.ListFormat.ListIndent(); // Move to second level.
-        builder.Writeln("Second level item");
-        builder.ListFormat.ListIndent(); // Move to third level.
-        builder.Writeln("Third level item");
-        builder.ListFormat.ListOutdent(); // Back to second level.
-        builder.Writeln("Another second level item");
-        builder.ListFormat.RemoveNumbers(); // End the list.
+        builder.Writeln("Item 1");
+        builder.ListFormat.ListIndent();
+        builder.Writeln("Subitem 1");
+        builder.ListFormat.ListOutdent();
+        builder.Writeln("Item 2");
+        builder.ListFormat.RemoveNumbers();
 
         // Ensure the output directory exists.
         string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
         // Save the document.
-        string outputPath = Path.Combine(artifactsDir, "Lists.AdjustIndentation.docx");
-        doc.Save(outputPath);
+        doc.Save(Path.Combine(artifactsDir, "AdjustedListIndentation.docx"));
     }
 }

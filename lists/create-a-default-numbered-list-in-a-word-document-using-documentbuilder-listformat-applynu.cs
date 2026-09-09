@@ -1,36 +1,32 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-namespace AsposeWordsListExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Initialize DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a default numbered list.
-            builder.ListFormat.ApplyNumberDefault();
+        // Add a heading before the list.
+        builder.Writeln("Default numbered list:");
 
-            // Add several list items.
-            builder.Writeln("First item");
-            builder.Writeln("Second item");
-            builder.Writeln("Third item");
+        // Start a default numbered list.
+        builder.ListFormat.ApplyNumberDefault();
 
-            // End the list.
-            builder.ListFormat.RemoveNumbers();
+        // Add list items.
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        builder.Writeln("Third item");
 
-            // Define the output file path.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "DefaultNumberedList.docx");
+        // End the list.
+        builder.ListFormat.RemoveNumbers();
 
-            // Save the document.
-            doc.Save(outputPath);
-        }
+        // Save the document to the file system.
+        doc.Save("NumberedList.docx");
     }
 }
