@@ -4,94 +4,61 @@ using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
 
-public class Program
+namespace ContentControlToHtml
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add an introductory paragraph.
-        builder.Writeln("Document with various content controls:");
-
-        // -----------------------------------------------------------------
-        // Inline plain‑text content control.
-        // -----------------------------------------------------------------
-        Paragraph inlineParagraph = doc.FirstSection.Body.FirstParagraph;
-
-        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        public static void Main()
         {
-            Title = "CustomerName",
-            Tag = "customer-name"
-        };
-        plainTextSdt.RemoveAllChildren();
-        plainTextSdt.AppendChild(new Run(doc, "John Doe"));
-        inlineParagraph.AppendChild(new Run(doc, " Name: "));
-        inlineParagraph.AppendChild(plainTextSdt);
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // -----------------------------------------------------------------
-        // Inline checkbox content control.
-        // -----------------------------------------------------------------
-        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
-        {
-            Title = "Agree",
-            Tag = "agree",
-            Checked = true
-        };
-        inlineParagraph.AppendChild(new Run(doc, " "));
-        inlineParagraph.AppendChild(checkBoxSdt);
-        inlineParagraph.AppendChild(new Run(doc, " I agree"));
+            // Get the first paragraph of the document (it always exists in a new document).
+            Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // -----------------------------------------------------------------
-        // Inline drop‑down list content control.
-        // -----------------------------------------------------------------
-        StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
-        {
-            Title = "Country",
-            Tag = "country"
-        };
-        dropDownSdt.ListItems.Add(new SdtListItem("USA", "USA"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Canada", "Canada"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Mexico", "Mexico"));
-        dropDownSdt.RemoveAllChildren();
-        dropDownSdt.AppendChild(new Run(doc, "USA"));
-        inlineParagraph.AppendChild(new Run(doc, " "));
-        inlineParagraph.AppendChild(dropDownSdt);
-        inlineParagraph.AppendChild(new Run(doc, " (Select country)"));
+            // ---------- Plain text content control ----------
+            StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+            {
+                Title = "CustomerName",
+                Tag = "customer-name"
+            };
+            plainTextSdt.RemoveAllChildren();
+            plainTextSdt.AppendChild(new Run(doc, "Contoso"));
+            paragraph.AppendChild(plainTextSdt);
 
-        // -----------------------------------------------------------------
-        // Block‑level rich‑text content control.
-        // -----------------------------------------------------------------
-        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-        {
-            Title = "Comments",
-            Tag = "comments"
-        };
-        Paragraph innerParagraph = new Paragraph(doc);
-        innerParagraph.AppendChild(new Run(doc, "This is a sample comment inside a rich‑text content control."));
-        richTextSdt.AppendChild(innerParagraph);
-        doc.FirstSection.Body.AppendChild(richTextSdt);
+            // Add a space between controls for readability.
+            paragraph.AppendChild(new Run(doc, " "));
 
-        // Save the source DOCX (optional, demonstrates that the file exists).
-        const string docxPath = "ContentControls.docx";
-        doc.Save(docxPath, SaveFormat.Docx);
+            // ---------- Checkbox content control ----------
+            StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+            {
+                Title = "Agree",
+                Tag = "agree",
+                Checked = true
+            };
+            paragraph.AppendChild(checkBoxSdt);
 
-        // -----------------------------------------------------------------
-        // Convert the document to HTML while preserving content‑control attributes.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
-        {
-            // The default behavior exports content controls as <span> elements
-            // with data‑attributes that retain Title, Tag, Id, etc.
-            // No additional configuration is required for this scenario.
-        };
+            // Add a space between controls.
+            paragraph.AppendChild(new Run(doc, " "));
 
-        const string htmlPath = "ContentControls.html";
-        doc.Save(htmlPath, htmlOptions);
+            // ---------- Drop‑down list content control ----------
+            StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
+            {
+                Title = "Options",
+                Tag = "options"
+            };
+            dropDownSdt.ListItems.Add(new SdtListItem("Option A", "A"));
+            dropDownSdt.ListItems.Add(new SdtListItem("Option B", "B"));
+            paragraph.AppendChild(dropDownSdt);
 
-        // Inform the user (console output is allowed as it does not require input).
-        Console.WriteLine($"DOCX saved to: {Path.GetFullPath(docxPath)}");
-        Console.WriteLine($"HTML saved to: {Path.GetFullPath(htmlPath)}");
+            // Save the document as HTML. The default behavior exports content controls as data‑attributes.
+            HtmlSaveOptions htmlOptions = new HtmlSaveOptions();
+
+            string htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "ContentControls.html");
+            doc.Save(htmlPath, htmlOptions);
+
+            // Indicate completion.
+            Console.WriteLine($"Document converted to HTML with data‑attributes saved at: {htmlPath}");
+        }
     }
 }

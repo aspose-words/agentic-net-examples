@@ -8,12 +8,12 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add some introductory text.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Below is a locked content control (read‑only).");
 
-        // Insert an inline plain‑text content control.
+        // Add a paragraph describing the content control.
+        builder.Writeln("Document with a locked content control:");
+
+        // Create an inline plain‑text content control.
         StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
             Title = "ReadOnlyControl",
@@ -24,11 +24,11 @@ public class Program
             LockContentControl = true
         };
 
-        // Add placeholder text inside the content control.
+        // Set the displayed text inside the control.
         sdt.RemoveAllChildren();
-        sdt.AppendChild(new Run(doc, "This text cannot be edited or removed."));
+        sdt.AppendChild(new Run(doc, "This text cannot be edited or the control deleted."));
 
-        // Insert the content control into the document.
+        // Insert the locked content control into the document.
         builder.InsertNode(sdt);
 
         // Save the resulting document.

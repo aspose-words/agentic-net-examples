@@ -1,49 +1,36 @@
 using System;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Newtonsoft.Json; // Included as required by the task, though not used.
 
-public class Program
+namespace ContentControlClearExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Ensure the document has at least one paragraph to host the content control.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
-
-        // Create an inline plain‑text content control.
-        StructuredDocumentTag contentControl = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        contentControl.Title = "SampleControl";
-        contentControl.Tag = "sample-tag";
-
-        // Add some initial text inside the control.
-        contentControl.RemoveAllChildren(); // Ensure it is empty before adding text.
-        contentControl.AppendChild(new Run(doc, "Initial content inside the control."));
-
-        // Insert the content control into the paragraph.
-        paragraph.AppendChild(contentControl);
-
-        // Save the document with the populated content control.
-        string initialPath = Path.Combine(Environment.CurrentDirectory, "initial.docx");
-        doc.Save(initialPath);
-
-        // Locate the content control by its title.
-        StructuredDocumentTag foundControl = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                                                .OfType<StructuredDocumentTag>()
-                                                .FirstOrDefault(sdt => sdt.Title == "SampleControl");
-
-        if (foundControl != null)
+        public static void Main()
         {
-            // Clear the contents of the control while keeping the control itself.
-            foundControl.Clear();
-        }
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document after clearing the control's contents.
-        string clearedPath = Path.Combine(Environment.CurrentDirectory, "cleared.docx");
-        doc.Save(clearedPath);
+            // Insert a plain‑text content control (inline level) into the document.
+            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+            {
+                Title = "SampleControl",
+                Tag = "sample-control"
+            };
+            builder.InsertNode(sdt);
+
+            // Add some initial text inside the content control.
+            sdt.AppendChild(new Run(doc, "Initial content inside the control."));
+
+            // Clear the contents of the content control while keeping the control itself.
+            sdt.Clear();
+
+            // Save the resulting document.
+            doc.Save("ClearedContentControl.docx");
+
+            // Indicate completion (no interactive input required).
+            Console.WriteLine("Document saved as ClearedContentControl.docx");
+        }
     }
 }
