@@ -9,59 +9,53 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare output directories.
+        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "Dithered.tiff");
 
-        // Create a new blank document.
+        // Create a simple document with a heading and an image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text.
-        builder.Writeln("Sample document with an image to demonstrate TIFF dithering.");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Sample Document");
 
-        // Create a simple bitmap image in memory using Aspose.Drawing.
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        // Generate a simple in‑memory image (100×100 blue square) using Aspose.Drawing.
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background with white.
-                graphics.Clear(Color.White);
-
-                // Draw a blue ellipse.
-                using (Pen pen = new Pen(Color.Blue, 5))
-                {
-                    graphics.DrawEllipse(pen, 20, 20, 160, 160);
-                }
+                graphics.Clear(Color.Blue);
             }
 
-            // Save the bitmap to a memory stream as PNG.
-            using (MemoryStream imgStream = new MemoryStream())
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                bitmap.Save(imgStream, ImageFormat.Png);
-                imgStream.Position = 0;
+                // Save the bitmap to the stream as PNG.
+                bitmap.Save(imageStream, ImageFormat.Png);
+                imageStream.Position = 0;
 
-                // Insert the image into the document.
-                builder.InsertImage(imgStream);
+                // Insert the image into the document from the stream.
+                builder.InsertImage(imageStream);
             }
         }
 
-        // Configure TIFF save options with Floyd‑Steinberg dithering and a high threshold.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure TIFF save options to use Floyd‑Steinberg dithering with a high threshold.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Ccitt3,
             TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
-            ThresholdForFloydSteinbergDithering = 150 // Darken the binary image.
+            ThresholdForFloydSteinbergDithering = (byte)150 // Darken the binary output.
         };
 
-        // Save the document as a TIFF file.
-        string tiffPath = Path.Combine(outputDir, "DitheredOutput.tiff");
-        doc.Save(tiffPath, tiffOptions);
+        // Save the document as a TIFF image.
+        doc.Save(outputPath, options);
 
-        // Verify that the file was created.
-        if (!File.Exists(tiffPath))
-            throw new Exception("Failed to create the TIFF file.");
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        Console.WriteLine($"TIFF file saved successfully to: {tiffPath}");
+        // Optionally, report success (no interactive prompts required).
+        Console.WriteLine("TIFF image saved successfully to: " + outputPath);
     }
 }
