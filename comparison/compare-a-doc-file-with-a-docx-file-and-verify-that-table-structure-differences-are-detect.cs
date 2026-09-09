@@ -1,12 +1,18 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the original DOC file with a simple 1‑row, 2‑cell table.
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonOutput");
+        Directory.CreateDirectory(outputDir);
+
+        // Create the original DOC file with a simple 2‑cell table.
         Document originalDoc = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(originalDoc);
         builderOriginal.StartTable();
@@ -15,54 +21,44 @@ public class Program
         builderOriginal.InsertCell();
         builderOriginal.Write("Original Cell 2");
         builderOriginal.EndTable();
+        string originalPath = Path.Combine(outputDir, "original.doc");
+        originalDoc.Save(originalPath);
 
-        const string originalPath = "Original.doc";
-        originalDoc.Save(originalPath, SaveFormat.Doc);
-
-        // Create the revised DOCX file with a different table structure (1‑row, 3‑cell).
+        // Create the revised DOCX file with a modified table (different text and an extra cell).
         Document revisedDoc = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revisedDoc);
         builderRevised.StartTable();
         builderRevised.InsertCell();
-        builderRevised.Write("Revised Cell A");
+        builderRevised.Write("Edited Cell 1");          // changed text
         builderRevised.InsertCell();
-        builderRevised.Write("Revised Cell B");
+        builderRevised.Write("Original Cell 2");        // unchanged text
         builderRevised.InsertCell();
-        builderRevised.Write("Revised Cell C");
+        builderRevised.Write("New Cell 3");             // extra cell
         builderRevised.EndTable();
+        string revisedPath = Path.Combine(outputDir, "revised.docx");
+        revisedDoc.Save(revisedPath);
 
-        const string revisedPath = "Revised.docx";
-        revisedDoc.Save(revisedPath, SaveFormat.Docx);
+        // Perform comparison. The original document will receive revisions.
+        originalDoc.Compare(revisedDoc, "Comparer", DateTime.Now);
 
-        // Load the two documents for comparison.
-        Document docToCompare = new Document(originalPath);
-        Document docReference = new Document(revisedPath);
-
-        // Perform the comparison. Revisions will be added to docToCompare.
-        docToCompare.Compare(docReference, "Comparer", DateTime.Now);
-
-        // Verify that at least one revision was created.
-        if (docToCompare.Revisions.Count == 0)
+        // Verify that at least one revision exists.
+        if (originalDoc.Revisions.Count == 0)
             throw new InvalidOperationException("Expected at least one revision after comparison.");
 
-        // Verify that a revision affecting a table was detected.
-        bool tableRevisionFound = false;
-        foreach (Revision rev in docToCompare.Revisions)
-        {
-            // Some table‑related revisions have a Paragraph as the ParentNode.
-            // Check whether the revision node is inside a Table by walking up the ancestor chain.
-            if (rev.ParentNode != null && rev.ParentNode.GetAncestor(NodeType.Table) != null)
-            {
-                tableRevisionFound = true;
-                break;
-            }
-        }
+        // Count revisions that affect any part of a table.
+        int tableRevisionCount = originalDoc.Revisions
+            .Count(r => r.ParentNode?.GetAncestor(NodeType.Table) != null);
 
-        if (!tableRevisionFound)
-            throw new InvalidOperationException("Expected a table revision but none was found.");
+        if (tableRevisionCount == 0)
+            throw new InvalidOperationException("Expected at least one table revision, but none were found.");
 
         // Save the comparison result.
-        const string resultPath = "ComparisonResult.docx";
-        docToCompare.Save(resultPath, SaveFormat.Docx);
+        string resultPath = Path.Combine(outputDir, "comparisonResult.docx");
+        originalDoc.Save(resultPath);
+
+        // Output a simple summary.
+        Console.WriteLine($"Total revisions detected: {originalDoc.Revisions.Count}");
+        Console.WriteLine($"Table revisions detected: {tableRevisionCount}");
+        Console.WriteLine($"Comparison result saved to: {resultPath}");
     }
 }

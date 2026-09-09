@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.7.0"
+      "Aspose.Words": "26.8.0"
     },
     "required_namespaces": [
       "System",
@@ -189,8 +189,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 9,

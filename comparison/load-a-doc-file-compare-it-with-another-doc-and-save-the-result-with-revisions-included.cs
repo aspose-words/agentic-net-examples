@@ -6,39 +6,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document with some content.
+        // Create the original document.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
         builderOriginal.Writeln("Hello world.");
-        builderOriginal.Writeln("This is the original document.");
 
-        // Create the revised document with differences.
+        // Create the revised document with a difference.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello world!"); // Modified line.
-        builderRevised.Writeln("This is the revised document with an extra line.");
+        builderRevised.Writeln("Hello revised world.");
 
         // Ensure both documents have no revisions before comparison.
-        if (original.HasRevisions || revised.HasRevisions)
-        {
+        if (original.Revisions.Count != 0 || revised.Revisions.Count != 0)
             throw new InvalidOperationException("Documents must not contain revisions before comparison.");
-        }
 
-        // Compare the documents. The original document will receive revisions describing the changes.
+        // Compare the documents. The original document will receive revisions.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Verify that revisions were created.
+        // Verify that at least one revision was created.
         if (original.Revisions.Count == 0)
-        {
             throw new InvalidOperationException("Expected at least one revision after comparison.");
-        }
 
-        // Save the comparison result (original document now contains revisions).
+        // Save the result with revisions included.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparedResult.docx");
         original.Save(outputPath);
-
-        // Optionally, write the revision count to the console for verification.
-        Console.WriteLine($"Comparison completed. Revisions count: {original.Revisions.Count}");
-        Console.WriteLine($"Result saved to: {outputPath}");
     }
 }

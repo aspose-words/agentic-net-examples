@@ -2,91 +2,78 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
         // Create the original document with two sections.
         Document original = new Document();
         DocumentBuilder builder = new DocumentBuilder(original);
 
-        // Section 1.
-        builder.Writeln("Section 1 original text.");
-        // Insert a header to demonstrate that it will be ignored.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Header for Section 1");
-        builder.MoveToDocumentEnd();
-
-        // Section 2.
+        // Section 1
+        builder.Writeln("Section 1 - Original content.");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 2 original text.");
-        // Add a table in Section 2 (will be ignored by compare options).
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell A1");
-        builder.InsertCell();
-        builder.Write("Cell B1");
-        builder.EndTable();
+
+        // Section 2
+        builder.Writeln("Section 2 - Original content.");
 
         // Save the original for reference (optional).
-        string originalPath = Path.Combine(outputDir, "Original.docx");
+        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
         original.Save(originalPath);
 
         // Clone the original to create the revised version.
         Document revised = (Document)original.Clone(true);
         DocumentBuilder revBuilder = new DocumentBuilder(revised);
 
-        // Modify only the text in Section 1.
+        // Modify text in Section 1.
         revBuilder.MoveToSection(0);
-        Paragraph firstParagraph = revised.FirstSection.Body.FirstParagraph;
-        firstParagraph.Runs[0].Text = "Section 1 revised text.";
+        revBuilder.Writeln("Section 1 - Revised content.");
+
+        // Modify text in Section 2.
+        revBuilder.MoveToSection(1);
+        revBuilder.Writeln("Section 2 - Revised content.");
 
         // Save the revised document (optional).
-        string revisedPath = Path.Combine(outputDir, "Revised.docx");
+        string revisedPath = Path.Combine(Directory.GetCurrentDirectory(), "Revised.docx");
         revised.Save(revisedPath);
 
-        // Set up compare options to focus on body text only.
+        // Set up compare options – we will use the default options but specify the target document.
         CompareOptions compareOptions = new CompareOptions
         {
-            IgnoreHeadersAndFooters = true,
-            IgnoreTables = true,
-            IgnoreFootnotes = false,
-            IgnoreComments = true,
-            IgnoreTextboxes = true,
-            IgnoreFields = true,
-            IgnoreFormatting = true,
-            IgnoreCaseChanges = false,
-            CompareMoves = false,
-            Target = ComparisonTargetType.New
+            Target = ComparisonTargetType.New // Use the revised document as the target during comparison.
         };
 
-        // Perform the comparison.
-        string author = "John Doe";
-        DateTime compareDate = DateTime.Now;
-        original.Compare(revised, author, compareDate, compareOptions);
+        // Perform the comparison. Revisions will be added to the original document.
+        original.Compare(revised, "Comparer", DateTime.Now, compareOptions);
 
         // Save the comparison result.
-        string resultPath = Path.Combine(outputDir, "Compared.docx");
+        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.docx");
         original.Save(resultPath);
 
-        // Report revisions that belong to the first section only.
-        Console.WriteLine("Revisions detected in Section 1:");
+        // Analyze revisions only in Section 2 (index 1).
+        int sectionIndexToInspect = 1;
+        int revisionsInSection = 0;
+
         foreach (Revision rev in original.Revisions)
         {
-            Section revSection = rev.ParentNode?.GetAncestor(NodeType.Section) as Section;
-            if (revSection != null && original.Sections.IndexOf(revSection) == 0)
+            // Get the section that contains the revision's parent node.
+            Node? parent = rev.ParentNode;
+            if (parent == null) continue;
+
+            Section? section = parent.GetAncestor(NodeType.Section) as Section;
+            if (section == null) continue;
+
+            // Sections are stored in the document's Sections collection.
+            int currentIndex = original.Sections.IndexOf(section);
+            if (currentIndex == sectionIndexToInspect)
             {
-                Console.WriteLine($"- Type: {rev.RevisionType}, Text: \"{rev.ParentNode?.GetText().Trim()}\"");
+                revisionsInSection++;
+                Console.WriteLine($"Revision in Section {sectionIndexToInspect + 1}: Type={rev.RevisionType}, Text=\"{parent.GetText().Trim()}\"");
             }
         }
 
-        // Summary output.
-        Console.WriteLine($"Total revisions: {original.Revisions.Count}");
-        Console.WriteLine($"Comparison result saved to: {resultPath}");
+        Console.WriteLine($"Total revisions found in Section {sectionIndexToInspect + 1}: {revisionsInSection}");
     }
 }

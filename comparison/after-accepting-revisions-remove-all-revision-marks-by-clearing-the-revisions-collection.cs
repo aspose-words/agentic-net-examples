@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Comparing;
 
 public class Program
 {
@@ -8,28 +9,30 @@ public class Program
         // Create the original document.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");
+        builderOriginal.Writeln("Hello world!");
+        builderOriginal.Writeln("This is the original document.");
 
-        // Create the revised document with a difference.
+        // Create the revised document with some differences.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello revised world.");
+        builderRevised.Writeln("Hello world!");
+        builderRevised.Writeln("This is the revised document with changes.");
 
-        // Compare the documents – revisions will be added to the original.
-        original.Compare(revised, "Author", DateTime.Now);
+        // Compare the documents – revisions will be added to the original document.
+        original.Compare(revised, "John Doe", DateTime.Now);
 
         // Ensure that revisions were created.
         if (original.Revisions.Count == 0)
             throw new InvalidOperationException("Expected revisions after comparison.");
 
-        // Accept all revisions, which removes the revision marks.
-        original.Revisions.AcceptAll();
+        // Accept all revisions.
+        original.AcceptAllRevisions();
 
-        // Verify that the revisions collection is now empty.
+        // After accepting, the revisions collection should be empty.
         if (original.Revisions.Count != 0)
             throw new InvalidOperationException("Revisions were not cleared after acceptance.");
 
-        // Save the resulting document.
-        original.Save("final.docx");
+        // Save the final document without any revision marks.
+        original.Save("Result.docx");
     }
 }

@@ -1,48 +1,47 @@
 using System;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class OrientationComparison
+public class Program
 {
     public static void Main()
     {
-        // Create the original document (portrait orientation).
+        // Create the original document with default (portrait) orientation.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
         builderOriginal.Writeln("This document is in portrait orientation.");
-        // Ensure the page setup is portrait (default).
+        // Ensure the orientation is explicitly set to Portrait for clarity.
         builderOriginal.PageSetup.Orientation = Orientation.Portrait;
 
-        // Create the revised document (landscape orientation).
+        // Create the revised document and change its orientation to Landscape.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This document is in landscape orientation.");
-        // Change the page orientation to landscape.
         builderRevised.PageSetup.Orientation = Orientation.Landscape;
+        builderRevised.Writeln("This document is in landscape orientation.");
 
-        // Verify that both documents start without revisions.
-        if (original.Revisions.Count != 0 || revised.Revisions.Count != 0)
-            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
-
-        // Compare the documents. The original document will receive revisions.
+        // Compare the two documents. Revisions will be added to the original document.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Count total revisions and specifically format-change revisions (orientation change).
-        int totalRevisions = original.Revisions.Count;
-        int formatRevisions = original.Revisions.Count(r => r.RevisionType == RevisionType.FormatChange);
+        // Verify that at least one revision exists.
+        if (original.Revisions.Count == 0)
+            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
 
-        // Verify that at least one format-change revision exists (orientation change).
-        if (formatRevisions == 0)
-            throw new InvalidOperationException("Expected a format-change revision for page orientation.");
+        // Check that a format change revision (orientation change) is present.
+        bool hasFormatChange = false;
+        foreach (Revision rev in original.Revisions)
+        {
+            if (rev.RevisionType == RevisionType.FormatChange)
+            {
+                hasFormatChange = true;
+                break;
+            }
+        }
 
-        // Output revision summary to the console.
-        Console.WriteLine($"Total revisions detected: {totalRevisions}");
-        Console.WriteLine($"Format-change revisions (e.g., orientation): {formatRevisions}");
+        if (!hasFormatChange)
+            throw new InvalidOperationException("Expected a format change revision for orientation, but none was found.");
 
         // Save the compared document with revisions.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OrientationComparison.docx");
+        string outputPath = "OrientationComparison.docx";
         original.Save(outputPath);
     }
 }
