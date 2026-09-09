@@ -2,51 +2,56 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class BatchClearRangeExample
 {
     public static void Main()
     {
         // Define folders for input and output documents.
-        string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
 
-        // Ensure the directories exist.
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Ensure the folders exist.
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a few sample documents with some text.
-        // -----------------------------------------------------------------
-        for (int i = 1; i <= 3; i++)
+        // Sample document names.
+        string[] docNames = { "Doc1.docx", "Doc2.docx", "Doc3.docx" };
+
+        // Create sample source documents with some content.
+        foreach (string name in docNames)
         {
-            string filePath = Path.Combine(inputDir, $"Sample{i}.docx");
-            CreateSampleDocument(filePath, $"This is the content of document {i}.");
+            string inputPath = Path.Combine(inputFolder, name);
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is the content of {name}.");
+            doc.Save(inputPath);
         }
 
-        // -----------------------------------------------------------------
-        // Step 2: Batch process each document – clear its entire content.
-        // -----------------------------------------------------------------
-        foreach (string file in Directory.GetFiles(inputDir, "*.docx"))
+        // Batch process: load each document, clear its entire range, and save the result.
+        foreach (string name in docNames)
         {
-            // Load the document.
-            Document doc = new Document(file);
+            string inputPath = Path.Combine(inputFolder, name);
+            string outputPath = Path.Combine(outputFolder, name);
 
-            // Delete all characters in the whole‑document range.
+            // Load the document.
+            Document doc = new Document(inputPath);
+
+            // Delete all characters in the document's range, effectively clearing the content.
             doc.Range.Delete();
 
-            // Save the cleared document to the output folder.
-            string fileName = Path.GetFileNameWithoutExtension(file);
-            string outPath = Path.Combine(outputDir, $"{fileName}_Cleared.docx");
-            doc.Save(outPath);
+            // Save the cleared document.
+            doc.Save(outputPath);
         }
-    }
 
-    // Helper method to create a simple document with a single paragraph of text.
-    private static void CreateSampleDocument(string path, string text)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(text);
-        doc.Save(path);
+        // Optional verification: ensure that the output documents are empty.
+        foreach (string name in docNames)
+        {
+            string outputPath = Path.Combine(outputFolder, name);
+            Document clearedDoc = new Document(outputPath);
+            string text = clearedDoc.Range.Text.Trim();
+
+            // The text should be empty after deletion.
+            Console.WriteLine($"{name} cleared: {(string.IsNullOrEmpty(text) ? "Yes" : "No")}");
+        }
     }
 }

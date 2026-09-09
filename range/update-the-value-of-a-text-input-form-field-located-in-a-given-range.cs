@@ -6,33 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // ---------- Create a sample document ----------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field named "MyTextField" with an initial value.
-        // Parameters: name, type, format, default text, maximum length (0 = no limit).
-        builder.InsertTextInput("MyTextField", TextFormFieldType.Regular, "", "Initial value", 0);
-        builder.Writeln(); // End the paragraph.
+        // Introductory line.
+        builder.Writeln("Please fill the form below:");
 
-        // Save the original document (optional, just to show the before state).
+        // Insert a text input form field named "MyField" with default text "Old value".
+        // The overload requires a format string (empty) and a maximum length (0 = no limit).
+        FormField textField = builder.InsertTextInput("MyField", TextFormFieldType.Regular, "Old value", "", 0);
+
+        // Save the initial document.
         doc.Save("Original.docx");
 
-        // Locate the form field by its name using the document's FormFields collection.
-        FormField formField = doc.Range.FormFields["MyTextField"];
-        if (formField != null)
+        // ---------- Load the document and modify the form field ----------
+        Document loadedDoc = new Document("Original.docx");
+
+        // The form field resides in the second paragraph (index 1).
+        Paragraph paragraphWithField = loadedDoc.FirstSection.Body.Paragraphs[1];
+
+        // Obtain the range of that paragraph. Use the fully qualified Aspose.Words.Range to avoid ambiguity with System.Range.
+        Aspose.Words.Range targetRange = paragraphWithField.Range;
+
+        // Update the value of the text input form field within this range.
+        if (targetRange.FormFields.Count > 0)
         {
-            // Update the value (result) of the text input form field.
-            formField.Result = "Updated value";
+            // Apply the new value to the first form field in the range.
+            targetRange.FormFields[0].SetTextInputValue("New value");
         }
 
-        // Demonstrate accessing the form field via the range that contains it.
-        // The form field resides inside a paragraph; we can get that paragraph's range.
-        // This shows how a range can be used to work with nodes inside it.
-        // Paragraph paragraph = (Paragraph)formField.Start.ParentNode;
-        // paragraph.Range.FormFields[0].Result = "Updated via range";
-
-        // Save the modified document.
-        doc.Save("Updated.docx");
+        // Save the updated document.
+        loadedDoc.Save("Updated.docx");
     }
 }

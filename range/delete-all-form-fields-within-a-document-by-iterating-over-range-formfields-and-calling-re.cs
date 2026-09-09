@@ -1,51 +1,45 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class DeleteAllFormFields
+namespace DeleteFormFieldsExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a few different form fields.
-        builder.Write("Choose a value: ");
-        builder.InsertComboBox("ComboBox", new[] { "One", "Two", "Three" }, 0);
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
-        builder.Write("Check this box: ");
-        builder.InsertCheckBox("CheckBox", false, 50);
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
-        builder.Write("Enter text: ");
-        builder.InsertTextInput("TextInput", TextFormFieldType.Regular, "", "Placeholder", 50);
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
-        // Save the document with form fields (optional, just to see the initial state).
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-        string initialPath = Path.Combine(outputDir, "DocumentWithFormFields.docx");
-        doc.Save(initialPath);
-
-        // Iterate over the FormFields collection and remove each form field.
-        // Collect fields first to avoid modifying the collection while iterating.
-        List<FormField> fieldsToRemove = new List<FormField>();
-        foreach (FormField field in doc.Range.FormFields)
+        public static void Main()
         {
-            fieldsToRemove.Add(field);
-        }
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        foreach (FormField field in fieldsToRemove)
-        {
-            field.RemoveField();
-        }
+            // Insert a combo box form field.
+            builder.Write("Choose a value: ");
+            FormField comboBox = builder.InsertComboBox("MyComboBox", new[] { "One", "Two", "Three" }, 0);
+            builder.InsertParagraph();
 
-        // Save the cleaned document.
-        string cleanedPath = Path.Combine(outputDir, "DocumentWithoutFormFields.docx");
-        doc.Save(cleanedPath);
+            // Insert a check box form field.
+            builder.Write("Accept terms: ");
+            FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 50);
+            builder.InsertParagraph();
+
+            // Insert a text input form field.
+            builder.Write("Enter name: ");
+            FormField textInput = builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Placeholder", 50);
+            builder.InsertParagraph();
+
+            // Save the document with form fields (optional, just to demonstrate the before state).
+            doc.Save("DocumentWithFormFields.docx");
+
+            // Delete all form fields by iterating over the FormFields collection and removing each field.
+            FormFieldCollection formFields = doc.Range.FormFields;
+            for (int i = formFields.Count - 1; i >= 0; i--)
+            {
+                // Remove the complete form field.
+                formFields[i].RemoveField();
+            }
+
+            // Save the resulting document without form fields.
+            doc.Save("DocumentWithoutFormFields.docx");
+        }
     }
 }

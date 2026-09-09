@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -8,17 +7,15 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add some sample text to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is some sample text that will be deleted.");
 
-        // Add some sample text to the document body.
-        builder.Writeln("Hello world!");
-        builder.Writeln("This text will be removed.");
-
-        // Delete all characters in the document's range.
+        // Delete all characters in the document's body by calling Delete on the document's Range.
         doc.Range.Delete();
 
-        // Save the resulting (empty) document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedBody.docx");
-        doc.Save(outputPath);
+        // Save the resulting (empty) document to a file in the current directory.
+        doc.Save("DeletedContent.docx");
     }
 }

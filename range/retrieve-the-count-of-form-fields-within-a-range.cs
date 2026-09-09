@@ -6,26 +6,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a combo box form field.
-        builder.InsertComboBox("MyComboBox", new[] { "One", "Two", "Three" }, 0);
+        builder.Write("Choose a value: ");
+        builder.InsertComboBox("ComboBox", new[] { "One", "Two", "Three" }, 0);
+        builder.InsertBreak(BreakType.ParagraphBreak);
 
         // Insert a check box form field.
-        builder.InsertCheckBox("MyCheckBox", false, 50);
+        builder.Write("Check this box: ");
+        builder.InsertCheckBox("CheckBox", false, 50);
+        builder.InsertBreak(BreakType.ParagraphBreak);
 
         // Insert a text input form field.
-        builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Placeholder text", 50);
+        builder.Write("Enter text: ");
+        builder.InsertTextInput("TextInput", TextFormFieldType.Regular, "", "Placeholder", 50);
 
-        // Retrieve the count of form fields in the document's range.
+        // Retrieve the count of form fields in the whole document range.
         int formFieldCount = doc.Range.FormFields.Count;
 
-        // Output the count to the console.
+        // Output the count.
         Console.WriteLine($"Number of form fields in the document: {formFieldCount}");
 
-        // Save the document (optional, demonstrates that the document was created).
-        doc.Save("FormFields.docx");
+        // Save the document (optional, demonstrates that the document is valid).
+        doc.Save("FormFieldsCount.docx");
     }
 }

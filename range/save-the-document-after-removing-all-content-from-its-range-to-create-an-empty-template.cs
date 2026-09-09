@@ -9,19 +9,17 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add some sample content that will be removed.
+        // Add some sample content so we can demonstrate the removal.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This text will be removed.");
+        builder.Writeln("This text will be removed from the document.");
 
-        // Delete all characters in the document's range, leaving an empty template.
+        // Remove all characters (nodes) from the whole document range.
         doc.Range.Delete();
 
-        // Ensure the output directory exists.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
+        // Define the output file path (saved in the current working directory).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EmptyTemplate.docx");
 
-        // Save the empty template.
-        string outputPath = Path.Combine(outputDir, "EmptyTemplate.docx");
+        // Save the now empty document as a template.
         doc.Save(outputPath);
     }
 }
