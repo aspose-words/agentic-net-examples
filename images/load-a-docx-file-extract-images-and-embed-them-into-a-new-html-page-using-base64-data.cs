@@ -1,10 +1,8 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Aspose.Drawing.Common namespace
+using Aspose.Drawing;
 
 public class Program
 {
@@ -14,112 +12,70 @@ public class Program
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a deterministic sample image (sample.png).
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        const int imgWidth = 200;
-        const int imgHeight = 200;
-
-        // Create bitmap and fill with a solid color.
-        Bitmap bitmap = new Bitmap(imgWidth, imgHeight);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.LightBlue);
-        // Dispose drawing objects.
-        graphics.Dispose();
-        bitmap.Save(sampleImagePath);
-        bitmap.Dispose();
-
-        // -----------------------------------------------------------------
-        // Step 2: Create a DOCX document and insert the sample image.
-        // -----------------------------------------------------------------
+        // File paths.
+        string imagePath = Path.Combine(artifactsDir, "sample.png");
         string docPath = Path.Combine(artifactsDir, "sample.docx");
+        string htmlPath = Path.Combine(artifactsDir, "output.html");
+
+        // 1. Create a deterministic sample image.
+        CreateSampleImage(imagePath);
+
+        // 2. Create a DOCX document and insert the image.
+        CreateDocumentWithImage(docPath, imagePath);
+
+        // 3. Load the DOCX and save it as HTML with images embedded as Base64.
+        SaveDocumentAsHtmlWithBase64(docPath, htmlPath);
+
+        // Validate that the HTML file was created.
+        if (!File.Exists(htmlPath))
+            throw new InvalidOperationException("HTML output was not created.");
+    }
+
+    private static void CreateSampleImage(string filePath)
+    {
+        const int width = 200;
+        const int height = 100;
+
+        // Use Aspose.Drawing to generate the image.
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                // Fill background with white.
+                graphics.Clear(Color.White);
+            }
+
+            // Save the bitmap to a deterministic file name.
+            bitmap.Save(filePath);
+        }
+    }
+
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        // Create a blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
+
+        // Insert the previously created image.
+        builder.InsertImage(imagePath);
+
+        // Save the document.
         doc.Save(docPath);
+    }
 
-        // -----------------------------------------------------------------
-        // Step 3: Load the DOCX document.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
+    private static void SaveDocumentAsHtmlWithBase64(string docPath, string htmlPath)
+    {
+        // Load the document that contains the image.
+        Document doc = new Document(docPath);
 
-        // -----------------------------------------------------------------
-        // Step 4: Extract images from the document.
-        // -----------------------------------------------------------------
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        List<string> base64Images = new List<string>();
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // Configure HTML save options to embed images as Base64.
+        HtmlSaveOptions options = new HtmlSaveOptions
         {
-            if (!shape.HasImage)
-                continue;
+            ExportImagesAsBase64 = true,
+            PrettyFormat = true
+        };
 
-            // Get raw image bytes.
-            byte[] imageBytes = shape.ImageData.ImageBytes;
-            if (imageBytes == null || imageBytes.Length == 0)
-                continue;
-
-            // Determine MIME type from image extension.
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType).ToLowerInvariant(); // e.g., ".png"
-            string mime;
-            switch (extension)
-            {
-                case ".png":
-                    mime = "image/png";
-                    break;
-                case ".jpeg":
-                case ".jpg":
-                    mime = "image/jpeg";
-                    break;
-                case ".gif":
-                    mime = "image/gif";
-                    break;
-                case ".bmp":
-                    mime = "image/bmp";
-                    break;
-                case ".webp":
-                    mime = "image/webp";
-                    break;
-                case ".tiff":
-                case ".tif":
-                    mime = "image/tiff";
-                    break;
-                default:
-                    mime = "application/octet-stream";
-                    break;
-            }
-
-            // Convert to Base64 and build data URI.
-            string base64 = Convert.ToBase64String(imageBytes);
-            string dataUri = $"data:{mime};base64,{base64}";
-            base64Images.Add(dataUri);
-        }
-
-        // Validate that at least one image was extracted.
-        if (base64Images.Count == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        // -----------------------------------------------------------------
-        // Step 5: Generate HTML with embedded Base64 images.
-        // -----------------------------------------------------------------
-        string htmlPath = Path.Combine(artifactsDir, "output.html");
-        using (StreamWriter writer = new StreamWriter(htmlPath, false))
-        {
-            writer.WriteLine("<!DOCTYPE html>");
-            writer.WriteLine("<html>");
-            writer.WriteLine("<head><meta charset=\"UTF-8\"><title>Extracted Images</title></head>");
-            writer.WriteLine("<body>");
-            foreach (string dataUri in base64Images)
-            {
-                writer.WriteLine($"<img src=\"{dataUri}\" alt=\"Embedded Image\" style=\"margin:10px;\" />");
-            }
-            writer.WriteLine("</body>");
-            writer.WriteLine("</html>");
-        }
-
-        // -----------------------------------------------------------------
-        // Completion message (optional, not required for non‑interactive run).
-        // -----------------------------------------------------------------
-        Console.WriteLine($"HTML file with embedded images created at: {htmlPath}");
+        // Save as HTML; images will be embedded directly in the <img> tags.
+        doc.Save(htmlPath, options);
     }
 }

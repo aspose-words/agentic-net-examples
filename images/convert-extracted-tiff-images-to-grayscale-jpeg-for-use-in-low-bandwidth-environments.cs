@@ -1,7 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
@@ -10,80 +10,110 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
+        // Prepare a folder for all generated files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a sample TIFF image using Aspose.Drawing
-        string tiffPath = Path.Combine(artifactsDir, "sample.tif");
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200))
+        // 1. Create a sample TIFF image.
+        string tiffPath = Path.Combine(artifactsDir, "sample.tiff");
+        CreateSampleTiff(tiffPath);
+
+        // 2. Insert the TIFF image into a Word document.
+        string docPath = Path.Combine(artifactsDir, "docWithTiff.docx");
+        InsertImageIntoDocument(tiffPath, docPath);
+
+        // 3. Extract the image(s) from the document and convert each to a grayscale JPEG.
+        ConvertExtractedImagesToGrayscaleJpeg(docPath, artifactsDir);
+    }
+
+    // Creates a deterministic 200x200 TIFF image with a red rectangle.
+    private static void CreateSampleTiff(string filePath)
+    {
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
                 g.Clear(Aspose.Drawing.Color.White);
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
+                using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.Red))
                 {
-                    g.DrawRectangle(pen, 20, 20, 160, 160);
-                }
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-                {
-                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red))
-                    {
-                        g.DrawString("TIFF", font, brush, new Aspose.Drawing.PointF(50, 80));
-                    }
+                    g.FillRectangle(brush, 20, 20, 160, 160);
                 }
             }
-            bitmap.Save(tiffPath, Aspose.Drawing.Imaging.ImageFormat.Tiff);
+
+            bitmap.Save(filePath, ImageFormat.Tiff);
         }
 
-        // 2. Insert the TIFF image into a Word document
+        if (!File.Exists(filePath))
+            throw new Exception("Failed to create sample TIFF image.");
+    }
+
+    // Inserts the provided image file into a new Word document.
+    private static void InsertImageIntoDocument(string imagePath, string docPath)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(tiffPath);
-        string docPath = Path.Combine(artifactsDir, "DocumentWithTiff.docx");
+        builder.InsertImage(imagePath);
         doc.Save(docPath);
 
-        // 3. Load the document and extract images
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        if (!File.Exists(docPath))
+            throw new Exception("Failed to save document with TIFF image.");
+    }
+
+    // Extracts all images from the document, converts each to grayscale,
+    // and saves the result as a JPEG file.
+    private static void ConvertExtractedImagesToGrayscaleJpeg(string docPath, string outputDir)
+    {
+        Document doc = new Document(docPath);
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
 
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        foreach (Shape shape in shapes.OfType<Shape>())
         {
             if (!shape.HasImage)
-                continue; // Skip shapes without images
+                continue;
 
-            // Save the image to a memory stream
+            // Save the original image to a memory stream.
             using (MemoryStream imageStream = new MemoryStream())
             {
                 shape.ImageData.Save(imageStream);
-                imageStream.Position = 0;
+                imageStream.Position = 0; // Reset before reading.
 
-                // 4. Create a temporary document containing only this image
-                Document tempDoc = new Document();
-                DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-                tempBuilder.InsertImage(imageStream);
-
-                // 5. Save the temporary document as a grayscale JPEG
-                ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
+                // Load the image into a bitmap for pixel manipulation.
+                using (Bitmap bitmap = new Bitmap(imageStream))
                 {
-                    ImageColorMode = ImageColorMode.Grayscale,
-                    JpegQuality = 80
-                };
+                    // Convert the bitmap to grayscale.
+                    ConvertBitmapToGrayscale(bitmap);
 
-                string jpegPath = Path.Combine(artifactsDir, $"Image_{imageIndex}_grayscale.jpg");
-                tempDoc.Save(jpegPath, jpegOptions);
+                    // Prepare the output JPEG path.
+                    string jpegPath = Path.Combine(outputDir, $"grayscale_{imageIndex}.jpg");
 
-                // Validate that the JPEG file was created
-                if (!File.Exists(jpegPath))
-                    throw new InvalidOperationException($"Failed to create JPEG file: {jpegPath}");
+                    // Save the grayscale bitmap as JPEG.
+                    bitmap.Save(jpegPath, ImageFormat.Jpeg);
 
-                imageIndex++;
+                    if (!File.Exists(jpegPath))
+                        throw new Exception($"Failed to save JPEG image: {jpegPath}");
+
+                    imageIndex++;
+                }
             }
         }
 
-        // Ensure at least one image was processed
         if (imageIndex == 0)
-            throw new InvalidOperationException("No images were found to convert.");
+            throw new Exception("No images were found and converted.");
+    }
+
+    // Performs a per‑pixel grayscale conversion using the standard luminance formula.
+    private static void ConvertBitmapToGrayscale(Bitmap bitmap)
+    {
+        for (int y = 0; y < bitmap.Height; y++)
+        {
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                Aspose.Drawing.Color original = bitmap.GetPixel(x, y);
+                int gray = (int)(0.3 * original.R + 0.59 * original.G + 0.11 * original.B);
+                Aspose.Drawing.Color grayColor = Aspose.Drawing.Color.FromArgb(gray, gray, gray);
+                bitmap.SetPixel(x, y, grayColor);
+            }
+        }
     }
 }

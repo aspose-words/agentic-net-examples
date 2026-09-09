@@ -11,72 +11,78 @@ public class Program
 {
     public static void Main()
     {
-        // Directories for artifacts.
+        // Prepare folders.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
+        string inputImagePath = Path.Combine(artifactsDir, "sample.jpg");
+        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
 
-        // 1. Create a sample JPEG image using Aspose.Drawing.
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.jpg");
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        // 1. Create a sample JPEG image.
+        using (Bitmap bmp = new Bitmap(200, 200))
+        using (Graphics g = Graphics.FromImage(bmp))
         {
-            graphics.Clear(Color.LightBlue);
-            graphics.DrawEllipse(new Pen(Color.DarkBlue, 5), 20, 20, 160, 160);
-            bitmap.Save(sampleImagePath, ImageFormat.Jpeg);
+            g.Clear(Aspose.Drawing.Color.LightBlue);
+            g.DrawEllipse(new Pen(Aspose.Drawing.Color.DarkBlue, 5), 20, 20, 160, 160);
+            bmp.Save(inputImagePath, ImageFormat.Jpeg);
         }
 
-        // 2. Create a Word document and insert the JPEG image.
+        // 2. Insert the image into a Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        string docPath = Path.Combine(artifactsDir, "Document.docx");
+        builder.InsertImage(inputImagePath);
         doc.Save(docPath);
 
         // 3. Load the document and extract JPEG images.
         Document loadedDoc = new Document(docPath);
-        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true).Cast<Shape>()
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                              .Cast<Shape>()
                               .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Jpeg)
                               .ToList();
 
-        if (shapes.Count == 0)
+        if (!shapes.Any())
             throw new InvalidOperationException("No JPEG images were found in the document.");
 
         int index = 0;
         foreach (var shape in shapes)
         {
-            // Save the original image to a memory stream.
+            // Save original image to a memory stream.
             using (MemoryStream originalStream = new MemoryStream())
             {
                 shape.ImageData.Save(originalStream);
                 originalStream.Position = 0;
 
                 // Load the image with Aspose.Drawing.
-                using (Image image = Image.FromStream(originalStream))
+                using (Bitmap originalBitmap = new Bitmap(originalStream))
                 {
-                    // Prepare encoder parameters for progressive JPEG with reduced quality.
+                    // Prepare JPEG encoder with progressive (interlaced) encoding and quality.
                     ImageCodecInfo jpegCodec = ImageCodecInfo.GetImageEncoders()
                                                              .First(c => c.FormatID == ImageFormat.Jpeg.Guid);
-
                     EncoderParameters encoderParams = new EncoderParameters(2);
-                    // Quality = 70 (out of 100).
-                    encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 70L);
-                    // Enable progressive (interlaced) encoding.
-                    encoderParams.Param[1] = new EncoderParameter(Encoder.ScanMethod,
-                                                                  (long)EncoderValue.ScanMethodInterlaced);
+                    // Quality = 70 (adjust as needed).
+                    EncoderParameter qualityParam = new EncoderParameter(Encoder.Quality, 70L);
+                    // Progressive (interlaced) scan method.
+                    EncoderParameter scanParam = new EncoderParameter(Encoder.ScanMethod, (long)EncoderValue.ScanMethodInterlaced);
+                    encoderParams.Param[0] = qualityParam;
+                    encoderParams.Param[1] = scanParam;
 
-                    // Save the compressed image.
+                    // Save the compressed progressive JPEG.
                     string compressedPath = Path.Combine(artifactsDir, $"compressed_{index}.jpg");
-                    image.Save(compressedPath, jpegCodec, encoderParams);
+                    originalBitmap.Save(compressedPath, jpegCodec, encoderParams);
 
-                    // Validate that the file was created.
-                    if (!File.Exists(compressedPath))
-                        throw new InvalidOperationException($"Failed to create compressed image: {compressedPath}");
+                    // Validate that the compressed file exists and is smaller.
+                    FileInfo originalInfo = new FileInfo(inputImagePath);
+                    FileInfo compressedInfo = new FileInfo(compressedPath);
+                    if (!compressedInfo.Exists)
+                        throw new InvalidOperationException($"Compressed image not created: {compressedPath}");
+                    if (compressedInfo.Length >= originalInfo.Length)
+                        Console.WriteLine($"Warning: Compressed image {compressedInfo.Name} is not smaller than the original.");
 
                     index++;
                 }
             }
         }
 
-        // All done – the compressed JPEG images are stored in the Artifacts folder.
+        // Indicate completion.
+        Console.WriteLine("Image compression with progressive encoding completed.");
     }
 }

@@ -1,87 +1,95 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Markup;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
+using Aspose.Words.Markup;
+using Aspose.Drawing; // Aspose.Drawing namespace for Bitmap, Graphics, Color
 
-public class Program
+public class ExtractImagesFromContentControls
 {
     public static void Main()
     {
+        // Folder for all generated files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
         // -----------------------------------------------------------------
-        // 1. Create a deterministic sample image (sample.png)
+        // 1. Create a sample image that will be inserted into the document.
         // -----------------------------------------------------------------
-        const string sampleImagePath = "sample.png";
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(100, 100);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.White);
-        using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black))
+        string sampleImagePath = Path.Combine(outputDir, "sample.png");
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
-            graphics.DrawRectangle(pen, 10, 10, 80, 80);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                // Fill the bitmap with a solid white color.
+                g.Clear(Color.White);
+            }
+            // Save the bitmap so it can be used later.
+            bitmap.Save(sampleImagePath);
         }
-        bitmap.Save(sampleImagePath);
-        graphics.Dispose();
-        bitmap.Dispose();
 
-        // -----------------------------------------------------------------
-        // 2. Create a DOCX with two content controls, each containing the image
-        // -----------------------------------------------------------------
-        const string docPath = "sample.docx";
+        // --------------------------------------------------------------
+        // 2. Build a DOCX containing several content controls with images.
+        // --------------------------------------------------------------
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Helper to create a content control with an image inside
-        void AddImageContentControl(string tag, string title)
+        // Helper to create a content control, insert a paragraph and an image.
+        void InsertImageIntoContentControl(string tag, string title)
         {
-            // Create the StructuredDocumentTag (content control)
+            // Create a block‑level rich‑text content control.
             StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-            sdt.Tag = tag;
+            sdt.Tag = tag;          // Identifier that will be used for the file name.
             sdt.Title = title;
 
-            // Create a paragraph that will hold the image
-            Paragraph para = new Paragraph(doc);
-            sdt.AppendChild(para);
-
-            // Insert the content control into the document body
+            // Append the content control directly to the document body.
             doc.FirstSection.Body.AppendChild(sdt);
 
-            // Use a DocumentBuilder positioned inside the paragraph to insert the image
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Content controls must contain a paragraph before an image can be added.
+            Paragraph para = new Paragraph(doc);
+            sdt.AppendChild(para);
             builder.MoveTo(para);
+
+            // Insert the previously created sample image.
             builder.InsertImage(sampleImagePath);
         }
 
-        // First content control
-        AddImageContentControl("ImageControl1", "First Image Control");
+        // Create a few distinct content controls.
+        InsertImageIntoContentControl("ControlA", "First control");
+        InsertImageIntoContentControl("ControlB", "Second control");
+        InsertImageIntoContentControl("ControlC", "Third control");
 
-        // Add an empty paragraph to separate the controls
-        doc.FirstSection.Body.AppendChild(new Paragraph(doc));
-
-        // Second content control
-        AddImageContentControl("ImageControl2", "Second Image Control");
-
-        // Save the document
+        // Save the document that now holds the images inside content controls.
+        string docPath = Path.Combine(outputDir, "sample.docx");
         doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document and extract images from the content controls
-        // -----------------------------------------------------------------
+        // --------------------------------------------------------------
+        // 3. Load the document and extract images from each content control.
+        // --------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
-        NodeCollection sdtNodes = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true);
         int totalExtracted = 0;
 
+        // Get all StructuredDocumentTag nodes (content controls) in the document.
+        NodeCollection sdtNodes = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true);
         foreach (StructuredDocumentTag sdt in sdtNodes)
         {
-            string tag = !string.IsNullOrEmpty(sdt.Tag) ? sdt.Tag : "untagged";
-            int imageIndex = 0;
+            // Use the Tag property as the identifier for naming extracted files.
+            string controlId = string.IsNullOrEmpty(sdt.Tag) ? $"Control_{sdt.Id}" : sdt.Tag;
 
+            // Find all Shape nodes that are descendants of the current content control.
             NodeCollection shapeNodes = sdt.GetChildNodes(NodeType.Shape, true);
+            int imageIndex = 0;
             foreach (Shape shape in shapeNodes)
             {
                 if (shape.HasImage)
                 {
-                    string outFileName = $"{tag}_{imageIndex}.png";
-                    shape.ImageData.Save(outFileName);
+                    // Determine the appropriate file extension for the image type.
+                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                    string imageFileName = $"{controlId}_{imageIndex}{extension}";
+                    string imageFullPath = Path.Combine(outputDir, imageFileName);
+
+                    // Save the image to the file system.
+                    shape.ImageData.Save(imageFullPath);
                     imageIndex++;
                     totalExtracted++;
                 }
@@ -92,7 +100,6 @@ public class Program
         if (totalExtracted == 0)
             throw new InvalidOperationException("No images were extracted from the content controls.");
 
-        // Indicate success (non‑interactive).
-        Console.WriteLine($"Extraction complete. {totalExtracted} image(s) saved.");
+        // The program finishes automatically; all files are written to the Output folder.
     }
 }

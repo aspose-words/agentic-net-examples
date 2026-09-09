@@ -10,25 +10,31 @@ public class ExtractChartImages
 {
     public static void Main()
     {
-        // Prepare working folders.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        string outputDir = Path.Combine(workDir, "ExtractedImages");
-        Directory.CreateDirectory(workDir);
+        // Prepare output folders.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string outputDir = Path.Combine(artifactsDir, "ExtractedImages");
         Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample DOCX that contains an embedded chart.
+        // 1. Create a sample DOCX that contains an embedded Excel chart.
         // -----------------------------------------------------------------
-        string docPath = Path.Combine(workDir, "SampleWithChart.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple column chart. The chart is stored as a Shape.
-        builder.InsertChart(ChartType.Column, 400, 300);
+        // Insert a simple column chart.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        Chart chart = chartShape.Chart;
+
+        // Set a title – data population is optional for extraction purposes.
+        chart.Title.Text = "Sample Chart";
+
+        // Save the document.
+        string docPath = Path.Combine(artifactsDir, "SampleWithChart.docx");
         doc.Save(docPath);
 
         // -----------------------------------------------------------------
-        // 2. Load the document and extract images from chart shapes.
+        // 2. Load the document and extract images from embedded charts.
         // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
@@ -36,31 +42,29 @@ public class ExtractChartImages
         int imageIndex = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // If the shape already contains an image (e.g., a picture), save it directly.
+            // Save any shape that already contains an image.
             if (shape.HasImage)
             {
-                string outFile = Path.Combine(outputDir,
-                    $"ChartImage_{imageIndex}{FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType)}");
-                shape.ImageData.Save(outFile);
+                string ext = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string fileName = Path.Combine(outputDir, $"Image_{imageIndex}{ext}");
+                shape.ImageData.Save(fileName);
                 imageIndex++;
                 continue;
             }
 
-            // If the shape is a chart, render it to a PNG image.
-            // In Aspose.Words the presence of a chart can be checked via HasChart.
-            if (shape.HasChart)
+            // If the shape is a chart, render it to PNG.
+            if (shape.Chart != null)
             {
-                string outFile = Path.Combine(outputDir, $"ChartImage_{imageIndex}.png");
+                string fileName = Path.Combine(outputDir, $"Chart_{imageIndex}.png");
+                // Use ImageSaveOptions to specify PNG format.
                 ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
-                shape.GetShapeRenderer().Save(outFile, options);
+                shape.GetShapeRenderer().Save(fileName, options);
                 imageIndex++;
             }
         }
 
-        // -----------------------------------------------------------------
-        // 3. Validate that at least one image was extracted.
-        // -----------------------------------------------------------------
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No chart images were extracted from the document.");
+        // Validate that at least one image was extracted.
+        if (Directory.GetFiles(outputDir).Length == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
     }
 }

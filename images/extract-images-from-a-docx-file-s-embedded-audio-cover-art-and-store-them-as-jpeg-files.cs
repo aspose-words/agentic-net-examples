@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -11,80 +11,81 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Paths for the sample cover image and the DOCX file.
-        string coverImagePath = Path.Combine(artifactsDir, "cover.png");
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
+        // Prepare folders
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
         // 1. Create a deterministic sample image that will act as audio cover art.
-        CreateSampleCoverImage(coverImagePath);
+        string coverImagePath = Path.Combine(workDir, "cover.png");
+        CreateSampleCoverImage(coverImagePath, 200, 200);
 
-        // 2. Create a DOCX document and insert the cover image.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape imageShape = builder.InsertImage(coverImagePath);
-        imageShape.Width = 200;   // set explicit size
-        imageShape.Height = 200;
-        doc.Save(docPath);
+        // 2. Build a DOCX document and insert the cover image.
+        string docPath = Path.Combine(workDir, "SampleWithAudio.docx");
+        CreateDocumentWithCoverImage(docPath, coverImagePath);
 
-        // 3. Load the document and extract all images (cover art) as JPEG files.
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
+        // 3. Extract all images (cover art) from the document and save them as JPEG files.
+        ExtractImagesAsJpeg(docPath, workDir);
 
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
-        {
-            if (shape.HasImage)
-            {
-                // Save the image data to a memory stream.
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    shape.ImageData.Save(ms);
-                    ms.Position = 0;
+        // Validation – ensure at least one JPEG was created.
+        int jpegCount = Directory.GetFiles(workDir, "*.jpg").Length;
+        if (jpegCount == 0)
+            throw new InvalidOperationException("No JPEG images were extracted from the document.");
 
-                    // Load the image with Aspose.Drawing and re‑save it as JPEG.
-                    using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(ms))
-                    {
-                        string outFile = Path.Combine(artifactsDir, $"CoverArt_{extractedCount}.jpg");
-                        img.Save(outFile, ImageFormat.Jpeg);
-                        extractedCount++;
-                    }
-                }
-            }
-        }
-
-        // Validate that at least one image was extracted.
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
+        // The example finishes without requiring user interaction.
     }
 
-    // Creates a simple 200×200 PNG image with deterministic content.
-    private static void CreateSampleCoverImage(string filePath)
+    // Creates a simple solid‑color PNG image using Aspose.Drawing.
+    private static void CreateSampleCoverImage(string filePath, int width, int height)
     {
-        int width = 200;
-        int height = 200;
-
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        using (Bitmap bitmap = new Bitmap(width, height))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Aspose.Drawing.Color.LightBlue);
+            graphics.Clear(Color.CornflowerBlue);
+            bitmap.Save(filePath, ImageFormat.Png);
+        }
+    }
 
-                // Draw deterministic text.
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
+    // Generates a DOCX file that contains the previously created image.
+    private static void CreateDocumentWithCoverImage(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert the image inline – in a real scenario this would be the audio object's cover art.
+        builder.InsertImage(imagePath);
+
+        doc.Save(docPath, SaveFormat.Docx);
+    }
+
+    // Extracts every image from the document, converts it to JPEG, and writes it to the output folder.
+    private static void ExtractImagesAsJpeg(string docPath, string outputFolder)
+    {
+        Document doc = new Document(docPath);
+
+        // Get all shape nodes (they may contain images).
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+
+        int imageIndex = 0;
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        {
+            if (!shape.HasImage)
+                continue;
+
+            // Save the shape's image data to a memory stream.
+            using (MemoryStream imgStream = new MemoryStream())
+            {
+                shape.ImageData.Save(imgStream);
+                imgStream.Position = 0;
+
+                // Load the image with Aspose.Drawing and re‑save it as JPEG.
+                using (Bitmap bitmap = new Bitmap(imgStream))
                 {
-                    graphics.DrawString(
-                        "Cover",
-                        font,
-                        Aspose.Drawing.Brushes.Black,
-                        new Aspose.Drawing.PointF(20, 80));
+                    string jpegPath = Path.Combine(outputFolder, $"CoverArt_{imageIndex}.jpg");
+                    bitmap.Save(jpegPath, ImageFormat.Jpeg);
                 }
             }
 
-            bitmap.Save(filePath);
+            imageIndex++;
         }
     }
 }

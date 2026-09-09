@@ -1,149 +1,167 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
-using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 
-public class Program
+public class BatchImageExtractor
 {
     public static void Main()
     {
-        // Root folder for all generated data.
-        string rootFolder = Path.Combine(Directory.GetCurrentDirectory(), "BatchImageDemo");
-        string odtFolder = Path.Combine(rootFolder, "OdtFiles");
-        string extractedImagesFolder = Path.Combine(rootFolder, "ExtractedImages");
-        string catalogFolder = Path.Combine(rootFolder, "Catalog");
+        // Define deterministic folders relative to the executable directory.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string imagesDir = Path.Combine(baseDir, "ExtractedImages");
+        string catalogDir = Path.Combine(baseDir, "Catalog");
 
-        // Ensure folders exist.
-        Directory.CreateDirectory(odtFolder);
-        Directory.CreateDirectory(extractedImagesFolder);
-        Directory.CreateDirectory(catalogFolder);
+        // Ensure clean environment.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(imagesDir);
+        Directory.CreateDirectory(catalogDir);
 
-        // 1. Create deterministic sample images.
-        string[] sampleImagePaths = CreateSampleImages(rootFolder);
+        // Step 1: Create sample images and ODT documents that contain them.
+        CreateSampleDocuments(inputDir);
 
-        // 2. Create a few ODT documents that contain those images.
-        CreateSampleOdtFiles(odtFolder, sampleImagePaths);
+        // Step 2: Batch process ODT files, extract images, and collect info for the catalog.
+        var catalogEntries = ProcessDocumentsAndExtractImages(inputDir, imagesDir);
 
-        // 3. Batch extract images from all ODT files.
-        List<string> extractedImageFiles = ExtractImagesFromOdtFiles(odtFolder, extractedImagesFolder);
+        // Step 3: Build a searchable PDF catalog that lists each source document and its images.
+        CreatePdfCatalog(catalogEntries, catalogDir);
 
-        // Validate that at least one image was extracted.
-        if (extractedImageFiles.Count == 0)
+        // Validation: ensure at least one image was extracted and catalog PDF exists.
+        if (!catalogEntries.Any())
             throw new InvalidOperationException("No images were extracted from the ODT files.");
 
-        // 4. Build a searchable PDF catalog that lists the extracted images.
-        CreatePdfCatalog(extractedImageFiles, catalogFolder);
-
-        // The example finishes automatically.
+        string catalogPdfPath = Path.Combine(catalogDir, "ImageCatalog.pdf");
+        if (!File.Exists(catalogPdfPath))
+            throw new FileNotFoundException("The PDF catalog was not created.", catalogPdfPath);
     }
 
-    // Creates two simple PNG images using Aspose.Drawing and returns their file paths.
-    private static string[] CreateSampleImages(string rootFolder)
+    // Creates a few ODT files, each containing a deterministic sample image.
+    private static void CreateSampleDocuments(string inputDir)
     {
-        string[] paths = new string[2];
-        for (int i = 0; i < 2; i++)
-        {
-            string filePath = Path.Combine(rootFolder, $"sample{i + 1}.png");
-            using (Bitmap bitmap = new Bitmap(200, 200))
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                // Fill with a distinct color.
-                Aspose.Drawing.Color fillColor = i == 0
-                    ? Aspose.Drawing.Color.FromArgb(255, 100, 150, 200) // Light blue
-                    : Aspose.Drawing.Color.FromArgb(255, 200, 150, 100); // Light orange
-                g.Clear(fillColor);
-                bitmap.Save(filePath);
-            }
-            paths[i] = filePath;
-        }
-        return paths;
-    }
-
-    // Generates three ODT documents, each containing one of the sample images.
-    private static void CreateSampleOdtFiles(string odtFolder, string[] sampleImages)
-    {
+        // Create three sample images.
         for (int i = 0; i < 3; i++)
         {
+            string imagePath = Path.Combine(inputDir, $"sample{i}.png");
+            CreateSampleImage(imagePath, 200 + i * 50, 150 + i * 30, i);
+        }
+
+        // Insert each image into its own ODT document.
+        for (int i = 0; i < 3; i++)
+        {
+            string imagePath = Path.Combine(inputDir, $"sample{i}.png");
+            string odtPath = Path.Combine(inputDir, $"Document{i}.odt");
+
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-
-            builder.Writeln($"Document {i + 1} – contains an image.");
-            // Alternate between the two sample images.
-            string imagePath = sampleImages[i % sampleImages.Length];
+            builder.Writeln($"Document {i + 1} containing an image.");
             builder.InsertImage(imagePath);
-
-            string odtPath = Path.Combine(odtFolder, $"SampleDocument{i + 1}.odt");
             doc.Save(odtPath, SaveFormat.Odt);
         }
     }
 
-    // Extracts all images from every ODT file in the source folder.
-    private static List<string> ExtractImagesFromOdtFiles(string odtFolder, string outputFolder)
+    // Generates a deterministic PNG image using Aspose.Drawing.
+    private static void CreateSampleImage(string filePath, int width, int height, int seed)
     {
-        List<string> extractedFiles = new List<string>();
-        string[] odtFiles = Directory.GetFiles(odtFolder, "*.odt");
-
-        foreach (string odtPath in odtFiles)
+        using (Bitmap bitmap = new Bitmap(width, height))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            // Load the ODT document.
-            Document doc = new Document(odtPath, new LoadOptions());
+            // Fill background with a color derived from the seed.
+            int r = (seed * 70) % 256;
+            int g = (seed * 130) % 256;
+            int b = (seed * 200) % 256;
+            graphics.Clear(Color.FromArgb(r, g, b));
 
-            // Get all shape nodes (including images).
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 0;
+            // Draw a simple rectangle border.
+            graphics.DrawRectangle(new Pen(Color.White, 3), 5, 5, width - 10, height - 10);
 
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
-            {
-                if (!shape.HasImage)
-                    continue;
-
-                // Determine proper file extension.
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imageFileName = $"{Path.GetFileNameWithoutExtension(odtPath)}_img{imageIndex}{extension}";
-                string imageFullPath = Path.Combine(outputFolder, imageFileName);
-
-                // Save the image.
-                shape.ImageData.Save(imageFullPath);
-                extractedFiles.Add(imageFullPath);
-                imageIndex++;
-            }
+            bitmap.Save(filePath);
         }
-
-        return extractedFiles;
     }
 
-    // Creates a PDF catalog that lists each extracted image with a caption.
-    private static void CreatePdfCatalog(List<string> imageFiles, string catalogFolder)
+    // Processes each ODT file, extracts images, and returns catalog data.
+    private static CatalogEntry[] ProcessDocumentsAndExtractImages(string inputDir, string imagesDir)
+    {
+        var odtFiles = Directory.GetFiles(inputDir, "*.odt");
+        var entries = odtFiles.Select(odtPath =>
+        {
+            var extractedImages = ExtractImagesFromDocument(odtPath, imagesDir);
+            return new CatalogEntry
+            {
+                SourceDocumentName = Path.GetFileName(odtPath),
+                ImagePaths = extractedImages
+            };
+        }).Where(e => e.ImagePaths.Any()).ToArray();
+
+        return entries;
+    }
+
+    // Extracts all images from a single document and saves them to the images folder.
+    private static string[] ExtractImagesFromDocument(string docPath, string imagesDir)
+    {
+        Document doc = new Document(docPath);
+        var shapeNodes = doc.GetChildNodes(NodeType.Shape, true)
+                            .Cast<Shape>()
+                            .Where(s => s.HasImage)
+                            .ToArray();
+
+        var savedPaths = shapeNodes.Select((shape, index) =>
+        {
+            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+            string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_img{index}{extension}";
+            string fullPath = Path.Combine(imagesDir, imageFileName);
+            shape.ImageData.Save(fullPath);
+            return fullPath;
+        }).ToArray();
+
+        return savedPaths;
+    }
+
+    // Creates a PDF catalog that lists each source document and embeds its extracted images.
+    private static void CreatePdfCatalog(CatalogEntry[] entries, string catalogDir)
     {
         Document catalog = new Document();
         DocumentBuilder builder = new DocumentBuilder(catalog);
 
-        builder.Writeln("Image Catalog");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln();
-
-        foreach (string imagePath in imageFiles)
-        {
-            // Insert image.
-            builder.InsertImage(imagePath);
-            // Add a caption with the file name (searchable text).
-            builder.Writeln(Path.GetFileName(imagePath));
-            builder.Writeln(); // Add spacing.
-        }
-
-        // Configure PDF save options (optional compression).
+        // Optional: set PDF save options for better compression.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             ImageCompression = PdfImageCompression.Jpeg,
             JpegQuality = 80
         };
 
-        string pdfPath = Path.Combine(catalogFolder, "ImageCatalog.pdf");
-        catalog.Save(pdfPath, pdfOptions);
+        foreach (var entry in entries)
+        {
+            // Add a heading for the source document.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+            builder.Writeln(entry.SourceDocumentName);
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+
+            // Insert each extracted image.
+            foreach (string imgPath in entry.ImagePaths)
+            {
+                builder.InsertParagraph();
+                builder.InsertImage(imgPath);
+                builder.InsertParagraph();
+                // Add the image file name as searchable text.
+                builder.Writeln(Path.GetFileName(imgPath));
+            }
+
+            // Add a page break after each document section.
+            builder.InsertBreak(BreakType.PageBreak);
+        }
+
+        string catalogPath = Path.Combine(catalogDir, "ImageCatalog.pdf");
+        catalog.Save(catalogPath, pdfOptions);
+    }
+
+    // Simple DTO to hold catalog information.
+    private class CatalogEntry
+    {
+        public string SourceDocumentName { get; set; }
+        public string[] ImagePaths { get; set; }
     }
 }

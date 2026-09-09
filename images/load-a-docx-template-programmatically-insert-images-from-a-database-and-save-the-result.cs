@@ -3,107 +3,88 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing; // Aspose.Drawing.Common provides Bitmap, Graphics, Color
+using Aspose.Drawing;
 
-public class Program
+namespace AsposeWordsImageInsertExample
 {
-    public static void Main()
+    public class Program
     {
-        // Paths for files used in the example
-        const string templatePath = "template.docx";
-        const string resultPath = "result.docx";
-        const string imagePath1 = "sample1.png";
-        const string imagePath2 = "sample2.png";
-
-        // ------------------------------------------------------------
-        // 1. Create sample images that will act as data retrieved from a DB.
-        // ------------------------------------------------------------
-        CreateSampleImage(imagePath1, 200, 100, Aspose.Drawing.Color.LightBlue);
-        CreateSampleImage(imagePath2, 150, 150, Aspose.Drawing.Color.LightCoral);
-
-        // Simulate image BLOBs stored in a database as byte arrays.
-        List<byte[]> imageBlobs = new List<byte[]>
+        public static void Main()
         {
-            File.ReadAllBytes(imagePath1),
-            File.ReadAllBytes(imagePath2)
-        };
+            // Paths for temporary files
+            const string imagePath1 = "image1.png";
+            const string imagePath2 = "image2.png";
+            const string templatePath = "template.docx";
+            const string resultPath = "result.docx";
 
-        // ------------------------------------------------------------
-        // 2. Create a simple DOCX template that will be loaded later.
-        // ------------------------------------------------------------
-        CreateTemplateDocument(templatePath);
+            // -------------------------------------------------
+            // 1. Create sample images that will act as DB BLOBs
+            // -------------------------------------------------
+            CreateSampleImage(imagePath1, Aspose.Drawing.Color.LightBlue);
+            CreateSampleImage(imagePath2, Aspose.Drawing.Color.LightCoral);
 
-        // ------------------------------------------------------------
-        // 3. Load the template document.
-        // ------------------------------------------------------------
-        Document doc = new Document(templatePath);
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Move the builder to the end of the document to insert images.
-        builder.MoveToDocumentEnd();
-
-        // ------------------------------------------------------------
-        // 4. Insert each image from the simulated DB into the document.
-        // ------------------------------------------------------------
-        foreach (byte[] imageBytes in imageBlobs)
-        {
-            // Use a MemoryStream for the image bytes.
-            using (MemoryStream ms = new MemoryStream(imageBytes))
+            // Read the images into byte arrays to simulate database storage
+            var imagesFromDatabase = new List<byte[]>
             {
-                ms.Position = 0; // Ensure the stream is at the beginning.
-                // Insert the image inline.
-                builder.InsertImage(ms);
-                // Add a line break after each image for readability.
-                builder.InsertBreak(BreakType.LineBreak);
-            }
-        }
+                File.ReadAllBytes(imagePath1),
+                File.ReadAllBytes(imagePath2)
+            };
 
-        // ------------------------------------------------------------
-        // 5. Save the resulting document.
-        // ------------------------------------------------------------
-        doc.Save(resultPath, SaveFormat.Docx);
+            // -------------------------------------------------
+            // 2. Create a simple DOCX template
+            // -------------------------------------------------
+            var templateDoc = new Document();
+            var templateBuilder = new DocumentBuilder(templateDoc);
+            templateBuilder.Writeln("Template Document");
+            templateBuilder.Writeln("Below are images inserted from the database:");
+            templateDoc.Save(templatePath);
 
-        // ------------------------------------------------------------
-        // 6. Validate that the output file was created.
-        // ------------------------------------------------------------
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException($"The output file '{resultPath}' was not created.");
+            // -------------------------------------------------
+            // 3. Load the template and insert images
+            // -------------------------------------------------
+            var doc = new Document(templatePath);
+            var builder = new DocumentBuilder(doc);
 
-        // Clean up temporary files (optional).
-        // File.Delete(imagePath1);
-        // File.Delete(imagePath2);
-        // File.Delete(templatePath);
-    }
+            // Move the cursor to the end of the document (after the placeholder text)
+            builder.MoveToDocumentEnd();
 
-    // Helper method to create a deterministic PNG image using Aspose.Drawing.
-    private static void CreateSampleImage(string fileName, int width, int height, Aspose.Drawing.Color backgroundColor)
-    {
-        // Create a bitmap with the desired dimensions.
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
-            // Obtain a graphics object to draw on the bitmap.
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            foreach (var imageBytes in imagesFromDatabase)
             {
-                // Fill the background with a solid color.
-                graphics.Clear(backgroundColor);
+                // Insert the image from a byte array
+                builder.InsertImage(imageBytes);
+                // Add a line break after each image for readability
+                builder.Writeln();
             }
 
-            // Save the bitmap to a PNG file.
-            bitmap.Save(fileName);
+            // -------------------------------------------------
+            // 4. Save the resulting document
+            // -------------------------------------------------
+            doc.Save(resultPath);
+
+            // -------------------------------------------------
+            // 5. Validate that the output file was created
+            // -------------------------------------------------
+            if (!File.Exists(resultPath))
+                throw new InvalidOperationException($"The result document '{resultPath}' was not created.");
+
+            // Clean up temporary image files (optional)
+            // File.Delete(imagePath1);
+            // File.Delete(imagePath2);
         }
-    }
 
-    // Helper method to create a minimal DOCX template.
-    private static void CreateTemplateDocument(string fileName)
-    {
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        private static void CreateSampleImage(string filePath, Aspose.Drawing.Color backgroundColor)
+        {
+            // Create a 100x100 bitmap and fill it with the specified background color
+            using (var bitmap = new Aspose.Drawing.Bitmap(100, 100))
+            {
+                using (var graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+                {
+                    graphics.Clear(backgroundColor);
+                }
 
-        builder.Writeln("This is a template document.");
-        builder.Writeln("Images will be inserted below:");
-        // Add an empty paragraph to separate from inserted images.
-        builder.InsertParagraph();
-
-        templateDoc.Save(fileName, SaveFormat.Docx);
+                // Save the bitmap to a PNG file
+                bitmap.Save(filePath);
+            }
+        }
     }
 }

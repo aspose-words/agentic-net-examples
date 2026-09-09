@@ -9,72 +9,96 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PNG image.
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic sample PNG image to be used in the document.
+        // -----------------------------------------------------------------
+        const int sampleWidth = 100;
+        const int sampleHeight = 100;
         const string sampleImagePath = "sample.png";
-        using (Bitmap bitmap = new Bitmap(100, 100))
+
+        using (Bitmap bmp = new Bitmap(sampleWidth, sampleHeight))
+        using (Graphics gfx = Graphics.FromImage(bmp))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.White);
-                g.FillEllipse(Brushes.Black, 25, 25, 50, 50);
-            }
-            bitmap.Save(sampleImagePath, ImageFormat.Png);
+            // Fill with white background.
+            gfx.Clear(Aspose.Drawing.Color.White);
+            // Draw a simple black rectangle inside the image.
+            gfx.DrawRectangle(
+                new Pen(Aspose.Drawing.Color.Black, 2),
+                10, 10, sampleWidth - 20, sampleHeight - 20);
+
+            // Save the sample PNG.
+            bmp.Save(sampleImagePath, ImageFormat.Png);
         }
 
-        // Create a document and insert the sample image.
+        // -----------------------------------------------------------------
+        // 2. Build a Word document and insert the sample PNG several times.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        const string docPath = "DocumentWithImage.docx";
-        doc.Save(docPath);
 
-        // Extract PNG images, apply a red 5‑pixel border, and save them.
+        // Insert the image three times to have multiple shapes to process.
+        for (int i = 0; i < 3; i++)
+        {
+            builder.InsertImage(sampleImagePath);
+            builder.Writeln(); // add a line break between images.
+        }
+
+        // -----------------------------------------------------------------
+        // 3. Extract all PNG images, apply a 5‑pixel red border, and save them.
+        // -----------------------------------------------------------------
         NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        int savedCount = 0;
+        int extractedCount = 0;
+        const int borderSize = 5;
 
-        foreach (Shape shape in shapes)
+        foreach (Shape shape in shapes.OfType<Shape>())
         {
             if (!shape.HasImage)
                 continue;
 
-            ImageData imgData = shape.ImageData;
-            if (imgData.ImageType != ImageType.Png)
+            // Process only PNG images.
+            if (shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Load the original image into a bitmap.
-            using (MemoryStream ms = new MemoryStream())
+            // Obtain the raw image bytes.
+            byte[] imageBytes = shape.ImageData.ToByteArray();
+
+            // Load the image into an Aspose.Drawing.Bitmap.
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            using (Bitmap original = new Bitmap(ms))
             {
-                imgData.Save(ms);
-                ms.Position = 0;
-                using (Bitmap original = new Bitmap(ms))
+                // Create a new bitmap that is larger to accommodate the border.
+                int newWidth = original.Width + borderSize * 2;
+                int newHeight = original.Height + borderSize * 2;
+
+                using (Bitmap bordered = new Bitmap(newWidth, newHeight))
+                using (Graphics graphics = Graphics.FromImage(bordered))
                 {
-                    int borderSize = 5;
-                    int newWidth = original.Width + borderSize * 2;
-                    int newHeight = original.Height + borderSize * 2;
+                    // Fill the whole bitmap with red – this becomes the border.
+                    graphics.Clear(Aspose.Drawing.Color.Red);
 
-                    // Create a new bitmap with a red background.
-                    using (Bitmap bordered = new Bitmap(newWidth, newHeight))
-                    {
-                        using (Graphics g = Graphics.FromImage(bordered))
-                        {
-                            g.Clear(Color.Red);
-                            g.DrawImage(
-                                original,
-                                new Rectangle(borderSize, borderSize, original.Width, original.Height));
-                        }
+                    // Draw the original image onto the new bitmap, offset by the border size.
+                    graphics.DrawImage(
+                        original,
+                        borderSize,
+                        borderSize,
+                        original.Width,
+                        original.Height);
 
-                        string outPath = $"extracted-{++savedCount}.png";
-                        bordered.Save(outPath, ImageFormat.Png);
-                    }
+                    // Save the resulting image.
+                    string outFileName = $"Extracted_{extractedCount}.png";
+                    bordered.Save(outFileName, ImageFormat.Png);
                 }
             }
+
+            extractedCount++;
         }
 
-        if (savedCount == 0)
+        // -----------------------------------------------------------------
+        // 4. Validation – ensure at least one image was written.
+        // -----------------------------------------------------------------
+        if (extractedCount == 0)
             throw new InvalidOperationException("No PNG images were extracted and saved.");
 
-        // Clean up the sample files (optional).
-        // File.Delete(sampleImagePath);
-        // File.Delete(docPath);
+        Console.WriteLine($"Successfully processed and saved {extractedCount} PNG image(s) with a red border.");
     }
 }

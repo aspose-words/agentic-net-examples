@@ -5,82 +5,84 @@ using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using System.Linq;
 
-public class GrayscaleImageExtractor
+public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Ensure the output folder exists.
+        const string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
 
-        // 1. Create a deterministic JPEG image.
-        string sampleJpegPath = Path.Combine(artifactsDir, "sample.jpg");
-        CreateSampleJpeg(sampleJpegPath, 200, 100);
-
-        // 2. Build a DOCX that contains several copies of the JPEG image.
-        string sourceDocPath = Path.Combine(artifactsDir, "source.docx");
-        CreateDocumentWithImages(sourceDocPath, sampleJpegPath, 3);
-
-        // 3. Load the document and extract JPEG images, applying a grayscale filter.
-        Document doc = new Document(sourceDocPath);
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        int jpegIndex = 0;
-
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic sample JPEG image using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        const string sampleImagePath = "sample.jpg";
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200))
         {
-            if (!shape.HasImage) continue;
-            if (shape.ImageData.ImageType != ImageType.Jpeg) continue;
-
-            // Apply grayscale rendering flag.
-            shape.ImageData.GrayScale = true;
-
-            // Determine file name with proper extension.
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string grayImagePath = Path.Combine(artifactsDir, $"extracted_{jpegIndex}_gray{extension}");
-
-            // Save the grayscale image.
-            shape.ImageData.Save(grayImagePath);
-            jpegIndex++;
-        }
-
-        // Validation.
-        if (jpegIndex == 0)
-            throw new InvalidOperationException("No JPEG images were found and processed.");
-
-        Console.WriteLine($"Processed {jpegIndex} JPEG image(s). Grayscale files are located in: {artifactsDir}");
-    }
-
-    // Creates a deterministic JPEG image using Aspose.Drawing.
-    private static void CreateSampleJpeg(string filePath, int width, int height)
-    {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
-                using (SolidBrush brush = new SolidBrush(Color.Blue))
+                // Fill background.
+                graphics.Clear(Aspose.Drawing.Color.LightBlue);
+
+                // Draw a simple ellipse.
+                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Orange))
                 {
-                    g.FillRectangle(brush, 10, 10, width - 20, height - 20);
+                    graphics.FillEllipse(brush, 20, 20, 160, 160);
                 }
             }
-            // Explicitly save as JPEG.
-            bitmap.Save(filePath, ImageFormat.Jpeg);
-        }
-    }
 
-    // Creates a DOCX file and inserts the specified image multiple times.
-    private static void CreateDocumentWithImages(string docPath, string imagePath, int repeatCount)
-    {
+            // Save the bitmap as a JPEG file.
+            bitmap.Save(sampleImagePath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+        }
+
+        // -----------------------------------------------------------------
+        // 2. Create a DOCX document and insert the JPEG image several times.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(sampleImagePath);
+        builder.InsertParagraph();
+        builder.InsertImage(sampleImagePath);
 
-        for (int i = 0; i < repeatCount; i++)
+        // Save the document to the output folder.
+        string docPath = Path.Combine(outputDir, "input.docx");
+        doc.Save(docPath);
+
+        // -----------------------------------------------------------------
+        // 3. Load the document and process all JPEG images.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
+        int imageIndex = 0;
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            builder.InsertParagraph();
-            builder.InsertImage(imagePath);
+            if (!shape.HasImage)
+                continue;
+
+            // Process only JPEG images.
+            if (shape.ImageData.ImageType != ImageType.Jpeg)
+                continue;
+
+            // Apply grayscale filter to the image.
+            shape.ImageData.GrayScale = true;
+
+            // Determine the appropriate file extension for the image type.
+            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+            string outputImagePath = Path.Combine(outputDir, $"extracted_{imageIndex}{extension}");
+
+            // Save the processed image to disk.
+            shape.ImageData.Save(outputImagePath);
+            imageIndex++;
         }
 
-        doc.Save(docPath);
+        // Validate that at least one image was extracted and processed.
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No JPEG images were found and processed.");
+
+        // Optional cleanup of the temporary sample image.
+        // File.Delete(sampleImagePath);
     }
 }

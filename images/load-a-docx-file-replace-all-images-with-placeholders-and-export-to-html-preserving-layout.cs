@@ -1,110 +1,101 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
+using Aspose.Drawing; // Aspose.Drawing provides Bitmap, Graphics, Color
 
 public class Program
 {
     public static void Main()
     {
-        // Define file and folder names
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        string imagesDir = Path.Combine(workDir, "Images");
-        string htmlImagesDir = Path.Combine(workDir, "HtmlImages");
-        string docPath = Path.Combine(workDir, "input.docx");
-        string htmlPath = Path.Combine(workDir, "output.html");
-        string sampleImagePath = Path.Combine(imagesDir, "sample.png");
-        string placeholderImagePath = Path.Combine(imagesDir, "placeholder.png");
-
-        // Ensure clean workspace
-        if (Directory.Exists(workDir))
-            Directory.Delete(workDir, true);
-        Directory.CreateDirectory(workDir);
-        Directory.CreateDirectory(imagesDir);
-        Directory.CreateDirectory(htmlImagesDir);
+        // Define working directory and file paths.
+        string workDir = Directory.GetCurrentDirectory();
+        string sampleImagePath = Path.Combine(workDir, "sample.png");
+        string placeholderImagePath = Path.Combine(workDir, "placeholder.png");
+        string inputDocPath = Path.Combine(workDir, "input.docx");
+        string outputHtmlPath = Path.Combine(workDir, "output.html");
+        string imagesFolder = Path.Combine(workDir, "html_images");
 
         // -------------------------------------------------
-        // 1. Create a sample image (sample.png)
+        // 1. Create a sample image to be inserted into the DOCX.
         // -------------------------------------------------
-        const int sampleWidth = 200;
-        const int sampleHeight = 150;
-        using (Bitmap bmp = new Bitmap(sampleWidth, sampleHeight))
+        using (Bitmap bmp = new Bitmap(200, 150))
         {
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.Clear(Color.LightBlue);
-                // Simple visual content – a filled ellipse
-                g.FillEllipse(Brushes.DarkBlue, 20, 20, sampleWidth - 40, sampleHeight - 40);
             }
             bmp.Save(sampleImagePath);
         }
 
         // -------------------------------------------------
-        // 2. Create a placeholder image (placeholder.png)
+        // 2. Create a placeholder image that will replace all originals.
         // -------------------------------------------------
-        const int placeholderSize = 100;
-        using (Bitmap bmp = new Bitmap(placeholderSize, placeholderSize))
+        using (Bitmap bmp = new Bitmap(200, 150))
         {
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.Clear(Color.LightGray);
-                // Simple visual content – a red cross
-                g.DrawLine(Pens.Red, 0, 0, placeholderSize, placeholderSize);
-                g.DrawLine(Pens.Red, placeholderSize, 0, 0, placeholderSize);
             }
             bmp.Save(placeholderImagePath);
         }
 
         // -------------------------------------------------
-        // 3. Create a DOCX document and insert the sample image several times
+        // 3. Build a sample DOCX containing a few images.
         // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
         builder.Writeln("Document with images:");
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertImage(sampleImagePath);
-            builder.Writeln(); // add a line break after each image
-        }
-        doc.Save(docPath);
+        builder.InsertImage(sampleImagePath);
+        builder.Writeln();
+        builder.InsertImage(sampleImagePath);
+        builder.Writeln();
+        builder.InsertImage(sampleImagePath);
+
+        doc.Save(inputDocPath);
 
         // -------------------------------------------------
-        // 4. Load the document, replace each image with the placeholder image
+        // 4. Load the DOCX, replace each image with the placeholder.
         // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
+        Document loadedDoc = new Document(inputDocPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
             {
-                // Replace the image data with the placeholder image file
+                // Replace the image data with the placeholder image.
                 shape.ImageData.SetImage(placeholderImagePath);
             }
         }
 
         // -------------------------------------------------
-        // 5. Save the modified document to HTML, preserving layout
+        // 5. Save the modified document to HTML, preserving layout.
         // -------------------------------------------------
+        if (Directory.Exists(imagesFolder))
+            Directory.Delete(imagesFolder, true);
+        Directory.CreateDirectory(imagesFolder);
+
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
-            ImagesFolder = htmlImagesDir,
+            ImagesFolder = imagesFolder,
             ExportImagesAsBase64 = false, // keep images as separate files
-            ScaleImageToShapeSize = true   // ensure layout matches original shape sizes
+            ScaleImageToShapeSize = true   // preserve layout scaling
         };
-        loadedDoc.Save(htmlPath, htmlOptions);
+
+        loadedDoc.Save(outputHtmlPath, htmlOptions);
 
         // -------------------------------------------------
-        // 6. Validate that output files were created
+        // 6. Simple validation.
         // -------------------------------------------------
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML file was not created.");
+        if (!File.Exists(outputHtmlPath))
+            throw new InvalidOperationException("HTML output file was not created.");
 
-        if (!Directory.Exists(htmlImagesDir) || !Directory.GetFiles(htmlImagesDir).Any())
+        if (Directory.GetFiles(imagesFolder).Length == 0)
             throw new InvalidOperationException("No images were saved during HTML export.");
 
-        // The example finishes without requiring user interaction.
+        // Example completed successfully.
     }
 }

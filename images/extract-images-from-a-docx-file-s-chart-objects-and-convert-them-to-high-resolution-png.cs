@@ -2,68 +2,102 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Saving;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class ExtractChartImages
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // -----------------------------------------------------------------
+        // 1. Prepare output folder.
+        // -----------------------------------------------------------------
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample DOCX containing a chart.
+        // 2. Create a deterministic sample image (white background with a black rectangle).
         // -----------------------------------------------------------------
-        string docPath = Path.Combine(artifactsDir, "ChartDocument.docx");
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                using (Pen pen = new Pen(Color.Black, 5))
+                {
+                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+                }
+            }
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
+        }
+
+        // -----------------------------------------------------------------
+        // 3. Create a DOCX and insert the sample image.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
-        Chart chart = chartShape.Chart;
+        builder.Writeln("Sample document with an image (standing in for a chart):");
+        builder.InsertImage(sampleImagePath);
 
-        // Populate the chart with sample data.
-        chart.Series.Clear();
-        chart.Series.Add("Series 1", new[] { "A", "B", "C" }, new[] { 10.0, 20.0, 30.0 });
-        chart.Series.Add("Series 2", new[] { "A", "B", "C" }, new[] { 15.0, 25.0, 35.0 });
-
-        // Save the document.
-        doc.Save(docPath);
-        // -----------------------------------------------------------------
+        string sourceDocPath = Path.Combine(artifactsDir, "ImageDocument.docx");
+        doc.Save(sourceDocPath);
 
         // -----------------------------------------------------------------
-        // 2. Load the document and extract chart shapes.
+        // 4. Load the document and extract images from shape objects.
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        Document loadedDoc = new Document(sourceDocPath);
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true).Cast<Shape>();
 
-        int chartIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        int extractedCount = 0;
+        foreach (Shape shape in shapes)
         {
-            // Chart shapes expose a non‑null Chart property.
-            if (shape.Chart != null)
+            if (shape.HasImage)
             {
-                // Render the chart shape to a high‑resolution PNG.
-                ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
-                {
-                    // Set a high DPI for better quality.
-                    Resolution = 300f
-                };
+                // Determine file extension based on the original image type.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string outFile = Path.Combine(artifactsDir, $"ExtractedImage_{extractedCount}{extension}");
 
-                string imagePath = Path.Combine(artifactsDir, $"ChartImage_{chartIndex}.png");
-                shape.GetShapeRenderer().Save(imagePath, options);
-                chartIndex++;
+                // Save the original image data (preserves original format).
+                shape.ImageData.Save(outFile);
+                extractedCount++;
             }
         }
+
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No images were extracted from shape objects.");
+
         // -----------------------------------------------------------------
+        // 5. Render each shape containing an image to a high‑resolution PNG.
+        // -----------------------------------------------------------------
+        int renderedCount = 0;
+        foreach (Shape shape in shapes)
+        {
+            if (shape.HasImage)
+            {
+                string renderPath = Path.Combine(artifactsDir, $"RenderedShape_{renderedCount}.png");
 
-        // Validate that at least one image was extracted.
-        if (chartIndex == 0)
-            throw new InvalidOperationException("No chart images were extracted from the document.");
+                ImageSaveOptions renderOptions = new ImageSaveOptions(SaveFormat.Png)
+                {
+                    // Set both horizontal and vertical DPI to 300.
+                    Resolution = 300
+                };
 
-        Console.WriteLine($"Extracted {chartIndex} chart image(s) to folder: {artifactsDir}");
+                // Render the shape to a PNG file with the specified resolution.
+                shape.GetShapeRenderer().Save(renderPath, renderOptions);
+                renderedCount++;
+            }
+        }
+
+        // -----------------------------------------------------------------
+        // 6. Completion message.
+        // -----------------------------------------------------------------
+        Console.WriteLine($"Extracted {extractedCount} image(s) and rendered {renderedCount} shape(s) to '{artifactsDir}'.");
     }
 }
