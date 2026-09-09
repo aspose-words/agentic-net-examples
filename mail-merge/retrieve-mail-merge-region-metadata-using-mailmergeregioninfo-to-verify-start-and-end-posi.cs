@@ -4,45 +4,54 @@ using Aspose.Words;
 using Aspose.Words.MailMerging;
 using Aspose.Words.Fields;
 
-public class Program
+namespace MailMergeRegionInfoExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a builder to add content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a mail merge region named "MyRegion" with two fields.
-        builder.InsertField(" MERGEFIELD TableStart:MyRegion");
-        builder.InsertField(" MERGEFIELD Field1");
-        builder.Write(", ");
-        builder.InsertField(" MERGEFIELD Field2");
-        builder.InsertField(" MERGEFIELD TableEnd:MyRegion");
-
-        // Retrieve the hierarchy of mail merge regions.
-        MailMergeRegionInfo hierarchy = doc.MailMerge.GetRegionsHierarchy();
-
-        // Get the top‑level regions from the hierarchy.
-        IList<MailMergeRegionInfo> topRegions = hierarchy.Regions;
-
-        if (topRegions.Count > 0)
+        public static void Main()
         {
-            MailMergeRegionInfo region = topRegions[0];
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Access the start and end fields of the region.
-            FieldMergeField startField = region.StartField;
-            FieldMergeField endField = region.EndField;
+            // Insert a simple mail merge region named "Region1" with two fields.
+            builder.InsertField(" MERGEFIELD TableStart:Region1");
+            builder.InsertField(" MERGEFIELD Column1");
+            builder.InsertField(" MERGEFIELD TableEnd:Region1");
 
-            Console.WriteLine("Region name: " + region.Name);
-            Console.WriteLine("Start field name: " + startField.FieldName);
-            Console.WriteLine("End field name: " + endField.FieldName);
+            // Retrieve the full hierarchy of mail merge regions.
+            MailMergeRegionInfo hierarchy = doc.MailMerge.GetRegionsHierarchy();
+
+            // The top-level regions are stored in the Regions collection.
+            IList<MailMergeRegionInfo> topRegions = hierarchy.Regions;
+
+            // Output information about each region.
+            foreach (MailMergeRegionInfo region in topRegions)
+            {
+                Console.WriteLine($"Region Name: {region.Name}");
+                Console.WriteLine($"Nesting Level: {region.Level}");
+
+                // Start and end fields contain the MERGEFIELD that marks the region boundaries.
+                FieldMergeField startField = region.StartField;
+                FieldMergeField endField = region.EndField;
+
+                Console.WriteLine($"Start Field Name: {startField?.FieldName}");
+                Console.WriteLine($"End Field Name: {endField?.FieldName}");
+
+                // List all child fields inside the region.
+                IList<Field> fields = region.Fields;
+                Console.WriteLine($"Number of child fields: {fields.Count}");
+                foreach (Field f in fields)
+                {
+                    if (f is FieldMergeField mergeField)
+                        Console.WriteLine($"  Child Field: {mergeField.FieldName}");
+                }
+
+                Console.WriteLine(new string('-', 40));
+            }
+
+            // Save the document to verify that the region was created correctly.
+            doc.Save("MailMergeRegionInfoOutput.docx");
         }
-        else
-        {
-            Console.WriteLine("No mail merge regions found.");
-        }
-
-        // Save the document (optional, demonstrates the save lifecycle).
-        doc.Save("MailMergeRegionInfo.docx");
     }
 }

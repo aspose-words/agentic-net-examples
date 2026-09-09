@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -12,26 +11,22 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert merge fields into the document.
-        builder.InsertField("MERGEFIELD FullName");
-        builder.Writeln();
-        builder.InsertField("MERGEFIELD Company");
-        builder.Writeln();
-        builder.InsertField("MERGEFIELD Address");
-        builder.Writeln();
-        builder.InsertField("MERGEFIELD City");
-        builder.Writeln();
+        builder.Write("Dear ");
+        builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName", "<LastName>");
+        builder.Writeln(":");
+        builder.InsertField("MERGEFIELD Message", "<Message>");
 
         // Prepare data for a single record mail merge.
-        string[] fieldNames = { "FullName", "Company", "Address", "City" };
-        object[] fieldValues = { "James Bond", "MI5 Headquarters", "Milbank", "London" };
+        string[] fieldNames = { "FirstName", "LastName", "Message" };
+        object[] fieldValues = { "John", "Doe", "Hello! This document was created with Aspose.Words mail merge." };
 
         // Execute the mail merge.
         doc.MailMerge.Execute(fieldNames, fieldValues);
 
-        // Define the output PDF file path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "MergedDocument.pdf");
-
         // Save the merged document as PDF.
+        string outputPath = "MergedDocument.pdf";
         doc.Save(outputPath, SaveFormat.Pdf);
     }
 }
