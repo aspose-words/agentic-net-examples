@@ -3,118 +3,106 @@ using System.Data;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
-using Aspose.Words.Drawing;
+using Aspose.Words.Replacing; // Needed for FindReplaceOptions
 
 public class Program
 {
     public static void Main()
     {
-        // Output folder.
+        // Prepare output directory.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create sample documents that will be inserted for each data row.
-        // -----------------------------------------------------------------
-        string docPath1 = Path.Combine(outputDir, "Sample1.docx");
-        string docPath2 = Path.Combine(outputDir, "Sample2.docx");
-
-        CreateSampleDocument(docPath1, "Content of the first inserted document.");
-        CreateSampleDocument(docPath2, "Content of the second inserted document.");
-
-        // ---------------------------------------------------------------
-        // 2. Build a mail‑merge template that contains a MERGEFIELD.
-        //    The field value will be the file name of the document to insert.
-        // ---------------------------------------------------------------
+        // File paths.
+        string insertDocPath = Path.Combine(outputDir, "InsertDoc.docx");
         string templatePath = Path.Combine(outputDir, "Template.docx");
+        string resultPdfPath = Path.Combine(outputDir, "Combined.pdf");
+
+        // -----------------------------------------------------------------
+        // 1. Create a document that will be inserted for each data row.
+        // -----------------------------------------------------------------
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("This is inserted content for row {0}.");
+        insertDoc.Save(insertDocPath);
+
+        // -----------------------------------------------------------------
+        // 2. Create a mail‑merge template containing a MERGEFIELD that will
+        //    be replaced by the inserted document.
+        // -----------------------------------------------------------------
         Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        DocumentBuilder templateBuilder = new DocumentBuilder(template);
+        templateBuilder.Writeln("Start of merged document");
+        templateBuilder.InsertField("MERGEFIELD Document");
+        templateBuilder.Writeln("End of merged document");
+        template.Save(templatePath);
 
-        builder.Writeln("=== Begin of merged document ===");
-        // The field name can be anything; we use "DocPath".
-        builder.InsertField("MERGEFIELD DocPath");
-        builder.Writeln(); // Ensure a line break after each inserted document.
-        builder.Writeln("=== End of merged document ===");
+        // -----------------------------------------------------------------
+        // 3. Set up a FieldMergingCallback that inserts the document at the
+        //    merge field location for each record.
+        // -----------------------------------------------------------------
+        template.MailMerge.FieldMergingCallback = new InsertDocumentCallback(insertDocPath);
 
-        template.Save(templatePath, SaveFormat.Docx);
+        // -----------------------------------------------------------------
+        // 4. Build a simple data source with three rows.
+        // -----------------------------------------------------------------
+        DataTable data = new DataTable("Data");
+        data.Columns.Add("Dummy");
+        data.Rows.Add("Row1");
+        data.Rows.Add("Row2");
+        data.Rows.Add("Row3");
 
-        // ---------------------------------------------------------------
-        // 3. Prepare a data source (DataTable) with a row for each document.
-        // ---------------------------------------------------------------
-        DataTable data = new DataTable("Docs");
-        data.Columns.Add("DocPath", typeof(string));
-        data.Rows.Add(docPath1);
-        data.Rows.Add(docPath2);
-
-        // ---------------------------------------------------------------
-        // 4. Subscribe to the FieldMergingCallback.
-        //    When the "DocPath" field is encountered we load the referenced
-        //    document and insert its content at the field location.
-        // ---------------------------------------------------------------
-        template.MailMerge.FieldMergingCallback = new InsertDocumentCallback();
-
-        // ---------------------------------------------------------------
-        // 5. Execute the mail merge. For each row the callback will insert
-        //    the corresponding document.
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // 5. Execute the mail merge – the callback will insert a document
+        //    for each row, effectively joining them.
+        // -----------------------------------------------------------------
         template.MailMerge.Execute(data);
 
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
         // 6. Save the combined result as PDF.
-        // ---------------------------------------------------------------
-        string pdfPath = Path.Combine(outputDir, "CombinedResult.pdf");
-        template.Save(pdfPath, SaveFormat.Pdf);
+        // -----------------------------------------------------------------
+        template.Save(resultPdfPath, SaveFormat.Pdf);
 
-        // Simple validation that the PDF was created.
-        if (File.Exists(pdfPath))
-        {
-            Console.WriteLine($"Combined PDF generated successfully at: {pdfPath}");
-        }
-        else
-        {
-            throw new InvalidOperationException("Failed to generate the combined PDF file.");
-        }
+        // -----------------------------------------------------------------
+        // 7. Validate that the PDF was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(resultPdfPath))
+            throw new InvalidOperationException("Failed to create the combined PDF file.");
     }
 
-    // Helper method to create a minimal DOCX with a single paragraph of text.
-    private static void CreateSampleDocument(string filePath, string text)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(text);
-        doc.Save(filePath, SaveFormat.Docx);
-    }
-
-    // Callback that replaces the MERGEFIELD value with the contents of the
-    // document whose file name is stored in the field.
+    // -----------------------------------------------------------------
+    // Callback implementation that inserts a document at the merge field.
+    // -----------------------------------------------------------------
     private class InsertDocumentCallback : IFieldMergingCallback
     {
+        private readonly string _insertDocPath;
+
+        public InsertDocumentCallback(string insertDocPath)
+        {
+            _insertDocPath = insertDocPath;
+        }
+
         void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // We only act on the "DocPath" field.
-            if (!args.DocumentFieldName.Equals("DocPath", StringComparison.OrdinalIgnoreCase))
+            // Only handle the specific merge field.
+            if (!args.DocumentFieldName.Equals("Document", StringComparison.OrdinalIgnoreCase))
                 return;
-
-            string fileName = args.FieldValue?.ToString();
-
-            if (string.IsNullOrEmpty(fileName) || !File.Exists(fileName))
-            {
-                // Insert a placeholder text if the file is missing.
-                args.Text = "[Missing document]";
-                return;
-            }
 
             // Load the document to be inserted.
-            Document insertDoc = new Document(fileName);
+            Document docToInsert = new Document(_insertDocPath);
 
-            // Move the builder to the merge field location.
+            // Replace the placeholder with the current (1‑based) record number.
+            int recordNumber = args.RecordIndex + 1;
+            docToInsert.Range.Replace("{0}", recordNumber.ToString(), new FindReplaceOptions());
+
+            // Move the cursor to the merge field location and remove the field.
             DocumentBuilder builder = new DocumentBuilder(args.Document);
             builder.MoveToMergeField(args.DocumentFieldName);
 
-            // Insert the whole document at the field position.
-            builder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
+            // Insert the prepared document at the cursor position.
+            builder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
 
-            // Suppress the default text insertion for this field.
+            // Prevent the default text insertion for this field.
             args.Text = string.Empty;
         }
 

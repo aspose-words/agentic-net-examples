@@ -6,13 +6,17 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string destDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docx");
-        string srcRtfPath = Path.Combine(Directory.GetCurrentDirectory(), "Source.rtf");
-        string mergedDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.docx");
+        // Define a folder for all temporary files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Paths for the source and destination documents.
+        string destDocPath = Path.Combine(outputDir, "Destination.docx");
+        string srcRtfPath = Path.Combine(outputDir, "Source.rtf");
+        string combinedDocPath = Path.Combine(outputDir, "Combined.docx");
 
         // -----------------------------------------------------------------
-        // 1. Create the destination DOCX document.
+        // Create the destination DOCX document.
         // -----------------------------------------------------------------
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
@@ -20,7 +24,7 @@ public class Program
         destDoc.Save(destDocPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 2. Create the source RTF document.
+        // Create the source RTF document.
         // -----------------------------------------------------------------
         Document srcDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
@@ -28,36 +32,33 @@ public class Program
         srcDoc.Save(srcRtfPath, SaveFormat.Rtf);
 
         // -----------------------------------------------------------------
-        // 3. Load both documents from disk.
+        // Load the documents from disk.
         // -----------------------------------------------------------------
-        Document destination = new Document(destDocPath);
-        Document source = new Document(srcRtfPath);
+        Document destination = new Document(destDocPath); // Loads DOCX.
+        Document source = new Document(srcRtfPath);      // Loads RTF.
 
-        // -----------------------------------------------------------------
-        // 4. Append the RTF document to the DOCX using destination styles.
-        // -----------------------------------------------------------------
+        // Append the RTF document to the DOCX using destination styles.
         destination.AppendDocument(source, ImportFormatMode.UseDestinationStyles);
 
-        // -----------------------------------------------------------------
-        // 5. Save the combined document as DOCX.
-        // -----------------------------------------------------------------
-        destination.Save(mergedDocPath, SaveFormat.Docx);
+        // Save the combined document as DOCX.
+        destination.Save(combinedDocPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 6. Validate that the merged file exists and contains content from both sources.
+        // Validation: ensure the combined file exists and contains both texts.
         // -----------------------------------------------------------------
-        if (!File.Exists(mergedDocPath))
-            throw new InvalidOperationException("Merged document was not created.");
+        if (!File.Exists(combinedDocPath))
+            throw new InvalidOperationException("The combined document was not created.");
 
-        Document merged = new Document(mergedDocPath);
-        string mergedText = merged.GetText();
+        Document combined = new Document(combinedDocPath);
+        string combinedText = combined.GetText();
 
-        if (!mergedText.Contains("destination DOCX document") ||
-            !mergedText.Contains("source RTF document"))
+        if (!combinedText.Contains("This is the destination DOCX document.") ||
+            !combinedText.Contains("This is the source RTF document."))
         {
-            throw new InvalidOperationException("Merged document does not contain expected content.");
+            throw new InvalidOperationException("The combined document does not contain expected content.");
         }
 
-        // The program finishes without requiring any user interaction.
+        // Indicate successful completion.
+        Console.WriteLine("Documents merged successfully. Output saved to: " + combinedDocPath);
     }
 }

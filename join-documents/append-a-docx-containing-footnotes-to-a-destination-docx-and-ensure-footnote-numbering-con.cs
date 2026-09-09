@@ -1,64 +1,46 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 using Aspose.Words.Notes;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the output files
-        string destinationPath = "Destination.docx";
-        string sourcePath = "SourceWithFootnotes.docx";
-        string mergedPdfPath = "MergedDocument.pdf";
-
-        // -----------------------------------------------------------------
-        // Create the destination document with a footnote
-        // -----------------------------------------------------------------
+        // Create the destination document with a footnote.
         Document destinationDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destinationDoc);
-        destBuilder.Writeln("This is the destination document.");
-        destBuilder.InsertFootnote(FootnoteType.Footnote, "First footnote in destination.");
-        // Ensure continuous footnote numbering
-        destinationDoc.FootnoteOptions.RestartRule = FootnoteNumberingRule.Continuous;
-        destinationDoc.Save(destinationPath, SaveFormat.Docx);
+        destBuilder.Writeln("Destination document start.");
+        destBuilder.InsertFootnote(FootnoteType.Footnote, "Destination footnote 1.");
+        destBuilder.Writeln("More text in destination.");
 
-        // -----------------------------------------------------------------
-        // Create the source document that also contains footnotes
-        // -----------------------------------------------------------------
+        // Ensure footnote numbering continues (default behavior).
+        destinationDoc.FootnoteOptions.RestartRule = FootnoteNumberingRule.Continuous;
+
+        // Create the source document that also contains a footnote.
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("This is the source document that will be appended.");
-        srcBuilder.InsertFootnote(FootnoteType.Footnote, "First footnote in source.");
-        srcBuilder.InsertFootnote(FootnoteType.Footnote, "Second footnote in source.");
-        // Ensure continuous footnote numbering in the source as well
-        sourceDoc.FootnoteOptions.RestartRule = FootnoteNumberingRule.Continuous;
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // Load the documents (simulating a real‑world scenario)
-        // -----------------------------------------------------------------
-        Document dst = new Document(destinationPath);
-        Document src = new Document(sourcePath);
+        srcBuilder.Writeln("Source document start.");
+        srcBuilder.InsertFootnote(FootnoteType.Footnote, "Source footnote 1.");
+        srcBuilder.Writeln("More text in source.");
 
         // Append the source document to the destination document.
-        // Keep source formatting; footnote numbering will continue because both
-        // documents use the Continuous restart rule.
-        dst.AppendDocument(src, ImportFormatMode.KeepSourceFormatting);
+        destinationDoc.AppendDocument(sourceDoc, ImportFormatMode.KeepSourceFormatting);
 
         // Save the merged document as PDF.
-        dst.Save(mergedPdfPath, SaveFormat.Pdf);
+        string outputPath = "MergedOutput.pdf";
+        destinationDoc.Save(outputPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // Validation: ensure the PDF was created
-        // -----------------------------------------------------------------
-        if (!File.Exists(mergedPdfPath))
-        {
-            throw new InvalidOperationException($"Failed to create the merged PDF at '{mergedPdfPath}'.");
-        }
+        // Validation: check that the PDF file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The merged PDF file was not created.");
 
-        // Optional: clean up intermediate files (comment out if you need them)
-        // File.Delete(destinationPath);
-        // File.Delete(sourcePath);
+        // Validation: ensure the merged document contains both footnotes.
+        int footnoteCount = destinationDoc.GetChildNodes(NodeType.Footnote, true).Count;
+        if (footnoteCount != 2)
+            throw new InvalidOperationException($"Expected 2 footnotes after merge, but found {footnoteCount}.");
+
+        // Optional: indicate successful completion (no console output required).
     }
 }
