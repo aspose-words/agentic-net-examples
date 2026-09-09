@@ -11,30 +11,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        // Insert a column chart with a reasonable size.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series to start with a clean chart.
+        // Remove the demo data series and add our own data.
         chart.Series.Clear();
-
-        // Add a simple series with categories and values.
         chart.Series.Add(
             "Sample Series",
-            new[] { "Category A", "Category B", "Category C", "Category D" },
-            new double[] { 10, 30, 50, 70 });
+            new[] { "A", "B", "C", "D", "E" },
+            new double[] { 30, 120, 80, 150, 60 });
 
-        // Access the primary Y‑axis.
+        // Adjust the primary Y‑axis scaling.
         ChartAxis yAxis = chart.AxisY;
+        yAxis.Scaling.Minimum = new AxisBound(0);      // Fixed minimum value.
+        yAxis.Scaling.Maximum = new AxisBound(200);    // Fixed maximum value.
+        yAxis.MajorUnit = 50;                          // Major tick interval.
 
-        // Set fixed minimum and maximum bounds.
-        yAxis.Scaling.Minimum = new AxisBound(0);    // Minimum value = 0
-        yAxis.Scaling.Maximum = new AxisBound(100); // Maximum value = 100
+        // Optionally set minor unit for finer grid lines.
+        yAxis.MinorUnit = 10;
 
-        // Define the major unit interval (distance between major tick marks).
-        yAxis.MajorUnit = 20; // Major tick every 20 units
-
-        // Save the document with the modified chart.
+        // Save the document.
         doc.Save("YaxisScaling.docx");
     }
 }

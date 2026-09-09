@@ -1,36 +1,28 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;               // Needed for the Shape class
-using Aspose.Words.Drawing.Charts;        // Chart‑related APIs
+using Aspose.Words.Drawing;               // Needed for Shape
+using Aspose.Words.Drawing.Charts;        // Chart APIs
 
-public class RemoveChartSeriesExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart. The default chart contains three demo series.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        // Insert a column chart into the document.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Verify that the inserted shape actually contains a chart.
-        if (!chartShape.HasChart)
-            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+        // Index of the series to remove (e.g., the second series).
+        int seriesIndexToRemove = 1;
 
-        // Access the series collection of the chart.
-        ChartSeriesCollection series = chart.Series;
-
-        // Define the zero‑based index of the series we want to remove.
-        int indexToRemove = 2; // Removes the third demo series.
-
-        // Validate the index before attempting removal.
-        if (indexToRemove < 0 || indexToRemove >= series.Count)
-            throw new ArgumentOutOfRangeException(nameof(indexToRemove), "Series index is out of range.");
-
-        // Remove the series at the specified index.
-        series.RemoveAt(indexToRemove);
+        // Validate the index before removing the series.
+        if (seriesIndexToRemove >= 0 && seriesIndexToRemove < chart.Series.Count)
+        {
+            chart.Series.RemoveAt(seriesIndexToRemove);
+        }
 
         // Save the modified document.
         doc.Save("RemoveSeries.docx");

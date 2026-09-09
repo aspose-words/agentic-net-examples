@@ -1,7 +1,6 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Drawing;          // Needed for the Shape class
 using Aspose.Words.Drawing.Charts;
 
 public class Program
@@ -12,31 +11,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart.
+        // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series.
+        // Remove the default demo series that Aspose.Words adds.
         chart.Series.Clear();
 
-        // Define categories and values.
-        string[] categories = { "A", "B", "C", "D", "E" };
-        double[] values = { 10, 20, 30, 40, 50 };
+        // Define categories (X‑axis labels) and corresponding Y values.
+        string[] categories = { "Category 1", "Category 2", "Category 3" };
+        double[] values = { 10, 20, 30 };
 
-        // Add a new series.
+        // Add a new series with the categories and values.
         ChartSeries series = chart.Series.Add("Series 1", categories, values);
 
-        // Colors for each data point.
-        Color[] pointColors = { Color.Red, Color.Green, Color.Blue, Color.Orange, Color.Purple };
+        // Set a distinct fill color for each data point in the series.
+        series.DataPoints[0].Format.Fill.Color = Color.Red;    // First point – red
+        series.DataPoints[1].Format.Fill.Color = Color.Green; // Second point – green
+        series.DataPoints[2].Format.Fill.Color = Color.Blue;  // Third point – blue
 
-        // Apply colors to individual data points.
-        for (int i = 0; i < series.DataPoints.Count && i < pointColors.Length; i++)
-        {
-            ChartDataPoint point = series.DataPoints[i];
-            point.Format.Fill.Color = pointColors[i];
-        }
-
-        // Save the document.
-        doc.Save("ChartDataPointsColors.docx");
+        // Save the document containing the customized chart.
+        doc.Save("AddDataPointsColors.docx");
     }
 }

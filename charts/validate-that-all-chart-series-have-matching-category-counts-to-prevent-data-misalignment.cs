@@ -11,40 +11,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart.
+        // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
         // Remove the demo data that comes with a newly inserted chart.
         chart.Series.Clear();
 
-        // Define categories that will be shared by all series.
+        // Define a common set of categories for all series.
         string[] categories = { "Q1", "Q2", "Q3", "Q4" };
 
-        // Define values for two series.
-        double[] series1Values = { 10.0, 20.0, 30.0, 40.0 };
-        double[] series2Values = { 15.0, 25.0, 35.0, 45.0 };
+        // Add series that correctly match the number of categories.
+        chart.Series.Add("Series A", categories, new double[] { 10, 20, 30, 40 });
+        chart.Series.Add("Series B", categories, new double[] { 15, 25, 35, 45 });
 
-        // Validate that each series has the same number of values as categories.
-        ValidateSeriesData(categories, series1Values);
-        ValidateSeriesData(categories, series2Values);
+        // Uncomment the following line to see the validation exception in action
+        // chart.Series.Add("Series Bad", categories, new double[] { 5, 10, 15 }); // Mismatched count
 
-        // Add the series to the chart.
-        chart.Series.Add("Series 1", categories, series1Values);
-        chart.Series.Add("Series 2", categories, series2Values);
+        // Validate that every series has the same number of data points as there are categories.
+        ValidateSeriesCategoryAlignment(chart, categories.Length);
 
-        // Save the document.
+        // Save the resulting document.
         doc.Save("ValidatedChart.docx");
     }
 
-    // Throws an exception if the number of values does not match the number of categories.
-    private static void ValidateSeriesData(string[] categories, double[] values)
+    // Throws an exception if any series does not contain the expected number of values.
+    private static void ValidateSeriesCategoryAlignment(Chart chart, int expectedCategoryCount)
     {
-        if (categories == null) throw new ArgumentNullException(nameof(categories));
-        if (values == null) throw new ArgumentNullException(nameof(values));
+        foreach (ChartSeries series in chart.Series)
+        {
+            // For category‑based charts the YValues collection holds the data points.
+            int valuesCount = series.YValues.Count;
 
-        if (categories.Length != values.Length)
-            throw new InvalidOperationException(
-                $"Series data mismatch: categories count ({categories.Length}) does not match values count ({values.Length}).");
+            if (valuesCount != expectedCategoryCount)
+            {
+                throw new InvalidOperationException(
+                    $"Series \"{series.Name}\" contains {valuesCount} values, " +
+                    $"but expected {expectedCategoryCount} to match the category count.");
+            }
+        }
     }
 }

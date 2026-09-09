@@ -1,56 +1,56 @@
 using System;
-using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-namespace ChartInTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new document and a builder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Define a fixed column width so the cell size is deterministic.
-            const double columnWidth = 300.0; // points
-            builder.CellFormat.Width = columnWidth;
+        // Define cell dimensions (points).
+        const double cellWidth = 300.0;
+        const double cellHeight = 200.0;
 
-            // Start a table with two columns.
-            builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-            // First cell – just some placeholder text.
-            builder.InsertCell();
-            builder.Write("Sample data");
+        // First cell – just some placeholder text.
+        builder.InsertCell();
+        builder.CellFormat.Width = cellWidth;
+        builder.RowFormat.Height = cellHeight;
+        builder.RowFormat.HeightRule = HeightRule.Exactly;
+        builder.Write("Placeholder");
 
-            // Second cell – insert the chart.
-            builder.InsertCell();
+        // End the first row.
+        builder.EndRow();
 
-            // Insert a column chart. Width and height are set to match the cell width.
-            Shape chartShape = builder.InsertChart(ChartType.Column, columnWidth, columnWidth * 0.6);
-            if (!chartShape.HasChart)
-                throw new InvalidOperationException("The inserted shape does not contain a chart.");
+        // Second cell – the chart will be inserted here.
+        builder.InsertCell();
+        builder.CellFormat.Width = cellWidth;
+        builder.RowFormat.Height = cellHeight;
+        builder.RowFormat.HeightRule = HeightRule.Exactly;
 
-            // Ensure the chart scales proportionally with the cell dimensions.
-            chartShape.Width = columnWidth;
-            chartShape.Height = columnWidth * 0.6; // maintain the same aspect ratio used on insertion.
+        // Insert a column chart that matches the cell size.
+        Shape chartShape = builder.InsertChart(ChartType.Column, cellWidth, cellHeight);
+        Chart chart = chartShape.Chart;
 
-            // Populate the chart with custom data.
-            Chart chart = chartShape.Chart;
-            chart.Series.Clear();
-            string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-            double[] values = { 15.0, 30.0, 25.0, 40.0 };
-            chart.Series.Add("Sales", categories, values);
+        // Remove the demo data and add custom series.
+        chart.Series.Clear();
+        chart.Series.Add(
+            "Quarterly Sales",
+            new[] { "Q1", "Q2", "Q3", "Q4" },
+            new[] { 120.0, 150.0, 180.0, 200.0 });
 
-            // Finish the row and the table.
-            builder.EndRow();
-            builder.EndTable();
+        // Finish the row and the table.
+        builder.EndRow();
+        builder.EndTable();
 
-            // Save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ChartInTable.docx");
-            doc.Save(outputPath);
-        }
+        // Save the document.
+        doc.Save("ChartInTable.docx");
     }
 }

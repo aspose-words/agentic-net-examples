@@ -9,57 +9,51 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a new document and insert a simple chart.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape initialChart = builder.InsertChart(ChartType.Column, 400, 300);
+        builder.Writeln("Sample document.");
 
-        // Optional: clear demo data and add custom series.
-        Chart chart = initialChart.Chart;
-        chart.Series.Clear();
-        chart.Series.Add("Sample", new[] { "A", "B", "C" }, new[] { 10.0, 20.0, 30.0 });
-
-        // Step 2: Save the document to a writable memory stream.
-        using (MemoryStream writableStream = new MemoryStream())
+        // Save the document into a memory buffer.
+        using (MemoryStream tempStream = new MemoryStream())
         {
-            // Save to stream using the overload that specifies the format.
-            doc.Save(writableStream, SaveFormat.Docx);
-            // Ensure the stream's position is at the beginning for reading.
-            writableStream.Position = 0;
+            // Save to the stream using a format overload (required by the API).
+            doc.Save(tempStream, SaveFormat.Docx);
+            byte[] docBytes = tempStream.ToArray();
 
-            // Step 3: Create a read‑only stream from the same byte array.
-            MemoryStream readOnlyStream = new MemoryStream(writableStream.ToArray(), writable: false);
-
-            // Step 4: Load the document from the read‑only stream.
-            Document readOnlyDoc = new Document(readOnlyStream);
-            DocumentBuilder readOnlyBuilder = new DocumentBuilder(readOnlyDoc);
-
-            // Step 5: Attempt to modify the document (insert another chart) and handle any exceptions.
-            try
+            // Create a read‑only stream from the buffer.
+            using (MemoryStream readOnlyStream = new MemoryStream(docBytes, writable: false))
             {
-                readOnlyBuilder.InsertChart(ChartType.Pie, 300, 300);
-                Console.WriteLine("Chart inserted successfully into the read‑only document object.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception during chart insertion: {ex.Message}");
-            }
+                try
+                {
+                    // Load the document from the read‑only stream.
+                    Document readOnlyDoc = new Document(readOnlyStream);
 
-            // Step 6: Attempt to save the modified document back to the same read‑only stream.
-            try
-            {
-                // Reset position to the start; this will fail because the stream is not writable.
-                readOnlyStream.Position = 0;
-                readOnlyDoc.Save(readOnlyStream, SaveFormat.Docx);
-                Console.WriteLine("Document saved back to the read‑only stream (unexpected).");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception during saving to read‑only stream: {ex.Message}");
-            }
+                    // Insert a chart into the loaded document.
+                    DocumentBuilder chartBuilder = new DocumentBuilder(readOnlyDoc);
+                    Shape chartShape = chartBuilder.InsertChart(ChartType.Column, 432, 252);
+                    Chart chart = chartShape.Chart;
 
-            // Step 7: Save the final document to a regular file to verify the result.
-            readOnlyDoc.Save("Result.docx");
+                    // Replace the default demo data with custom series.
+                    chart.Series.Clear();
+                    chart.Series.Add(
+                        "Series 1",
+                        new[] { "Category A", "Category B", "Category C" },
+                        new[] { 10.0, 20.0, 30.0 });
+
+                    // Attempt to save back to the same read‑only stream.
+                    // This will throw because the stream is not writable.
+                    readOnlyDoc.Save(readOnlyStream, SaveFormat.Docx);
+                }
+                catch (Exception ex)
+                {
+                    // Expected exception for the read‑only stream scenario.
+                    Console.WriteLine($"Exception caught: {ex.Message}");
+                }
+            }
         }
+
+        // Save the original document to a file to demonstrate normal operation.
+        doc.Save("output.docx");
     }
 }

@@ -1,43 +1,47 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;          // Needed for the Shape class
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Expected counts for validation.
+        const int expectedSeriesCount = 2;
+        const int expectedDataPointsPerSeries = 3;
+
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a default column chart. The chart contains 3 demo series,
-        // each with 4 data points (categories) by default.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        // Insert a column chart.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
         Chart chart = chartShape.Chart;
 
-        // Ensure the shape actually contains a chart.
-        if (!chartShape.HasChart)
-            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+        // Remove the demo data that Aspose.Words inserts by default.
+        chart.Series.Clear();
 
-        // Expected counts based on the default demo data.
-        const int expectedSeriesCount = 3;
-        const int expectedDataPointsPerSeries = 4;
+        // Define categories (X‑axis labels) and add two series with matching data points.
+        string[] categories = { "Category 1", "Category 2", "Category 3" };
+        chart.Series.Add("Series 1", categories, new double[] { 10, 20, 30 });
+        chart.Series.Add("Series 2", categories, new double[] { 15, 25, 35 });
 
-        // Validate the number of series.
+        // ----- Validation -----
+        // Verify the number of series.
         if (chart.Series.Count != expectedSeriesCount)
             throw new InvalidOperationException(
-                $"Chart validation failed: expected {expectedSeriesCount} series, but found {chart.Series.Count}.");
+                $"Chart must contain {expectedSeriesCount} series, but found {chart.Series.Count}.");
 
-        // Validate the number of data points in each series.
+        // Verify each series contains the expected number of data points.
         foreach (ChartSeries series in chart.Series)
         {
             if (series.DataPoints.Count != expectedDataPointsPerSeries)
                 throw new InvalidOperationException(
-                    $"Chart validation failed: series \"{series.Name}\" expected {expectedDataPointsPerSeries} data points, but found {series.DataPoints.Count}.");
+                    $"Series '{series.Name}' must contain {expectedDataPointsPerSeries} data points, but found {series.DataPoints.Count}.");
         }
 
-        // All validations passed – save the document.
+        // Save the validated document.
         doc.Save("validated-chart.docx");
     }
 }

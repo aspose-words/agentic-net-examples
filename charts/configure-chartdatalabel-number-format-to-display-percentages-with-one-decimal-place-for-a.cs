@@ -3,40 +3,41 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-public class Program
+namespace ChartDataLabelPercentageExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a builder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a pie chart. Pie charts naturally display percentages.
-        Shape chartShape = builder.InsertChart(ChartType.Pie, 500, 300);
-        Chart chart = chartShape.Chart;
-
-        // Remove the demo data series.
-        chart.Series.Clear();
-
-        // Add a custom series with three categories.
-        ChartSeries series = chart.Series.Add(
-            "Sample Series",
-            new[] { "Category A", "Category B", "Category C" },
-            new[] { 30.0, 45.0, 25.0 });
-
-        // Enable data labels for the series.
-        series.HasDataLabels = true;
-
-        // Configure each data label to show percentage with one decimal place.
-        for (int i = 0; i < series.DataLabels.Count; i++)
+        public static void Main()
         {
-            ChartDataLabel label = series.DataLabels[i];
-            label.ShowPercentage = true;                     // Show the percentage value.
-            label.NumberFormat.FormatCode = "0.0%";          // One decimal place.
-            label.ShowValue = false;                         // Hide the raw value (optional).
-        }
+            // Create a new document and a builder.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document.
-        doc.Save("ChartDataLabelPercentage.docx");
+            // Insert a column chart.
+            Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+            Chart chart = chartShape.Chart;
+
+            // Remove the default demo series.
+            chart.Series.Clear();
+
+            // Add a custom series with categories and values.
+            string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+            double[] values = { 0.25, 0.35, 0.20, 0.20 };
+            chart.Series.Add("Quarterly", categories, values);
+
+            // Enable data labels for each series and set the number format to show percentages
+            // with one decimal place.
+            foreach (ChartSeries series in chart.Series)
+            {
+                series.HasDataLabels = true;
+                ChartDataLabelCollection labels = series.DataLabels;
+                labels.ShowValue = true;
+                // Format code "0.0%" displays percentages with one decimal place.
+                labels.NumberFormat.FormatCode = "0.0%";
+            }
+
+            // Save the document.
+            doc.Save("ChartDataLabelPercentage.docx");
+        }
     }
 }
