@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,41 +6,31 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(artifactsDir);
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a TOC that includes outline levels 1 and 2.
-        builder.InsertTableOfContents("\\o \"1-2\" \\h \\z \\u");
+        // Insert a Table of Contents that will include headings up to level 3.
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
         builder.InsertBreak(BreakType.PageBreak);
 
-        // First heading (outline level 1, using built‑in Heading 1 style).
+        // Insert a main heading (outline level 1).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
+        builder.Writeln("Main Heading");
 
-        // Subheading – set explicit outline level to 2.
+        // Insert a subheading and explicitly set its outline level to 2.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2; // Level 2 = outline level 2
+        builder.Writeln("Subheading Level 2");
+
+        // Add a normal paragraph of body text.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
-        builder.Writeln("Section 1.1");
+        builder.Writeln("This is some body text under the subheading.");
 
-        // Another top‑level heading.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.BodyText; // reset to default.
-        builder.Writeln("Chapter 2");
-
-        // Second subheading with outline level 2.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
-        builder.Writeln("Section 2.1");
-
-        // Update fields so the TOC reflects the inserted entries.
+        // Update fields so the TOC reflects the headings.
         doc.UpdateFields();
 
-        // Save the document.
-        doc.Save(Path.Combine(artifactsDir, "OutlineLevelExample.docx"));
+        // Save the resulting document.
+        doc.Save("ParagraphOutlineLevelExample.docx");
     }
 }

@@ -8,26 +8,31 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder for easy content insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure paragraph formatting: center alignment and a space after the paragraph.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.ParagraphFormat.SpaceAfter = 12; // points
+        // ------------------------------------------------------------
+        // Set paragraph formatting that will be applied to the next
+        // paragraph (the one that will contain the DATE field).
+        // ------------------------------------------------------------
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center; // Center the text.
+        builder.ParagraphFormat.SpaceAfter = 12;                       // Add 12 points spacing after the paragraph.
 
-        // Write some introductory text.
-        builder.Write("Current date: ");
+        // Write some introductory text and start a new paragraph.
+        builder.Writeln("Current date:");
 
-        // Insert a DATE field with a custom date format using the \\@ switch.
-        // The field result will be formatted as "Wednesday, March 27, 2024".
-        Field dateField = builder.InsertField("DATE \\@ \"dddd, MMMM dd, yyyy\"");
+        // Insert a DATE field. The field is updated immediately (second argument = true).
+        Field dateField = builder.InsertField(FieldType.FieldDate, true);
 
-        // Finish the paragraph.
-        builder.Writeln();
+        // Apply a custom date/time format to the field result via the FieldFormat object.
+        // This corresponds to the \\@ switch in a Word field.
+        dateField.Format.DateTimeFormat = "dddd, MMMM dd, yyyy";
 
-        // Ensure all fields are up‑to‑date before saving.
+        // Ensure all fields in the document are up‑to‑date before saving.
         doc.UpdateFields();
 
-        // Save the document to the current directory.
+        // Save the document to the local file system.
         doc.Save("ParagraphWithDateField.docx");
     }
 }

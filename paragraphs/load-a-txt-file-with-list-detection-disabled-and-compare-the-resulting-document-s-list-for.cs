@@ -8,62 +8,49 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample plain‑text content that contains list items.
-        // The first three lines use a dot delimiter (e.g., "1.") – always detected as a list.
-        // The next three lines use a whitespace delimiter (e.g., "1 ") – detected only when
-        // DetectNumberingWithWhitespaces is true.
+        // Prepare a sample plain‑text file containing numbered and bulleted list items.
         string txtContent =
-            "1. First item\r\n" +
-            "2. Second item\r\n" +
-            "3. Third item\r\n\r\n" +
-            "1 Fourth item\r\n" +
-            "2 Fourth item\r\n" +
-            "3 Fourth item";
+            "1. First numbered item\r\n" +
+            "2. Second numbered item\r\n" +
+            "3. Third numbered item\r\n" +
+            "A regular paragraph without list formatting.\r\n" +
+            "- First bullet item\r\n" +
+            "- Second bullet item\r\n";
 
-        // Write the content to a temporary file.
-        string txtPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.txt");
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        string txtPath = Path.Combine(artifactsDir, "Sample.txt");
         File.WriteAllText(txtPath, txtContent);
 
-        // -----------------------------------------------------------------
-        // Load with list detection enabled (default settings).
-        // -----------------------------------------------------------------
-        Document docEnabled = new Document(txtPath, new TxtLoadOptions());
+        // Load the text file with the default options (list detection enabled).
+        Document docWithDetection = new Document(txtPath);
 
-        // Count paragraphs that are recognized as list items.
-        int enabledListItemCount = docEnabled
-            .GetChildNodes(NodeType.Paragraph, true)
-            .Cast<Paragraph>()
-            .Count(p => p.IsListItem);
-
-        // Save the document for visual verification (optional).
-        string enabledDocPath = Path.Combine(Directory.GetCurrentDirectory(), "enabled.docx");
-        docEnabled.Save(enabledDocPath);
-
-        // -----------------------------------------------------------------
-        // Load with list detection disabled.
-        // -----------------------------------------------------------------
-        TxtLoadOptions disabledOptions = new TxtLoadOptions
+        // Load the same text file with list detection disabled.
+        TxtLoadOptions loadOptions = new TxtLoadOptions
         {
-            // Turn off automatic numbering detection completely.
-            AutoNumberingDetection = false,
-            // Also disable whitespace‑delimited list detection.
-            DetectNumberingWithWhitespaces = false
+            // Disables automatic numbering detection while loading plain‑text.
+            AutoNumberingDetection = false
         };
-        Document docDisabled = new Document(txtPath, disabledOptions);
+        Document docWithoutDetection = new Document(txtPath, loadOptions);
 
-        int disabledListItemCount = docDisabled
+        // Count paragraphs that are recognized as list items in each document.
+        int countWithDetection = docWithDetection
             .GetChildNodes(NodeType.Paragraph, true)
             .Cast<Paragraph>()
             .Count(p => p.IsListItem);
 
-        // Save the document for visual verification (optional).
-        string disabledDocPath = Path.Combine(Directory.GetCurrentDirectory(), "disabled.docx");
-        docDisabled.Save(disabledDocPath);
+        int countWithoutDetection = docWithoutDetection
+            .GetChildNodes(NodeType.Paragraph, true)
+            .Cast<Paragraph>()
+            .Count(p => p.IsListItem);
 
-        // -----------------------------------------------------------------
-        // Output the comparison results.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"List items with detection enabled : {enabledListItemCount}");
-        Console.WriteLine($"List items with detection disabled: {disabledListItemCount}");
+        // Output the comparison result.
+        Console.WriteLine($"List items with detection enabled : {countWithDetection}");
+        Console.WriteLine($"List items with detection disabled: {countWithoutDetection}");
+
+        // Save both documents so the difference can be inspected manually if needed.
+        docWithDetection.Save(Path.Combine(artifactsDir, "WithListDetection.docx"));
+        docWithoutDetection.Save(Path.Combine(artifactsDir, "WithoutListDetection.docx"));
     }
 }

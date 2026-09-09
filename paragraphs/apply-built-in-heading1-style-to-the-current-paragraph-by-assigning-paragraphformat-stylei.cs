@@ -1,25 +1,27 @@
 using System;
-using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class ApplyHeadingStyle
+namespace AsposeWordsParagraphStyleExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Initialize a DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the built‑in Heading1 style to the paragraph that will be created.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            // Apply the built‑in Heading1 style to the current paragraph.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
 
-        // Write the heading text; this creates a paragraph with the Heading1 style.
-        builder.Writeln("Heading 1 Example");
+            // Add some text – this paragraph will be formatted as Heading1.
+            builder.Writeln("Sample Heading 1");
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Heading1Example.docx");
-        doc.Save(outputPath);
+            // Save the document to the local file system.
+            doc.Save("Output.docx");
+        }
     }
 }
