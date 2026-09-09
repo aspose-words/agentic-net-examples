@@ -3,60 +3,85 @@ using System.IO;
 using System.Net.Http;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare output folder.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputFolder);
 
-        // Create a sample existing DOCX file.
-        string existingDocPath = Path.Combine(outputDir, "Existing.docx");
+        // -----------------------------------------------------------------
+        // 1. Create a local DOCX that will act as the existing document.
+        // -----------------------------------------------------------------
         Document existingDoc = new Document();
-        DocumentBuilder existingBuilder = new DocumentBuilder(existingDoc);
-        existingBuilder.Writeln("This is the existing document.");
+        DocumentBuilder builder = new DocumentBuilder(existingDoc);
+        builder.Writeln("This is the existing document.");
+
+        string existingDocPath = Path.Combine(outputFolder, "Existing.docx");
         existingDoc.Save(existingDocPath);
 
-        // Download a DOCX from a web service (simulated by a public URL).
-        string webDocUrl = "https://filesamples.com/samples/document/docx/sample3.docx";
-        byte[] webDocBytes;
+        // -----------------------------------------------------------------
+        // 2. Obtain a DOCX from a web service (download a sample file).
+        // -----------------------------------------------------------------
+        // Sample DOCX URL – any publicly reachable DOCX file can be used.
+        const string sampleDocUrl = "https://filesamples.com/samples/document/docx/sample3.docx";
+
         using (HttpClient httpClient = new HttpClient())
         {
-            webDocBytes = httpClient.GetByteArrayAsync(webDocUrl).Result;
+            HttpResponseMessage response = httpClient.GetAsync(sampleDocUrl).Result;
+            response.EnsureSuccessStatusCode();
+
+            byte[] docBytes = response.Content.ReadAsByteArrayAsync().Result;
+
+            using (MemoryStream webDocStream = new MemoryStream(docBytes))
+            {
+                // Load the downloaded document from the memory stream.
+                Document webDoc = new Document(webDocStream);
+
+                // -----------------------------------------------------------------
+                // 3. Append the web‑generated document to the existing one.
+                // -----------------------------------------------------------------
+                existingDoc.AppendDocument(webDoc, ImportFormatMode.KeepSourceFormatting);
+            }
         }
 
-        // Load the downloaded DOCX into a Document object.
-        Document webDoc;
-        using (MemoryStream webStream = new MemoryStream(webDocBytes))
-        {
-            webStream.Position = 0; // Ensure the stream is at the beginning.
-            webDoc = new Document(webStream);
-        }
+        // -----------------------------------------------------------------
+        // 4. Save the merged document as DOCX (optional, for verification).
+        // -----------------------------------------------------------------
+        string mergedDocxPath = Path.Combine(outputFolder, "Merged.docx");
+        existingDoc.Save(mergedDocxPath);
 
-        // Load the existing DOCX.
-        Document mergedDoc = new Document(existingDocPath);
+        // -----------------------------------------------------------------
+        // 5. Convert the merged document to PDF and encrypt it with a password.
+        // -----------------------------------------------------------------
+        string encryptedPdfPath = Path.Combine(outputFolder, "MergedEncrypted.pdf");
 
-        // Append the web‑service document to the existing document.
-        mergedDoc.AppendDocument(webDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Encrypt the final PDF with a password.
-        string pdfPath = Path.Combine(outputDir, "MergedEncrypted.pdf");
-        PdfEncryptionDetails encryption = new PdfEncryptionDetails("UserPassword", "OwnerPassword");
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            EncryptionDetails = encryption
+            // UserPassword is required to open the PDF; OwnerPassword controls permissions.
+            EncryptionDetails = new PdfEncryptionDetails("UserPassword123", "OwnerPassword123")
         };
-        mergedDoc.Save(pdfPath, pdfOptions);
 
-        // Validate that the PDF was created.
-        if (!File.Exists(pdfPath))
-        {
-            throw new InvalidOperationException("The encrypted PDF was not created.");
-        }
+        existingDoc.Save(encryptedPdfPath, pdfOptions);
 
-        // Indicate successful completion.
-        Console.WriteLine("Document merged and encrypted PDF saved to: " + pdfPath);
+        // -----------------------------------------------------------------
+        // 6. Validation – ensure the encrypted PDF file exists and contains expected text.
+        // -----------------------------------------------------------------
+        if (!File.Exists(encryptedPdfPath))
+            throw new InvalidOperationException("Encrypted PDF was not created.");
+
+        // Load the encrypted PDF using the same password to verify its content.
+        LoadOptions loadOptions = new LoadOptions("UserPassword123");
+        Document pdfDoc = new Document(encryptedPdfPath, loadOptions);
+        string pdfText = pdfDoc.GetText();
+
+        if (!pdfText.Contains("This is the existing document."))
+            throw new InvalidOperationException("Merged content is missing in the encrypted PDF.");
+
+        // If execution reaches this point, the process succeeded.
+        Console.WriteLine("Document appended and PDF encrypted successfully.");
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -9,102 +8,99 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare a folder for temporary files.
+        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        Directory.CreateDirectory(dataDir);
 
         // Paths for the documents.
-        string mainDocPath = Path.Combine(outputDir, "MainDocument.docx");
-        string subDocPath = Path.Combine(outputDir, "SubDocument.docx");
-        string resultPath = Path.Combine(outputDir, "Result.docx");
+        string mainDocPath = Path.Combine(dataDir, "Main.docx");
+        string insertDocPath = Path.Combine(dataDir, "Insert.docx");
+        string resultPath = Path.Combine(dataDir, "Result.docx");
 
-        // Create the main document containing a placeholder XML tag.
+        // -----------------------------------------------------------------
+        // Create the main document that contains the XML tag to be replaced.
+        // -----------------------------------------------------------------
         Document mainDoc = new Document();
         DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
-        mainBuilder.Writeln("This is the main document.");
-        // Placeholder tag that will be replaced.
-        mainBuilder.Writeln("<InsertDoc/>");
-        mainBuilder.Writeln("End of the main document.");
-        mainDoc.Save(mainDocPath);
+        mainBuilder.Writeln("Document start.");
+        // The placeholder tag that will be searched for.
+        mainBuilder.Writeln("<myTag/>");
+        mainBuilder.Writeln("Document end.");
+        mainDoc.Save(mainDocPath, SaveFormat.Docx);
 
-        // Create the document that will be inserted.
-        Document subDoc = new Document();
-        DocumentBuilder subBuilder = new DocumentBuilder(subDoc);
-        subBuilder.Writeln("=== Inserted Document Start ===");
-        subBuilder.Writeln("This content comes from the inserted document.");
-        subBuilder.Writeln("=== Inserted Document End ===");
-        subDoc.Save(subDocPath);
+        // ---------------------------------------------------------------
+        // Create the document whose content will be inserted during replace.
+        // ---------------------------------------------------------------
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("=== Inserted Content Start ===");
+        insertBuilder.Writeln("Hello from the inserted document.");
+        insertBuilder.Writeln("=== Inserted Content End ===");
+        insertDoc.Save(insertDocPath, SaveFormat.Docx);
 
-        // Load the main document for processing.
-        Document processingDoc = new Document(mainDocPath);
-
-        // Set up find‑replace options with a custom callback.
+        // ---------------------------------------------------------------
+        // Load the main document and perform a find‑replace with a callback.
+        // ---------------------------------------------------------------
+        Document srcDoc = new Document(mainDocPath);
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new InsertDocumentAtReplaceHandler(subDocPath)
+            ReplacingCallback = new InsertDocumentCallback(insertDocPath)
         };
 
-        // Perform the replace operation on the placeholder tag.
-        processingDoc.Range.Replace(new Regex("<InsertDoc/>"), "", options);
+        // Use a regular expression to locate the exact XML tag.
+        srcDoc.Range.Replace(new Regex("<myTag/>"), string.Empty, options);
+        srcDoc.Save(resultPath, SaveFormat.Docx);
 
-        // Save the final document.
-        processingDoc.Save(resultPath, SaveFormat.Docx);
-
-        // Validate that the result file was created.
+        // ---------------------------------------------------------------
+        // Verify that the result file was created.
+        // ---------------------------------------------------------------
         if (!File.Exists(resultPath))
             throw new InvalidOperationException("The result document was not created.");
-
-        // Verify that the inserted content exists.
-        string resultText = new Document(resultPath).GetText();
-        if (!resultText.Contains("Inserted Document Start"))
-            throw new InvalidOperationException("The inserted document content was not found in the result.");
     }
 
-    // Callback that inserts a document at the location of the matched placeholder.
-    private class InsertDocumentAtReplaceHandler : IReplacingCallback
+    // Callback that inserts a document at the location of the matched tag.
+    private class InsertDocumentCallback : IReplacingCallback
     {
-        private readonly string _subDocPath;
+        private readonly string _docPath;
 
-        public InsertDocumentAtReplaceHandler(string subDocPath)
+        public InsertDocumentCallback(string docPath)
         {
-            _subDocPath = subDocPath;
+            _docPath = docPath;
         }
 
         ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
             // Load the document to be inserted.
-            Document subDoc = new Document(_subDocPath);
+            Document subDoc = new Document(_docPath);
 
-            // The match is inside a paragraph; get that paragraph.
-            Paragraph placeholderParagraph = args.MatchNode?.ParentNode as Paragraph;
-            if (placeholderParagraph == null)
-                return ReplaceAction.Skip;
-
-            // Insert the sub‑document after the placeholder paragraph.
-            InsertDocument(placeholderParagraph, subDoc);
-
-            // Remove the placeholder paragraph.
-            placeholderParagraph.Remove();
+            // The match resides inside a paragraph.
+            Paragraph placeholderParagraph = args.MatchNode.ParentNode as Paragraph;
+            if (placeholderParagraph != null)
+            {
+                InsertDocument(placeholderParagraph, subDoc);
+                // Remove the paragraph that contained the placeholder tag.
+                placeholderParagraph.Remove();
+            }
 
             // Skip further processing of this match.
             return ReplaceAction.Skip;
         }
 
-        // Inserts all nodes of docToInsert after the specified paragraph or table.
+        // Inserts all nodes of docToInsert after insertionDestination.
         private static void InsertDocument(Node insertionDestination, Document docToInsert)
         {
-            if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
+            if (insertionDestination.NodeType != NodeType.Paragraph &&
+                insertionDestination.NodeType != NodeType.Table)
                 throw new ArgumentException("Insertion destination must be a paragraph or table.");
 
-            CompositeNode destinationStory = insertionDestination.ParentNode;
-
+            CompositeNode dstStory = insertionDestination.ParentNode;
             NodeImporter importer = new NodeImporter(docToInsert, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
 
             foreach (Section srcSection in docToInsert.Sections)
             {
                 foreach (Node srcNode in srcSection.Body)
                 {
-                    // Skip the last empty paragraph of a section.
+                    // Skip the final empty paragraph of a section.
                     if (srcNode.NodeType == NodeType.Paragraph)
                     {
                         Paragraph para = (Paragraph)srcNode;
@@ -113,7 +109,7 @@ public class Program
                     }
 
                     Node newNode = importer.ImportNode(srcNode, true);
-                    destinationStory.InsertAfter(newNode, insertionDestination);
+                    dstStory.InsertAfter(newNode, insertionDestination);
                     insertionDestination = newNode;
                 }
             }

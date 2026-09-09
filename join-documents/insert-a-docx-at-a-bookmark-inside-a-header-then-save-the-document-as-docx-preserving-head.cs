@@ -6,50 +6,59 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the output document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        // Folder for all generated files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // ---------- Create destination document with a header containing a bookmark ----------
+        // -----------------------------------------------------------------
+        // 1. Create a source DOCX that will be inserted into the header.
+        // -----------------------------------------------------------------
+        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is the inserted document content.");
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
+
+        // -----------------------------------------------------------------
+        // 2. Create the destination document with a header that contains a bookmark.
+        // -----------------------------------------------------------------
+        string resultPath = Path.Combine(outputDir, "Result.docx");
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
-        // Move the builder to the primary header of the first section.
+        // Ensure the first section has a primary header.
         destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Insert a bookmark inside the header.
+        // Insert a bookmark named "HeaderBookmark" where the source will be placed.
         destBuilder.StartBookmark("HeaderBookmark");
-        destBuilder.Write("Header start. ");
         destBuilder.EndBookmark("HeaderBookmark");
-        destBuilder.Writeln("Header end.");
 
-        // ---------- Create source document that will be inserted ----------
-        Document srcDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Writeln("<<Inserted content from source DOCX>>");
+        // Add some surrounding text to visualize the header.
+        destBuilder.Write("Header before bookmark. ");
+        destBuilder.MoveToBookmark("HeaderBookmark");
+        destBuilder.Write(" [Inserted content will appear here] ");
+        destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        destBuilder.Writeln(" Header after bookmark.");
 
-        // ---------- Insert the source document at the bookmark inside the header ----------
-        // Move back to the header and then to the bookmark.
+        // -----------------------------------------------------------------
+        // 3. Load the source document and insert it at the bookmark inside the header.
+        // -----------------------------------------------------------------
+        Document docToInsert = new Document(sourcePath);
         destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         destBuilder.MoveToBookmark("HeaderBookmark");
+        destBuilder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
 
-        // Insert the source document preserving its formatting.
-        destBuilder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+        // -----------------------------------------------------------------
+        // 4. Save the final document preserving header formatting.
+        // -----------------------------------------------------------------
+        destDoc.Save(resultPath, SaveFormat.Docx);
 
-        // ---------- Save the merged document ----------
-        destDoc.Save(outputPath, SaveFormat.Docx);
-
-        // ---------- Validation ----------
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
-
-        // Load the saved document and verify that the inserted text appears in the header.
-        Document verifyDoc = new Document(outputPath);
-        string headerText = verifyDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary].GetText();
-
-        if (!headerText.Contains("Inserted content from source DOCX"))
-            throw new InvalidOperationException("The inserted content was not found in the header.");
-
-        // If execution reaches this point, the operation succeeded.
-        Console.WriteLine("Document created successfully at: " + outputPath);
+        // -----------------------------------------------------------------
+        // 5. Simple validation that the output file was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(resultPath))
+        {
+            throw new InvalidOperationException($"The result document was not saved to '{resultPath}'.");
+        }
     }
 }

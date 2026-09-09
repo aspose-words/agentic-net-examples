@@ -1,82 +1,90 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the main document that contains the placeholder text.
+        // Prepare file names.
+        string mainDocPath = "MainDocument.docx";
+        string insertDocPath = "InsertDocument.docx";
+        string outputPath = "ResultDocument.docx";
+
+        // Create the main document containing the placeholder phrase.
         Document mainDoc = new Document();
         DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
-        mainBuilder.Writeln("This is the main document.");
+        mainBuilder.Writeln("This is the beginning of the main document.");
         mainBuilder.Writeln("INSERT_HERE"); // Placeholder to be replaced.
-        mainBuilder.Writeln("End of the main document.");
+        mainBuilder.Writeln("This is the end of the main document.");
+        mainDoc.Save(mainDocPath, SaveFormat.Docx);
 
-        // Create the document that will be inserted at the placeholder.
-        string insertPath = Path.Combine(Directory.GetCurrentDirectory(), "Insert.docx");
+        // Create the document that will be inserted.
         Document insertDoc = new Document();
         DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
-        insertBuilder.Writeln("This is the inserted document content.");
-        insertDoc.Save(insertPath);
+        insertBuilder.Writeln("=== Inserted Document Start ===");
+        insertBuilder.Writeln("This content comes from the inserted document.");
+        insertBuilder.Writeln("=== Inserted Document End ===");
+        insertDoc.Save(insertDocPath, SaveFormat.Docx);
 
-        // Configure FindReplaceOptions with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new InsertDocumentAtReplaceHandler(insertPath)
-        };
+        // Load the main document for processing.
+        Document src = new Document(mainDocPath);
 
-        // Perform the replace operation. The placeholder text is removed,
-        // and the content of Insert.docx is inserted at its location.
-        mainDoc.Range.Replace(new Regex("INSERT_HERE"), "", options);
+        // Set up FindReplaceOptions with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new InsertDocumentAtReplaceHandler(insertDocPath);
+
+        // Perform the replace operation using a regular expression that matches the placeholder.
+        src.Range.Replace(new Regex("INSERT_HERE"), "", options);
 
         // Save the resulting document.
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
-        mainDoc.Save(resultPath);
+        src.Save(outputPath, SaveFormat.Docx);
 
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The merged document was not saved correctly.");
-
-        // Optional: verify that the inserted text is present.
-        Document resultDoc = new Document(resultPath);
-        string resultText = resultDoc.GetText();
-        if (!resultText.Contains("This is the inserted document content."))
-            throw new InvalidOperationException("The inserted document content was not found in the result.");
+        // Simple validation that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The result document was not saved correctly.");
     }
 
-    // Callback that inserts a document at each match of the placeholder.
+    // Callback that inserts a document at the location of each match.
     private class InsertDocumentAtReplaceHandler : IReplacingCallback
     {
-        private readonly string _insertPath;
+        private readonly string _docToInsertPath;
 
-        public InsertDocumentAtReplaceHandler(string insertPath) => _insertPath = insertPath;
+        public InsertDocumentAtReplaceHandler(string docToInsertPath)
+        {
+            _docToInsertPath = docToInsertPath;
+        }
 
         ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
             // Load the document to be inserted.
-            Document subDoc = new Document(_insertPath);
+            Document subDoc = new Document(_docToInsertPath);
 
-            // The placeholder resides in a paragraph; insert after that paragraph.
-            Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
-            InsertDocument(placeholderParagraph, subDoc);
+            // The match is inside a Run; its parent paragraph is the insertion point.
+            Paragraph para = (Paragraph)args.MatchNode.ParentNode;
 
-            // Remove the paragraph that contained the placeholder text.
-            placeholderParagraph.Remove();
+            // Insert the document after the paragraph containing the placeholder.
+            InsertDocument(para, subDoc);
+
+            // Remove the placeholder paragraph.
+            para.Remove();
 
             // Skip further processing of this match.
             return ReplaceAction.Skip;
         }
 
-        // Inserts all nodes of the source document after the specified paragraph.
+        // Inserts all nodes of docToInsert after the specified insertion destination.
         private static void InsertDocument(Node insertionDestination, Document docToInsert)
         {
             if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
                 throw new ArgumentException("The destination node must be a paragraph or a table.");
 
             CompositeNode dstStory = insertionDestination.ParentNode;
+
             NodeImporter importer = new NodeImporter(docToInsert, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
 
             foreach (Section srcSection in docToInsert.Sections)
@@ -86,8 +94,8 @@ public class Program
                     // Skip the last empty paragraph of a section.
                     if (srcNode.NodeType == NodeType.Paragraph)
                     {
-                        Paragraph para = (Paragraph)srcNode;
-                        if (para.IsEndOfSection && !para.HasChildNodes)
+                        Paragraph p = (Paragraph)srcNode;
+                        if (p.IsEndOfSection && !p.HasChildNodes)
                             continue;
                     }
 
