@@ -1,64 +1,60 @@
 using System;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class UpdateCommentExample
+#nullable enable
+
+public class Program
 {
     public static void Main()
     {
         // Create a new document and add a paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a paragraph that will contain a comment.");
+        builder.Writeln("This is a sample paragraph.");
 
-        // Create a comment with some initial text and formatting.
+        // Create a comment with some formatted text (bold).
         Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("Original comment text.");
+        comment.SetText("Original comment.");
+
+        // Preserve the formatting of the first run (make it bold).
+        Run? firstRun = comment.FirstParagraph?.Runs.OfType<Run>().FirstOrDefault();
+        if (firstRun != null)
+        {
+            firstRun.Font.Bold = true;
+        }
+
         // Append the comment to the current paragraph.
         builder.CurrentParagraph.AppendChild(comment);
 
-        // Define the index of the comment to update (0‑based).
-        int commentIndex = 0;
-
-        // Retrieve all comment nodes in the document.
+        // -----------------------------------------------------------------
+        // Update the text of the comment at a specific index while preserving formatting.
+        // -----------------------------------------------------------------
+        // Enumerate all comments in the document.
         var comments = doc.GetChildNodes(NodeType.Comment, true)
                           .OfType<Comment>()
                           .ToList();
 
-        // Ensure the requested index exists.
-        if (commentIndex >= 0 && commentIndex < comments.Count)
-        {
-            Comment targetComment = comments[commentIndex];
+        int targetIndex = 0; // Index of the comment to update.
 
-            // Get the first paragraph inside the comment story.
-            Paragraph commentParagraph = targetComment.FirstParagraph;
+        if (targetIndex >= 0 && targetIndex < comments.Count)
+        {
+            Comment targetComment = comments[targetIndex];
+
+            // Update the text of each run inside the comment's first paragraph.
+            // This keeps the original formatting (e.g., bold, italic) intact.
+            Paragraph? commentParagraph = targetComment.FirstParagraph;
             if (commentParagraph != null)
             {
-                // Preserve formatting by updating the text of the first run.
-                if (commentParagraph.Runs.Count > 0)
+                foreach (Run run in commentParagraph.Runs)
                 {
-                    Run firstRun = commentParagraph.Runs[0];
-                    firstRun.Text = "Updated comment text while preserving formatting.";
-
-                    // Remove any additional runs that may exist.
-                    for (int i = commentParagraph.Runs.Count - 1; i > 0; i--)
-                        commentParagraph.Runs[i].Remove();
-                }
-                else
-                {
-                    // If there are no runs, simply add a new one.
-                    commentParagraph.AppendChild(new Run(doc, "Updated comment text while preserving formatting."));
+                    run.Text = "Updated comment text.";
                 }
             }
         }
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
         // Save the modified document.
-        string outputPath = Path.Combine(outputDir, "UpdatedComment.docx");
-        doc.Save(outputPath);
+        doc.Save("UpdatedComment.docx");
     }
 }

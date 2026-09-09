@@ -5,148 +5,156 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-namespace CommentComparisonDemo
+namespace AsposeWordsCommentsComparison
 {
     public class Program
     {
         public static void Main()
         {
-            // Prepare output folder.
+            // Prepare a temporary folder for the sample files.
             string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
             Directory.CreateDirectory(outputDir);
 
-            // Create the original document with three comments.
+            // -----------------------------------------------------------------
+            // 1. Create the original document with two comments.
+            // -----------------------------------------------------------------
             Document originalDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(originalDoc);
 
-            // First paragraph and comment.
-            builder.Writeln("Paragraph 1.");
+            builder.Writeln("First paragraph.");
+
             Comment comment1 = new Comment(originalDoc, "Alice", "A", DateTime.Now);
-            comment1.SetText("Original comment 1.");
+            comment1.SetText("Original comment 1");
             builder.CurrentParagraph.AppendChild(comment1);
 
-            // Second paragraph and comment.
-            builder.Writeln("Paragraph 2.");
+            builder.Writeln("Second paragraph.");
+
             Comment comment2 = new Comment(originalDoc, "Bob", "B", DateTime.Now);
-            comment2.SetText("Original comment 2.");
+            comment2.SetText("Original comment 2");
             builder.CurrentParagraph.AppendChild(comment2);
 
-            // Third paragraph and comment.
-            builder.Writeln("Paragraph 3.");
-            Comment comment3 = new Comment(originalDoc, "Charlie", "C", DateTime.Now);
-            comment3.SetText("Original comment 3.");
-            builder.CurrentParagraph.AppendChild(comment3);
-
-            // Save original document.
             string originalPath = Path.Combine(outputDir, "Original.docx");
             originalDoc.Save(originalPath);
 
-            // Clone the original to create the edited version.
+            // -----------------------------------------------------------------
+            // 2. Clone the original and modify it:
+            //    - Change text of the first comment.
+            //    - Delete the second comment.
+            //    - Add a new third comment.
+            // -----------------------------------------------------------------
             Document editedDoc = (Document)originalDoc.Clone(true);
 
-            // Locate comments in the edited document by their IDs.
-            var editedComments = editedDoc.GetChildNodes(NodeType.Comment, true)
-                                          .OfType<Comment>()
-                                          .ToDictionary(c => c.Id);
-
-            // Delete the second comment (Bob's comment).
-            if (editedComments.TryGetValue(comment2.Id, out Comment? toDelete))
+            // Change text of the first comment.
+            Comment editedComment1 = editedDoc.GetChildNodes(NodeType.Comment, true)
+                                             .OfType<Comment>()
+                                             .FirstOrDefault(c => c.Author == "Alice");
+            if (editedComment1 != null && editedComment1.FirstParagraph?.Runs.Count > 0)
             {
-                toDelete.Remove();
+                editedComment1.FirstParagraph.Runs[0].Text = "Modified comment 1";
             }
 
-            // Modify the text of the first comment (Alice's comment).
-            if (editedComments.TryGetValue(comment1.Id, out Comment? toModify))
-            {
-                toModify.SetText("Modified comment 1.");
-            }
+            // Delete the second comment.
+            Comment editedComment2 = editedDoc.GetChildNodes(NodeType.Comment, true)
+                                             .OfType<Comment>()
+                                             .FirstOrDefault(c => c.Author == "Bob");
+            editedComment2?.Remove();
 
-            // Add a new comment (Dave's comment) to the last paragraph.
-            Paragraph lastParagraph = editedDoc.FirstSection.Body.LastParagraph;
-            Comment comment4 = new Comment(editedDoc, "Dave", "D", DateTime.Now);
-            comment4.SetText("Newly added comment 4.");
-            lastParagraph.AppendChild(comment4);
+            // Add a new third comment.
+            DocumentBuilder editBuilder = new DocumentBuilder(editedDoc);
+            editBuilder.Writeln("Third paragraph with a new comment.");
 
-            // Save edited document.
+            Comment comment3 = new Comment(editedDoc, "Charlie", "C", DateTime.Now);
+            comment3.SetText("New comment 3");
+            editBuilder.CurrentParagraph.AppendChild(comment3);
+
             string editedPath = Path.Combine(outputDir, "Edited.docx");
             editedDoc.Save(editedPath);
 
             // -----------------------------------------------------------------
-            // Compare the two documents and list comment differences.
+            // 3. Compare the two documents. The original document will receive revisions.
             // -----------------------------------------------------------------
+            Document compareDoc = new Document(originalPath);
+            Document compareTarget = new Document(editedPath);
+            compareDoc.Compare(compareTarget, "Comparer", DateTime.Now);
 
-            // Perform a comparison; revisions will be added to the original document.
-            originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
+            // -----------------------------------------------------------------
+            // 4. Create a version of the original document with all revisions accepted.
+            //    This represents the edited state.
+            // -----------------------------------------------------------------
+            Document finalDoc = (Document)compareDoc.Clone(true);
+            finalDoc.Revisions.AcceptAll();
 
-            // Gather comments from both versions.
-            List<Comment> originalCommentList = originalDoc.GetChildNodes(NodeType.Comment, true)
-                                                          .OfType<Comment>()
-                                                          .ToList();
+            // -----------------------------------------------------------------
+            // 5. Enumerate comments in both the revision‑bearing document and the final document.
+            // -----------------------------------------------------------------
+            List<Comment> originalComments = compareDoc.GetChildNodes(NodeType.Comment, true)
+                                                      .OfType<Comment>()
+                                                      .ToList();
 
-            List<Comment> editedCommentList = editedDoc.GetChildNodes(NodeType.Comment, true)
-                                                        .OfType<Comment>()
-                                                        .ToList();
+            List<Comment> finalComments = finalDoc.GetChildNodes(NodeType.Comment, true)
+                                                  .OfType<Comment>()
+                                                  .ToList();
 
             // Build dictionaries keyed by comment Id for quick lookup.
-            var originalById = originalCommentList.ToDictionary(c => c.Id);
-            var editedById = editedCommentList.ToDictionary(c => c.Id);
+            Dictionary<int, Comment> originalById = originalComments.ToDictionary(c => c.Id);
+            Dictionary<int, Comment> finalById = finalComments.ToDictionary(c => c.Id);
 
-            // Track results.
-            List<string> added = new List<string>();
-            List<string> deleted = new List<string>();
-            List<string> modified = new List<string>();
+            // -----------------------------------------------------------------
+            // 6. Determine added, deleted, and modified comments.
+            // -----------------------------------------------------------------
+            List<Comment> addedComments = finalComments.Where(c => !originalById.ContainsKey(c.Id)).ToList();
+            List<Comment> deletedComments = originalComments.Where(c => !finalById.ContainsKey(c.Id)).ToList();
 
-            // Detect added and modified comments.
-            foreach (var editedPair in editedById)
+            List<(Comment Original, Comment Modified)> modifiedComments = new List<(Comment, Comment)>();
+            foreach (var kvp in originalById)
             {
-                int id = editedPair.Key;
-                Comment editedComment = editedPair.Value;
-
-                if (!originalById.ContainsKey(id))
+                int id = kvp.Key;
+                Comment original = kvp.Value;
+                if (finalById.TryGetValue(id, out Comment updated))
                 {
-                    // New comment.
-                    added.Add(FormatCommentInfo(editedComment));
-                }
-                else
-                {
-                    // Possible modification.
-                    Comment originalComment = originalById[id];
-                    string originalText = originalComment.GetText().Trim();
-                    string editedText = editedComment.GetText().Trim();
-
-                    if (!string.Equals(originalText, editedText, StringComparison.Ordinal))
+                    string originalText = original.GetText().Trim();
+                    string updatedText = updated.GetText().Trim();
+                    if (!string.Equals(originalText, updatedText, StringComparison.Ordinal))
                     {
-                        modified.Add($"Id={id}, Author={editedComment.Author}, From=\"{originalText}\" To=\"{editedText}\"");
+                        modifiedComments.Add((original, updated));
                     }
                 }
             }
 
-            // Detect deleted comments.
-            foreach (var originalPair in originalById)
-            {
-                int id = originalPair.Key;
-                if (!editedById.ContainsKey(id))
-                {
-                    deleted.Add(FormatCommentInfo(originalPair.Value));
-                }
-            }
+            // -----------------------------------------------------------------
+            // 7. Output the results.
+            // -----------------------------------------------------------------
+            Console.WriteLine("=== Comment Comparison Report ===");
+            Console.WriteLine();
 
-            // Output the results.
-            Console.WriteLine("Added comments:");
-            foreach (string info in added) Console.WriteLine($"  {info}");
+            Console.WriteLine("Added Comments:");
+            if (addedComments.Count == 0)
+                Console.WriteLine("  (none)");
+            else
+                foreach (var c in addedComments)
+                    Console.WriteLine($"  Author: {c.Author}, Text: \"{c.GetText().Trim()}\"");
 
-            Console.WriteLine("\nModified comments:");
-            foreach (string info in modified) Console.WriteLine($"  {info}");
+            Console.WriteLine();
 
-            Console.WriteLine("\nDeleted comments:");
-            foreach (string info in deleted) Console.WriteLine($"  {info}");
-        }
+            Console.WriteLine("Deleted Comments:");
+            if (deletedComments.Count == 0)
+                Console.WriteLine("  (none)");
+            else
+                foreach (var c in deletedComments)
+                    Console.WriteLine($"  Author: {c.Author}, Text: \"{c.GetText().Trim()}\"");
 
-        // Helper to format comment information for display.
-        private static string FormatCommentInfo(Comment comment)
-        {
-            string text = comment.GetText().Trim();
-            return $"Id={comment.Id}, Author={comment.Author}, Text=\"{text}\"";
+            Console.WriteLine();
+
+            Console.WriteLine("Modified Comments:");
+            if (modifiedComments.Count == 0)
+                Console.WriteLine("  (none)");
+            else
+                foreach (var pair in modifiedComments)
+                    Console.WriteLine($"  Author: {pair.Original.Author}, Original: \"{pair.Original.GetText().Trim()}\", Modified: \"{pair.Modified.GetText().Trim()}\"");
+
+            // Save the documents for inspection (optional).
+            compareDoc.Save(Path.Combine(outputDir, "ComparedWithRevisions.docx"));
+            finalDoc.Save(Path.Combine(outputDir, "FinalAfterAccept.docx"));
         }
     }
 }

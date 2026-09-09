@@ -9,27 +9,26 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This paragraph will have a comment attached to it.");
+
+        // Add some text to the document.
+        builder.Writeln("Paragraph before comment.");
 
         // Create a comment with author metadata.
         Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("Review this paragraph for clarity.");
+        comment.SetText("This comment will be visible in the PDF output.");
 
-        // Append the comment to the current paragraph so it is anchored to the text.
-        Paragraph? currentParagraph = builder.CurrentParagraph;
-        if (currentParagraph != null)
-        {
-            currentParagraph.AppendChild(comment);
-        }
+        // Insert the comment into the first paragraph.
+        // The comment is anchored to a range of text using CommentRangeStart and CommentRangeEnd.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(new CommentRangeStart(doc, comment.Id));
+        firstParagraph.AppendChild(new Run(doc, "Commented text"));
+        firstParagraph.AppendChild(new CommentRangeEnd(doc, comment.Id));
+        firstParagraph.AppendChild(comment);
 
         // Configure the layout to render comments as PDF annotations.
         doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
-
-        // Rebuild the layout after changing the option.
-        doc.UpdatePageLayout();
+        doc.UpdatePageLayout(); // Rebuild layout after changing options.
 
         // Save the document as PDF; comments will appear as visible annotations.
         doc.Save("DocumentWithComments.pdf", SaveFormat.Pdf);
