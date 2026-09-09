@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -8,117 +7,99 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample source document with a start Run and an end Bookmark.
-        // -----------------------------------------------------------------
+        // Create a sample source document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Paragraph before the range.
-        builder.Writeln("Paragraph before the range.");
+        builder.Writeln("Paragraph before start.");
+        // Paragraph that contains the start run.
+        builder.Writeln(); // create empty paragraph
+        builder.Write("StartRun"); // this run will be the start marker
+        builder.Writeln(); // end of the paragraph
 
-        // Insert the start Run that will mark the beginning of extraction.
-        Run startRun = new Run(sourceDoc, "StartRun");
-        builder.CurrentParagraph.AppendChild(startRun);
-        builder.Writeln(); // End the paragraph containing the start run.
+        builder.Writeln("Paragraph 1 between markers.");
+        builder.Writeln("Paragraph 2 between markers.");
 
-        // Content that should be extracted (paragraphs and a table).
-        builder.Writeln("First extracted paragraph.");
-        builder.Writeln("Second extracted paragraph.");
-
+        // Insert a table to demonstrate mixed content extraction.
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Cell A1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Cell B1");
         builder.EndRow();
         builder.EndTable();
 
-        // Insert the end Bookmark that will mark the end of extraction.
-        builder.StartBookmark("EndMarker");
-        builder.Writeln("Paragraph after the range (inside bookmark).");
-        builder.EndBookmark("EndMarker");
+        // End bookmark marker.
+        builder.StartBookmark("EndRange");
+        builder.Writeln("Paragraph after end bookmark.");
+        builder.EndBookmark("EndRange");
 
-        // Paragraph after the range.
-        builder.Writeln("Paragraph after the range.");
-
-        // Save the source document.
+        // Save the source document (optional, for inspection).
         const string sourcePath = "source.docx";
         sourceDoc.Save(sourcePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the source document and locate the start Run and end Bookmark.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
-
-        // Find the start Run by its exact text.
-        Run foundStartRun = null;
-        foreach (Run run in loadedDoc.GetChildNodes(NodeType.Run, true))
+        // Locate the start Run node with the exact text "StartRun".
+        Run startRun = null;
+        foreach (Run run in sourceDoc.GetChildNodes(NodeType.Run, true))
         {
             if (run.Text == "StartRun")
             {
-                foundStartRun = run;
+                startRun = run;
                 break;
             }
         }
 
-        if (foundStartRun == null)
-            throw new InvalidOperationException("Start Run not found.");
+        if (startRun == null)
+            throw new InvalidOperationException("Start run not found.");
 
-        // Find the end Bookmark by name.
-        Bookmark endBookmark = loadedDoc.Range.Bookmarks["EndMarker"];
+        // Locate the end bookmark node (BookmarkEnd) named "EndRange".
+        Bookmark endBookmark = sourceDoc.Range.Bookmarks["EndRange"];
         if (endBookmark == null)
-            throw new InvalidOperationException("End Bookmark not found.");
+            throw new InvalidOperationException("End bookmark not found.");
 
-        // Use the BookmarkStart node as the exclusive end boundary.
-        Node endNode = endBookmark.BookmarkStart;
+        BookmarkEnd endBookmarkNode = endBookmark.BookmarkEnd;
+        if (endBookmarkNode == null)
+            throw new InvalidOperationException("End bookmark node not found.");
 
-        // -----------------------------------------------------------------
-        // 3. Collect all block‑level nodes that lie between the start Run and the end Bookmark.
-        // -----------------------------------------------------------------
-        List<Node> nodesToExtract = new List<Node>();
+        // Determine the block-level nodes that bound the extraction range.
+        Paragraph startParagraph = startRun.ParentNode as Paragraph;
+        Paragraph endParagraph = endBookmarkNode.ParentNode as Paragraph;
 
-        // The start Run resides inside its own paragraph. We begin extraction after that paragraph.
-        Node current = foundStartRun.ParentNode?.NextSibling;
+        if (startParagraph == null || endParagraph == null)
+            throw new InvalidOperationException("Unable to determine paragraph boundaries.");
 
-        while (current != null && !current.Equals(endNode))
+        // Prepare the destination document.
+        Document destDoc = new Document();
+        destDoc.RemoveAllChildren();
+
+        Section destSection = new Section(destDoc);
+        destDoc.AppendChild(destSection);
+
+        Body destBody = new Body(destDoc);
+        destSection.AppendChild(destBody);
+
+        // Importer to handle node import between documents.
+        NodeImporter importer = new NodeImporter(sourceDoc, destDoc, ImportFormatMode.KeepSourceFormatting);
+
+        // Traverse sibling nodes between the start and end paragraphs (exclusive).
+        Node currentNode = startParagraph.NextSibling;
+        while (currentNode != null && currentNode != endParagraph)
         {
-            if (current.NodeType == NodeType.Paragraph || current.NodeType == NodeType.Table)
-                nodesToExtract.Add(current);
-
-            current = current.NextSibling;
+            // Clone and import the node into the destination document.
+            Node importedNode = importer.ImportNode(currentNode, true);
+            destBody.AppendChild(importedNode);
+            currentNode = currentNode.NextSibling;
         }
 
-        if (nodesToExtract.Count == 0)
-            throw new InvalidOperationException("No nodes were found between the start Run and the end Bookmark.");
-
-        // -----------------------------------------------------------------
-        // 4. Create a new document and import the collected nodes.
-        // -----------------------------------------------------------------
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren();
-
-        Section resultSection = new Section(resultDoc);
-        resultDoc.AppendChild(resultSection);
-
-        Body resultBody = new Body(resultDoc);
-        resultSection.AppendChild(resultBody);
-
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-
-        foreach (Node node in nodesToExtract)
-        {
-            Node importedNode = importer.ImportNode(node, true);
-            resultBody.AppendChild(importedNode);
-        }
-
-        // -----------------------------------------------------------------
-        // 5. Save the extracted content and verify the output file.
-        // -----------------------------------------------------------------
+        // Save the extracted content.
         const string resultPath = "extracted.docx";
-        resultDoc.Save(resultPath);
+        destDoc.Save(resultPath);
 
+        // Validate that the output file was created.
         if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The extracted document was not created.");
+            throw new InvalidOperationException("Extraction failed: output file was not created.");
+
+        // Optional: indicate success (no console interaction required).
+        // The program will exit normally.
     }
 }

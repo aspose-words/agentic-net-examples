@@ -9,118 +9,122 @@ public class Program
     public static void Main()
     {
         // -----------------------------------------------------------------
-        // 1. Create a source document with several headings and content.
+        // 1. Create a source document that contains two headings and some
+        //    content between them.
         // -----------------------------------------------------------------
-        Document source = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(source);
+        string sourcePath = "source.docx";
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
 
+        // First heading (start marker)
         srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        srcBuilder.Writeln("Heading 1");
+        srcBuilder.Writeln("Start Heading");
 
-        srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        srcBuilder.Writeln("Heading 2");
-        srcBuilder.Writeln("Paragraph under Heading 2.");
+        // Content to be extracted
+        srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        srcBuilder.Writeln("Paragraph 1 between headings.");
+        srcBuilder.Writeln("Paragraph 2 between headings.");
 
-        srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        srcBuilder.Writeln("Heading 3");
-        srcBuilder.Writeln("Paragraph under Heading 3.");
+        // Insert a simple table as part of the extracted range
+        srcBuilder.StartTable();
+        srcBuilder.InsertCell();
+        srcBuilder.Write("Cell A1");
+        srcBuilder.InsertCell();
+        srcBuilder.Write("Cell B1");
+        srcBuilder.EndRow();
+        srcBuilder.InsertCell();
+        srcBuilder.Write("Cell A2");
+        srcBuilder.InsertCell();
+        srcBuilder.Write("Cell B2");
+        srcBuilder.EndTable();
 
-        source.Save("source.docx");
+        // Second heading (end marker)
+        srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        srcBuilder.Writeln("End Heading");
 
-        // -----------------------------------------------------------------
-        // 2. Create a template document that will receive the extracted content.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder tmplBuilder = new DocumentBuilder(template);
-
-        tmplBuilder.Writeln("Template start");
-        tmplBuilder.Writeln("[Placeholder]"); // marker where content will be inserted
-        tmplBuilder.Writeln("Template end");
-
-        template.Save("template.docx");
-
-        // -----------------------------------------------------------------
-        // 3. Load both documents.
-        // -----------------------------------------------------------------
-        Document srcDoc = new Document("source.docx");
-        Document tmplDoc = new Document("template.docx");
+        // Save the source document
+        sourceDoc.Save(sourcePath);
 
         // -----------------------------------------------------------------
-        // 4. Locate the start and end heading paragraphs.
+        // 2. Load the source document and locate the two heading paragraphs.
         // -----------------------------------------------------------------
+        Document loadedSource = new Document(sourcePath);
         Paragraph startHeading = null;
         Paragraph endHeading = null;
 
-        foreach (Paragraph para in srcDoc.FirstSection.Body.Paragraphs)
+        foreach (Paragraph para in loadedSource.GetChildNodes(NodeType.Paragraph, true))
         {
             string text = para.GetText().Trim();
-            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1 && text == "Heading 1")
-                startHeading = para;
-            else if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading3 && text == "Heading 3")
-                endHeading = para;
+            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
+            {
+                if (text == "Start Heading")
+                    startHeading = para;
+                else if (text == "End Heading")
+                    endHeading = para;
+            }
         }
 
         if (startHeading == null || endHeading == null)
             throw new InvalidOperationException("Required headings were not found in the source document.");
 
         // -----------------------------------------------------------------
-        // 5. Collect all nodes that lie between the two headings (exclusive).
+        // 3. Collect all nodes that lie between the two headings (exclusive).
         // -----------------------------------------------------------------
-        List<Node> nodesBetween = new List<Node>();
-        Node curNode = startHeading.NextSibling;
-
-        while (curNode != null && curNode != endHeading)
+        List<Node> nodesToExtract = new List<Node>();
+        Node current = startHeading.NextSibling;
+        while (current != null && current != endHeading)
         {
-            Node next = curNode.NextSibling; // preserve next reference before moving
-            nodesBetween.Add(curNode);
-            curNode = next;
+            Node next = current.NextSibling; // Preserve next node before we move it
+            nodesToExtract.Add(current);
+            current = next;
         }
 
-        if (nodesBetween.Count == 0)
+        if (nodesToExtract.Count == 0)
             throw new InvalidOperationException("No content found between the specified headings.");
 
         // -----------------------------------------------------------------
-        // 6. Find the placeholder paragraph in the template.
+        // 4. Create a template document where the extracted content will be inserted.
         // -----------------------------------------------------------------
-        Paragraph placeholder = null;
-        foreach (Paragraph para in tmplDoc.FirstSection.Body.Paragraphs)
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
+        tmplBuilder.Writeln("=== Template Header ===");
+        tmplBuilder.Writeln("Content will be inserted below:");
+        templateDoc.Save(templatePath);
+
+        // Load the template
+        Document loadedTemplate = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 5. Import the extracted nodes into the template document.
+        // -----------------------------------------------------------------
+        // We'll insert after the last paragraph of the template body.
+        Paragraph insertionPoint = loadedTemplate.FirstSection.Body.LastParagraph;
+
+        NodeImporter importer = new NodeImporter(loadedSource, loadedTemplate, ImportFormatMode.KeepSourceFormatting);
+
+        foreach (Node node in nodesToExtract)
         {
-            if (para.GetText().Contains("[Placeholder]"))
-            {
-                placeholder = para;
-                break;
-            }
-        }
-
-        if (placeholder == null)
-            throw new InvalidOperationException("Placeholder paragraph not found in the template document.");
-
-        // -----------------------------------------------------------------
-        // 7. Import the extracted nodes into the template after the placeholder.
-        // -----------------------------------------------------------------
-        NodeImporter importer = new NodeImporter(srcDoc, tmplDoc, ImportFormatMode.KeepSourceFormatting);
-        CompositeNode destinationStory = placeholder.ParentNode as CompositeNode;
-        Node insertionPoint = placeholder;
-
-        foreach (Node node in nodesBetween)
-        {
+            // Import the node (deep clone) into the destination document.
             Node importedNode = importer.ImportNode(node, true);
-            destinationStory.InsertAfter(importedNode, insertionPoint);
-            insertionPoint = importedNode; // advance insertion point
+            // Insert after the current insertion point.
+            insertionPoint.ParentNode.InsertAfter(importedNode, insertionPoint);
+            // Update the insertion point so subsequent nodes are appended in order.
+            insertionPoint = importedNode as Paragraph ?? insertionPoint;
         }
 
-        // Remove the placeholder paragraph itself.
-        placeholder.Remove();
+        // -----------------------------------------------------------------
+        // 6. Save the resulting document.
+        // -----------------------------------------------------------------
+        string resultPath = "result.docx";
+        loadedTemplate.Save(resultPath);
 
-        // -----------------------------------------------------------------
-        // 8. Save the resulting document.
-        // -----------------------------------------------------------------
-        tmplDoc.Save("result.docx");
-
-        // -----------------------------------------------------------------
-        // 9. Validate that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists("result.docx"))
+        // Validate that the result file was created.
+        if (!File.Exists(resultPath))
             throw new InvalidOperationException("Result document was not created.");
+
+        // Optional: clean up intermediate files (comment out if you want to inspect them)
+        // File.Delete(sourcePath);
+        // File.Delete(templatePath);
     }
 }

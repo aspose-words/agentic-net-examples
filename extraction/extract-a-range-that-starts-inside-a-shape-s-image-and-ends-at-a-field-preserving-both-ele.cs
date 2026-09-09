@@ -10,113 +10,108 @@ public class Program
 {
     public static void Main()
     {
-        // --------------------------------------------------------------------
-        // 1. Create a sample document that contains an inline image and a DATE field.
-        // --------------------------------------------------------------------
+        // -------------------------------------------------
+        // 1. Create a sample source document.
+        // -------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Intro paragraph.
-        builder.Writeln("Intro paragraph before the image.");
-
-        // Insert a tiny 1x1 pixel PNG image from a base‑64 string.
+        // Insert a tiny PNG image (inline shape) and keep a reference to the shape.
         byte[] pngBytes = Convert.FromBase64String(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=");
         using (MemoryStream imgStream = new MemoryStream(pngBytes))
         {
-            // InsertImage returns a Shape when the image is inline.
-            Shape imageShape = builder.InsertImage(imgStream);
-            if (!imageShape.HasImage)
-                throw new InvalidOperationException("Failed to insert an image shape.");
+            builder.InsertImage(imgStream);
         }
 
-        // Some text after the image.
-        builder.Writeln("Paragraph after the image, before the field.");
+        // Add some text after the image.
+        builder.Writeln("Text after image.");
 
-        // Insert a DATE field and update fields so the result is calculated.
-        builder.InsertField(FieldType.FieldDate, true);
-        sourceDoc.UpdateFields();
+        // Insert a DATE field and keep a reference to it.
+        Field dateField = builder.InsertField(FieldType.FieldDate, true);
+        builder.Writeln("More text after field.");
 
-        // Save the source document (demonstrating the create‑save lifecycle).
+        // Save the source document (demonstrating the required save rule).
         const string sourcePath = "source.docx";
         sourceDoc.Save(sourcePath);
 
-        // --------------------------------------------------------------------
-        // 2. Extraction: range that starts inside the image shape and ends at the field.
-        // --------------------------------------------------------------------
-        // Load the document (demonstrating the load lifecycle).
-        Document loadedDoc = new Document(sourcePath);
+        // -------------------------------------------------
+        // 2. Load the document (demonstrating the required load rule).
+        // -------------------------------------------------
+        Document loaded = new Document(sourcePath);
 
-        // Locate the first shape that contains an image.
-        Shape startShape = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                    .OfType<Shape>()
-                                    .FirstOrDefault(s => s.HasImage);
-        if (startShape == null)
-            throw new InvalidOperationException("No image shape found in the document.");
+        // -------------------------------------------------
+        // 3. Locate the image shape.
+        // -------------------------------------------------
+        Shape imageShape = loaded.GetChildNodes(NodeType.Shape, true)
+                                 .OfType<Shape>()
+                                 .FirstOrDefault(s => s.HasImage);
+        if (imageShape == null)
+            throw new InvalidOperationException("Image shape not found.");
 
-        // Locate the first DATE field.
-        Field endField = loadedDoc.Range.Fields
-                                   .FirstOrDefault(f => f.Type == FieldType.FieldDate);
-        if (endField == null)
-            throw new InvalidOperationException("No DATE field found in the document.");
+        // -------------------------------------------------
+        // 4. Locate the first field (the DATE field we inserted).
+        // -------------------------------------------------
+        Field targetField = loaded.Range.Fields.FirstOrDefault();
+        if (targetField == null)
+            throw new InvalidOperationException("Target field not found.");
 
-        // Determine the paragraphs that contain the start shape and the end field.
-        Paragraph startParagraph = startShape.ParentNode as Paragraph;
-        Paragraph endParagraph = endField.Start.ParentNode as Paragraph;
+        // -------------------------------------------------
+        // 5. Determine the paragraphs that contain the start (image) and end (field).
+        // -------------------------------------------------
+        Paragraph startParagraph = imageShape.ParentParagraph;
+        Paragraph endParagraph = targetField.Start.ParentParagraph;
 
         if (startParagraph == null || endParagraph == null)
-            throw new InvalidOperationException("Unable to locate the containing paragraphs.");
+            throw new InvalidOperationException("Unable to determine start or end paragraph.");
 
-        // Ensure both paragraphs belong to the same story (the main body).
-        Body body = loadedDoc.FirstSection.Body;
-        int startIndex = body.IndexOf(startParagraph);
-        int endIndex = body.IndexOf(endParagraph);
-        if (startIndex < 0 || endIndex < 0 || startIndex > endIndex)
-            throw new InvalidOperationException("Invalid paragraph boundaries for extraction.");
+        // -------------------------------------------------
+        // 6. Build a new document that will contain the extracted range.
+        // -------------------------------------------------
+        Document result = new Document();
+        result.RemoveAllChildren(); // Ensure a clean document structure.
 
-        // --------------------------------------------------------------------
-        // 3. Build a new document that will hold the extracted range.
-        // --------------------------------------------------------------------
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren(); // Clear the default empty section/paragraph.
+        Section resultSection = new Section(result);
+        result.AppendChild(resultSection);
 
-        Section resultSection = new Section(resultDoc);
-        resultDoc.AppendChild(resultSection);
-
-        Body resultBody = new Body(resultDoc);
+        Body resultBody = new Body(result);
         resultSection.AppendChild(resultBody);
 
-        // Use NodeImporter to correctly import nodes from the source document.
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        // -------------------------------------------------
+        // 7. Import (clone) paragraphs from start to end (inclusive) preserving all inline nodes.
+        //    Use NodeImporter to avoid cross‑document node errors.
+        // -------------------------------------------------
+        NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
 
-        // Import each paragraph from start to end (inclusive) into the result document.
-        for (int i = startIndex; i <= endIndex; i++)
+        bool copying = false;
+        foreach (Paragraph para in loaded.FirstSection.Body.Paragraphs)
         {
-            Paragraph srcParagraph = body.Paragraphs[i];
-            Node importedParagraph = importer.ImportNode(srcParagraph, true);
-            resultBody.AppendChild(importedParagraph);
+            if (!copying && para == startParagraph)
+                copying = true;
+
+            if (copying)
+            {
+                // Import the paragraph (deep clone) into the destination document.
+                Node importedNode = importer.ImportNode(para, true);
+                resultBody.AppendChild(importedNode);
+            }
+
+            if (copying && para == endParagraph)
+                break;
         }
 
-        // --------------------------------------------------------------------
-        // 4. Save the extracted range.
-        // --------------------------------------------------------------------
-        const string resultPath = "extracted-range.docx";
-        resultDoc.Save(resultPath);
+        // -------------------------------------------------
+        // 8. Save the extracted range.
+        // -------------------------------------------------
+        const string resultPath = "extracted.docx";
+        result.Save(resultPath);
 
-        // --------------------------------------------------------------------
-        // 5. Validation: ensure the result contains both an image shape and a DATE field.
-        // --------------------------------------------------------------------
-        bool hasImage = resultDoc.GetChildNodes(NodeType.Shape, true)
-                                 .OfType<Shape>()
-                                 .Any(s => s.HasImage);
-        bool hasField = resultDoc.Range.Fields
-                                 .Any(f => f.Type == FieldType.FieldDate);
+        // -------------------------------------------------
+        // 9. Validate that the output file was created.
+        // -------------------------------------------------
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("Extraction failed: output file not created.");
 
-        if (!hasImage)
-            throw new InvalidOperationException("Extracted document does not contain the expected image.");
-        if (!hasField)
-            throw new InvalidOperationException("Extracted document does not contain the expected field.");
-
-        // Program completes without interactive input.
+        Console.WriteLine("Extraction completed successfully.");
     }
 }

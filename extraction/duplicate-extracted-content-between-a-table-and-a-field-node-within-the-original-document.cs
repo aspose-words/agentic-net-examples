@@ -5,87 +5,136 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Fields;
 
-public class Program
+namespace AsposeWordsExtractionExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document with a table, some paragraphs, and a field.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Intro paragraph before table.");
-
-        // Insert a table.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Paragraphs that will be between the table and the field.
-        builder.Writeln("First paragraph between table and field.");
-        builder.Writeln("Second paragraph between table and field.");
-
-        // Insert a field and keep a reference to its containing paragraph.
-        builder.InsertField("MERGEFIELD SampleField", "«SampleField»");
-        Paragraph fieldParagraph = builder.CurrentParagraph;
-
-        builder.Writeln("Paragraph after field.");
-
-        // Save the initial document (optional, for inspection).
-        const string inputPath = "sample.docx";
-        doc.Save(inputPath);
-
-        // Locate the first table in the document.
-        Table table = doc.GetChildNodes(NodeType.Table, true)[0] as Table;
-        if (table == null)
-            throw new InvalidOperationException("Table not found in the document.");
-
-        // Get the body that contains the nodes.
-        Body body = doc.FirstSection.Body;
-
-        // Collect nodes that lie between the table and the field paragraph (exclusive).
-        List<Node> nodesToDuplicate = new List<Node>();
-        Node current = table.NextSibling;
-        while (current != null && current != fieldParagraph)
+        public static void Main()
         {
-            nodesToDuplicate.Add(current);
-            current = current.NextSibling;
+            // -------------------------------------------------------------
+            // 1. Create a sample source document with a table, paragraphs and a field.
+            // -------------------------------------------------------------
+            Document sourceDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+            builder.Writeln("Paragraph before the table.");
+
+            // Insert a simple 2x2 table.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Write("A1");
+            builder.InsertCell();
+            builder.Write("B1");
+            builder.EndRow();
+            builder.InsertCell();
+            builder.Write("A2");
+            builder.InsertCell();
+            builder.Write("B2");
+            builder.EndRow();
+            builder.EndTable();
+
+            // Paragraphs that will be extracted and duplicated.
+            builder.Writeln("Middle paragraph 1.");
+            builder.Writeln("Middle paragraph 2.");
+
+            // Insert a MERGEFIELD (field node) – this creates its own paragraph.
+            builder.InsertField("MERGEFIELD MyField");
+
+            builder.Writeln("Paragraph after the field.");
+
+            // Save the source document (optional, for inspection).
+            const string sourcePath = "source.docx";
+            sourceDoc.Save(sourcePath);
+
+            // -------------------------------------------------------------
+            // 2. Extraction: locate the table and the field's containing paragraph.
+            // -------------------------------------------------------------
+            // Find the first table in the document.
+            Table targetTable = sourceDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
+            if (targetTable == null)
+                throw new InvalidOperationException("Table not found in the document.");
+
+            // Locate the first field start node and get its ancestor paragraph.
+            FieldStart fieldStart = sourceDoc.GetChildNodes(NodeType.FieldStart, true)[0] as FieldStart;
+            if (fieldStart == null)
+                throw new InvalidOperationException("Field not found in the document.");
+
+            Paragraph fieldParagraph = fieldStart.GetAncestor(NodeType.Paragraph) as Paragraph;
+            if (fieldParagraph == null)
+                throw new InvalidOperationException("Field's paragraph could not be determined.");
+
+            // -------------------------------------------------------------
+            // 3. Collect nodes that lie between the table and the field paragraph.
+            // -------------------------------------------------------------
+            // Use a forward traversal from the table's next sibling until the field paragraph is reached.
+            List<Node> nodesBetween = new List<Node>();
+            Node curNode = targetTable.NextSibling;
+            while (curNode != null && curNode != fieldParagraph)
+            {
+                nodesBetween.Add(curNode);
+                curNode = curNode.NextSibling;
+            }
+
+            if (nodesBetween.Count == 0)
+                throw new InvalidOperationException("No nodes found between the table and the field.");
+
+            // -------------------------------------------------------------
+            // 4. Duplication: copy the extracted nodes and insert after the field.
+            // -------------------------------------------------------------
+            // Use NodeImporter to preserve original formatting.
+            NodeImporter importer = new NodeImporter(sourceDoc, sourceDoc, ImportFormatMode.KeepSourceFormatting);
+
+            // The parent container where we will insert the duplicated nodes.
+            CompositeNode parent = fieldParagraph.ParentNode as CompositeNode;
+            if (parent == null)
+                throw new InvalidOperationException("Field paragraph does not have a valid parent.");
+
+            // Insert each imported node after the field paragraph, maintaining order.
+            Node insertionPoint = fieldParagraph;
+            foreach (Node node in nodesBetween)
+            {
+                Node importedNode = importer.ImportNode(node, true);
+                parent.InsertAfter(importedNode, insertionPoint);
+                insertionPoint = importedNode;
+            }
+
+            // -------------------------------------------------------------
+            // 5. Save the modified document.
+            // -------------------------------------------------------------
+            const string resultPath = "result.docx";
+            sourceDoc.Save(resultPath);
+
+            // -------------------------------------------------------------
+            // 6. Validation: ensure the duplicated content exists after the field.
+            // -------------------------------------------------------------
+            if (!File.Exists(resultPath))
+                throw new InvalidOperationException("Result document was not created.");
+
+            Document resultDoc = new Document(resultPath);
+            Body resultBody = resultDoc.FirstSection.Body;
+
+            // Find the field paragraph again in the result document.
+            FieldStart resultFieldStart = resultDoc.GetChildNodes(NodeType.FieldStart, true)[0] as FieldStart;
+            Paragraph resultFieldParagraph = resultFieldStart.GetAncestor(NodeType.Paragraph) as Paragraph;
+            if (resultFieldParagraph == null)
+                throw new InvalidOperationException("Result field paragraph not found.");
+
+            // Use the paragraph collection to locate the duplicated paragraphs.
+            ParagraphCollection paragraphs = resultBody.Paragraphs;
+            int resultFieldIndex = paragraphs.IndexOf(resultFieldParagraph);
+            if (resultFieldIndex < 0 || resultFieldIndex + 2 >= paragraphs.Count)
+                throw new InvalidOperationException("Duplicated paragraphs are missing.");
+
+            Paragraph firstDuplicated = paragraphs[resultFieldIndex + 1];
+            Paragraph secondDuplicated = paragraphs[resultFieldIndex + 2];
+
+            if (!firstDuplicated.GetText().Contains("Middle paragraph 1") ||
+                !secondDuplicated.GetText().Contains("Middle paragraph 2"))
+            {
+                throw new InvalidOperationException("Duplicated content verification failed.");
+            }
+
+            // Program completes without requiring user interaction.
         }
-
-        if (nodesToDuplicate.Count == 0)
-            throw new InvalidOperationException("No content found between the table and the field.");
-
-        // Clone the extracted nodes to preserve formatting.
-        List<Node> clonedNodes = new List<Node>();
-        foreach (Node node in nodesToDuplicate)
-        {
-            clonedNodes.Add(node.Clone(true));
-        }
-
-        // Insert the cloned nodes after the field's paragraph.
-        Node referenceNode = fieldParagraph;
-        foreach (Node clone in clonedNodes)
-        {
-            body.InsertAfter(clone, referenceNode);
-            referenceNode = clone; // Update reference for next insertion.
-        }
-
-        // Save the resulting document.
-        const string outputPath = "duplicated.docx";
-        doc.Save(outputPath);
-
-        // Validation: ensure the cloned nodes were inserted after the field paragraph.
-        Node firstInserted = fieldParagraph.NextSibling;
-        if (firstInserted == null || firstInserted != clonedNodes[0])
-            throw new InvalidOperationException("Duplication validation failed: first cloned node not found after field.");
-
-        // Ensure the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        Console.WriteLine("Content between table and field duplicated successfully.");
     }
 }
