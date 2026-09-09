@@ -12,30 +12,23 @@ namespace FormFieldResultExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a text input form field with a name.
-            builder.Write("Please enter your name: ");
+            // Insert a text input form field with a placeholder text.
             FormField textField = builder.InsertTextInput(
-                name: "NameField",
-                type: TextFormFieldType.Regular,
-                format: "",
-                fieldValue: "",
-                maxLength: 0);
+                "MyTextField",                     // field name
+                TextFormFieldType.Regular,         // field type
+                "",                                // format (none)
+                "Placeholder",                     // initial displayed text
+                0);                                // no length limit
 
-            // Ensure the form field was created.
-            if (textField == null)
-                throw new InvalidOperationException("Failed to create the text input form field.");
+            // Validate that the field was added to the document.
+            if (doc.Range.FormFields["MyTextField"] == null)
+                throw new InvalidOperationException("The expected form field was not found.");
 
-            // Set the Result property to a predefined string.
-            const string predefinedValue = "John Doe";
-            textField.Result = predefinedValue;
-
-            // Validate that the value was set correctly.
-            if (textField.Result != predefinedValue)
-                throw new InvalidOperationException("The form field result was not set correctly.");
+            // Set the Result property to the predefined string value.
+            textField.Result = "Predefined value";
 
             // Save the document to disk.
-            const string outputPath = "FormFieldsResult.docx";
-            doc.Save(outputPath);
+            doc.Save("FormFieldResult.docx");
         }
     }
 }

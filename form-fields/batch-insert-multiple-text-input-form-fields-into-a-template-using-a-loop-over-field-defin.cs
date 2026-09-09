@@ -1,79 +1,59 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
 public class Program
 {
-    // Simple definition for a text input form field.
-    private struct TextFieldDefinition
+    // Simple DTO to hold field definition data.
+    private class FieldDefinition
     {
-        public string Name;          // Form field name (also bookmark name)
-        public string DefaultText;   // Text that appears when the field is empty
-        public int MaxLength;        // Maximum number of characters (0 = unlimited)
-
-        public TextFieldDefinition(string name, string defaultText, int maxLength)
-        {
-            Name = name;
-            DefaultText = defaultText;
-            MaxLength = maxLength;
-        }
+        public string Name { get; set; }          // Form field name (also bookmark name).
+        public string Placeholder { get; set; }   // Text shown when the field is empty.
+        public int MaxLength { get; set; }        // Maximum characters allowed (0 = unlimited).
     }
 
     public static void Main()
     {
-        // Define a set of text input fields to be inserted.
-        TextFieldDefinition[] fields = new TextFieldDefinition[]
+        // Prepare a list of field definitions to be inserted.
+        var fields = new List<FieldDefinition>
         {
-            new TextFieldDefinition("FirstName", "Enter first name", 30),
-            new TextFieldDefinition("LastName", "Enter last name", 30),
-            new TextFieldDefinition("Email", "example@domain.com", 50),
-            new TextFieldDefinition("Phone", "123-456-7890", 20)
+            new FieldDefinition { Name = "FirstName", Placeholder = "Enter first name", MaxLength = 30 },
+            new FieldDefinition { Name = "LastName", Placeholder = "Enter last name", MaxLength = 30 },
+            new FieldDefinition { Name = "Email", Placeholder = "example@domain.com", MaxLength = 50 },
+            new FieldDefinition { Name = "Phone", Placeholder = "123-456-7890", MaxLength = 20 }
         };
 
-        // Create a new blank document and a builder to edit it.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a title paragraph.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Font.Size = 16;
-        builder.Font.Bold = true;
-        builder.Writeln("User Information Form");
-        builder.InsertParagraph();
-
-        // Loop over the field definitions and insert each one.
+        // Insert each text input form field using the definitions above.
         foreach (var def in fields)
         {
             // Write a label for the field.
-            builder.Font.Size = 12;
-            builder.Font.Bold = false;
-            builder.Write($"{def.Name}: ");
+            builder.Writeln($"{def.Name}:");
 
             // Insert the text input form field.
-            // Parameters: name, type, format, default text, max length.
-            builder.InsertTextInput(def.Name, TextFormFieldType.Regular, "", def.DefaultText, def.MaxLength);
-
-            // Move to the next line after each field.
-            builder.InsertParagraph();
+            // Parameters: name, type, format (empty), default text, max length.
+            builder.InsertTextInput(def.Name, TextFormFieldType.Regular, "", def.Placeholder, def.MaxLength);
         }
 
-        // Validate that the expected number of form fields were created.
+        // Validate that form fields were added.
         FormFieldCollection formFields = doc.Range.FormFields;
-        if (formFields.Count != fields.Length)
-        {
-            throw new InvalidOperationException($"Expected {fields.Length} form fields, but found {formFields.Count}.");
-        }
+        if (formFields.Count == 0)
+            throw new InvalidOperationException("No form fields were inserted into the document.");
 
-        // Optionally, write the names of the created fields to the console.
-        Console.WriteLine("Created form fields:");
-        foreach (FormField field in formFields)
+        // Optionally, verify each field exists by name.
+        foreach (var def in fields)
         {
-            Console.WriteLine($"- {field.Name}");
+            FormField? field = formFields[def.Name];
+            if (field == null)
+                throw new InvalidOperationException($"Form field '{def.Name}' was not found.");
         }
 
         // Save the document to disk.
-        string outputPath = "BatchFormFields.docx";
+        const string outputPath = "BatchFormFields.docx";
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

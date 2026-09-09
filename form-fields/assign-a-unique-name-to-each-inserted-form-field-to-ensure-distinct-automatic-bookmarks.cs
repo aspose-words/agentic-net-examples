@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -10,15 +11,16 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Counter to generate unique names for each form field.
+        // Counter to generate unique names.
         int fieldIndex = 1;
 
         // Insert a text input form field with a unique name.
         string textFieldName = $"TextField_{fieldIndex++}";
         builder.Write("Enter your name: ");
         FormField textField = builder.InsertTextInput(textFieldName, TextFormFieldType.Regular, "", "John Doe", 50);
-        // Ensure the name is set (InsertTextInput already sets it, but we assign explicitly for clarity).
-        textField.Name = textFieldName;
+        // Ensure the name was set.
+        if (string.IsNullOrEmpty(textField.Name))
+            throw new InvalidOperationException("Text input field name was not assigned.");
 
         builder.InsertBreak(BreakType.ParagraphBreak);
 
@@ -26,7 +28,8 @@ public class Program
         string checkBoxName = $"CheckBox_{fieldIndex++}";
         builder.Write("Accept terms: ");
         FormField checkBox = builder.InsertCheckBox(checkBoxName, false, 0);
-        checkBox.Name = checkBoxName;
+        if (string.IsNullOrEmpty(checkBox.Name))
+            throw new InvalidOperationException("Check box field name was not assigned.");
 
         builder.InsertBreak(BreakType.ParagraphBreak);
 
@@ -35,19 +38,24 @@ public class Program
         builder.Write("Select a country: ");
         string[] items = { "USA", "Canada", "Mexico" };
         FormField comboBox = builder.InsertComboBox(comboBoxName, items, 0);
-        comboBox.Name = comboBoxName;
+        if (string.IsNullOrEmpty(comboBox.Name))
+            throw new InvalidOperationException("Combo box field name was not assigned.");
 
-        // Verify that each form field has a distinct name.
+        // Validate that all form fields exist in the collection.
         FormFieldCollection fields = doc.Range.FormFields;
-        Console.WriteLine("Form fields in the document:");
+        if (fields.Count != 3)
+            throw new InvalidOperationException("Expected three form fields in the document.");
+
+        // Output the names of the form fields to verify uniqueness.
+        Console.WriteLine("Form fields and their unique names:");
         foreach (FormField field in fields)
         {
-            Console.WriteLine($"- Name: {field.Name}, Type: {field.Type}");
+            Console.WriteLine($"- {field.Type}: {field.Name}");
         }
 
-        // Save the document to disk.
-        string outputPath = "FormFieldsUniqueNames.docx";
+        // Save the document. Each form field automatically creates a bookmark with the same name.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "FormFields_UniqueNames.docx");
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to '{outputPath}'.");
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

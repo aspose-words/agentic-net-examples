@@ -2,29 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace FormFieldExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some introductory text.
-        builder.Writeln("Document with a custom checkbox form field:");
+            // Add some explanatory text.
+            builder.Writeln("Please confirm the agreement:");
 
-        // Insert a checkbox form field.
-        // Parameters: name, defaultValue (checked by default), checkedValue (current state), size in points.
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", true, true, 30);
+            // Insert a checkbox form field.
+            // name: "AgreementCheckBox"
+            // defaultValue: true (the default state when the document is opened)
+            // checkedValue: true (the current state after insertion)
+            // size: 30 points (custom size)
+            FormField checkBox = builder.InsertCheckBox("AgreementCheckBox", true, true, 30);
+            // Ensure the custom size is applied.
+            checkBox.IsCheckBoxExactSize = true;
 
-        // Ensure the custom size is applied.
-        checkBox.IsCheckBoxExactSize = true;
-        checkBox.CheckBoxSize = 30; // size in points
+            // Add a line break after the checkbox.
+            builder.Writeln();
 
-        // Add a line break after the checkbox.
-        builder.Writeln();
-
-        // Save the document to the local file system.
-        doc.Save("CheckBoxFormField.docx");
+            // Save the document.
+            doc.Save("CheckboxFormField.docx");
+        }
     }
 }

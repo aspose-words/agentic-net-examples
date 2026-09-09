@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -10,31 +11,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a check box form field named "MyCheckBox".
-        // The second argument sets the initial checked state (true = checked).
-        // The third argument specifies the size; 0 lets Word choose the size automatically.
+        // Insert a checkbox form field with a known name.
+        builder.Write("Check this box: ");
         FormField checkBox = builder.InsertCheckBox("MyCheckBox", true, 0);
+        // Ensure the checkbox is saved with its current state.
+        checkBox.Checked = true;
 
-        // Save the document so that the form field persists.
-        const string outputPath = "FormFields_CheckBox.docx";
-        doc.Save(outputPath);
+        // Save the document to a file (required by the rules).
+        string filePath = Path.Combine(Environment.CurrentDirectory, "CheckBoxResult.docx");
+        doc.Save(filePath);
 
-        // Retrieve the collection of form fields from the document.
-        FormFieldCollection formFields = doc.Range.FormFields;
+        // Load the document back (simulating a separate read operation).
+        Document loadedDoc = new Document(filePath);
 
-        // Locate the check box by its name. Throw if it cannot be found.
-        FormField field = formFields["MyCheckBox"];
-        if (field == null)
-            throw new InvalidOperationException("The expected check box form field was not found.");
+        // Retrieve the checkbox form field by name.
+        FormField loadedCheckBox = loadedDoc.Range.FormFields["MyCheckBox"];
+        if (loadedCheckBox == null)
+            throw new InvalidOperationException("The expected checkbox form field was not found.");
 
-        // Determine whether the check box is checked using the recommended Checked property.
-        bool isChecked = field.Checked;
+        // Read the Result property. For a checkbox, "1" means checked, "0" means unchecked.
+        string result = loadedCheckBox.Result;
+        bool isChecked = result == "1";
 
-        // Output the result to the console.
-        Console.WriteLine($"Check box \"{field.Name}\" is {(isChecked ? "checked" : "unchecked")}.");
-
-        // (Optional) The Result property for a check box contains "1" for checked and "0" for unchecked.
-        // string result = field.Result;
-        // Console.WriteLine($"Result property value: {result}");
+        // Output the determination.
+        Console.WriteLine($"Checkbox '{loadedCheckBox.Name}' is {(isChecked ? "checked" : "unchecked")} (Result = \"{result}\").");
     }
 }
