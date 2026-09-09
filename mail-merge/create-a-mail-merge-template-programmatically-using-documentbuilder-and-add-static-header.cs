@@ -1,6 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
@@ -10,24 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add static header text.
+        // Add a static header that will appear on every page.
+        // Use the built‑in header/footer feature.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Company Confidential - Mail Merge Template");
-        builder.Writeln(); // Move to next line in the header.
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Font.Size = 16;
+        builder.Font.Bold = true;
+        builder.Writeln("Customer Invoice");
 
         // Return to the main body of the document.
         builder.MoveToDocumentEnd();
 
-        // Build the mail‑merge body with static text and MERGEFIELDs.
-        builder.Writeln("Dear ");
+        // Insert a blank line after the header.
+        builder.Writeln();
+
+        // Add merge fields that will be filled during a mail merge.
+        builder.Font.Size = 12;
+        builder.Font.Bold = false;
+        builder.Write("Dear ");
         builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
         builder.Write(" ");
         builder.InsertField("MERGEFIELD LastName", "<LastName>");
         builder.Writeln(":");
-        builder.InsertField("MERGEFIELD Message", "<Message>");
+        builder.Writeln();
 
-        // Save the template to a file.
-        const string outputPath = "MailMergeTemplate.docx";
+        builder.Write("Thank you for your purchase of ");
+        builder.InsertField("MERGEFIELD ProductName", "<ProductName>");
+        builder.Write(" on ");
+        builder.InsertField("MERGEFIELD PurchaseDate", "<PurchaseDate>");
+        builder.Writeln(".");
+
+        // Save the template to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "MailMergeTemplate.docx");
         doc.Save(outputPath);
     }
 }

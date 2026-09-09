@@ -2,13 +2,13 @@ using System;
 using System.Data;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
+using Aspose.Words.Tables;
 
 namespace MailMergeTableRegionExample
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
             // Create a new blank document.
             Document doc = new Document();
@@ -17,43 +17,41 @@ namespace MailMergeTableRegionExample
             // Start a table that will contain the mail merge region.
             builder.StartTable();
 
-            // Insert a single cell that will hold the region start, the merge fields, and the region end.
-            builder.InsertCell();
-
             // Insert the TableStart field for the region named "Employees".
+            builder.InsertCell();
             builder.InsertField(" MERGEFIELD TableStart:Employees ");
 
-            // Insert merge fields that correspond to the columns of the data source.
+            // Insert a cell for the "Name" column.
+            builder.InsertCell();
             builder.InsertField(" MERGEFIELD Name ");
-            builder.Write(" "); // Add a space between fields.
+
+            // Insert a cell for the "Age" column.
+            builder.InsertCell();
             builder.InsertField(" MERGEFIELD Age ");
 
             // Insert the TableEnd field to close the region.
+            builder.InsertCell();
             builder.InsertField(" MERGEFIELD TableEnd:Employees ");
 
             // End the row and the table.
             builder.EndRow();
             builder.EndTable();
 
-            // Prepare a DataTable that matches the region name and contains data for the merge fields.
+            // Prepare a DataTable that matches the region name and column names.
             DataTable employees = new DataTable("Employees");
             employees.Columns.Add("Name", typeof(string));
             employees.Columns.Add("Age", typeof(int));
 
-            // Add sample rows.
             employees.Rows.Add("John Doe", 30);
-            employees.Rows.Add("Jane Smith", 25);
-            employees.Rows.Add("Bob Johnson", 40);
+            employees.Rows.Add("Jane Smith", 27);
+            employees.Rows.Add("Bob Johnson", 45);
 
-            // Execute the mail merge with regions. The table will be expanded for each row in the DataTable.
+            // Execute the mail merge with regions using the DataTable.
             doc.MailMerge.ExecuteWithRegions(employees);
 
             // Save the resulting document to the current directory.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "MailMergeWithTableRegion.docx");
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "MailMergeTableRegion.docx");
             doc.Save(outputPath);
-
-            // Inform the user where the file was saved.
-            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }
