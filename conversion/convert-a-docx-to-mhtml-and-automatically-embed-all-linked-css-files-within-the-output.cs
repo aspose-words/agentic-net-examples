@@ -7,50 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string inputPath = "sample.docx";
-        const string outputPath = "sample.mht";
-
-        // -----------------------------------------------------------------
-        // 1. Create a simple DOCX document.
-        // -----------------------------------------------------------------
+        // Create a sample DOCX document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, Aspose.Words!");
-        builder.Writeln("This document will be converted to MHTML with embedded CSS.");
+        builder.Writeln("Hello World!");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Styled Heading");
+        string inputPath = "sample.docx";
         doc.Save(inputPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX document.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
+        // Load the DOCX document.
+        Document loaded = new Document(inputPath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare save options for MHTML.
-        //    - Use HtmlSaveOptions with SaveFormat.Mhtml.
-        //    - Set CssStyleSheetType to Embedded so CSS is placed inside a <style> tag.
-        // -----------------------------------------------------------------
+        // Configure save options to produce MHTML with embedded CSS.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
-            CssStyleSheetType = CssStyleSheetType.Embedded
+            CssStyleSheetType = CssStyleSheetType.Inline,
+            ExportCidUrlsForMhtmlResources = false
         };
 
-        // -----------------------------------------------------------------
-        // 4. Save the document as MHTML.
-        // -----------------------------------------------------------------
-        loadedDoc.Save(outputPath, saveOptions);
+        // Save as MHTML.
+        string outputPath = "output.mht";
+        loaded.Save(outputPath, saveOptions);
 
-        // -----------------------------------------------------------------
-        // 5. Validate that the output file was created and contains data.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("MHTML output file was not created.");
-
-        FileInfo info = new FileInfo(outputPath);
-        if (info.Length == 0)
-            throw new InvalidOperationException("MHTML output file is empty.");
-
-        // Optional: indicate success.
-        Console.WriteLine($"Document successfully converted to MHTML: {outputPath}");
+        // Verify that the output file was created and is not empty.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        {
+            throw new InvalidOperationException("MHTML conversion failed: output file not created or empty.");
+        }
     }
 }

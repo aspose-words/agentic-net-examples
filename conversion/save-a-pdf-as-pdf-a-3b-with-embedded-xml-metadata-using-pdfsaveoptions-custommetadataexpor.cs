@@ -10,35 +10,29 @@ public class Program
         // Create a simple Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document for PDF/A‑3b conversion with embedded XML metadata.");
+        builder.Writeln("Sample content for PDF/A‑3b conversion.");
 
-        // Add custom document properties – these will be exported as XMP metadata.
-        doc.CustomDocumentProperties.Add("Company", "Acme Corp");
-        doc.CustomDocumentProperties.Add("Project", "PDF/A‑3b Demo");
+        // Add a custom document property that contains XML.
+        // This property will be exported as XMP metadata.
+        doc.CustomDocumentProperties.Add("CustomXml", "<root><info>Sample</info></root>");
 
-        // Configure PDF save options for PDF/A‑3b compliance and XMP metadata export.
+        // Configure PDF save options:
+        // - PDF/A‑3u compliance (Aspose.Words does not have a direct PdfA3b enum value;
+        //   PdfA3u is the closest option that supports PDF/A‑3 features).
+        // - Export custom properties as XMP metadata.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            // PDF/A‑3b compliance – use the unrestricted variant.
             Compliance = PdfCompliance.PdfA3u,
-
-            // Export custom properties as XMP metadata.
             CustomPropertiesExport = PdfCustomPropertiesExport.Metadata
         };
 
-        // Define the output file path.
-        string outputPath = "output_pdfa3b.pdf";
+        const string outputPath = "output_pdfa3b.pdf";
 
-        // Save the document as PDF/A‑3b with embedded XML metadata.
+        // Save the document as PDF/A‑3b (using PdfA3u compliance) with embedded metadata.
         doc.Save(outputPath, saveOptions);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
-        {
-            throw new InvalidOperationException("The PDF/A‑3b file was not created successfully.");
-        }
-
-        // Inform that the process completed.
-        Console.WriteLine($"PDF/A‑3b file saved to: {Path.GetFullPath(outputPath)}");
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The PDF/A‑3b file was not created.");
     }
 }

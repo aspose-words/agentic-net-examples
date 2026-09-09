@@ -7,30 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple DOC file.
+        // Create a sample DOC file.
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOC content.");
-        const string inputPath = "input.doc";
-        source.Save(inputPath, SaveFormat.Doc);
+        builder.Writeln("This is a sample document for PDF conversion with a custom page size.");
 
-        // Load the DOC file.
-        Document doc = new Document(inputPath);
+        // Save the source document as DOC.
+        source.Save("input.doc", SaveFormat.Doc);
 
-        // Set a custom page size (500x700 points) for the first section.
-        // Points are the default unit for page dimensions in Aspose.Words.
-        doc.FirstSection.PageSetup.PageWidth = 500f;
-        doc.FirstSection.PageSetup.PageHeight = 700f;
+        // Load the created DOC file.
+        Document doc = new Document("input.doc");
 
-        // Convert to PDF.
-        const string outputPath = "output.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Set a custom page size (A4: 595 x 842 points) for the first section.
+        // Page dimensions are measured in points (1 point = 1/72 inch).
+        doc.FirstSection.PageSetup.PageWidth = 595f;
+        doc.FirstSection.PageSetup.PageHeight = 842f;
+
+        // Configure PDF save options (no need to set PageSize here).
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+
+        // Convert the DOC to PDF using the specified options.
+        doc.Save("output.pdf", pdfOptions);
 
         // Verify that the PDF was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Expected output PDF was not created.");
+        if (!File.Exists("output.pdf"))
+            throw new InvalidOperationException("The PDF file was not created.");
 
-        // Clean up temporary files (optional).
-        File.Delete(inputPath);
+        // Optional: Clean up temporary files.
+        File.Delete("input.doc");
     }
 }

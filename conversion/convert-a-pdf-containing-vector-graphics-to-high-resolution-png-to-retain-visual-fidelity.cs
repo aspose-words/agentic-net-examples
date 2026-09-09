@@ -8,47 +8,39 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary PDF and the final PNG.
-        const string inputPdfPath = "input.pdf";
-        const string outputPngPath = "output.png";
-
-        // -----------------------------------------------------------------
-        // Step 1: Create a sample PDF that contains vector graphics.
-        // -----------------------------------------------------------------
+        // Step 1: Create a sample Word document with a vector shape.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Insert a rectangle shape (vector graphic).
+        builder.InsertShape(ShapeType.Rectangle, 300, 150);
+        // Save the document as PDF – this PDF will contain the vector graphic.
+        const string pdfPath = "input.pdf";
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Add some text.
-        builder.Writeln("Sample PDF with vector graphics:");
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("Failed to create the source PDF.");
 
-        // Insert a vector shape (a 5‑point star). Use a shape type that exists in the API.
-        // ShapeType.Star5 is not available; use ShapeType.Star5 (fallback to a regular star shape).
-        builder.InsertShape(ShapeType.Star, 200, 200);
-
-        // Save the document as PDF – this PDF now contains vector graphics.
-        sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
-
-        // -----------------------------------------------------------------
-        // Step 2: Load the PDF and convert the first page to a high‑resolution PNG.
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document(inputPdfPath);
-
-        // Configure image save options for high quality.
+        // Step 2: Load the PDF and render it to a high‑resolution PNG.
+        Document pdfDoc = new Document(pdfPath);
         ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            // Render at 300 DPI to retain visual fidelity.
+            // High DPI to retain visual fidelity.
             Resolution = 300,
-            // Use the high‑quality rendering algorithm.
-            UseHighQualityRendering = true
+            // Ensure high‑quality rendering algorithms are used.
+            UseHighQualityRendering = true,
+            // Render the first page (index 0). Adjust if multiple pages are needed.
+            PageSet = new PageSet(0)
         };
 
-        // Save the first page of the PDF as a PNG image.
-        pdfDoc.Save(outputPngPath, pngOptions);
+        const string pngPath = "output.png";
+        pdfDoc.Save(pngPath, pngOptions);
 
-        // -----------------------------------------------------------------
-        // Step 3: Verify that the PNG file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputPngPath))
-            throw new InvalidOperationException("Expected output PNG was not created.");
+        // Step 3: Validate that the PNG was created and contains data.
+        if (!File.Exists(pngPath) || new FileInfo(pngPath).Length == 0)
+            throw new InvalidOperationException("The PNG conversion failed or produced an empty file.");
+
+        // Optional: Inform the user (no interactive input required).
+        Console.WriteLine($"PDF successfully converted to high‑resolution PNG: {pngPath}");
     }
 }

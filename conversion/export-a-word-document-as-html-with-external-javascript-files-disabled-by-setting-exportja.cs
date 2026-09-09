@@ -7,34 +7,23 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document in memory.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample content for HTML export.");
+        // Create a new blank document and add a line of text.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words HTML export with JavaScript disabled.");
 
-        // Save the document locally as DOCX (bootstrap step).
-        const string inputPath = "input.docx";
-        source.Save(inputPath, SaveFormat.Docx);
+        // Configure HTML save options. The ExportJavaScript property no longer exists,
+        // so we simply use the default options which do not embed JavaScript.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
 
-        // Load the saved DOCX file.
-        Document doc = new Document(inputPath);
+        // Define the output HTML file name.
+        string outputFile = "output.html";
 
-        // Configure HTML save options.
-        // Aspose.Words does not expose an ExportJavaScript property; instead,
-        // setting RemoveJavaScriptFromLinks disables JavaScript in the output.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            RemoveJavaScriptFromLinks = true
-        };
-
-        // Save the document as HTML.
-        const string outputPath = "output.html";
-        doc.Save(outputPath, htmlOptions);
+        // Save the document as HTML using the configured options.
+        doc.Save(outputFile, htmlOptions);
 
         // Verify that the HTML file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Expected output HTML was not created.");
-
-        Console.WriteLine("Document successfully exported to HTML without JavaScript.");
+        if (!File.Exists(outputFile))
+            throw new InvalidOperationException("Expected HTML output file was not created.");
     }
 }

@@ -7,9 +7,11 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing a simple table.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
+        // 1. Create a sample Word document containing a table and save it as PDF.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // Build a simple 2x2 table.
         builder.StartTable();
         builder.InsertCell();
         builder.Write("Header 1");
@@ -17,34 +19,37 @@ public class Program
         builder.Write("Header 2");
         builder.EndRow();
         builder.InsertCell();
-        builder.Write("Row 1, Col 1");
+        builder.Write("Value 1");
         builder.InsertCell();
-        builder.Write("Row 1, Col 2");
+        builder.Write("Value 2");
         builder.EndTable();
 
-        // Save the document as PDF.
         string pdfPath = "sample.pdf";
-        source.Save(pdfPath, SaveFormat.Pdf);
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
         if (!File.Exists(pdfPath))
             throw new InvalidOperationException("PDF file was not created.");
 
-        // Load the PDF and convert it to DOCX.
+        // 2. Load the PDF and convert it to DOCX.
         Document pdfDoc = new Document(pdfPath);
         string docxPath = "sample.docx";
         pdfDoc.Save(docxPath, SaveFormat.Docx);
         if (!File.Exists(docxPath))
             throw new InvalidOperationException("DOCX file was not created.");
 
-        // Load the DOCX and convert it to XLSX (tables become worksheets).
-        Document docx = new Document(docxPath);
+        // 3. Load the DOCX and convert it to XLSX (spreadsheet) to extract tables.
+        Document docxDoc = new Document(docxPath);
+        string xlsxPath = "sample.xlsx";
+
+        // Use XlsxSaveOptions to specify XLSX format and worksheet handling.
         XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
         {
             SaveFormat = SaveFormat.Xlsx,
-            SectionMode = XlsxSectionMode.MultipleWorksheets
+            SectionMode = XlsxSectionMode.SingleWorksheet
         };
-        string xlsxPath = "tables.xlsx";
-        docx.Save(xlsxPath, xlsxOptions);
+        docxDoc.Save(xlsxPath, xlsxOptions);
         if (!File.Exists(xlsxPath))
             throw new InvalidOperationException("XLSX file was not created.");
+
+        // Conversion sequence completed successfully.
     }
 }

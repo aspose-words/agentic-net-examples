@@ -1,27 +1,44 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOCX content for conversion to PDF.");
-        const string inputPath = "input.docx";
-        source.Save(inputPath, SaveFormat.Docx);
+        // Define file names in the current working directory.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.pdf");
 
-        // Load the DOCX document from disk.
-        Document doc = new Document(inputPath);
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOCX document.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample DOCX document.");
+        builder.Writeln("It will be converted to PDF while preserving layout.");
+        sourceDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Save the loaded document as PDF, preserving layout.
-        const string outputPath = "output.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // -----------------------------------------------------------------
+        // 2. Load the DOCX file from disk.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(inputPath);
 
-        // Verify that the PDF file was created.
+        // -----------------------------------------------------------------
+        // 3. Save the document as PDF.
+        // -----------------------------------------------------------------
+        loadedDoc.Save(outputPath, SaveFormat.Pdf);
+
+        // -----------------------------------------------------------------
+        // 4. Validate that the PDF was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Expected output PDF was not created.");
+        {
+            throw new InvalidOperationException("The PDF output file was not created.");
+        }
+
+        // Optional: Inform the user (no interactive wait required).
+        Console.WriteLine($"Conversion completed successfully. PDF saved to: {outputPath}");
     }
 }

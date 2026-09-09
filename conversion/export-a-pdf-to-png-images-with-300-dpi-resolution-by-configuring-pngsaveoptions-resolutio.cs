@@ -7,37 +7,61 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample document and save it as PDF (input.pdf).
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is page 1 of the PDF.");
+        // Define file names.
+        const string pdfPath = "sample.pdf";
+        const string outputFolder = "PngPages";
+
+        // Ensure the output folder exists.
+        if (Directory.Exists(outputFolder))
+            Directory.Delete(outputFolder, true);
+        Directory.CreateDirectory(outputFolder);
+
+        // -----------------------------------------------------------------
+        // 1. Create a sample document and save it as PDF (input for conversion).
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is page 1.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 2 of the PDF.");
-        sourceDoc.Save("input.pdf", SaveFormat.Pdf);
+        builder.Writeln("This is page 2.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is page 3.");
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Step 2: Load the PDF document we just created.
-        Document pdfDoc = new Document("input.pdf");
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("Failed to create the source PDF file.");
 
-        // Step 3: Export each page of the PDF to a separate PNG image at 300 DPI.
+        // -----------------------------------------------------------------
+        // 2. Load the PDF document.
+        // -----------------------------------------------------------------
+        Document pdfDoc = new Document(pdfPath);
+
+        // -----------------------------------------------------------------
+        // 3. Export each page of the PDF to a separate PNG image at 300 DPI.
+        // -----------------------------------------------------------------
         for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+            // Configure image save options for PNG with 300 DPI.
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
             {
-                // Set both horizontal and vertical resolution to 300 DPI.
-                Resolution = 300f,
-                // Render only the current page.
-                PageSet = new PageSet(pageIndex)
+                Resolution = 300f,               // Set both horizontal and vertical DPI.
+                PageSet = new PageSet(pageIndex) // Render only the current page.
             };
 
-            string outputFileName = $"page_{pageIndex + 1}.png";
-            pdfDoc.Save(outputFileName, pngOptions);
+            string pngPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
+            pdfDoc.Save(pngPath, options);
 
             // Validate that the PNG file was created.
-            if (!File.Exists(outputFileName))
-                throw new InvalidOperationException($"Failed to create image file: {outputFileName}");
+            if (!File.Exists(pngPath))
+                throw new InvalidOperationException($"Failed to create PNG for page {pageIndex + 1}.");
         }
 
-        // All pages have been exported successfully.
-        Console.WriteLine("PDF has been exported to PNG images at 300 DPI.");
+        // -----------------------------------------------------------------
+        // 4. Clean up temporary files (optional).
+        // -----------------------------------------------------------------
+        // File.Delete(pdfPath); // Uncomment if you want to remove the intermediate PDF.
+
+        Console.WriteLine("PDF successfully exported to PNG images at 300 DPI.");
     }
 }

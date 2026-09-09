@@ -6,46 +6,26 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string inputPdfPath = "input.pdf";
-        const string outputTxtPath = "output.txt";
+        // Create a sample PDF document.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Sample PDF content for text extraction.");
+        source.Save("input.pdf", SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // Create a sample PDF document if it does not already exist.
-        // -----------------------------------------------------------------
-        if (!File.Exists(inputPdfPath))
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln("This is a sample PDF created for text extraction.");
-            // Save the document as PDF.
-            sampleDoc.Save(inputPdfPath, SaveFormat.Pdf);
-        }
-
-        // -----------------------------------------------------------------
         // Load the PDF document.
-        // -----------------------------------------------------------------
-        Document pdfDocument = new Document(inputPdfPath);
+        Document pdfDoc = new Document("input.pdf");
 
-        // -----------------------------------------------------------------
-        // Extract the plain text from the PDF.
-        // -----------------------------------------------------------------
-        string extractedText = pdfDocument.GetText();
+        // Extract the text content.
+        string extractedText = pdfDoc.GetText();
 
-        // -----------------------------------------------------------------
-        // Write the extracted text to a TXT file.
-        // -----------------------------------------------------------------
-        File.WriteAllText(outputTxtPath, extractedText);
+        // Save the extracted text to a plain TXT file.
+        File.WriteAllText("output.txt", extractedText);
 
-        // -----------------------------------------------------------------
-        // Validate that the output file was created and contains data.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputTxtPath) || new FileInfo(outputTxtPath).Length == 0)
-        {
-            throw new InvalidOperationException("The text extraction failed; output file was not created or is empty.");
-        }
+        // Validate that the TXT file was created and contains data.
+        if (!File.Exists("output.txt"))
+            throw new InvalidOperationException("Expected output TXT was not created.");
 
-        // Optional: indicate success (no console interaction required).
-        // Console.WriteLine("Text extraction completed successfully.");
+        if (new FileInfo("output.txt").Length == 0)
+            throw new InvalidOperationException("The extracted text file is empty.");
     }
 }

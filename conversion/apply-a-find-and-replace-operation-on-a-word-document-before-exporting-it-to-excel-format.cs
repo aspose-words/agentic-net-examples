@@ -6,30 +6,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document containing placeholders.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Report for _Customer_");
-        builder.Writeln("Dear _Customer_,");
-        builder.Writeln("Your order number is _OrderNumber_.");
-
-        // Save the document as DOCX to simulate an existing input file.
+        // Define file names.
         const string inputPath = "input.docx";
-        source.Save(inputPath, SaveFormat.Docx);
-
-        // Load the DOCX file.
-        Document doc = new Document(inputPath);
-
-        // Perform find‑and‑replace operations.
-        doc.Range.Replace("_Customer_", "Acme Corp");
-        doc.Range.Replace("_OrderNumber_", "12345");
-
-        // Export the modified document to Excel (XLSX) format.
         const string outputPath = "output.xlsx";
+
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample Word document.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Dear _Customer_,");
+        builder.Writeln("Thank you for your purchase.");
+        sourceDoc.Save(inputPath, SaveFormat.Docx);
+
+        // -----------------------------------------------------------------
+        // Step 2: Load the document, perform find‑and‑replace.
+        // -----------------------------------------------------------------
+        Document doc = new Document(inputPath);
+        int replacements = doc.Range.Replace("_Customer_", "John Doe");
+        if (replacements == 0)
+            throw new InvalidOperationException("No occurrences were replaced.");
+
+        // -----------------------------------------------------------------
+        // Step 3: Export the modified document to Excel format.
+        // -----------------------------------------------------------------
         doc.Save(outputPath, SaveFormat.Xlsx);
 
-        // Verify that the Excel file was created.
+        // -----------------------------------------------------------------
+        // Step 4: Validate that the Excel file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Expected output file '{outputPath}' was not created.");
+            throw new InvalidOperationException("The expected Excel file was not created.");
+
+        // Optional: clean up temporary files (comment out if inspection is needed).
+        // File.Delete(inputPath);
+        // File.Delete(outputPath);
     }
 }

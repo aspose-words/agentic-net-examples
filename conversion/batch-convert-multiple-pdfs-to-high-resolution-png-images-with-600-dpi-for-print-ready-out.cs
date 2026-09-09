@@ -3,72 +3,61 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class BatchPdfToPngConverter
+public class Program
 {
     public static void Main()
     {
-        // Define folders for input PDFs and output PNGs.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPngs");
+        // Prepare folders for input PDFs and output PNGs.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputPdfs");
+        string outputDir = Path.Combine(baseDir, "OutputPngs");
 
-        // Ensure clean environment.
-        if (Directory.Exists(inputFolder))
-            Directory.Delete(inputFolder, true);
-        if (Directory.Exists(outputFolder))
-            Directory.Delete(outputFolder, true);
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create sample PDF files.
-        CreateSamplePdf(Path.Combine(inputFolder, "Sample1.pdf"), "First sample PDF.", 2);
-        CreateSamplePdf(Path.Combine(inputFolder, "Sample2.pdf"), "Second sample PDF.", 3);
-
-        // Process each PDF in the input folder.
-        string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
-        foreach (string pdfPath in pdfFiles)
+        // Create a few sample PDF files to act as the batch source.
+        for (int i = 1; i <= 3; i++)
         {
-            // Load the PDF document.
-            Document pdfDocument = new Document(pdfPath);
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-            // Convert each page to a separate high‑resolution PNG.
-            for (int pageIndex = 0; pageIndex < pdfDocument.PageCount; pageIndex++)
+            builder.Writeln($"Sample PDF {i} - Page 1.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"Sample PDF {i} - Page 2.");
+
+            string pdfPath = Path.Combine(inputDir, $"Sample{i}.pdf");
+            sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+
+            if (!File.Exists(pdfPath))
+                throw new InvalidOperationException($"Failed to create sample PDF: {pdfPath}");
+        }
+
+        // Batch convert each PDF to high‑resolution PNG images (600 DPI), one image per page.
+        foreach (string pdfFile in Directory.GetFiles(inputDir, "*.pdf"))
+        {
+            Document pdfDoc = new Document(pdfFile);
+
+            for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
             {
-                ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
-                pngOptions.Resolution = 600; // 600 DPI for print‑ready quality.
-                pngOptions.PageSet = new PageSet(pageIndex); // Render only the current page.
+                ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+                {
+                    // Render only the current page.
+                    PageSet = new PageSet(pageIndex),
+                    // Set the required resolution for print‑ready output.
+                    Resolution = 600
+                };
 
-                string pngFileName = $"{Path.GetFileNameWithoutExtension(pdfPath)}_Page{pageIndex + 1}.png";
-                string pngPath = Path.Combine(outputFolder, pngFileName);
+                string pngFileName = $"{Path.GetFileNameWithoutExtension(pdfFile)}_page{pageIndex + 1}.png";
+                string pngPath = Path.Combine(outputDir, pngFileName);
 
-                pdfDocument.Save(pngPath, pngOptions);
+                pdfDoc.Save(pngPath, options);
 
-                // Validate that the PNG was created.
                 if (!File.Exists(pngPath))
-                    throw new InvalidOperationException($"Failed to create PNG file: {pngPath}");
+                    throw new InvalidOperationException($"Failed to create PNG image: {pngPath}");
             }
         }
 
-        // Optional: write a simple completion message.
+        // Indicate successful completion (no interactive prompts).
         Console.WriteLine("Batch conversion completed successfully.");
-    }
-
-    // Helper method to create a sample PDF with the specified text and page count.
-    private static void CreateSamplePdf(string filePath, string title, int pageCount)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        for (int i = 0; i < pageCount; i++)
-        {
-            builder.Writeln($"{title} - Page {i + 1}");
-            if (i < pageCount - 1)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
-
-        doc.Save(filePath, SaveFormat.Pdf);
-
-        // Verify that the PDF was created.
-        if (!File.Exists(filePath))
-            throw new InvalidOperationException($"Failed to create sample PDF: {filePath}");
     }
 }

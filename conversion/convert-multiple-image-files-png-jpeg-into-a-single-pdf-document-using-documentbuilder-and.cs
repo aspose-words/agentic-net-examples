@@ -1,78 +1,75 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for temporary image files.
-        string imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputImages");
-        Directory.CreateDirectory(imagesFolder);
+        // Set up working directories.
+        string workingDir = Directory.GetCurrentDirectory();
+        string imagesDir = Path.Combine(workingDir, "Images");
+        Directory.CreateDirectory(imagesDir);
 
-        // Create a PNG image.
-        string pngPath = Path.Combine(imagesFolder, "sample.png");
+        string pngPath = Path.Combine(imagesDir, "sample.png");
+        string jpegPath = Path.Combine(imagesDir, "sample.jpg");
+        string pdfPath = Path.Combine(workingDir, "CombinedImages.pdf");
+
+        // Create a simple PNG image using Aspose.Drawing.
         using (Bitmap pngBitmap = new Bitmap(200, 200))
         {
             using (Graphics graphics = Graphics.FromImage(pngBitmap))
             {
                 graphics.Clear(Color.LightBlue);
-                using (Pen pen = new Pen(Color.Red, 5))
-                {
-                    graphics.DrawEllipse(pen, 20, 20, 160, 160);
-                }
+                // Use fully qualified Aspose.Drawing.Font to avoid ambiguity.
+                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20);
+                graphics.DrawString("PNG Image", font, new SolidBrush(Color.DarkBlue), new PointF(20, 80));
+                font.Dispose();
             }
             pngBitmap.Save(pngPath, ImageFormat.Png);
         }
 
-        // Create a JPEG image.
-        string jpegPath = Path.Combine(imagesFolder, "sample.jpg");
+        // Create a simple JPEG image using Aspose.Drawing.
         using (Bitmap jpegBitmap = new Bitmap(200, 200))
         {
             using (Graphics graphics = Graphics.FromImage(jpegBitmap))
             {
-                graphics.Clear(Color.LightGreen);
-                using (Pen pen = new Pen(Color.Blue, 5))
-                {
-                    graphics.DrawRectangle(pen, 30, 30, 140, 140);
-                }
+                graphics.Clear(Color.LightCoral);
+                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20);
+                graphics.DrawString("JPEG Image", font, new SolidBrush(Color.White), new PointF(20, 80));
+                font.Dispose();
             }
             jpegBitmap.Save(jpegPath, ImageFormat.Jpeg);
         }
 
-        // Create a new Word document.
+        // Build a Word document and insert the images.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the PNG image.
         builder.InsertImage(pngPath);
-        // Insert a page break between images.
         builder.InsertBreak(BreakType.PageBreak);
-        // Insert the JPEG image.
         builder.InsertImage(jpegPath);
 
-        // Save the document as a PDF.
-        string outputPdf = Path.Combine(Directory.GetCurrentDirectory(), "ImagesCombined.pdf");
-        doc.Save(outputPdf, SaveFormat.Pdf);
+        // Save the document as a single PDF file.
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
-        if (!File.Exists(outputPdf))
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
             throw new InvalidOperationException("The PDF file was not created.");
 
-        // Clean up temporary images (optional).
+        // Optional cleanup of temporary images.
         try
         {
             File.Delete(pngPath);
             File.Delete(jpegPath);
-            Directory.Delete(imagesFolder);
+            Directory.Delete(imagesDir);
         }
         catch
         {
-            // Ignored – cleanup is not critical for the example.
+            // Ignored – cleanup is best‑effort.
         }
     }
 }

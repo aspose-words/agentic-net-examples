@@ -7,48 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a large DOCX document (simulating a large file).
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-
-        // Add many pages to increase size.
-        for (int i = 0; i < 1000; i++)
+        // Create a sample DOCX document.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample document generated for streaming conversion.");
+        // Add enough content to simulate a large document.
+        for (int i = 0; i < 5000; i++)
         {
-            builder.Writeln($"This is page {i + 1} of a large document.");
-            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"Paragraph {i + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
         }
+        const string inputPath = "input.docx";
+        sourceDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Save the document locally as DOCX (input file).
-        const string inputPath = "large_input.docx";
-        source.Save(inputPath, SaveFormat.Docx);
-
-        // Load the DOCX document from the file system.
+        // Load the DOCX document.
         Document doc = new Document(inputPath);
 
-        // Create PDF save options with memory optimization enabled.
-        SaveOptions pdfOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
-        pdfOptions.MemoryOptimization = true;
+        // Prepare PDF save options with memory optimization enabled.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            MemoryOptimization = true
+        };
 
-        // Convert the document to PDF using a memory stream to minimize memory usage.
+        // Convert to PDF using a memory stream to keep memory usage low.
         using (MemoryStream pdfStream = new MemoryStream())
         {
             doc.Save(pdfStream, pdfOptions);
 
             // Verify that data was written to the stream.
             if (pdfStream.Length == 0)
-                throw new InvalidOperationException("PDF conversion produced an empty stream.");
+                throw new InvalidOperationException("No PDF data was written to the stream.");
 
-            // Optionally write the PDF to a file for verification.
+            // Write the stream to a file.
             const string outputPath = "output.pdf";
             pdfStream.Position = 0;
-            using (FileStream file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+            using (FileStream fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
             {
-                pdfStream.CopyTo(file);
+                pdfStream.CopyTo(fileStream);
             }
 
-            // Ensure the output file was created.
+            // Validate that the output file was created.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException("Expected output PDF file was not created.");
+                throw new InvalidOperationException("The PDF file was not created.");
         }
     }
 }

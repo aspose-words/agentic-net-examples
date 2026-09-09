@@ -6,7 +6,7 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input RTF files and output PDFs.
+        // Define folders for input RTF files and output PDF files.
         string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputRtf");
         string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdf");
 
@@ -14,39 +14,41 @@ public class Program
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample RTF files if the input folder is empty.
-        if (Directory.GetFiles(inputFolder, "*.rtf").Length == 0)
+        // Create sample RTF documents if the input folder is empty.
+        // This follows the "doc to pdf file pattern" adapted for RTF.
+        string[] sampleNames = { "Sample1.rtf", "Sample2.rtf", "Sample3.rtf" };
+        foreach (string fileName in sampleNames)
         {
-            for (int i = 1; i <= 3; i++)
+            string filePath = Path.Combine(inputFolder, fileName);
+            if (!File.Exists(filePath))
             {
-                // Create a blank document and add some text.
-                Document sampleDoc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-                builder.Writeln($"Sample RTF content for file {i}.");
-
-                // Save the document as RTF in the input folder.
-                string rtfPath = Path.Combine(inputFolder, $"Sample{i}.rtf");
-                sampleDoc.Save(rtfPath, SaveFormat.Rtf);
+                Document source = new Document();
+                DocumentBuilder builder = new DocumentBuilder(source);
+                builder.Writeln($"This is the content of {Path.GetFileNameWithoutExtension(fileName)}.");
+                source.Save(filePath, SaveFormat.Rtf);
             }
         }
 
-        // Process each RTF file in the input folder.
+        // Process each RTF file in the input folder and convert it to PDF.
         string[] rtfFiles = Directory.GetFiles(inputFolder, "*.rtf");
-        foreach (string rtfFile in rtfFiles)
+        foreach (string rtfPath in rtfFiles)
         {
             // Load the RTF document.
-            Document doc = new Document(rtfFile);
+            Document doc = new Document(rtfPath);
 
             // Determine the output PDF path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(rtfFile) + ".pdf";
+            string pdfFileName = Path.GetFileNameWithoutExtension(rtfPath) + ".pdf";
             string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Convert and save as PDF using the default layout.
+            // Save the document as PDF using the default layout.
             doc.Save(pdfPath, SaveFormat.Pdf);
 
             // Verify that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
+                throw new InvalidOperationException($"Expected output PDF was not created: {pdfPath}");
         }
+
+        // Optional: indicate completion.
+        Console.WriteLine("Batch conversion completed successfully.");
     }
 }

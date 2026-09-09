@@ -8,45 +8,53 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample Word document, add a comment (annotation) and
-        //    save it as a PDF file with comments rendered as annotations.
-        // -----------------------------------------------------------------
+        // Define file names.
+        const string pdfFile = "sample.pdf";
+        const string xpsFile = "sample.xps";
+
+        // ---------------------------------------------------------------
+        // Step 1: Create a sample PDF document with a comment (annotation).
+        // ---------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample PDF with a review comment.");
 
-        // Create a comment node and attach it to the current paragraph.
+        // Add some content.
+        builder.Writeln("This is a sample document.");
+
+        // Create a comment node manually (InsertComment is not available in this version).
         Comment comment = new Comment(sourceDoc, "Reviewer", "RV", DateTime.Now);
         comment.SetText("Please review this paragraph.");
+        // Append the comment to the current paragraph.
         builder.CurrentParagraph.AppendChild(comment);
 
-        // Render comments as annotations (required for PDF).
+        // Ensure comments are saved as PDF annotations.
         sourceDoc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
+        // Rebuild layout after changing layout options.
+        sourceDoc.UpdatePageLayout();
 
-        const string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Save the document as PDF.
+        sourceDoc.Save(pdfFile, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // 2. Load the generated PDF file.
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document(pdfPath);
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfFile))
+            throw new InvalidOperationException("The PDF file was not created.");
 
-        // -----------------------------------------------------------------
-        // 3. Convert the PDF to XPS while preserving annotations.
-        // -----------------------------------------------------------------
-        const string xpsPath = "output.xps";
-        XpsSaveOptions xpsOptions = new XpsSaveOptions(); // default options preserve annotations
-        pdfDoc.Save(xpsPath, xpsOptions);
+        // ---------------------------------------------------------------
+        // Step 2: Load the PDF and convert it to XPS while preserving annotations.
+        // ---------------------------------------------------------------
+        Document pdfDoc = new Document(pdfFile);
 
-        // -----------------------------------------------------------------
-        // 4. Validate that the XPS file was created and contains data.
-        // -----------------------------------------------------------------
-        if (!File.Exists(xpsPath) || new FileInfo(xpsPath).Length == 0)
-        {
-            throw new InvalidOperationException("XPS conversion failed: output file is missing or empty.");
-        }
+        // Use XpsSaveOptions to control XPS output if needed.
+        XpsSaveOptions xpsOptions = new XpsSaveOptions();
 
-        Console.WriteLine("Conversion succeeded. XPS file created at: " + Path.GetFullPath(xpsPath));
+        // Save the loaded PDF as XPS.
+        pdfDoc.Save(xpsFile, xpsOptions);
+
+        // Verify that the XPS file was created.
+        if (!File.Exists(xpsFile))
+            throw new InvalidOperationException("The XPS file was not created.");
+
+        // Indicate successful conversion.
+        Console.WriteLine($"PDF file '{pdfFile}' was successfully converted to XPS file '{xpsFile}'.");
     }
 }

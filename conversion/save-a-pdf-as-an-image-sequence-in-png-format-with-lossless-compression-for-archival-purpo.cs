@@ -7,44 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with two pages.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample PDF content - Page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Sample PDF content - Page 2.");
-
-        // Save the document as PDF (input file for conversion).
-        const string pdfPath = "input.pdf";
-        source.Save(pdfPath, SaveFormat.Pdf);
+        // Create a sample PDF document.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample PDF content for image sequence conversion.");
+        sourceDoc.Save("sample.pdf", SaveFormat.Pdf);
 
         // Load the PDF document.
-        Document pdfDoc = new Document(pdfPath);
+        Document pdfDoc = new Document("sample.pdf");
 
         // Convert each page of the PDF to a separate PNG image.
         for (int i = 0; i < pdfDoc.PageCount; i++)
         {
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
-            {
-                // Render the specific page.
-                PageSet = new PageSet(i),
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
+            options.PageSet = new PageSet(i);               // Render the specific page.
+            options.ImageColorMode = ImageColorMode.None;   // Preserve original colors (lossless PNG).
+            options.Resolution = 300;                       // Optional: set DPI for high quality.
 
-                // Use a high resolution for archival quality.
-                Resolution = 300,
+            string outputFileName = $"page_{i + 1}.png";
+            pdfDoc.Save(outputFileName, options);
 
-                // Ensure color mode is unchanged (PNG is lossless).
-                ImageColorMode = ImageColorMode.None
-            };
-
-            string imagePath = $"output_page_{i + 1}.png";
-            pdfDoc.Save(imagePath, options);
-
-            // Validate that the image was created.
-            if (!File.Exists(imagePath))
-                throw new InvalidOperationException($"Failed to create image: {imagePath}");
+            // Verify that the image file was created.
+            if (!File.Exists(outputFileName))
+                throw new InvalidOperationException($"Expected image file '{outputFileName}' was not created.");
         }
 
-        // Clean up the temporary PDF if desired.
-        // File.Delete(pdfPath);
+        // Verify that the PDF file exists.
+        if (!File.Exists("sample.pdf"))
+            throw new InvalidOperationException("Expected PDF file 'sample.pdf' was not created.");
     }
 }

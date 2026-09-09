@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,68 +7,63 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string pdfPath = "sample.pdf";
-        const string epubPath = "output.epub";
+        // Paths for the temporary PDF input and the resulting EPUB output.
+        const string pdfPath = "sample_input.pdf";
+        const string epubPath = "converted_output.epub";
 
         // -----------------------------------------------------------------
-        // Step 1: Create a sample Word document with heading styles.
+        // 1. Create a sample PDF document with a simple chapter hierarchy.
         // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        Document pdfSource = new Document();
+        DocumentBuilder builder = new DocumentBuilder(pdfSource);
 
-        // Chapter 1 (Heading 1)
+        // Chapter 1
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
+        builder.Writeln("Chapter 1: Introduction");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the introduction chapter.");
 
-        // Section 1.1 (Heading 2)
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1");
-
-        // Subsection 1.1.1 (Heading 3)
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Subsection 1.1.1");
-
-        // Chapter 2 (Heading 1)
+        // Chapter 2
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
-
-        // Section 2.1 (Heading 2)
+        builder.Writeln("Chapter 2: Details");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 2.1");
+        builder.Writeln("Section 2.1: Overview");
+        builder.Writeln("Some overview text.");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section 2.2: Deep Dive");
+        builder.Writeln("Detailed information goes here.");
 
         // Save the document as PDF.
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        pdfSource.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+            throw new InvalidOperationException("Failed to create the source PDF file.");
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the PDF and convert it to EPUB.
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document(pdfPath);
+        // ---------------------------------------------------------------
+        // 2. Load the PDF and convert it to EPUB while preserving hierarchy.
+        // ---------------------------------------------------------------
+        Document pdfDocument = new Document(pdfPath);
 
         // Configure EPUB save options.
-        HtmlSaveOptions epubSaveOptions = new HtmlSaveOptions
+        HtmlSaveOptions epubOptions = new HtmlSaveOptions(SaveFormat.Epub)
         {
-            SaveFormat = SaveFormat.Epub,
-            Encoding = Encoding.UTF8,
-            // Split the output at heading paragraphs to preserve chapter hierarchy.
+            // Split the output at heading paragraphs to keep chapter structure.
             DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
+            // Include up to three heading levels in the navigation map (TOC).
+            NavigationMapLevel = 3,
             // Export built‑in and custom document properties.
-            ExportDocumentProperties = true,
-            // Define how many heading levels appear in the navigation map.
-            NavigationMapLevel = 3
+            ExportDocumentProperties = true
         };
 
         // Save as EPUB.
-        pdfDoc.Save(epubPath, epubSaveOptions);
+        pdfDocument.Save(epubPath, epubOptions);
 
         // Verify that the EPUB was created.
         if (!File.Exists(epubPath))
-            throw new InvalidOperationException("The EPUB file was not created.");
+            throw new InvalidOperationException("EPUB conversion failed; output file not found.");
 
-        // The example finishes without waiting for user input.
+        // Clean up temporary PDF if desired.
+        // File.Delete(pdfPath);
     }
 }

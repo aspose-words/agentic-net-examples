@@ -3,62 +3,95 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
+using Aspose.Drawing.Imaging; // For ImageFormat
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary JPEG image and the resulting PDF.
-        const string imagePath = "sample.jpg";
-        const string pdfPath = "image.pdf";
+        // Define file names.
+        const string jpegPath = "sample.jpg";
+        const string pdfPath = "output.pdf";
 
-        // Create a sample JPEG image using Aspose.Drawing.
-        CreateSampleJpeg(imagePath);
+        // ------------------------------------------------------------
+        // 1. Create a sample JPEG image using Aspose.Drawing.
+        // ------------------------------------------------------------
+        const int imageWidth = 800;
+        const int imageHeight = 600;
 
-        // Create a new Word document and insert the JPEG image.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
-
-        // Configure PDF save options to preserve the original image resolution and color depth.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // Create a bitmap with the desired size.
+        using (Bitmap bitmap = new Bitmap(imageWidth, imageHeight))
         {
-            ImageCompression = PdfImageCompression.Jpeg, // Keep JPEG format.
-            JpegQuality = 100,                           // No quality loss.
-            ColorMode = ColorMode.Normal                 // Preserve original colors.
-        };
-        // Disable downsampling to keep the original resolution.
-        pdfOptions.DownsampleOptions.DownsampleImages = false;
-
-        // Save the document as a PDF file.
-        doc.Save(pdfPath, pdfOptions);
-
-        // Verify that the PDF was created successfully.
-        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
-            throw new InvalidOperationException("The PDF file was not created or is empty.");
-    }
-
-    private static void CreateSampleJpeg(string path)
-    {
-        // Create a 200x200 pixel bitmap with 24‑bit color depth.
-        using (Bitmap bitmap = new Bitmap(200, 200, PixelFormat.Format24bppRgb))
-        {
+            // Obtain a graphics object to draw on the bitmap.
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background with a light color.
-                graphics.Clear(Color.LightBlue);
+                // Fill background with a solid color.
+                graphics.Clear(Color.CornflowerBlue);
 
-                // Draw a dark red ellipse in the center.
-                using (SolidBrush brush = new SolidBrush(Color.DarkRed))
+                // Draw a simple rectangle.
+                using (Pen pen = new Pen(Color.Yellow, 5))
                 {
-                    graphics.FillEllipse(brush, 50, 50, 100, 100);
+                    graphics.DrawRectangle(pen, 50, 50, imageWidth - 100, imageHeight - 100);
+                }
+
+                // Draw some text using a drawing font.
+                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 48);
+                try
+                {
+                    using (SolidBrush brush = new SolidBrush(Color.White))
+                    {
+                        graphics.DrawString("Sample JPEG", font, brush, new PointF(100, imageHeight / 2 - 24));
+                    }
+                }
+                finally
+                {
+                    font.Dispose();
                 }
             }
 
-            // Save the bitmap as a JPEG image.
-            bitmap.Save(path, ImageFormat.Jpeg);
+            // Save the bitmap as a JPEG with maximum quality to preserve color depth.
+            using (MemoryStream jpegStream = new MemoryStream())
+            {
+                // Aspose.Drawing saves JPEG with high quality by default.
+                bitmap.Save(jpegStream, ImageFormat.Jpeg);
+                File.WriteAllBytes(jpegPath, jpegStream.ToArray());
+            }
         }
+
+        // Verify that the JPEG file was created.
+        if (!File.Exists(jpegPath) || new FileInfo(jpegPath).Length == 0)
+            throw new InvalidOperationException("Failed to create the sample JPEG image.");
+
+        // ------------------------------------------------------------
+        // 2. Create a Word document and insert the JPEG image.
+        // ------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert the image at its original size (preserving resolution).
+        builder.InsertImage(jpegPath);
+
+        // ------------------------------------------------------------
+        // 3. Save the document as PDF while preserving the original image quality.
+        // ------------------------------------------------------------
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            // Prevent downsampling of images.
+            DownsampleOptions = { DownsampleImages = false },
+
+            // Preserve JPEG quality (no additional compression).
+            JpegQuality = 100,
+
+            // Use automatic image compression to keep original bytes when possible.
+            ImageCompression = PdfImageCompression.Auto
+        };
+
+        doc.Save(pdfPath, pdfOptions);
+
+        // ------------------------------------------------------------
+        // 4. Validate that the PDF was created successfully.
+        // ------------------------------------------------------------
+        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
+            throw new InvalidOperationException("PDF conversion failed; output file was not created.");
     }
 }

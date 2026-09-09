@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net.Mail;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,52 +8,49 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX document.
-        // -----------------------------------------------------------------
+        // Step 1: Create a sample DOCX document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words! This is a sample document.");
-
-        string docxPath = "sample.docx";
+        builder.Writeln("Hello Aspose.Words! This document will be converted to MHTML and embedded in an email.");
+        const string docxPath = "sample.docx";
         doc.Save(docxPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX document (simulating an existing file scenario).
-        // -----------------------------------------------------------------
+        // Verify that the DOCX file was created.
+        if (!File.Exists(docxPath) || new FileInfo(docxPath).Length == 0)
+            throw new InvalidOperationException("Failed to create the sample DOCX file.");
+
+        // Step 2: Load the DOCX and convert it to MHTML.
         Document loadedDoc = new Document(docxPath);
+        const string mhtmlPath = "sample.mht";
+        loadedDoc.Save(mhtmlPath, SaveFormat.Mhtml);
 
-        // -----------------------------------------------------------------
-        // 3. Convert the document to MHTML.
-        // -----------------------------------------------------------------
-        string mhtmlPath = "sample.mhtml";
-        HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
-        loadedDoc.Save(mhtmlPath, mhtmlOptions);
+        // Verify that the MHTML file was created.
+        if (!File.Exists(mhtmlPath) || new FileInfo(mhtmlPath).Length == 0)
+            throw new InvalidOperationException("Failed to convert the document to MHTML.");
 
-        if (!File.Exists(mhtmlPath))
-            throw new InvalidOperationException("MHTML file was not created.");
-
-        // -----------------------------------------------------------------
-        // 4. Build a minimal RFC‑822 email message and embed the MHTML
-        //    content as the HTML body.
-        // -----------------------------------------------------------------
+        // Read the MHTML content.
         string mhtmlContent = File.ReadAllText(mhtmlPath);
 
-        string emlPath = "email.eml";
+        // Step 3: Create a simple email and embed the MHTML content as the HTML body.
+        // Using System.Net.Mail instead of Aspose.Email (which is not part of the required packages).
+        MailMessage email = new MailMessage
+        {
+            From = new MailAddress("sender@example.com"),
+            Subject = "Document embedded as MHTML",
+            IsBodyHtml = true,
+            Body = mhtmlContent
+        };
+        email.To.Add("recipient@example.com");
 
-        // Simple email headers followed by a blank line and the HTML body.
-        string emlContent =
-            $"From: sender@example.com\r\n" +
-            $"To: receiver@example.com\r\n" +
-            $"Subject: Document as MHTML\r\n" +
-            $"MIME-Version: 1.0\r\n" +
-            $"Content-Type: text/html; charset=utf-8\r\n" +
-            $"\r\n" +
-            $"{mhtmlContent}";
+        // Save the email content to an .eml file for verification.
+        const string emlPath = "email.eml";
+        File.WriteAllText(emlPath, email.ToString());
 
-        File.WriteAllText(emlPath, emlContent);
+        // Verify that the email file was created.
+        if (!File.Exists(emlPath) || new FileInfo(emlPath).Length == 0)
+            throw new InvalidOperationException("Failed to save the email message.");
 
-        if (!File.Exists(emlPath))
-            throw new InvalidOperationException("Email file was not created.");
+        // Output simple confirmation.
+        Console.WriteLine("DOCX to MHTML conversion and email embedding completed successfully.");
     }
 }

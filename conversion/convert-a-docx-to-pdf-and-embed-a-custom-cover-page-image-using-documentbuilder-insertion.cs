@@ -1,8 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.BuildingBlocks;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,67 +9,79 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current working directory.
-        string workDir = Directory.GetCurrentDirectory();
-        string coverPath = Path.Combine(workDir, "cover.png");
-        string docPath = Path.Combine(workDir, "sample.docx");
-        string pdfPath = Path.Combine(workDir, "sample.pdf");
+        // Paths for temporary files
+        const string coverImagePath = "cover.png";
+        const string docxPath = "sample.docx";
+        const string pdfPath = "output.pdf";
 
-        // Create a simple cover image using Aspose.Drawing.
-        CreateCoverImage(coverPath);
+        // --------------------------------------------------------------
+        // Create a simple cover image using Aspose.Drawing (no System.Drawing)
+        // --------------------------------------------------------------
+        const int imageWidth = 600;
+        const int imageHeight = 800;
 
-        // Create a DOCX document and insert the cover image.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.InsertImage(coverPath);
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is the main document content after the cover page.");
-
-        // Save the DOCX file (lifecycle: create → save).
-        source.Save(docPath, SaveFormat.Docx);
-
-        // Load the DOCX and convert it to PDF (lifecycle: load → save).
-        Document doc = new Document(docPath);
-        doc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Validate that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
-    }
-
-    private static void CreateCoverImage(string filePath)
-    {
-        // Create a bitmap of size 600x800.
-        using (Bitmap bitmap = new Bitmap(600, 800))
+        using (Bitmap bitmap = new Bitmap(imageWidth, imageHeight))
         {
-            // Obtain a graphics object to draw on the bitmap.
+            // Obtain a Graphics object for drawing on the bitmap
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill the background with a light blue color.
-                graphics.Clear(Color.LightBlue);
+                // Fill background
+                graphics.Clear(Color.White);
 
-                // Prepare a drawing font (explicit type to avoid ambiguity).
+                // Prepare font and brush
                 Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 48);
                 try
                 {
-                    // Use a solid brush for the text color.
-                    using (SolidBrush brush = new SolidBrush(Color.DarkBlue))
-                    {
-                        // Define the rectangle where the text will be drawn.
-                        RectangleF layout = new RectangleF(100, 350, 400, 100);
-                        // Draw the text "Cover Page" within the rectangle.
-                        graphics.DrawString("Cover Page", font, brush, layout);
-                    }
+                    // Draw centered text
+                    string text = "Cover Page";
+                    // Measure text size
+                    SizeF textSize = graphics.MeasureString(text, font);
+                    float x = (imageWidth - textSize.Width) / 2;
+                    float y = (imageHeight - textSize.Height) / 2;
+                    graphics.DrawString(text, font, Brushes.Black, x, y);
                 }
                 finally
                 {
-                    // Ensure the font is disposed.
                     font.Dispose();
                 }
             }
 
-            // Save the bitmap as a PNG file using Aspose.Drawing.Imaging.ImageFormat.
-            bitmap.Save(filePath, ImageFormat.Png);
+            // Save the image to a file (PNG format)
+            bitmap.Save(coverImagePath, ImageFormat.Png);
         }
+
+        // --------------------------------------------------------------
+        // Create a DOCX document, insert the cover image, and add content
+        // --------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // Insert the cover image at the beginning
+        builder.InsertImage(coverImagePath);
+        // Add a page break after the cover
+        builder.InsertBreak(BreakType.PageBreak);
+        // Add sample body content
+        builder.Writeln("This is the main document content after the cover page.");
+
+        // Save the DOCX file
+        sourceDoc.Save(docxPath, SaveFormat.Docx);
+
+        // --------------------------------------------------------------
+        // Load the DOCX and convert it to PDF
+        // --------------------------------------------------------------
+        Document loadedDoc = new Document(docxPath);
+        loadedDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // --------------------------------------------------------------
+        // Validate that the PDF was created
+        // --------------------------------------------------------------
+        if (!File.Exists(pdfPath))
+        {
+            throw new InvalidOperationException("Expected output PDF was not created.");
+        }
+
+        // Optional cleanup (commented out to allow inspection of generated files)
+        // File.Delete(coverImagePath);
+        // File.Delete(docxPath);
     }
 }
