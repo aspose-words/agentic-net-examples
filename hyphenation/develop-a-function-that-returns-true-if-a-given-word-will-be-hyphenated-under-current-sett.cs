@@ -1,92 +1,92 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using static Aspose.Words.Hyphenation; // Import static members of the Hyphenation class
 
 public class Program
 {
-    // Path to the local hyphenation dictionary.
-    private const string DictionaryPath = "hyph_en_US.dic";
+    // Mapping from language code to the full path of the registered dictionary file.
+    private static readonly Dictionary<string, string> _registeredDictionaries = new();
 
-    // Language code used for the dictionary.
-    private const string Language = "en-US";
-
-    // Ensures that a minimal dictionary file exists and is registered.
-    private static void EnsureDictionaryRegistered()
+    public static void Main()
     {
-        if (!File.Exists(DictionaryPath))
+        // Prepare a minimal hyphenation dictionary for English (US).
+        const string language = "en-US";
+        const string dictFileName = "hyph_en_US.dic";
+
+        // Dictionary format: first line is the encoding, subsequent lines are "word=hy-phen-ated".
+        string dictContent =
+            "UTF-8\n" +
+            "hyphenation=hy-phen-ation\n" +
+            "extraordinarycharacteristically=ex-tra-or-di-nary-char-ac-ter-is-ti-cal-ly\n";
+
+        // Write the dictionary file to the local folder.
+        File.WriteAllText(dictFileName, dictContent);
+
+        // Register the dictionary with Aspose.Words.
+        Hyphenation.RegisterDictionary(language, dictFileName);
+        _registeredDictionaries[language] = Path.GetFullPath(dictFileName);
+
+        // Example words to test.
+        string[] words = { "hyphenation", "extraordinarycharacteristically", "unregisteredword" };
+
+        foreach (string w in words)
         {
-            // Create a deterministic dictionary with a few sample entries.
-            // The format is: UTF-8 on the first line, then word=hyphenated‑pattern on subsequent lines.
-            File.WriteAllText(DictionaryPath,
-                "UTF-8\n" +
-                "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-                "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-                "communication=com-mu-ni-ca-tion\n");
+            bool canHyphenate = WillHyphenate(w, language);
+            Console.WriteLine($"Word \"{w}\" hyphenated under current settings: {canHyphenate}");
         }
 
-        // Register the dictionary if it has not been registered yet.
-        if (!IsDictionaryRegistered(Language))
-            RegisterDictionary(Language, DictionaryPath);
+        // Clean up the temporary dictionary file.
+        if (File.Exists(dictFileName))
+            File.Delete(dictFileName);
     }
 
-    // Returns true if the supplied word has a hyphenation entry in the registered dictionary.
-    public static bool WillHyphenate(string word)
+    /// <summary>
+    /// Determines whether the specified word will be hyphenated under the current hyphenation settings.
+    /// The method checks if a hyphenation dictionary is registered for the given language and
+    /// whether the dictionary contains an entry for the word.
+    /// </summary>
+    /// <param name="word">The word to test.</param>
+    /// <param name="language">The language code (e.g., "en-US").</param>
+    /// <returns>True if the word has a hyphenation entry in the registered dictionary; otherwise false.</returns>
+    private static bool WillHyphenate(string word, string language)
     {
-        if (string.IsNullOrWhiteSpace(word))
+        if (string.IsNullOrEmpty(word) || string.IsNullOrEmpty(language))
             return false;
 
-        EnsureDictionaryRegistered();
+        // Verify that a dictionary for the language is registered.
+        if (!Hyphenation.IsDictionaryRegistered(language))
+            return false;
 
-        // Simple lookup: the dictionary file contains lines "word=pattern".
-        // If the word appears before the '=', we consider it hyphenatable.
-        foreach (var line in File.ReadAllLines(DictionaryPath))
+        // Retrieve the path of the dictionary file that was registered.
+        if (!_registeredDictionaries.TryGetValue(language, out string dictPath) || !File.Exists(dictPath))
+            return false;
+
+        // Read the dictionary file and look for an entry matching the word (case‑insensitive).
+        // Dictionary lines after the first line have the format: originalWord=hy‑phen‑ated
+        foreach (string line in File.ReadLines(dictPath))
         {
-            // Skip the first line which contains the encoding marker.
-            if (line.StartsWith("UTF-8", StringComparison.OrdinalIgnoreCase))
+            // Skip the encoding header line.
+            if (line.StartsWith("UTF-", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var trimmed = line.Trim();
-            if (trimmed.Length == 0)
+            // Ignore empty lines.
+            if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            var parts = trimmed.Split('=', 2);
-            if (parts.Length == 2 && string.Equals(parts[0], word, StringComparison.OrdinalIgnoreCase))
+            // Split the line into the original word and its hyphenated form.
+            int separatorIndex = line.IndexOf('=');
+            if (separatorIndex <= 0)
+                continue; // malformed line
+
+            string original = line.Substring(0, separatorIndex).Trim();
+            // Compare the original word with the input word.
+            if (string.Equals(original, word, StringComparison.OrdinalIgnoreCase))
                 return true;
         }
 
+        // No matching entry found.
         return false;
-    }
-
-    // Demonstrates the usage of WillHyphenate.
-    public static void Main()
-    {
-        // Create a blank document and enable automatic hyphenation.
-        var doc = new Document();
-        doc.HyphenationOptions.AutoHyphenation = true;
-
-        // Narrow the page width to force hyphenation when possible.
-        doc.FirstSection.PageSetup.PageWidth = 200;
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
-
-        // Add a sample paragraph containing words that may be hyphenated.
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-
-        // Save the document to trigger layout (the file is not required for the core logic).
-        doc.Save("HyphenationDemo.pdf");
-
-        // Test the helper function with various words.
-        string[] testWords = { "communication", "extraordinarycharacteristically", "unknownword" };
-        foreach (var w in testWords)
-        {
-            bool canHyphenate = WillHyphenate(w);
-            Console.WriteLine($"Word \"{w}\" hyphenatable: {canHyphenate}");
-        }
-
-        // Validate that the PDF was created.
-        if (!File.Exists("HyphenationDemo.pdf"))
-            throw new InvalidOperationException("Expected output file was not created.");
     }
 }

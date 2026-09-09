@@ -3,67 +3,53 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
 
-public class Program
+public class HyphenationComparison
 {
     public static void Main()
     {
-        // Paths for temporary files.
-        const string dictionaryPath = "hyph_en_US.dic";
-        const string nonHyphenatedPdf = "nonhyphenated.pdf";
-        const string hyphenatedPdf = "hyphenated.pdf";
-
-        // Create a minimal hyphenation dictionary for English (US).
-        // The first line must specify the encoding, followed by word‑hyphenation patterns.
-        File.WriteAllText(dictionaryPath,
+        // Prepare a minimal hyphenation dictionary for English (US).
+        const string dictPath = "hyph_en_US.dic";
+        File.WriteAllText(dictPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary so that Aspose.Words can hyphenate English text.
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
+        // Register the dictionary so Aspose.Words can hyphenate the words.
+        Hyphenation.RegisterDictionary("en-US", dictPath);
+        if (!Hyphenation.IsDictionaryRegistered("en-US"))
+            throw new InvalidOperationException("Failed to register the hyphenation dictionary.");
 
-        // -----------------------------------------------------------------
-        // Create the base document with sample text that can be hyphenated.
-        // -----------------------------------------------------------------
-        Document baseDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(baseDoc);
-
-        // Use a relatively large font to make line wrapping more likely.
+        // Create a document with long words that require hyphenation.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Size = 24;
-        builder.Writeln(
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication");
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
+        // Narrow the page width to force line wrapping and hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 200; // points
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Narrow the page width to force words onto new lines where hyphenation may occur.
-        baseDoc.FirstSection.PageSetup.PageWidth = 200;
-        baseDoc.FirstSection.PageSetup.LeftMargin = 20;
-        baseDoc.FirstSection.PageSetup.RightMargin = 20;
-
-        // ---------------------------------------------------------------
-        // Save the document without automatic hyphenation (default state).
-        // ---------------------------------------------------------------
-        baseDoc.Save(nonHyphenatedPdf);
-        if (!File.Exists(nonHyphenatedPdf))
-            throw new InvalidOperationException("Non‑hyphenated PDF was not created.");
-
-        // ---------------------------------------------------------------
-        // Clone the base document, enable automatic hyphenation, and save.
-        // ---------------------------------------------------------------
-        Document hyphenatedDoc = (Document)baseDoc.Clone(true);
-        hyphenatedDoc.HyphenationOptions.AutoHyphenation = true;
-        hyphenatedDoc.Save(hyphenatedPdf);
+        // ---------- Hyphenated PDF ----------
+        doc.HyphenationOptions.AutoHyphenation = true;
+        const string hyphenatedPdf = "hyphenated.pdf";
+        doc.Save(hyphenatedPdf);
         if (!File.Exists(hyphenatedPdf))
             throw new InvalidOperationException("Hyphenated PDF was not created.");
 
-        // ---------------------------------------------------------------
-        // Compare file sizes.
-        // ---------------------------------------------------------------
-        long sizeNon = new FileInfo(nonHyphenatedPdf).Length;
-        long sizeHy = new FileInfo(hyphenatedPdf).Length;
+        // ---------- Non‑hyphenated PDF ----------
+        doc.HyphenationOptions.AutoHyphenation = false;
+        const string nonHyphenatedPdf = "nonhyphenated.pdf";
+        doc.Save(nonHyphenatedPdf);
+        if (!File.Exists(nonHyphenatedPdf))
+            throw new InvalidOperationException("Non‑hyphenated PDF was not created.");
 
-        Console.WriteLine($"Non‑hyphenated PDF size: {sizeNon} bytes");
-        Console.WriteLine($"Hyphenated PDF size: {sizeHy} bytes");
-        Console.WriteLine($"Size difference: {sizeHy - sizeNon} bytes");
+        // Compare file sizes.
+        long hyphenatedSize = new FileInfo(hyphenatedPdf).Length;
+        long nonHyphenatedSize = new FileInfo(nonHyphenatedPdf).Length;
+
+        Console.WriteLine($"Hyphenated PDF size: {hyphenatedSize} bytes");
+        Console.WriteLine($"Non‑hyphenated PDF size: {nonHyphenatedSize} bytes");
+        Console.WriteLine($"Size difference (non‑hyphenated - hyphenated): {nonHyphenatedSize - hyphenatedSize} bytes");
     }
 }

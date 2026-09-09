@@ -8,50 +8,49 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a minimal hyphenation dictionary for English (US).
-        const string dictFileName = "hyph_en_US.dic";
-        File.WriteAllText(dictFileName,
-            "UTF-8\n" +
-            "characteristically=char-ac-ter-is-ti-cal-ly\n" +
-            "communication=com-mu-ni-ca-tion\n");
-
-        // Register the dictionary so that Aspose.Words can hyphenate English text.
-        Hyphenation.RegisterDictionary("en-US", dictFileName);
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Narrow the page width to force line wrapping and possible hyphenation.
+        // Set a narrow page width to force line wrapping and hyphenation.
         doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Enable automatic hyphenation for the whole document.
+        // Prepare a minimal hyphenation dictionary for English (US).
+        const string dictFileName = "hyph_en_US.dic";
+        File.WriteAllText(dictFileName,
+            "UTF-8\n" +
+            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
+            "communication=com-mu-ni-ca-tion\n");
+
+        // Register the dictionary.
+        Hyphenation.RegisterDictionary("en-US", dictFileName);
+
+        // Enable automatic hyphenation for the document.
         doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Set the language of the text to match the registered dictionary.
-        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
-
         // First paragraph – hyphenation disabled.
-        builder.Writeln("characteristically communication");
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
         Paragraph firstPara = doc.FirstSection.Body.Paragraphs[0];
         firstPara.ParagraphFormat.SuppressAutoHyphens = true;
 
-        // Target paragraph – hyphenation enabled (default).
-        builder.Writeln("characteristically communication");
+        // Second paragraph – hyphenation enabled (default).
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
         // Third paragraph – hyphenation disabled.
-        builder.Writeln("characteristically communication");
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
         Paragraph thirdPara = doc.FirstSection.Body.Paragraphs[2];
         thirdPara.ParagraphFormat.SuppressAutoHyphens = true;
 
         // Save the document to PDF to visualize hyphenation.
-        const string outputPath = "HyphenatedParagraph.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        const string outputFile = "Hyphenated.pdf";
+        doc.Save(outputFile, SaveFormat.Pdf);
 
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The expected PDF output was not created.");
+        // Validate that the output file was created.
+        if (!File.Exists(outputFile))
+            throw new InvalidOperationException($"Expected output file '{outputFile}' was not created.");
     }
 }

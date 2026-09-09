@@ -3,12 +3,13 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Settings;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a minimal hyphenation dictionary for English (US).
+        // Prepare a minimal hyphenation dictionary for English (US).
         const string dictFileName = "hyph_en_US.dic";
         File.WriteAllText(dictFileName,
             "UTF-8\n" +
@@ -16,54 +17,49 @@ public class Program
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary for the "en-US" locale.
+        // Register the dictionary so that hyphenation can be applied.
         Hyphenation.RegisterDictionary("en-US", dictFileName);
 
-        // Build a document with text long enough to trigger hyphenation.
+        // Create a sample document with long words that can be hyphenated.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Size = 12;
+        builder.Writeln(
+            "extraordinarycharacteristically internationalization communication " +
+            "extraordinarycharacteristically internationalization communication " +
+            "extraordinarycharacteristically internationalization communication.");
 
-        // Narrow page width forces line wrapping.
-        doc.FirstSection.PageSetup.PageWidth = 200;
+        // Narrow the page width to force line wrapping and thus hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 300;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Set the paragraph locale to match the dictionary language.
-        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
-
-        // Sample text containing words present in the dictionary, repeated to ensure wrapping.
-        string sample = "extraordinarycharacteristically internationalization communication ";
-        for (int i = 0; i < 20; i++)
-        {
-            builder.Writeln(sample);
-        }
-
         // Measure PDF generation with automatic hyphenation enabled.
         doc.HyphenationOptions.AutoHyphenation = true;
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
-        doc.Save("hyphenated.pdf");
+        string hyphenatedPdf = "Hyphenated.pdf";
+        Stopwatch sw = Stopwatch.StartNew();
+        doc.Save(hyphenatedPdf, SaveFormat.Pdf);
         sw.Stop();
-        long hyphenatedTime = sw.ElapsedMilliseconds;
-        sw.Reset();
+        long timeWithHyphenation = sw.ElapsedMilliseconds;
 
-        // Measure PDF generation with hyphenation disabled.
-        doc.HyphenationOptions.AutoHyphenation = false;
-        // Force layout recomputation after changing hyphenation settings.
-        doc.UpdatePageLayout();
-        sw.Start();
-        doc.Save("nonhyphenated.pdf");
-        sw.Stop();
-        long nonHyphenatedTime = sw.ElapsedMilliseconds;
-
-        // Validate that the output files were created.
-        if (!File.Exists("hyphenated.pdf"))
+        // Verify the PDF was created.
+        if (!File.Exists(hyphenatedPdf))
             throw new InvalidOperationException("Hyphenated PDF was not created.");
-        if (!File.Exists("nonhyphenated.pdf"))
+
+        // Measure PDF generation with automatic hyphenation disabled.
+        doc.HyphenationOptions.AutoHyphenation = false;
+        string nonHyphenatedPdf = "NonHyphenated.pdf";
+        sw.Restart();
+        doc.Save(nonHyphenatedPdf, SaveFormat.Pdf);
+        sw.Stop();
+        long timeWithoutHyphenation = sw.ElapsedMilliseconds;
+
+        // Verify the second PDF was created.
+        if (!File.Exists(nonHyphenatedPdf))
             throw new InvalidOperationException("Non‑hyphenated PDF was not created.");
 
-        // Output the measured times.
-        Console.WriteLine($"Hyphenated PDF generation time: {hyphenatedTime} ms");
-        Console.WriteLine($"Non‑hyphenated PDF generation time: {nonHyphenatedTime} ms");
+        // Output the timing results.
+        Console.WriteLine($"PDF generation time with hyphenation: {timeWithHyphenation} ms");
+        Console.WriteLine($"PDF generation time without hyphenation: {timeWithoutHyphenation} ms");
     }
 }

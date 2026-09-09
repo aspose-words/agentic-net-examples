@@ -1,73 +1,80 @@
 using System;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
         // Create a minimal hyphenation dictionary for English (US).
-        const string dictPath = "hyph_en_US.dic";
+        string dictPath = Path.Combine(outputDir, "hyph_en_US.dic");
         File.WriteAllText(dictPath,
             "UTF-8\n" +
-            "extraordinarycharacteristically=ex-tra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Create a new blank document.
+        // Register the dictionary.
+        Hyphenation.RegisterDictionary("en-US", dictPath);
+
+        // Build a multi‑section document with long text to trigger hyphenation.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Narrow page width to force line wrapping.
+        // Narrow page width forces line wrapping.
         doc.FirstSection.PageSetup.PageWidth = 300; // points
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Add sample text that can be hyphenated.
-        builder.Font.Size = 12;
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
+        // Set the locale for hyphenation.
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
 
-        // Insert a second section with the same content.
+        // Add a paragraph with repetitive long words.
+        string longText = "extraordinarycharacteristically internationalization communication ";
+        for (int i = 0; i < 30; i++) builder.Writeln(longText);
+
+        // Insert a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-        // Ensure the second section has the same page setup.
-        doc.Sections[1].PageSetup.PageWidth = doc.FirstSection.PageSetup.PageWidth;
-        doc.Sections[1].PageSetup.LeftMargin = doc.FirstSection.PageSetup.LeftMargin;
-        doc.Sections[1].PageSetup.RightMargin = doc.FirstSection.PageSetup.RightMargin;
+        for (int i = 0; i < 30; i++) builder.Writeln(longText);
 
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-
-        // Layout the document and get the page count before hyphenation.
+        // Ensure layout is calculated before measuring.
         doc.UpdatePageLayout();
         int pagesBefore = doc.PageCount;
+
+        // Save the document without hyphenation.
+        string beforePath = Path.Combine(outputDir, "BeforeHyphenation.pdf");
+        doc.Save(beforePath, SaveFormat.Pdf);
 
         // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
         doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 720;
+        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
         doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Register the dictionary for the document's language.
-        Hyphenation.RegisterDictionary("en-US", dictPath);
-
-        // Re‑layout the document and get the new page count.
+        // Re‑layout the document after changing hyphenation settings.
         doc.UpdatePageLayout();
         int pagesAfter = doc.PageCount;
 
-        // Save the hyphenated document as PDF.
-        const string outputPath = "Hyphenated.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Save the hyphenated version.
+        string afterPath = Path.Combine(outputDir, "AfterHyphenation.pdf");
+        doc.Save(afterPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The expected PDF output file was not created.");
+        // Validate that the output files were created.
+        if (!File.Exists(beforePath))
+            throw new InvalidOperationException("The PDF before hyphenation was not created.");
+        if (!File.Exists(afterPath))
+            throw new InvalidOperationException("The PDF after hyphenation was not created.");
 
-        // Output the pagination comparison.
+        // Report the pagination difference.
         Console.WriteLine($"Pages before hyphenation: {pagesBefore}");
         Console.WriteLine($"Pages after hyphenation: {pagesAfter}");
+        Console.WriteLine($"Difference: {pagesAfter - pagesBefore}");
     }
 }

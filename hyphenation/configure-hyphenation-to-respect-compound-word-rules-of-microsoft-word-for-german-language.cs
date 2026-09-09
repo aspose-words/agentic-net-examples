@@ -3,50 +3,43 @@ using System.Globalization;
 using System.IO;
 using Aspose.Words;
 
-public class HyphenationGermanExample
+public class Program
 {
     public static void Main()
     {
-        // Create a minimal German (Switzerland) hyphenation dictionary.
-        const string dictFileName = "hyph_de_CH.dic";
-        const string dictContent = @"UTF-8
-Donaudampfschifffahrtsgesellschaftskapitän=Do-nau-dampf-schiff-fahrts-gesell-schafts-ka-pit-än
-";
-        File.WriteAllText(dictFileName, dictContent);
-
-        // Register the dictionary for the "de-CH" locale.
-        Aspose.Words.Hyphenation.RegisterDictionary("de-CH", dictFileName);
-
-        // Create a new blank document.
+        // Create a blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Narrow page width forces line wrapping so hyphenation can be observed.
-        doc.FirstSection.PageSetup.PageWidth = 200; // points
+        // Set the text locale to German (Switzerland) so that Word uses German hyphenation rules.
+        builder.Font.LocaleId = new CultureInfo("de-CH").LCID;
+
+        // Write a long German compound word that will need hyphenation.
+        builder.Writeln("Donaudampfschifffahrtsgesellschaftskapitän");
+
+        // Narrow the page width to force line wrapping and hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Enable automatic hyphenation.
+        // Enable automatic hyphenation for the document.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Set the font locale to German (Switzerland) to match the dictionary.
-        builder.Font.LocaleId = new CultureInfo("de-CH").LCID;
-        builder.Font.Size = 12;
+        // Create a minimal German hyphenation dictionary file.
+        const string dictPath = "hyph_de_CH.dic";
+        File.WriteAllText(dictPath,
+            "UTF-8\n" +
+            "Donaudampfschifffahrtsgesellschaftskapitän=Do-nau-dampf-schiff-fahrts-ge-sell-schafts-ka-pit-än");
 
-        // Write a sentence containing a long German compound word.
-        builder.Writeln(
-            "Die Donaudampfschifffahrtsgesellschaftskapitänin steuerte das Schiff durch die engen Kanäle.");
+        // Register the dictionary for the \"de-CH\" language code.
+        Hyphenation.RegisterDictionary("de-CH", dictPath);
 
-        // Save the document as PDF.
-        const string outputPath = "HyphenatedGerman.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Save the document as PDF to observe hyphenation.
+        const string outPath = "HyphenatedGerman.pdf";
+        doc.Save(outPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The expected PDF file was not created.");
-
-        // Clean up the temporary dictionary file.
-        File.Delete(dictFileName);
+        if (!File.Exists(outPath))
+            throw new InvalidOperationException("Expected PDF output was not created.");
     }
 }
