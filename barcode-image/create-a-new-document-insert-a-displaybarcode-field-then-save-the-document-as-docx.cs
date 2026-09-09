@@ -10,20 +10,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a DISPLAYBARCODE field using the typed API.
+        // Insert a DISPLAYBARCODE field.
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        // Configure the barcode (example: QR code with custom colors and scaling).
+        // Configure the barcode (example: QR code).
         barcodeField.BarcodeType = "QR";
-        barcodeField.BarcodeValue = "1234567890";
-        barcodeField.BackgroundColor = "0xFFFFFF"; // white background
-        barcodeField.ForegroundColor = "0x000000"; // black bars
+        barcodeField.BarcodeValue = "HelloWorld";
+        barcodeField.BackgroundColor = "0xFFFFFF";
+        barcodeField.ForegroundColor = "0x000000";
         barcodeField.ErrorCorrectionLevel = "3";
         barcodeField.ScalingFactor = "250";
         barcodeField.SymbolHeight = "1000";
         barcodeField.SymbolRotation = "0";
 
-        // Ensure the field result is updated.
+        // Update fields to apply the changes.
         doc.UpdateFields();
 
         // Save the document as DOCX.

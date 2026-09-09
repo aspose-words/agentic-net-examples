@@ -1,7 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.BuildingBlocks;
 using Aspose.Words.Fields;
+using Aspose.Words.Replacing;
 
 public class Program
 {
@@ -12,27 +13,30 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a DISPLAYBARCODE field with a placeholder value.
-        // Use the typed insertion method as required by the rules.
-        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        barcodeField.BarcodeType = "QR";               // QR code type.
-        barcodeField.BarcodeValue = "PLACEHOLDER";     // Placeholder that will be replaced later.
-        barcodeField.BackgroundColor = "0xF8BD69";     // Optional styling.
-        barcodeField.ForegroundColor = "0xB5413B";
-        barcodeField.ErrorCorrectionLevel = "3";
-        barcodeField.ScalingFactor = "250";
-        barcodeField.SymbolHeight = "1000";
-        barcodeField.SymbolRotation = "0";
+        Aspose.Words.Fields.FieldDisplayBarcode displayBarcode = 
+            (Aspose.Words.Fields.FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        displayBarcode.BarcodeType = "QR";
+        displayBarcode.BarcodeValue = "PLACEHOLDER"; // placeholder text
+        displayBarcode.BackgroundColor = "0xF8BD69";
+        displayBarcode.ForegroundColor = "0xB5413B";
+        displayBarcode.ErrorCorrectionLevel = "3";
+        displayBarcode.ScalingFactor = "250";
+        displayBarcode.SymbolHeight = "1000";
+        displayBarcode.SymbolRotation = "0";
 
-        // Add a line break after the field for readability.
+        // Add a line break after the field.
         builder.Writeln();
 
-        // Replace the placeholder with the actual dynamic value.
-        barcodeField.BarcodeValue = "https://example.com";
+        // Replace the placeholder with a dynamic value before generating the barcode.
+        // In a real scenario this value could come from a database, user input, etc.
+        string dynamicValue = "ABC123";
+        displayBarcode.BarcodeValue = dynamicValue;
 
-        // Update fields so the barcode image is generated with the new value.
+        // Update all fields in the document so the barcode image is generated.
         doc.UpdateFields();
 
-        // Save the document to disk.
-        doc.Save("DisplayBarcodeDynamic.docx");
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "DisplayBarcodeDynamic.docx");
+        doc.Save(outputPath);
     }
 }

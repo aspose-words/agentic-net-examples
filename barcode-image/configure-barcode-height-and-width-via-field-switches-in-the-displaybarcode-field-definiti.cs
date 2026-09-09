@@ -16,21 +16,21 @@ public class Program
 
         // Configure the barcode type and value.
         barcodeField.BarcodeType = "QR";
-        barcodeField.BarcodeValue = "Aspose";
+        barcodeField.BarcodeValue = "1234567890";
 
-        // Set the height of the barcode symbol (in TWIPS; 1 inch = 1440 TWIPS).
-        // Example: 2 inches high.
-        barcodeField.SymbolHeight = (2 * 1440).ToString();
+        // Set the height of the barcode symbol (in twips; 1 inch = 1440 twips).
+        // Example: 2 inches high => 2 * 1440 = 2880 twips.
+        barcodeField.SymbolHeight = "2880";
 
-        // Set the scaling factor to control the width (percentage).
-        // Example: 150% scaling.
-        barcodeField.ScalingFactor = "150";
+        // Set the width scaling factor as a percentage.
+        // Example: 200% width.
+        barcodeField.ScalingFactor = "200";
 
-        // Update fields to apply the changes.
+        // Apply the changes to the field.
         doc.UpdateFields();
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "DisplayBarcode.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "BarcodeDisplay.docx");
         doc.Save(outputPath);
     }
 }

@@ -1,6 +1,6 @@
 # BarCode Image Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the BarCode Image category. Each file is a standalone console example selected from the verified 26.7.0 run.
+This folder contains the live, publish-ready C# examples for the BarCode Image category. Each file is a standalone console example selected from the verified 26.8.0 run.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the BarCode Image c
 - Slug: barcode-image
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260802_190455_803b68
+- Source run: 20260830_195242_46e1a9
 - Word Field Only examples: 5
 - Custom Generator examples: 25
 
@@ -22,8 +22,8 @@ This folder contains the live, publish-ready C# examples for the BarCode Image c
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.7.0
-- Aspose.BarCode 26.7.0
+- Aspose.Words 26.8.0
+- Aspose.BarCode 26.8.0
 - Aspose.Drawing.Common 25.11.0
 
 ## Running Examples
@@ -33,8 +33,8 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.7.0
-dotnet add package Aspose.BarCode --version 26.7.0
+dotnet add package Aspose.Words --version 26.8.0
+dotnet add package Aspose.BarCode --version 26.8.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 
 # Copy one example from this folder into the project as Program.cs
@@ -56,8 +56,8 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.7.0
-dotnet add package Aspose.BarCode --version 26.7.0
+dotnet add package Aspose.Words --version 26.8.0
+dotnet add package Aspose.BarCode --version 26.8.0
 dotnet add package Aspose.Drawing.Common --version 25.11.0
 
 # PowerShell example
@@ -150,6 +150,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.7.0 run.
+- This category is 100% publish-ready for the 26.8.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

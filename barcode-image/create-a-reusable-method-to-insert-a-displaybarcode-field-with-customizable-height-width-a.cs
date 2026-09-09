@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -8,41 +7,42 @@ namespace BarcodeFieldExample
     public class Program
     {
         // Inserts a DISPLAYBARCODE field with the specified parameters.
-        // heightTwips – height of the barcode symbol in TWIPS (1/1440 inch).
-        // scalingFactor – scaling factor for the symbol (percentage, e.g., "250").
-        private static void InsertDisplayBarcode(DocumentBuilder builder, string value, string type, string heightTwips, string scalingFactor)
+        // height and scalingFactor are strings because the field properties expect string values.
+        public static void InsertDisplayBarcode(DocumentBuilder builder, string value, string type, string height, string scalingFactor)
         {
-            // Insert a typed DISPLAYBARCODE field.
+            // Create a typed DISPLAYBARCODE field.
             var field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
             // Set required properties.
             field.BarcodeValue = value;
             field.BarcodeType = type;
-            field.SymbolHeight = heightTwips;
-            field.ScalingFactor = scalingFactor;
+            field.SymbolHeight = height;        // Height in TWIPS (1/1440 inch).
+            field.ScalingFactor = scalingFactor; // Percentage scaling.
 
-            // Move to the next line after the field.
+            // Add a line break after the field for readability.
             builder.Writeln();
         }
 
         public static void Main()
         {
-            // Create a new empty document.
+            // Create a new document and builder.
             var doc = new Document();
             var builder = new DocumentBuilder(doc);
 
-            // Example usages of the reusable method.
-            InsertDisplayBarcode(builder, "ABC123", "QR", "1000", "250");          // QR code.
-            InsertDisplayBarcode(builder, "501234567890", "EAN13", "800", "200"); // EAN13 code.
-            InsertDisplayBarcode(builder, "12345ABCDE", "CODE39", "900", "150"); // CODE39 code.
-            InsertDisplayBarcode(builder, "09312345678907", "ITF14", "1100", "300"); // ITF14 code.
+            // Example 1: EAN13 barcode.
+            InsertDisplayBarcode(builder, "501234567890", "EAN13", "1000", "250");
 
-            // Update fields to ensure the results are calculated.
+            // Example 2: QR code with larger size.
+            InsertDisplayBarcode(builder, "ABC123", "QR", "1500", "300");
+
+            // Example 3: CODE39 barcode with default size.
+            InsertDisplayBarcode(builder, "12345ABCDE", "CODE39", "800", "200");
+
+            // Update all fields to ensure they are calculated.
             doc.UpdateFields();
 
             // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Barcodes.docx");
-            doc.Save(outputPath);
+            doc.Save("DisplayBarcode.docx");
         }
     }
 }
