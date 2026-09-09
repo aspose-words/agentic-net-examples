@@ -9,67 +9,58 @@ public class Program
 {
     public static void Main()
     {
-        // Resolve the document path relative to the executable folder.
-        string documentPath = Path.Combine(AppContext.BaseDirectory, "OleObjects.docx");
+        // Prepare a temporary file to be embedded as an OLE object.
+        string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "Temp");
+        Directory.CreateDirectory(tempFolder);
+        string sampleFilePath = Path.Combine(tempFolder, "sample.txt");
+        File.WriteAllText(sampleFilePath, "This is a sample text file for OLE embedding.");
 
-        // If the source document does not exist, create an empty one so the program can run without error.
-        if (!File.Exists(documentPath))
+        // Create a new Word document and insert the OLE object.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert the file as an embedded OLE object (not a link, not an icon).
+        builder.InsertOleObject(sampleFilePath, false, false, null);
+
+        // Collect OLE metadata.
+        var csvBuilder = new StringBuilder();
+        csvBuilder.AppendLine("ShapeIndex,SourceFullName,SizeBytes");
+
+        var shapes = doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>().ToArray();
+        for (int i = 0; i < shapes.Length; i++)
         {
-            // Create a blank document and save it to the expected location.
-            Document emptyDoc = new Document();
-            emptyDoc.Save(documentPath);
-        }
-
-        // Load the Word document (existing or newly created).
-        Document doc = new Document(documentPath);
-
-        // Prepare CSV content.
-        StringBuilder csvBuilder = new StringBuilder();
-        csvBuilder.AppendLine("SourceFileName,SizeInBytes");
-
-        // Iterate over all shapes that may contain OLE objects.
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
-        {
+            Shape shape = shapes[i];
             OleFormat oleFormat = shape.OleFormat;
             if (oleFormat == null)
                 continue; // Not an OLE object.
 
-            // Determine a display name for the OLE object.
-            string sourceFileName = string.IsNullOrEmpty(oleFormat.SourceFullName)
-                ? oleFormat.SuggestedFileName ?? "EmbeddedObject"
-                : Path.GetFileName(oleFormat.SourceFullName);
+            // SourceFullName may be empty for embedded objects.
+            string sourceName = oleFormat.SourceFullName ?? string.Empty;
 
-            // Get the size of the raw OLE data (0 for linked objects that cannot be read).
-            long sizeInBytes = 0;
+            // Get raw data size. For linked objects this may throw; handle gracefully.
+            long size = 0;
             try
             {
                 byte[] rawData = oleFormat.GetRawData();
-                sizeInBytes = rawData?.LongLength ?? 0;
+                size = rawData?.LongLength ?? 0;
             }
-            catch
+            catch (InvalidOperationException)
             {
-                // Linked objects may throw; treat size as 0.
-                sizeInBytes = 0;
+                // Linked objects cannot provide raw data.
+                size = 0;
             }
 
-            csvBuilder.AppendLine($"{EscapeCsv(sourceFileName)},{sizeInBytes}");
+            csvBuilder.AppendLine($"{i},\"{sourceName}\",{size}");
         }
 
-        // Write the CSV report.
-        string csvPath = Path.Combine(AppContext.BaseDirectory, "OleMetadataReport.csv");
-        File.WriteAllText(csvPath, csvBuilder.ToString());
+        // Write CSV report to file.
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "OleMetadataReport.csv");
+        File.WriteAllText(reportPath, csvBuilder.ToString(), Encoding.UTF8);
 
-        Console.WriteLine($"OLE metadata report saved to '{csvPath}'.");
-    }
+        // Clean up temporary files.
+        try { File.Delete(sampleFilePath); } catch { }
+        try { Directory.Delete(tempFolder, true); } catch { }
 
-    // Escapes CSV fields that contain commas, quotes or newlines.
-    private static string EscapeCsv(string field)
-    {
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-        {
-            string escaped = field.Replace("\"", "\"\"");
-            return $"\"{escaped}\"";
-        }
-        return field;
+        // Indicate completion (no interactive prompts).
+        Console.WriteLine($"OLE metadata report generated at: {reportPath}");
     }
 }

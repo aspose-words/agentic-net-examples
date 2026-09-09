@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -9,76 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple ZIP archive in memory with two files.
-        byte[] zipBytes;
-        using (var ms = new MemoryStream())
-        {
-            using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, true))
-            {
-                var entry1 = archive.CreateEntry("File1.txt");
-                using (var entryStream = entry1.Open())
-                using (var writer = new StreamWriter(entryStream))
-                {
-                    writer.Write("Content of file 1");
-                }
-
-                var entry2 = archive.CreateEntry("File2.txt");
-                using (var entryStream = entry2.Open())
-                using (var writer = new StreamWriter(entryStream))
-                {
-                    writer.Write("Content of file 2");
-                }
-            }
-            zipBytes = ms.ToArray();
-        }
-
-        // Create a new document and insert the ZIP as an OLE Package.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        using (MemoryStream zipStream = new MemoryStream(zipBytes))
-        {
-            // Insert the OLE object as a package and display it as an icon.
-            Shape oleShape = builder.InsertOleObject(zipStream, "Package", true, null);
+        // Prepare dummy data to embed as an OLE package (e.g., a simple text file content).
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Sample content for OLE package.");
 
-            // Set package properties for identification.
-            oleShape.OleFormat.OlePackage.FileName = "SampleArchive.zip";
-            oleShape.OleFormat.OlePackage.DisplayName = "Sample Archive";
+        // Insert the dummy data as an OLE Package object.
+        using (MemoryStream stream = new MemoryStream(dummyData))
+        {
+            // "Package" progId indicates a generic OLE package.
+            Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
+
+            // Set OLE package properties for later inspection.
+            oleShape.OleFormat.OlePackage.FileName = "SamplePackage.txt";
+            oleShape.OleFormat.OlePackage.DisplayName = "Sample Package Display Name";
         }
 
-        // Iterate through all shapes to find OLE Packages and enumerate their details.
-        var shapes = doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>();
-        foreach (var shape in shapes)
-        {
-            OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat != null && oleFormat.OlePackage != null)
-            {
-                OlePackage package = oleFormat.OlePackage;
-                Console.WriteLine("Found OLE Package:");
-                Console.WriteLine($"  FileName   : {package.FileName}");
-                Console.WriteLine($"  DisplayName: {package.DisplayName}");
+        // Save the document to a temporary file.
+        string docPath = Path.Combine(Path.GetTempPath(), "OlePackageDemo.docx");
+        doc.Save(docPath);
 
-                // Optionally, list the raw OLE entries (e.g., the embedded file streams).
-                // The package itself stores the original file; we can extract it to inspect its contents.
-                using (MemoryStream extracted = new MemoryStream())
-                {
-                    oleFormat.Save(extracted);
-                    extracted.Position = 0;
-                    using (var archive = new ZipArchive(extracted, ZipArchiveMode.Read))
-                    {
-                        Console.WriteLine("  Contained entries:");
-                        foreach (var entry in archive.Entries)
-                        {
-                            Console.WriteLine($"    - {entry.FullName} ({entry.Length} bytes)");
-                        }
-                    }
-                }
-            }
+        // Load the saved document.
+        Document loadedDoc = new Document(docPath);
+
+        // Find the first shape that contains an OLE object.
+        Shape shapeWithOle = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
+        if (shapeWithOle?.OleFormat?.OlePackage != null)
+        {
+            OlePackage olePackage = shapeWithOle.OleFormat.OlePackage;
+
+            // Output OLE package information.
+            Console.WriteLine("OLE Package Information:");
+            Console.WriteLine($"  FileName   : {olePackage.FileName}");
+            Console.WriteLine($"  DisplayName: {olePackage.DisplayName}");
+
+            // Retrieve raw OLE data (the embedded file bytes) and display its length.
+            byte[] rawData = shapeWithOle.OleFormat.GetRawData();
+            Console.WriteLine($"  Raw data length: {rawData.Length} bytes");
+        }
+        else
+        {
+            Console.WriteLine("No OLE package found in the document.");
         }
 
-        // Save the document to a temporary file (optional, demonstrates saving).
-        string outputPath = Path.Combine(Path.GetTempPath(), "OlePackageDemo.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Clean up the temporary document file.
+        if (File.Exists(docPath))
+        {
+            File.Delete(docPath);
+        }
     }
 }

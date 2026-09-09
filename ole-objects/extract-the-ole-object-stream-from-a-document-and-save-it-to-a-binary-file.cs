@@ -3,40 +3,37 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class ExtractOleObject
+public class Program
 {
     public static void Main()
     {
-        // Create a simple text file in memory to embed as an OLE package.
-        byte[] fileBytes = System.Text.Encoding.UTF8.GetBytes("This is the content of the embedded file.");
-        using (MemoryStream embedStream = new MemoryStream(fileBytes))
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Prepare some sample data to embed as an OLE object.
+        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("Sample OLE object data");
+        using (MemoryStream dataStream = new MemoryStream(sampleData))
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            // Insert the OLE object into the document.
+            // progId "Package" indicates a generic OLE package.
+            // asIcon = false (display content), presentation = null (default icon if needed).
             DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert the OLE object from the stream.
-            // progId "Package" denotes a generic OLE package.
-            // asIcon = true to display it as an icon (optional).
-            // presentation = null to use the default icon.
-            Shape oleShape = builder.InsertOleObject(embedStream, "Package", true, null);
-
+            Shape oleShape = builder.InsertOleObject(dataStream, "Package", false, null);
+            
             // Access the OleFormat of the inserted shape.
             OleFormat oleFormat = oleShape.OleFormat;
 
-            // Determine a file name for the extracted OLE data.
-            string suggestedExtension = oleFormat.SuggestedExtension ?? ".bin";
-            string outputFile = Path.Combine(Directory.GetCurrentDirectory(),
-                                             "ExtractedOleObject" + suggestedExtension);
+            // Define the output file path for the extracted OLE stream.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ExtractedOle.bin");
 
-            // Save the OLE object's binary data to the file via a stream.
-            using (FileStream fileStream = new FileStream(outputFile, FileMode.Create))
+            // Save the OLE object data to a binary file using a stream.
+            using (FileStream outputStream = new FileStream(outputPath, FileMode.Create))
             {
-                oleFormat.Save(fileStream);
+                oleFormat.Save(outputStream);
             }
 
-            // Optional: indicate completion (no interactive input required).
-            Console.WriteLine("OLE object extracted to: " + outputFile);
+            // Optional: indicate completion.
+            Console.WriteLine($"OLE object extracted to: {outputPath}");
         }
     }
 }
