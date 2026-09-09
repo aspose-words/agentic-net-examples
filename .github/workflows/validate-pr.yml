@@ -1,0 +1,309 @@
+name: Validate and Auto-Merge Examples
+
+on:
+  pull_request:
+    branches:
+      - main
+      - "release/**"
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - labeled
+      - unlabeled
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+concurrency:
+  group: validate-examples-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Build and run changed examples
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Get changed C# files
+        id: changed
+        shell: bash
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          MERGE_BASE=$(git merge-base "$BASE" "$HEAD")
+
+          echo "PR base:    $BASE"
+          echo "PR head:    $HEAD"
+          echo "Merge base: $MERGE_BASE"
+
+          FILES=$(git diff --name-only "$MERGE_BASE" "$HEAD" -- '*.cs' | grep '\.cs$' || true)
+
+          if [ -z "$FILES" ]; then
+            echo "No .cs files changed in this PR."
+            echo "has_cs=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          printf '%s\n' "$FILES" > /tmp/changed_cs.txt
+          COUNT=$(wc -l < /tmp/changed_cs.txt | tr -d ' ')
+
+          echo "Found $COUNT changed .cs file(s)."
+          cat /tmp/changed_cs.txt
+
+          echo "has_cs=true" >> "$GITHUB_OUTPUT"
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Build and run examples
+        if: steps.changed.outputs.has_cs == 'true'
+        shell: bash
+        run: |
+          set +e
+
+          PASS=0
+          FAIL=0
+          RUN_PASS=0
+          RUN_FAIL=0
+          TOTAL="${{ steps.changed.outputs.count }}"
+          FAILED_FILES=""
+
+          mkdir -p .build-example
+
+          while IFS= read -r f; do
+            [ -f "$f" ] || continue
+
+            CATEGORY="${f%%/*}"
+            INDEX_PATH="$CATEGORY/index.json"
+
+            if [ ! -f "$INDEX_PATH" ]; then
+              FAIL=$((FAIL + 1))
+              echo "::error file=$f::Missing category index.json at $INDEX_PATH"
+              FAILED_FILES="$FAILED_FILES
+          FILE:$f
+          Missing category index.json at $INDEX_PATH
+          ENDFILE"
+              continue
+            fi
+
+            python3 - "$INDEX_PATH" > .build-example/ExampleProject.csproj <<'PY'
+          import html
+          import json
+          import sys
+
+          index_path = sys.argv[1]
+          with open(index_path, encoding="utf-8") as handle:
+              data = json.load(handle)
+
+          category = data.get("category", {})
+          packages = category.get("required_packages") or ["Aspose.Words"]
+          versions = category.get("package_versions") or {}
+
+          fallback_versions = {
+              "Newtonsoft.Json": "13.0.3",
+              "Aspose.Drawing.Common": "25.11.0",
+              "Microsoft.Extensions.DependencyInjection": "8.0.1",
+              "SkiaSharp": "3.119.0",
+              "System.Text.Encoding.CodePages": "9.0.2",
+          }
+
+          print('<Project Sdk="Microsoft.NET.Sdk">')
+          print('  <PropertyGroup>')
+          print('    <OutputType>Exe</OutputType>')
+          print('    <TargetFramework>net8.0</TargetFramework>')
+          print('    <Nullable>enable</Nullable>')
+          print('    <ImplicitUsings>enable</ImplicitUsings>')
+          print('  </PropertyGroup>')
+          print('  <ItemGroup>')
+
+          seen = set()
+          for package in packages:
+              if not package or package in seen:
+                  continue
+              seen.add(package)
+              version = versions.get(package) or fallback_versions.get(package)
+              package_xml = html.escape(package, quote=True)
+              if version:
+                  version_xml = html.escape(version, quote=True)
+                  print(f'    <PackageReference Include="{package_xml}" Version="{version_xml}" />')
+              else:
+                  print(f'    <PackageReference Include="{package_xml}" />')
+
+          print('  </ItemGroup>')
+          print('</Project>')
+          PY
+
+            cp "$f" .build-example/Program.cs
+
+            dotnet restore .build-example/ --verbosity quiet
+            RESTORE_EXIT=$?
+            if [ $RESTORE_EXIT -ne 0 ]; then
+              FAIL=$((FAIL + 1))
+              echo "::error file=$f::Restore failed"
+              FAILED_FILES="$FAILED_FILES
+          FILE:$f
+          dotnet restore failed for category $CATEGORY
+          ENDFILE"
+              continue
+            fi
+
+            BUILD_OUT=$(dotnet build .build-example/ --no-restore --configuration Release --nologo 2>&1)
+            BUILD_EXIT=$?
+
+            if [ $BUILD_EXIT -eq 0 ] && echo "$BUILD_OUT" | grep -q "Build succeeded"; then
+              PASS=$((PASS + 1))
+
+              RUN_OUT=$(timeout 30s dotnet run --project .build-example/ --configuration Release --no-build --nologo 2>&1)
+              RUN_EXIT=$?
+              if [ $RUN_EXIT -eq 0 ] || [ $RUN_EXIT -eq 124 ]; then
+                RUN_PASS=$((RUN_PASS + 1))
+              else
+                RUN_FAIL=$((RUN_FAIL + 1))
+              fi
+
+              echo "PASS: $f"
+            else
+              FAIL=$((FAIL + 1))
+              ERRORS=$(echo "$BUILD_OUT" | grep -E "error CS|error NETSDK|error NU|^.*error :" | sed "s|Program\.cs|$f|g" || true)
+              [ -n "$ERRORS" ] || ERRORS="$BUILD_OUT"
+              echo "::error file=$f::Build failed"
+              echo "FAIL: $f"
+              echo "$ERRORS"
+              FAILED_FILES="$FAILED_FILES
+          FILE:$f
+          $ERRORS
+          ENDFILE"
+            fi
+          done < /tmp/changed_cs.txt
+
+          {
+            echo "## Validation Results"
+            echo ""
+            echo "**Product:** Aspose.Words for .NET"
+            echo "**Files:** $TOTAL"
+            echo ""
+            echo "**Build:** $PASS passed | $FAIL failed"
+            echo "**Run:** $RUN_PASS ok | $RUN_FAIL runtime errors/timeouts"
+            echo ""
+
+            if [ $FAIL -gt 0 ]; then
+              echo "### Build Failures"
+              echo ""
+              echo "$FAILED_FILES" | while IFS= read -r line; do
+                case "$line" in
+                  FILE:*)
+                    echo "<details><summary><code>${line#FILE:}</code></summary>"
+                    echo ""
+                    echo '```text'
+                    ;;
+                  ENDFILE)
+                    echo '```'
+                    echo "</details>"
+                    echo ""
+                    ;;
+                  *)
+                    [ -n "$line" ] && echo "$line"
+                    ;;
+                esac
+              done
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "========================================"
+          echo "Build: $PASS passed | $FAIL failed out of $TOTAL"
+          echo "Run:   $RUN_PASS ok | $RUN_FAIL runtime errors/timeouts"
+          echo "========================================"
+
+          [ "$FAIL" -eq 0 ]
+
+      - name: No C# files changed
+        if: steps.changed.outputs.has_cs == 'false'
+        run: echo "No .cs files changed, so build validation was skipped."
+
+  no-cs-deletes:
+    name: URL stability - no C# deletes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect deleted C# files
+        id: deletes
+        shell: bash
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          MERGE_BASE=$(git merge-base "$BASE" "$HEAD")
+          DELETED=$(git diff --name-only --diff-filter=D "$MERGE_BASE" "$HEAD" -- '*.cs' || true)
+
+          if [ -z "$DELETED" ]; then
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            echo "No .cs files deleted."
+            exit 0
+          fi
+
+          COUNT=$(printf '%s\n' "$DELETED" | wc -l | tr -d ' ')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Deleted C# files"
+            echo ""
+            echo '```text'
+            printf '%s\n' "$DELETED"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce no-delete rule
+        if: steps.deletes.outputs.count != '0'
+        env:
+          LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        shell: bash
+        run: |
+          if printf '%s' "$LABELS" | grep -q '"allow-delete"'; then
+            echo "PR has allow-delete label, so .cs deletions are permitted."
+            echo "**Bypass applied:** PR has \`allow-delete\` label." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          {
+            echo "### Failed: C# deletions block the merge"
+            echo ""
+            echo "Every published .cs path can be an external URL. Keep old paths as stubs or add the \`allow-delete\` label only when deletion is intentional."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1
+
+  auto-merge:
+    name: Auto-merge agent PR
+    runs-on: ubuntu-latest
+    needs:
+      - validate
+      - no-cs-deletes
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      startsWith(github.event.pull_request.head.ref, 'agentic/publish/')
+
+    steps:
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        shell: bash
+        run: |
+          gh pr merge "$PR_URL" --squash --delete-branch
