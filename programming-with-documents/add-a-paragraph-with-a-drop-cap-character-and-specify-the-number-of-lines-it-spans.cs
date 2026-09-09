@@ -2,26 +2,36 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+namespace DropCapExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Set the drop cap height to span 4 lines.
-        builder.ParagraphFormat.LinesToDrop = 4;
-        builder.Writeln("H"); // This paragraph becomes the drop cap.
+            // Attach a DocumentBuilder to the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Reset the drop cap setting for subsequent paragraphs.
-        builder.ParagraphFormat.LinesToDrop = 0;
-        builder.Writeln("ello world!"); // Normal paragraph that wraps around the drop cap.
+            // Set the number of lines the drop cap should span.
+            // This makes the next paragraph start with a large capital letter.
+            builder.ParagraphFormat.LinesToDrop = 4;
 
-        // Save the document to the output folder.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "DropCapExample.docx");
-        doc.Save(outputPath);
+            // Write the drop cap character.
+            builder.Writeln("H");
+
+            // Reset LinesToDrop to 0 so subsequent text behaves normally.
+            builder.ParagraphFormat.LinesToDrop = 0;
+
+            // Write the remaining text that will wrap around the drop cap.
+            builder.Writeln("ello world! This paragraph demonstrates a drop cap character spanning four lines.");
+
+            // Define the output path (in the same folder as the executable).
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DropCapExample.docx");
+
+            // Save the document.
+            doc.Save(outputPath);
+        }
     }
 }

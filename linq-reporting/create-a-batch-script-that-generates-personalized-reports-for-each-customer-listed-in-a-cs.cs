@@ -1,82 +1,108 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingBatch
+public class Customer
 {
-    public class Program
+    public string Name { get; set; } = "";
+    public string Address { get; set; } = "";
+    public string Email { get; set; } = "";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider for CSV parsing (required on .NET Core).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // -----------------------------------------------------------------
+        // 1. Create a sample CSV file with customer data.
+        // -----------------------------------------------------------------
+        string csvPath = "customers.csv";
+        string[] csvLines =
         {
-            // Working directory.
-            string workDir = Directory.GetCurrentDirectory();
+            "Name,Address,Email",
+            "Alice Johnson,123 Maple St.,alice@example.com",
+            "Bob Smith,456 Oak Ave.,bob@example.com",
+            "Carol Lee,789 Pine Rd.,carol@example.com"
+        };
+        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
 
-            // 1. Create sample CSV data.
-            string csvPath = Path.Combine(workDir, "customers.csv");
-            CreateSampleCsv(csvPath);
-
-            // 2. Create a LINQ Reporting template programmatically.
-            string templatePath = Path.Combine(workDir, "template.docx");
-            CreateTemplateDocument(templatePath);
-
-            // 3. Load the template.
-            Document templateDoc = new Document(templatePath);
-
-            // 4. Prepare CSV data source with headers.
-            var loadOptions = new CsvDataLoadOptions(true);
-            CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
-
-            // 5. Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine
+        // -----------------------------------------------------------------
+        // 2. Load CSV data into a list of Customer objects.
+        // -----------------------------------------------------------------
+        var customers = new List<Customer>();
+        using (var reader = new StreamReader(csvPath))
+        {
+            // Skip header.
+            string? header = reader.ReadLine();
+            while (!reader.EndOfStream)
             {
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
-            };
-            // The root data source name must match the name used in the template tags ("customers").
-            engine.BuildReport(templateDoc, csvDataSource, "customers");
+                string? line = reader.ReadLine();
+                if (string.IsNullOrWhiteSpace(line)) continue;
 
-            // 6. Save the generated report.
-            string outputPath = Path.Combine(workDir, "CustomerReports.docx");
-            templateDoc.Save(outputPath);
+                // Simple CSV split (no quoted commas handling needed for this sample).
+                string[] parts = line.Split(',');
+                if (parts.Length >= 3)
+                {
+                    customers.Add(new Customer
+                    {
+                        Name = parts[0].Trim(),
+                        Address = parts[1].Trim(),
+                        Email = parts[2].Trim()
+                    });
+                }
+            }
         }
 
-        // Creates a simple CSV file with a few customer records.
-        private static void CreateSampleCsv(string path)
+        // -----------------------------------------------------------------
+        // 3. Create a Word template with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        string templatePath = "CustomerTemplate.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Personalized Report");
+        builder.Writeln("--------------------");
+        builder.Writeln("Name   : <<[Customer.Name]>>");
+        builder.Writeln("Address: <<[Customer.Address]>>");
+        builder.Writeln("Email  : <<[Customer.Email]>>");
+        builder.Writeln(); // blank line between reports
+
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 4. Generate a separate report file for each customer.
+        // -----------------------------------------------------------------
+        foreach (var customer in customers)
         {
-            string[] lines =
-            {
-                "CustomerName,Address,Email",
-                "Alice Johnson,123 Maple St.,alice@example.com",
-                "Bob Smith,456 Oak Ave.,bob@example.com",
-                "Carol Davis,789 Pine Rd.,carol@example.com"
-            };
-            File.WriteAllLines(path, lines);
-        }
+            // Load the template for each iteration to start from a clean document.
+            var reportDoc = new Document(templatePath);
 
-        // Builds a Word template that uses LINQ Reporting tags to iterate over customers.
-        private static void CreateTemplateDocument(string path)
+            // Build the report using the current customer as the data source.
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, customer, "Customer");
+
+            // Create a safe file name.
+            string safeName = MakeFileNameSafe(customer.Name);
+            string outputPath = $"Report_{safeName}.docx";
+
+            reportDoc.Save(outputPath);
+            Console.WriteLine($"Generated report: {outputPath}");
+        }
+    }
+
+    // Helper to replace invalid filename characters.
+    private static string MakeFileNameSafe(string name)
+    {
+        foreach (char c in Path.GetInvalidFileNameChars())
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Title
-            builder.Writeln("Customer Report");
-            builder.Writeln("----------------");
-
-            // Begin foreach loop over the CSV rows (exposed as "customers").
-            builder.Writeln("<<foreach [c in customers]>>");
-
-            // Individual customer fields.
-            builder.Writeln("Name   : <<[c.CustomerName]>>");
-            builder.Writeln("Address: <<[c.Address]>>");
-            builder.Writeln("Email  : <<[c.Email]>>");
-            builder.Writeln(""); // Blank line between records.
-
-            // End foreach loop.
-            builder.Writeln("<</foreach>>");
-
-            // Save the template.
-            doc.Save(path);
+            name = name.Replace(c, '_');
         }
+        return name;
     }
 }

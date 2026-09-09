@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -11,42 +12,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Column chart and obtain its Chart object.
+        // Insert a Column chart.
         Shape columnChartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart columnChart = columnChartShape.Chart;
 
-        // Remove the demo data that comes with a newly inserted chart.
+        // Clear the demo data.
         columnChart.Series.Clear();
 
-        // Populate the chart with sample data.
+        // Define categories and values.
         string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-        double[] sales = { 15000, 21000, 18000, 24000 };
-        double[] expenses = { 12000, 16000, 13000, 19000 };
+        double[] values = { 120.5, 150.0, 130.75, 170.25 };
 
-        columnChart.Series.Add("Sales", categories, sales);
-        columnChart.Series.Add("Expenses", categories, expenses);
+        // Add a series with the data.
+        columnChart.Series.Add("Sales", categories, values);
 
         // ----- Dynamic transformation: replace the column chart with a line chart -----
-        // Store the data that we want to keep.
-        // (In this simple example we already have the arrays above.)
+        // Remember the data for reuse.
+        string[] savedCategories = (string[])categories.Clone();
+        double[] savedValues = (double[])values.Clone();
 
-        // Insert a Line chart right after the column chart.
-        // The builder is positioned after the previously inserted shape,
-        // so the new chart will appear directly after it.
+        // Move the builder back to the column chart shape.
+        builder.MoveTo(columnChartShape);
+        // Remove the column chart shape from the document.
+        columnChartShape.Remove();
+
+        // Insert a Line chart at the same position.
         Shape lineChartShape = builder.InsertChart(ChartType.Line, 500, 300);
         Chart lineChart = lineChartShape.Chart;
 
-        // Clear any demo data in the new chart.
+        // Clear any demo data and add the saved series.
         lineChart.Series.Clear();
-
-        // Add the same series data to the line chart.
-        lineChart.Series.Add("Sales", categories, sales);
-        lineChart.Series.Add("Expenses", categories, expenses);
-
-        // Remove the original column chart from the document.
-        columnChartShape.Remove();
+        lineChart.Series.Add("Sales", savedCategories, savedValues);
+        // ------------------------------------------------------------------------------
 
         // Save the document.
-        doc.Save("DynamicChartTransformation.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DynamicChart.docx");
+        doc.Save(outputPath);
     }
 }

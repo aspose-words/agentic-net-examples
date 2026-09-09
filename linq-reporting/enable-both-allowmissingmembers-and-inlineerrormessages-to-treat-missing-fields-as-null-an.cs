@@ -4,51 +4,50 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Sample data model with a single existing object.
-    public class Model
+    // Simple data model with only one property.
+    public class ReportModel
     {
-        public Existing ExistingObject { get; set; } = new Existing();
-    }
-
-    public class Existing
-    {
-        public string Value { get; set; } = "Present";
+        public string Name { get; set; } = "John Doe";
+        // Note: Age property is intentionally omitted to demonstrate AllowMissingMembers.
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a blank document and add LINQ Reporting tags.
+            // Create a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Tag referencing a missing object – will be treated as null.
-            builder.Writeln("Missing field output: <<[MissingObject.Name]>>");
+            // Write a valid tag that references an existing member.
+            builder.Writeln("Customer Name: <<[model.Name]>>");
 
-            // Tag referencing an existing field – will be populated normally.
-            builder.Writeln("Existing field output: <<[model.ExistingObject.Value]>>");
+            // Write a tag that references a missing member (Age). With AllowMissingMembers this will be treated as null.
+            builder.Writeln("Customer Age: <<[model.Age]>>");
+
+            // Write a malformed tag to trigger a syntax error. InlineErrorMessages will embed the error message.
+            builder.Writeln("Malformed Tag Example: <<[model.Name] -unknownSwitch>>");
 
             // Prepare the data source.
-            Model model = new Model();
+            ReportModel model = new ReportModel();
 
-            // Configure the reporting engine to allow missing members and embed error messages.
+            // Configure the reporting engine with both options.
             ReportingEngine engine = new ReportingEngine
             {
                 Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages,
-                MissingMemberMessage = "NULL"
+                MissingMemberMessage = "Missing"
             };
 
-            // Build the report. The overload with the data source name allows the template to reference the root object.
+            // Build the report. The overload with dataSourceName allows the template to reference the root object as "model".
             bool success = engine.BuildReport(doc, model, "model");
 
-            // Save the generated document.
-            const string outputPath = "ReportOutput.docx";
-            doc.Save(outputPath);
+            // Output the success flag (true indicates the template was parsed without fatal errors).
+            Console.WriteLine($"Report build success: {success}");
 
-            // Output the result of the build operation.
-            Console.WriteLine($"Report build successful: {success}");
-            Console.WriteLine($"Document saved to: {outputPath}");
+            // Save the generated document.
+            const string outputPath = "ReportWithMissingMembers.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Report saved to: {outputPath}");
         }
     }
 }

@@ -19,25 +19,27 @@ public class Program
         // Remove the demo data series.
         chart.Series.Clear();
 
-        // Define categories for the X‑axis.
+        // Define categories and series data.
         string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        chart.Series.Add("Product A", categories, new double[] { 120, 150, 170, 130 });
+        chart.Series.Add("Product B", categories, new double[] { 80, 110, 140, 100 });
 
-        // Add two custom series with sample data.
-        chart.Series.Add("Product A", categories, new double[] { 10, 20, 30, 40 });
-        chart.Series.Add("Product B", categories, new double[] { 15, 25, 35, 45 });
+        // Define the default font size and color for data labels.
+        const float defaultFontSize = 10f;
+        Color defaultFontColor = Color.White;
 
-        // Apply default data‑label settings to every series.
+        // Apply the default data label settings to every series.
         foreach (ChartSeries series in chart.Series)
         {
             // Enable data labels for the series.
             series.HasDataLabels = true;
 
-            // Show the value in each label.
+            // Show the value in each data label.
             series.DataLabels.ShowValue = true;
 
-            // Set a consistent font size and color for all labels in the series.
-            series.DataLabels.Font.Size = 12;
-            series.DataLabels.Font.Color = Color.DarkBlue;
+            // Set the default font size and color for all data labels in this series.
+            series.DataLabels.Font.Size = defaultFontSize;
+            series.DataLabels.Font.Color = defaultFontColor;
         }
 
         // Save the document.

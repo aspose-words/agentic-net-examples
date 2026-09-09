@@ -4,42 +4,47 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Sample external type whose properties will be accessed directly from the template.
+    // Sample data model.
     public class CustomerInfo
     {
-        // Static properties allow direct access without an instance.
-        public static string Name { get; } = "John Doe";
-        public static int Age { get; } = 42;
+        public string Name { get; set; } = "John Doe";
+        public int Age { get; set; } = 30;
+        public string Email { get; set; } = "john.doe@example.com";
+    }
+
+    // Wrapper for the root object used in the template.
+    public class ReportModel
+    {
+        public CustomerInfo Customer { get; set; } = new CustomerInfo();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Step 1: Create a template document with LINQ Reporting tags.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Create a blank document and a builder to insert LINQ Reporting tags.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            builder.Writeln("Customer Name: <<[CustomerInfo.Name]>>");
-            builder.Writeln("Customer Age: <<[CustomerInfo.Age]>>");
+            // Insert template tags that reference the CustomerInfo properties.
+            builder.Writeln("Customer Report");
+            builder.Writeln("----------------");
+            builder.Writeln("Name : <<[model.Customer.Name]>>");
+            builder.Writeln("Age  : <<[model.Customer.Age]>>");
+            builder.Writeln("Email: <<[model.Customer.Email]>>");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            // Prepare the data source.
+            ReportModel model = new ReportModel();
 
-            // Step 2: Load the template for reporting.
-            Document loadedTemplate = new Document(templatePath);
-
-            // Step 3: Configure the ReportingEngine and register the external type.
+            // Register the external type so its members can be accessed in the template.
             ReportingEngine engine = new ReportingEngine();
             engine.KnownTypes.Add(typeof(CustomerInfo));
 
-            // Build the report. No data source is needed because we are accessing static members.
-            engine.BuildReport(loadedTemplate, new object(), "");
+            // Build the report using the template, data source, and root name.
+            engine.BuildReport(doc, model, "model");
 
-            // Step 4: Save the generated report.
-            const string reportPath = "Report.docx";
-            loadedTemplate.Save(reportPath);
+            // Save the generated document.
+            doc.Save("CustomerReport.docx");
         }
     }
 }

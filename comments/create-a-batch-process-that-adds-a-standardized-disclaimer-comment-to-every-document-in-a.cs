@@ -1,59 +1,84 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 
 public class Program
 {
+    // Standardized disclaimer text to be added as a comment.
+    private const string DisclaimerText = "Disclaimer: This document is confidential and intended for the designated recipient only.";
+
+    // Author metadata for the disclaimer comment.
+    private const string DisclaimerAuthor = "Compliance Team";
+    private const string DisclaimerInitial = "CT";
+
     public static void Main()
     {
-        // Prepare input and output folders.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        // Define input and output folders relative to the current working directory.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
 
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Ensure the folders exist.
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Create sample documents.
-        CreateSampleDocuments(inputDir);
+        // If the input folder is empty, create a few sample documents for demonstration.
+        if (!Directory.EnumerateFiles(inputFolder, "*.docx").Any())
+        {
+            CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docx"), "First sample document.");
+            CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docx"), "Second sample document with multiple paragraphs.\nSecond line.\nThird line.");
+        }
 
-        // Process each document: add a standardized disclaimer comment.
-        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
+        // Process each .docx file in the input folder.
+        foreach (string inputPath in Directory.EnumerateFiles(inputFolder, "*.docx"))
         {
             // Load the document.
-            Document doc = new Document(filePath);
+            Document doc = new Document(inputPath);
 
-            // Create the disclaimer comment.
-            Comment disclaimer = new Comment(doc, "Standard Disclaimer", "SD", DateTime.Now);
-            disclaimer.SetText("This document is confidential and intended solely for the recipient.");
+            // Ensure the document has at least one paragraph to attach the comment.
+            doc.EnsureMinimum();
 
-            // Append the comment to the first paragraph of the document.
-            Paragraph? firstParagraph = doc.FirstSection?.Body?.FirstParagraph;
-            if (firstParagraph != null)
-            {
-                firstParagraph.AppendChild(disclaimer);
-            }
+            // Add the disclaimer comment to the last paragraph of the document.
+            AddDisclaimerComment(doc);
 
-            // Save the modified document to the output folder, preserving the original file name.
-            string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
+            // Determine the output file path (same file name, different folder).
+            string outputPath = Path.Combine(outputFolder, Path.GetFileName(inputPath));
+
+            // Save the modified document.
             doc.Save(outputPath);
         }
-
-        // Indicate completion.
-        Console.WriteLine("Disclaimer comments added to all documents.");
     }
 
-    private static void CreateSampleDocuments(string folderPath)
+    // Creates a simple document with the specified text content.
+    private static void CreateSampleDocument(string filePath, string content)
     {
-        for (int i = 1; i <= 3; i++)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Sample document {i}");
-            builder.Writeln("This is some example content.");
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(content);
+        doc.Save(filePath);
+    }
 
-            string fileName = Path.Combine(folderPath, $"Doc{i}.docx");
-            doc.Save(fileName);
-        }
+    // Adds a standardized disclaimer comment to the last paragraph of the given document.
+    private static void AddDisclaimerComment(Document doc)
+    {
+        // Retrieve the last paragraph in the main body.
+        var lastParagraph = doc.FirstSection?.Body?.LastParagraph;
+        if (lastParagraph == null)
+            return; // Safety check; should not occur because EnsureMinimum was called.
+
+        // Create a new comment node.
+        Comment comment = new Comment(doc)
+        {
+            Author = DisclaimerAuthor,
+            Initial = DisclaimerInitial,
+            DateTime = DateTime.Now
+        };
+
+        // Build the comment's visible content: a paragraph containing a run with the disclaimer text.
+        comment.AppendChild(new Paragraph(doc));
+        comment.FirstParagraph?.AppendChild(new Run(doc, DisclaimerText));
+
+        // Append the comment to the paragraph so it appears in the document.
+        lastParagraph.AppendChild(comment);
     }
 }

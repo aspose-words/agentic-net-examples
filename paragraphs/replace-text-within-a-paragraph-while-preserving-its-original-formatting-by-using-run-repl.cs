@@ -10,23 +10,19 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a paragraph with a formatted placeholder.
+        // Build a paragraph that contains two runs with different formatting.
+        builder.Font.Name = "Arial";
+        builder.Font.Size = 12;
+        builder.Font.Bold = true;          // First run: bold.
         builder.Write("Hello ");
-        builder.Font.Bold = true;   // Make the placeholder bold.
-        builder.Font.Italic = true; // Make the placeholder italic.
-        builder.Write("_Name_");
+        builder.Font.Bold = false;
+        builder.Font.Italic = true;        // Second run: italic.
+        builder.Write("World");
+        builder.Writeln();                 // End the paragraph.
 
-        // Reset the font formatting for the rest of the paragraph.
-        builder.Font.ClearFormatting();
-
-        builder.Writeln("!");
-
-        // Replace the placeholder while preserving its original formatting.
-        int replacements = doc.Range.Replace("_Name_", "World");
-
-        // Verify that a replacement was made.
-        if (replacements == 0)
-            throw new InvalidOperationException("No occurrences were replaced.");
+        // Replace the text "Hello" with "Hi" while preserving the original formatting.
+        // The Range.Replace method updates the text inside the existing run(s) without altering their formatting.
+        doc.Range.Replace("Hello", "Hi");
 
         // Save the resulting document.
         doc.Save("Output.docx");

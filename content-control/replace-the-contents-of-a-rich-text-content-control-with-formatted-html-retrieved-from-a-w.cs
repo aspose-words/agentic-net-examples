@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Aspose.Words;
@@ -6,48 +8,71 @@ using Aspose.Words.Markup;
 
 public class Program
 {
-    public static void Main()
+    public static async Task Main(string[] args)
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a block‑level rich‑text content control.
-        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        // Add some introductory text.
+        builder.Writeln("Document before the content control.");
+
+        // Create a block‑level rich‑text content control.
+        StructuredDocumentTag richSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
-            Title = "HtmlContent",
-            Tag = "html-content"
+            Title = "HtmlPlaceholder",
+            Tag = "html-placeholder"
         };
+        // The SDT must contain at least one paragraph to host content.
+        Paragraph placeholderParagraph = new Paragraph(doc);
+        richSdt.AppendChild(placeholderParagraph);
+        doc.FirstSection.Body.AppendChild(richSdt);
 
-        // Add a placeholder paragraph (will be removed later).
-        Paragraph placeholder = new Paragraph(doc);
-        placeholder.AppendChild(new Run(doc, "Placeholder text"));
-        richTextSdt.AppendChild(placeholder);
-        doc.FirstSection.Body.AppendChild(richTextSdt);
+        // Add some text after the control.
+        builder.Writeln("Document after the content control.");
+
+        // Optional: save the seed document (useful for debugging).
+        doc.Save("seed.docx");
 
         // Retrieve formatted HTML from a web service.
-        string html = GetHtmlFromWeb().GetAwaiter().GetResult();
+        string htmlContent;
+        using (HttpClient httpClient = new HttpClient())
+        {
+            // Example URL that returns a simple HTML page.
+            HttpResponseMessage response = await httpClient.GetAsync("https://httpbin.org/html");
+            response.EnsureSuccessStatusCode();
+            htmlContent = await response.Content.ReadAsStringAsync();
+        }
 
-        // Clear existing placeholder and add an empty paragraph to host the HTML.
-        richTextSdt.RemoveAllChildren();
-        Paragraph hostParagraph = new Paragraph(doc);
-        richTextSdt.AppendChild(hostParagraph);
+        // Locate the rich‑text content control by its title.
+        StructuredDocumentTag targetSdt = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .FirstOrDefault(s => s.Title == "HtmlPlaceholder");
 
-        // Position the builder inside the newly added paragraph.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(hostParagraph);
-        builder.InsertHtml(html); // Insert the HTML; formatting is preserved.
+        if (targetSdt == null)
+        {
+            throw new InvalidOperationException("The target content control was not found.");
+        }
+
+        // Ensure we are working with a rich‑text control.
+        if (targetSdt.SdtType != SdtType.RichText)
+        {
+            throw new InvalidOperationException("The target content control is not a rich‑text control.");
+        }
+
+        // Remove any existing children (placeholder text, etc.).
+        targetSdt.RemoveAllChildren();
+
+        // Insert a new paragraph that will receive the HTML.
+        Paragraph htmlParagraph = new Paragraph(doc);
+        targetSdt.AppendChild(htmlParagraph);
+
+        // Move the builder to the new paragraph inside the SDT and insert the HTML.
+        DocumentBuilder htmlBuilder = new DocumentBuilder(doc);
+        htmlBuilder.MoveTo(htmlParagraph);
+        htmlBuilder.InsertHtml(htmlContent);
 
         // Save the resulting document.
         doc.Save("output.docx");
-    }
-
-    // Simple helper that downloads HTML from a public URL.
-    private static async Task<string> GetHtmlFromWeb()
-    {
-        const string url = "https://www.example.com"; // Any page that returns HTML.
-        using HttpClient client = new HttpClient();
-        HttpResponseMessage response = await client.GetAsync(url);
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();
     }
 }

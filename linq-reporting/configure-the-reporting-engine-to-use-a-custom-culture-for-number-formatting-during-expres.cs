@@ -1,50 +1,33 @@
 using System;
 using System.Globalization;
+using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    // Sample numeric value that will be formatted according to the custom culture.
+    public decimal Price { get; set; } = 1234.56m;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Preserve the original thread culture.
-        CultureInfo originalCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+        // Set a custom culture (French) for the current thread.
+        // This culture uses a comma as the decimal separator.
+        Thread.CurrentThread.CurrentCulture = new CultureInfo("fr-FR");
 
-        // Set a custom culture (French - France) that uses a comma as the decimal separator.
-        System.Threading.Thread.CurrentThread.CurrentCulture = new CultureInfo("fr-FR");
-
-        // -------------------------------------------------
-        // Create a template document with a LINQ Reporting tag.
-        // -------------------------------------------------
+        // Create the template document and insert a LINQ Reporting tag.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // The tag references the "Total" property of the root object named "model".
-        builder.Writeln("Total amount: <<[model.Total]>>");
+        builder.Writeln("Price: <<[model.Price]>>");
 
-        // -------------------------------------------------
-        // Prepare the data model.
-        // -------------------------------------------------
-        ReportModel model = new ReportModel { Total = 12345.67m };
-
-        // -------------------------------------------------
-        // Build the report using the ReportingEngine.
-        // -------------------------------------------------
+        // Build the report using the custom culture.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(doc, new ReportModel(), "model");
 
-        // -------------------------------------------------
-        // Save the generated report.
-        // -------------------------------------------------
-        doc.Save("ReportOutput.docx");
-
-        // Restore the original culture.
-        System.Threading.Thread.CurrentThread.CurrentCulture = originalCulture;
-    }
-
-    // Simple data model with a numeric property.
-    public class ReportModel
-    {
-        public decimal Total { get; set; } = 0;
+        // Save the generated document.
+        doc.Save("Report.docx");
     }
 }

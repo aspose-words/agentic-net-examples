@@ -1,79 +1,87 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Layout;
+using Aspose.Words.BuildingBlocks;
+using Aspose.Words.Fields;   // Needed for FieldType
 
 public class Program
 {
     public static void Main()
     {
-        // Create sample source documents
-        string doc1Path = Path.Combine(Directory.GetCurrentDirectory(), "Source1.docx");
-        string doc2Path = Path.Combine(Directory.GetCurrentDirectory(), "Source2.docx");
-        CreateSampleDocument(doc1Path, "Document One", 2);
-        CreateSampleDocument(doc2Path, "Document Two", 3);
+        // Prepare a folder for temporary files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Load source documents
-        Document source1 = new Document(doc1Path);
-        Document source2 = new Document(doc2Path);
+        // Create two source documents with simple content.
+        string srcPath1 = Path.Combine(artifactsDir, "Source1.docx");
+        string srcPath2 = Path.Combine(artifactsDir, "Source2.docx");
 
-        // Create destination document and append sources
-        Document destination = new Document();
-        destination.RemoveAllChildren(); // start with an empty document
+        CreateSourceDocument(srcPath1, "First source document.");
+        CreateSourceDocument(srcPath2, "Second source document.");
 
-        destination.AppendDocument(source1, ImportFormatMode.KeepSourceFormatting);
-        destination.AppendDocument(source2, ImportFormatMode.KeepSourceFormatting);
+        // Load the source documents.
+        Document srcDoc1 = new Document(srcPath1);
+        Document srcDoc2 = new Document(srcPath2);
 
-        // Update layout to calculate page numbers
-        destination.UpdatePageLayout();
+        // Create the destination document (initially empty).
+        Document dstDoc = new Document();
 
-        // Validate page numbers for each section
-        LayoutCollector collector = new LayoutCollector(destination);
-        int previousPageNumber = 0;
-        int sectionIndex = 0;
-        foreach (Section section in destination.Sections)
+        // Append the source documents to the destination.
+        dstDoc.AppendDocument(srcDoc1, ImportFormatMode.KeepSourceFormatting);
+        dstDoc.AppendDocument(srcDoc2, ImportFormatMode.KeepSourceFormatting);
+
+        // Ensure layout is up‑to‑date before inserting page numbers.
+        dstDoc.UpdatePageLayout();
+
+        // Insert a PAGE field into the primary footer of each section.
+        for (int i = 0; i < dstDoc.Sections.Count; i++)
         {
-            // Get the first paragraph of the section to retrieve its page number
-            Paragraph firstParagraph = section.Body.FirstParagraph;
-            if (firstParagraph == null)
-                throw new InvalidOperationException($"Section {sectionIndex} does not contain any paragraphs.");
-
-            int pageNumber = collector.GetStartPageIndex(firstParagraph);
-            if (pageNumber <= previousPageNumber)
-                throw new InvalidOperationException($"Section {sectionIndex} starts on page {pageNumber}, which is not after previous page {previousPageNumber}.");
-
-            previousPageNumber = pageNumber;
-            sectionIndex++;
+            DocumentBuilder builder = new DocumentBuilder(dstDoc);
+            builder.MoveToSection(i);
+            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            // Insert a PAGE field that will display the current page number.
+            builder.InsertField(FieldType.FieldPage, true);
         }
 
-        // Save merged document
-        string mergedPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.docx");
-        destination.Save(mergedPath, SaveFormat.Docx);
+        // Update fields so that the PAGE fields contain their results.
+        dstDoc.UpdateFields();
 
-        // Validate that the merged file exists
+        // Validate that each footer's PAGE field shows the expected page number.
+        int expectedPage = 1;
+        foreach (Section section in dstDoc.Sections)
+        {
+            HeaderFooter footer = section.HeadersFooters[HeaderFooterType.FooterPrimary];
+            if (footer != null)
+            {
+                // Find the first field in the footer (there should be exactly one PAGE field).
+                var pageField = footer.Range.Fields.FirstOrDefault();
+                if (pageField == null)
+                    throw new InvalidOperationException($"Section {expectedPage} does not contain a PAGE field.");
+
+                string fieldResult = pageField.Result?.Trim();
+                if (fieldResult != expectedPage.ToString())
+                    throw new InvalidOperationException(
+                        $"Page number mismatch in section {expectedPage}: expected {expectedPage}, got {fieldResult}.");
+            }
+            expectedPage++;
+        }
+
+        // Save the merged document.
+        string mergedPath = Path.Combine(artifactsDir, "Merged.docx");
+        dstDoc.Save(mergedPath);
+
+        // Verify that the file was created.
         if (!File.Exists(mergedPath))
-            throw new FileNotFoundException("Merged document was not created.", mergedPath);
-
-        // Indicate success (no interactive input)
-        Console.WriteLine("Document merge and page number validation completed successfully.");
+            throw new FileNotFoundException("Merged document was not saved.", mergedPath);
     }
 
-    private static void CreateSampleDocument(string path, string title, int pageCount)
+    // Helper method to create a simple one‑section document with given text.
+    private static void CreateSourceDocument(string filePath, string text)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln(title);
-        builder.Writeln($"This document will contain {pageCount} pages.");
-
-        for (int i = 1; i <= pageCount; i++)
-        {
-            builder.Writeln($"--- Page {i} content ---");
-            // Add enough text to force a new page if not the last page
-            if (i < pageCount)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
-
-        doc.Save(path, SaveFormat.Docx);
+        builder.Writeln(text);
+        doc.Save(filePath);
     }
 }

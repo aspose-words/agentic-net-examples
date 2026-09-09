@@ -1,88 +1,103 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
 
-public class Program
+namespace LinqReportingTagPreprocess
 {
-    public static void Main()
+    // Simple data model used by the template.
+    public class Order
     {
-        // Register code page provider (required for some Aspose.Words features)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Create sample data model
-        ReportModel model = new ReportModel
+        public string CustomerName { get; set; } = "John Doe";
+        public List<Item> Items { get; set; } = new()
         {
-            BookmarkName = "MyBookmark",
-            Title = "Sample Report"
+            new Item { Index = 1, Name = "Apple" },
+            new Item { Index = 2, Name = "Banana" }
         };
-
-        // Create a template document programmatically
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Paragraph with a bookmark tag whose body is inside the same run (needs preprocessing)
-        builder.Writeln("<<bookmark [model.BookmarkName]>>" + model.Title + "<</bookmark>>");
-
-        // Preprocess the document to ensure tag bodies are placed outside markup elements
-        EnsureTagBodiesOutsideMarkup(template);
-
-        // Build the report
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
-
-        // Save the generated report
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ReportOutput.docx");
-        template.Save(outputPath);
     }
 
-    // Scans the document and splits runs that contain both opening and closing tags,
-    // placing the tag bodies in separate runs outside the markup tags.
-    private static void EnsureTagBodiesOutsideMarkup(Document doc)
+    public class Item
     {
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    class Program
+    {
+        static void Main()
         {
-            // Iterate over runs; use index because we may insert new runs during iteration
-            for (int i = 0; i < paragraph.Runs.Count; i++)
+            // 1. Create a template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Paragraph with a tag inside a run (simulating a malformed placement).
+            builder.Writeln("Order for <<[order.CustomerName]>>:");
+            builder.Writeln("<<foreach [item in order.Items]>>");
+            builder.Writeln(" - Item <<[item.Index]>>: <<[item.Name]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            const string templatePath = "TagTemplate.docx";
+            template.Save(templatePath);
+
+            // 2. Load the template back for preprocessing.
+            Document doc = new Document(templatePath);
+
+            // 3. Preprocess: ensure that tag bodies are placed outside markup elements.
+            //    For each paragraph, if a run contains a tag (<<...>>), move the whole tag
+            //    to its own paragraph before the original paragraph.
+            MoveTagsToSeparateParagraphs(doc);
+
+            // 4. Build the report using LINQ Reporting Engine.
+            ReportingEngine engine = new ReportingEngine();
+            Order data = new Order(); // sample data
+            engine.BuildReport(doc, data, "order");
+
+            // 5. Save the final report.
+            const string outputPath = "ReportResult.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        }
+
+        // Scans the document and moves any tag text (<<...>>) that is inside a run
+        // to a separate paragraph placed before the original paragraph.
+        private static void MoveTagsToSeparateParagraphs(Document doc)
+        {
+            // Collect paragraphs that need processing to avoid modifying the collection while iterating.
+            List<Paragraph> paragraphs = new List<Paragraph>();
+            foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+                paragraphs.Add(para);
+
+            foreach (Paragraph para in paragraphs)
             {
-                Run run = (Run)paragraph.Runs[i];
-                string text = run.Text;
-
-                // Check for a bookmark tag that contains both opening and closing parts in the same run
-                if (text.Contains("<<bookmark") && text.Contains("<</bookmark>>"))
+                // Search runs for tag patterns.
+                foreach (Run run in para.GetChildNodes(NodeType.Run, true))
                 {
-                    int openingEnd = text.IndexOf(">>", StringComparison.Ordinal) + 2;
-                    string openingTag = text.Substring(0, openingEnd);
+                    string text = run.Text;
+                    int startIdx = text.IndexOf("<<", StringComparison.Ordinal);
+                    int endIdx = text.IndexOf(">>", StringComparison.Ordinal);
 
-                    int closingStart = text.IndexOf("<</bookmark>>", StringComparison.Ordinal);
-                    string body = text.Substring(openingEnd, closingStart - openingEnd);
-                    string closingTag = text.Substring(closingStart);
+                    // Simple detection of a tag inside the run.
+                    if (startIdx >= 0 && endIdx > startIdx)
+                    {
+                        string tag = text.Substring(startIdx, endIdx - startIdx + 2);
 
-                    // Replace current run with the opening tag
-                    run.Text = openingTag;
+                        // Remove the tag from the original run.
+                        string newRunText = text.Remove(startIdx, tag.Length);
+                        run.Text = newRunText;
 
-                    // Insert body run
-                    Run bodyRun = new Run(doc, body);
-                    paragraph.Runs.Insert(i + 1, bodyRun);
-
-                    // Insert closing tag run
-                    Run closingRun = new Run(doc, closingTag);
-                    paragraph.Runs.Insert(i + 2, closingRun);
-
-                    // Skip over the newly inserted runs
-                    i += 2;
+                        // Insert a new paragraph before the current one containing only the tag.
+                        Paragraph tagParagraph = (Paragraph)para.Clone(false);
+                        Run tagRun = new Run(doc, tag);
+                        tagParagraph.Runs.Clear();
+                        tagParagraph.Runs.Add(tagRun);
+                        para.ParentNode.InsertBefore(tagParagraph, para);
+                        // Only handle the first tag per run for this example.
+                        break;
+                    }
                 }
             }
         }
     }
-}
-
-// Public data model used by the LINQ Reporting engine
-public class ReportModel
-{
-    public string BookmarkName { get; set; } = "DefaultBookmark";
-    public string Title { get; set; } = "Default Title";
 }

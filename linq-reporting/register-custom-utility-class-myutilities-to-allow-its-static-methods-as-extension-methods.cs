@@ -2,59 +2,65 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class MyUtilities
+namespace AsposeWordsLinqReportingExample
 {
-    // Extension-like static method that can be called from LINQ Reporting tags.
-    public static string ToUpper(string value) => value?.ToUpperInvariant() ?? string.Empty;
-}
-
-public class Person
-{
-    // Initialize to avoid nullable warnings.
-    public string Name { get; set; } = string.Empty;
-}
-
-public class Program
-{
-    public static void Main()
+    // Sample data model.
+    public class Order
     {
-        // -----------------------------------------------------------------
-        // 1. Create a template document with a LINQ Reporting tag that calls
-        //    the static utility method.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Initialize to avoid nullable warnings.
+        public string CustomerName { get; set; } = string.Empty;
+        public DateTime OrderDate { get; set; }
+    }
 
-        // Correct tag syntax for calling a static method: <<[MyUtilities.ToUpper(model.Name)]>>
-        builder.Writeln("<<[MyUtilities.ToUpper(model.Name)]>>");
+    // Custom utility class whose static methods will be used as extension methods in the template.
+    public static class MyUtilities
+    {
+        // Extension method for DateTime to format the date.
+        public static string FormatDate(this DateTime date)
+        {
+            return date.ToString("yyyy-MM-dd");
+        }
 
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Additional utility method (example) that could be used in templates.
+        public static string ToUpperCase(this string text)
+        {
+            return text?.ToUpperInvariant() ?? string.Empty;
+        }
+    }
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for report generation.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a simple template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        var model = new Person { Name = "John Doe" };
+            // Insert LINQ Reporting tags that reference the data model and the extension methods.
+            builder.Writeln("Customer: <<[order.CustomerName.ToUpperCase()]>>");
+            builder.Writeln("Order Date: <<[order.OrderDate.FormatDate()]>>");
 
-        // -----------------------------------------------------------------
-        // 4. Configure the reporting engine and register the utility class.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(MyUtilities));
+            // Prepare sample data.
+            Order order = new Order
+            {
+                CustomerName = "John Doe",
+                OrderDate = DateTime.Now
+            };
 
-        // -----------------------------------------------------------------
-        // 5. Build the report using the model and the root name "model".
-        // -----------------------------------------------------------------
-        engine.BuildReport(doc, model, "model");
+            // Initialize the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
 
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save("Report.docx");
+            // Allow the engine to treat missing members (including extension methods) as valid.
+            engine.Options = ReportBuildOptions.AllowMissingMembers;
+
+            // Register the custom utility class so its static methods can be used as extension methods.
+            engine.KnownTypes.Add(typeof(MyUtilities));
+
+            // Build the report using the template, the data source, and the root name "order".
+            engine.BuildReport(template, order, "order");
+
+            // Save the generated report.
+            template.Save("Report.docx");
+        }
     }
 }

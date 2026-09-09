@@ -8,54 +8,47 @@ public class SetOfficeMathDisplayInline
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Output file path.
+        const string outputPath = "OfficeMathInline.docx";
+
+        // Create a new blank document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Introductory paragraph.
-        builder.Writeln("Below is an equation that will be set to inline display mode:");
+        // Insert an EQ field that will be turned into a real OfficeMath object.
+        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Insert an EQ field (the placeholder for a real OfficeMath object).
-        Field field = builder.InsertField(FieldType.FieldEquation, true);
-        FieldEQ eqField = field as FieldEQ;
-        if (eqField == null)
-            throw new InvalidOperationException("Failed to create an EQ field.");
-
-        // Write the EQ switch/arguments after the field separator.
-        // The field code will become: EQ \f(1,2)
+        // Write the EQ argument (a simple fraction) after the field separator.
         builder.MoveTo(eqField.Separator);
         builder.Write(@"\f(1,2)");
 
-        // Return the builder to the paragraph that contains the field and start a new line.
-        builder.MoveTo(eqField.Start.ParentNode);
-        builder.Writeln();
-
-        // Ensure the field is up‑to‑date (optional but safe).
+        // Update the field so that its result is calculated (required for some versions).
         eqField.Update();
 
-        // Convert the EQ field to a real OfficeMath node.
+        // Return the builder to the start of the field (the field's parent paragraph).
+        builder.MoveTo(eqField.Start);
+
+        // Convert the EQ field to an OfficeMath node.
         OfficeMath officeMath = eqField.AsOfficeMath();
         if (officeMath == null)
-            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
 
         // Insert the OfficeMath node before the field start and remove the original field.
         eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
         eqField.Remove();
 
-        // Set the display type of all top‑level OfficeMath paragraphs to Inline.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath om in mathNodes)
+        // Ensure we are working with a top‑level equation (MathObjectType.OMathPara).
+        if (officeMath.MathObjectType == MathObjectType.OMathPara)
         {
-            if (om.MathObjectType == MathObjectType.OMathPara)
-                om.DisplayType = OfficeMathDisplayType.Inline;
+            // Set the display mode to Inline for a compact layout.
+            officeMath.DisplayType = OfficeMathDisplayType.Inline;
         }
 
         // Save the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "OfficeMathInline.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
+        doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

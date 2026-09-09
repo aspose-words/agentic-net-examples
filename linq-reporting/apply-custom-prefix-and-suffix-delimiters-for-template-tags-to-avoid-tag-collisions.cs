@@ -1,57 +1,60 @@
 using System;
-using System.Text;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for legacy encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        const string templatePath = "template.docx";
-        const string outputPath = "report.docx";
-
-        // -------------------------------------------------
-        // Create the template document programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Use default LINQ Reporting tags << >> to avoid tag collisions.
-        builder.Writeln("<<[person.Name]>> is <<[person.Age]>> years old.");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // Load the template back for reporting.
-        // -------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // Sample data source.
-        Person person = new Person
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Name = "John Doe",
-            Age = 30
+            Persons = new List<Person>
+            {
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
+            }
         };
 
-        // -------------------------------------------------
-        // Configure the ReportingEngine.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // Create a template document using the default delimiters << and >>.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Build the report using the root object name "person".
-        engine.BuildReport(reportDoc, person, "person");
+        // Write a foreach block with the correct LINQ Reporting syntax.
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>  Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+
+        // Create the reporting engine.
+        var engine = new ReportingEngine();
+
+        // Build the report. The root object is passed with the name "model"
+        // so the template can reference its members directly.
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        reportDoc.Save(outputPath);
+        reportDoc.Save("Report.docx");
     }
+}
+
+// Root data model referenced in the template as <<[model.Persons]>>.
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+// Simple data entity.
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
 }

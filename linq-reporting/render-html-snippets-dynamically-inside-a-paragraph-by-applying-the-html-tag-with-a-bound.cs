@@ -1,48 +1,47 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Model
+public class HtmlModel
 {
-    // HTML snippet to be rendered inside the paragraph.
-    public string HtmlSnippet { get; set; } = "<b>Default Bold</b> and <i>Default Italic</i>";
+    // HTML snippet that will be inserted into the paragraph.
+    public string HtmlSnippet { get; set; } = "<b>Bold Text</b> and <i>Italic Text</i>";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-        // ---------- Create the template document ----------
-        const string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a paragraph containing the LINQ Reporting tag that renders HTML.
-        // The tag uses the -html switch to treat the bound string as HTML.
+        // Insert a paragraph that contains a LINQ Reporting HTML tag.
+        // The tag will be replaced with the value of HtmlSnippet at build time.
         builder.Writeln("<<[model.HtmlSnippet] -html>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // ---------- Load the template and build the report ----------
-        var reportDoc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
 
-        // Prepare the data model with a dynamic HTML snippet.
-        var model = new Model
-        {
-            HtmlSnippet = "<p style='color:blue;'>This is <span style='font-weight:bold;'>dynamic</span> HTML content.</p>"
-        };
+        // Prepare the data source.
+        HtmlModel model = new HtmlModel();
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Create the reporting engine and generate the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
 
-        // Save the generated document.
-        const string outputPath = "output.docx";
-        reportDoc.Save(outputPath);
+        // Save the final document.
+        loadedTemplate.Save(reportPath);
     }
 }

@@ -7,21 +7,24 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input HTML files and output PDFs.
+        // Define folders for input HTML files and output PDF files.
         string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
         string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdf");
 
-        // Ensure the folders exist.
+        // Ensure clean state.
+        if (Directory.Exists(inputFolder))
+            Directory.Delete(inputFolder, true);
+        if (Directory.Exists(outputFolder))
+            Directory.Delete(outputFolder, true);
+
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample HTML files if the folder is empty.
-        if (Directory.GetFiles(inputFolder, "*.html").Length == 0)
+        // Create sample HTML files.
+        for (int i = 1; i <= 3; i++)
         {
-            File.WriteAllText(Path.Combine(inputFolder, "Sample1.html"),
-                "<html><body><h1>Sample 1</h1><p>This is the first sample HTML file.</p></body></html>");
-            File.WriteAllText(Path.Combine(inputFolder, "Sample2.html"),
-                "<html><body><h1>Sample 2</h1><p>This is the second sample HTML file.</p></body></html>");
+            string htmlContent = $"<html><body><h1>Sample Document {i}</h1><p>This is a test HTML file.</p></body></html>";
+            File.WriteAllText(Path.Combine(inputFolder, $"sample{i}.html"), htmlContent);
         }
 
         // Process each HTML file in the input folder.
@@ -30,19 +33,20 @@ public class Program
             // Load the HTML document.
             Document doc = new Document(htmlPath);
 
-            // Define a custom page size (width x height in points).
-            // Example: 500 points wide by 700 points high.
-            doc.FirstSection.PageSetup.PageWidth = 500;
-            doc.FirstSection.PageSetup.PageHeight = 700;
+            // Define a custom page size (e.g., 6 inches x 9 inches).
+            // Aspose.Words uses points (1 inch = 72 points).
+            const double inchesToPoints = 72.0;
+            doc.FirstSection.PageSetup.PageWidth = 6 * inchesToPoints;   // 432 points
+            doc.FirstSection.PageSetup.PageHeight = 9 * inchesToPoints;  // 648 points
 
-            // Configure PDF save options.
+            // Prepare PDF save options.
             PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
-            // Determine the output PDF file name.
+            // Determine output PDF path.
             string pdfFileName = Path.GetFileNameWithoutExtension(htmlPath) + ".pdf";
             string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Save the document as PDF using the custom options.
+            // Save the document as PDF with the custom page size.
             doc.Save(pdfPath, pdfOptions);
 
             // Verify that the PDF was created.
@@ -50,7 +54,7 @@ public class Program
                 throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
         }
 
-        // Optional: indicate completion (no interactive input required).
+        // Optional: indicate successful completion (no interactive prompts).
         Console.WriteLine("Batch conversion completed successfully.");
     }
 }

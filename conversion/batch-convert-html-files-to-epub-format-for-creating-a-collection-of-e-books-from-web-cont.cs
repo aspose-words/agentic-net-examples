@@ -8,52 +8,47 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output directories.
+        // Prepare input and output directories.
         string inputDir = "InputHtml";
         string outputDir = "OutputEpub";
 
-        // Ensure the directories exist.
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
         // Create sample HTML files.
-        string htmlFile1 = Path.Combine(inputDir, "Sample1.html");
-        string htmlContent1 = "<html><body><h1>First Document</h1><p>This is the first sample HTML file.</p></body></html>";
-        File.WriteAllText(htmlFile1, htmlContent1, Encoding.UTF8);
+        File.WriteAllText(Path.Combine(inputDir, "Sample1.html"),
+            "<html><body><h1>First Document</h1><p>This is the first sample.</p></body></html>", Encoding.UTF8);
+        File.WriteAllText(Path.Combine(inputDir, "Sample2.html"),
+            "<html><body><h1>Second Document</h1><p>This is the second sample.</p></body></html>", Encoding.UTF8);
 
-        string htmlFile2 = Path.Combine(inputDir, "Sample2.html");
-        string htmlContent2 = "<html><body><h1>Second Document</h1><p>This is the second sample HTML file.</p></body></html>";
-        File.WriteAllText(htmlFile2, htmlContent2, Encoding.UTF8);
-
-        // Process each HTML file in the input directory.
-        string[] htmlFiles = Directory.GetFiles(inputDir, "*.html");
-        foreach (string htmlPath in htmlFiles)
+        // Process each HTML file in the input folder.
+        foreach (string htmlFilePath in Directory.GetFiles(inputDir, "*.html"))
         {
             // Load the HTML document.
-            Document doc = new Document(htmlPath);
+            Document doc = new Document(htmlFilePath);
 
-            // Configure save options for EPUB.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions();
-            saveOptions.SaveFormat = SaveFormat.Epub;
-            saveOptions.Encoding = Encoding.UTF8;
-            // Optional: split the EPUB into parts at heading paragraphs.
-            saveOptions.DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph;
-            // Export document properties (optional).
-            saveOptions.ExportDocumentProperties = true;
+            // Configure save options for EPUB conversion.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Epub)
+            {
+                Encoding = Encoding.UTF8,
+                // Optional: split the EPUB into parts by heading paragraphs.
+                DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
+                ExportDocumentProperties = true
+            };
 
             // Determine the output EPUB file path.
-            string epubFileName = Path.ChangeExtension(Path.GetFileName(htmlPath), ".epub");
-            string epubPath = Path.Combine(outputDir, epubFileName);
+            string epubFileName = Path.GetFileNameWithoutExtension(htmlFilePath) + ".epub";
+            string epubFilePath = Path.Combine(outputDir, epubFileName);
 
             // Save the document as EPUB.
-            doc.Save(epubPath, saveOptions);
+            doc.Save(epubFilePath, saveOptions);
 
             // Verify that the EPUB file was created.
-            if (!File.Exists(epubPath))
-                throw new InvalidOperationException($"EPUB file was not created: {epubPath}");
+            if (!File.Exists(epubFilePath))
+                throw new InvalidOperationException($"EPUB file was not created: {epubFilePath}");
         }
 
-        // Indicate completion.
-        Console.WriteLine("Batch conversion of HTML files to EPUB completed successfully.");
+        // Indicate successful completion.
+        Console.WriteLine("Batch conversion completed successfully.");
     }
 }

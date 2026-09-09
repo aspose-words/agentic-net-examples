@@ -1,62 +1,45 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Model class exposed to the template.
-    public class ReportModel
+    public static void Main()
     {
-        // Initialized to avoid nullable warnings.
-        public DateTime CurrentUtcNow { get; set; } = DateTime.UtcNow;
-    }
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Ensure the working directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+        // -------------------------------------------------
+        // 1. Create a template document with a LINQ Reporting tag.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // The tag <<[DateTime.UtcNow]>> will be replaced by the current UTC time.
+        builder.Writeln("Current UTC time: <<[DateTime.UtcNow]>>");
 
-            // Insert a tag that references the model's CurrentUtcNow property.
-            builder.Writeln("Current UTC time: <<[model.CurrentUtcNow]>>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // -------------------------------------------------
+        // 2. Load the template and build the report.
+        // -------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+        // Configure the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel();
+        // Register the DateTime type so that static members can be accessed in the template.
+        engine.KnownTypes.Add(typeof(DateTime));
 
-            // Create and configure the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // No special options required.
+        // Build the report. No data source is required because we only use a static member.
+        // Passing a dummy object satisfies the method signature.
+        engine.BuildReport(loadedTemplate, new object());
 
-            // Build the report using the root object name "model".
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // -----------------------------------------------------------------
-            // 3. Save the generated report.
-            // -----------------------------------------------------------------
-            string reportPath = Path.Combine(outputDir, "Report.docx");
-            loadedTemplate.Save(reportPath);
-
-            // Inform the user where the files are located (no interactive input required).
-            Console.WriteLine($"Template saved to: {templatePath}");
-            Console.WriteLine($"Report saved to:   {reportPath}");
-        }
+        // -------------------------------------------------
+        // 3. Save the generated report.
+        // -------------------------------------------------
+        loadedTemplate.Save(reportPath);
     }
 }

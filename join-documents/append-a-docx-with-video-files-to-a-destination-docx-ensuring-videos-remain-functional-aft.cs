@@ -7,56 +7,72 @@ public class Program
 {
     public static void Main()
     {
-        // Define a folder for all generated files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Paths for the dummy video, source DOCX, destination DOCX, merged DOCX and final PDF.
-        string videoPath = Path.Combine(artifactsDir, "sample.mp4");
-        string sourceDocPath = Path.Combine(artifactsDir, "source.docx");
-        string destDocPath = Path.Combine(artifactsDir, "destination.docx");
-        string mergedDocPath = Path.Combine(artifactsDir, "merged.docx");
-        string mergedPdfPath = Path.Combine(artifactsDir, "merged.pdf");
-
-        // Create a placeholder video file (the content is irrelevant for the demo).
+        // -----------------------------------------------------------------
+        // 1. Create a dummy video file (placeholder content).
+        // -----------------------------------------------------------------
+        string videoPath = Path.Combine(outputDir, "sample.mp4");
+        // Write a few bytes to make the file exist; real video content is not required for the demo.
         File.WriteAllBytes(videoPath, new byte[] { 0x00, 0x01, 0x02, 0x03 });
 
-        // -------------------- Create source document with an embedded video --------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        // -----------------------------------------------------------------
+        // 2. Create the source DOCX that contains the video.
+        // -----------------------------------------------------------------
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
         srcBuilder.Writeln("Source document with an embedded video:");
-        // Embed the video as an OLE object (not a link, not an icon).
-        srcBuilder.InsertOleObject(videoPath, false, false, null);
-        sourceDoc.Save(sourceDocPath);
+        // Embed the video as an OLE object. Use the overload that accepts (fileName, isLinked, asIcon, presentation).
+        srcBuilder.InsertOleObject(videoPath, isLinked: false, asIcon: false, presentation: null);
+        string srcPath = Path.Combine(outputDir, "Source.docx");
+        srcDoc.Save(srcPath, SaveFormat.Docx);
 
-        // -------------------- Create destination document --------------------
-        Document destDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(destDoc);
-        dstBuilder.Writeln("Destination document content.");
-        destDoc.Save(destDocPath);
+        // -----------------------------------------------------------------
+        // 3. Create the destination DOCX.
+        // -----------------------------------------------------------------
+        Document dstDoc = new Document();
+        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
+        dstBuilder.Writeln("Destination document (will receive the source).");
+        string dstPath = Path.Combine(outputDir, "Destination.docx");
+        dstDoc.Save(dstPath, SaveFormat.Docx);
 
-        // -------------------- Load documents and append --------------------
-        Document src = new Document(sourceDocPath);
-        Document dst = new Document(destDocPath);
-        // Append the source document while preserving its formatting (including the OLE video).
-        dst.AppendDocument(src, ImportFormatMode.KeepSourceFormatting);
-        dst.Save(mergedDocPath);
+        // -----------------------------------------------------------------
+        // 4. Append the source document to the destination document.
+        // -----------------------------------------------------------------
+        // Load the documents again to simulate a real‑world scenario.
+        Document destination = new Document(dstPath);
+        Document source = new Document(srcPath);
+        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
+        string mergedPath = Path.Combine(outputDir, "Merged.docx");
+        destination.Save(mergedPath, SaveFormat.Docx);
 
-        // -------------------- Convert merged document to PDF with video embedded --------------------
+        // -----------------------------------------------------------------
+        // 5. Convert the merged document to PDF, embedding the video attachment.
+        // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Embed OLE objects (the video) as annotations so they remain functional in the PDF.
             AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations
         };
-        dst.Save(mergedPdfPath, pdfOptions);
+        string pdfPath = Path.Combine(outputDir, "Merged.pdf");
+        destination.Save(pdfPath, pdfOptions);
 
-        // -------------------- Validation --------------------
-        if (!File.Exists(mergedDocPath))
-            throw new InvalidOperationException("Merged DOCX was not created.");
+        // -----------------------------------------------------------------
+        // 6. Validate that all output files were created.
+        // -----------------------------------------------------------------
+        ValidateFileExists(srcPath);
+        ValidateFileExists(dstPath);
+        ValidateFileExists(mergedPath);
+        ValidateFileExists(pdfPath);
+        ValidateFileExists(videoPath);
+    }
 
-        if (!File.Exists(mergedPdfPath))
-            throw new InvalidOperationException("Merged PDF was not created.");
-
-        // Program ends without waiting for user input.
+    private static void ValidateFileExists(string path)
+    {
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException($"Expected file was not created: {path}");
+        }
     }
 }

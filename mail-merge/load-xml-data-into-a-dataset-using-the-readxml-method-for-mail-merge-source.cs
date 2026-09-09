@@ -3,56 +3,56 @@ using System.Data;
 using System.IO;
 using Aspose.Words;
 
-namespace AsposeWordsMailMergeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Prepare a simple XML file that will be used as the mail merge data source.
-            string xmlContent = @"
-<Root>
-    <Person>
-        <FullName>Thomas Hardy</FullName>
-        <Address>120 Hanover Sq., London</Address>
-    </Person>
-    <Person>
-        <FullName>Paolo Accorti</FullName>
-        <Address>Via Monte Bianco 34, Torino</Address>
-    </Person>
-</Root>";
-            string xmlPath = Path.Combine(Path.GetTempPath(), "people.xml");
-            File.WriteAllText(xmlPath, xmlContent);
+        // Prepare a simple XML file that represents a DataSet with one table named "Customers".
+        string xmlContent =
+            @"<?xml version=""1.0"" encoding=""utf-8""?>"
+          + @"<DataSet>"
+          + @"  <Customers>"
+          + @"    <Customer>"
+          + @"      <CustomerName>Thomas Hardy</CustomerName>"
+          + @"      <Address>120 Hanover Sq., London</Address>"
+          + @"    </Customer>"
+          + @"    <Customer>"
+          + @"      <CustomerName>Paolo Accorti</CustomerName>"
+          + @"      <Address>Via Monte Bianco 34, Torino</Address>"
+          + @"    </Customer>"
+          + @"  </Customers>"
+          + @"</DataSet>";
 
-            // Load the XML data into a DataSet using ReadXml.
-            DataSet dataSet = new DataSet();
-            dataSet.ReadXml(xmlPath);
+        // Write the XML to a temporary file.
+        string xmlPath = Path.Combine(Path.GetTempPath(), "Customers.xml");
+        File.WriteAllText(xmlPath, xmlContent);
 
-            // Create a new blank document and add mail merge fields.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Load the XML data into a DataSet using ReadXml.
+        DataSet dataSet = new DataSet();
+        dataSet.ReadXml(xmlPath);
 
-            // Define a mail merge region that matches the DataTable name ("Person").
-            builder.InsertField("MERGEFIELD TableStart:Person");
-            builder.Writeln(); // optional line break
+        // Create a new blank Word document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert the fields that will be populated from the XML data.
-            builder.InsertField("MERGEFIELD FullName");
-            builder.Write(" - ");
-            builder.InsertField("MERGEFIELD Address");
-            builder.Writeln(); // optional line break
+        // Insert a mail‑merge region that corresponds to the "Customers" table.
+        // TableStart and TableEnd fields define the region boundaries.
+        builder.InsertField(" MERGEFIELD TableStart:Customers");
+        builder.InsertField(" MERGEFIELD CustomerName");
+        builder.Write(" - ");
+        builder.InsertField(" MERGEFIELD Address");
+        builder.InsertField(" MERGEFIELD TableEnd:Customers");
 
-            // End of the mail merge region.
-            builder.InsertField("MERGEFIELD TableEnd:Person");
+        // Perform mail merge using the DataSet that was loaded from XML.
+        // ExecuteWithRegions will process the region defined above.
+        doc.MailMerge.ExecuteWithRegions(dataSet);
 
-            // Perform the mail merge using the DataSet as the source.
-            doc.MailMerge.ExecuteWithRegions(dataSet);
+        // Save the resulting document.
+        string outputPath = Path.Combine(Path.GetTempPath(), "MailMergeResult.docx");
+        doc.Save(outputPath);
 
-            // Save the merged document.
-            string outputPath = Path.Combine(Path.GetTempPath(), "MergedDocument.docx");
-            doc.Save(outputPath);
-
-            // The example finishes without waiting for user input.
-        }
+        // Inform the user where the file was saved.
+        Console.WriteLine("Mail merge completed. Document saved to:");
+        Console.WriteLine(outputPath);
     }
 }

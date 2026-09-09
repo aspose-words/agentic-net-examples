@@ -12,43 +12,38 @@ public class Program
 
         // Insert a text input form field.
         builder.Write("Enter your name: ");
-        FormField textField = builder.InsertTextInput(
-            "UserName",                     // field name
-            TextFormFieldType.Regular,      // field type
-            "",                             // format (none)
-            "John Doe",                     // placeholder text
-            50);                            // max length
+        FormField textField = builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
+        textField.Result = "John Doe";
 
         // Insert a checkbox form field.
         builder.InsertBreak(BreakType.ParagraphBreak);
         builder.Write("Accept terms: ");
-        FormField checkBox = builder.InsertCheckBox(
-            "AcceptTerms",                  // field name
-            false,                          // default unchecked
-            15);                            // size in points
+        FormField checkBox = builder.InsertCheckBox("AcceptTerms", false, 15);
+        checkBox.Checked = false;
 
         // Insert a combo box (dropdown) form field.
         builder.InsertBreak(BreakType.ParagraphBreak);
-        builder.Write("Select a country: ");
-        FormField comboBox = builder.InsertComboBox(
-            "Country",                      // field name
-            new[] { "USA", "Canada", "UK" },// items
-            0);                             // default selected index
+        builder.Write("Select a fruit: ");
+        FormField comboBox = builder.InsertComboBox("FruitChoice", new[] { "Apple", "Banana", "Cherry" }, 0);
+        comboBox.Result = "Apple";
 
-        // Ensure that at least one form field exists.
-        FormFieldCollection formFields = doc.Range.FormFields;
-        if (formFields.Count == 0)
-            throw new InvalidOperationException("The document does not contain any form fields.");
-
-        // Iterate through all form fields and log their Result values.
-        foreach (FormField field in formFields)
+        // Ensure the document contains at least one form field.
+        if (doc.Range.FormFields.Count == 0)
         {
-            // Guard against null Result.
-            string result = field.Result ?? string.Empty;
-            Console.WriteLine($"Field Name: {field.Name}, Result: \"{result}\"");
+            throw new InvalidOperationException("The document does not contain any form fields.");
         }
 
-        // Save the document (required by the feature rules).
-        doc.Save("FormFieldsOutput.docx");
+        // Iterate through all form fields and log their Result values.
+        foreach (FormField field in doc.Range.FormFields)
+        {
+            if (field != null)
+            {
+                // For debugging purposes, output the field name and its current result.
+                Console.WriteLine($"Field Name: {field.Name}, Result: {field.Result}");
+            }
+        }
+
+        // Save the document (even though we only read fields, saving satisfies the lifecycle rule).
+        doc.Save("FormFields.docx");
     }
 }

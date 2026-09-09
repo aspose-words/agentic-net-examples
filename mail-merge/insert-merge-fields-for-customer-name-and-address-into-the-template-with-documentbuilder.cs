@@ -1,36 +1,35 @@
 using System;
 using System.Data;
-using System.IO;
 using Aspose.Words;
+using Aspose.Words.Fields;
 
-namespace MailMergeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert MERGEFIELDs for CustomerName and Address.
-            builder.InsertField(" MERGEFIELD CustomerName ");
-            builder.Writeln(); // Move to next line.
-            builder.InsertField(" MERGEFIELD Address ");
+        // Insert a MERGEFIELD for the customer's name.
+        builder.InsertField(" MERGEFIELD CustomerName ");
 
-            // Prepare a data source with two records.
-            DataTable table = new DataTable("Customers");
-            table.Columns.Add("CustomerName");
-            table.Columns.Add("Address");
-            table.Rows.Add("Thomas Hardy", "120 Hanover Sq., London");
-            table.Rows.Add("Paolo Accorti", "Via Monte Bianco 34, Torino");
+        // Insert a line break.
+        builder.Writeln();
 
-            // Execute the mail merge using the DataTable.
-            doc.MailMerge.Execute(table);
+        // Insert a MERGEFIELD for the customer's address.
+        builder.InsertField(" MERGEFIELD Address ");
 
-            // Save the resulting document to the executable's folder.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MailMergeResult.docx");
-            doc.Save(outputPath);
-        }
+        // Prepare a simple data source with one record.
+        DataTable table = new DataTable("Customers");
+        table.Columns.Add("CustomerName");
+        table.Columns.Add("Address");
+        table.Rows.Add("Thomas Hardy", "120 Hanover Sq., London");
+
+        // Perform the mail merge.
+        doc.MailMerge.Execute(table);
+
+        // Save the result to a file in the current directory.
+        doc.Save("MergedDocument.docx");
     }
 }

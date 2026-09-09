@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using Aspose.Words;
@@ -8,11 +9,11 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to insert form fields.
+        // Create a new document and add checkbox form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three check box form fields with distinct names.
+        // Insert three check boxes with distinct names.
         builder.Write("Option A: ");
         builder.InsertCheckBox("CheckBox1", false, 0);
         builder.InsertParagraph();
@@ -32,31 +33,31 @@ public class Program
             ""CheckBox3"": true
         }";
 
-        // Parse the JSON configuration.
-        using JsonDocument jsonDoc = JsonDocument.Parse(jsonConfig);
-        JsonElement root = jsonDoc.RootElement;
+        // Parse the JSON into a dictionary.
+        Dictionary<string, bool> config = JsonSerializer.Deserialize<Dictionary<string, bool>>(jsonConfig);
 
-        // Update each checkbox according to the JSON data.
-        foreach (JsonProperty property in root.EnumerateObject())
+        // Update each form field according to the configuration.
+        foreach (KeyValuePair<string, bool> kvp in config)
         {
-            string fieldName = property.Name;
-            bool shouldBeChecked = property.Value.GetBoolean();
+            // Retrieve the form field by name.
+            FormField field = doc.Range.FormFields[kvp.Key];
+            if (field == null)
+                throw new InvalidOperationException($"Form field '{kvp.Key}' not found.");
 
-            // Retrieve the form field by name; throw if it does not exist.
-            FormField formField = doc.Range.FormFields[fieldName];
-            if (formField == null)
-                throw new InvalidOperationException($"Form field '{fieldName}' not found.");
+            // Ensure the field is a checkbox.
+            if (field.Type != FieldType.FieldFormCheckBox)
+                throw new InvalidOperationException($"Form field '{kvp.Key}' is not a checkbox.");
 
-            // Ensure the field is a checkbox before setting the Checked property.
-            if (formField.Type != FieldType.FieldFormCheckBox)
-                throw new InvalidOperationException($"Form field '{fieldName}' is not a checkbox.");
+            // Set the checked state.
+            field.Checked = kvp.Value;
 
-            formField.Checked = shouldBeChecked;
+            // Validate the assignment.
+            if (field.Checked != kvp.Value)
+                throw new InvalidOperationException($"Failed to set checked state for '{kvp.Key}'.");
         }
 
-        // Update fields (not strictly required for checkboxes but follows best practice) and save the document.
-        doc.UpdateFields();
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UpdatedFormFields.docx");
+        // Save the updated document.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "UpdatedFormFields.docx");
         doc.Save(outputPath);
     }
 }

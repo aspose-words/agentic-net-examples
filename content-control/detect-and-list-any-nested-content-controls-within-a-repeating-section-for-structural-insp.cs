@@ -6,118 +6,99 @@ using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
 
-namespace ContentControlInspection
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Build a repeating section content control.
+        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
         {
-            // Create a sample document with a repeating section that contains nested content controls.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Title = "RepeatingSection",
+            Tag = "rep-section"
+        };
 
-            // Create the outer repeating section (block level).
-            StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
-            {
-                Title = "RepeatingSection",
-                Tag = "rep-section"
-            };
-            // Add a placeholder paragraph inside the repeating section.
-            Paragraph placeholderParagraph = new Paragraph(doc);
-            placeholderParagraph.AppendChild(new Run(doc, "Repeating section placeholder"));
-            repeatingSection.AppendChild(placeholderParagraph);
-            doc.FirstSection.Body.AppendChild(repeatingSection);
+        // Add a simple paragraph inside the repeating section.
+        Paragraph startParagraph = new Paragraph(doc);
+        startParagraph.AppendChild(new Run(doc, "Repeating item start"));
+        repeatingSection.AppendChild(startParagraph);
 
-            // Create a repeating section item.
-            StructuredDocumentTag repeatingItem = new StructuredDocumentTag(doc, SdtType.RepeatingSectionItem, MarkupLevel.Block);
-            repeatingSection.AppendChild(repeatingItem);
+        // Add a nested block-level rich text content control.
+        StructuredDocumentTag nestedBlock = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "NestedBlock",
+            Tag = "nested-block"
+        };
+        Paragraph blockParagraph = new Paragraph(doc);
+        blockParagraph.AppendChild(new Run(doc, "Nested block content"));
+        nestedBlock.AppendChild(blockParagraph);
+        repeatingSection.AppendChild(nestedBlock);
 
-            // Inside the item, add a nested plain‑text content control (inline level).
-            StructuredDocumentTag nestedPlain = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-            {
-                Title = "NestedPlain",
-                Tag = "nested-plain"
-            };
-            nestedPlain.RemoveAllChildren();
-            nestedPlain.AppendChild(new Run(doc, "Nested value"));
+        // Add a nested inline plain text content control inside a paragraph.
+        Paragraph inlineParagraph = new Paragraph(doc);
+        StructuredDocumentTag nestedInline = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "NestedInline",
+            Tag = "nested-inline"
+        };
+        nestedInline.RemoveAllChildren();
+        nestedInline.AppendChild(new Run(doc, "Inline content"));
+        inlineParagraph.AppendChild(nestedInline);
+        repeatingSection.AppendChild(inlineParagraph);
 
-            // The inline SDT must be placed inside a paragraph.
-            Paragraph innerParagraph = new Paragraph(doc);
-            innerParagraph.AppendChild(new Run(doc, "Before nested "));
-            innerParagraph.AppendChild(nestedPlain);
-            innerParagraph.AppendChild(new Run(doc, " after nested."));
-            repeatingItem.AppendChild(innerParagraph);
+        // Insert the repeating section into the document body.
+        doc.FirstSection.Body.AppendChild(repeatingSection);
 
-            // Save the document to disk.
-            const string docPath = "sample.docx";
-            doc.Save(docPath);
+        // Save the sample document.
+        const string docPath = "NestedRepeatingSection.docx";
+        doc.Save(docPath);
 
-            // Load the document back for inspection.
-            Document loadedDoc = new Document(docPath);
+        // Detect nested content controls within each repeating section.
+        var report = new List<NestedControlInfo>();
 
-            // Find all repeating sections.
-            List<RepeatingSectionInfo> report = new List<RepeatingSectionInfo>();
-            IEnumerable<StructuredDocumentTag> repeatingSections = loadedDoc
-                .GetChildNodes(NodeType.StructuredDocumentTag, true)
+        IEnumerable<StructuredDocumentTag> repeatingControls = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .Where(sdt => sdt.SdtType == SdtType.RepeatingSection);
+
+        foreach (StructuredDocumentTag repeating in repeatingControls)
+        {
+            // Find all descendant StructuredDocumentTag nodes that are not the repeating section itself.
+            IEnumerable<StructuredDocumentTag> nestedControls = repeating.GetChildNodes(NodeType.StructuredDocumentTag, true)
                 .OfType<StructuredDocumentTag>()
-                .Where(sdt => sdt.SdtType == SdtType.RepeatingSection);
+                .Where(sdt => sdt != repeating);
 
-            foreach (StructuredDocumentTag repSection in repeatingSections)
+            foreach (StructuredDocumentTag nested in nestedControls)
             {
-                // Gather nested content controls inside this repeating section.
-                List<ControlInfo> nestedControls = repSection
-                    .GetChildNodes(NodeType.StructuredDocumentTag, true)
-                    .OfType<StructuredDocumentTag>()
-                    .Select(sdt => new ControlInfo
-                    {
-                        Title = sdt.Title ?? string.Empty,
-                        Tag = sdt.Tag ?? string.Empty,
-                        Type = sdt.SdtType.ToString()
-                    })
-                    .ToList();
-
-                // Add information about this repeating section to the report.
-                report.Add(new RepeatingSectionInfo
+                report.Add(new NestedControlInfo
                 {
-                    Title = repSection.Title ?? string.Empty,
-                    Tag = repSection.Tag ?? string.Empty,
-                    NestedControls = nestedControls
+                    ParentRepeatingTitle = repeating.Title,
+                    ParentRepeatingTag = repeating.Tag,
+                    NestedTitle = nested.Title,
+                    NestedTag = nested.Tag,
+                    NestedType = nested.SdtType.ToString()
                 });
             }
-
-            // Serialize the inspection result to JSON.
-            string json = JsonConvert.SerializeObject(report, Formatting.Indented);
-            const string jsonPath = "nestedControls.json";
-            File.WriteAllText(jsonPath, json);
-
-            // Output the result to the console.
-            Console.WriteLine("Nested content controls within repeating sections:");
-            foreach (RepeatingSectionInfo sectionInfo in report)
-            {
-                Console.WriteLine($"Repeating Section - Title: {sectionInfo.Title}, Tag: {sectionInfo.Tag}");
-                foreach (ControlInfo ctrl in sectionInfo.NestedControls)
-                {
-                    Console.WriteLine($"  Nested Control - Title: {ctrl.Title}, Tag: {ctrl.Tag}, Type: {ctrl.Type}");
-                }
-            }
-
-            Console.WriteLine($"Inspection data saved to '{jsonPath}'.");
         }
 
-        // Helper class to hold information about a nested control.
-        private class ControlInfo
-        {
-            public string Title { get; set; } = string.Empty;
-            public string Tag { get; set; } = string.Empty;
-            public string Type { get; set; } = string.Empty;
-        }
+        // Serialize the inspection result to JSON.
+        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
+        const string jsonPath = "NestedControls.json";
+        File.WriteAllText(jsonPath, json);
 
-        // Helper class to hold information about a repeating section and its nested controls.
-        private class RepeatingSectionInfo
-        {
-            public string Title { get; set; } = string.Empty;
-            public string Tag { get; set; } = string.Empty;
-            public List<ControlInfo> NestedControls { get; set; } = new List<ControlInfo>();
-        }
+        // Output the result to the console.
+        Console.WriteLine("Nested content controls detected within repeating sections:");
+        Console.WriteLine(json);
+    }
+
+    // Helper class for JSON serialization.
+    private class NestedControlInfo
+    {
+        public string ParentRepeatingTitle { get; set; } = string.Empty;
+        public string ParentRepeatingTag { get; set; } = string.Empty;
+        public string NestedTitle { get; set; } = string.Empty;
+        public string NestedTag { get; set; } = string.Empty;
+        public string NestedType { get; set; } = string.Empty;
     }
 }

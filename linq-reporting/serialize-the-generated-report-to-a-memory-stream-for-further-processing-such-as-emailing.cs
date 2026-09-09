@@ -9,63 +9,50 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document in memory.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a blank document that will serve as the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Simple title.
-        builder.Writeln("Order Report");
-        builder.Writeln("Customer: <<[model.CustomerName]>>");
-        builder.Writeln();
-
-        // LINQ Reporting foreach block to list items.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item: <<[item.Name]>> - Qty: <<[item.Quantity]>>");
+        // Insert LINQ Reporting tags into the template.
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report using the data model.
+        // Prepare sample data.
+        ReportModel model = new ReportModel
+        {
+            Persons = new List<Person>
+            {
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob",   Age = 45 }
+            }
+        };
+
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        OrderReport model = CreateSampleModel();
-        engine.BuildReport(template, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Serialize the generated report to a memory stream (e.g., for emailing).
         using (MemoryStream reportStream = new MemoryStream())
         {
-            template.Save(reportStream, SaveFormat.Docx);
-            // The stream now contains the DOCX bytes.
-            Console.WriteLine($"Report generated. Stream length: {reportStream.Length} bytes");
-            // Reset position if the stream will be read later.
-            reportStream.Position = 0;
-            // Further processing such as attaching to an email would use 'reportStream'.
+            doc.Save(reportStream, SaveFormat.Docx);
+            reportStream.Position = 0; // Reset position for downstream consumers.
+
+            // Example usage: display the size of the generated report.
+            Console.WriteLine($"Report generated. Stream length: {reportStream.Length} bytes.");
         }
     }
+}
 
-    // Creates a sample data model for the report.
-    private static OrderReport CreateSampleModel()
-    {
-        return new OrderReport
-        {
-            CustomerName = "John Doe",
-            Items = new()
-            {
-                new Item { Name = "Apple", Quantity = 3 },
-                new Item { Name = "Banana", Quantity = 5 },
-                new Item { Name = "Orange", Quantity = 2 }
-            }
-        };
-    }
+// Wrapper class that matches the root object name used in BuildReport.
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
-    // Root data model referenced in the template as 'model'.
-    public class OrderReport
-    {
-        public string CustomerName { get; set; } = "";
-        public List<Item> Items { get; set; } = new();
-    }
-
-    // Item model used inside the foreach loop.
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public int Quantity { get; set; }
-    }
+// Simple data model referenced by the template tags.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

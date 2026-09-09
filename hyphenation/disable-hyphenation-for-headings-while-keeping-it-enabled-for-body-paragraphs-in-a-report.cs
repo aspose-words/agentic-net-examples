@@ -7,72 +7,65 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the temporary hyphenation dictionary.
-        const string dictPath = "hyph_en_US.dic";
+        // Paths for the dictionary and the output PDF.
+        const string dictionaryPath = "hyph_en_US.dic";
+        const string outputPath = "Report.pdf";
 
-        // Create a minimal English hyphenation dictionary.
-        // The format is: first line "UTF-8", then word=hyphenated-pieces per line.
-        File.WriteAllText(dictPath,
-            "UTF-8\n" +
-            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n");
+        // Create a minimal hyphenation dictionary for English (US).
+        // The format: first line is the encoding, subsequent lines are word=hyphenation-points.
+        File.WriteAllText(dictionaryPath,
+@"UTF-8
+extraordinarycharacteristically=ex-tra-or-di-nary-char-ac-ter-is-ti-cal-ly
+internationalization=in-ter-na-tion-al-i-za-tion
+communication=com-mu-ni-ca-tion");
 
-        // Register the dictionary for the "en-US" locale.
-        Hyphenation.RegisterDictionary("en-US", dictPath);
+        // Register the dictionary so that Aspose.Words can hyphenate English text.
+        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Narrow the page width so that long words need to wrap and hyphenate.
-        // Width is in points (1 point = 1/72 inch). 200 points ≈ 2.78 inches.
-        doc.FirstSection.PageSetup.PageWidth = 200;
+        // Enable automatic hyphenation for the whole document.
+        doc.HyphenationOptions.AutoHyphenation = true;
+        // Optional: tweak hyphenation settings.
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
+
+        // Narrow the page width to force line wrapping and hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.17 inches)
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Enable automatic hyphenation for the whole document.
-        doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 360; // 0.25 inch
-
-        // ---------- Headings (hyphenation disabled) ----------
-        // Heading 1
+        // ---------- Heading (hyphenation disabled) ----------
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.ParagraphFormat.SuppressAutoHyphens = true; // Disable hyphenation for this paragraph.
-        builder.Writeln("Heading 1: This is a very long heading that could be hyphenated but we suppress it.");
-
-        // Heading 2
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        // Suppress hyphenation for this heading.
         builder.ParagraphFormat.SuppressAutoHyphens = true;
-        builder.Writeln("Heading 2: Another lengthy heading that should stay on one line without hyphens.");
+        builder.Font.Size = 24;
+        builder.Writeln("Heading: extraordinarycharacteristically internationalization communication");
 
-        // ---------- Body paragraphs (hyphenation enabled) ----------
-        // Reset to normal style and enable hyphenation.
+        // Add a blank line between heading and body.
+        builder.Writeln();
+
+        // ---------- Body paragraph (hyphenation enabled) ----------
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        // Ensure hyphenation is allowed for body paragraphs.
         builder.ParagraphFormat.SuppressAutoHyphens = false;
-
-        // Body paragraph containing words that can be hyphenated.
+        builder.Font.Size = 12;
         builder.Writeln(
-            "Body paragraph: The word extraordinarycharacteristically demonstrates how hyphenation works. " +
-            "Another example is internationalization which may also be split across lines. " +
-            "Communication between components often requires clear formatting.");
-
-        // Add a second body paragraph to ensure multiple lines.
-        builder.Writeln(
-            "Additional body text: Aspose.Words provides powerful APIs for document generation, " +
-            "including automatic hyphenation, style management, and layout control.");
+            "Body: The quick brown fox jumps over the lazy dog. " +
+            "This paragraph contains the word extraordinarycharacteristically which is long enough to be hyphenated " +
+            "when it reaches the end of the line. The same applies to internationalization and communication.");
 
         // Save the document to PDF.
-        const string outputPath = "HyphenationReport.pdf";
         doc.Save(outputPath, SaveFormat.Pdf);
 
         // Verify that the output file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The expected PDF output was not created.");
+            throw new InvalidOperationException($"Expected output file '{outputPath}' was not created.");
 
         // Clean up the temporary dictionary file.
-        if (File.Exists(dictPath))
-            File.Delete(dictPath);
+        if (File.Exists(dictionaryPath))
+            File.Delete(dictionaryPath);
     }
 }

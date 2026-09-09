@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -8,82 +7,77 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the files.
-        string csvPath = "data.csv";
-        string templatePath = "template.docx";
-        string outputPath = "filled.docx";
+        // Paths for the temporary files.
+        const string csvPath = "data.csv";
+        const string templatePath = "template.docx";
+        const string outputPath = "output.docx";
 
-        // Create a simple CSV file with field names and values.
-        // Format: FieldName,Value
-        File.WriteAllLines(csvPath, new[]
-        {
-            "FirstName,John",
-            "LastName,Doe",
-            "Email,john.doe@example.com"
-        });
+        // -----------------------------------------------------------------
+        // 1. Create a simple CSV file that will be used as the data source.
+        // -----------------------------------------------------------------
+        File.WriteAllText(csvPath,
+            "FirstName,LastName,Email\n" +
+            "John,Doe,john.doe@example.com");
 
-        // Build a template document that contains text input form fields
-        // matching the CSV field names.
+        // ---------------------------------------------------------------
+        // 2. Build a Word template containing text input form fields.
+        // ---------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Helper to insert a labeled text input field.
-        void InsertLabeledField(string fieldName, string placeholder)
-        {
-            builder.Writeln($"{fieldName}:");
-            // Insert a text input form field with a placeholder and no length limit.
-            builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", placeholder, 0);
-            builder.Writeln(); // Add a blank line after each field.
-        }
+        builder.Write("First Name: ");
+        builder.InsertTextInput("FirstName", TextFormFieldType.Regular, "", "", 50);
+        builder.Writeln();
 
-        InsertLabeledField("FirstName", "Enter first name");
-        InsertLabeledField("LastName", "Enter last name");
-        InsertLabeledField("Email", "Enter email address");
+        builder.Write("Last Name: ");
+        builder.InsertTextInput("LastName", TextFormFieldType.Regular, "", "", 50);
+        builder.Writeln();
 
-        // Save the template to disk.
+        builder.Write("Email: ");
+        builder.InsertTextInput("Email", TextFormFieldType.Regular, "", "", 100);
+        builder.Writeln();
+
+        // Save the template for later loading.
         templateDoc.Save(templatePath);
 
-        // Load the template document.
+        // ---------------------------------------------------------------
+        // 3. Load the template and populate its form fields from CSV.
+        // ---------------------------------------------------------------
         Document doc = new Document(templatePath);
-
-        // Read CSV data into a dictionary.
-        var data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var line in File.ReadAllLines(csvPath))
-        {
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            var parts = line.Split(new[] { ',' }, 2);
-            if (parts.Length != 2)
-                continue; // Skip malformed lines.
-
-            string key = parts[0].Trim();
-            string value = parts[1].Trim();
-            data[key] = value;
-        }
-
-        // Ensure the document contains at least one form field.
         FormFieldCollection formFields = doc.Range.FormFields;
-        if (formFields.Count == 0)
-            throw new InvalidOperationException("The document does not contain any form fields.");
 
-        // Populate each form field with the corresponding CSV value.
-        foreach (var kvp in data)
+        // Read CSV content.
+        string[] csvLines = File.ReadAllLines(csvPath);
+        if (csvLines.Length < 2)
+            throw new InvalidOperationException("CSV file must contain a header and at least one data row.");
+
+        // Header defines the mapping between CSV columns and form field names.
+        string[] headers = csvLines[0].Split(',');
+
+        // Use the first data row for this example.
+        string[] values = csvLines[1].Split(',');
+
+        if (headers.Length != values.Length)
+            throw new InvalidOperationException("CSV header and data column counts do not match.");
+
+        // Populate each form field.
+        for (int i = 0; i < headers.Length; i++)
         {
-            // Retrieve the form field by its bookmark/name.
-            FormField field = formFields[kvp.Key];
+            string fieldName = headers[i];
+            string fieldValue = values[i];
+
+            // Validate field existence.
+            FormField field = formFields[fieldName];
             if (field == null)
-                throw new KeyNotFoundException($"Form field '{kvp.Key}' not found in the document.");
+                throw new InvalidOperationException($"Form field '{fieldName}' not found in the document.");
 
-            // For text input fields, use SetTextInputValue to apply formatting.
-            field.SetTextInputValue(kvp.Value);
-
-            // Validate that the value was set.
-            if (!string.Equals(field.Result, kvp.Value, StringComparison.Ordinal))
-                throw new InvalidOperationException($"Failed to set value for field '{kvp.Key}'.");
+            // Set the value. Using SetTextInputValue applies any format (none in this case).
+            field.SetTextInputValue(fieldValue);
         }
 
-        // Save the filled document.
+        // ---------------------------------------------------------------
+        // 4. Save the populated document.
+        // ---------------------------------------------------------------
         doc.Save(outputPath);
     }
 }

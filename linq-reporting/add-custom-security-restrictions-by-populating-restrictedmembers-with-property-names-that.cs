@@ -1,53 +1,63 @@
 using System;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingSecurity
+public class Person
 {
-    // Simple data model.
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public decimal Salary { get; set; }
-    }
+    // Public properties referenced by the template.
+    public string Name { get; set; } = string.Empty;
+    public string Secret { get; set; } = string.Empty;
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
+
+        // -------------------------------------------------
+        // Create the template document programmatically.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert LINQ Reporting tags that reference the model's members.
+        builder.Writeln("Name: <<[model.Name]>>");
+        builder.Writeln("Secret: <<[model.Secret]>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // Load the template for report generation.
+        // -------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
+
+        // Sample data model.
+        Person model = new Person
         {
-            // Register code page provider (required for some Aspose.Words features).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Name = "John Doe",
+            Secret = "TopSecretInformation"
+        };
 
-            // Create a template document programmatically.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Salary: <<[person.Salary]>>");
+        // -------------------------------------------------
+        // Configure the ReportingEngine with custom security restrictions.
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
 
-            // Prepare the data source.
-            Person person = new Person
-            {
-                Name = "John Doe",
-                Salary = 12345.67m
-            };
+        // Restrict access to the Person type (all its members). This is the
+        // available API for setting restricted types. To avoid runtime errors
+        // when a restricted member is referenced in the template, enable the
+        // AllowMissingMembers option so missing members are treated as null.
+        ReportingEngine.SetRestrictedTypes(typeof(Person));
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
 
-            // Restrict access to the Person type. All its members will be treated as missing.
-            // This is the supported way to enforce security restrictions in Aspose.Words LINQ Reporting.
-            ReportingEngine.SetRestrictedTypes(typeof(Person));
+        // Build the report using the loaded template and the data model.
+        engine.BuildReport(loadedTemplate, model, "model");
 
-            // Configure the reporting engine.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.AllowMissingMembers,
-                MissingMemberMessage = "[Hidden]"
-            };
-
-            // Build the report. The root object name must match the tag prefix used in the template.
-            engine.BuildReport(doc, person, "person");
-
-            // Save the generated report.
-            doc.Save("Report.docx");
-        }
+        // Save the final report.
+        loadedTemplate.Save(outputPath);
     }
 }

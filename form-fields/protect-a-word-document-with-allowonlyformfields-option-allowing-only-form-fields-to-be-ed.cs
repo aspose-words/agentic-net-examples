@@ -10,21 +10,21 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a prompt and a text input form field.
-        builder.Writeln("Please fill in the form below:");
-        builder.Write("Name: ");
-        FormField nameField = builder.InsertTextInput(
-            "NameField",                     // Field name
-            TextFormFieldType.Regular,       // Field type
-            "",                              // No specific format
-            "Enter name here",               // Placeholder text
-            0);                              // No length limit
+        // Add some introductory text.
+        builder.Writeln("Please fill in the form field below:");
+
+        // Insert a text input form field.
+        // Parameters: name, type, format, default text, max length (0 = unlimited).
+        builder.InsertTextInput("UserInput", TextFormFieldType.Regular, "", "Enter your text here", 0);
 
         // Protect the document so that only form fields can be edited.
         doc.Protect(ProtectionType.AllowOnlyFormFields);
 
         // Save the protected document.
-        const string outputPath = "ProtectedForm.docx";
+        const string outputPath = "ProtectedFormFields.docx";
         doc.Save(outputPath);
+
+        // Inform that the file has been created (no user interaction required).
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

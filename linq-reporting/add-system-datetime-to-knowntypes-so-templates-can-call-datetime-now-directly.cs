@@ -6,40 +6,23 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the template and the final report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        // Create a blank document and a builder to add content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // 1. Create a simple template that uses DateTime.Now.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Insert a LINQ Reporting tag that accesses DateTime.Now.
         builder.Writeln("Current date and time: <<[DateTime.Now]>>");
-        templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the template for reporting.
-        // -------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // -------------------------------------------------
-        // 3. Configure the ReportingEngine.
-        // -------------------------------------------------
+        // Initialize the reporting engine.
         ReportingEngine engine = new ReportingEngine();
 
-        // Add System.DateTime to the set of known types so the template can access static members.
+        // Add System.DateTime to the known types collection.
         engine.KnownTypes.Add(typeof(DateTime));
 
-        // No data source is required for this example; an empty object is sufficient.
-        engine.BuildReport(reportDoc, new object());
+        // Build the report. No data source is needed for this static call.
+        engine.BuildReport(doc, new object(), "");
 
-        // -------------------------------------------------
-        // 4. Save the generated report.
-        // -------------------------------------------------
-        reportDoc.Save(reportPath);
-
-        // Indicate completion (no interactive input required).
-        Console.WriteLine($"Report generated successfully: {reportPath}");
+        // Save the resulting document.
+        doc.Save("Output.docx");
     }
 }

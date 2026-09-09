@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -6,27 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Create a DocumentBuilder which will be used to insert content.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a numbered list using the default list template.
+        // Create a numbered list based on the default template and assign it to the builder.
         builder.ListFormat.List = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Set the list level to 3 (zero‑based, so this is the fourth level in Word,
-        // but the requirement states "three", which corresponds to level index 3).
+        // Set the list level to 3 (fourth level, because levels are zero‑based: 0,1,2,3).
+        // This will make the next paragraph a third‑level list item.
         builder.ListFormat.ListLevelNumber = 3;
 
-        // Add a paragraph that will appear as a third‑level list item.
+        // Add the paragraph that will appear as a third‑level list item.
         builder.Writeln("Third‑level list item");
 
-        // End the list formatting.
+        // End the list formatting for any subsequent paragraphs.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to disk.
-        string outputPath = "ThirdLevelList.docx";
+        // Prepare an output folder.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "ThirdLevelList.docx");
         doc.Save(outputPath);
     }
 }

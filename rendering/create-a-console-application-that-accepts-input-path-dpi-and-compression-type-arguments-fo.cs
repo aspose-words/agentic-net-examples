@@ -7,59 +7,53 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        // Expected arguments: <inputPath> <dpi> <compression>
-        // If arguments are missing or invalid, defaults are used.
-        string inputPath = args.Length > 0 ? args[0] : string.Empty;
-        int dpi = args.Length > 1 && int.TryParse(args[1], out int parsedDpi) ? parsedDpi : 300;
-        string compressionArg = args.Length > 2 ? args[2] : "Lzw";
+        // Default values – used when the required arguments are not supplied.
+        const string defaultInput = "sample.docx";
+        const int defaultDpi = 300;
+        const TiffCompression defaultCompression = TiffCompression.Lzw;
+
+        // Resolve input path.
+        string inputPath = args.Length > 0 ? args[0] : defaultInput;
+
+        // Resolve DPI.
+        int dpi = defaultDpi;
+        if (args.Length > 1 && int.TryParse(args[1], out int parsedDpi) && parsedDpi > 0)
+            dpi = parsedDpi;
 
         // Resolve compression type.
-        if (!Enum.TryParse<TiffCompression>(compressionArg, true, out TiffCompression compression))
+        TiffCompression compression = defaultCompression;
+        if (args.Length > 2 && Enum.TryParse<TiffCompression>(args[2], true, out TiffCompression parsedComp))
+            compression = parsedComp;
+
+        // Ensure the source document exists; create a simple one if it does not.
+        if (!File.Exists(inputPath))
         {
-            compression = TiffCompression.Lzw; // fallback to default
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln("Sample document generated because the input file was missing.");
+            sampleDoc.Save(inputPath);
         }
 
-        // Ensure we have a source document.
-        Document doc;
-        if (!string.IsNullOrEmpty(inputPath) && File.Exists(inputPath))
-        {
-            doc = new Document(inputPath);
-        }
-        else
-        {
-            // Create a simple sample document.
-            doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Sample document for TIFF conversion.");
-            // Save the sample document locally so it can be reloaded if needed.
-            string samplePath = Path.Combine(Path.GetTempPath(), "SampleDocument.docx");
-            doc.Save(samplePath);
-            doc = new Document(samplePath);
-        }
+        // Load the document.
+        Document doc = new Document(inputPath);
 
-        // Prepare TIFF save options.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure TIFF save options.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            Resolution = dpi,
+            Resolution = dpi,          // Sets both horizontal and vertical DPI.
             TiffCompression = compression
         };
 
-        // Determine output file path.
-        string outputDirectory = Path.GetDirectoryName(inputPath);
-        if (string.IsNullOrEmpty(outputDirectory) || !Directory.Exists(outputDirectory))
-            outputDirectory = Directory.GetCurrentDirectory();
+        // Determine output file name (same folder, same base name, .tiff extension).
+        string outputPath = Path.ChangeExtension(inputPath, ".tiff");
 
-        string outputFileName = $"Converted_{dpi}dpi_{compression}.tiff";
-        string outputPath = Path.Combine(outputDirectory, outputFileName);
+        // Save as a (potentially multi‑page) TIFF image.
+        doc.Save(outputPath, saveOptions);
 
-        // Save the document as a TIFF image.
-        doc.Save(outputPath, tiffOptions);
-
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
 
-        // Optionally, inform the user (no interactive wait).
-        Console.WriteLine($"TIFF file saved to: {outputPath}");
+        Console.WriteLine($"TIFF conversion completed: {outputPath}");
     }
 }

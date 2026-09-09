@@ -11,27 +11,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare a simple memory stream as the OLE data source.
-        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Dummy OLE data");
+        // Prepare some dummy data to act as the OLE object's content.
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Dummy OLE content");
         using (MemoryStream stream = new MemoryStream(dummyData))
         {
-            builder.Writeln("Attempting to insert OLE object with an invalid ProgId:");
+            // Use an intentionally invalid ProgId to trigger an error.
+            string progId = "NonExistent.ProgId";
 
             try
             {
-                // Use a ProgId that is not registered on the system to trigger an exception.
-                builder.InsertOleObject(stream, "NonExistent.ProgId", false, null);
-                builder.Writeln("OLE object inserted successfully.");
+                // Attempt to insert the OLE object.
+                builder.InsertOleObject(stream, progId, false, null);
+                Console.WriteLine("OLE object inserted successfully.");
             }
             catch (Exception ex)
             {
-                // Gracefully handle the error and inform the user.
-                builder.Writeln($"Failed to insert OLE object: {ex.Message}");
+                // Handle the case where the ProgId is not registered.
+                Console.WriteLine($"Failed to insert OLE object. ProgId '{progId}' may not be registered.");
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectErrorHandling.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectDemo.docx");
         doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

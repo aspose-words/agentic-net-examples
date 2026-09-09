@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -15,28 +16,29 @@ namespace ListIndentExample
             // Start a default numbered list.
             builder.ListFormat.ApplyNumberDefault();
 
-            // Write the first list item (level 0).
-            builder.Writeln("Item at level 0");
-
-            // Increase the list level inside a loop and add items at each deeper level.
-            for (int i = 1; i <= 5; i++)
+            // Write several paragraphs, increasing the list level before each new paragraph.
+            // The first paragraph is at level 0, then we indent for the next one, and so on.
+            for (int i = 0; i < 5; i++)
             {
-                // Increase the current list level by one.
-                builder.ListFormat.ListIndent();
+                builder.Writeln($"Item at list level {i}");
 
-                // Write a paragraph that will appear at the new list level.
-                builder.Writeln($"Item at level {i}");
+                // Increase the list level for the next paragraph, except after the last one.
+                if (i < 4)
+                {
+                    builder.ListFormat.ListIndent();
+                }
             }
 
-            // Optional: return to the original level before finishing the list.
-            for (int i = 0; i < 5; i++)
+            // Reset the list level back to the base level and end the list.
+            while (builder.ListFormat.ListLevelNumber > 0)
+            {
                 builder.ListFormat.ListOutdent();
-
-            // End the list formatting.
+            }
             builder.ListFormat.RemoveNumbers();
 
-            // Save the document to the file system.
-            doc.Save("IncreaseIndent.docx");
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "IncreaseListIndent.docx");
+            doc.Save(outputPath);
         }
     }
 }

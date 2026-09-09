@@ -3,45 +3,41 @@ using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
-{
-    public DateTime Date { get; set; } = DateTime.Now;
-    public double Number { get; set; } = 12345.6789;
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Create a simple template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Tag that formats a date using a specific culture (French).
+        // Insert LINQ Reporting tags that format a date and a number using a specific culture.
         builder.Writeln("Date (fr-FR): <<[model.Date.ToString(\"D\", CultureInfo.GetCultureInfo(\"fr-FR\"))]>>");
-
-        // Tag that formats a number using a specific culture (German).
-        builder.Writeln("Number (de-DE): <<[model.Number.ToString(\"N\", CultureInfo.GetCultureInfo(\"de-DE\"))]>>");
-
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        builder.Writeln("Amount (fr-FR): <<[model.Amount.ToString(\"C\", CultureInfo.GetCultureInfo(\"fr-FR\"))]>>");
 
         // Prepare the data source.
-        ReportModel model = new ReportModel();
+        ReportModel model = new ReportModel
+        {
+            Date = new DateTime(2023, 12, 31),
+            Amount = 12345.67
+        };
 
-        // Create the reporting engine and register CultureInfo type.
+        // Configure the reporting engine.
         ReportingEngine engine = new ReportingEngine();
+        // Register System.Globalization.CultureInfo to allow its static members in template expressions.
         engine.KnownTypes.Add(typeof(CultureInfo));
 
-        // Build the report using the model as the root object named "model".
+        // Build the report.
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // Save the generated document.
+        doc.Save("Report.docx");
     }
+}
+
+// Simple data model used by the template.
+public class ReportModel
+{
+    public DateTime Date { get; set; } = DateTime.Now;
+    public double Amount { get; set; } = 0.0;
 }

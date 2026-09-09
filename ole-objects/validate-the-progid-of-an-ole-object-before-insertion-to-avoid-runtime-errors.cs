@@ -11,60 +11,37 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the ProgID we intend to use for the OLE object.
-        string progId = "Package"; // Example of a known ProgID.
-
-        // Validate the ProgID before insertion.
-        if (!IsProgIdValid(progId))
+        // Dummy OLE data – in a real scenario this would be the actual file bytes.
+        byte[] dummyData = new byte[] { 0x00 };
+        using (MemoryStream oleStream = new MemoryStream(dummyData))
         {
-            // If the ProgID is not valid, skip insertion and finish.
-            Console.WriteLine($"ProgID \"{progId}\" is not valid. Skipping OLE insertion.");
-            doc.Save("ValidatedOleObject.docx");
-            return;
-        }
+            // The ProgID we intend to use for the OLE object.
+            string progId = "Package";
 
-        // Prepare dummy data for the OLE object (e.g., a simple byte array).
-        byte[] dummyData = new byte[] { 0x50, 0x4B, 0x03, 0x04 }; // Beginning of a ZIP file header.
-        using (MemoryStream stream = new MemoryStream(dummyData))
-        {
-            // Insert the OLE object using the validated ProgID.
-            // Parameters: stream, progId, asIcon (false), presentation (null).
-            Shape oleShape = builder.InsertOleObject(stream, progId, false, null);
+            // Validate the ProgID before attempting insertion.
+            if (IsProgIdValid(progId))
+            {
+                // Insert the OLE object using the validated ProgID.
+                Shape oleShape = builder.InsertOleObject(oleStream, progId, false, null);
 
-            // Optional: verify that the inserted object's ProgID matches the expected value.
-            string insertedProgId = oleShape.OleFormat.ProgId;
-            Console.WriteLine($"Inserted OLE object ProgID: {insertedProgId}");
+                // Retrieve and display the ProgID of the inserted object.
+                string insertedProgId = oleShape.OleFormat.ProgId;
+                Console.WriteLine($"Inserted OLE object with ProgId: {insertedProgId}");
+            }
+            else
+            {
+                Console.WriteLine($"ProgId '{progId}' is not valid. Insertion skipped.");
+            }
         }
 
         // Save the document to the file system.
         doc.Save("ValidatedOleObject.docx");
     }
 
-    // Simple validation method for ProgID strings.
+    // Simple validation logic for a ProgID.
     private static bool IsProgIdValid(string progId)
     {
-        // ProgID must not be null or empty.
-        if (string.IsNullOrEmpty(progId))
-            return false;
-
-        // Example whitelist of known safe ProgIDs.
-        string[] allowedProgIds = new string[]
-        {
-            "Package",          // Generic OLE package.
-            "Excel.Sheet",      // Microsoft Excel.
-            "Word.Document",    // Microsoft Word.
-            "PowerPoint.Show",  // Microsoft PowerPoint.
-            "Visio.Drawing"     // Microsoft Visio.
-        };
-
-        // Check if the provided ProgID is in the whitelist.
-        foreach (string allowed in allowedProgIds)
-        {
-            if (string.Equals(progId, allowed, StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-
-        // If not found in the whitelist, consider it invalid.
-        return false;
+        // ProgId must be non‑null, non‑empty and must not contain whitespace.
+        return !string.IsNullOrEmpty(progId) && !progId.Contains(" ");
     }
 }

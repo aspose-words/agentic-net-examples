@@ -6,34 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary input and final output documents.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
+        // Paths for the original and modified documents.
+        const string originalPath = "FormFields.docx";
+        const string modifiedPath = "FormFields_Modified.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create a DOCX file with a combo box form field.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 1. Create a sample DOCX with a combo box field.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a prompt and insert a combo box named "FruitCombo".
+        // Add some prompt text.
         builder.Write("Pick a fruit: ");
+
+        // Define the items for the combo box and insert it.
         string[] items = { "Apple", "Banana", "Cherry" };
-        // InsertComboBox creates the form field and a bookmark with the same name.
-        builder.InsertComboBox("FruitCombo", items, 0); // default selection is the first item.
+        // InsertComboBox creates a legacy combo box form field.
+        builder.InsertComboBox("FruitCombo", items, 0); // Default selection is the first item (Apple).
 
-        // Save the document that will be loaded later.
-        doc.Save(inputPath);
+        // Save the document that contains the form field.
+        doc.Save(originalPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the existing DOCX file.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
+        // -------------------------------------------------
+        // 2. Load the document and modify the combo box selection.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
 
-        // -----------------------------------------------------------------
-        // 3. Locate the combo box form field and change its selection.
-        // -----------------------------------------------------------------
-        FormField comboBox = loadedDoc.Range.FormFields["FruitCombo"];
+        // Access the collection of form fields.
+        FormFieldCollection formFields = loadedDoc.Range.FormFields;
+
+        // Retrieve the combo box by its name.
+        FormField comboBox = formFields["FruitCombo"];
         if (comboBox == null)
             throw new InvalidOperationException("The combo box 'FruitCombo' was not found in the document.");
 
@@ -41,16 +44,15 @@ public class Program
         if (comboBox.Type != FieldType.FieldFormDropDown)
             throw new InvalidOperationException("The field 'FruitCombo' is not a drop‑down form field.");
 
-        // Change the selected index to 1 (second item: "Banana").
+        // Change the selected item to "Banana" (index 1).
         comboBox.DropDownSelectedIndex = 1;
 
-        // Optional validation: ensure the Result reflects the new selection.
-        if (!comboBox.Result.Equals("Banana", StringComparison.Ordinal))
-            throw new InvalidOperationException("Failed to update the combo box selection.");
+        // Alternatively, you could set the Result property:
+        // comboBox.Result = "Banana";
 
-        // -----------------------------------------------------------------
-        // 4. Save the modified document.
-        // -----------------------------------------------------------------
-        loadedDoc.Save(outputPath);
+        // -------------------------------------------------
+        // 3. Save the modified document.
+        // -------------------------------------------------
+        loadedDoc.Save(modifiedPath);
     }
 }

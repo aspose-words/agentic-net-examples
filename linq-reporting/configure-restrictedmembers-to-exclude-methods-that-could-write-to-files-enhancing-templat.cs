@@ -6,33 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Restrict types that expose file‑writing capabilities.
-        // This must be done before any report is built.
-        ReportingEngine.SetRestrictedTypes(
-            typeof(System.IO.File),
-            typeof(System.IO.StreamWriter),
-            typeof(System.IO.FileInfo));
+        // Create a simple template document.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Create a simple template document with a LINQ Reporting tag.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello <<[person.Name]>>!");
+        // This tag attempts to call a method that writes to a file.
+        // The call will be blocked because System.IO.File will be added to the restricted types list.
+        builder.Writeln("Attempt to write a file: <<[System.IO.File.WriteAllText(\"blocked.txt\", \"secret\")]>>");
 
-        // Prepare the data model.
-        var person = new Person { Name = "John Doe" };
+        // Save the template so it can be re‑loaded before building the report.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(doc, person, "person");
+        // Load the template document.
+        Document doc = new Document(templatePath);
 
-        // Save the generated report.
+        // Restrict the System.IO.File type – all its members become inaccessible in templates.
+        ReportingEngine.SetRestrictedTypes(typeof(System.IO.File));
+
+        // Configure the engine to treat missing members as null instead of throwing.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.AllowMissingMembers
+        };
+
+        // Build the report. The root data source is an empty object because the template does not use any data.
+        engine.BuildReport(doc, new object(), "");
+
+        // Save the resulting document. The restricted call will be omitted, leaving an empty string in its place.
         doc.Save("Report.docx");
     }
-}
-
-// Simple data model used by the template.
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
 }

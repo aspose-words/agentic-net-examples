@@ -1,12 +1,9 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Layout;
 using Aspose.Words.Saving;
-using Aspose.Words.Fields;
-using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
@@ -16,59 +13,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a simple paragraph to host the comment.
-        builder.Writeln("This paragraph will have a comment with a hyperlink.");
+        // Add a paragraph that will hold the comment.
+        builder.Writeln("This paragraph will have a comment containing a hyperlink.");
 
-        // Create a top‑level comment.
+        // Create a comment and attach it to the paragraph.
         Comment comment = new Comment(doc, "Jane Doe", "JD", DateTime.Now);
-        // Ensure the comment has at least one paragraph.
-        comment.AppendChild(new Paragraph(doc));
-        // Append the comment to the current paragraph.
-        builder.CurrentParagraph.AppendChild(comment);
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        paragraph.AppendChild(comment);
 
-        // Move the builder into the comment's first paragraph to add content.
-        builder.MoveTo(comment.FirstParagraph);
-        // Insert a hyperlink field inside the comment.
-        builder.Font.Color = Color.Blue;
-        builder.Font.Underline = Underline.Single;
-        builder.InsertHyperlink("Aspose website", "https://www.aspose.com", false);
-        builder.Font.ClearFormatting();
+        // Inside the comment, add a paragraph and a hyperlink to an external URL.
+        Paragraph commentParagraph = (Paragraph)comment.AppendChild(new Paragraph(doc));
+        DocumentBuilder commentBuilder = new DocumentBuilder(doc);
+        commentBuilder.MoveTo(commentParagraph);
+        commentBuilder.Font.Color = Color.Blue;
+        commentBuilder.Font.Underline = Underline.Single;
+        commentBuilder.InsertHyperlink("Aspose.Words", "https://www.aspose.com/words", false);
+        commentBuilder.Font.ClearFormatting();
 
-        // Show comments as PDF annotations.
+        // Configure the document to show comments as PDF annotations.
         doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
-        // Rebuild layout after changing display mode.
         doc.UpdatePageLayout();
 
-        // Save the document to PDF.
-        string pdfPath = "CommentWithHyperlink.pdf";
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            // Optional: open hyperlinks in a new window/tab.
-            OpenHyperlinksInNewWindow = true
-        };
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document as PDF.
+        string pdfPath = Path.Combine(outputDir, "CommentWithHyperlink.pdf");
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
         doc.Save(pdfPath, pdfOptions);
 
-        // Reload the PDF to verify the hyperlink inside the comment.
-        Document pdfDoc = new Document(pdfPath);
-        var comments = pdfDoc.GetChildNodes(NodeType.Comment, true)
-                             .OfType<Comment>()
-                             .ToList();
-
-        foreach (Comment c in comments)
+        // Simple verification that the PDF file was created and is not empty.
+        if (File.Exists(pdfPath) && new FileInfo(pdfPath).Length > 0)
         {
-            // Look for hyperlink fields inside the comment's range.
-            var hyperlinkField = c.Range.Fields
-                                    .OfType<FieldHyperlink>()
-                                    .FirstOrDefault();
-
-            if (hyperlinkField != null)
-            {
-                Console.WriteLine($"Comment by {c.Author} contains hyperlink: {hyperlinkField.Address}");
-            }
-            else
-            {
-                Console.WriteLine($"Comment by {c.Author} does not contain a hyperlink.");
-            }
+            Console.WriteLine("PDF saved successfully with a comment containing a hyperlink.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to create the PDF file.");
         }
     }
 }

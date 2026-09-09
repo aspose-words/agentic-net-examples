@@ -3,65 +3,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class LinqReportingExample
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Ensure the working directory is the executable's directory.
-            string workDir = AppDomain.CurrentDomain.BaseDirectory;
-
-            // 1. Create a sample XML data file.
-            string xmlPath = Path.Combine(workDir, "people.xml");
-            File.WriteAllText(xmlPath,
-@"<?xml version=""1.0"" encoding=""utf-8""?>
-<persons>
-    <person>
+        // Prepare sample XML data.
+        const string xmlFileName = "People.xml";
+        const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<People>
+    <Person>
         <Name>John Doe</Name>
         <Age>30</Age>
-    </person>
-    <person>
+    </Person>
+    <Person>
         <Name>Jane Smith</Name>
         <Age>25</Age>
-    </person>
-    <person>
+    </Person>
+    <Person>
         <Name>Bob Johnson</Name>
         <Age>40</Age>
-    </person>
-</persons>");
+    </Person>
+</People>";
+        File.WriteAllText(xmlFileName, xmlContent);
 
-            // 2. Build a template document that contains LINQ Reporting tags.
-            string templatePath = Path.Combine(workDir, "template.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a template document with LINQ Reporting tags.
+        const string templateFileName = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("People Report");
-            builder.Writeln("<<foreach [p in persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>");
-            builder.Writeln("Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
+        builder.Writeln("People Report");
+        builder.Writeln("----------------");
+        // Begin foreach loop over the XML data source named "xmlData".
+        builder.Writeln("<<foreach [in xmlData]>>");
+        // Inside the loop output the fields of each Person element.
+        builder.Writeln("Name: <<[Name]>>");
+        builder.Writeln("Age: <<[Age]>>");
+        builder.Writeln(""); // Blank line between records.
+        // End foreach loop.
+        builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templateFileName);
 
-            // 3. Load the template document.
-            Document doc = new Document(templatePath);
+        // Load the template document for reporting.
+        Document reportDoc = new Document(templateFileName);
 
-            // 4. Create an XmlDataSource from the XML file.
-            XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
+        // Create an XML data source from the XML file.
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlFileName);
 
-            // 5. Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // default options
-            engine.BuildReport(doc, xmlDataSource, "persons");
+        // Build the report using the data source. The data source name must match the tag ("xmlData").
+        ReportingEngine engine = new ReportingEngine();
+        bool success = engine.BuildReport(reportDoc, xmlDataSource, "xmlData");
 
-            // 6. Save the generated report.
-            string outputPath = Path.Combine(workDir, "output.docx");
-            doc.Save(outputPath);
+        // Save the generated report.
+        const string outputFileName = "Report.docx";
+        reportDoc.Save(outputFileName);
 
-            // Inform that the process completed (no interactive input required).
-            Console.WriteLine($"Report generated successfully: {outputPath}");
-        }
+        Console.WriteLine(success
+            ? $"Report generated successfully: {outputFileName}"
+            : "Report generation failed.");
     }
 }

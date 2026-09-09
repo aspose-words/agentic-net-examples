@@ -1,78 +1,62 @@
 using System;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Utility class with a static method that will be called from a LINQ Reporting expression tag.
-    public static class MyUtility
+    public static void Main()
     {
-        // Formats a DateTime value as a short date string.
-        public static string FormatDate(DateTime date) => date.ToString("yyyy-MM-dd");
-    }
+        // Create a blank document that will serve as the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-    // Simple data model that will be used as the root object for the report.
-    public class Order
-    {
-        public string CustomerName { get; set; } = "John Doe";
-        public DateTime OrderDate { get; set; } = DateTime.Today;
-        public decimal Amount { get; set; } = 123.45m;
-    }
+        // Insert a LINQ Reporting tag that calls a static utility method.
+        // The static method is accessed via the type name (Utility.FormatDate).
+        builder.Writeln("Order date: <<[Utility.FormatDate(OrderDate)]>>");
 
-    public class Program
-    {
-        public static void Main()
+        // Save the template to a temporary file.
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+        doc.Save(templatePath);
+
+        // Load the template back (demonstrates load step).
+        Document template = new Document(templatePath);
+
+        // Prepare sample data.
+        ReportModel model = new ReportModel
         {
-            // Register code page provider required by Aspose.Words for some encodings.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            OrderDate = new DateTime(2023, 12, 25)
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // Configure the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        // Register the utility class so its static members can be used in expressions.
+        engine.KnownTypes.Add(typeof(Utility));
 
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            // Call static method MyUtility.FormatDate via expression tag.
-            builder.Writeln("Order Date: <<[MyUtility.FormatDate(order.OrderDate)]>>");
-            builder.Writeln("Amount: <<[order.Amount]>>");
+        // Build the report using the model as the root data source named "model".
+        engine.BuildReport(template, model, "model");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
+        // Save the generated report.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+        template.Save(outputPath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template back from disk (required before building the report).
-            // -----------------------------------------------------------------
-            var loadedTemplate = new Document(templatePath);
+        Console.WriteLine($"Report generated: {outputPath}");
+    }
+}
 
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            var order = new Order
-            {
-                CustomerName = "Alice Smith",
-                OrderDate = new DateTime(2023, 12, 15),
-                Amount = 987.65m
-            };
+// Sample data model used by the template.
+public class ReportModel
+{
+    // The date that will be formatted by the utility method.
+    public DateTime OrderDate { get; set; } = DateTime.MinValue;
+}
 
-            // -----------------------------------------------------------------
-            // 4. Build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-
-            // Register the utility type so its static members can be accessed in expressions.
-            engine.KnownTypes.Add(typeof(MyUtility));
-
-            // The root object name used in the template tags is "order".
-            engine.BuildReport(loadedTemplate, order, "order");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string reportPath = "Report.docx";
-            loadedTemplate.Save(reportPath);
-        }
+// Utility class containing a static method that will be called from the template.
+public static class Utility
+{
+    // Formats a DateTime as a short date string.
+    public static string FormatDate(DateTime date)
+    {
+        return date.ToString("d");
     }
 }

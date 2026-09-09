@@ -3,45 +3,60 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableStyleExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Initialize DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
-        Table table = builder.StartTable();
+            // Start a new table.
+            Table table = builder.StartTable();
 
-        // First row (header).
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow();
+            // Insert a header row.
+            builder.InsertCell();
+            builder.Write("Product");
+            builder.InsertCell();
+            builder.Write("Quantity");
+            builder.EndRow();
 
-        // Second row (data).
-        builder.InsertCell();
-        builder.Write("Data 1");
-        builder.InsertCell();
-        builder.Write("Data 2");
-        builder.EndRow();
+            // Insert a few data rows.
+            builder.InsertCell();
+            builder.Write("Apples");
+            builder.InsertCell();
+            builder.Write("10");
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            builder.InsertCell();
+            builder.Write("Bananas");
+            builder.InsertCell();
+            builder.Write("20");
+            builder.EndRow();
 
-        // Apply the built‑in "Grid Table 5 Dark" style to the whole table.
-        table.StyleIdentifier = StyleIdentifier.GridTable5Dark;
-        // Apply all style options (first row, first column, row bands, etc.).
-        table.StyleOptions = TableStyleOptions.Default;
+            builder.InsertCell();
+            builder.Write("Cherries");
+            builder.InsertCell();
+            builder.Write("30");
+            builder.EndRow();
 
-        // Define output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GridTable5Dark.docx");
+            // End the table construction.
+            builder.EndTable();
 
-        // Save the document.
-        doc.Save(outputPath);
+            // Apply the built‑in "Grid Table 5 Dark" style to the whole table.
+            table.StyleIdentifier = StyleIdentifier.GridTable5Dark;
+            // Apply all style options (first row, last row, banding, etc.) for consistent formatting.
+            table.StyleOptions = TableStyleOptions.Default;
+
+            // Define output path (saved in the current working directory).
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "GridTable5Dark.docx");
+
+            // Save the document.
+            doc.Save(outputPath);
+        }
     }
 }

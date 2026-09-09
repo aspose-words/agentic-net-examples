@@ -8,36 +8,35 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare file paths in the current working directory.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-
-        // Create a sample document with irregular spacing.
+        // Create a sample document containing multiple consecutive spaces.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This  is   a    test.  Multiple   spaces   here.");
-        builder.Writeln("Another   line   with  spaces.");
+        builder.Writeln("This  is   a    sample   text    with  irregular   spacing.");
+        builder.Writeln("Another    line    with   spaces.");
+
+        // Save the document to a local file.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
         doc.Save(inputPath);
 
-        // Load the document we just created.
-        Document loaded = new Document(inputPath);
+        // Load the saved document.
+        Document loadedDoc = new Document(inputPath);
 
-        // Define a regular expression that matches two or more consecutive spaces.
-        Regex multipleSpaces = new Regex(@" {2,}");
+        // Regular expression that matches two or more spaces.
+        Regex regex = new Regex(@" {2,}");
 
-        // Perform the replacement: replace each match with a single space.
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacementCount = loaded.Range.Replace(multipleSpaces, " ", options);
+        // Replace each match with a single space.
+        int replacedCount = loadedDoc.Range.Replace(regex, " ", new FindReplaceOptions());
 
-        // Ensure that at least one replacement occurred.
-        if (replacementCount == 0)
-            throw new InvalidOperationException("Expected at least one space reduction replacement.");
+        // Ensure that at least one replacement was performed.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement.");
 
         // Save the modified document.
-        loaded.Save(outputPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        loadedDoc.Save(outputPath);
 
-        // Output the result count for verification (no interactive input required).
-        Console.WriteLine($"Replaced {replacementCount} occurrence(s) of multiple spaces.");
-        Console.WriteLine($"Modified document saved to: {outputPath}");
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

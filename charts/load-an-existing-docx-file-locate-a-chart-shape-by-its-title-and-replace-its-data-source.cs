@@ -9,57 +9,79 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX with a chart that has a title.
+        // Define file names in the working directory.
         const string inputPath = "input.docx";
-        CreateSampleDocument(inputPath);
+        const string outputPath = "updated.docx";
 
-        // Load the existing document.
-        Document doc = new Document(inputPath);
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample DOCX with a chart if it does not exist.
+        // -----------------------------------------------------------------
+        if (!File.Exists(inputPath))
+        {
+            // Create a blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Locate the chart shape by its title.
-        Shape chartShape = doc.GetChildNodes(NodeType.Shape, true)
-                              .OfType<Shape>()
-                              .FirstOrDefault(s => s.HasChart && s.Chart.Title.Text == "Sample Chart");
+            // Insert a column chart.
+            Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+            Chart chart = chartShape.Chart;
 
-        if (chartShape == null)
+            // Give the chart a title that we will later search for.
+            chart.Title.Text = "Sales Chart";
+            chart.Title.Show = true;
+
+            // Save the document that will serve as the input.
+            doc.Save(inputPath);
+        }
+
+        // ---------------------------------------------------------------
+        // Step 2: Load the existing document.
+        // ---------------------------------------------------------------
+        Document loadedDoc = new Document(inputPath);
+
+        // ---------------------------------------------------------------
+        // Step 3: Locate the chart shape by its title.
+        // ---------------------------------------------------------------
+        Shape? targetShape = null;
+        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
+        {
+            if (!shape.HasChart) continue;
+
+            Chart chart = shape.Chart;
+            // Ensure the title object exists before accessing its Text.
+            if (chart.Title != null && chart.Title.Text == "Sales Chart")
+            {
+                targetShape = shape;
+                break;
+            }
+        }
+
+        if (targetShape == null)
+        {
             throw new InvalidOperationException("Chart with the specified title was not found.");
+        }
 
-        // Replace the chart's data source.
-        Chart chart = chartShape.Chart;
-        chart.Series.Clear();
+        // ---------------------------------------------------------------
+        // Step 4: Replace the chart's data source.
+        // ---------------------------------------------------------------
+        Chart targetChart = targetShape.Chart;
 
-        string[] categories = { "Category A", "Category B", "Category C" };
-        double[] values = { 15.0, 30.0, 45.0 };
-        chart.Series.Add("Updated Series", categories, values);
+        // Clear any existing series.
+        targetChart.Series.Clear();
+
+        // Define new categories and values.
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        double[] values = { 15.0, 25.0, 35.0, 45.0 };
+
+        // Add a new series with the new data.
+        targetChart.Series.Add("New Series", categories, values);
 
         // Optionally update the chart title to reflect the change.
-        chart.Title.Text = "Updated Chart";
+        targetChart.Title.Text = "Updated Sales Chart";
 
-        // Save the modified document.
-        const string outputPath = "updated.docx";
-        doc.Save(outputPath);
-    }
-
-    // Helper method to create a DOCX containing a chart with a title.
-    private static void CreateSampleDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        Chart chart = chartShape.Chart;
-
-        // Set a title for later identification.
-        chart.Title.Text = "Sample Chart";
-        chart.Title.Show = true;
-
-        // Add initial demo data.
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-        chart.Series.Clear();
-        chart.Series.Add("Initial Series", categories, new double[] { 10, 20, 30, 40 });
-
-        // Save the document.
-        doc.Save(filePath);
+        // ---------------------------------------------------------------
+        // Step 5: Save the modified document.
+        // ---------------------------------------------------------------
+        loadedDoc.Save(outputPath);
     }
 }

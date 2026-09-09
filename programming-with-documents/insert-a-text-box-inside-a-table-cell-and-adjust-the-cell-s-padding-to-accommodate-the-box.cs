@@ -1,45 +1,40 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTextBoxInTableCell
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and insert the first cell.
-        Table table = builder.StartTable();
-        builder.InsertCell();
+            // Start a table and insert the first cell.
+            builder.StartTable();
+            builder.InsertCell();
 
-        // Increase the cell padding so the text box does not touch the cell borders.
-        // Left, Top, Right, Bottom padding values are in points.
-        builder.CellFormat.SetPaddings(10, 10, 10, 10);
+            // Increase the cell padding so the text box does not touch the cell borders.
+            // Padding values are in points.
+            builder.CellFormat.SetPaddings(10, 10, 10, 10);
 
-        // Insert a text box shape into the current cell.
-        // Width and height are also specified in points.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 150, 50);
+            // Insert a text box shape into the current cell.
+            // Width and height are also specified in points.
+            Shape shape = builder.InsertShape(ShapeType.TextBox, 150, 80);
 
-        // Add a paragraph with some text inside the text box.
-        Paragraph paragraph = new Paragraph(doc);
-        Run run = new Run(doc, "Hello inside the text box!");
-        paragraph.AppendChild(run);
-        textBox.AppendChild(paragraph);
+            // Move the builder's cursor inside the text box and write the desired text.
+            builder.MoveTo(shape.LastParagraph);
+            builder.Write("This is a text box inside a table cell.");
 
-        // Finish the row and the table.
-        builder.EndRow();
-        builder.EndTable();
+            // Finish the row and the table.
+            builder.EndRow();
+            builder.EndTable();
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "TextBoxInTableCell.docx");
-        doc.Save(outputPath);
+            // Save the document to the local file system.
+            doc.Save("TextBoxInTableCell.docx");
+        }
     }
 }

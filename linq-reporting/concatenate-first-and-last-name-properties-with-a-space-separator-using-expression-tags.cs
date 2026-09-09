@@ -1,80 +1,40 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace LinqReportingExample
 {
-    // Data model representing a person.
+    // Data model with first and last name.
     public class Person
     {
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
-    }
-
-    // Wrapper model that holds a collection of persons.
-    public class Model
-    {
-        public List<Person> Persons { get; set; } = new();
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider (required for some Aspose.Words features).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Create a blank document and a builder to insert the template.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Insert a LINQ Reporting expression that concatenates first and last name with a space.
+            builder.Writeln("<<[person.FirstName + \" \" + person.LastName]>>");
 
-            // Insert a foreach loop that iterates over the Persons collection.
-            builder.Writeln("<<foreach [p in Persons]>>");
-            // Concatenate first and last name with a space using an expression tag.
-            builder.Writeln("<<[p.FirstName + \" \" + p.LastName]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to a local file.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Prepare sample data.
-            // -----------------------------------------------------------------
-            Model data = new Model
+            // Prepare the data source.
+            var person = new Person
             {
-                Persons = new List<Person>
-                {
-                    new Person { FirstName = "John", LastName = "Doe" },
-                    new Person { FirstName = "Jane", LastName = "Smith" },
-                    new Person { FirstName = "Alice", LastName = "Johnson" }
-                }
+                FirstName = "John",
+                LastName = "Doe"
             };
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document report = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
-            // No special options are required for this simple scenario.
-            engine.Options = ReportBuildOptions.None;
+            // Build the report using the ReportingEngine.
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, person, "person");
 
-            // BuildReport using the model as the root object (no root name needed).
-            engine.BuildReport(report, data);
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-            report.Save(outputPath);
-
-            // Indicate completion (optional console output, not required for interaction).
-            Console.WriteLine("Report generated successfully at: " + outputPath);
+            // Save the generated report.
+            doc.Save("Report.docx");
         }
     }
 }

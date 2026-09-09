@@ -1,19 +1,18 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart into the document.
-        // Width = 432 points, Height = 252 points.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
 
         // Retrieve the Chart object from the inserted shape.
@@ -21,14 +20,13 @@ public class Program
 
         // Modify the chart title.
         ChartTitle title = chart.Title;
-        title.Text = "Sales Overview 2024";
+        title.Text = "Quarterly Sales";
         title.Font.Size = 16;
-        title.Font.Color = System.Drawing.Color.DarkBlue;
+        title.Font.Color = Color.DarkBlue;
         title.Show = true;      // Ensure the title is visible.
-        title.Overlay = false;  // Keep other elements from overlapping the title.
+        title.Overlay = false;  // Do not allow other elements to overlap the title.
 
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ModifiedChart.docx");
-        doc.Save(outputPath);
+        // Save the document with the updated chart title.
+        doc.Save("ModifiedChartTitle.docx");
     }
 }

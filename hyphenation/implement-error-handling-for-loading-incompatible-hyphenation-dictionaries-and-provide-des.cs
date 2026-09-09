@@ -1,94 +1,72 @@
 using System;
-using System.Globalization;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Loading; // For WarningInfoCollection
 
 public class Program
 {
     public static void Main()
     {
-        // File names used in the example.
-        const string validDictPath = "valid_hyph_en_US.dic";
-        const string invalidDictPath = "invalid_hyph_en_US.dic";
-        const string outputPdf = "Hyphenated.pdf";
-
-        // -----------------------------------------------------------------
-        // Create a minimal valid hyphenation dictionary.
-        // The first line defines the encoding, subsequent lines define word‑hyphenation pairs.
-        // -----------------------------------------------------------------
-        File.WriteAllText(validDictPath,
-            "UTF-8\n" +
-            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n");
-
-        // Create an invalid (empty) dictionary to provoke an error.
-        File.WriteAllText(invalidDictPath, string.Empty);
-
-        // -----------------------------------------------------------------
-        // Attempt to register the invalid dictionary.
-        // The RegisterDictionary method throws if the file cannot be parsed.
-        // -----------------------------------------------------------------
-        try
-        {
-            Hyphenation.RegisterDictionary("en-US", invalidDictPath);
-            Console.WriteLine("Invalid dictionary registered unexpectedly.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to register invalid dictionary: {ex.Message}");
-        }
-
-        // -----------------------------------------------------------------
-        // Register the valid dictionary and verify that it is indeed registered.
-        // -----------------------------------------------------------------
-        try
-        {
-            Hyphenation.RegisterDictionary("en-US", validDictPath);
-            Console.WriteLine("Valid dictionary registered successfully.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to register valid dictionary: {ex.Message}");
-            // If registration fails, further processing would be meaningless.
-            return;
-        }
-
-        // Double‑check registration status.
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-        {
-            Console.WriteLine("Dictionary registration check failed.");
-            return;
-        }
-
-        // -----------------------------------------------------------------
-        // Build a document that forces hyphenation by using a narrow page width.
-        // -----------------------------------------------------------------
+        // Create a simple document with long words that can be hyphenated.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Size = 24;
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Narrow page layout.
-        doc.FirstSection.PageSetup.PageWidth = 200; // points
+        // Narrow the page width so the words wrap and hyphenation can be observed.
+        doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
         // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Write a line containing words that exist in the dictionary.
-        builder.Font.Size = 24;
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
+        // Create a deliberately malformed hyphenation dictionary.
+        const string dictPath = "invalid_hyph_en_US.dic";
+        File.WriteAllText(dictPath,
+            // Missing the required header line ("UTF-8") and contains garbage.
+            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "this line is not a valid pattern");
 
-        // -----------------------------------------------------------------
-        // Save the document as PDF.
-        // -----------------------------------------------------------------
-        doc.Save(outputPdf, SaveFormat.Pdf);
+        // Set up a warning collector to capture any warnings during registration.
+        WarningInfoCollection warnings = new WarningInfoCollection();
+        Hyphenation.WarningCallback = warnings;
 
-        // Verify that the PDF was created.
-        if (!File.Exists(outputPdf))
-            throw new InvalidOperationException("Expected PDF output file was not created.");
+        // Attempt to register the malformed dictionary and handle errors gracefully.
+        try
+        {
+            Hyphenation.RegisterDictionary("en-US", dictPath);
+            Console.WriteLine("Dictionary registered successfully.");
+        }
+        catch (Exception ex)
+        {
+            // Provide a clear, descriptive message for the failure.
+            Console.WriteLine($"Failed to register hyphenation dictionary for 'en-US': {ex.Message}");
+        }
 
-        Console.WriteLine($"Document saved successfully to '{outputPdf}'.");
+        // Report any warnings that were raised during the registration attempt.
+        if (warnings.Count > 0)
+        {
+            Console.WriteLine("Hyphenation warnings:");
+            foreach (WarningInfo warning in warnings)
+            {
+                Console.WriteLine($"- {warning.WarningType}: {warning.Description}");
+            }
+        }
+
+        // Save the document. If the dictionary was invalid, hyphenation will not be applied,
+        // but the document will still be saved.
+        const string outputPath = "HyphenatedOutput.pdf";
+        doc.Save(outputPath);
+
+        // Verify that the output file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved to '{outputPath}'.");
+        }
+        else
+        {
+            throw new InvalidOperationException("The expected output PDF was not created.");
+        }
     }
 }

@@ -7,53 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Define the output folder and ensure it exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "EastAsianEmphasis.docx");
-
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for inserting and formatting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set a common font for the document.
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 24;
-
-        // Define the LCID for Japanese language.
+        // Japanese language identifier.
         int japaneseLcid = new CultureInfo("ja-JP", false).LCID;
 
-        // Apply Japanese locale to the builder's font.
+        // Set the builder's font language to Japanese.
         builder.Font.LocaleId = japaneseLcid;
 
-        // Check if the current font language is Japanese before applying an emphasis mark.
+        // Apply an emphasis mark only if the language is Japanese.
         if (builder.Font.LocaleId == japaneseLcid)
         {
-            // Apply an East Asian emphasis mark (solid circle above the text).
             builder.Font.EmphasisMark = Aspose.Words.EmphasisMark.OverSolidCircle;
         }
 
-        // Write Japanese text that will display with the emphasis mark.
-        builder.Writeln("強調された日本語テキスト");
+        // Write Japanese text that will display the emphasis mark.
+        builder.Writeln("こんにちは世界"); // "Hello World" in Japanese
 
-        // Clear formatting to reset emphasis and locale for the next run.
+        // Clear formatting to reset language and emphasis.
         builder.Font.ClearFormatting();
 
-        // Set English locale (no emphasis will be applied).
+        // Set language to English (no emphasis will be applied).
         builder.Font.LocaleId = new CultureInfo("en-US", false).LCID;
+        builder.Writeln("Hello world!");
 
-        // Write English text; emphasis mark will remain None.
-        builder.Writeln("Regular English text without emphasis");
+        // Define output path and ensure the directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "EastAsianEmphasis.docx");
 
-        // Save the document to the specified path.
+        // Save the document.
         doc.Save(outputPath);
 
-        // Simple verification that the file was created.
+        // Validate that the file was created.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine("Document created successfully at: " + outputPath);
+            Console.WriteLine("Document saved successfully: " + outputPath);
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
         }
     }
 }

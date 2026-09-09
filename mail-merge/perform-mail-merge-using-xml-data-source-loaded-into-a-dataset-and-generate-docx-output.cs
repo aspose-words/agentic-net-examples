@@ -1,123 +1,68 @@
 using System;
 using System.Data;
 using System.IO;
-using System.IO.Compression;
-using System.Text;
+using Aspose.Words;
+using Aspose.Words.MailMerging;
 
-public class MailMergeExample
+public class MailMergeFromXml
 {
     public static void Main()
     {
-        // Sample XML data source
-        string xmlData = @"
-<Customers>
-  <Customer>
-    <FirstName>John</FirstName>
-    <LastName>Doe</LastName>
-    <Email>john@example.com</Email>
-  </Customer>
-  <Customer>
-    <FirstName>Jane</FirstName>
-    <LastName>Smith</LastName>
-    <Email>jane@example.com</Email>
-  </Customer>
-</Customers>";
+        // Define file paths in the current directory.
+        string xmlPath = Path.Combine(Environment.CurrentDirectory, "Data.xml");
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "MergedOutput.docx");
 
-        // Load XML into a DataSet
-        DataSet ds = new DataSet();
-        using (StringReader sr = new StringReader(xmlData))
-        {
-            ds.ReadXml(sr);
-        }
+        // Create a simple XML data source.
+        string xmlContent = @"
+<Root>
+    <Person>
+        <FirstName>John</FirstName>
+        <LastName>Doe</LastName>
+        <Message>Hello! This is a merged message.</Message>
+    </Person>
+    <Person>
+        <FirstName>Jane</FirstName>
+        <LastName>Smith</LastName>
+        <Message>Welcome to Aspose.Words mail merge.</Message>
+    </Person>
+</Root>";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // Build the WordprocessingML document (document.xml)
-        StringBuilder docBuilder = new StringBuilder();
-        docBuilder.Append(@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>");
-        docBuilder.Append(@"<w:document xmlns:w=""http://schemas.openxmlformats.org/wordprocessingml/2006/main"">");
-        docBuilder.Append(@"<w:body>");
-        docBuilder.Append(@"<w:p><w:r><w:t>Customer List</w:t></w:r></w:p>");
-        docBuilder.Append(@"<w:tbl>");
+        // Build a mail‑merge template document with a region named "Person".
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Header row
-        docBuilder.Append(@"<w:tr>");
-        docBuilder.Append(Cell("First Name"));
-        docBuilder.Append(Cell("Last Name"));
-        docBuilder.Append(Cell("Email"));
-        docBuilder.Append(@"</w:tr>");
+        // Begin the region.
+        builder.InsertField(" MERGEFIELD TableStart:Person");
+        // Insert the fields that will be filled from the XML.
+        builder.Write("First Name: ");
+        builder.InsertField(" MERGEFIELD FirstName");
+        builder.Writeln();
+        builder.Write("Last Name: ");
+        builder.InsertField(" MERGEFIELD LastName");
+        builder.Writeln();
+        builder.Write("Message: ");
+        builder.InsertField(" MERGEFIELD Message");
+        builder.Writeln();
+        // End the region.
+        builder.InsertField(" MERGEFIELD TableEnd:Person");
 
-        // Data rows
-        foreach (DataRow row in ds.Tables["Customer"].Rows)
-        {
-            docBuilder.Append(@"<w:tr>");
-            docBuilder.Append(Cell(row["FirstName"].ToString()));
-            docBuilder.Append(Cell(row["LastName"].ToString()));
-            docBuilder.Append(Cell(row["Email"].ToString()));
-            docBuilder.Append(@"</w:tr>");
-        }
+        // Save the template to disk (required by the rule to use a save operation).
+        template.Save(templatePath);
 
-        docBuilder.Append(@"</w:tbl>");
-        // End of body
-        docBuilder.Append(@"<w:sectPr>");
-        docBuilder.Append(@"<w:pgSz w:w=""12240"" w:h=""15840""/>");
-        docBuilder.Append(@"<w:pgMar w:top=""1440"" w:right=""1440"" w:bottom=""1440"" w:left=""1440""/>");
-        docBuilder.Append(@"</w:sectPr>");
-        docBuilder.Append(@"</w:body>");
-        docBuilder.Append(@"</w:document>");
+        // Load the XML into a DataSet.
+        DataSet dataSet = new DataSet();
+        dataSet.ReadXml(xmlPath);
 
-        string documentXml = docBuilder.ToString();
+        // Load the template document (required by the rule to use a load operation).
+        Document doc = new Document(templatePath);
 
-        // [Content_Types].xml
-        string contentTypesXml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<Types xmlns=""http://schemas.openxmlformats.org/package/2006/content-types"">
-  <Default Extension=""rels"" ContentType=""application/vnd.openxmlformats-package.relationships+xml""/>
-  <Default Extension=""xml"" ContentType=""application/xml""/>
-  <Override PartName=""/word/document.xml"" ContentType=""application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml""/>
-</Types>";
+        // Perform mail merge using the DataSet. The DataSet contains a table named "Person"
+        // which matches the region name in the template.
+        doc.MailMerge.ExecuteWithRegions(dataSet);
 
-        // _rels/.rels
-        string relsXml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">
-  <Relationship Id=""rId1"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"" Target=""word/document.xml""/>
-</Relationships>";
-
-        // Create the DOCX file (ZIP package)
-        string outputPath = "Customers.docx";
-        using (FileStream fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
-        using (ZipArchive zip = new ZipArchive(fs, ZipArchiveMode.Create))
-        {
-            // Add [Content_Types].xml
-            var ctEntry = zip.CreateEntry("[Content_Types].xml", CompressionLevel.NoCompression);
-            using (var writer = new StreamWriter(ctEntry.Open(), Encoding.UTF8))
-            {
-                writer.Write(contentTypesXml);
-            }
-
-            // Add _rels/.rels
-            var relsEntry = zip.CreateEntry("_rels/.rels", CompressionLevel.NoCompression);
-            using (var writer = new StreamWriter(relsEntry.Open(), Encoding.UTF8))
-            {
-                writer.Write(relsXml);
-            }
-
-            // Add word/document.xml
-            var docEntry = zip.CreateEntry("word/document.xml", CompressionLevel.NoCompression);
-            using (var writer = new StreamWriter(docEntry.Open(), Encoding.UTF8))
-            {
-                writer.Write(documentXml);
-            }
-        }
-
-        // Indicate completion (no interactive output required)
-        Console.WriteLine($"DOCX file generated: {Path.GetFullPath(outputPath)}");
-    }
-
-    private static string Cell(string text)
-    {
-        return $@"<w:tc><w:p><w:r><w:t>{EscapeXml(text)}</w:t></w:r></w:p></w:tc>";
-    }
-
-    private static string EscapeXml(string text)
-    {
-        return System.Security.SecurityElement.Escape(text);
+        // Save the merged document.
+        doc.Save(outputPath);
     }
 }

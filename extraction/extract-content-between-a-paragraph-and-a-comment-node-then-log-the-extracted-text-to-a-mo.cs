@@ -1,91 +1,77 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // ------------------------------------------------------------
-        // Create a sample document containing paragraphs and a comment.
-        // ------------------------------------------------------------
+        // Create a sample document with paragraphs and a comment.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Paragraph before target.");               // Paragraph 0
-        builder.Writeln("Start paragraph.");                      // Paragraph 1 (start boundary)
+        // Paragraph that will serve as the start marker.
+        builder.Writeln("Paragraph A - Start");
 
-        // Text that will be between the start paragraph and the comment.
-        builder.Writeln("This is the first line of extracted text.");
-        builder.Writeln("This is the second line of extracted text.");
+        // Paragraph that lies between the start paragraph and the comment.
+        builder.Writeln("Paragraph B - Between");
 
-        // Insert a comment anchored to a piece of text.
-        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("This is a comment.");
+        // Create a comment node and attach it to the current paragraph (Paragraph B).
+        Comment comment = new Comment(doc, "Monitor", "MT", DateTime.Now);
+        comment.SetText("This is a sample comment.");
+        builder.CurrentParagraph.AppendChild(comment);
 
-        // The comment range start/end are placed around the following run.
-        builder.CurrentParagraph.AppendChild(new CommentRangeStart(doc, comment.Id));
-        builder.Write("Commented text.");
-        builder.CurrentParagraph.AppendChild(new CommentRangeEnd(doc, comment.Id));
-        builder.CurrentParagraph.AppendChild(comment); // Append the comment node itself.
+        // Paragraph after the comment (not part of the extraction range).
+        builder.Writeln("Paragraph C - After");
 
-        // Additional paragraph after the comment.
-        builder.Writeln("Paragraph after comment.");
+        // Save the source document (optional, for inspection).
+        const string sourcePath = "source.docx";
+        doc.Save(sourcePath);
 
-        // Save the document locally.
-        const string docPath = "sample.docx";
-        doc.Save(docPath);
+        // Load the document to simulate a separate extraction step.
+        Document loaded = new Document(sourcePath);
 
-        // ------------------------------------------------------------
-        // Load the document for extraction.
-        // ------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-
-        // Locate the start paragraph (index 1).
-        Paragraph startParagraph = loadedDoc.FirstSection.Body.Paragraphs[1];
+        // Locate the start paragraph (Paragraph A).
+        Paragraph startParagraph = loaded.FirstSection.Body.Paragraphs[0];
         if (startParagraph == null)
             throw new InvalidOperationException("Start paragraph not found.");
 
-        // Locate the comment range start node to determine the end boundary.
-        CommentRangeStart commentRangeStart = loadedDoc.GetChildNodes(NodeType.CommentRangeStart, true)[0] as CommentRangeStart;
-        if (commentRangeStart == null)
-            throw new InvalidOperationException("Comment range start not found.");
+        // Locate the comment node.
+        Comment targetComment = loaded.GetChildNodes(NodeType.Comment, true)[0] as Comment;
+        if (targetComment == null)
+            throw new InvalidOperationException("Comment node not found.");
 
-        Paragraph endParagraph = commentRangeStart.ParentNode as Paragraph;
-        if (endParagraph == null)
-            throw new InvalidOperationException("End paragraph (containing comment) not found.");
-
-        // Extract text between the start and end paragraphs (exclusive).
-        NodeCollection bodyParagraphs = loadedDoc.FirstSection.Body.Paragraphs;
-        int startIndex = bodyParagraphs.IndexOf(startParagraph);
-        int endIndex = bodyParagraphs.IndexOf(endParagraph);
-
-        if (endIndex <= startIndex)
-            throw new InvalidOperationException("Invalid paragraph boundaries for extraction.");
-
-        StringBuilder extractedBuilder = new StringBuilder();
-        for (int i = startIndex + 1; i < endIndex; i++)
+        // Collect all nodes that appear between the start paragraph and the comment node.
+        List<Node> betweenNodes = new List<Node>();
+        Node current = startParagraph.NextSibling;
+        while (current != null && current != targetComment)
         {
-            Paragraph para = bodyParagraphs[i] as Paragraph;
-            if (para != null)
-                extractedBuilder.Append(para.GetText());
+            betweenNodes.Add(current);
+            current = current.NextSibling;
         }
 
-        string extractedText = extractedBuilder.ToString().Trim();
+        // Extract text from the collected nodes.
+        string extractedText = string.Empty;
+        foreach (Node node in betweenNodes)
+        {
+            // Use GetText for block nodes; for inline nodes GetText also works.
+            extractedText += node.GetText();
+        }
 
-        // ------------------------------------------------------------
-        // Log the extracted text (simulated monitoring system).
-        // ------------------------------------------------------------
-        Console.WriteLine("=== Extracted Content ===");
+        // Trim the result to remove trailing paragraph breaks.
+        extractedText = extractedText.Trim();
+
+        // Log the extracted text to the monitoring system (simulated via console output).
+        Console.WriteLine("Extracted text between paragraph and comment:");
         Console.WriteLine(extractedText);
-        Console.WriteLine("=========================");
 
-        const string logPath = "extracted.txt";
-        File.WriteAllText(logPath, extractedText);
+        // Additionally, write the extracted text to a deterministic file.
+        const string outputPath = "extracted.txt";
+        File.WriteAllText(outputPath, extractedText);
 
-        // Validate that the log file was created.
-        if (!File.Exists(logPath))
-            throw new InvalidOperationException("Failed to create the extraction log file.");
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Failed to create the extracted text file.");
     }
 }

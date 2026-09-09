@@ -3,59 +3,87 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define folders.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "ImageExample");
-        string inputDir = Path.Combine(baseDir, "Input");
-        string outputDir = Path.Combine(baseDir, "Output");
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Define base directories.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        string imagesDir = Path.Combine(baseDir, "ExtractedImages");
+        Directory.CreateDirectory(baseDir);
+        Directory.CreateDirectory(imagesDir);
 
-        // Create a deterministic sample image.
-        string sampleImagePath = Path.Combine(inputDir, "sample.png");
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        // Create a deterministic sample image (sample.png).
+        string sampleImagePath = Path.Combine(baseDir, "sample.png");
+        CreateSampleImage(sampleImagePath, 200, 200);
+
+        // Create a DOCX document and insert the sample image.
+        string docPath = Path.Combine(baseDir, "sample.docx");
+        CreateDocumentWithImage(docPath, sampleImagePath);
+
+        // Load the document and extract all embedded images.
+        ExtractImagesFromDocument(docPath, imagesDir);
+    }
+
+    private static void CreateSampleImage(string filePath, int width, int height)
+    {
+        // Create a bitmap and clear it with white color.
+        using (Bitmap bitmap = new Bitmap(width, height))
         using (Graphics graphics = Graphics.FromImage(bitmap))
         {
             graphics.Clear(Color.White);
-            // Simple drawing – a black rectangle.
-            graphics.DrawRectangle(new Pen(Color.Black), 20, 20, 160, 160);
-            bitmap.Save(sampleImagePath);
+            // Optionally, draw something deterministic (a black rectangle).
+            graphics.DrawRectangle(new Pen(Color.Black, 2), 10, 10, width - 20, height - 20);
+            // Save the bitmap to the specified file.
+            bitmap.Save(filePath);
         }
+    }
 
-        // Create a DOCX document and insert the sample image.
-        string docPath = Path.Combine(inputDir, "sample.docx");
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
+
+        // Insert the image into the document.
+        builder.InsertImage(imagePath);
+
+        // Save the document.
         doc.Save(docPath);
+    }
 
+    private static void ExtractImagesFromDocument(string docPath, string outputFolder)
+    {
         // Load the document.
-        Document loadedDoc = new Document(docPath);
+        Document doc = new Document(docPath);
 
-        // Extract all images from the document.
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        // Get all shape nodes (including images).
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
         int imageIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        foreach (Shape shape in shapes.OfType<Shape>())
         {
             if (shape.HasImage)
             {
+                // Determine the appropriate file extension for the image type.
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string outFile = Path.Combine(outputDir, $"extracted_{imageIndex}{extension}");
-                shape.ImageData.Save(outFile);
+                string outputPath = Path.Combine(outputFolder, $"extracted_{imageIndex}{extension}");
+
+                // Save the image data to the file system.
+                shape.ImageData.Save(outputPath);
                 imageIndex++;
             }
         }
 
         // Validate that at least one image was extracted.
         if (imageIndex == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
+        {
+            throw new Exception("No images were extracted from the document.");
+        }
 
-        // Optional: indicate completion.
-        Console.WriteLine($"Extracted {imageIndex} image(s) to \"{outputDir}\".");
+        Console.WriteLine($"Extracted {imageIndex} image(s) to \"{outputFolder}\".");
     }
 }

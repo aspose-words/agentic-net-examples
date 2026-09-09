@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -7,22 +8,22 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with different first page header.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable a different header for the first page.
+        // Enable different first page header.
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // First page header.
+        // First page header placeholder.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Writeln("First Header");
+        builder.Write("FirstHeaderPlaceholder");
 
-        // Primary header for all other pages.
+        // Primary (other pages) header placeholder.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Other Header");
+        builder.Write("OtherHeaderPlaceholder");
 
-        // Return to the main body and add enough text to create three pages.
+        // Add body content spanning three pages.
         builder.MoveToSection(0);
         builder.Writeln("Page 1");
         builder.InsertBreak(BreakType.PageBreak);
@@ -30,43 +31,45 @@ public class Program
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Page 3");
 
-        // Define a callback that replaces header text based on the header type.
-        IReplacingCallback callback = new HeaderReplaceCallback();
-        FindReplaceOptions options = new FindReplaceOptions(callback);
+        // Save the initial document.
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Replace any occurrence of the word "Header" in the document.
-        int replacedCount = doc.Range.Replace(new Regex("Header"), "Header", options);
+        // Load the document for replacement.
+        Document loaded = new Document(inputPath);
 
-        if (replacedCount == 0)
-            throw new InvalidOperationException("No header replacements were performed.");
+        // Callback that decides replacement based on header type.
+        var callback = new HeaderReplaceCallback();
+
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = callback
+        };
+
+        // Replace both placeholders with appropriate text.
+        Regex regex = new Regex("(FirstHeaderPlaceholder|OtherHeaderPlaceholder)");
+        int replaced = loaded.Range.Replace(regex, string.Empty, options);
+
+        if (replaced == 0)
+            throw new InvalidOperationException("No header placeholders were replaced.");
 
         // Save the modified document.
-        doc.Save("Result.docx");
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 
-    // Callback that changes the replacement text depending on the header type.
+    // Callback implementation that checks the header/footer type of the match.
     private class HeaderReplaceCallback : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Find the HeaderFooter node that contains the match.
+            // Find the containing HeaderFooter node, if any.
             HeaderFooter header = args.MatchNode.GetAncestor(NodeType.HeaderFooter) as HeaderFooter;
-            if (header == null)
-                return ReplaceAction.Skip; // Not inside a header/footer.
 
-            // Choose replacement based on the header type.
-            switch (header.HeaderFooterType)
-            {
-                case HeaderFooterType.HeaderFirst:
-                    args.Replacement = "New First Header";
-                    break;
-                case HeaderFooterType.HeaderPrimary:
-                    args.Replacement = "New Other Header";
-                    break;
-                default:
-                    // For any other header types, keep the original replacement.
-                    break;
-            }
+            if (header != null && header.HeaderFooterType == HeaderFooterType.HeaderFirst)
+                args.Replacement = "First Header Updated";
+            else
+                args.Replacement = "Other Header Updated";
 
             return ReplaceAction.Replace;
         }

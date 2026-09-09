@@ -3,94 +3,93 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class ExtractMixedRange
 {
     public static void Main()
     {
-        // Create a sample source document.
+        // -------------------- Create a sample source document --------------------
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+
+        // Intro paragraph (outside the extraction range).
+        builder.Writeln("Intro paragraph before the table.");
+
+        // Build a 2x2 table.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell A1");
+        builder.InsertCell();
+        builder.Write("Cell B1");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell A2");
+        builder.InsertCell();
+        builder.Write("Cell B2");
+        builder.EndTable();
+
+        // Paragraph that will serve as the end boundary of the extraction.
+        builder.Writeln("Target paragraph – this marks the end of the extracted range.");
+
+        // Additional content after the extraction range.
+        builder.Writeln("Paragraph after the extracted range.");
+
+        // Save the source document.
         const string sourcePath = "source.docx";
-        CreateSourceDocument(sourcePath);
+        source.Save(sourcePath);
 
-        // Load the source document.
-        Document sourceDoc = new Document(sourcePath);
+        // -------------------- Load the source document --------------------
+        Document loaded = new Document(sourcePath);
 
-        // Locate the start cell (first cell in the document).
-        Cell startCell = sourceDoc.GetChildNodes(NodeType.Cell, true)[0] as Cell;
+        // Locate the first cell of the first table (start of the range).
+        Table firstTable = loaded.GetChildNodes(NodeType.Table, true)[0] as Table;
+        if (firstTable == null)
+            throw new InvalidOperationException("No table found in the document.");
+
+        Cell startCell = firstTable.FirstRow.FirstCell;
         if (startCell == null)
-            throw new InvalidOperationException("Start cell not found.");
+            throw new InvalidOperationException("The table does not contain any cells.");
 
-        // Locate the end paragraph (the first paragraph that follows the table).
+        // Locate the paragraph that contains the specific marker text (end of the range).
         Paragraph endParagraph = null;
-        NodeCollection allParagraphs = sourceDoc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph para in allParagraphs)
+        foreach (Paragraph para in loaded.FirstSection.Body.Paragraphs)
         {
-            // The paragraph whose previous sibling is a table is the first paragraph after the table.
-            if (para.PreviousSibling != null && para.PreviousSibling.NodeType == NodeType.Table)
+            if (para.GetText().Contains("Target paragraph"))
             {
                 endParagraph = para;
                 break;
             }
         }
-
         if (endParagraph == null)
             throw new InvalidOperationException("End paragraph not found.");
 
-        // Build a new document that will contain the extracted range.
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren();
+        // -------------------- Prepare the destination document --------------------
+        Document result = new Document();
+        result.RemoveAllChildren(); // Ensure a clean document.
 
         // Create a new section and body for the result document.
-        Section resultSection = new Section(resultDoc);
-        resultDoc.AppendChild(resultSection);
-        Body resultBody = new Body(resultDoc);
+        Section resultSection = new Section(result);
+        result.AppendChild(resultSection);
+        Body resultBody = new Body(result);
         resultSection.AppendChild(resultBody);
 
-        // Import the table that contains the start cell.
-        Table containingTable = startCell.GetAncestor(NodeType.Table) as Table;
-        if (containingTable == null)
-            throw new InvalidOperationException("Containing table not found.");
+        // -------------------- Import the required nodes --------------------
+        // Use NodeImporter to import nodes from the source into the destination.
+        NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
 
-        NodeImporter importer = new NodeImporter(sourceDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-        Node importedTable = importer.ImportNode(containingTable, true);
+        // Import the whole table (which contains the start cell) into the result.
+        Node importedTable = importer.ImportNode(firstTable, true);
         resultBody.AppendChild(importedTable);
 
-        // Import the end paragraph.
+        // Import the end paragraph into the result.
         Node importedParagraph = importer.ImportNode(endParagraph, true);
         resultBody.AppendChild(importedParagraph);
 
-        // Save the extracted content.
+        // -------------------- Save the extracted content --------------------
         const string resultPath = "extracted.docx";
-        resultDoc.Save(resultPath);
+        result.Save(resultPath);
 
         // Verify that the output file was created.
         if (!File.Exists(resultPath))
-            throw new InvalidOperationException("Extraction output was not created.");
-    }
-
-    // Helper method to create a sample document with a table followed by paragraphs.
-    private static void CreateSourceDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple 2x2 table.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1,1");
-        builder.InsertCell();
-        builder.Write("Cell 1,2");
-        builder.EndRow();
-        builder.InsertCell();
-        builder.Write("Cell 2,1");
-        builder.InsertCell();
-        builder.Write("Cell 2,2");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Add paragraphs after the table.
-        builder.Writeln("Paragraph after table 1.");
-        builder.Writeln("Paragraph after table 2.");
-
-        doc.Save(filePath);
+            throw new InvalidOperationException("The extracted document was not created.");
     }
 }

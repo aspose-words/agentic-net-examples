@@ -7,50 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        string docxPath = "sample.docx";
-        string pdfPath = "sample.pdf";
-
-        // -----------------------------------------------------------------
-        // 1. Create a new blank document and add a header and a footer.
-        // -----------------------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Ensure the same header/footer appears on every page.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = false;
-        builder.PageSetup.OddAndEvenPagesHeaderFooter = false;
-
-        // Add header text.
+        // Add a primary header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Sample Header Text");
+        builder.Write("Sample Header");
 
-        // Add footer text.
+        // Add a primary footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Sample Footer Text");
+        builder.Write("Sample Footer");
 
-        // Add some body content so the PDF is not empty.
+        // Return to the main body and add some content.
         builder.MoveToSection(0);
-        builder.Writeln("This is the body of the document.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page content.");
+        builder.Writeln("Hello World!");
 
-        // Save the document as DOCX (input file).
+        // Save the document as DOCX (input for conversion).
+        string docxPath = "sample.docx";
         doc.Save(docxPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Load the saved DOCX and convert it to PDF.
-        // -----------------------------------------------------------------
+        // Load the saved DOCX.
         Document loadedDoc = new Document(docxPath);
+
+        // Convert to PDF.
+        string pdfPath = "output.pdf";
         loadedDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // 3. Verify that the PDF was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
+            throw new InvalidOperationException("PDF conversion failed: output file not created or empty.");
 
-        // Optional cleanup (comment out if you want to inspect the files).
+        // Optional cleanup (comment out if you want to keep the files).
         // File.Delete(docxPath);
         // File.Delete(pdfPath);
     }

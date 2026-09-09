@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 using Aspose.Drawing.Drawing2D;
@@ -10,85 +12,85 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Prepare a folder for all generated files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // File paths.
-        string inputImagePath = Path.Combine(artifactsDir, "input.jpg");
-        string docPath = Path.Combine(artifactsDir, "document.docx");
-        string extractedImagePath = Path.Combine(artifactsDir, "extracted.jpg");
-        string thumbnailPath = Path.Combine(artifactsDir, "thumbnail.jpg");
+        // -----------------------------------------------------------------
+        // 1. Create a sample JPEG image (200x200) using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.jpg");
+        int originalWidth = 200;
+        int originalHeight = 200;
+
+        Bitmap bitmap = new Bitmap(originalWidth, originalHeight);
+        Graphics graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(Color.LightBlue);
+        // Draw a simple ellipse to make the image recognizable.
+        graphics.DrawEllipse(Pens.DarkBlue, 20, 20, 160, 160);
+        graphics.Dispose();
+        bitmap.Save(sampleImagePath, ImageFormat.Jpeg);
+        bitmap.Dispose();
 
         // -----------------------------------------------------------------
-        // 1. Create a deterministic sample JPEG image using Aspose.Drawing.
+        // 2. Insert the image into a Word document.
         // -----------------------------------------------------------------
-        int originalWidth = 800;
-        int originalHeight = 600;
-        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.White);
-                // Simple visual content – a blue rectangle.
-                using (SolidBrush brush = new SolidBrush(Color.Blue))
-                {
-                    g.FillRectangle(brush, 100, 100, 600, 400);
-                }
-            }
-            // Save as JPEG.
-            bitmap.Save(inputImagePath, ImageFormat.Jpeg);
-        }
-
-        // --------------------------------------------------------------
-        // 2. Create a Word document and insert the JPEG image.
-        // --------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape shape = builder.InsertImage(inputImagePath);
-        doc.Save(docPath);
+        builder.InsertImage(sampleImagePath);
+        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
+        doc.Save(docPath, SaveFormat.Docx);
 
-        // --------------------------------------------------------------
-        // 3. Extract the image from the shape.
-        // --------------------------------------------------------------
-        if (!shape.HasImage)
-            throw new InvalidOperationException("The inserted shape does not contain an image.");
+        // -----------------------------------------------------------------
+        // 3. Extract JPEG images, resize them to 50% and save as thumbnails.
+        // -----------------------------------------------------------------
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int thumbnailIndex = 0;
 
-        // Optional: save the extracted image directly.
-        shape.ImageData.Save(extractedImagePath);
-
-        // --------------------------------------------------------------
-        // 4. Resize the extracted JPEG to 50% width and height.
-        // --------------------------------------------------------------
-        using (MemoryStream ms = new MemoryStream())
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Save image data to a stream and reset position.
-            shape.ImageData.Save(ms);
-            ms.Position = 0;
+            if (!shape.HasImage)
+                continue;
 
-            using (Bitmap originalBitmap = new Bitmap(ms))
+            // Process only JPEG images.
+            if (shape.ImageData.ImageType != ImageType.Jpeg)
+                continue;
+
+            // Get the original image bytes.
+            byte[] imageBytes = shape.ImageData.ToByteArray();
+
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                int thumbWidth = originalBitmap.Width / 2;
-                int thumbHeight = originalBitmap.Height / 2;
-
-                using (Bitmap thumbBitmap = new Bitmap(thumbWidth, thumbHeight))
+                // Load the original image.
+                using (Bitmap originalBmp = new Bitmap(ms))
                 {
-                    using (Graphics g = Graphics.FromImage(thumbBitmap))
+                    // Calculate new dimensions (50% of original).
+                    int thumbWidth = originalBmp.Width / 2;
+                    int thumbHeight = originalBmp.Height / 2;
+
+                    // Create a new bitmap for the thumbnail.
+                    using (Bitmap thumbBmp = new Bitmap(thumbWidth, thumbHeight))
                     {
-                        // High‑quality scaling.
-                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        g.DrawImage(originalBitmap, 0, 0, thumbWidth, thumbHeight);
+                        using (Graphics g = Graphics.FromImage(thumbBmp))
+                        {
+                            // High quality scaling.
+                            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                            g.DrawImage(originalBmp, 0, 0, thumbWidth, thumbHeight);
+                        }
+
+                        // Save the thumbnail.
+                        string thumbPath = Path.Combine(artifactsDir, $"thumbnail_{thumbnailIndex}.jpg");
+                        thumbBmp.Save(thumbPath, ImageFormat.Jpeg);
+                        thumbnailIndex++;
                     }
-                    // Save the thumbnail as JPEG.
-                    thumbBitmap.Save(thumbnailPath, ImageFormat.Jpeg);
                 }
             }
         }
 
-        // --------------------------------------------------------------
-        // 5. Validate that the thumbnail file was created.
-        // --------------------------------------------------------------
-        if (!File.Exists(thumbnailPath))
-            throw new FileNotFoundException("Thumbnail image was not created.", thumbnailPath);
+        // Validate that at least one thumbnail was created.
+        if (thumbnailIndex == 0)
+            throw new InvalidOperationException("No JPEG images were extracted and resized.");
+
+        // Optional: indicate completion (no console interaction required).
     }
 }

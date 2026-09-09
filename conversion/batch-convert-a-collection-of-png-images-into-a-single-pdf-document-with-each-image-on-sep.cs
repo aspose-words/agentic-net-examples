@@ -3,35 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
-using Aspose.Drawing; // Aspose.Drawing.Common namespace
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
-public class BatchPngToPdf
+public class Program
 {
     public static void Main()
     {
-        // Define folders for input images and output PDF.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputImages");
-        string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "CombinedImages.pdf");
+        // Folder to hold generated PNG images.
+        const string imagesFolder = "InputImages";
+        Directory.CreateDirectory(imagesFolder);
 
-        // Ensure the input folder exists.
-        Directory.CreateDirectory(inputFolder);
+        // Number of sample images to create.
+        const int imageCount = 3;
 
         // Create sample PNG images using Aspose.Drawing.
-        CreateSamplePng(Path.Combine(inputFolder, "Image1.png"), Aspose.Drawing.Color.LightBlue, "First");
-        CreateSamplePng(Path.Combine(inputFolder, "Image2.png"), Aspose.Drawing.Color.LightGreen, "Second");
-        CreateSamplePng(Path.Combine(inputFolder, "Image3.png"), Aspose.Drawing.Color.LightCoral, "Third");
+        for (int i = 1; i <= imageCount; i++)
+        {
+            string filePath = Path.Combine(imagesFolder, $"Image{i}.png");
+            using (Bitmap bitmap = new Bitmap(600, 800, PixelFormat.Format32bppArgb))
+            {
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    // Fill background.
+                    graphics.Clear(Color.LightBlue);
 
-        // Gather all PNG files from the input folder.
-        string[] pngFiles = Directory.GetFiles(inputFolder, "*.png");
+                    // Prepare drawing objects.
+                    Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 36);
+                    using (SolidBrush brush = new SolidBrush(Color.DarkBlue))
+                    {
+                        string text = $"Sample Image {i}";
+                        graphics.DrawString(text, font, brush, new PointF(50, 350));
+                    }
+                }
 
-        if (pngFiles.Length == 0)
-            throw new InvalidOperationException("No PNG images were found to convert.");
+                // Save as PNG.
+                bitmap.Save(filePath, ImageFormat.Png);
+            }
+        }
 
         // Create a new blank Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert each PNG onto a separate page.
+        // Insert each PNG image on a separate page.
+        string[] pngFiles = Directory.GetFiles(imagesFolder, "*.png");
         for (int i = 0; i < pngFiles.Length; i++)
         {
             builder.InsertImage(pngFiles[i]);
@@ -41,47 +58,19 @@ public class BatchPngToPdf
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save the assembled document as a PDF.
-        doc.Save(outputPdfPath, SaveFormat.Pdf);
+        // Save the assembled document as PDF.
+        const string outputPdf = "CombinedImages.pdf";
+        doc.Save(outputPdf, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(outputPdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+        // Validate that the PDF was created.
+        if (!File.Exists(outputPdf))
+            throw new InvalidOperationException("The PDF file was not created as expected.");
 
-        Console.WriteLine($"Successfully created PDF: {outputPdfPath}");
-    }
-
-    // Helper method to create a simple PNG image with a solid background and centered text.
-    private static void CreateSamplePng(string filePath, Aspose.Drawing.Color backgroundColor, string label)
-    {
-        const int width = 400;
-        const int height = 300;
-
-        // Create a bitmap and obtain a graphics object for drawing.
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        // Cleanup temporary images (optional).
+        foreach (string file in pngFiles)
         {
-            // Fill background.
-            using (SolidBrush brush = new SolidBrush(backgroundColor))
-            {
-                graphics.FillRectangle(brush, 0, 0, width, height);
-            }
-
-            // Prepare font and text layout.
-            Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24);
-            using (SolidBrush textBrush = new SolidBrush(Aspose.Drawing.Color.Black))
-            {
-                // Measure the text size.
-                SizeF textSize = graphics.MeasureString(label, font);
-                float x = (width - textSize.Width) / 2;
-                float y = (height - textSize.Height) / 2;
-
-                // Draw the label text.
-                graphics.DrawString(label, font, textBrush, x, y);
-            }
-
-            // Save as PNG.
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+            File.Delete(file);
         }
+        Directory.Delete(imagesFolder);
     }
 }

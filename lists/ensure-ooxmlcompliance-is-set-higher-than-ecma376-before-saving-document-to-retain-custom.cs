@@ -1,51 +1,53 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Lists;
+using Aspose.Words.Saving;
 using Aspose.Words.Settings;
 
 public class Program
 {
     public static void Main()
     {
-        // Define output directory and file name.
+        // Ensure the output directory exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string filePath = Path.Combine(outputDir, "CustomList.docx");
 
-        // Create a new blank document and a DocumentBuilder to add content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a numbered list to the document.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Customize the first level of the list (e.g., red font, larger size, start at 5).
-        ListLevel level0 = list.ListLevels[0];
-        level0.Font.Color = Color.Red;
-        level0.Font.Size = 24;
-        level0.StartAt = 5;
+        doc.Lists.Add(ListTemplate.NumberDefault);
+        List docList = doc.Lists[0];
 
         // Enable restarting the list at each new section.
-        // This property only takes effect when the OOXML compliance level is newer than Ecma376.
-        list.IsRestartAtEachSection = true;
+        // This property only takes effect when the OOXML compliance level is higher than Ecma376.
+        docList.IsRestartAtEachSection = true;
 
-        // Apply the list to a few paragraphs, insert a section break, and continue the list.
-        builder.ListFormat.List = list;
+        // Apply the list to the builder.
+        builder.ListFormat.List = docList;
+
+        // Write some list items, then insert a section break and write more items.
         builder.Writeln("Item 1");
         builder.Writeln("Item 2");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
         builder.Writeln("Item 3");
         builder.Writeln("Item 4");
-        builder.ListFormat.RemoveNumbers();
 
-        // Create OoxmlSaveOptions and set compliance higher than Ecma376.
+        // Configure OOXML save options with a compliance level higher than Ecma376.
         OoxmlSaveOptions saveOptions = new OoxmlSaveOptions();
         saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
 
         // Save the document using the specified save options.
-        doc.Save(filePath, saveOptions);
+        string outPath = Path.Combine(outputDir, "CustomList.docx");
+        doc.Save(outPath, saveOptions);
+
+        // Load the saved document to verify that the list restart setting was retained.
+        Document loadedDoc = new Document(outPath);
+        bool isRestartEnabled = loadedDoc.Lists[0].IsRestartAtEachSection;
+
+        // Output the verification result.
+        Console.WriteLine($"IsRestartAtEachSection retained after save: {isRestartEnabled}");
     }
 }

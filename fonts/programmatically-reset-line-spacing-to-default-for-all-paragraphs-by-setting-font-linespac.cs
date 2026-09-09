@@ -1,41 +1,50 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Define output directory and ensure it exists
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create a new blank document
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample paragraphs with different formatting
-        builder.Writeln("First paragraph with default line spacing.");
-        builder.Font.Size = 24;
-        builder.Writeln("Second paragraph with larger font size.");
-        builder.Font.Size = 12;
-        builder.Writeln("Third paragraph with normal font size.");
+        // Add a paragraph with a custom line spacing (exactly 30 points).
+        builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Exactly;
+        builder.ParagraphFormat.LineSpacing = 30;
+        builder.Writeln("Paragraph with custom line spacing (Exactly 30 points).");
 
-        // Reset line spacing for all paragraphs to the default values
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Add another paragraph with a different custom line spacing (at least 20 points).
+        builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.AtLeast;
+        builder.ParagraphFormat.LineSpacing = 20;
+        builder.Writeln("Another paragraph with custom line spacing (AtLeast 20 points).");
+
+        // Reset line spacing for all paragraphs to the default value.
+        // Setting LineSpacing to 0 and using the Multiple rule restores the default behavior.
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            // Default line spacing is defined by the Multiple rule with a value of 0 (auto)
-            paragraph.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-            paragraph.ParagraphFormat.LineSpacing = 0;
+            para.ParagraphFormat.LineSpacing = 0;
+            para.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
         }
 
-        // Save the document
-        string outputPath = Path.Combine(artifactsDir, "ResetLineSpacing.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Simple verification that the file was created
-        Console.WriteLine(File.Exists(outputPath)
-            ? $"Document saved successfully to: {outputPath}"
-            : "Failed to save the document.");
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "ResetLineSpacing.docx");
+        doc.Save(outputPath);
+
+        // Validate that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

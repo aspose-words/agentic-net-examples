@@ -1,59 +1,81 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Product
-{
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data.
-        var allProducts = new List<Product>
+        // Prepare sample data.
+        List<Item> sourceItems = new()
         {
-            new() { Name = "Apple",  Price = 10m },
-            new() { Name = "Banana", Price = 25m },
-            new() { Name = "Cherry", Price = 30m },
-            new() { Name = "Date",   Price = 15m },
-            new() { Name = "Elderberry", Price = 50m }
+            new Item { Id = 1, Name = "Apple",  Value = 5 },
+            new Item { Id = 2, Name = "Banana", Value = 12 },
+            new Item { Id = 3, Name = "Cherry", Value = 8 },
+            new Item { Id = 4, Name = "Date",   Value = 15 },
+            new Item { Id = 5, Name = "Elderberry", Value = 20 }
         };
 
-        // Combine Where, Select, and OrderBy in a single LINQ expression.
-        var filteredSorted = allProducts
-            .Where(p => p.Price > 20)                     // filter
-            .Select(p => new Product { Name = p.Name, Price = p.Price }) // project
-            .OrderByDescending(p => p.Price)             // sort
+        // LINQ: filter Value > 10, project required fields, order by Name.
+        List<ItemDto> filtered = sourceItems
+            .Where(i => i.Value > 10)
+            .Select(i => new ItemDto { Id = i.Id, Name = i.Name, Value = i.Value })
+            .OrderBy(i => i.Name)
             .ToList();
 
-        // Prepare the model for the reporting engine.
-        var model = new ReportModel { Products = filteredSorted };
+        // Wrap the result for the reporting engine.
+        ReportModel model = new() { Items = filtered };
 
-        // Create a Word document template programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a template document programmatically.
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+        CreateTemplate(templatePath);
 
-        builder.Writeln("Filtered and Sorted Products:");
-        // LINQ Reporting foreach tag iterating over the Products collection.
-        builder.Writeln("<<foreach [p in model.Products]>>");
-        builder.Writeln(" - <<[p.Name]>> : $<<[p.Price]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Build the report using the model.
-        var engine = new ReportingEngine();
+        // Load the template and build the report.
+        Document doc = new(templatePath);
+        ReportingEngine engine = new();
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+        doc.Save(reportPath);
     }
+
+    // Generates a simple Word template with a foreach tag.
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        builder.Writeln("Filtered and Sorted Items:");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>, Value: <<[item.Value]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(filePath);
+    }
+}
+
+// Simple data entity.
+public class Item
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int Value { get; set; }
+}
+
+// DTO used in the report.
+public class ItemDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int Value { get; set; }
+}
+
+// Wrapper class for the reporting engine.
+public class ReportModel
+{
+    public List<ItemDto> Items { get; set; } = new();
 }

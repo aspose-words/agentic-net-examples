@@ -5,25 +5,37 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Player
-{
-    public int Rank { get; set; }
-    public string Name { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<Player> Players { get; set; } = new();
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for legacy encodings (required by Aspose.Words in some environments)
+        // Register code page provider (required for some Aspose.Words features)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample data
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        builder.Writeln("Ranking Report");
+        builder.Writeln("<<foreach [p in Players]>>");
+        // Apply ordinal text format (First, Second, Third, ...) to the Rank field.
+        builder.Writeln("<<[p.Rank]:ordinalText>>. <<[p.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template back for report generation.
+        // -----------------------------------------------------------------
+        Document report = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
         var model = new ReportModel
         {
             Players = new List<Player>
@@ -35,40 +47,30 @@ public class Program
             }
         };
 
-        // Create a template document programmatically
-        string templatePath = "RankingTemplate.docx";
-        CreateTemplate(templatePath);
-
-        // Load the template
-        Document doc = new Document(templatePath);
-
-        // Build the report using LINQ Reporting engine
+        // -----------------------------------------------------------------
+        // 4. Build the report using Aspose.Words LINQ Reporting engine.
+        // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(report, model, "model");
 
-        // Save the generated report
-        doc.Save("RankingReport.docx");
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        const string outputPath = "Report.docx";
+        report.Save(outputPath);
     }
+}
 
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+// ---------------------------------------------------------------------
+// Data model classes (public, non‑nullable properties initialized).
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<Player> Players { get; set; } = new();
+}
 
-        // Title
-        builder.Writeln("Ranking Report");
-        builder.Writeln();
-
-        // Begin foreach loop over Players collection
-        builder.Writeln("<<foreach [player in Players]>>");
-
-        // Use ordinal text format for the rank (First, Second, Third, ...)
-        builder.Writeln("<<[player.Rank]:ordinalText>>. <<[player.Name]>>");
-
-        // End foreach loop
-        builder.Writeln("<</foreach>>");
-
-        // Save the template
-        doc.Save(filePath);
-    }
+public class Player
+{
+    public int Rank { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

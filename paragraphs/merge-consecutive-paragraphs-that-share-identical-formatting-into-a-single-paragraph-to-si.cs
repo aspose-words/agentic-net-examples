@@ -1,71 +1,72 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
-public class Program
+public class MergeParagraphsExample
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder for inserting content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define a common paragraph style.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Font.Size = 12;
-        builder.Font.Name = "Arial";
-        builder.Font.Color = Color.Black;
+        // Paragraph 1 – style "Normal", left aligned.
+        builder.ParagraphFormat.StyleName = "Normal";
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
+        builder.Writeln("First paragraph with normal style.");
 
-        // Two consecutive paragraphs with identical formatting.
-        builder.Writeln("Paragraph 1 – same formatting.");
-        builder.Writeln("Paragraph 2 – same formatting.");
+        // Paragraph 2 – same formatting as paragraph 1 (should be merged).
+        builder.Writeln("Second paragraph with the same formatting.");
 
-        // A paragraph with different formatting.
-        builder.Font.Color = Color.Red;
-        builder.Writeln("Paragraph 3 – different formatting.");
+        // Paragraph 3 – different alignment (won't be merged with previous).
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Writeln("Third paragraph centered.");
 
-        // Another paragraph that matches the first style but is not consecutive.
-        builder.Font.Color = Color.Black;
-        builder.Writeln("Paragraph 4 – same as first style, non‑consecutive.");
+        // Paragraph 4 – same formatting as paragraph 3 (should be merged).
+        builder.Writeln("Fourth paragraph also centered.");
+
+        // Paragraph 5 – different style (won't be merged).
+        builder.ParagraphFormat.StyleName = "Heading 1";
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
+        builder.Writeln("Heading paragraph.");
+
+        // Save the original document for reference.
+        doc.Save("Original.docx");
 
         // Merge consecutive paragraphs that share identical formatting.
-        MergeConsecutiveParagraphs(doc);
+        ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
 
-        // Save the resulting document.
-        doc.Save("MergedParagraphs.docx");
-    }
-
-    private static void MergeConsecutiveParagraphs(Document doc)
-    {
-        // Work with the body of the first section.
-        Body body = doc.FirstSection.Body;
-        // Iterate while there is a next paragraph to compare.
-        for (int i = 0; i < body.Paragraphs.Count - 1; i++)
+        int i = 0;
+        while (i < paragraphs.Count - 1)
         {
-            Paragraph first = body.Paragraphs[i];
-            Paragraph second = body.Paragraphs[i + 1];
+            Paragraph current = paragraphs[i];
+            Paragraph next = paragraphs[i + 1];
 
-            // Compare relevant formatting properties.
-            bool sameStyle = first.ParagraphFormat.StyleIdentifier == second.ParagraphFormat.StyleIdentifier;
-            bool sameAlignment = first.ParagraphFormat.Alignment == second.ParagraphFormat.Alignment;
-            bool sameOutline = first.ParagraphFormat.OutlineLevel == second.ParagraphFormat.OutlineLevel;
+            // Compare formatting: style name and alignment.
+            bool sameStyle = string.Equals(current.ParagraphFormat.StyleName, next.ParagraphFormat.StyleName, StringComparison.Ordinal);
+            bool sameAlignment = current.ParagraphFormat.Alignment == next.ParagraphFormat.Alignment;
 
-            if (sameStyle && sameAlignment && sameOutline)
+            if (sameStyle && sameAlignment)
             {
-                // Append all runs from the second paragraph to the first.
-                foreach (Run run in second.Runs)
+                // Move all child nodes (runs, fields, etc.) from the next paragraph to the current one.
+                while (next.HasChildNodes)
                 {
-                    // Clone the run to preserve its formatting.
-                    first.AppendChild(run.Clone(true));
+                    Node child = next.FirstChild;
+                    next.RemoveChild(child);
+                    current.AppendChild(child);
                 }
 
-                // Remove the now‑empty second paragraph.
-                second.Remove();
+                // Remove the now empty next paragraph.
+                next.Remove();
 
-                // After removal, stay at the same index to check the new next paragraph.
-                i--;
+                // Do not increment i to check the new next paragraph against the current one.
+            }
+            else
+            {
+                i++; // Move to the next pair.
             }
         }
+
+        // Save the merged document.
+        doc.Save("Merged.docx");
     }
 }

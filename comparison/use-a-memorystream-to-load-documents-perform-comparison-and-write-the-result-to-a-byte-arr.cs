@@ -7,43 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document in memory.
-        Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Alpha");
+        // Create the first document with distinct content.
+        Document doc1 = new Document();
+        DocumentBuilder builder1 = new DocumentBuilder(doc1);
+        builder1.Writeln("Alpha");
 
-        // Save the original document to a MemoryStream.
-        using MemoryStream msOriginal = new MemoryStream();
-        original.Save(msOriginal, SaveFormat.Docx);
-        msOriginal.Position = 0; // Reset for reading.
+        // Save the first document to a memory stream.
+        using MemoryStream ms1 = new MemoryStream();
+        doc1.Save(ms1, SaveFormat.Docx);
+        ms1.Position = 0; // Reset for reading.
 
-        // Create the revised document in memory.
-        Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Beta");
+        // Create the second document with different content.
+        Document doc2 = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(doc2);
+        builder2.Writeln("Beta");
 
-        // Save the revised document to a MemoryStream.
-        using MemoryStream msRevised = new MemoryStream();
-        revised.Save(msRevised, SaveFormat.Docx);
-        msRevised.Position = 0; // Reset for reading.
+        // Save the second document to a memory stream.
+        using MemoryStream ms2 = new MemoryStream();
+        doc2.Save(ms2, SaveFormat.Docx);
+        ms2.Position = 0; // Reset for reading.
 
-        // Load the documents back from the streams.
-        Document loadedOriginal = new Document(msOriginal);
-        Document loadedRevised = new Document(msRevised);
+        // Load the documents from the memory streams.
+        Document loaded1 = new Document(ms1);
+        Document loaded2 = new Document(ms2);
 
-        // Perform the comparison.
-        loadedOriginal.Compare(loadedRevised, "Author", DateTime.Now);
+        // Perform comparison. The original document (loaded1) will contain revisions.
+        loaded1.Compare(loaded2, "Author", DateTime.Now);
 
         // Verify that at least one revision was created.
-        if (loadedOriginal.Revisions.Count == 0)
+        if (loaded1.Revisions.Count == 0)
             throw new InvalidOperationException("Expected at least one revision after comparison.");
 
-        // Save the comparison result to a MemoryStream and obtain the byte array.
+        // Save the comparison result to a memory stream.
         using MemoryStream resultStream = new MemoryStream();
-        loadedOriginal.Save(resultStream, SaveFormat.Docx);
-        byte[] resultBytes = resultStream.ToArray();
+        loaded1.Save(resultStream, SaveFormat.Docx);
+        byte[] resultBytes = resultStream.ToArray(); // The resulting document as a byte array.
 
-        // Output the size of the resulting byte array to confirm execution.
+        // Optional: write the size of the result to the console for verification.
         Console.WriteLine($"Comparison result byte array length: {resultBytes.Length}");
     }
 }

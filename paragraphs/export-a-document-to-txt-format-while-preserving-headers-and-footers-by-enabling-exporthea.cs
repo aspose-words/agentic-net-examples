@@ -7,8 +7,9 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a primary header.
         HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
@@ -20,32 +21,28 @@ public class Program
         doc.FirstSection.HeadersFooters.Add(footer);
         footer.AppendParagraph("Primary footer");
 
-        // Build the body of the document with a few pages.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Add some body content with page breaks.
         builder.Writeln("Page 1");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Page 2");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3");
+        builder.Write("Page 3");
 
         // Configure TXT save options to export headers and footers.
         TxtSaveOptions saveOptions = new TxtSaveOptions
         {
-            ExportHeadersFootersMode = TxtExportHeadersFootersMode.PrimaryOnly,
-            ForcePageBreaks = true // Preserve page breaks in the plain‑text output.
+            ExportHeadersFootersMode = TxtExportHeadersFootersMode.PrimaryOnly
         };
 
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(artifactsDir);
-        string txtPath = Path.Combine(artifactsDir, "DocumentWithHeadersFooters.txt");
+        // Define output path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ExportedWithHeadersFooters.txt");
 
         // Save the document as plain text with the specified options.
-        doc.Save(txtPath, saveOptions);
+        doc.Save(outputPath, saveOptions);
 
-        // Optional: display the saved text content.
-        string savedText = File.ReadAllText(txtPath);
-        Console.WriteLine("Saved TXT content:");
-        Console.WriteLine(savedText);
+        // Output the result path and file content.
+        Console.WriteLine("Document saved to: " + outputPath);
+        Console.WriteLine("Saved text content:");
+        Console.WriteLine(File.ReadAllText(outputPath));
     }
 }

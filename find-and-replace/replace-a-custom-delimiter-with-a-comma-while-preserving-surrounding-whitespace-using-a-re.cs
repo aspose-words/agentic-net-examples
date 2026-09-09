@@ -7,21 +7,21 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First value || second value.");
-        builder.Writeln("Third value||fourth value.");
-        builder.Writeln("No delimiter here.");
 
-        // Save the original for reference (optional).
-        doc.Save("input.docx");
+        // Sample text containing a custom delimiter ';' surrounded by whitespace.
+        builder.Writeln("Apple ; Banana ;Cherry ;  Date");
 
-        // Define a regex that matches the custom delimiter "||".
-        Regex delimiterRegex = new Regex(@"\|\|");
+        // Regular expression that matches a semicolon only when it has whitespace on both sides.
+        // The look‑behind (?<=\s) ensures a whitespace character precedes the semicolon,
+        // and the look‑ahead (?=\s) ensures a whitespace character follows it.
+        Regex delimiterRegex = new Regex(@"(?<=\s);(?=\s)");
 
-        // Perform the replacement: replace "||" with a comma while leaving surrounding whitespace untouched.
-        int replacedCount = doc.Range.Replace(delimiterRegex, ",", new FindReplaceOptions());
+        // Perform the replacement: replace the matched semicolon with a comma.
+        FindReplaceOptions options = new FindReplaceOptions();
+        int replacedCount = doc.Range.Replace(delimiterRegex, ",", options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)

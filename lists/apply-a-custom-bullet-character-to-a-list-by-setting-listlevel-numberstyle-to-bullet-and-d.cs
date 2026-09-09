@@ -1,17 +1,14 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder which will be used to insert content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Create a new list based on the default bullet template.
         List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
@@ -19,29 +16,29 @@ public class Program
         // Access the first (top) level of the list.
         ListLevel level = bulletList.ListLevels[0];
 
-        // Set the list level to use a bullet style.
+        // Set the level to use a bullet style.
         level.NumberStyle = NumberStyle.Bullet;
 
-        // Define a custom bullet character (black circle in this case).
-        // The NumberFormat property holds the character that will be displayed as the bullet.
-        level.NumberFormat = "\u25CF"; // Unicode character: ●
+        // Define a custom bullet character (★ - black star).
+        level.NumberFormat = "\u2605";
 
-        // Optionally, set the font that contains the bullet glyph.
-        level.Font.Name = "Symbol";
+        // Optional: customize the appearance of the bullet.
+        level.Font.Name = "Arial";
+        level.Font.Size = 12;
+        level.Font.Color = Color.DarkBlue;
 
-        // Apply the custom list to the builder.
+        // Use a DocumentBuilder to add paragraphs that will use the custom bullet list.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.ListFormat.List = bulletList;
 
-        // Add some list items.
-        builder.Writeln("First custom bullet item");
-        builder.Writeln("Second custom bullet item");
-        builder.Writeln("Third custom bullet item");
+        builder.Writeln("First item with a custom bullet.");
+        builder.Writeln("Second item with a custom bullet.");
+        builder.Writeln("Third item with a custom bullet.");
 
-        // End the list.
+        // End the list formatting.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomBulletList.docx");
-        doc.Save(outputPath);
+        // Save the document to a file.
+        doc.Save("CustomBulletList.docx");
     }
 }

@@ -12,18 +12,20 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart with a predefined style (ShadedPlot) to ensure consistent branding.
+        // Width and height are specified in points.
         Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300, ChartStyle.ShadedPlot);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series.
+        // Remove the demo data that Aspose.Words inserts by default.
         chart.Series.Clear();
 
-        // Add custom series data.
+        // Add custom data series.
         string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-        chart.Series.Add("Sales", categories, new double[] { 1500, 2000, 1800, 2200 });
+        double[] values = { 15000, 21000, 18000, 24000 };
+        chart.Series.Add("Quarterly Sales", categories, values);
 
-        // Set a visible title for the chart.
-        chart.Title.Text = "Quarterly Sales";
+        // Optionally, set a title for the chart.
+        chart.Title.Text = "Sales Overview";
         chart.Title.Show = true;
 
         // Save the document to the working directory.

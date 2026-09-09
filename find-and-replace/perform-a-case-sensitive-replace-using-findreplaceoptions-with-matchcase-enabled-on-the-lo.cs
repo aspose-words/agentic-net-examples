@@ -1,7 +1,8 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing;      // Required package, not used directly in this example
+using Newtonsoft.Json;    // Required package, not used directly in this example
 
 public class Program
 {
@@ -12,40 +13,29 @@ public class Program
         const string outputPath = "output.docx";
 
         // -----------------------------------------------------------------
-        // Create a sample document with known text.
+        // Create a sample document with mixed‑case occurrences of the word.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World! This is a test. world.");
+        builder.Writeln("Apple apple APPLE");
         doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Load the document from the file system.
-        // -----------------------------------------------------------------
+        // ---------------------------------------------------------------
+        // Load the document and perform a case‑sensitive replacement.
+        // ---------------------------------------------------------------
         Document loaded = new Document(inputPath);
-
-        // -----------------------------------------------------------------
-        // Configure find‑replace options to be case‑sensitive.
-        // -----------------------------------------------------------------
         FindReplaceOptions options = new FindReplaceOptions
         {
-            MatchCase = true
+            MatchCase = true   // Enable case‑sensitive matching.
         };
 
-        // Replace the exact word "World" with "Universe".
-        int replacedCount = loaded.Range.Replace("World", "Universe", options);
+        int replacedCount = loaded.Range.Replace("Apple", "Orange", options);
 
-        // Verify that at least one replacement occurred.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one case‑sensitive replacement.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // -----------------------------------------------------------------
         // Save the modified document.
-        // -----------------------------------------------------------------
         loaded.Save(outputPath);
-
-        // Optional: indicate success (no interactive input required).
-        Console.WriteLine($"Replacements made: {replacedCount}");
-        Console.WriteLine($"Modified document saved to '{outputPath}'.");
     }
 }

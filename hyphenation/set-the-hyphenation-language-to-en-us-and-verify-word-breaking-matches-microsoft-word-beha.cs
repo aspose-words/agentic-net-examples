@@ -4,50 +4,47 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
 
-public class HyphenationExample
+public class Program
 {
     public static void Main()
     {
-        // Create a minimal hyphenation dictionary for en-US.
-        const string dictFileName = "hyph_en_US.dic";
-        File.WriteAllText(dictFileName,
+        // Create a minimal hyphenation dictionary for en‑US.
+        const string dictFile = "hyph_en_US.dic";
+        File.WriteAllText(dictFile,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary for the en-US language.
-        Hyphenation.RegisterDictionary("en-US", dictFileName);
+        // Register the dictionary.
+        Hyphenation.RegisterDictionary("en-US", dictFile);
         if (!Hyphenation.IsDictionaryRegistered("en-US"))
-            throw new InvalidOperationException("Failed to register the en-US hyphenation dictionary.");
+            throw new InvalidOperationException("Failed to register the en‑US hyphenation dictionary.");
 
-        // Create a new document and configure page layout to force line wrapping.
+        // Create a document with narrow page width to force line breaks.
         Document doc = new Document();
-        doc.FirstSection.PageSetup.PageWidth = 200; // narrow width (points)
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        doc.FirstSection.PageSetup.PageWidth = 200;   // 200 points (~2.78 inches)
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Build content that contains words which can be hyphenated.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Size = 12;
-        builder.Font.LocaleId = new CultureInfo("en-US").LCID; // set language to en-US
-        builder.Writeln("extraordinarycharacteristically communication demonstration of automatic hyphenation.");
+        // Set the locale to en‑US and write long words that can be hyphenated.
+        builder.Font.Size = 24;
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Enable automatic hyphenation for the document.
+        // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
 
         // Save the document to PDF (layout is performed during save).
-        const string outputFile = "Hyphenated.pdf";
-        doc.Save(outputFile, SaveFormat.Pdf);
+        const string outFile = "Hyphenated.pdf";
+        doc.Save(outFile, SaveFormat.Pdf);
 
         // Verify that the output file was created.
-        if (!File.Exists(outputFile))
-            throw new InvalidOperationException($"The expected output file '{outputFile}' was not created.");
+        if (!File.Exists(outFile))
+            throw new InvalidOperationException($"The expected output file '{outFile}' was not created.");
 
-        // Additional sanity check: ensure auto hyphenation is enabled.
-        if (!doc.HyphenationOptions.AutoHyphenation)
-            throw new InvalidOperationException("Auto hyphenation is not enabled as expected.");
-
-        // Clean up temporary dictionary file (optional).
-        // File.Delete(dictFileName);
+        // Clean up temporary files (optional).
+        // File.Delete(dictFile);
     }
 }

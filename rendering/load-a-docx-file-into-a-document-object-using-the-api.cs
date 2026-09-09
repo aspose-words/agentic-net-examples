@@ -6,28 +6,19 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for the sample files.
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        Directory.CreateDirectory(dataDir);
+        // Path for the sample DOCX file.
+        string samplePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
 
-        // Path of the DOCX file that will be created and later loaded.
-        string docPath = Path.Combine(dataDir, "Sample.docx");
+        // Create a simple document and save it.
+        Document createDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(createDoc);
+        builder.Writeln("Hello World!");
+        createDoc.Save(samplePath);
 
-        // -----------------------------------------------------------------
-        // Create a simple DOCX document and save it to the file system.
-        // -----------------------------------------------------------------
-        Document doc = new Document();                     // Create a blank document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words!");           // Add some text.
-        doc.Save(docPath);                                // Save; format inferred from ".docx".
+        // Load the DOCX file into a new Document object.
+        Document loadedDoc = new Document(samplePath);
 
-        // -----------------------------------------------------------------
-        // Load the previously saved DOCX file into a new Document object.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);       // Load using the file name.
-
-        // Simple verification: output the text contained in the loaded document.
-        string loadedText = loadedDoc.GetText().Trim();
-        Console.WriteLine($"Loaded document text: {loadedText}");
+        // Verify loading by printing the document text.
+        Console.WriteLine(loadedDoc.GetText().Trim());
     }
 }

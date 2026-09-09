@@ -4,69 +4,50 @@ using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class Program
+public class OfficeMathExample
 {
     public static void Main()
     {
-        // Output file path.
-        string outputPath = "ModifiedDocument.docx";
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert two equations using the deterministic EQ‑field bootstrap workflow.
-        InsertOfficeMath(builder, @"\f(1,2)"); // Fraction 1/2
-        InsertOfficeMath(builder, @"\r(3,x)"); // Cube root of x
+        // Insert an EQ field (complex field) that will be converted to a real OfficeMath object.
+        // The field is created with the FieldEquation type.
+        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Save the document as DOCX. All OfficeMath nodes are preserved with their formatting.
+        // Move to the field separator and write the EQ argument.
+        // The "\f(1,2)" switch creates a simple fraction 1/2.
+        builder.MoveTo(eqField.Separator);
+        builder.Write(@"\f(1,2)");
+
+        // Return the builder to the paragraph that contains the field.
+        builder.MoveTo(eqField.Start.ParentNode);
+
+        // Update the field so that its result is calculated before conversion.
+        eqField.Update();
+
+        // Convert the EQ field to an OfficeMath object.
+        OfficeMath officeMath = eqField.AsOfficeMath();
+
+        if (officeMath == null)
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+
+        // Insert the OfficeMath node before the field start node.
+        eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
+        // Remove the original EQ field from the document.
+        eqField.Remove();
+
+        // Apply formatting to the top‑level OfficeMath node.
+        officeMath.DisplayType = OfficeMathDisplayType.Display;
+        officeMath.Justification = OfficeMathJustification.Left;
+
+        // Save the modified document as DOCX.
+        string outputPath = "ModifiedDocument.docx";
         doc.Save(outputPath, SaveFormat.Docx);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-    }
-
-    // Inserts an EQ field, converts it to a real OfficeMath object,
-    // applies display formatting, and removes the original field.
-    private static void InsertOfficeMath(DocumentBuilder builder, string eqArguments)
-    {
-        // Insert an empty EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the EQ arguments (the equation) into the field separator.
-        if (field.Separator != null)
-        {
-            builder.MoveTo(field.Separator);
-            builder.Write(eqArguments);
-        }
-
-        // Move back to the paragraph that contains the field.
-        builder.MoveTo(field.Start.ParentNode);
-        // Insert a paragraph break after the equation for readability.
-        builder.InsertParagraph();
-
-        // Update the field so that Word processes the EQ code.
-        field.Update();
-
-        // Convert the EQ field to a real OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-
-        // Ensure conversion succeeded.
-        if (officeMath == null)
-            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
-
-        // Insert the OfficeMath node before the field start node.
-        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-
-        // Remove the original EQ field from the document.
-        field.Remove();
-
-        // Apply display formatting to top‑level OfficeMath nodes only.
-        if (officeMath.MathObjectType == MathObjectType.OMathPara)
-        {
-            officeMath.DisplayType = OfficeMathDisplayType.Display;
-            officeMath.Justification = OfficeMathJustification.Left;
-        }
+            throw new FileNotFoundException("The output DOCX file was not created.", outputPath);
     }
 }

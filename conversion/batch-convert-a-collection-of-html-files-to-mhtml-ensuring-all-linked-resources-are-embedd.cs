@@ -1,47 +1,52 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare input and output folders.
-        string inputFolder = "InputHtml";
-        string outputFolder = "OutputMhtml";
+        // Define folders for input HTML files and output MHTML files.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputMhtml");
 
+        // Ensure the folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create a sample PNG image using Aspose.Drawing.
-        string imagePath = Path.Combine(inputFolder, "image.png");
-        using (Bitmap bitmap = new Bitmap(100, 100))
+        // Create a simple PNG image (1x1 pixel) that will be referenced by the HTML files.
+        string imagePath = Path.Combine(inputFolder, "sample.png");
+        if (!File.Exists(imagePath))
         {
-            // Fill the bitmap with a solid red color.
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Aspose.Drawing.Color.Red);
-            }
-
-            // Save the bitmap as PNG using Aspose.Drawing.Imaging.ImageFormat.
-            bitmap.Save(imagePath, ImageFormat.Png);
+            // Base64 representation of a 1x1 transparent PNG.
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ+Xc8AAAAASUVORK5CYII=";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            File.WriteAllBytes(imagePath, pngBytes);
         }
 
-        // Write a sample HTML file that references the image.
-        string htmlFileName = "sample.html";
-        string htmlFilePath = Path.Combine(inputFolder, htmlFileName);
-        string htmlContent =
-            "<html>" +
-            "<body>" +
-            "<h1>Sample Document</h1>" +
-            "<p>Hello world!</p>" +
-            "<img src=\"image.png\" alt=\"Sample Image\"/>" +
-            "</body>" +
-            "</html>";
-        File.WriteAllText(htmlFilePath, htmlContent);
+        // Create two sample HTML files that reference the PNG image.
+        for (int i = 1; i <= 2; i++)
+        {
+            string htmlFileName = $"sample{i}.html";
+            string htmlPath = Path.Combine(inputFolder, htmlFileName);
+
+            if (!File.Exists(htmlPath))
+            {
+                string htmlContent = $@"
+<!DOCTYPE html>
+<html>
+<head><title>Sample {i}</title></head>
+<body>
+    <h1>Sample Document {i}</h1>
+    <p>This is a test HTML file.</p>
+    <img src=""sample.png"" alt=""Sample Image"" />
+</body>
+</html>";
+                File.WriteAllText(htmlPath, htmlContent, Encoding.UTF8);
+            }
+        }
 
         // Batch convert each HTML file in the input folder to MHTML.
         string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
@@ -50,12 +55,11 @@ public class Program
             // Load the HTML document.
             Document doc = new Document(htmlFile);
 
-            // Configure save options for MHTML with embedded resources.
+            // Configure save options to embed all resources in the MHTML output.
             HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
             {
                 ExportCidUrlsForMhtmlResources = true, // Use CID URLs for resources.
-                ExportFontResources = true,            // Export fonts if any.
-                ExportImagesAsBase64 = false           // Keep images as separate parts.
+                ExportFontResources = true               // Ensure font resources are embedded if any.
             };
 
             // Determine the output MHTML file path.
@@ -65,15 +69,12 @@ public class Program
             // Save the document as MHTML.
             doc.Save(outputPath, saveOptions);
 
-            // Validate that the output file was created and is not empty.
+            // Validate that the output file was created.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Expected output MHTML file was not created: {outputPath}");
-
-            FileInfo info = new FileInfo(outputPath);
-            if (info.Length == 0)
-                throw new InvalidOperationException($"Output MHTML file is empty: {outputPath}");
+                throw new InvalidOperationException($"Failed to create MHTML file: {outputPath}");
         }
 
+        // Indicate successful completion.
         Console.WriteLine("Batch conversion completed successfully.");
     }
 }

@@ -11,87 +11,62 @@ public class Program
     public static void Main()
     {
         // -----------------------------------------------------------------
-        // 1. Create a JSON configuration file with placeholder values.
+        // 1. Create a sample document containing placeholders like [[Name]]
         // -----------------------------------------------------------------
-        const string jsonConfig = @"{
-            ""FirstName"": ""John"",
-            ""LastName"": ""Doe"",
-            ""Date"": ""2023-12-31""
-        }";
-
-        const string configPath = "config.json";
-        File.WriteAllText(configPath, jsonConfig);
-
-        // Parse the JSON into a dictionary.
-        IDictionary<string, string> values = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(configPath))
-                                            ?? new Dictionary<string, string>();
-
-        // -----------------------------------------------------------------
-        // 2. Create a sample Word document containing placeholders.
-        // -----------------------------------------------------------------
-        const string inputPath = "input.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello [[FirstName]] [[LastName]], today is [[Date]].");
+        builder.Writeln("Hello [[FirstName]] [[LastName]]! Your order [[OrderId]] is confirmed.");
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document and replace placeholders using a callback.
-        // -----------------------------------------------------------------
+        // ---------------------------------------------------------------
+        // 2. Load replacement values from a JSON configuration (in‑memory)
+        // ---------------------------------------------------------------
+        const string json = @"{ ""FirstName"": ""John"", ""LastName"": ""Doe"", ""OrderId"": ""12345"" }";
+        Dictionary<string, string> values = JsonConvert.DeserializeObject<Dictionary<string, string>>(json)
+                                          ?? new Dictionary<string, string>();
+
+        // ---------------------------------------------------------------
+        // 3. Load the document and replace placeholders using a callback
+        // ---------------------------------------------------------------
         Document loaded = new Document(inputPath);
-        var replacer = new PlaceholderReplacer(values);
-        var options = new FindReplaceOptions { ReplacingCallback = replacer };
+        FindReplaceOptions options = new FindReplaceOptions(new PlaceholderReplacer(values));
 
-        // Regex matches any text surrounded by double brackets, e.g. [[Key]].
+        // Regex matches [[Placeholder]] and captures the name inside the brackets
         int replacedCount = loaded.Range.Replace(new Regex(@"\[\[(.+?)\]\]"), string.Empty, options);
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one placeholder replacement.");
 
-        // -----------------------------------------------------------------
-        // 4. Save the modified document.
-        // -----------------------------------------------------------------
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No placeholders were replaced.");
+
+        // ---------------------------------------------------------------
+        // 4. Save the modified document
+        // ---------------------------------------------------------------
         const string outputPath = "output.docx";
         loaded.Save(outputPath);
-
-        // Optional: display the resulting document text.
-        Console.WriteLine("Resulting document text:");
-        Console.WriteLine(loaded.GetText().Trim());
-    }
-}
-
-// ---------------------------------------------------------------------
-// Callback that replaces each matched placeholder with the value from
-// the JSON configuration. If a key is missing, the original placeholder
-// is left unchanged.
-// ---------------------------------------------------------------------
-public class PlaceholderReplacer : IReplacingCallback
-{
-    private readonly IDictionary<string, string> _values;
-
-    public PlaceholderReplacer(IDictionary<string, string> values)
-    {
-        _values = values ?? new Dictionary<string, string>();
     }
 
-    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+    // -----------------------------------------------------------------
+    // Callback that substitutes each matched placeholder with the value
+    // from the JSON dictionary.
+    // -----------------------------------------------------------------
+    private class PlaceholderReplacer : IReplacingCallback
     {
-        // args.Match.Value includes the surrounding brackets, e.g. [[FirstName]].
-        string placeholder = args.Match.Value;
+        private readonly IDictionary<string, string> _values;
 
-        // Extract the key between the brackets.
-        // Length is at least 4 (e.g. [[a]]).
-        string key = placeholder.Substring(2, placeholder.Length - 4);
+        public PlaceholderReplacer(IDictionary<string, string> values) => _values = values;
 
-        if (_values.TryGetValue(key, out string replacement))
+        public ReplaceAction Replacing(ReplacingArgs args)
         {
-            args.Replacement = replacement;
-        }
-        else
-        {
-            // Keep the original placeholder if no matching key is found.
-            args.Replacement = placeholder;
-        }
+            // args.Match.Value is the whole match, e.g. [[FirstName]]
+            // Group 1 contains the placeholder name without brackets.
+            string placeholderName = args.Match.Groups[1].Value;
 
-        return ReplaceAction.Replace;
+            if (_values.TryGetValue(placeholderName, out string replacement))
+                args.Replacement = replacement;
+            else
+                args.Replacement = args.Match.Value; // keep original if not found
+
+            return ReplaceAction.Replace;
+        }
     }
 }

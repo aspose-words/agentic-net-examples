@@ -1,6 +1,7 @@
 using System;
+using System.Data;
 using Aspose.Words;
-using Aspose.Words.BuildingBlocks;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,30 +11,47 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a static footer to the document.
+        // ------------------------------------------------------------
+        // Add a static footer that will appear on every page.
+        // ------------------------------------------------------------
         // Move the builder to the primary footer of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("This is a static footer added before mail merge.");
-        // Return the builder to the main body of the document.
-        builder.MoveToDocumentEnd();
+        // Write the static text.
+        builder.Write("Confidential – For internal use only");
+        // Add a line break after the footer text.
+        builder.Writeln();
 
-        // Build the mail‑merge template in the main body.
-        builder.Writeln(); // Ensure we are on a new line after the footer.
-        builder.Write("Dear ");
+        // ------------------------------------------------------------
+        // Build a simple mail‑merge template.
+        // ------------------------------------------------------------
+        // Move back to the main body of the document.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Dear ");
         builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
         builder.Write(" ");
         builder.InsertField("MERGEFIELD LastName", "<LastName>");
         builder.Writeln(":");
         builder.InsertField("MERGEFIELD Message", "<Message>");
 
-        // Prepare simple mail‑merge data.
-        string[] fieldNames = { "FirstName", "LastName", "Message" };
-        object[] fieldValues = { "John", "Doe", "Hello! This document contains a static footer." };
+        // ------------------------------------------------------------
+        // Prepare sample data for the mail merge.
+        // ------------------------------------------------------------
+        DataTable table = new DataTable("Data");
+        table.Columns.Add("FirstName");
+        table.Columns.Add("LastName");
+        table.Columns.Add("Message");
 
+        table.Rows.Add("John", "Doe", "Welcome to Aspose.Words!");
+        table.Rows.Add("Jane", "Smith", "Your order has been shipped.");
+
+        // ------------------------------------------------------------
         // Execute the mail merge.
-        doc.MailMerge.Execute(fieldNames, fieldValues);
+        // ------------------------------------------------------------
+        doc.MailMerge.Execute(table);
 
+        // ------------------------------------------------------------
         // Save the resulting document.
-        doc.Save("Result.docx");
+        // ------------------------------------------------------------
+        doc.Save("MailMergeWithFooter.docx");
     }
 }

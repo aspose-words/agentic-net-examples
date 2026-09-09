@@ -1,43 +1,30 @@
 using System;
 using System.Data;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Simulate a database by using an in‑memory DataTable.
-        DataTable table = new DataTable();
-        table.Columns.Add("Id", typeof(int));
-        table.Columns.Add("Name", typeof(string));
-
-        // Define the primary key so that Find can locate rows by Id.
-        table.PrimaryKey = new[] { table.Columns["Id"] };
-
-        // Insert a sample record.
-        table.Rows.Add(1, "John Doe");
-
-        // Retrieve the name for replacement (mimicking a DB query).
-        string nameFromDb = table.Rows.Find(1) != null
-            ? table.Rows.Find(1)["Name"].ToString()
-            : "Unknown";
-
-        // Build a Word document containing a placeholder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Dear _FullName_,");
-        builder.Writeln("Welcome to our service.");
 
-        // Replace the placeholder with the value retrieved from the simulated database.
-        doc.Range.Replace("_FullName_", nameFromDb, new FindReplaceOptions());
+        // Write a paragraph that contains a placeholder to be replaced.
+        builder.Writeln("Hello _FullName_, welcome to our company.");
 
-        // Save the resulting document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
+        // Simulate retrieving a value from a database.
+        DataTable dbTable = new DataTable();
+        dbTable.Columns.Add("FullName", typeof(string));
+        dbTable.Rows.Add("John Doe"); // Example data row.
 
-        // Output the final text to the console for verification.
-        Console.WriteLine("Document text after replacement:");
-        Console.WriteLine(doc.GetText().Trim());
+        // Extract the dynamic value.
+        string fullName = dbTable.Rows[0]["FullName"].ToString();
+
+        // Replace the placeholder text in the whole document range.
+        doc.Range.Replace("_FullName_", fullName);
+
+        // Save the modified document.
+        doc.Save("Output.docx");
     }
 }

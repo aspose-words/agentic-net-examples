@@ -2,15 +2,13 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportData
+public class Wrapper
 {
-    // The external document to be inserted.
     public Document Document { get; set; }
 
-    public ReportData()
+    public Wrapper(Document doc)
     {
-        // Initialize to avoid nullable warnings.
-        Document = new Document();
+        Document = doc ?? throw new ArgumentNullException(nameof(doc));
     }
 }
 
@@ -18,53 +16,29 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the files used in the example.
-        const string externalDocPath = "ExternalDocument.docx";
-        const string templatePath = "Template.docx";
-        const string outputPath = "Result.docx";
+        // Create the external document that will be inserted.
+        var sourceDoc = new Document();
+        var srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is the content of the external document.");
+        const string sourcePath = "Source.docx";
+        sourceDoc.Save(sourcePath);
 
-        // -----------------------------------------------------------------
-        // 1. Create an external Word document that will be inserted later.
-        // -----------------------------------------------------------------
-        Document externalDoc = new Document();
-        DocumentBuilder extBuilder = new DocumentBuilder(externalDoc);
-        extBuilder.Writeln("This is the content of the external document.");
-        externalDoc.Save(externalDocPath);
-
-        // ---------------------------------------------------------------
-        // 2. Create a template document containing the <<doc>> tag.
-        // ---------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
-        tmplBuilder.Writeln("Report start");
-        // The tag inserts the document referenced by src.Document at runtime.
+        // Create the template document containing the insert tag.
+        var templateDoc = new Document();
+        var tmplBuilder = new DocumentBuilder(templateDoc);
+        tmplBuilder.Writeln("Before inserted document:");
         tmplBuilder.Writeln("<<doc [src.Document]>>");
-        tmplBuilder.Writeln("Report end");
-        templateDoc.Save(templatePath);
+        tmplBuilder.Writeln("After inserted document.");
 
-        // ---------------------------------------------------------------
-        // 3. Load the template back from disk (required before building).
-        // ---------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        // Wrap the external document for the reporting engine.
+        var wrapper = new Wrapper(new Document(sourcePath));
 
-        // ---------------------------------------------------------------
-        // 4. Prepare the data source with the external document.
-        // ---------------------------------------------------------------
-        ReportData data = new ReportData
-        {
-            Document = new Document(externalDocPath)
-        };
+        // Build the report using the wrapper as the data source.
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, wrapper, "src");
 
-        // ---------------------------------------------------------------
-        // 5. Build the report using the LINQ Reporting engine.
-        // ---------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // No special options are needed for this simple scenario.
-        engine.BuildReport(loadedTemplate, data, "src");
-
-        // ---------------------------------------------------------------
-        // 6. Save the final document.
-        // ---------------------------------------------------------------
-        loadedTemplate.Save(outputPath);
+        // Save the final document.
+        const string outputPath = "Result.docx";
+        templateDoc.Save(outputPath);
     }
 }

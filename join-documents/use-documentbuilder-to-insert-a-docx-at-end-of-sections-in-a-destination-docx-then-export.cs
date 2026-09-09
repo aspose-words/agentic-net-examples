@@ -1,66 +1,77 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Prepare output directory.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Paths for the sample documents.
-        string destPath = Path.Combine(outputDir, "Destination.docx");
-        string srcPath = Path.Combine(outputDir, "Source.docx");
-        string mergedPath = Path.Combine(outputDir, "Merged.docx");
-
-        // ---------- Create destination document with multiple sections ----------
+        // ---------- Create destination document ----------
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
-        destBuilder.Writeln("Destination Section 1");
+        // Section 1
+        destBuilder.Writeln("Destination Document - Section 1");
         destBuilder.InsertBreak(BreakType.SectionBreakNewPage);
-        destBuilder.Writeln("Destination Section 2");
-        destDoc.Save(destPath); // optional, just to have a physical file.
+
+        // Section 2
+        destBuilder.Writeln("Destination Document - Section 2");
+        destBuilder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Section 3
+        destBuilder.Writeln("Destination Document - Section 3");
+
+        string destPath = Path.Combine(outputDir, "Destination.docx");
+        destDoc.Save(destPath, SaveFormat.Docx);
 
         // ---------- Create source document ----------
         Document srcDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Writeln("Source Document Content");
-        srcDoc.Save(srcPath); // optional.
+        srcBuilder.Writeln("=== Inserted Content Start ===");
+        srcBuilder.Writeln("This is the content of the source DOCX.");
+        srcBuilder.Writeln("=== Inserted Content End ===");
 
-        // ---------- Insert the source document at the end of each original section ----------
-        int originalSectionCount = destDoc.Sections.Count; // capture before modifications.
+        string srcPath = Path.Combine(outputDir, "Source.docx");
+        srcDoc.Save(srcPath, SaveFormat.Docx);
+
+        // ---------- Insert source document at the end of each section ----------
+        // Reload documents to simulate a real‑world scenario.
+        Document destination = new Document(destPath);
+        Document source = new Document(srcPath);
+        DocumentBuilder builder = new DocumentBuilder(destination);
+
+        // Preserve the original section count because inserting modifies the collection.
+        int originalSectionCount = destination.Sections.Count;
         for (int i = 0; i < originalSectionCount; i++)
         {
-            Section section = destDoc.Sections[i];
+            Section currentSection = destination.Sections[i];
+            Paragraph lastParagraph = currentSection.Body.LastParagraph;
 
-            // Move the builder to the last paragraph of the current section.
-            destBuilder.MoveTo(section.Body.LastParagraph);
-
-            // Optional page break before the inserted content.
-            destBuilder.InsertBreak(BreakType.PageBreak);
-
-            // Insert the source document preserving its formatting.
-            destBuilder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+            // Move the cursor to the end of the current section.
+            builder.MoveTo(lastParagraph);
+            // Insert the source document while keeping its formatting.
+            builder.InsertDocument(source, ImportFormatMode.KeepSourceFormatting);
         }
 
-        // ---------- Save the merged document ----------
-        destDoc.Save(mergedPath, SaveFormat.Docx);
+        // Save the merged result.
+        string mergedPath = Path.Combine(outputDir, "Merged.docx");
+        destination.Save(mergedPath, SaveFormat.Docx);
 
-        // ---------- Simple validation ----------
+        // ---------- Validation ----------
         if (!File.Exists(mergedPath))
             throw new InvalidOperationException("Merged document was not created.");
 
         Document mergedDoc = new Document(mergedPath);
         string mergedText = mergedDoc.GetText();
 
-        if (!mergedText.Contains("Destination Section 1") ||
-            !mergedText.Contains("Destination Section 2") ||
-            !mergedText.Contains("Source Document Content"))
-        {
-            throw new InvalidOperationException("Merged document does not contain expected content.");
-        }
+        if (!mergedText.Contains("This is the content of the source DOCX."))
+            throw new InvalidOperationException("Merged document does not contain expected source content.");
+
+        Console.WriteLine($"Merged document created at: {mergedPath}");
     }
 }

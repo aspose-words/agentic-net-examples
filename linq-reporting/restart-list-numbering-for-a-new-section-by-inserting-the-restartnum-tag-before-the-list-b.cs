@@ -7,62 +7,77 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document that will serve as the LINQ Reporting template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // -----------------------------------------------------------------
-        // Template: iterate over sections.
-        // -----------------------------------------------------------------
-        builder.Writeln("<<foreach [sec in Sections]>>");
-        // Section title.
-        builder.Writeln("<<[sec.Title]>>");
-        // Start a numbered list for the items of the current section.
-        builder.ListFormat.ApplyNumberDefault();
-        // Restart numbering for each new section and iterate over its items.
-        builder.Writeln("<<restartNum>><<foreach [it in sec.Items]>><<[it]>><</foreach>>");
-        // End of outer foreach.
-        builder.Writeln("<</foreach>>");
-
-        // -----------------------------------------------------------------
-        // Prepare sample data.
-        // -----------------------------------------------------------------
-        ReportModel model = new()
+        // Create sample data.
+        var model = new ReportModel
         {
-            Sections = new List<Section>
+            Orders = new List<Order>
             {
-                new Section
+                new Order
                 {
-                    Title = "Fruits",
-                    Items = new List<string> { "Apple", "Banana", "Cherry" }
+                    ClientName = "Acme Corp",
+                    Services = new List<Service>
+                    {
+                        new Service { Name = "Consulting" },
+                        new Service { Name = "Support" }
+                    }
                 },
-                new Section
+                new Order
                 {
-                    Title = "Vegetables",
-                    Items = new List<string> { "Carrot", "Lettuce", "Tomato" }
+                    ClientName = "Globex Inc",
+                    Services = new List<Service>
+                    {
+                        new Service { Name = "Implementation" },
+                        new Service { Name = "Training" },
+                        new Service { Name = "Maintenance" }
+                    }
                 }
             }
         };
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
+        // Build the template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        // Begin a foreach over the orders collection.
+        builder.Writeln("<<foreach [order in Orders]>>");
+        // Output the client name.
+        builder.Writeln("<<[order.ClientName]>>");
+        // Numbered list of services – restart numbering for each order.
+        builder.Writeln("1. <<restartNum>><<foreach [service in order.Services]>> <<[service.Name]>> <</foreach>>");
+        // End the orders foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, demonstrates the lifecycle rule).
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template (demonstrates the load rule).
+        var doc = new Document(templatePath);
+
+        // Build the report using LINQ Reporting.
+        var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated document.
-        doc.Save("RestartNumberingReport.docx");
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model used by the LINQ Reporting template.
-// ---------------------------------------------------------------------
+// Root data model.
 public class ReportModel
 {
-    public List<Section> Sections { get; set; } = new();
+    public List<Order> Orders { get; set; } = new();
 }
 
-public class Section
+// Order with a collection of services.
+public class Order
 {
-    public string Title { get; set; } = string.Empty;
-    public List<string> Items { get; set; } = new();
+    public string ClientName { get; set; } = string.Empty;
+    public List<Service> Services { get; set; } = new();
+}
+
+// Simple service item.
+public class Service
+{
+    public string Name { get; set; } = string.Empty;
 }

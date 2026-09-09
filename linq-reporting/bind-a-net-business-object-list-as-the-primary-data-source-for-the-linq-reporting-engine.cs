@@ -5,65 +5,58 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingExample
 {
-    public static void Main()
+    // Business object representing a person.
+    public class Person
     {
-        // Register code page provider for Aspose.Words if needed.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data.
-        var report = new ReportModel
-        {
-            Orders = new List<Order>
-            {
-                new Order { Id = 1, CustomerName = "Alice Johnson", Amount = 250.75m },
-                new Order { Id = 2, CustomerName = "Bob Smith", Amount = 120.00m },
-                new Order { Id = 3, CustomerName = "Carol Davis", Amount = 560.40m }
-            }
-        };
-
-        // Create a template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Order Report");
-        builder.Writeln("==============");
-        builder.Writeln();
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Amount: $<<[order.Amount]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(templatePath);
-
-        // Load the template and build the report.
-        var templateDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        bool success = engine.BuildReport(templateDoc, report, "report");
-
-        // Save the generated report.
-        var outputPath = "ReportOutput.docx";
-        templateDoc.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
-}
 
-// Wrapper class for the root data source.
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
+    // Wrapper model that will be passed as the root data source.
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
 
-// Sample business object.
-public class Order
-{
-    public int Id { get; set; }
-    public string CustomerName { get; set; } = string.Empty;
-    public decimal Amount { get; set; }
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for any legacy encodings used by Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample data.
+            var model = new ReportModel();
+            model.Persons.Add(new Person { Name = "Alice", Age = 30 });
+            model.Persons.Add(new Person { Name = "Bob", Age = 45 });
+            model.Persons.Add(new Person { Name = "Charlie", Age = 28 });
+
+            // Create a template document programmatically.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Insert LINQ Reporting tags.
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>");
+            builder.Writeln("Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            doc.Save(templatePath);
+
+            // Load the template for report generation.
+            var reportDoc = new Document(templatePath);
+
+            // Build the report using the LINQ Reporting engine.
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated report.
+            var outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+        }
+    }
 }

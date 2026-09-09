@@ -7,30 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a couple of comments.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // Prepare a temporary folder for the sample document.
+        string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "Temp");
+        Directory.CreateDirectory(tempFolder);
 
-        // First paragraph.
-        builder.Writeln("This is the first paragraph.");
-        // Add a comment to the first paragraph.
-        Comment comment1 = new Comment(sampleDoc, "Alice", "A", DateTime.Now);
+        // Path of the sample DOCX file.
+        string samplePath = Path.Combine(tempFolder, "SampleWithComments.docx");
+
+        // Create a new document and a builder to add content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // First paragraph with a comment.
+        builder.Writeln("First paragraph.");
+        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
         comment1.SetText("Review this paragraph.");
         builder.CurrentParagraph.AppendChild(comment1);
 
-        // Second paragraph.
-        builder.Writeln("This is the second paragraph.");
-        // Add a second comment.
-        Comment comment2 = new Comment(sampleDoc, "Bob", "B", DateTime.Now);
-        comment2.SetText("Consider rephrasing this sentence.");
+        // Second paragraph with another comment.
+        builder.Writeln("Second paragraph.");
+        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
+        comment2.SetText("Consider rephrasing.");
         builder.CurrentParagraph.AppendChild(comment2);
 
-        // Save the sample document to a temporary file.
-        string tempFilePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.docx");
-        sampleDoc.Save(tempFilePath);
+        // Save the document to disk.
+        doc.Save(samplePath);
 
-        // Load the document from the file.
-        Document loadedDoc = new Document(tempFilePath);
+        // Load the document from the file system.
+        Document loadedDoc = new Document(samplePath);
 
         // Enumerate all comments in the document.
         var comments = loadedDoc
@@ -38,18 +42,12 @@ public class Program
             .OfType<Comment>()
             .ToList();
 
-        // Print each comment's author and text.
+        // Print author and comment text for each comment.
         foreach (Comment c in comments)
         {
-            string author = c.Author ?? string.Empty;
+            // GetText() returns the comment text including any trailing line breaks.
             string text = c.GetText()?.Trim() ?? string.Empty;
-            Console.WriteLine($"{author}: {text}");
-        }
-
-        // Clean up the temporary file.
-        if (File.Exists(tempFilePath))
-        {
-            File.Delete(tempFilePath);
+            Console.WriteLine($"{c.Author}: {text}");
         }
     }
 }

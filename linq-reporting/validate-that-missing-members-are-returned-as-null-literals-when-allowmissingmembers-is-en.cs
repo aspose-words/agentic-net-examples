@@ -7,31 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document and a builder to insert LINQ Reporting tags.
+        DocumentBuilder builder = new DocumentBuilder();
 
-        // Insert LINQ Reporting tags that reference a missing member.
-        // The engine will treat these missing members as null literals.
-        builder.Writeln("Missing member test: <<[missingObject.First().Id]>>");
-        builder.Writeln("Missing collection test: <<foreach [in missingObject]>><<[Id]>><</foreach>>");
+        // Tag that references a missing member – should be rendered as an empty string.
+        builder.Writeln("Missing member test: <<[missingObject.Name]>>");
 
-        // Configure the reporting engine to allow missing members.
+        // Tag that iterates over a missing collection – each iteration should produce nothing.
+        builder.Writeln("Missing collection iteration:");
+        builder.Writeln("<<foreach [in missingObject]>>- <<[Name]>> <</foreach>>");
+
+        // Prepare the reporting engine with the AllowMissingMembers option.
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.AllowMissingMembers;
-        // The message printed for a missing member; using the literal "null" for verification.
-        engine.MissingMemberMessage = "null";
+        engine.MissingMemberMessage = "Missed";
 
         // Build the report using an empty DataSet as the data source.
-        // The root name is an empty string because we are not referencing the data source object itself.
-        bool success = engine.BuildReport(doc, new DataSet(), "");
+        // The empty DataSet ensures that no objects named "missingObject" exist.
+        bool success = engine.BuildReport(builder.Document, new DataSet(), "");
 
-        // Output the result to the console for verification.
-        Console.WriteLine("Report build successful: " + success);
-        Console.WriteLine("Document content:");
-        Console.WriteLine(doc.GetText());
+        // Save the generated report.
+        const string outputPath = "MissingMembersReport.docx";
+        builder.Document.Save(outputPath);
 
-        // Save the generated document (optional, helps visual verification).
-        doc.Save("MissingMembersReport.docx");
+        // Output a simple verification message.
+        Console.WriteLine($"Report built successfully: {success}");
+        Console.WriteLine($"Report saved to: {outputPath}");
     }
 }

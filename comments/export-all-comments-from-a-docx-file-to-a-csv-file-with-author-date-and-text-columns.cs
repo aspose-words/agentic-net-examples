@@ -3,64 +3,87 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 
-public class ExportCommentsToCsv
+namespace ExportCommentsToCsv
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Path for the sample DOCX file.
-        string docPath = Path.Combine(outputDir, "Sample.docx");
-
-        // Create a sample document with comments.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // First paragraph with a comment.
-        builder.Writeln("First paragraph.");
-        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment1.SetText("First comment.");
-        builder.CurrentParagraph.AppendChild(comment1);
-
-        // Second paragraph with another comment.
-        builder.Writeln("Second paragraph.");
-        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now.AddMinutes(-5));
-        comment2.SetText("Second comment, includes a comma.");
-        builder.CurrentParagraph.AppendChild(comment2);
-
-        // Save the sample document.
-        doc.Save(docPath);
-
-        // Load the document to demonstrate reading comments.
-        Document loadedDoc = new Document(docPath);
-
-        // Enumerate all comments in the document.
-        var comments = loadedDoc
-            .GetChildNodes(NodeType.Comment, true)
-            .OfType<Comment>()
-            .ToList();
-
-        // Path for the CSV output.
-        string csvPath = Path.Combine(outputDir, "Comments.csv");
-
-        // Write comments to CSV with columns: Author, Date, Text.
-        using (var writer = new StreamWriter(csvPath))
+        public static void Main()
         {
-            writer.WriteLine("Author,Date,Text");
-            foreach (Comment c in comments)
-            {
-                // Ensure CSV fields are properly escaped.
-                string author = (c.Author ?? string.Empty).Replace("\"", "\"\"");
-                string date = c.DateTime.ToString("o"); // ISO 8601 format.
-                string text = c.GetText().Trim().Replace("\"", "\"\"");
+            // Input and output file names.
+            const string sampleDocPath = "sample.docx";
+            const string csvPath = "comments.csv";
 
-                writer.WriteLine($"\"{author}\",\"{date}\",\"{text}\"");
+            // -----------------------------------------------------------------
+            // 1. Create a sample DOCX document with a few comments.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // First paragraph with a comment.
+            builder.Writeln("This is the first paragraph.");
+            Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
+            comment1.SetText("Review the wording of this paragraph.");
+            builder.CurrentParagraph.AppendChild(comment1);
+
+            // Second paragraph with a comment.
+            builder.Writeln("Second paragraph follows.");
+            Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now.AddMinutes(-15));
+            comment2.SetText("Consider adding an example here.");
+            builder.CurrentParagraph.AppendChild(comment2);
+
+            // Save the sample document.
+            doc.Save(sampleDocPath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the document (simulating a real input file).
+            // -----------------------------------------------------------------
+            Document loadedDoc = new Document(sampleDocPath);
+
+            // -----------------------------------------------------------------
+            // 3. Enumerate all comments in the document.
+            // -----------------------------------------------------------------
+            var comments = loadedDoc
+                .GetChildNodes(NodeType.Comment, true)
+                .OfType<Comment>()
+                .ToList();
+
+            // -----------------------------------------------------------------
+            // 4. Export comments to a CSV file with columns: Author, Date, Text.
+            // -----------------------------------------------------------------
+            using (var writer = new StreamWriter(csvPath))
+            {
+                // Write CSV header.
+                writer.WriteLine("Author,Date,Text");
+
+                foreach (Comment c in comments)
+                {
+                    string author = EscapeCsv(c.Author);
+                    // ISO 8601 format for the date.
+                    string date = EscapeCsv(c.DateTime.ToString("o"));
+                    // Plain text of the comment.
+                    string text = EscapeCsv(c.GetText().Trim());
+
+                    writer.WriteLine($"{author},{date},{text}");
+                }
             }
+
+            Console.WriteLine($"Exported {comments.Count} comment(s) to '{csvPath}'.");
         }
 
-        // Indicate completion (no interactive input required).
-        Console.WriteLine($"Exported {comments.Count} comment(s) to \"{csvPath}\".");
+        // Helper method to escape a CSV field according to RFC 4180.
+        private static string EscapeCsv(string field)
+        {
+            if (field == null)
+                return string.Empty;
+
+            bool mustQuote = field.Contains(',') || field.Contains('"') || field.Contains('\r') || field.Contains('\n');
+            if (mustQuote)
+            {
+                string escaped = field.Replace("\"", "\"\"");
+                return $"\"{escaped}\"";
+            }
+
+            return field;
+        }
     }
 }

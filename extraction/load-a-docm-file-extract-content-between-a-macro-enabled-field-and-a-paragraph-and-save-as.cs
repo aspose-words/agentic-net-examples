@@ -1,103 +1,108 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Fields;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCM file with a field and several paragraphs.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample DOCM file with a macro button field, some content, and a terminating paragraph.
+        string sourcePath = "sample.docm";
+        CreateSampleDocm(sourcePath);
 
-        // Paragraph 1 – contains a macro‑enabled field (for demo we use a simple field).
-        builder.InsertField("MERGEFIELD SampleField \\* MERGEFORMAT");
-        builder.Writeln(); // End of first paragraph.
+        // Load the DOCM file.
+        Document sourceDoc = new Document(sourcePath);
 
-        // Paragraph 2 – content that will be extracted.
-        builder.Writeln("This is the content that should be extracted.");
-
-        // Paragraph 3 – the ending paragraph (boundary).
-        builder.Writeln("End of extraction range.");
-
-        // Save as a macro‑enabled document (DOCM).
-        const string sourcePath = "sample.docm";
-        sourceDoc.Save(sourcePath, SaveFormat.Docm);
-
-        // -----------------------------------------------------------------
-        // 2. Load the DOCM file.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
-
-        // -----------------------------------------------------------------
-        // 3. Locate the field (start marker) and the ending paragraph.
-        // -----------------------------------------------------------------
-        if (loadedDoc.Range.Fields.Count == 0)
-            throw new InvalidOperationException("No fields found in the document.");
-
-        // Assume the first field is the start marker.
-        Field startField = loadedDoc.Range.Fields[0];
-        Paragraph startParagraph = startField.Start.ParentNode as Paragraph;
-        if (startParagraph == null)
-            throw new InvalidOperationException("Start field is not inside a paragraph.");
-
-        // Find the ending paragraph by its exact text.
-        Paragraph endParagraph = null;
-        foreach (Paragraph para in loadedDoc.FirstSection.Body.Paragraphs)
+        // Locate the macro button field.
+        Field macroField = null;
+        foreach (Field field in sourceDoc.Range.Fields)
         {
-            if (para.GetText().Trim() == "End of extraction range.")
+            if (field.Type == FieldType.FieldMacroButton)
+            {
+                macroField = field;
+                break;
+            }
+        }
+
+        if (macroField == null)
+            throw new InvalidOperationException("Macro button field not found.");
+
+        // Locate the target paragraph that marks the end of the extraction range.
+        Paragraph endParagraph = null;
+        foreach (Paragraph para in sourceDoc.FirstSection.Body.Paragraphs)
+        {
+            if (para.GetText().Contains("End Paragraph"))
             {
                 endParagraph = para;
                 break;
             }
         }
+
         if (endParagraph == null)
-            throw new InvalidOperationException("Ending paragraph not found.");
+            throw new InvalidOperationException("End paragraph not found.");
 
-        // -----------------------------------------------------------------
-        // 4. Extract the content that lies between the start field's paragraph
-        //    and the ending paragraph (exclusive of the boundaries).
-        // -----------------------------------------------------------------
-        Body sourceBody = loadedDoc.FirstSection.Body;
-        int startIndex = sourceBody.Paragraphs.IndexOf(startParagraph);
-        int endIndex = sourceBody.Paragraphs.IndexOf(endParagraph);
+        // Determine the paragraph that contains the macro field.
+        Paragraph startParagraph = macroField.Start.GetAncestor(NodeType.Paragraph) as Paragraph;
+        if (startParagraph == null)
+            throw new InvalidOperationException("Start paragraph not found.");
 
-        if (startIndex < 0 || endIndex < 0 || endIndex <= startIndex + 1)
-            throw new InvalidOperationException("Invalid extraction range.");
+        // Build a new document that will hold the extracted content.
+        Document extractedDoc = new Document();
+        extractedDoc.RemoveAllChildren();
 
-        // Create a new document that will hold the extracted content.
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren(); // Remove the default section/paragraph.
+        Section section = new Section(extractedDoc);
+        extractedDoc.AppendChild(section);
 
-        // Build the minimal required structure: Section -> Body.
-        Section resultSection = new Section(resultDoc);
-        resultDoc.AppendChild(resultSection);
-        Body resultBody = new Body(resultDoc);
-        resultSection.AppendChild(resultBody);
+        Body body = new Body(extractedDoc);
+        section.AppendChild(body);
 
-        // Use NodeImporter to import nodes from the source document into the result document.
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        // Get the collection of paragraphs in the source body.
+        ParagraphCollection sourceParas = sourceDoc.FirstSection.Body.Paragraphs;
 
-        // Import each paragraph that falls inside the range.
-        for (int i = startIndex + 1; i < endIndex; i++)
+        // Find the indices of the start and end paragraphs.
+        int startIndex = sourceParas.IndexOf(startParagraph);
+        int endIndex = sourceParas.IndexOf(endParagraph);
+
+        if (startIndex < 0 || endIndex < 0 || endIndex < startIndex)
+            throw new InvalidOperationException("Invalid paragraph range for extraction.");
+
+        // Use a NodeImporter to import nodes from the source document into the destination document.
+        NodeImporter importer = new NodeImporter(sourceDoc, extractedDoc, ImportFormatMode.KeepSourceFormatting);
+
+        // Import and copy each paragraph within the range to the new document.
+        for (int i = startIndex; i <= endIndex; i++)
         {
-            Paragraph paraToImport = sourceBody.Paragraphs[i];
-            Node importedNode = importer.ImportNode(paraToImport, true);
-            resultBody.AppendChild(importedNode);
+            Node importedNode = importer.ImportNode(sourceParas[i], true);
+            body.AppendChild(importedNode);
         }
 
-        // -----------------------------------------------------------------
-        // 5. Save the extracted content as a DOCX file.
-        // -----------------------------------------------------------------
-        const string outputPath = "extracted.docx";
-        resultDoc.Save(outputPath, SaveFormat.Docx);
+        // Save the extracted content as a DOCX file.
+        string outputPath = "extracted.docx";
+        extractedDoc.Save(outputPath, SaveFormat.Docx);
 
         // Verify that the output file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The extracted DOCX file was not created.");
+    }
+
+    private static void CreateSampleDocm(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a macro button field.
+        builder.InsertField("MACROBUTTON NoMacro \"Click Me\"");
+
+        // Add some content after the field.
+        builder.Writeln("Content line 1");
+        builder.Writeln("Content line 2");
+
+        // Insert the terminating paragraph.
+        builder.Writeln("End Paragraph");
+
+        // Save as a macro-enabled document.
+        doc.Save(filePath, SaveFormat.Docm);
     }
 }

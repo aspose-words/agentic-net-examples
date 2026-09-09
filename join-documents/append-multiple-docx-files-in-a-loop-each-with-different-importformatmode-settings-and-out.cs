@@ -8,55 +8,56 @@ public class Program
 {
     public static void Main()
     {
-        // Directory for generated files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Folder for temporary source documents and final output.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "JoinDocsWork");
+        Directory.CreateDirectory(workDir);
 
-        // Destination document that will hold all appended content.
-        Document dstDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
-        dstBuilder.Writeln("Combined Document Start");
-        dstBuilder.Writeln(); // Add a blank line.
-
-        // Different ImportFormatMode values to use for each source document.
-        List<ImportFormatMode> importModes = new List<ImportFormatMode>
+        // Define source documents: file name, text content, and ImportFormatMode to use when appending.
+        var sources = new List<(string FileName, string Content, ImportFormatMode Mode)>
         {
-            ImportFormatMode.UseDestinationStyles,
-            ImportFormatMode.KeepSourceFormatting,
-            ImportFormatMode.KeepDifferentStyles
+            (Path.Combine(workDir, "Doc1.docx"), "First document content.", ImportFormatMode.UseDestinationStyles),
+            (Path.Combine(workDir, "Doc2.docx"), "Second document content.", ImportFormatMode.KeepSourceFormatting),
+            (Path.Combine(workDir, "Doc3.docx"), "Third document content.", ImportFormatMode.KeepDifferentStyles)
         };
 
-        // Append a source document for each mode.
-        for (int i = 0; i < importModes.Count; i++)
+        // Create each source DOCX file.
+        foreach (var (fileName, content, _) in sources)
         {
-            // Create a simple source document with unique text.
-            Document srcDoc = new Document();
-            DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-            srcBuilder.Writeln($"Source Document {i + 1}");
-            srcBuilder.Writeln($"This document is appended using {importModes[i]} mode.");
-            srcBuilder.Writeln(); // Separate sections.
+            var srcDoc = new Document();
+            var builder = new DocumentBuilder(srcDoc);
+            builder.Writeln(content);
+            srcDoc.Save(fileName, SaveFormat.Docx);
+        }
 
-            // Append the source document to the destination using the current mode.
-            dstDoc.AppendDocument(srcDoc, importModes[i]);
+        // Destination document that will receive all source documents.
+        var dstDoc = new Document();
+
+        // Append each source document using its specific ImportFormatMode.
+        foreach (var (fileName, _, mode) in sources)
+        {
+            var srcDoc = new Document(fileName);
+            dstDoc.AppendDocument(srcDoc, mode);
         }
 
         // Save the combined document as PDF.
-        string outputPdfPath = Path.Combine(artifactsDir, "Combined.pdf");
-        dstDoc.Save(outputPdfPath, SaveFormat.Pdf);
+        string pdfPath = Path.Combine(workDir, "Combined.pdf");
+        dstDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validation: ensure the PDF file was created and contains at least one page.
-        if (!File.Exists(outputPdfPath))
+        // Validation: ensure the PDF file exists.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The combined PDF was not created.");
+
+        // Load the PDF back as a Document to verify its text contains all source contents.
+        var pdfDoc = new Document(pdfPath);
+        string combinedText = pdfDoc.GetText();
+
+        foreach (var (_, content, _) in sources)
         {
-            throw new InvalidOperationException("The combined PDF file was not created.");
+            if (!combinedText.Contains(content))
+                throw new InvalidOperationException($"Combined PDF is missing expected content: \"{content}\"");
         }
 
-        Document pdfDoc = new Document(outputPdfPath);
-        if (pdfDoc.PageCount == 0)
-        {
-            throw new InvalidOperationException("The combined PDF file contains no pages.");
-        }
-
-        // Optional: indicate success (no interactive output required).
-        // The program will exit normally if no exception is thrown.
+        // Clean up temporary files (optional).
+        // Directory.Delete(workDir, true);
     }
 }

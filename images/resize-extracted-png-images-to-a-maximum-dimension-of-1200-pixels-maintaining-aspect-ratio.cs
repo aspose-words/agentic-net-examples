@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -10,68 +9,83 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PNG image larger than 1200 pixels.
-        const string originalImagePath = "sample.png";
-        using (Bitmap originalBitmap = new Bitmap(2000, 1500))
-        using (Graphics g = Graphics.FromImage(originalBitmap))
+        // Create a deterministic sample PNG image.
+        const string inputImagePath = "input.png";
+        const int sampleWidth = 2000;
+        const int sampleHeight = 1500;
+        using (Bitmap bmp = new Bitmap(sampleWidth, sampleHeight))
+        using (Graphics g = Graphics.FromImage(bmp))
         {
-            g.Clear(Color.White);
-            originalBitmap.Save(originalImagePath, ImageFormat.Png);
+            g.Clear(Aspose.Drawing.Color.LightBlue);
+            // Draw a simple rectangle for visual reference.
+            using (Pen pen = new Pen(Aspose.Drawing.Color.DarkBlue, 10))
+            {
+                g.DrawRectangle(pen, 100, 100, sampleWidth - 200, sampleHeight - 200);
+            }
+            bmp.Save(inputImagePath, ImageFormat.Png);
         }
 
-        // Create a Word document and insert the sample image.
+        // Insert the sample image into a Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(originalImagePath);
-        const string docPath = "sample.docx";
+        builder.InsertImage(inputImagePath);
+        const string docPath = "DocumentWithImage.docx";
         doc.Save(docPath);
 
-        // Load the document and extract PNG images.
+        // Load the document (demonstrating load rule usage).
         Document loadedDoc = new Document(docPath);
-        var pngShapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                 .Cast<Shape>()
-                                 .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Png)
-                                 .ToList();
-
-        if (!pngShapes.Any())
-            throw new InvalidOperationException("No PNG images were found in the document.");
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
-        foreach (var shape in pngShapes)
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Save the image data to a memory stream.
-            using (MemoryStream ms = new MemoryStream())
+            if (!shape.HasImage)
+                continue;
+
+            // Obtain the image bytes from the shape.
+            byte[] imageBytes = shape.ImageData.ToByteArray();
+
+            // Load the bytes into an Aspose.Drawing.Bitmap.
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                shape.ImageData.Save(ms);
-                ms.Position = 0; // Reset stream before reading.
-
-                // Load the image into Aspose.Drawing.Bitmap.
-                using (Bitmap bitmap = new Bitmap(ms))
+                ms.Position = 0;
+                using (Bitmap originalBitmap = new Bitmap(ms))
                 {
-                    int originalWidth = bitmap.Width;
-                    int originalHeight = bitmap.Height;
+                    // Determine new dimensions while preserving aspect ratio.
+                    int originalWidth = originalBitmap.Width;
+                    int originalHeight = originalBitmap.Height;
+                    const int maxDimension = 1200;
 
-                    // Determine scaling factor to keep max dimension <= 1200.
-                    int maxDimension = Math.Max(originalWidth, originalHeight);
-                    if (maxDimension <= 1200)
+                    double scale = 1.0;
+                    if (originalWidth > originalHeight && originalWidth > maxDimension)
+                        scale = (double)maxDimension / originalWidth;
+                    else if (originalHeight >= originalWidth && originalHeight > maxDimension)
+                        scale = (double)maxDimension / originalHeight;
+
+                    int newWidth = (int)Math.Round(originalWidth * scale);
+                    int newHeight = (int)Math.Round(originalHeight * scale);
+
+                    // If scaling is not required, keep original size.
+                    if (scale >= 1.0)
                     {
-                        // No resizing needed; save the original image.
-                        string unchangedPath = $"extracted_{imageIndex}.png";
-                        bitmap.Save(unchangedPath, ImageFormat.Png);
+                        newWidth = originalWidth;
+                        newHeight = originalHeight;
                     }
-                    else
-                    {
-                        double scale = 1200.0 / maxDimension;
-                        int newWidth = (int)Math.Round(originalWidth * scale);
-                        int newHeight = (int)Math.Round(originalHeight * scale);
 
-                        using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
-                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
-                        {
-                            graphics.DrawImage(bitmap, 0, 0, newWidth, newHeight);
-                            string resizedPath = $"resized_{imageIndex}.png";
-                            resizedBitmap.Save(resizedPath, ImageFormat.Png);
-                        }
+                    // Resize the image.
+                    using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
+                    using (Graphics graphics = Graphics.FromImage(resizedBitmap))
+                    {
+                        graphics.Clear(Aspose.Drawing.Color.Transparent);
+                        graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
+
+                        // Save the resized image.
+                        string resizedImagePath = $"resized_{imageIndex}.png";
+                        resizedBitmap.Save(resizedImagePath, ImageFormat.Png);
+
+                        // Validate that the file was created.
+                        if (!File.Exists(resizedImagePath))
+                            throw new InvalidOperationException($"Failed to create resized image: {resizedImagePath}");
                     }
                 }
             }
@@ -79,9 +93,12 @@ public class Program
             imageIndex++;
         }
 
-        // Validate that at least one resized file was created.
-        var outputFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "resized_*.png");
-        if (!outputFiles.Any())
-            throw new InvalidOperationException("No resized PNG images were produced.");
+        // Ensure at least one image was processed.
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
+
+        // Cleanup temporary files (optional).
+        // File.Delete(inputImagePath);
+        // File.Delete(docPath);
     }
 }

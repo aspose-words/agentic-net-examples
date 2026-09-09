@@ -1,61 +1,69 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingExample
 {
-    public static void Main()
+    // Data model used by the LINQ Reporting template.
+    public class ReportModel
     {
-        // Register code page provider for Aspose.Words (required for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Nullable discount value.
+        public decimal? Discount { get; set; }
 
-        // Prepare sample data with nullable decimal fields.
-        var model = new ReportModel
+        // Nullable tax value.
+        public decimal? Tax { get; set; }
+
+        // Combined value using the lifted addition operator.
+        // If either operand is null, the result is null.
+        public decimal? Combined => Discount + Tax;
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Discount = 12.5m,
-            Tax = null // Tax is missing for this example.
-        };
+            // -----------------------------------------------------------------
+            // 1. Create a simple Word template with a LINQ Reporting tag.
+            // -----------------------------------------------------------------
+            string templatePath = "Template.docx";
 
-        // Create a template document programmatically.
-        string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Load the template document.
-        var doc = new Document(templatePath);
+            // Write a line that will display the combined value.
+            builder.Writeln("Combined value: <<[model.Combined]>>");
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 2. Prepare sample data.
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel
+            {
+                Discount = 12.5m,
+                Tax = 3.75m
+                // If you want to test null handling, set either property to null.
+            };
+
+            // -----------------------------------------------------------------
+            // 3. Load the template and build the report.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            ReportingEngine engine = new ReportingEngine();
+            // The root object name used in the template tags is "model".
+            engine.BuildReport(reportDoc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+
+            // Inform the user (optional, not required for non‑interactive execution).
+            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        }
     }
-
-    // Generates a simple Word template containing LINQ Reporting tags.
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Discount: <<[model.Discount]>>");
-        builder.Writeln("Tax: <<[model.Tax]>>");
-        builder.Writeln("Combined (Discount + Tax): <<[model.Combined]>>");
-
-        doc.Save(filePath);
-    }
-}
-
-// Data model used by the report. All members are public.
-public class ReportModel
-{
-    // Nullable decimal fields.
-    public decimal? Discount { get; set; }
-    public decimal? Tax { get; set; }
-
-    // Combined value using the lifted addition operator.
-    // The result is null if either operand is null.
-    public decimal? Combined => Discount + Tax;
 }

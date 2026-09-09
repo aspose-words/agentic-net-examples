@@ -2,111 +2,90 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Newtonsoft.Json;
+using Aspose.Drawing;               // Aspose.Drawing.Common namespace
+using Aspose.Drawing.Imaging;       // For ImageFormat
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic sample image using Aspose.Drawing
-        const int width = 200;
-        const int height = 200;
-        const string sampleImagePath = "sample.png";
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic BMP image file to be used as input.
+        // -----------------------------------------------------------------
+        const string bmpPath = "sample.bmp";
+        const int width = 100;
+        const int height = 100;
 
+        // Create a white bitmap.
         using (Bitmap bitmap = new Bitmap(width, height))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                // Fill background with white
-                graphics.Clear(Aspose.Drawing.Color.White);
-                // Draw a red ellipse
-                using (Pen pen = new Pen(Aspose.Drawing.Color.Red, 5))
-                {
-                    graphics.DrawEllipse(pen, 10, 10, width - 20, height - 20);
-                }
-            }
-            // Save the image to a local file
-            bitmap.Save(sampleImagePath);
+            graphics.Clear(Color.White);
+            // Save as BMP.
+            bitmap.Save(bmpPath, ImageFormat.Bmp);
         }
 
-        // Verify that the sample image was created
-        if (!File.Exists(sampleImagePath))
-            throw new FileNotFoundException("Failed to create the sample image.", sampleImagePath);
+        // Verify that the BMP file was created.
+        if (!File.Exists(bmpPath))
+            throw new FileNotFoundException("Failed to create the sample BMP image.", bmpPath);
 
-        // Step 2: Create a DOCX document and insert the image
+        // -----------------------------------------------------------------
+        // 2. Create a DOCX document and insert the BMP image.
+        // -----------------------------------------------------------------
         const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
+
+        // Insert the BMP image into the document.
+        builder.InsertImage(bmpPath);
+
+        // Save the document.
         doc.Save(docPath);
 
-        // Verify that the document was saved
+        // Verify that the DOCX file was created.
         if (!File.Exists(docPath))
-            throw new FileNotFoundException("Failed to save the DOCX document.", docPath);
+            throw new FileNotFoundException("Failed to create the sample DOCX document.", docPath);
 
-        // Step 3: Load the document and extract the image as BMP into a MemoryStream
+        // -----------------------------------------------------------------
+        // 3. Load the document and extract the first image (BMP) into a MemoryStream.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
-        Shape imageShape = null;
 
-        foreach (Node node in loadedDoc.GetChildNodes(NodeType.Shape, true))
+        // Find the first shape that actually contains an image.
+        Shape imageShape = null;
+        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
         {
-            Shape shape = (Shape)node;
             if (shape.HasImage)
             {
                 imageShape = shape;
-                break; // Assuming only one image for this example
+                break;
             }
         }
 
         if (imageShape == null)
-            throw new InvalidOperationException("No image shape found in the document.");
+            throw new InvalidOperationException("No image found in the document.");
 
-        // Prepare a memory stream for the BMP image
-        using (MemoryStream bmpStream = new MemoryStream())
+        // Save the image data to a memory stream.
+        using (MemoryStream imageStream = new MemoryStream())
         {
-            // Convert the original image bytes to BMP and write to the stream
-            byte[] originalBytes = imageShape.ImageData.ImageBytes;
-            using (MemoryStream srcStream = new MemoryStream(originalBytes))
-            {
-                using (Image img = Image.FromStream(srcStream))
-                {
-                    img.Save(bmpStream, ImageFormat.Bmp);
-                }
-            }
+            // The image was originally a BMP, so this will preserve the BMP format.
+            imageShape.ImageData.Save(imageStream);
 
-            // Reset stream position for subsequent reading
-            bmpStream.Position = 0;
+            // Reset the stream position before any further use.
+            imageStream.Position = 0;
 
-            // Optional: write the extracted BMP to a file for validation
-            const string extractedBmpPath = "extracted.bmp";
-            using (FileStream fileStream = new FileStream(extractedBmpPath, FileMode.Create, FileAccess.Write))
-            {
-                bmpStream.CopyTo(fileStream);
-            }
+            // -----------------------------------------------------------------
+            // 4. Example: pass the memory stream to an API (placeholder).
+            // -----------------------------------------------------------------
+            // For demonstration, we simply output the size of the stream.
+            Console.WriteLine($"Extracted image stream length: {imageStream.Length} bytes");
 
-            // Validate that the BMP file was created
-            if (!File.Exists(extractedBmpPath))
-                throw new FileNotFoundException("Failed to write the extracted BMP image.", extractedBmpPath);
-
-            // Reset stream again before using it further
-            bmpStream.Position = 0;
-
-            // Step 4: Simulate passing the stream to an API by converting to Base64 and creating JSON payload
-            byte[] bmpBytes = bmpStream.ToArray();
-            string base64Image = Convert.ToBase64String(bmpBytes);
-            var payload = new { ImageBase64 = base64Image };
-            string json = JsonConvert.SerializeObject(payload, Formatting.Indented);
-
-            // Output the JSON payload (could be sent to an API)
-            Console.WriteLine(json);
+            // If you had an API method like: void UploadImage(Stream stream);
+            // you would call: UploadImage(imageStream);
         }
 
-        // Clean up temporary files (optional)
-        // File.Delete(sampleImagePath);
+        // Cleanup: optional removal of temporary files.
+        // File.Delete(bmpPath);
         // File.Delete(docPath);
-        // File.Delete("extracted.bmp");
     }
 }

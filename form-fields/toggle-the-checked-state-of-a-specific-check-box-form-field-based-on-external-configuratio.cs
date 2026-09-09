@@ -4,49 +4,60 @@ using Aspose.Words.Fields;
 
 public class Program
 {
+    // Entry point of the console application.
     public static void Main()
     {
-        // Create a new blank document.
+        // Path for the initial document and the updated document.
+        const string initialDocPath = "FormFields.docx";
+        const string updatedDocPath = "FormFields_Updated.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create a new document and insert a checkbox form field.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field with a known name.
-        const string checkBoxName = "MyCheckBox";
-        builder.Write("Toggle this check box: ");
-        FormField insertedCheckBox = builder.InsertCheckBox(checkBoxName, false, 0);
-        if (insertedCheckBox == null)
-            throw new InvalidOperationException("Failed to create the checkbox form field.");
+        // Insert a paragraph with a checkbox named "MyCheckBox".
+        builder.Writeln("Toggle this checkbox based on configuration:");
+        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
+        // Optional: set a readable size for the checkbox.
+        checkBox.IsCheckBoxExactSize = true;
+        checkBox.CheckBoxSize = 12.0;
 
-        // Read external configuration (environment variable "CHECKBOX_STATE").
-        // Expected values: "true" or "false". Default is false if not set or invalid.
-        string envValue = Environment.GetEnvironmentVariable("CHECKBOX_STATE");
-        bool shouldBeChecked = false;
-        if (!string.IsNullOrEmpty(envValue) && bool.TryParse(envValue, out bool parsed))
-            shouldBeChecked = parsed;
+        // Save the document that contains the form field.
+        doc.Save(initialDocPath);
 
-        // Locate the checkbox by name in the document's form fields collection.
-        FormField targetField = null;
-        foreach (FormField field in doc.Range.FormFields)
-        {
-            if (field.Name == checkBoxName)
-            {
-                targetField = field;
-                break;
-            }
-        }
+        // -----------------------------------------------------------------
+        // 2. Load the document (simulating a separate operation) and
+        //    update the checkbox state according to external configuration.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(initialDocPath);
+        FormFieldCollection formFields = loadedDoc.Range.FormFields;
 
+        // Validate that the expected form field exists.
+        FormField? targetField = formFields["MyCheckBox"];
         if (targetField == null)
-            throw new InvalidOperationException($"Form field '{checkBoxName}' not found.");
+            throw new InvalidOperationException("Form field 'MyCheckBox' was not found.");
 
-        // Toggle the checked state based on the external configuration.
-        targetField.Checked = shouldBeChecked;
+        // Read external configuration. Here we use an environment variable.
+        // Expected values: "true" or "false" (case‑insensitive). Default is false.
+        bool desiredState = GetDesiredCheckedStateFromEnv();
 
-        // Validate that the state was applied.
-        if (targetField.Checked != shouldBeChecked)
-            throw new InvalidOperationException("Failed to set the checkbox state.");
+        // Toggle the checkbox state.
+        targetField.Checked = desiredState;
 
-        // Save the modified document.
-        const string outputPath = "ToggleCheckbox.docx";
-        doc.Save(outputPath);
+        // Save the updated document.
+        loadedDoc.Save(updatedDocPath);
+    }
+
+    // Reads the environment variable "CHECKBOX_CHECKED" and converts it to a bool.
+    // Returns false if the variable is missing or cannot be parsed.
+    private static bool GetDesiredCheckedStateFromEnv()
+    {
+        string? envValue = Environment.GetEnvironmentVariable("CHECKBOX_CHECKED");
+        if (string.IsNullOrWhiteSpace(envValue))
+            return false;
+
+        return bool.TryParse(envValue.Trim(), out bool result) && result;
     }
 }

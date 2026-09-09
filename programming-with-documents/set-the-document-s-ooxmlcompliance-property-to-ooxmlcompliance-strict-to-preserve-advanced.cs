@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Saving;
@@ -12,38 +11,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a simple numbered list.
+        // Add a numbered list to the document.
         doc.Lists.Add(ListTemplate.NumberDefault);
         List list = doc.Lists[0];
-        // Enable restarting the list at each new section (advanced list setting).
+
+        // Enable restarting the list numbering at each new section.
         list.IsRestartAtEachSection = true;
 
-        // Apply the list to a few paragraphs.
+        // Apply the list to the builder so that subsequent paragraphs become list items.
         builder.ListFormat.List = list;
+
+        // Write some list items, insert a section break, then write more items.
         builder.Writeln("Item 1");
         builder.Writeln("Item 2");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Item 3");
-        builder.Writeln("Item 4");
-        builder.ListFormat.RemoveNumbers();
+        builder.Writeln("Item 1");
+        builder.Writeln("Item 2");
 
-        // Configure OOXML save options to use strict compliance.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            Compliance = OoxmlCompliance.Iso29500_2008_Strict
-        };
+        // Save the document with strict OOXML compliance to preserve advanced list settings.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
+        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Strict;
 
-        // Determine an output path relative to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AdvancedListStrict.docx");
-
-        // Save the document with the specified compliance level.
-        doc.Save(outputPath, saveOptions);
-
-        // Reload the document to verify that the list setting is preserved.
-        Document loadedDoc = new Document(outputPath);
-        bool isRestart = loadedDoc.Lists[0].IsRestartAtEachSection;
-
-        // Output the verification result.
-        Console.WriteLine($"List restart at each section preserved: {isRestart}");
+        doc.Save("AdvancedListSettings.docx", saveOptions);
     }
 }

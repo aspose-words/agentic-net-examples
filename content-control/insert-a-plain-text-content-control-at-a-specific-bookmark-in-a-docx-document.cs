@@ -2,46 +2,41 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-public class Program
+namespace ContentControlExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document with a bookmark named "TargetBookmark".
-        Document seedDoc = new Document();
-        DocumentBuilder seedBuilder = new DocumentBuilder(seedDoc);
-        seedBuilder.StartBookmark("TargetBookmark");
-        seedBuilder.Write("Initial text inside the bookmark.");
-        seedBuilder.EndBookmark("TargetBookmark");
-        seedDoc.Save("input.docx");
-
-        // Load the document that contains the bookmark.
-        Document doc = new Document("input.docx");
-
-        // Ensure the bookmark exists.
-        Bookmark bookmark = doc.Range.Bookmarks["TargetBookmark"];
-        if (bookmark == null)
-            throw new InvalidOperationException("Bookmark 'TargetBookmark' not found.");
-
-        // Clear the bookmark's existing text.
-        bookmark.Text = string.Empty;
-
-        // Move the builder to the bookmark location.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveToBookmark("TargetBookmark");
-
-        // Create a plain text content control (StructuredDocumentTag).
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        public static void Main()
         {
-            Title = "CustomerName",
-            Tag = "customer-name"
-        };
-        sdt.RemoveAllChildren();
-        sdt.AppendChild(new Run(doc, "Contoso"));
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the content control at the bookmark position.
-        builder.InsertNode(sdt);
+            // Add a paragraph before the bookmark.
+            builder.Writeln("Paragraph before bookmark.");
 
-        // Save the modified document.
-        doc.Save("output.docx");
+            // Insert a bookmark named "TargetBookmark".
+            builder.StartBookmark("TargetBookmark");
+            builder.Writeln("This text will be replaced by a content control.");
+            builder.EndBookmark("TargetBookmark");
+
+            // Add a paragraph after the bookmark.
+            builder.Writeln("Paragraph after bookmark.");
+
+            // Move the cursor to the start of the bookmark.
+            builder.MoveToBookmark("TargetBookmark");
+
+            // Insert a plain text content control at the bookmark location.
+            StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+            sdt.Title = "CustomerName";
+            sdt.Tag = "customer-name";
+
+            // Replace any default placeholder with custom text.
+            sdt.RemoveAllChildren();
+            sdt.AppendChild(new Run(doc, "Contoso"));
+
+            // Save the document.
+            doc.Save("output.docx");
+        }
     }
 }

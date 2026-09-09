@@ -1,37 +1,59 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Path for the temporary PNG image.
+        // Paths for the temporary PNG image and the resulting PDF.
         const string pngPath = "sample.png";
-
-        // Base64‑encoded 1×1 red PNG image.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/6ZcKAAAAAElFTkSuQmCC";
-
-        // Write the PNG file to disk.
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(pngPath, pngBytes);
-
-        // Create a new blank Word document.
-        Document doc = new Document();
-
-        // Insert the PNG image into the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(pngPath);
-
-        // Save the document as PDF.
         const string pdfPath = "output.pdf";
+
+        // Create a simple PNG image using Aspose.Drawing types.
+        using (Bitmap bitmap = new Bitmap(300, 150))
+        {
+            // Obtain a Graphics object that can draw on the bitmap.
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                // Fill background.
+                graphics.Clear(Color.LightGray);
+
+                // Create a drawing font.
+                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24);
+                try
+                {
+                    // Use a brush for the text color.
+                    using (SolidBrush brush = new SolidBrush(Color.DarkBlue))
+                    {
+                        // Draw the string at the specified location.
+                        graphics.DrawString("Sample PNG", font, brush, new PointF(20, 60));
+                    }
+                }
+                finally
+                {
+                    font.Dispose();
+                }
+            }
+
+            // Save the bitmap as a PNG file.
+            bitmap.Save(pngPath, ImageFormat.Png);
+        }
+
+        // Load the PNG image as a document. Aspose.Words treats the image as a single‑page document.
+        Document doc = new Document(pngPath);
+
+        // Convert the document (image) to PDF.
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
             throw new InvalidOperationException("The PDF file was not created.");
 
-        // Clean up temporary files (optional).
+        // Clean up temporary PNG file (optional).
         File.Delete(pngPath);
     }
 }

@@ -12,42 +12,48 @@ public class Program
         const string outputPath = "sample.pdf";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample DOCX document.
+        // Step 1: Create a sample DOCX document with a non‑standard font.
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Font.Name = "Arial";
-        builder.Writeln("This paragraph uses the Arial font.");
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("This paragraph uses the Times New Roman font.");
+        // "Courier New" is not a standard Windows font for PDF embedding,
+        // so it will be treated as a custom font.
+        builder.Font.Name = "Courier New";
+        builder.Writeln("This paragraph uses the Courier New font and will be embedded in the PDF.");
+
+        // Save the DOCX to disk (input bootstrap rule).
         sourceDoc.Save(inputPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 2. Load the DOCX document.
+        // Step 2: Load the DOCX file that we just created.
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
+        Document doc = new Document(inputPath);
 
         // -----------------------------------------------------------------
-        // 3. Configure PDF save options to embed all fonts.
+        // Step 3: Configure PDF save options to embed all fonts.
         // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll
+            // Embed every font used in the document.
+            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll,
+            // Optional: embed the full font data (no subsetting).
+            EmbedFullFonts = true
         };
 
         // -----------------------------------------------------------------
-        // 4. Save the document as PDF with the specified options.
+        // Step 4: Save the document as PDF using the configured options.
         // -----------------------------------------------------------------
-        loadedDoc.Save(outputPath, pdfOptions);
+        doc.Save(outputPath, pdfOptions);
 
         // -----------------------------------------------------------------
-        // 5. Verify that the PDF file was created.
+        // Step 5: Validate that the PDF file was created.
         // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+        {
+            throw new InvalidOperationException("The expected PDF output file was not created.");
+        }
 
-        // Optional: clean up generated files (comment out if you want to keep them).
-        // File.Delete(inputPath);
-        // File.Delete(outputPath);
+        // Optionally, report success (no interactive input required).
+        Console.WriteLine("DOCX successfully converted to PDF with all fonts embedded.");
     }
 }

@@ -3,108 +3,81 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 
-public class ExtractOleImages
+public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare the output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a sample icon image that will be used as the OLE object's presentation.
-        string iconPath = Path.Combine(outputDir, "icon.png");
-        CreateSampleImage(iconPath, 100, 100);
+        // -----------------------------------------------------------------
+        // 1. Create sample files needed for the OLE object.
+        // -----------------------------------------------------------------
+        // Text file that will be embedded as an OLE package.
+        string sampleTextPath = Path.Combine(artifactsDir, "sample.txt");
+        File.WriteAllText(sampleTextPath, "This is a sample text file used as OLE data.");
 
-        // Create a sample file that will be embedded as an OLE object.
-        string oleDataPath = Path.Combine(outputDir, "sample.txt");
-        File.WriteAllText(oleDataPath, "This is sample OLE content.");
+        // Create a simple 32x32 PNG icon that will be used as the visual representation.
+        string iconPath = Path.Combine(artifactsDir, "icon.png");
+        using (Bitmap bitmap = new Bitmap(32, 32))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Aspose.Drawing.Color.LightBlue);
+                g.DrawRectangle(new Pen(Aspose.Drawing.Color.DarkBlue, 2), 4, 4, 24, 24);
+            }
+            bitmap.Save(iconPath);
+        }
 
-        // Build a document and embed the OLE object with the custom icon.
-        string docPath = Path.Combine(outputDir, "DocumentWithOle.docx");
-        CreateDocumentWithOle(docPath, oleDataPath, iconPath);
-
-        // Load the document and extract images from embedded OLE objects.
-        ExtractImagesFromOleObjects(docPath, outputDir);
-    }
-
-    private static void CreateSampleImage(string filePath, int width, int height)
-    {
-        // Create a deterministic bitmap.
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.LightGray);
-        // Optionally draw something simple.
-        graphics.Dispose();
-        bitmap.Save(filePath);
-        bitmap.Dispose();
-    }
-
-    private static void CreateDocumentWithOle(string docPath, string oleFilePath, string iconFilePath)
-    {
+        // -----------------------------------------------------------------
+        // 2. Build a Word document that contains an embedded OLE object
+        //    displayed as an icon (the image we just created).
+        // -----------------------------------------------------------------
+        string docPath = Path.Combine(artifactsDir, "OleDocument.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph before the OLE object.
-        builder.Writeln("Below is an embedded OLE object with a custom icon:");
-
-        // Insert the OLE object using streams.
-        using (FileStream oleStream = File.OpenRead(oleFilePath))
-        using (FileStream iconStream = File.OpenRead(iconFilePath))
+        // Insert the OLE object as an icon using the overload that accepts an image stream.
+        using (FileStream iconStream = File.OpenRead(iconPath))
         {
-            // progId "Package" works for generic files.
-            // asIcon = true to display the provided icon.
-            builder.InsertOleObject(oleStream, "Package", true, iconStream);
+            // Parameters: fileName, isLinked, asIcon, presentation (image stream)
+            builder.InsertOleObject(sampleTextPath, false, true, iconStream);
         }
 
         // Save the document.
         doc.Save(docPath);
-    }
 
-    private static void ExtractImagesFromOleObjects(string docPath, string outputDir)
-    {
-        Document doc = new Document(docPath);
-
-        // Get all shape nodes.
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        // -----------------------------------------------------------------
+        // 3. Load the document and extract the icon images from OLE objects.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
         int extractedCount = 0;
-
-        foreach (Shape shape in shapes.OfType<Shape>())
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Identify OLE objects that have an image (icon).
-            if (shape.OleFormat != null && shape.HasImage)
+            // We are interested only in OLE objects that have an image (icon).
+            if (shape.ShapeType == ShapeType.OleObject && shape.HasImage)
             {
                 OleFormat ole = shape.OleFormat;
-                string progId = ole.ProgId ?? "OleObject";
+                string progId = ole?.ProgId ?? "OleObject";
 
-                // Sanitize progId for file name.
-                foreach (char c in Path.GetInvalidFileNameChars())
-                    progId = progId.Replace(c, '_');
-
-                // Determine image extension based on its type.
+                // Determine the proper file extension for the image type.
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imageFileName = $"{progId}{extension}";
-                string imagePath = Path.Combine(outputDir, imageFileName);
+                string outputFileName = $"{progId}_{extractedCount}{extension}";
+                string outputPath = Path.Combine(artifactsDir, outputFileName);
 
-                // Save the image (icon) to disk.
-                shape.ImageData.Save(imagePath);
+                // Save the image.
+                shape.ImageData.Save(outputPath);
                 extractedCount++;
             }
         }
 
+        // Validate that at least one image was extracted.
         if (extractedCount == 0)
-            throw new InvalidOperationException("No OLE object images were found to extract.");
-
-        // Validate that at least one image file was created.
-        if (!Directory.GetFiles(outputDir, "*.png").Any() &&
-            !Directory.GetFiles(outputDir, "*.jpg").Any() &&
-            !Directory.GetFiles(outputDir, "*.jpeg").Any() &&
-            !Directory.GetFiles(outputDir, "*.bmp").Any())
-        {
-            throw new InvalidOperationException("Extraction completed but no image files were created.");
-        }
+            throw new InvalidOperationException("No OLE object images were extracted.");
     }
 }

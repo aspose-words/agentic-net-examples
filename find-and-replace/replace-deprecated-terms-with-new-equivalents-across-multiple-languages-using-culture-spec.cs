@@ -10,84 +10,84 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing deprecated terms in several languages.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("DeprecatedTerm1 is old.");
-        builder.Writeln("DeprecatedTerm2 is outdated.");
-        builder.Writeln("Ancien terme en français.");
-        builder.Writeln("Veralteter Begriff auf Deutsch.");
+        // Create a sample document with deprecated terms in different languages.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("The colour of the sky is blue.");                     // English (British)
+        builder.Writeln("Our organisation follows strict guidelines.");        // English (British)
+        builder.Writeln("Ce terme est déprécié et doit être remplacé.");       // French
+        builder.Writeln("Un autre texte sans terme obsolète.");               // French
+        doc.Save("sample.docx");
 
-        // Prepare a logger that will record every replacement performed.
-        var logger = new ReplacementLogger();
+        // Load the document for processing.
+        var loadedDoc = new Document("sample.docx");
 
-        // Common FindReplaceOptions used for all replacements.
-        var options = new FindReplaceOptions
+        // Prepare replacement definitions: pattern, replacement, culture identifier.
+        var replacements = new List<(Regex Pattern, string Replacement, string Culture)>
         {
-            MatchCase = false,               // Case‑insensitive search.
-            FindWholeWordsOnly = true,       // Replace whole words only.
-            ReplacingCallback = logger
+            (new Regex(@"\bcolour\b", RegexOptions.IgnoreCase), "color", "en-GB"),
+            (new Regex(@"\borganisation\b", RegexOptions.IgnoreCase), "organization", "en-GB"),
+            (new Regex(@"\bdéprécié\b", RegexOptions.IgnoreCase), "obsolète", "fr-FR")
         };
 
-        // Define the culture‑specific patterns and their replacements.
-        var replacements = new List<(Regex Pattern, string Replacement)>
-        {
-            // English terms.
-            (new Regex(@"\bDeprecatedTerm1\b", RegexOptions.Compiled | RegexOptions.CultureInvariant), "NewTerm1"),
-            (new Regex(@"\bDeprecatedTerm2\b", RegexOptions.Compiled | RegexOptions.CultureInvariant), "NewTerm2"),
-            // French term (case‑insensitive, Unicode aware).
-            (new Regex(@"\bAncien\b", RegexOptions.Compiled | RegexOptions.CultureInvariant), "Nouveau"),
-            // German term.
-            (new Regex(@"\bVeralteter\b", RegexOptions.Compiled | RegexOptions.CultureInvariant), "Aktuell")
-        };
+        // Collect all log entries from each replacement operation.
+        var allLogEntries = new List<ReplacementLogEntry>();
 
-        // Apply each replacement to the document.
-        int totalReplacements = 0;
-        foreach (var (pattern, replacement) in replacements)
+        foreach (var (pattern, replacement, culture) in replacements)
         {
-            int count = doc.Range.Replace(pattern, replacement, options);
-            totalReplacements += count;
+            var logger = new ReplacementLogger(culture);
+            var options = new FindReplaceOptions(logger);
+
+            int count = loadedDoc.Range.Replace(pattern, replacement, options);
+            if (count == 0)
+                throw new InvalidOperationException($"Expected at least one replacement for culture '{culture}'.");
+
+            allLogEntries.AddRange(logger.LogEntries);
         }
-
-        // Validate that at least one replacement occurred.
-        if (totalReplacements == 0)
-            throw new InvalidOperationException("No replacements were performed.");
-
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
 
         // Save the modified document.
-        string outputDocPath = Path.Combine(outputDir, "ReplacedDocument.docx");
-        doc.Save(outputDocPath);
+        loadedDoc.Save("output.docx");
 
         // Serialize the replacement log to JSON.
-        string jsonReport = JsonConvert.SerializeObject(logger.Records, Formatting.Indented);
-        string jsonPath = Path.Combine(outputDir, "ReplacementReport.json");
-        File.WriteAllText(jsonPath, jsonReport);
+        string jsonReport = JsonConvert.SerializeObject(allLogEntries, Formatting.Indented);
+        File.WriteAllText("report.json", jsonReport);
+    }
+}
+
+// Holds information about a single replacement operation.
+public class ReplacementLogEntry
+{
+    public string Culture { get; set; } = string.Empty;
+    public string OriginalText { get; set; } = string.Empty;
+    public string ReplacementText { get; set; } = string.Empty;
+    public int MatchOffset { get; set; }
+    public string NodeType { get; set; } = string.Empty;
+}
+
+// Callback that records each replacement.
+public class ReplacementLogger : IReplacingCallback
+{
+    public List<ReplacementLogEntry> LogEntries { get; } = new List<ReplacementLogEntry>();
+    private readonly string _culture;
+
+    public ReplacementLogger(string culture)
+    {
+        _culture = culture;
     }
 
-    // Simple record to hold details of each replacement.
-    private class ReplacementRecord
+    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
     {
-        public string Original { get; set; } = string.Empty;
-        public string Replacement { get; set; } = string.Empty;
-    }
-
-    // Callback that logs every match that is replaced.
-    private class ReplacementLogger : IReplacingCallback
-    {
-        public List<ReplacementRecord> Records { get; } = new List<ReplacementRecord>();
-
-        public ReplaceAction Replacing(ReplacingArgs args)
+        // Record details before the replacement is applied.
+        LogEntries.Add(new ReplacementLogEntry
         {
-            Records.Add(new ReplacementRecord
-            {
-                Original = args.Match.Value,
-                Replacement = args.Replacement
-            });
-            // No modification of the replacement string; just perform the replace.
-            return ReplaceAction.Replace;
-        }
+            Culture = _culture,
+            OriginalText = args.Match.Value,
+            ReplacementText = args.Replacement,
+            MatchOffset = args.MatchOffset,
+            NodeType = args.MatchNode.NodeType.ToString()
+        });
+
+        // Perform the replacement.
+        return ReplaceAction.Replace;
     }
 }

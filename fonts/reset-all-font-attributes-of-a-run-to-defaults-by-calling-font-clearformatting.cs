@@ -1,11 +1,10 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Fonts;
 using Aspose.Drawing;
-using Newtonsoft.Json;
 
-namespace FontResetExample
+namespace FontClearFormattingExample
 {
     public class Program
     {
@@ -14,29 +13,27 @@ namespace FontResetExample
             // Create a new blank document.
             Document doc = new Document();
 
-            // Add a paragraph to the first section.
+            // Get the first paragraph of the document (created by default).
             Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-            // Create a run with some sample text.
-            Run run = new Run(doc, "Sample text with custom formatting.");
-            paragraph.AppendChild(run);
+            // Create a run with some text.
+            Run run = new Run(doc, "Formatted text");
 
-            // Apply various font attributes to the run.
+            // Apply custom font formatting.
             Aspose.Words.Font font = run.Font;
             font.Name = "Courier New";
             font.Size = 24;
-            font.Bold = true;
-            font.Italic = true;
-            font.Underline = Underline.Single;
-            font.Color = System.Drawing.Color.Blue; // Explicit System.Drawing.Color
+            // Use Aspose.Drawing.Color to define the color, then convert to System.Drawing.Color.
+            font.Color = System.Drawing.Color.FromArgb(Aspose.Drawing.Color.Blue.ToArgb());
 
-            // Reset all font attributes to their defaults.
-            font.ClearFormatting();
+            // Add the run to the paragraph.
+            paragraph.AppendChild(run);
 
-            // Define output path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontResetOutput.docx");
+            // Reset all font attributes of the run to their defaults.
+            run.Font.ClearFormatting();
 
-            // Save the document.
+            // Save the document to the local file system.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
             doc.Save(outputPath);
         }
     }

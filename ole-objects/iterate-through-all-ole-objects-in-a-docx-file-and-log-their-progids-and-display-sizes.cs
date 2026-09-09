@@ -1,31 +1,35 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Determine the path to the DOCX file.
-        // Use the first command‑line argument if supplied; otherwise fall back to "input.docx".
-        string docPath = args.Length > 0 ? args[0] : "input.docx";
+        // Path to the input DOCX file.
+        string inputPath = "Sample.docx";
 
-        // Load the document if it exists; otherwise create an empty document.
-        Document doc = File.Exists(docPath) ? new Document(docPath) : new Document();
-
-        // Get all Shape nodes (including those in headers/footers).
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-
-        // Iterate through each shape and output OLE information when present.
-        foreach (Shape shape in shapes)
+        // Ensure the file exists. If it does not, create an empty document and save it.
+        if (!File.Exists(inputPath))
         {
-            OleFormat ole = shape.OleFormat;
-            if (ole != null)
+            Document emptyDoc = new Document(); // Create a blank document.
+            emptyDoc.Save(inputPath);           // Save it so that the file exists for loading.
+        }
+
+        // Load the document.
+        Document doc = new Document(inputPath);
+
+        // Iterate through all shapes in the document.
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
+        {
+            // Check if the shape contains an OLE object.
+            OleFormat oleFormat = shape.OleFormat;
+            if (oleFormat != null)
             {
-                Console.WriteLine($"OLE ProgId: {ole.ProgId}");
-                Console.WriteLine($"Display Size: {shape.Width}pt (W) x {shape.Height}pt (H)");
-                Console.WriteLine();
+                // Log the ProgId and display size (width and height in points).
+                Console.WriteLine($"OLE Object ProgId: {oleFormat.ProgId}, Size: {shape.Width}x{shape.Height} points");
             }
         }
     }

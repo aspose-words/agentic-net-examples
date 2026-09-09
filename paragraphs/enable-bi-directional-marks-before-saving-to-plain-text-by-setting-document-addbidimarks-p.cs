@@ -12,28 +12,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a left‑to‑right paragraph.
+        // Add left‑to‑right text.
         builder.Writeln("Hello world!");
 
-        // Mark the next paragraph as right‑to‑left.
+        // Add right‑to‑left paragraphs.
         builder.ParagraphFormat.Bidi = true;
-        builder.Writeln("שלום עולם!");   // Hebrew
-        builder.Writeln("مرحبا بالعالم!"); // Arabic
+        builder.Writeln("שלום עולם!");      // Hebrew
+        builder.Writeln("مرحبا بالعالم!");   // Arabic
 
-        // Configure save options to add BiDi marks when exporting to plain text.
+        // Configure save options to add BiDi marks.
         TxtSaveOptions saveOptions = new TxtSaveOptions
         {
             Encoding = Encoding.Unicode,
             AddBidiMarks = true
         };
 
-        // Determine an output path in the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.txt");
-
-        // Save the document as plain text using the configured options.
+        // Save the document as plain text.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BidiMarks.txt");
         doc.Save(outputPath, saveOptions);
 
-        // Optionally display a confirmation.
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Read and display the saved text.
+        string savedText = File.ReadAllText(outputPath, Encoding.Unicode);
+        Console.WriteLine("Saved text with BiDi marks:");
+        Console.WriteLine(savedText);
     }
 }

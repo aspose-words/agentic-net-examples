@@ -1,64 +1,58 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting; // Reporting engine and JSON data source classes
+using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
         // Prepare sample JSON data with ISO 8601 date strings.
-        string jsonPath = "people.json";
-        string jsonContent = @"[
-  { ""Name"": ""Alice"", ""BirthDate"": ""1985-03-12T00:00:00"" },
-  { ""Name"": ""Bob"",   ""BirthDate"": ""1992-07-25T00:00:00Z"" },
-  { ""Name"": ""Carol"", ""BirthDate"": ""2000-11-05T15:30:00+02:00"" }
-]";
-        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "people.json");
+        File.WriteAllText(jsonPath,
+            @"[
+                { ""Name"": ""John Doe"", ""BirthDate"": ""1990-05-15T00:00:00Z"" },
+                { ""Name"": ""Jane Smith"", ""BirthDate"": ""1985-12-01T00:00:00Z"" }
+            ]");
 
-        // Create a template document programmatically.
+        // Create a template document containing LINQ Reporting tags.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert LINQ Reporting tags.
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Birth Date: <<[person.BirthDate]>>");
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [p in persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Birth Date: <<[p.BirthDate]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template (ensures the engine works on a loaded document).
-        string templatePath = "template.docx";
         templateDoc.Save(templatePath);
 
-        // Load the template back.
-        Document doc = new Document(templatePath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Configure JSON parsing options to recognize ISO 8601 formats explicitly.
-        JsonDataLoadOptions jsonOptions = new JsonDataLoadOptions
+        // Configure JSON parsing to recognize ISO 8601 date formats.
+        JsonDataLoadOptions loadOptions = new JsonDataLoadOptions
         {
             ExactDateTimeParseFormats = new List<string>
             {
-                "yyyy-MM-ddTHH:mm:ss",
                 "yyyy-MM-ddTHH:mm:ssZ",
-                "yyyy-MM-ddTHH:mm:sszzz"
+                "yyyy-MM-ddTHH:mm:sszzz",
+                "yyyy-MM-ddTHH:mm:ss"
             }
         };
 
-        // Create the JSON data source.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath, jsonOptions);
+        // Create a JSON data source using the options above.
+        JsonDataSource dataSource = new JsonDataSource(jsonPath, loadOptions);
 
         // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        bool success = engine.BuildReport(doc, jsonDataSource, "persons");
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, dataSource, "persons");
 
         // Save the generated report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(outputPath);
     }
 }

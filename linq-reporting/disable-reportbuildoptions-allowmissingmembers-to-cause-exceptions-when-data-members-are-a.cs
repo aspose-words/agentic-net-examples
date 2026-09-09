@@ -2,65 +2,50 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Simple data model with a single property.
+    // Simple data model with only Name property.
     public class Person
     {
         public string Name { get; set; } = "John Doe";
-        // Note: No Age property – this will trigger a missing‑member error.
     }
 
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a LINQ Reporting tag that references a missing member (Age).
+        // The template expects a property called Age, which does not exist in Person.
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>"); // <-- missing member
+
+        // Save the template (optional, just to see the generated document).
+        const string templatePath = "ReportTemplate.docx";
+        doc.Save(templatePath);
+
+        // Prepare the data source.
+        var person = new Person();
+
+        // Create the reporting engine without AllowMissingMembers flag.
+        ReportingEngine engine = new ReportingEngine();
+        // Ensure no special options are set (default is ReportBuildOptions.None).
+        engine.Options = ReportBuildOptions.None;
+
+        try
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
-
-            // -----------------------------------------------------------------
-            // 1. Create a template document that contains a tag referencing a
-            //    non‑existent member (Age). The tag syntax follows Aspose.Words
-            //    LINQ Reporting rules.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>"); // Age does not exist.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back from disk (simulating a real‑world scenario).
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            var person = new Person();
-
-            // -----------------------------------------------------------------
-            // 4. Build the report without enabling AllowMissingMembers.
-            //    This should cause an exception because the template references
-            //    a missing member (Age).
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-
-            try
-            {
-                // The root object name used in the template tags is "person".
-                engine.BuildReport(doc, person, "person");
-                // If no exception occurs, save the generated report.
-                doc.Save(reportPath);
-                Console.WriteLine("Report generated successfully (unexpected).");
-            }
-            catch (Exception ex)
-            {
-                // Expected path: an exception is thrown due to the missing member.
-                Console.WriteLine("Expected exception caught:");
-                Console.WriteLine(ex.Message);
-            }
+            // Build the report. This should throw an exception because Age is missing.
+            engine.BuildReport(doc, person, "person");
+            // If no exception, save the resulting document.
+            doc.Save("ReportResult.docx");
+            Console.WriteLine("Report built successfully (unexpected).");
+        }
+        catch (Exception ex)
+        {
+            // Expected path: an exception is thrown for the missing member.
+            Console.WriteLine("Exception caught as expected:");
+            Console.WriteLine(ex.Message);
         }
     }
 }

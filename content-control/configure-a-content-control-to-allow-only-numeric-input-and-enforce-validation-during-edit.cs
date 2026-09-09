@@ -3,7 +3,7 @@ using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Fields;
 
-namespace NumericContentControlExample
+namespace ContentControlNumericExample
 {
     public class Program
     {
@@ -13,41 +13,35 @@ namespace NumericContentControlExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add an introductory paragraph.
+            // Write a prompt before the content control.
             builder.Writeln("Please enter a numeric value:");
 
-            // Create an inline plain‑text content control.
-            StructuredDocumentTag numericSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+            // Create a block‑level plain‑text content control.
+            StructuredDocumentTag numericSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Block)
             {
-                Title = "NumericInput",
-                Tag = "numeric-input",
-                // Prevent the user from deleting the content control, but allow editing its contents.
-                LockContentControl = true
+                Title = "NumericOnly",
+                Tag = "numeric"
             };
 
-            // Insert the content control into the current paragraph.
-            builder.InsertNode(numericSdt);
+            // Add a paragraph inside the content control – this will host the numeric field.
+            Paragraph sdtParagraph = new Paragraph(doc);
+            numericSdt.AppendChild(sdtParagraph);
 
-            // Move the builder's cursor inside the newly inserted content control.
-            builder.MoveTo(numericSdt);
+            // Insert the content control into the document body.
+            doc.FirstSection.Body.AppendChild(numericSdt);
 
-            // Insert a text input form field that accepts only numbers.
-            // Parameters: name, field type, default text, placeholder text, max length.
-            builder.InsertTextInput("NumericField", TextFormFieldType.Number, "", "0", 10);
+            // Move the builder cursor to the paragraph inside the content control.
+            builder.MoveTo(sdtParagraph);
 
-            // Save the document to the working directory.
-            const string outputPath = "NumericContentControl.docx";
-            doc.Save(outputPath);
+            // Insert a text input form field that only accepts numbers.
+            // The field type TextFormFieldType.Number enforces numeric input during editing.
+            builder.InsertTextInput("NumberField", TextFormFieldType.Number, "", "0", 10);
 
-            // Optional: Load the document again and verify that the field is of numeric type.
-            Document loadedDoc = new Document(outputPath);
-            FormField numericField = loadedDoc.Range.FormFields["NumericField"];
-            if (numericField == null || numericField.Type != FieldType.FieldFormTextInput)
-            {
-                throw new InvalidOperationException("Numeric form field was not created correctly.");
-            }
+            // Prevent the user from deleting the content control itself.
+            numericSdt.LockContentControl = true;
 
-            // The example finishes without requiring any user interaction.
+            // Save the resulting document.
+            doc.Save("NumericContentControl.docx");
         }
     }
 }

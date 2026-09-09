@@ -1,63 +1,84 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using System.Drawing;
+using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Prepare output folder.
+        // Define output folder and ensure it exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // ---------- Destination document ----------
-        Document dstDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
+        // File paths for the sample documents and the results.
+        string destPath = Path.Combine(outputDir, "Destination.docx");
+        string srcPath = Path.Combine(outputDir, "Source.docx");
+        string mergedPath = Path.Combine(outputDir, "Merged.docx");
+        string pdfPath = Path.Combine(outputDir, "Merged.pdf");
 
-        // Create a custom style in the destination document.
-        Style dstStyle = dstDoc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
-        dstStyle.Font.Color = Color.Blue; // Destination style uses blue text.
+        // ---------- Create destination document ----------
+        Document destDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
-        // Apply the custom style to a paragraph.
-        dstBuilder.ParagraphFormat.StyleName = "MyCustomStyle";
-        dstBuilder.Writeln("Destination paragraph with custom style.");
+        // Add a custom style to the destination document.
+        Style destStyle = destDoc.Styles.Add(StyleType.Paragraph, "DestStyle");
+        destStyle.Font.Name = "Arial";
+        destStyle.Font.Size = 14;
+        destStyle.Font.Color = System.Drawing.Color.Blue;
 
-        // ---------- Source document ----------
+        // Write some text using the custom style.
+        destBuilder.ParagraphFormat.StyleName = destStyle.Name;
+        destBuilder.Writeln("This is text from the destination document.");
+
+        // Save the destination document.
+        destDoc.Save(destPath);
+
+        // ---------- Create source document ----------
         Document srcDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
 
-        // Create a style with the same name but different formatting.
-        Style srcStyle = srcDoc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
-        srcStyle.Font.Color = Color.Red; // Source style uses red text.
+        // Add a different custom style with the same name to the source document.
+        Style srcStyle = srcDoc.Styles.Add(StyleType.Paragraph, "DestStyle");
+        srcStyle.Font.Name = "Times New Roman";
+        srcStyle.Font.Size = 16;
+        srcStyle.Font.Color = System.Drawing.Color.Red;
 
-        // Apply the custom style to a paragraph.
-        srcBuilder.ParagraphFormat.StyleName = "MyCustomStyle";
-        srcBuilder.Writeln("Source paragraph with custom style.");
+        // Write some text using the source's custom style.
+        srcBuilder.ParagraphFormat.StyleName = srcStyle.Name;
+        srcBuilder.Writeln("This is text from the source document.");
 
-        // ---------- Append source to destination ----------
-        // Use ImportFormatMode.UseDestinationStyles to force the source content
-        // to adopt the destination's style definitions.
-        dstDoc.AppendDocument(srcDoc, ImportFormatMode.UseDestinationStyles);
+        // Save the source document.
+        srcDoc.Save(srcPath);
 
-        // ---------- Save merged document ----------
-        string mergedDocPath = Path.Combine(outputDir, "Merged.docx");
-        dstDoc.Save(mergedDocPath, SaveFormat.Docx);
+        // ---------- Append source to destination using UseDestinationStyles ----------
+        // Load the previously saved documents (optional, we already have them in memory).
+        Document destination = new Document(destPath);
+        Document source = new Document(srcPath);
 
-        // ---------- Export merged document to PDF ----------
-        string pdfPath = Path.Combine(outputDir, "Merged.pdf");
-        dstDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Append the source document; styles with the same name will adopt the destination's definition.
+        destination.AppendDocument(source, ImportFormatMode.UseDestinationStyles);
+
+        // Save the merged document.
+        destination.Save(mergedPath);
+
+        // Export the merged document to PDF.
+        destination.Save(pdfPath, SaveFormat.Pdf);
 
         // ---------- Validation ----------
-        if (!File.Exists(mergedDocPath) || !File.Exists(pdfPath))
+        if (!File.Exists(mergedPath))
+            throw new FileNotFoundException("Merged DOCX was not created.", mergedPath);
+        if (!File.Exists(pdfPath))
+            throw new FileNotFoundException("PDF output was not created.", pdfPath);
+
+        // Verify that both pieces of text are present in the merged document.
+        string mergedText = destination.GetText();
+        if (!mergedText.Contains("This is text from the destination document.") ||
+            !mergedText.Contains("This is text from the source document."))
         {
-            throw new InvalidOperationException("Failed to create the output files.");
+            throw new InvalidOperationException("Merged document does not contain expected content.");
         }
 
-        // Indicate successful completion (no interactive input required).
-        Console.WriteLine("Documents created successfully:");
-        Console.WriteLine(mergedDocPath);
-        Console.WriteLine(pdfPath);
+        // Program completed successfully.
     }
 }

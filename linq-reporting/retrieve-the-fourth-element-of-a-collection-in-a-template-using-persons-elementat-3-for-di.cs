@@ -15,39 +15,48 @@ public class Person
     }
 }
 
-public class ReportModel
+public class Model
 {
     public List<Person> Persons { get; set; } = new();
-    public ReportModel()
-    {
-        // Sample data with at least four persons
-        Persons.Add(new Person("Alice", 30));
-        Persons.Add(new Person("Bob", 25));
-        Persons.Add(new Person("Charlie", 28));
-        Persons.Add(new Person("Diana", 32));
-        Persons.Add(new Person("Ethan", 27));
-    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document and insert the LINQ Reporting tag that accesses the fourth element.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // The tag uses ElementAt(3) to get the fourth person (zero‑based index).
+        // Create a template document with a LINQ Reporting tag that accesses the fourth element.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
         builder.Writeln("Fourth person: <<[model.Persons.ElementAt(3).Name]>> (Age: <<[model.Persons.ElementAt(3).Age]>>)");
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // Prepare the data source.
-        ReportModel model = new ReportModel();
+        // Load the template back for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Build the report using the ReportingEngine.
+        // Prepare sample data with at least four persons.
+        Model data = new Model
+        {
+            Persons = new List<Person>
+            {
+                new Person("Alice", 30),
+                new Person("Bob", 25),
+                new Person("Charlie", 28),
+                new Person("Diana", 32),   // Fourth element (index 3)
+                new Person("Ethan", 27)
+            }
+        };
+
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, data, "model");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+        // Save the generated report.
+        const string reportPath = "Report.docx";
+        reportDoc.Save(reportPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }

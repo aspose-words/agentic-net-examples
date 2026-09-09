@@ -3,80 +3,85 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
+using Aspose.Drawing; // Aspose.Drawing.Common namespace
 
-public class Program
+public class ExtractAudioWaveformImages
 {
     public static void Main()
     {
-        // Define file names.
-        const string imagePath = "waveform.png";
-        const string docPath = "sample.docx";
-        const string outputFolder = "ExtractedImages";
+        // Define deterministic file names and folders.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Ensure output folder exists.
-        Directory.CreateDirectory(outputFolder);
+        string inputImagePath = Path.Combine(artifactsDir, "waveform.png");
+        string docPath = Path.Combine(artifactsDir, "sample.docx");
 
-        // -------------------------------------------------
-        // Step 1: Create a sample waveform image using Aspose.Drawing.
-        // -------------------------------------------------
-        const int width = 400;
-        const int height = 100;
-        using (Bitmap bitmap = new Bitmap(width, height))
+        // ------------------------------------------------------------
+        // 1. Create a sample PNG image that will represent an audio waveform.
+        // ------------------------------------------------------------
+        const int imgWidth = 400;
+        const int imgHeight = 100;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                // Fill background.
+                // White background.
                 g.Clear(Color.White);
 
-                // Draw a simple waveform (sine-like line).
-                for (int x = 0; x < width; x++)
+                // Draw a simple waveform-like polyline.
+                Pen pen = new Pen(Color.Blue, 2);
+                for (int x = 0; x < imgWidth; x += 10)
                 {
-                    double radians = (double)x / width * 4 * Math.PI;
-                    int y = (int)(height / 2 + Math.Sin(radians) * (height / 3));
-                    bitmap.SetPixel(x, y, Color.Black);
+                    int y = (int)(imgHeight / 2 + 30 * Math.Sin(x * 0.05));
+                    g.DrawLine(pen, x, imgHeight / 2, x, y);
                 }
+                pen.Dispose();
             }
 
-            // Save the generated image to a file.
-            bitmap.Save(imagePath);
+            // Save the image to disk – required before inserting into the document.
+            bitmap.Save(inputImagePath);
         }
 
-        // -------------------------------------------------
-        // Step 2: Create a DOCX document and insert the image.
-        // -------------------------------------------------
+        // ------------------------------------------------------------
+        // 2. Create a DOCX document and insert the waveform image.
+        // ------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
+
+        // Insert the image as an inline shape.
+        builder.InsertImage(inputImagePath);
+
+        // Save the document.
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // Step 3: Load the document and extract all images.
-        // -------------------------------------------------
+        // ------------------------------------------------------------
+        // 3. Load the document and extract all images (including the waveform).
+        // ------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
-        int extractedCount = 0;
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int imageIndex = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
             {
-                // Determine appropriate file extension for the image type.
+                // Determine a file name with the proper extension.
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string outputPath = Path.Combine(outputFolder, $"extracted_{extractedCount}{extension}");
+                string outFile = Path.Combine(artifactsDir, $"extracted_{imageIndex}{extension}");
 
-                // Save the image to the file system.
-                shape.ImageData.Save(outputPath);
-                extractedCount++;
+                // Save the image data to the file system.
+                shape.ImageData.Save(outFile);
+                Console.WriteLine($"Extracted image saved to: {outFile}");
+                imageIndex++;
             }
         }
 
-        // Validate that at least one image was extracted.
-        if (extractedCount == 0)
+        // ------------------------------------------------------------
+        // 4. Validation – ensure at least one image was extracted.
+        // ------------------------------------------------------------
+        if (imageIndex == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
 
-        // Optional: clean up temporary files (commented out to keep results).
-        // File.Delete(imagePath);
-        // File.Delete(docPath);
+        // The program finishes automatically; no user interaction required.
     }
 }

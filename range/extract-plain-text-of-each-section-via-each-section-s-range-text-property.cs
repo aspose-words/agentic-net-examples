@@ -9,30 +9,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add content to the first section.
-        builder.Writeln("Section 1 - First paragraph.");
-        builder.Writeln("Section 1 - Second paragraph.");
+        // Add text to the first section.
+        builder.Writeln("Section 1 - Hello World!");
 
-        // Start a new section.
+        // Insert a section break to start a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 2 - Only paragraph.");
 
-        // Start another new section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 3 - First line.");
-        builder.Writeln("Section 3 - Second line.");
+        // Add text to the second section.
+        builder.Writeln("Section 2 - Aspose.Words example.");
 
-        // Save the document (optional, demonstrates lifecycle usage).
-        const string outputPath = "ExtractSections.docx";
+        // Save the document locally (optional, demonstrates the save rule).
+        const string outputPath = "Sections.docx";
         doc.Save(outputPath);
 
-        // Extract and display the plain text of each section using Section.Range.Text.
+        // Iterate through each section and extract its plain text via the section's Range.Text property.
         for (int i = 0; i < doc.Sections.Count; i++)
         {
             Section section = doc.Sections[i];
-            string sectionText = section.Range.Text.Trim(); // plain text of the section
-            Console.WriteLine($"--- Section {i + 1} ---");
-            Console.WriteLine(sectionText);
+            // Trim removes trailing control characters such as section breaks.
+            string plainText = section.Range.Text.Trim();
+            Console.WriteLine($"Section {i + 1} text: {plainText}");
         }
     }
 }

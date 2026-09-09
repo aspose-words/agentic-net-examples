@@ -11,35 +11,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading.
-        builder.Writeln("Order Summary");
-        builder.Writeln();
+        // Insert the start tag of the mail merge region.
+        // The region name "OrderItems" must match the DataTable name used later.
+        builder.InsertField(" MERGEFIELD TableStart:OrderItems");
 
-        // Insert the start of the mail merge region named "Orders".
-        builder.InsertField(" MERGEFIELD TableStart:Orders");
-
-        // Fields inside the region that will be filled from the data source.
+        // Insert fields that will be populated for each row of the region.
         builder.Write("Item: ");
-        builder.InsertField(" MERGEFIELD ItemName");
-        builder.Write("\tQuantity: ");
-        builder.InsertField(" MERGEFIELD Quantity");
-        builder.InsertParagraph();
+        builder.InsertField(" MERGEFIELD ItemName ");
+        builder.Write(", Qty: ");
+        builder.InsertField(" MERGEFIELD Quantity ");
+        builder.InsertParagraph(); // Separate each record with a paragraph.
 
-        // Insert the end of the mail merge region.
-        builder.InsertField(" MERGEFIELD TableEnd:Orders");
+        // Insert the end tag of the mail merge region.
+        builder.InsertField(" MERGEFIELD TableEnd:OrderItems");
 
-        // Create a DataTable that matches the region name.
-        DataTable orders = new DataTable("Orders");
-        orders.Columns.Add("ItemName");
-        orders.Columns.Add("Quantity");
-        orders.Rows.Add(new object[] { "Rugby Ball", 2 });
-        orders.Rows.Add(new object[] { "Soccer Jersey", 1 });
-        orders.Rows.Add(new object[] { "Baseball Cap", 3 });
+        // Prepare a DataTable that matches the region name and contains the data.
+        DataTable orderItems = new DataTable("OrderItems");
+        orderItems.Columns.Add("ItemName", typeof(string));
+        orderItems.Columns.Add("Quantity", typeof(int));
 
-        // Execute the mail merge with regions.
-        doc.MailMerge.ExecuteWithRegions(orders);
+        // Add some sample rows.
+        orderItems.Rows.Add("Rugby Ball", 2);
+        orderItems.Rows.Add("Team Jersey", 5);
+        orderItems.Rows.Add("Water Bottle", 3);
 
-        // Save the merged document.
-        doc.Save("OrderMergeResult.docx");
+        // Execute the mail merge using the region defined above.
+        doc.MailMerge.ExecuteWithRegions(orderItems);
+
+        // Save the resulting document.
+        doc.Save("MailMergeRegionExample.docx");
     }
 }

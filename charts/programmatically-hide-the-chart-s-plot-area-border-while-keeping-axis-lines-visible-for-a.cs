@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -8,7 +7,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -16,17 +15,13 @@ public class Program
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Clear default demo data.
+        // Populate the chart with sample data.
         chart.Series.Clear();
-
-        // Add custom series data.
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-        double[] values = { 120, 150, 180, 200 };
-        chart.Series.Add("Sales", categories, values);
+        string[] categories = { "Category 1", "Category 2", "Category 3" };
+        chart.Series.Add("Sample Series", categories, new double[] { 10, 20, 30 });
 
         // Hide the plot area border while keeping axis lines visible.
         chart.Format.Stroke.Weight = 0;
-        chart.Format.Stroke.Color = Color.Transparent;
 
         // Save the document.
         doc.Save("HidePlotAreaBorder.docx");

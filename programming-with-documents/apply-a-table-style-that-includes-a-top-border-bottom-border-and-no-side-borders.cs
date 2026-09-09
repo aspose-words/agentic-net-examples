@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Drawing;
 
 public class Program
 {
@@ -14,33 +14,30 @@ public class Program
 
         // Start a simple 2x2 table.
         Table table = builder.StartTable();
-
-        // First row.
         builder.InsertCell();
-        builder.Write("Cell 1,1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 1,2");
+        builder.Write("Cell 2");
         builder.EndRow();
 
-        // Second row.
         builder.InsertCell();
-        builder.Write("Cell 2,1");
+        builder.Write("Cell 3");
         builder.InsertCell();
-        builder.Write("Cell 2,2");
+        builder.Write("Cell 4");
         builder.EndTable();
 
-        // Apply borders: only top and bottom, no side borders.
-        // First clear any existing borders.
-        table.ClearBorders();
+        // Apply borders: top and bottom solid, left and right none.
+        table.SetBorder(BorderType.Top, LineStyle.Single, 1.0, Color.Black, true);
+        table.SetBorder(BorderType.Bottom, LineStyle.Single, 1.0, Color.Black, true);
+        table.SetBorder(BorderType.Left, LineStyle.None, 0.0, Color.Empty, true);
+        table.SetBorder(BorderType.Right, LineStyle.None, 0.0, Color.Empty, true);
 
-        // Top border.
-        table.SetBorder(BorderType.Top, LineStyle.Single, 1.5, Color.Black, true);
-        // Bottom border.
-        table.SetBorder(BorderType.Bottom, LineStyle.Single, 1.5, Color.Black, true);
-        // Left and right borders are left cleared (no border).
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "TableTopBottomBorders.docx");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableStyleTopBottom.docx");
+        // Save the document.
         doc.Save(outputPath);
     }
 }

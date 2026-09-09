@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
@@ -8,40 +9,51 @@ public class Program
 {
     public static void Main()
     {
-        // Define a base directory for all generated files.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        Directory.CreateDirectory(baseDir);
+        // Prepare output directories.
+        string baseDir = Directory.GetCurrentDirectory();
+        string artifactsDir = Path.Combine(baseDir, "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a custom folder that will act as the font source.
-        string customFontsDir = Path.Combine(baseDir, "CustomFonts");
+        // Create a custom fonts folder.
+        string customFontsDir = Path.Combine(artifactsDir, "CustomFonts");
         Directory.CreateDirectory(customFontsDir);
 
-        // (Optional) If you have a TrueType font file you can copy it into the folder here.
-        // For this example we simply leave the folder empty to demonstrate the configuration.
+        // Attempt to copy a system TrueType font into the custom folder.
+        // This ensures the folder actually contains a font file for the example.
+        string[] systemFontFolders = SystemFontSource.GetSystemFontFolders();
+        if (systemFontFolders.Length > 0)
+        {
+            string firstSystemFolder = systemFontFolders[0];
+            string[] ttfFiles = Directory.GetFiles(firstSystemFolder, "*.ttf");
+            if (ttfFiles.Length > 0)
+            {
+                string sourceFont = ttfFiles[0];
+                string destFont = Path.Combine(customFontsDir, Path.GetFileName(sourceFont));
+                File.Copy(sourceFont, destFont, true);
+            }
+        }
 
-        // Create a new blank document.
+        // Assign the custom fonts folder to Aspose.Words font settings.
+        // The second argument 'true' enables recursive scanning of subfolders.
+        FontSettings.DefaultInstance.SetFontsFolder(customFontsDir, true);
+
+        // Create a simple document that uses a font likely present in the copied file.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        // Use the name of the copied font if known; otherwise fall back to a common font.
+        builder.Font.Name = "Arial";
+        builder.Writeln("This document is rendered using a custom font folder.");
 
-        // Use a font name that is not guaranteed to be present on the system.
-        builder.Font.Name = "Alte DIN 1451 Mittelschrift";
-        builder.Writeln("This text is rendered using a custom font folder.");
+        // Render the document to PDF.
+        string pdfPath = Path.Combine(artifactsDir, "RenderedDocument.pdf");
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        doc.Save(pdfPath, pdfOptions);
 
-        // Configure FontSettings to use the custom fonts directory.
-        FontSettings fontSettings = new FontSettings();
-        // Scan subfolders recursively (set to true) – adjust as needed.
-        fontSettings.SetFontsFolder(customFontsDir, recursive: true);
-        doc.FontSettings = fontSettings;
+        // Verify that the PDF file was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("Failed to create the PDF output file.");
 
-        // Save the document to PDF to trigger rendering with the specified font settings.
-        string outputPath = Path.Combine(baseDir, "RenderedDocument.pdf");
-        doc.Save(outputPath, SaveFormat.Pdf);
-
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The PDF file was not created.");
-
-        // Indicate successful completion.
-        Console.WriteLine("Document rendered and saved to: " + outputPath);
+        // Optionally, clean up: reset font sources to original state.
+        FontSettings.DefaultInstance.ResetFontSources();
     }
 }

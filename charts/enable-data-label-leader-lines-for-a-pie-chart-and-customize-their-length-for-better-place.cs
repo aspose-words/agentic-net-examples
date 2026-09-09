@@ -1,13 +1,13 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Drawing;               // Needed for the Shape class
 using Aspose.Words.Drawing.Charts;
 
-public class Program
+public class EnableLeaderLinesPieChart
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to insert content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -15,13 +15,11 @@ public class Program
         Shape chartShape = builder.InsertChart(ChartType.Pie, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data series.
+        // Remove the demo series and add a custom one.
         chart.Series.Clear();
-
-        // Add a custom series with categories and values.
         ChartSeries series = chart.Series.Add(
             "Sample Series",
-            new[] { "Apples", "Bananas", "Cherries" },
+            new[] { "Category A", "Category B", "Category C" },
             new[] { 30.0, 45.0, 25.0 });
 
         // Enable data labels and show leader lines.
@@ -31,17 +29,15 @@ public class Program
         dataLabels.ShowValue = true;
         dataLabels.ShowPercentage = true;
 
-        // Customize the length of the leader lines by moving each label outward.
-        // This is done by setting absolute positions for the labels.
-        for (int i = 0; i < dataLabels.Count; i++)
+        // Adjust label positions to increase leader line length.
+        // Offset each label outward by a fixed amount.
+        for (int i = 0; i < series.YValues.Count; i++)
         {
             ChartDataLabel label = dataLabels[i];
-            // Position the label farther from the center based on its index.
-            double offset = 20.0 * (i + 1);
-            label.Left = offset;
-            label.Top = offset;
-            label.LeftMode = ChartDataLabelLocationMode.Absolute;
-            label.TopMode = ChartDataLabelLocationMode.Absolute;
+            label.Left += 15;                     // Move label to the right.
+            label.Top += 15;                      // Move label downward.
+            label.LeftMode = ChartDataLabelLocationMode.Offset;
+            label.TopMode = ChartDataLabelLocationMode.Offset;
         }
 
         // Save the document.

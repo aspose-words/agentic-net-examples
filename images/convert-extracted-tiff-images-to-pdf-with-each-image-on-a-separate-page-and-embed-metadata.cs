@@ -5,87 +5,66 @@ using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class ConvertTiffToPdf
+public class Program
 {
     public static void Main()
     {
-        // Define file names
-        string tiff1Path = "sample1.tif";
-        string tiff2Path = "sample2.tif";
-        string pdfPath = "ConvertedImages.pdf";
+        // Create deterministic sample TIFF images.
+        CreateSampleTiff("sample1.tif", "Page 1");
+        CreateSampleTiff("sample2.tif", "Page 2");
 
-        // -------------------------------------------------
-        // 1. Create sample TIFF images (deterministic local files)
-        // -------------------------------------------------
-        CreateSampleTiff(tiff1Path, Aspose.Drawing.Color.LightCoral, "Image 1");
-        CreateSampleTiff(tiff2Path, Aspose.Drawing.Color.LightGreen, "Image 2");
+        // Verify that the TIFF files were created.
+        if (!File.Exists("sample1.tif") || !File.Exists("sample2.tif"))
+            throw new FileNotFoundException("Sample TIFF images were not created.");
 
-        // Verify that the TIFF files were created
-        if (!File.Exists(tiff1Path) || !File.Exists(tiff2Path))
-            throw new FileNotFoundException("Failed to create sample TIFF images.");
-
-        // -------------------------------------------------
-        // 2. Create a new Word document and insert each TIFF on a separate page
-        // -------------------------------------------------
+        // Create a new Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert first image
-        builder.InsertImage(tiff1Path);
-        // Add a page break before the next image (if any)
+        // Insert the first TIFF image.
+        builder.InsertImage("sample1.tif");
+        // Insert a page break to start a new page.
         builder.InsertBreak(BreakType.PageBreak);
+        // Insert the second TIFF image.
+        builder.InsertImage("sample2.tif");
 
-        // Insert second image
-        builder.InsertImage(tiff2Path);
-
-        // -------------------------------------------------
-        // 3. Embed metadata into the document
-        // -------------------------------------------------
-        doc.BuiltInDocumentProperties.Title = "Converted TIFF Images to PDF";
+        // Embed metadata into the PDF.
+        doc.BuiltInDocumentProperties.Title = "Combined PDF from TIFFs";
         doc.BuiltInDocumentProperties.Author = "Aspose.Words Example";
-        doc.BuiltInDocumentProperties.Keywords = "TIFF, PDF, conversion, Aspose.Words";
+        doc.CustomDocumentProperties.Add("Source", "Generated sample TIFF images");
 
-        // -------------------------------------------------
-        // 4. Save the document as PDF
-        // -------------------------------------------------
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            // Ensure metadata is written to the PDF
-            ExportDocumentStructure = true
-        };
-        doc.Save(pdfPath, pdfOptions);
+        // Save the document as PDF.
+        string pdfPath = "output.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created
+        // Validate that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new FileNotFoundException("PDF conversion failed.");
+            throw new Exception("PDF file was not created.");
 
-        // Cleanup temporary TIFF files (optional)
-        File.Delete(tiff1Path);
-        File.Delete(tiff2Path);
+        Console.WriteLine($"PDF successfully created at '{Path.GetFullPath(pdfPath)}'.");
     }
 
-    private static void CreateSampleTiff(string filePath, Aspose.Drawing.Color backgroundColor, string text)
+    private static void CreateSampleTiff(string fileName, string text)
     {
-        // Create a bitmap and draw deterministic content
+        // Define image size.
         int width = 400;
         int height = 300;
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(backgroundColor);
 
-        // Simple text drawing (optional, uses default font)
-        // Use fully qualified Aspose.Drawing.Font to avoid ambiguity
-        using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-        using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
+        // Create a bitmap and draw deterministic content.
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
         {
-            graphics.DrawString(text, font, brush, new Aspose.Drawing.PointF(10, height / 2 - 12));
+            graphics.Clear(Aspose.Drawing.Color.White);
+
+            // Use Aspose.Drawing.Font explicitly to avoid ambiguity.
+            using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+            using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
+            {
+                graphics.DrawString(text, font, brush, new Aspose.Drawing.PointF(10, height / 2 - 20));
+            }
+
+            // Save as a single‑frame TIFF image.
+            bitmap.Save(fileName, Aspose.Drawing.Imaging.ImageFormat.Tiff);
         }
-
-        // Save as TIFF
-        bitmap.Save(filePath, ImageFormat.Tiff);
-
-        // Release resources
-        graphics.Dispose();
-        bitmap.Dispose();
     }
 }

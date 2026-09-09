@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Markup;
@@ -17,42 +16,53 @@ public class Program
         StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
             Title = "LinkControl",
-            Tag = "link-sdt"
+            Tag = "link-control"
         };
 
-        // The content control must contain at least one paragraph.
-        Paragraph sdtParagraph = new Paragraph(doc);
-        sdt.AppendChild(sdtParagraph);
+        // Add a paragraph that will hold the hyperlink.
+        Paragraph para = new Paragraph(doc);
+        sdt.AppendChild(para);
 
-        // Insert the hyperlink inside the paragraph that belongs to the content control.
-        builder.MoveTo(sdtParagraph);
-        builder.InsertHyperlink("Aspose", "https://www.aspose.com", false);
+        // Move the builder to the newly created paragraph.
+        builder.MoveTo(para);
 
-        // Add the content control to the document body.
+        // Insert a hyperlink field inside the content control.
+        builder.Font.Color = System.Drawing.Color.Blue;
+        builder.Font.Underline = Underline.Single;
+        FieldHyperlink hyperlink = (FieldHyperlink)builder.InsertHyperlink("Aspose", "https://www.aspose.com", false);
+        builder.Font.ClearFormatting();
+
+        // Append the content control to the document body.
         doc.FirstSection.Body.AppendChild(sdt);
 
-        // Save the original DOCX.
-        const string docxPath = "linkControl.docx";
+        // Save the document as DOCX.
+        const string docxPath = "LinkControl.docx";
         doc.Save(docxPath);
 
         // Convert the document to PDF.
-        const string pdfPath = "linkControl.pdf";
-        doc.Save(pdfPath);
+        const string pdfPath = "LinkControl.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF back into a Document object.
+        // Load the PDF back and verify the hyperlink target URL.
         Document pdfDoc = new Document(pdfPath);
+        FieldHyperlink loadedHyperlink = null;
 
-        // Locate the first hyperlink field in the converted document.
-        FieldHyperlink hyperlink = pdfDoc.Range.Fields
-            .OfType<FieldHyperlink>()
-            .FirstOrDefault();
+        foreach (Field field in pdfDoc.Range.Fields)
+        {
+            if (field.Type == FieldType.FieldHyperlink)
+            {
+                loadedHyperlink = (FieldHyperlink)field;
+                break;
+            }
+        }
 
-        // Verify that the hyperlink's target URL is the expected one.
-        string address = hyperlink?.Address ?? "NotFound";
-        bool isCorrect = address == "https://www.aspose.com";
-
-        // Output the verification result.
-        Console.WriteLine($"Hyperlink address after conversion: {address}");
-        Console.WriteLine($"Verification: {(isCorrect ? "Success" : "Failure")}");
+        if (loadedHyperlink != null)
+        {
+            Console.WriteLine("Hyperlink target URL: " + loadedHyperlink.Address);
+        }
+        else
+        {
+            Console.WriteLine("No hyperlink found in the converted document.");
+        }
     }
 }

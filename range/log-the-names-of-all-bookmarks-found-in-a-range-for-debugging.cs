@@ -1,31 +1,36 @@
 using System;
 using Aspose.Words;
 
-public class Program
+namespace BookmarkLogger
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a builder to add content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add several bookmarks to the document.
-        for (int i = 1; i <= 3; i++)
+        public static void Main()
         {
-            string name = $"Bookmark_{i}";
-            builder.StartBookmark(name);
-            builder.Write($"Text inside {name}.");
-            builder.EndBookmark(name);
-            builder.Writeln(); // Add a line break after each bookmark.
-        }
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Retrieve the collection of bookmarks from the document's range.
-        BookmarkCollection bookmarks = doc.Range.Bookmarks;
+            // Add a few bookmarks with some surrounding text.
+            for (int i = 1; i <= 3; i++)
+            {
+                string bookmarkName = $"Bookmark_{i}";
 
-        // Log each bookmark's name to the console for debugging.
-        foreach (Bookmark bookmark in bookmarks)
-        {
-            Console.WriteLine($"Bookmark name: {bookmark.Name}");
+                builder.Writeln($"Text before {bookmarkName}.");
+                builder.StartBookmark(bookmarkName);
+                builder.Writeln($"Content inside {bookmarkName}.");
+                builder.EndBookmark(bookmarkName);
+                builder.Writeln($"Text after {bookmarkName}.");
+            }
+
+            // Retrieve the collection of all bookmarks in the document's range.
+            BookmarkCollection bookmarks = doc.Range.Bookmarks;
+
+            // Log each bookmark's name to the console for debugging.
+            foreach (Bookmark bookmark in bookmarks)
+            {
+                Console.WriteLine($"Bookmark name: {bookmark.Name}");
+            }
         }
     }
 }

@@ -9,69 +9,87 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for all generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Directories for artifacts
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a deterministic animated GIF file (embedded base64 data).
-        // This GIF contains two simple frames.
-        string gifBase64 = "R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
-        byte[] gifBytes = Convert.FromBase64String(gifBase64);
-        string gifPath = Path.Combine(outputDir, "sample.gif");
-        File.WriteAllBytes(gifPath, gifBytes);
+        // 1. Create a sample GIF image (single‑frame is sufficient for the demo)
+        string gifPath = Path.Combine(artifactsDir, "sample.gif");
+        CreateSampleGif(gifPath);
 
-        // 2. Insert the GIF into a Word document.
+        // 2. Insert the GIF into a Word document
+        string docPath = Path.Combine(artifactsDir, "DocWithGif.docx");
+        InsertGifIntoDocument(gifPath, docPath);
+
+        // 3. Extract the GIF from the document and split it into PNG frames
+        ExtractGifFrames(docPath, artifactsDir);
+    }
+
+    private static void CreateSampleGif(string filePath)
+    {
+        // Create a 100x100 bitmap, fill it with a color and save as GIF
+        using (Bitmap bitmap = new Bitmap(100, 100))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
+        {
+            graphics.Clear(Color.CornflowerBlue);
+            bitmap.Save(filePath, ImageFormat.Gif);
+        }
+    }
+
+    private static void InsertGifIntoDocument(string gifFile, string docFile)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(gifPath);
-        string docPath = Path.Combine(outputDir, "sample.docx");
-        doc.Save(docPath);
+        // Insert the GIF image
+        builder.InsertImage(gifFile);
+        // Save the document
+        doc.Save(docFile);
+    }
 
-        // 3. Load the document and locate the GIF shape.
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        Shape gifShape = null;
+    private static void ExtractGifFrames(string docFile, string outputDir)
+    {
+        Document doc = new Document(docFile);
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+        int gifIndex = 0;
         foreach (Shape shape in shapes.OfType<Shape>())
         {
-            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Gif)
+            if (!shape.HasImage) continue;
+
+            // Process only GIF images
+            if (shape.ImageData.ImageType != ImageType.Gif) continue;
+
+            // Save the extracted GIF to a temporary file
+            string extractedGifPath = Path.Combine(outputDir, $"extracted_{gifIndex}.gif");
+            shape.ImageData.Save(extractedGifPath);
+
+            // Load the GIF using Aspose.Drawing.Image
+            using (Image gifImage = Image.FromFile(extractedGifPath))
             {
-                gifShape = shape;
-                break;
+                // Determine the number of frames (time dimension)
+                int frameCount = gifImage.GetFrameCount(FrameDimension.Time);
+                if (frameCount == 0) frameCount = 1; // fallback for single‑frame GIFs
+
+                for (int i = 0; i < frameCount; i++)
+                {
+                    // Select the current frame
+                    gifImage.SelectActiveFrame(FrameDimension.Time, i);
+
+                    // Create a bitmap from the current frame and save as PNG
+                    using (Bitmap frameBitmap = new Bitmap(gifImage))
+                    {
+                        string pngPath = Path.Combine(outputDir, $"gif_{gifIndex}_frame_{i}.png");
+                        frameBitmap.Save(pngPath, ImageFormat.Png);
+                    }
+                }
             }
+
+            gifIndex++;
         }
 
-        if (gifShape == null)
-            throw new InvalidOperationException("No GIF image found in the document.");
-
-        // 4. Extract the GIF image to a temporary file.
-        string extractedGifPath = Path.Combine(outputDir, "extracted.gif");
-        gifShape.ImageData.Save(extractedGifPath);
-
-        // 5. Load the extracted GIF using Aspose.Drawing and split into PNG frames.
-        using (Image gifImage = Image.FromFile(extractedGifPath))
-        {
-            // Determine the dimension that represents time (animation frames).
-            Guid timeGuid = FrameDimension.Time.Guid;
-            FrameDimension dimension = new FrameDimension(timeGuid);
-            int frameCount = gifImage.GetFrameCount(dimension);
-
-            if (frameCount == 0)
-                throw new InvalidOperationException("The GIF does not contain any frames.");
-
-            for (int i = 0; i < frameCount; i++)
-            {
-                gifImage.SelectActiveFrame(dimension, i);
-                string framePath = Path.Combine(outputDir, $"frame_{i + 1}.png");
-                gifImage.Save(framePath, ImageFormat.Png);
-            }
-        }
-
-        // 6. Validation – ensure at least one PNG file was created.
-        string[] pngFiles = Directory.GetFiles(outputDir, "frame_*.png");
-        if (pngFiles.Length == 0)
-            throw new InvalidOperationException("No PNG frames were generated.");
-
-        // Example completed successfully.
-        Console.WriteLine($"Generated {pngFiles.Length} PNG frame(s) in: {outputDir}");
+        // Validation: ensure at least one PNG was created
+        int pngCount = Directory.GetFiles(outputDir, "*.png").Length;
+        if (pngCount == 0)
+            throw new InvalidOperationException("No PNG frames were generated from the GIF image.");
     }
 }

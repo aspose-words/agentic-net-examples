@@ -1,9 +1,9 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Newtonsoft.Json;
 
@@ -11,79 +11,91 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
+        // Deterministic file names.
         const string imagePath = "sample.png";
         const string docPath = "sample.docx";
         const string jsonPath = "images.json";
 
         // -------------------------------------------------
-        // 1. Create a deterministic sample image (100x100 white PNG)
+        // 1. Create a sample PNG image using Aspose.Drawing.
         // -------------------------------------------------
-        var bitmap = new Bitmap(100, 100);
-        var graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        // (Optional) draw a simple rectangle for visual distinction
-        graphics.DrawRectangle(new Pen(Color.Black, 2), 10, 10, 80, 80);
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+
+        // Explicit Aspose.Drawing types as required by the image creation rules.
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        graphics.Clear(Aspose.Drawing.Color.White);
+        // Draw deterministic text.
+        graphics.DrawString(
+            "Sample",
+            new Aspose.Drawing.Font("Arial", 20),
+            new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black),
+            new Aspose.Drawing.PointF(10, 80));
+
+        // Save the generated image.
         bitmap.Save(imagePath);
+        // Clean up drawing resources.
         graphics.Dispose();
         bitmap.Dispose();
 
         // -------------------------------------------------
-        // 2. Create a Word document and insert the sample image twice
+        // 2. Create a Word document and insert the image.
         // -------------------------------------------------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(imagePath);
-        builder.InsertParagraph(); // separate the images
-        builder.InsertImage(imagePath);
+        // Save the document for later loading.
         doc.Save(docPath);
 
         // -------------------------------------------------
-        // 3. Load the document and extract all images
+        // 3. Load the document and extract all images.
         // -------------------------------------------------
-        var loadedDoc = new Document(docPath);
-        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        var extractedImages = new List<object>();
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        var extractedImages = new List<ImageInfo>();
+        int imageIndex = 0;
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (!shape.HasImage)
                 continue;
 
-            // Get raw image bytes
-            byte[] imageBytes = shape.ImageData.ToByteArray();
-
-            // Convert to Base64
-            string base64 = Convert.ToBase64String(imageBytes);
-
-            // Determine file extension based on image type
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-
-            // Store information for JSON output
-            extractedImages.Add(new
+            // Save the image data to a memory stream.
+            using (var ms = new MemoryStream())
             {
-                FileName = $"image{extractedImages.Count}{extension}",
-                Base64 = base64,
-                ImageType = shape.ImageData.ImageType.ToString()
-            });
+                shape.ImageData.Save(ms);
+                ms.Position = 0; // Ensure the stream is at the beginning.
+                byte[] imageBytes = ms.ToArray();
+                string base64 = Convert.ToBase64String(imageBytes);
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string fileName = $"image{imageIndex}{extension}";
+                extractedImages.Add(new ImageInfo { FileName = fileName, Base64Data = base64 });
+                imageIndex++;
+            }
         }
 
-        // Validate that at least one image was extracted
+        // Validate that at least one image was extracted.
         if (extractedImages.Count == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
+            throw new InvalidOperationException("No images were found in the document.");
 
         // -------------------------------------------------
-        // 4. Serialize the collection to JSON and write to file
+        // 4. Serialize the extracted images to JSON.
         // -------------------------------------------------
         string json = JsonConvert.SerializeObject(extractedImages, Formatting.Indented);
         File.WriteAllText(jsonPath, json);
 
-        // Validate that the JSON file was created
+        // -------------------------------------------------
+        // 5. Verify that the JSON file was created.
+        // -------------------------------------------------
         if (!File.Exists(jsonPath))
-            throw new InvalidOperationException("Failed to create the JSON output file.");
+            throw new FileNotFoundException("Failed to create the JSON output file.", jsonPath);
+    }
 
-        // (Optional) Clean up temporary files – comment out if you need to inspect them
-        // File.Delete(imagePath);
-        // File.Delete(docPath);
+    // Helper class representing one extracted image.
+    private class ImageInfo
+    {
+        public string FileName { get; set; }
+        public string Base64Data { get; set; }
     }
 }

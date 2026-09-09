@@ -1,58 +1,57 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Model
 {
-    // Sample property used in the template.
-    public string Name { get; set; } = "Aspose";
+    // Initialize to avoid nullable warnings.
+    public string Name { get; set; } = "";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string resultPath = "Result.docx";
+        // Create a simple template with a LINQ Reporting tag.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Hello <<[model.Name]>>!");
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple template document containing a LINQ Reporting tag.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("<<[model.Name]>>"); // Tag that will be replaced by Model.Name.
-        templateDoc.Save(templatePath);
+        // Save the template to disk.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
+        template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the first report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Load the template back.
+        Document doc = new Document(templatePath);
+
+        // Prepare the data source.
+        Model model = new Model { Name = "World" };
+
+        // Build the first report – this must succeed.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, new Model(), "model");
+        engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 3. Attempt to set restricted types after the first BuildReport.
-        //    According to the documentation this must throw an exception.
-        // -----------------------------------------------------------------
-        bool exceptionThrown = false;
+        // Save the generated report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        doc.Save(outputPath);
+
+        // Attempt to set restricted types after the first BuildReport.
         try
         {
-            // Any public type can be passed; using System.String for simplicity.
+            // This call should throw an exception because restricted types cannot be changed after building a report.
             ReportingEngine.SetRestrictedTypes(typeof(string));
+            Console.WriteLine("SetRestrictedTypes did not throw an exception (unexpected).");
         }
-        catch (InvalidOperationException)
+        catch (ArgumentException ex)
         {
-            // Expected exception when modifying restricted types after building a report.
-            exceptionThrown = true;
+            // Documented exception type.
+            Console.WriteLine($"Caught expected ArgumentException: {ex.Message}");
         }
-
-        // Output the test result.
-        Console.WriteLine($"SetRestrictedTypes after BuildReport threw exception: {exceptionThrown}");
-
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(resultPath);
+        catch (InvalidOperationException ex)
+        {
+            // Actual exception type thrown by the current library version.
+            Console.WriteLine($"Caught expected InvalidOperationException: {ex.Message}");
+        }
     }
 }

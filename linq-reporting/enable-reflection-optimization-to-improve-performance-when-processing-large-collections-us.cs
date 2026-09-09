@@ -1,76 +1,56 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-public class ReportGenerator
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    // Simple data entity.
+    public class Person
     {
-        // Paths for the template and the generated report
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+    }
 
-        // 1. Create a template document with LINQ Reporting tags
-        CreateTemplate(templatePath);
+    // Wrapper model that will be passed to the reporting engine.
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
 
-        // 2. Load the template document
-        Document doc = new Document(templatePath);
-
-        // 3. Enable reflection optimization (static property)
-        ReportingEngine.UseReflectionOptimization = true;
-
-        // 4. Prepare sample data
-        ReportModel model = new()
+    public class Program
+    {
+        public static void Main()
         {
-            Items = new()
+            // Enable reflection optimization to speed up processing of large collections.
+            ReportingEngine.UseReflectionOptimization = true;
+
+            // Create a blank document and build the template with LINQ Reporting tags.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Template: iterate over the Persons collection and output each person's data.
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Prepare sample data.
+            var model = new ReportModel
             {
-                new Item { Name = "Apple",  Price = 1.20 },
-                new Item { Name = "Banana", Price = 0.80 },
-                new Item { Name = "Cherry", Price = 2.50 }
-            }
-        };
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 45 },
+                    new Person { Name = "Charlie", Age = 28 }
+                }
+            };
 
-        // 5. Build the report
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
+            // Build the report using the model. The root name in the template is "model".
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-        // 6. Save the generated report
-        doc.Save(reportPath);
+            // Save the generated report.
+            doc.Save("ReportWithReflectionOptimization.docx");
+        }
     }
-
-    // Creates a simple Word template containing a foreach loop over Items
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
-
-        // Add a title
-        builder.Writeln("Product List");
-        builder.Writeln("-----------------");
-
-        // LINQ Reporting foreach tag
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Name: <<[item.Name]>>   Price: $<<[item.Price]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template
-        doc.Save(filePath);
-    }
-}
-
-// Root data model referenced in the template as <<[model.Items]>>
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Simple item class used inside the collection
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
 }

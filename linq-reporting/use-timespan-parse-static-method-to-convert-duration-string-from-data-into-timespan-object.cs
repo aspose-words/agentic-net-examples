@@ -1,67 +1,61 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+namespace AsposeWordsLinqReportingExample
 {
-    // Original duration string (e.g., "02:15:30")
-    public string DurationString { get; set; } = string.Empty;
-
-    // Parsed TimeSpan value
-    public TimeSpan Duration { get; set; }
-
-    public Order(string durationString)
+    // Data model used by the LINQ Reporting engine.
+    public class ReportModel
     {
-        DurationString = durationString;
-        // Convert the string to a TimeSpan using the static Parse method
-        Duration = TimeSpan.Parse(durationString);
+        // Duration expressed as a string, e.g. "02:30:45".
+        public string DurationString { get; set; } = "00:00:00";
     }
-}
 
-public class Program
-{
-    public static void Main()
+    public class Program
     {
-        // Ensure the output directory exists
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        public static void Main()
+        {
+            // Paths for the temporary template and the final report.
+            string templatePath = "Template.docx";
+            string reportPath = "Report.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Insert a simple LINQ Reporting tag that will display the parsed TimeSpan
-        builder.Writeln("Order duration: <<[order.Duration]>>");
+            // Insert a LINQ Reporting tag that parses the duration string using TimeSpan.Parse.
+            // The ReportingEngine must know the TimeSpan type to allow static method calls.
+            builder.Writeln("Parsed duration: <<[TimeSpan.Parse(model.DurationString)]>>");
 
-        // Save the template to disk
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        templateDoc.Save(templatePath);
+            // Save the template to disk.
+            template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for report generation
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // 2. Prepare the data source.
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel
+            {
+                DurationString = "02:30:45" // 2 hours, 30 minutes, 45 seconds.
+            };
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data source
-        // -----------------------------------------------------------------
-        // Example duration string; you can change this to any valid TimeSpan format
-        Order order = new Order("02:15:30"); // 2 hours, 15 minutes, 30 seconds
+            // -----------------------------------------------------------------
+            // 3. Build the report.
+            // -----------------------------------------------------------------
+            // Load the template document.
+            Document reportDoc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using Aspose.Words LINQ Reporting Engine
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // The root object name ("order") must match the tag prefix used in the template
-        engine.BuildReport(reportDoc, order, "order");
+            // Configure the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            // Register TimeSpan so its static members can be used in the template.
+            engine.KnownTypes.Add(typeof(TimeSpan));
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report
-        // -----------------------------------------------------------------
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+            // Build the report using the model as the root data source named "model".
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated report.
+            reportDoc.Save(reportPath);
+        }
     }
 }

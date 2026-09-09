@@ -1,11 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Markup;
+using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -13,108 +14,90 @@ public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // 1. Create a deterministic sample image (PNG).
-        // -------------------------------------------------
-        string workDir = Directory.GetCurrentDirectory();
-        string imagePath = Path.Combine(workDir, "sample.png");
-        string docPath = Path.Combine(workDir, "sample.docx");
+        // Prepare output folder
+        string baseDir = Directory.GetCurrentDirectory();
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(outputDir);
 
-        const int imgWidth = 200;
-        const int imgHeight = 200;
-
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        // 1. Create a deterministic sample image (sample.png)
+        string sampleImagePath = Path.Combine(outputDir, "sample.png");
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.LightBlue);
-                using (Pen pen = new Pen(Aspose.Drawing.Color.DarkBlue, 5))
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Pen pen = new Pen(Aspose.Drawing.Color.Blue, 3))
                 {
-                    g.DrawRectangle(pen, 20, 20, imgWidth - 40, imgHeight - 40);
+                    g.DrawRectangle(pen, 10, 10, 80, 80);
                 }
             }
-
-            bitmap.Save(imagePath, ImageFormat.Png);
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
         }
 
-        // -------------------------------------------------
-        // 2. Build a DOCX that contains the image and a
-        //    custom XML part mapping the image name to an
-        //    external resource ID.
-        // -------------------------------------------------
+        // 2. Create a new document and insert the image
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        Shape insertedShape = builder.InsertImage(sampleImagePath);
 
-        // Insert the image and give the shape a deterministic name.
-        Shape imgShape = builder.InsertImage(imagePath);
-        imgShape.Name = "Image1";
-
-        // Create a custom XML part that maps the shape name to an external ID.
+        // 3. Add a custom XML part that maps an external resource ID to the image index
         string customXml = @"
-            <Mappings xmlns='http://example.com/mappings'>
-                <Mapping ImageName='Image1' ExternalId='Res123' />
-            </Mappings>";
+<Resources>
+    <Resource>
+        <Id>res1</Id>
+        <ImageIndex>0</ImageIndex>
+    </Resource>
+</Resources>";
+        // Add the XML part with a generated ID
+        doc.CustomXmlParts.Add(Guid.NewGuid().ToString(), customXml);
 
-        // Add the custom XML part using the overload that accepts an ID and XML string.
-        string partId = Guid.NewGuid().ToString("B");
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(partId, customXml);
-
-        // Save the document.
+        // 4. Save the document
+        string docPath = Path.Combine(outputDir, "sample.docx");
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the document and parse the custom XML.
-        // -------------------------------------------------
+        // 5. Load the document for extraction
         Document loadedDoc = new Document(docPath);
-        var nameToExternalId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (CustomXmlPart part in loadedDoc.CustomXmlParts)
-        {
-            // Convert the part's byte data to a string.
-            string xmlContent = Encoding.UTF8.GetString(part.Data);
-            XDocument xDoc = XDocument.Parse(xmlContent);
-            XNamespace ns = "http://example.com/mappings";
+        // Retrieve the custom XML part (first one)
+        if (loadedDoc.CustomXmlParts.Count == 0)
+            throw new InvalidOperationException("No custom XML parts found in the document.");
 
-            foreach (XElement mapping in xDoc.Descendants(ns + "Mapping"))
-            {
-                string imageName = (string)mapping.Attribute("ImageName");
-                string externalId = (string)mapping.Attribute("ExternalId");
-                if (!string.IsNullOrEmpty(imageName) && !string.IsNullOrEmpty(externalId))
-                {
-                    nameToExternalId[imageName] = externalId;
-                }
-            }
-        }
+        // Data property returns a byte[]; convert to string
+        string xmlData = Encoding.UTF8.GetString(loadedDoc.CustomXmlParts[0].Data);
+        XDocument xDoc = XDocument.Parse(xmlData);
 
-        // -------------------------------------------------
-        // 4. Extract images from shapes and save them using
-        //    the external resource IDs from the custom XML.
-        // -------------------------------------------------
+        // 6. Collect all shapes that contain images
+        var imageShapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                                   .Cast<Shape>()
+                                   .Where(s => s.HasImage)
+                                   .ToList();
+
+        if (imageShapes.Count == 0)
+            throw new InvalidOperationException("No images found in the document.");
+
+        // 7. Map each resource ID to its corresponding image and save the image file
+        var resources = xDoc.Descendants("Resource");
         int extractedCount = 0;
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        foreach (var res in resources)
         {
-            if (!shape.HasImage)
+            string resourceId = res.Element("Id")?.Value;
+            string indexStr = res.Element("ImageIndex")?.Value;
+            if (string.IsNullOrEmpty(resourceId) || string.IsNullOrEmpty(indexStr))
                 continue;
 
-            // Use the shape's Name property for mapping.
-            string key = shape.Name;
-            if (string.IsNullOrEmpty(key) || !nameToExternalId.TryGetValue(key, out string externalId))
-                continue; // No mapping found for this shape.
+            if (!int.TryParse(indexStr, out int imgIndex) || imgIndex < 0 || imgIndex >= imageShapes.Count)
+                continue;
 
-            // Determine file extension based on the image type.
+            Shape shape = imageShapes[imgIndex];
             string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string outFile = Path.Combine(workDir, $"{externalId}{extension}");
-
-            // Save the image.
-            shape.ImageData.Save(outFile);
+            string outImagePath = Path.Combine(outputDir, $"{resourceId}{extension}");
+            shape.ImageData.Save(outImagePath);
             extractedCount++;
         }
 
-        // -------------------------------------------------
-        // 5. Validation – ensure at least one image was saved.
-        // -------------------------------------------------
+        // 8. Validation
         if (extractedCount == 0)
             throw new InvalidOperationException("No images were extracted based on the custom XML mapping.");
+
+        Console.WriteLine($"Extraction completed. {extractedCount} image(s) saved to '{outputDir}'.");
     }
 }

@@ -6,36 +6,30 @@ using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class BatchTiffToPngConverter
+public class Program
 {
     public static void Main()
     {
-        // Prepare input and output directories.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputImages");
-        string outputDir = Path.Combine(baseDir, "OutputImages");
+        // Directories for sample input TIFFs and output PNGs.
+        string inputDir = "InputImages";
+        string outputDir = "OutputImages";
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Create deterministic sample TIFF images with distinct DPI values.
-        // -----------------------------------------------------------------
-        for (int i = 0; i < 3; i++)
+        // Create deterministic sample TIFF images with DPI metadata.
+        for (int i = 0; i < 2; i++)
         {
             string tiffPath = Path.Combine(inputDir, $"sample{i}.tiff");
-            using (Bitmap bitmap = new Bitmap(200, 200))
+            using (Bitmap bitmap = new Bitmap(200, 100))
             {
-                // Set a distinct DPI for each image (72, 96, 120).
-                float dpi = 72f + i * 24f;
-                bitmap.SetResolution(dpi, dpi);
+                // Set DPI (e.g., 150).
+                bitmap.SetResolution(150f, 150f);
 
                 using (Graphics g = Graphics.FromImage(bitmap))
                 {
                     g.Clear(Color.White);
-                    using (Pen pen = new Pen(Color.Blue, 5))
-                    {
-                        g.DrawRectangle(pen, 20, 20, 160, 160);
-                    }
+                    // Simple visual content.
+                    g.DrawRectangle(Pens.Black, 10, 10, 180, 80);
                 }
 
                 // Save as TIFF (lossless).
@@ -43,66 +37,53 @@ public class BatchTiffToPngConverter
             }
         }
 
-        // --------------------------------------------------------------
-        // Insert the created TIFF images into a Word document.
-        // --------------------------------------------------------------
+        // Create a Word document and insert the sample TIFF images.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        foreach (string tiffFile in Directory.GetFiles(inputDir, "*.tiff"))
+        foreach (string file in Directory.GetFiles(inputDir, "*.tiff"))
         {
-            builder.InsertImage(tiffFile);
-            builder.Writeln(); // Separate images with a line break.
+            builder.InsertImage(file);
+            builder.Writeln(); // Separate images.
         }
 
-        // Optional: save the document to demonstrate insertion.
-        string docPath = Path.Combine(baseDir, "SampleDocument.docx");
-        doc.Save(docPath, SaveFormat.Docx);
+        string docPath = "SampleDocument.docx";
+        doc.Save(docPath);
 
-        // --------------------------------------------------------------
-        // Extract each image from the document and convert it to PNG,
-        // preserving the original DPI metadata.
-        // --------------------------------------------------------------
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        // Load the document and batch convert extracted images to PNG.
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
+
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Save the image data to a memory stream.
-            using (MemoryStream imageStream = new MemoryStream())
+            if (shape.HasImage)
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0;
+                // Get raw image bytes.
+                byte[] imageBytes = shape.ImageData.ToByteArray();
 
-                // Load the image with Aspose.Drawing.Bitmap.
-                using (Bitmap sourceBitmap = new Bitmap(imageStream))
+                using (MemoryStream ms = new MemoryStream(imageBytes))
                 {
-                    // Retrieve original DPI.
-                    float originalDpiX = sourceBitmap.HorizontalResolution;
-                    float originalDpiY = sourceBitmap.VerticalResolution;
+                    ms.Position = 0; // Ensure stream is at the beginning.
 
-                    // Create a new bitmap (clone) to ensure we have a writable instance.
-                    using (Bitmap pngBitmap = new Bitmap(sourceBitmap))
+                    using (Bitmap bitmap = new Bitmap(ms))
                     {
-                        // Preserve DPI metadata.
-                        pngBitmap.SetResolution(originalDpiX, originalDpiY);
-
-                        // Save as lossless PNG.
+                        // Preserve DPI metadata (already present in bitmap).
                         string pngPath = Path.Combine(outputDir, $"image{imageIndex}.png");
-                        pngBitmap.Save(pngPath, ImageFormat.Png);
+                        bitmap.Save(pngPath, ImageFormat.Png);
                     }
                 }
-            }
 
-            imageIndex++;
+                imageIndex++;
+            }
         }
 
-        // --------------------------------------------------------------
-        // Validation: ensure at least one PNG was generated.
-        // --------------------------------------------------------------
-        int pngCount = Directory.GetFiles(outputDir, "*.png").Length;
-        if (pngCount == 0)
-            throw new InvalidOperationException("No PNG images were generated.");
+        // Validation: ensure at least one PNG was created.
+        if (!Directory.GetFiles(outputDir, "*.png").Any())
+            throw new InvalidOperationException("No PNG images were produced.");
+
+        // Optional: clean up created files (comment out if inspection is needed).
+        // File.Delete(docPath);
+        // foreach (var f in Directory.GetFiles(inputDir)) File.Delete(f);
+        // foreach (var f in Directory.GetFiles(outputDir)) File.Delete(f);
     }
 }

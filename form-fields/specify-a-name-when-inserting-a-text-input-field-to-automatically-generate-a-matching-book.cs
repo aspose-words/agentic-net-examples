@@ -10,21 +10,24 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field and give it a name.
-        // A bookmark with the same name is automatically created.
-        string fieldName = "CustomerName";
-        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "Enter name", 0);
+        // Write some prompt text.
+        builder.Write("Please enter your name: ");
 
-        // Verify that the bookmark was created.
-        if (doc.Range.Bookmarks[fieldName] == null)
-            throw new InvalidOperationException($"Bookmark '{fieldName}' was not created.");
+        // Insert a text input form field with a specific name.
+        // The name "UserName" will also create a bookmark with the same name.
+        FormField textField = builder.InsertTextInput(
+            "UserName",                     // name of the form field (and bookmark)
+            TextFormFieldType.Regular,      // type of the text field
+            "",                             // format string (none)
+            "John Doe",                     // default placeholder text
+            0);                             // max length (0 = unlimited)
 
-        // Access the form field by its name and set a default value.
-        FormField textField = doc.Range.FormFields[fieldName];
-        if (textField == null)
-            throw new InvalidOperationException($"Form field '{fieldName}' not found.");
+        // Verify that the bookmark was automatically created.
+        if (doc.Range.Bookmarks["UserName"] == null)
+            throw new InvalidOperationException("Bookmark 'UserName' was not created.");
 
-        textField.Result = "John Doe";
+        // Optionally, set a value for the form field.
+        textField.Result = "Alice";
 
         // Save the document to disk.
         doc.Save("FormFieldWithBookmark.docx");

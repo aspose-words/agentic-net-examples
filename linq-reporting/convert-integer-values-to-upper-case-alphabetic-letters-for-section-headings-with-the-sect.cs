@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,63 +8,63 @@ public class Program
 {
     public static void Main()
     {
-        // Create the template document with LINQ Reporting tags.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Begin a foreach loop over the Sections collection.
-        builder.Writeln("<<foreach [sec in Sections]>>");
+        // 1. Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Write a heading where the integer Section value is converted to an uppercase letter.
-        builder.Writeln("<<[sec.Letter]>>. <<[sec.Title]>>");
-
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
+        // Add a heading that will display the section number as an uppercase letter.
+        // The model provides a computed property SectionLetter for this purpose.
+        builder.Writeln("<<[model.SectionLetter]>>. Section Heading");
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
+        string templatePath = Path.Combine(outputDir, "Template.docx");
         template.Save(templatePath);
 
-        // Load the template back for report generation.
-        var document = new Document(templatePath);
+        // 2. Load the template document for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Prepare the data model.
-        var model = new ReportModel
+        // 3. Prepare sample data.
+        // The model contains an integer Section and a derived property SectionLetter.
+        var model = new ReportModel { Section = 3 }; // Will be displayed as "C"
+
+        // 4. Build the report using Aspose.Words LINQ Reporting Engine.
+        ReportingEngine engine = new ReportingEngine
         {
-            Sections = new List<SectionItem>
-            {
-                new SectionItem { Section = 1, Title = "Introduction" },
-                new SectionItem { Section = 2, Title = "Details" },
-                new SectionItem { Section = 3, Title = "Conclusion" }
-            }
+            Options = ReportBuildOptions.None
         };
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(document, model, "model");
+        // 5. Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
 
-        // Save the generated report.
-        const string reportPath = "Report.docx";
-        document.Save(reportPath);
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }
 
-// Root data model for the report.
+// Data model used by the LINQ Reporting engine.
 public class ReportModel
 {
-    // Collection of sections to be iterated over in the template.
-    public List<SectionItem> Sections { get; set; } = new();
-}
-
-// Represents a single section with an integer identifier and a title.
-public class SectionItem
-{
-    // Integer value that will be converted to an uppercase letter in the report.
+    // Integer section number.
     public int Section { get; set; }
 
-    // Title of the section.
-    public string Title { get; set; } = string.Empty;
+    // Computed property that converts the integer to an uppercase alphabetic letter (A‑Z).
+    // Values outside 1‑26 are wrapped around (e.g., 27 -> A).
+    public string SectionLetter
+    {
+        get
+        {
+            if (Section <= 0)
+                return string.Empty;
 
-    // Computed property that converts the integer Section to an uppercase alphabetic letter (1 → A, 2 → B, etc.).
-    public string Letter => ((char)('A' + Section - 1)).ToString();
+            // Wrap the number to the range 1‑26.
+            int index = ((Section - 1) % 26) + 1;
+            char letter = (char)('A' + index - 1);
+            return letter.ToString();
+        }
+    }
 }

@@ -8,47 +8,43 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory and file.
+        // Create an output folder.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
         string tiffPath = Path.Combine(outputDir, "Ligatures.tiff");
 
-        // Create a new document.
+        // Build a simple document containing characters that form ligatures.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "Arial";      // Arial includes common ligatures.
+        builder.Font.Size = 48;
+        builder.Writeln("Office");        // Contains "ff".
+        builder.Writeln("Affix");         // Contains "fi".
+        builder.Writeln("Fluff");         // Contains "fl".
 
-        // Use a font that supports ligatures (e.g., Calibri) and write text containing ligatures.
-        builder.Font.Name = "Calibri";
-        builder.Writeln("Office"); // Contains the 'fi' ligature.
+        // If custom fonts are required, configure FontSettings here.
+        // FontSettings fontSettings = new FontSettings();
+        // fontSettings.SetFontsFolder(@"C:\MyFonts", true);
+        // doc.FontSettings = fontSettings;
 
-        // Configure font settings (optional: point to a folder with additional fonts).
-        FontSettings fontSettings = new FontSettings();
-        // Example: set the system fonts folder (adjust if necessary for the environment).
-        string systemFonts = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts));
-        if (Directory.Exists(systemFonts))
-        {
-            fontSettings.SetFontsFolder(systemFonts, true);
-        }
-        doc.FontSettings = fontSettings;
+        // Set up TIFF rendering options.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
+        options.Resolution = 300;                 // 300 DPI for good quality.
+        options.UseAntiAliasing = true;           // Enable anti‑aliasing.
+        options.UseHighQualityRendering = true;   // Use high‑quality rendering.
 
-        // Set up image save options for TIFF rendering.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            UseAntiAliasing = true,
-            UseHighQualityRendering = true,
-            Resolution = 300 // DPI
-        };
+        // Render all pages. Use an explicit int array to avoid ambiguity with the PageSet constructors.
+        options.PageSet = new PageSet(new int[] { 0 });
 
-        // Render the document to a TIFF file.
-        doc.Save(tiffPath, saveOptions);
+        // Save the document as a multi‑page TIFF.
+        doc.Save(tiffPath, options);
 
         // Verify that the TIFF file was created.
         if (!File.Exists(tiffPath))
-        {
-            throw new Exception("TIFF rendering failed: output file not found.");
-        }
+            throw new InvalidOperationException("Failed to create the TIFF file.");
 
-        // Indicate successful completion.
-        Console.WriteLine($"Document rendered to TIFF successfully: {tiffPath}");
+        // Output the result (optional).
+        long fileSize = new FileInfo(tiffPath).Length;
+        Console.WriteLine($"TIFF saved to '{tiffPath}' ({fileSize} bytes).");
     }
 }

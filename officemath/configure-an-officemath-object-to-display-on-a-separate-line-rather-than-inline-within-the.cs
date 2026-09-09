@@ -13,62 +13,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add an introductory paragraph.
-        builder.Writeln("Below is an equation displayed on its own line:");
+        // Add a paragraph with introductory text.
+        builder.Writeln("The following equation is displayed on its own line:");
 
-        // Insert an EQ field that will be converted to a real OfficeMath object.
-        FieldEQ eqField = InsertFieldEQ(builder, @"\f(1,2)");
+        // Insert an EQ field (the field code is "EQ").
+        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Ensure the field is up‑to‑date so that AsOfficeMath can parse it.
+        // Write a simple fraction (1/2) as the EQ field argument.
+        builder.MoveTo(eqField.Separator);
+        builder.Write(@"\f(1,2)");
+
+        // Update the field so that the EQ code is recognized.
         eqField.Update();
 
-        // Convert the EQ field to an OfficeMath node.
+        // Move back to the field start before conversion.
+        builder.MoveTo(eqField.Start);
+
+        // Convert the EQ field to a real OfficeMath object.
         OfficeMath officeMath = eqField.AsOfficeMath();
+
         if (officeMath == null)
             throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
 
-        // Replace the field with the OfficeMath node.
+        // Insert the OfficeMath node before the original field and remove the field.
         eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
         eqField.Remove();
 
-        // Verify that we have a top‑level equation (OMathPara).
-        if (officeMath.MathObjectType != MathObjectType.OMathPara)
-            throw new InvalidOperationException("The created OfficeMath is not a top‑level equation.");
-
-        // Set the equation to display on its own line and left‑justify it.
+        // Configure the OfficeMath to display on a separate line and left‑justified.
         officeMath.DisplayType = OfficeMathDisplayType.Display;
         officeMath.Justification = OfficeMathJustification.Left;
 
+        // Prepare output directory.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OfficeMathDisplay.docx");
+        string outputPath = Path.Combine(outputDir, "OfficeMathDisplay.docx");
         doc.Save(outputPath, SaveFormat.Docx);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
-
-        // Reload the document to ensure the saved settings are persisted.
-        Document loadedDoc = new Document(outputPath);
-        OfficeMath savedMath = (OfficeMath)loadedDoc.GetChild(NodeType.OfficeMath, 0, true);
-        if (savedMath == null || savedMath.DisplayType != OfficeMathDisplayType.Display)
-            throw new InvalidOperationException("The OfficeMath display type was not set to Display.");
-    }
-
-    // Helper that inserts an EQ field, writes the arguments, adds a following paragraph, and returns the field.
-    private static FieldEQ InsertFieldEQ(DocumentBuilder builder, string args)
-    {
-        // Insert an empty EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Move to the field separator and write the EQ arguments.
-        builder.MoveTo(field.Separator);
-        builder.Write(args);
-
-        // Return the builder to the paragraph that contains the field.
-        builder.MoveTo(field.Start.ParentNode);
-        // Insert a new paragraph after the field so the equation stands alone.
-        builder.InsertParagraph();
-
-        return field;
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

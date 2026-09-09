@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -12,39 +11,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the first section.
-        Shape originalChartShape = builder.InsertChart(ChartType.Column, 400, 300);
-        Chart originalChart = originalChartShape.Chart;
+        // First paragraph – will contain the original chart.
+        builder.Writeln("Original chart paragraph:");
 
-        // Optional: clear demo data and add custom series.
-        originalChart.Series.Clear();
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-        originalChart.Series.Add("Sales", categories, new double[] { 150, 200, 180, 220 });
+        // Insert a column chart and keep a reference to its shape.
+        Shape originalChartShape = builder.InsertChart(ChartType.Column, 432, 252);
 
-        // Ensure the shape really contains a chart.
+        // Verify that the shape indeed contains a chart before proceeding.
         if (!originalChartShape.HasChart)
             throw new InvalidOperationException("The inserted shape does not contain a chart.");
 
-        // Insert a section break to create a second section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Paragraph where the cloned chart will be placed.
+        builder.Writeln("Paragraph for the cloned chart:");
 
-        // Add a paragraph in the new section where the cloned chart will be placed.
-        builder.Writeln("Paragraph before the cloned chart.");
+        // Deep clone the original chart shape (including its chart data).
+        Shape clonedChartShape = (Shape)originalChartShape.Clone(true);
 
-        // Clone the original chart shape (deep clone).
-        Node clonedChartNode = originalChartShape.Clone(true);
+        // Locate the target paragraph (the one we just added).
+        Paragraph targetParagraph = (Paragraph)doc.GetChild(
+            NodeType.Paragraph,
+            doc.GetChildNodes(NodeType.Paragraph, true).Count - 1,
+            true);
 
-        // Move the builder to the end of the document (after the paragraph just added).
-        builder.MoveToDocumentEnd();
+        // Move the builder to the target paragraph and insert the cloned chart before it.
+        builder.MoveTo(targetParagraph);
+        builder.InsertNode(clonedChartShape);
 
-        // Insert the cloned chart shape before the current position.
-        builder.InsertNode(clonedChartNode);
-
-        // Add another paragraph after the cloned chart for demonstration.
-        builder.Writeln("Paragraph after the cloned chart.");
-
-        // Save the document to the working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ClonedChart.docx");
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save("ClonedChartExample.docx");
     }
 }

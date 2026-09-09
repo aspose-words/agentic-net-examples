@@ -9,24 +9,20 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a paragraph that contains the text "Page " followed by a PAGE field.
+        // Insert a paragraph that contains the page number field.
         builder.Write("Page ");
-        // Insert a PAGE field; the second argument is the field result placeholder (empty string).
-        builder.InsertField("PAGE", "");
-        // End the paragraph.
-        builder.Writeln();
+        builder.InsertField("PAGE", ""); // Inserts a PAGE field.
+        builder.Writeln(); // Ends the paragraph.
 
         // Configure the section to display page numbers as uppercase Roman numerals.
-        // Apply the setting to the first (and only) section of the document.
-        doc.FirstSection.PageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
-        // Ensure numbering starts at 1 and restarts for this section.
-        doc.FirstSection.PageSetup.RestartPageNumbering = true;
-        doc.FirstSection.PageSetup.PageStartingNumber = 1;
+        PageSetup pageSetup = doc.FirstSection.PageSetup;
+        pageSetup.RestartPageNumbering = true; // Start numbering from the first page.
+        pageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
 
-        // Save the document to a file in the current working directory.
-        doc.Save("RomanPageNumbers.docx");
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }

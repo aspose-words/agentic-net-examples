@@ -1,72 +1,60 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class PhoneModel
+public class PhoneNumberModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
 {
     public string PhoneNumber { get; set; } = string.Empty;
+
+    // Determines whether the phone number matches the required pattern.
+    public bool IsValid => Regex.IsMatch(PhoneNumber, @"^\d{3}-\d{3}-\d{4}$");
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        // Prepare sample data.
+        var model = new PhoneNumberModel();
+        model.Persons.Add(new Person { PhoneNumber = "123-456-7890" }); // valid
+        model.Persons.Add(new Person { PhoneNumber = "5551234" });      // invalid
+        model.Persons.Add(new Person { PhoneNumber = "987-654-3210" }); // valid
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a template document.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Write a line that conditionally shows whether the phone number matches the pattern.
-        // The pattern expects format: 123-456-7890
-        builder.Writeln("Phone: <<if [Regex.IsMatch(model.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>");
-        builder.Writeln("<<[model.PhoneNumber]>> (valid)");
-        builder.Writeln("<</if>>");
-        builder.Writeln("<<if [!Regex.IsMatch(model.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>");
-        builder.Writeln("<<[model.PhoneNumber]>> (invalid)");
-        builder.Writeln("<</if>>");
+        // Begin a foreach loop over the collection.
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Phone: <<[person.PhoneNumber]>> ");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Render "Valid" if the phone number matches the pattern.
+        builder.Writeln("<<if [person.IsValid]>>Valid<</if>>");
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Render "Invalid" if the phone number does not match the pattern.
+        builder.Writeln("<<if [!person.IsValid]>>Invalid<</if>>");
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data source.
-        // -----------------------------------------------------------------
-        PhoneModel model = new PhoneModel
-        {
-            // Change this value to test different formats.
-            PhoneNumber = "123-456-7890"
-        };
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using the ReportingEngine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
-        {
-            // Explicitly set options (none in this case).
-            Options = ReportBuildOptions.None
-        };
+        // Save the template (optional, shown for completeness).
+        const string templatePath = "PhoneNumberTemplate.docx";
+        doc.Save(templatePath);
 
-        // Allow the engine to use static members of Regex in expressions.
-        engine.KnownTypes.Add(typeof(Regex));
+        // Load the template and build the report.
+        var loadedDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedDoc, model, "model");
 
-        // Build the report. The root object name used in the template is "model".
-        engine.BuildReport(reportDoc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(reportPath);
+        // Save the final report.
+        const string outputPath = "PhoneNumberReport.docx";
+        loadedDoc.Save(outputPath);
     }
 }

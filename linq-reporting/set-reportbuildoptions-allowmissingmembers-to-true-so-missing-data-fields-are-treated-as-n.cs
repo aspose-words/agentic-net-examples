@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,52 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document that contains a reference to a missing field.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Name: <<[person.Name]>>");
-        // The Age property does NOT exist in the Person class.
-        builder.Writeln("Age: <<[person.Age]>>");
-        templateDoc.Save(templatePath);
+        // Insert a LINQ Reporting tag that references a member which does not exist.
+        // The engine will treat this missing member as null because we enable AllowMissingMembers.
+        builder.Writeln("<<[MissingObject.First().Id]>>");
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
+        // Configure the reporting engine to allow missing members.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.AllowMissingMembers
+        };
+        // Optional: customize the message shown for a plain missing member reference.
+        engine.MissingMemberMessage = "Missing";
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data source. Only Name is defined.
-        // -----------------------------------------------------------------
-        var person = new Person { Name = "John Doe" };
+        // Use an empty DataSet as the data source – it does not contain "MissingObject".
+        DataSet dataSource = new DataSet();
 
-        // -----------------------------------------------------------------
-        // 4. Configure the ReportingEngine to treat missing members as null.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-        engine.MissingMemberMessage = "N/A";
+        // Build the report. The third argument is the name of the data source object in the template.
+        // An empty string means the template does not need to reference the data source object itself.
+        engine.BuildReport(doc, dataSource, "");
 
-        // -----------------------------------------------------------------
-        // 5. Build the report. The root object name in the template is "person".
-        // -----------------------------------------------------------------
-        engine.BuildReport(reportDoc, person, "person");
-
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(outputPath);
-    }
-
-    // Simple data model with only a Name property.
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        // No Age property – it will be treated as null by the engine.
+        // Save the generated document.
+        doc.Save("ReportAllowMissingMembers.docx");
     }
 }
