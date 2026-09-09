@@ -11,88 +11,82 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field.
-        builder.Write("Enter text: ");
+        builder.Write("Enter your name: ");
         FormField textField = builder.InsertTextInput(
             "TextField",                     // field name
-            TextFormFieldType.Regular,       // field type
+            TextFormFieldType.Regular,       // type of text field
             "",                              // default text (empty)
-            "Default text",                  // placeholder text
+            "John Doe",                      // placeholder text
             50);                             // maximum length
 
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
         // Insert a check box form field.
-        builder.Write("Check this box: ");
+        builder.Write("\nAgree to terms: ");
         FormField checkBox = builder.InsertCheckBox(
             "CheckBoxField",                 // field name
             false,                           // initially unchecked
             50);                             // size in points
 
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
         // Insert a combo box (drop‑down) form field.
-        builder.Write("Select an option: ");
-        string[] items = { "Option1", "Option2", "Option3" };
+        builder.Write("\nSelect a fruit: ");
         FormField comboBox = builder.InsertComboBox(
             "ComboBoxField",                 // field name
-            items,                           // list items
-            0);                              // initially select the first item
+            new[] { "Apple", "Banana", "Cherry" }, // items
+            0);                              // initially select first item
 
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Save the initial document (optional, just to have a file).
+        doc.Save("FormFields.docx");
 
-        // Access the collection of form fields.
-        FormFieldCollection fields = doc.Range.FormFields;
+        // Access the collection of form fields in the document.
+        FormFieldCollection formFields = doc.Range.FormFields;
 
         // Ensure that at least one form field exists.
-        if (fields.Count == 0)
-            throw new InvalidOperationException("The document does not contain any form fields.");
+        if (formFields == null || formFields.Count == 0)
+            throw new InvalidOperationException("No form fields were found in the document.");
 
-        // Iterate through each form field and handle it according to its type.
-        foreach (FormField field in fields)
+        // Iterate through each form field and differentiate by its Type.
+        foreach (FormField field in formFields)
         {
-            // Guard against null (should not happen, but satisfies nullable safety rules).
-            if (field == null)
-                continue;
-
             switch (field.Type)
             {
                 case FieldType.FieldFormTextInput:
-                    // Text input field: read the current result, update it, and validate.
-                    Console.WriteLine($"Text field \"{field.Name}\" original result: \"{field.Result}\"");
-                    field.Result = "Updated Text";
-                    if (field.Result != "Updated Text")
-                        throw new InvalidOperationException($"Failed to update text field \"{field.Name}\".");
-                    Console.WriteLine($"Text field \"{field.Name}\" updated result: \"{field.Result}\"");
+                    // Update the text input field's result.
+                    field.Result = "Alice";
+                    Console.WriteLine($"Text field '{field.Name}' set to '{field.Result}'.");
                     break;
 
                 case FieldType.FieldFormCheckBox:
-                    // Check box field: read the checked state, set it to true, and validate.
-                    Console.WriteLine($"Check box \"{field.Name}\" original checked: {field.Checked}");
+                    // Set the check box to checked.
                     field.Checked = true;
-                    if (!field.Checked)
-                        throw new InvalidOperationException($"Failed to check the check box \"{field.Name}\".");
-                    Console.WriteLine($"Check box \"{field.Name}\" updated checked: {field.Checked}");
+                    Console.WriteLine($"Check box '{field.Name}' checked state is now '{field.Checked}'.");
                     break;
 
                 case FieldType.FieldFormDropDown:
-                    // Combo box field: read the selected item, change selection, and validate.
-                    Console.WriteLine($"Combo box \"{field.Name}\" original selected: \"{field.Result}\"");
-                    if (field.DropDownItems.Count > 1)
-                        field.DropDownSelectedIndex = 1; // select the second item
-                    if (field.DropDownSelectedIndex != 1)
-                        throw new InvalidOperationException($"Failed to change selection for combo box \"{field.Name}\".");
-                    Console.WriteLine($"Combo box \"{field.Name}\" updated selected: \"{field.Result}\"");
+                    // Change the selected item to the third entry ("Cherry").
+                    field.DropDownSelectedIndex = 2;
+                    Console.WriteLine($"Combo box '{field.Name}' selected item is now '{field.Result}'.");
                     break;
 
                 default:
-                    // Other field types are not part of this example.
+                    // Other field types are not handled in this example.
+                    Console.WriteLine($"Field '{field.Name}' has an unsupported type: {field.Type}");
                     break;
             }
         }
 
-        // Save the modified document.
-        const string outputPath = "FormFieldsExample.docx";
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to \"{outputPath}\".");
+        // Validate that the updates were applied correctly.
+        string updatedText = doc.Range.FormFields["TextField"]?.Result;
+        if (updatedText != "Alice")
+            throw new InvalidOperationException("Text field value was not updated correctly.");
+
+        bool? updatedCheck = doc.Range.FormFields["CheckBoxField"]?.Checked;
+        if (updatedCheck != true)
+            throw new InvalidOperationException("Check box value was not updated correctly.");
+
+        string updatedCombo = doc.Range.FormFields["ComboBoxField"]?.Result;
+        if (updatedCombo != "Cherry")
+            throw new InvalidOperationException("Combo box value was not updated correctly.");
+
+        // Save the document after modifications.
+        doc.Save("FormFields_Updated.docx");
     }
 }

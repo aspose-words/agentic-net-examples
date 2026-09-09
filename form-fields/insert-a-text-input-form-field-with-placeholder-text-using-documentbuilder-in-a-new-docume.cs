@@ -19,10 +19,10 @@ namespace FormFieldExample
 
             // Insert a text input form field with placeholder text.
             // Parameters: name, type, format, placeholder text, maxLength (0 = unlimited).
-            builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "Enter your name here", 0);
+            builder.InsertTextInput("TextInput", TextFormFieldType.Regular, "", "Enter your name here", 0);
 
             // Save the document to a file.
-            doc.Save("FormFieldTextInput.docx");
+            doc.Save("FormFieldExample.docx");
         }
     }
 }

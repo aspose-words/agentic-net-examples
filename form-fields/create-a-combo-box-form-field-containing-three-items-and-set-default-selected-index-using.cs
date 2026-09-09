@@ -2,29 +2,37 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace AsposeWordsFormFieldsExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Create a new empty document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add a prompt before the combo box.
-            builder.Write("Pick a fruit: ");
+        // Add a prompt before the combo box.
+        builder.Write("Select a color: ");
 
-            // Define the items that will appear in the combo box.
-            string[] items = { "Apple", "Banana", "Cherry" };
+        // Define the items for the combo box.
+        string[] items = { "Red", "Green", "Blue" };
 
-            // Insert a combo box form field named "FruitCombo" with the items above.
-            // The third parameter (selectedIndex) sets the default selected item (0‑based).
-            // Here we set it to 1, so "Banana" will be selected by default.
-            FormField comboBox = builder.InsertComboBox("FruitCombo", items, 1);
+        // Insert the combo box with the default selected index set to 1 (Green).
+        FormField comboBox = builder.InsertComboBox("ColorCombo", items, 1);
 
-            // Save the document to a file.
-            doc.Save("ComboBoxFormField.docx");
-        }
+        // Validate that the form field was added.
+        FormFieldCollection fields = doc.Range.FormFields;
+        if (fields == null || fields.Count == 0)
+            throw new InvalidOperationException("No form fields were created.");
+
+        // Retrieve the combo box by its name and verify the selected index.
+        FormField retrieved = fields["ColorCombo"];
+        if (retrieved == null)
+            throw new InvalidOperationException("Combo box 'ColorCombo' not found.");
+
+        if (retrieved.DropDownSelectedIndex != 1)
+            throw new InvalidOperationException("Default selected index is incorrect.");
+
+        // Save the document to disk.
+        doc.Save("ComboBoxFormField.docx");
     }
 }

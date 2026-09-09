@@ -10,19 +10,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Add a prompt for the user.
+        builder.Writeln("Enter a numeric value (max 50 characters):");
+
         // Insert a numeric text input form field.
-        // Parameters: name, type (Number), format (empty for default), default value, max length.
+        // Parameters: name, type (Number for numeric), format (empty), default value, max length.
         FormField numericField = builder.InsertTextInput(
-            name: "NumericInput",
-            type: TextFormFieldType.Number,
-            format: "",
-            fieldValue: "0",
-            maxLength: 50);
+            "NumericField",
+            TextFormFieldType.Number,
+            "",
+            "0",
+            50);
 
-        // Optionally set a display format (e.g., integer without decimals).
-        numericField.TextInputFormat = "0";
+        // Ensure the field is enabled.
+        numericField.Enabled = true;
 
-        // Save the document to a file.
-        doc.Save("FormField.docx");
+        // Save the document to disk.
+        doc.Save("FormFieldNumeric.docx");
     }
 }

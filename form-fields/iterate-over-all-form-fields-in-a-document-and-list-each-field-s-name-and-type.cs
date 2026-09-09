@@ -10,39 +10,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a few different types of form fields so that the document is not empty.
+        // Insert a text input form field.
         builder.Write("Enter your name: ");
         FormField textField = builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
 
+        // Insert a checkbox form field.
         builder.InsertBreak(BreakType.ParagraphBreak);
         builder.Write("Accept terms: ");
-        FormField checkBox = builder.InsertCheckBox("TermsCheck", false, 15);
+        FormField checkBox = builder.InsertCheckBox("AcceptTerms", false, 50);
 
+        // Insert a combo box (dropdown) form field.
         builder.InsertBreak(BreakType.ParagraphBreak);
         builder.Write("Select a fruit: ");
-        string[] fruits = { "Apple", "Banana", "Cherry" };
-        FormField comboBox = builder.InsertComboBox("FruitChoice", fruits, 0);
+        string[] items = { "Apple", "Banana", "Cherry" };
+        FormField comboBox = builder.InsertComboBox("FruitChoice", items, 0);
 
-        // Save the document (required by the rules when modifying form fields).
-        doc.Save("FormFieldsIterate.docx");
+        // Save the document (required by the rules).
+        doc.Save("FormFields.docx");
 
-        // Access the collection of form fields in the document.
+        // Iterate over all form fields and list their name and type.
         FormFieldCollection formFields = doc.Range.FormFields;
-
-        // Ensure that at least one form field exists.
-        if (formFields.Count == 0)
-        {
-            throw new InvalidOperationException("The document does not contain any form fields.");
-        }
-
-        // Iterate over each form field and output its name and type.
         foreach (FormField field in formFields)
         {
-            // Guard against null entries (should not happen, but follows nullable safety rules).
-            if (field != null)
-            {
-                Console.WriteLine($"Field Name: {field.Name}, Field Type: {field.Type}");
-            }
+            // Field.Type returns a FieldType enum value.
+            Console.WriteLine($"{field.Name}: {field.Type}");
         }
     }
 }
