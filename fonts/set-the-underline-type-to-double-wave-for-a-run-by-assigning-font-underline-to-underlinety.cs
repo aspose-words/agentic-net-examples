@@ -6,30 +6,30 @@ public class Program
 {
     public static void Main()
     {
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UnderlineDoubleWave.docx");
-
         // Create a new blank document.
-        Aspose.Words.Document doc = new Aspose.Words.Document();
+        Document doc = new Document();
 
-        // Create a run with some text.
-        Aspose.Words.Run run = new Aspose.Words.Run(doc, "This run has a double‑wave underline.");
+        // Use DocumentBuilder to add content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the underline type to double wave (WavyDouble) for the run's font.
-        run.Font.Underline = Aspose.Words.Underline.WavyDouble;
+        // Set underline type to double wave (WavyDouble) for the current font.
+        builder.Font.Underline = Aspose.Words.Underline.WavyDouble;
 
-        // Verify that the underline was set correctly.
-        if (run.Font.Underline != Aspose.Words.Underline.WavyDouble)
-            throw new InvalidOperationException("Failed to set the underline type to double wave.");
+        // Write sample text.
+        builder.Writeln("This text is underlined with a double wave.");
 
-        // Append the run to the first paragraph of the document.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
+        // Validate that the underline was set correctly.
+        if (builder.Font.Underline != Aspose.Words.Underline.WavyDouble)
+            throw new InvalidOperationException("Underline type was not set correctly.");
 
-        // Save the document to the specified path.
+        // Define output path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "DoubleWaveUnderline.docx");
+
+        // Save the document.
         doc.Save(outputPath);
 
-        // Ensure that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
+            throw new FileNotFoundException("The document was not saved.", outputPath);
     }
 }

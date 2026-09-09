@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Drawing; // For Aspose.Drawing.Color
+using Aspose.Drawing;
 
 public class Program
 {
@@ -10,42 +10,46 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to work with the document.
+        // Ensure the document has at least one paragraph.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+
+        // Use DocumentBuilder to obtain a Font object.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Obtain the Aspose.Words.Font object from the builder.
+        // Create an Aspose.Drawing.Color and convert it to System.Drawing.Color.
+        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Blue;
+        System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
+
+        // Configure the shared font.
         Aspose.Words.Font sharedFont = builder.Font;
+        sharedFont.Size = 24;
+        sharedFont.Color = sysColor;
 
-        // Set common font properties.
-        sharedFont.Size = 18; // Font size in points.
+        // Create the first run and apply the shared font properties.
+        Run run1 = new Run(doc, "First run. ");
+        run1.Font.Size = sharedFont.Size;
+        run1.Font.Color = sharedFont.Color;
+        paragraph.AppendChild(run1);
 
-        // Convert Aspose.Drawing.Color to System.Drawing.Color for the Font.Color property.
-        sharedFont.Color = System.Drawing.Color.FromArgb(Aspose.Drawing.Color.Red.ToArgb());
+        // Create the second run and apply the same font.
+        Run run2 = new Run(doc, "Second run.");
+        run2.Font.Size = sharedFont.Size;
+        run2.Font.Color = sharedFont.Color;
+        paragraph.AppendChild(run2);
 
-        // Validate that the properties were set correctly.
-        if (sharedFont.Size != 18 ||
-            sharedFont.Color.ToArgb() != System.Drawing.Color.FromArgb(Aspose.Drawing.Color.Red.ToArgb()).ToArgb())
-        {
-            Console.WriteLine("Font properties were not set as expected.");
-            return;
-        }
+        // Validation: ensure both runs have the expected size and color.
+        if (run1.Font.Size != 24 || run2.Font.Size != 24)
+            throw new InvalidOperationException("Font size mismatch.");
 
-        // Insert multiple runs; they inherit the shared font formatting.
-        builder.Writeln("First run with shared font.");
-        builder.Writeln("Second run with shared font.");
+        if (run1.Font.Color.ToArgb() != sysColor.ToArgb() || run2.Font.Color.ToArgb() != sysColor.ToArgb())
+            throw new InvalidOperationException("Font color mismatch.");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FormattedRuns.docx");
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontRuns.docx");
         doc.Save(outputPath);
 
-        // Validate that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully: {outputPath}");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("Output file not found.", outputPath);
     }
 }

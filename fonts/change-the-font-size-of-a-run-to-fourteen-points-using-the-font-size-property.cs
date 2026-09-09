@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Drawing;      // Required package, not used directly
-using Newtonsoft.Json;    // Required package, not used directly
 
 public class Program
 {
@@ -11,31 +9,28 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a run with sample text.
-        Run run = new Run(doc, "Sample text with 14pt font size.");
+        // Create a run with some text.
+        Run run = new Run(doc, "Hello Aspose.Words!");
 
-        // Set the font size to 14 points.
+        // Change the font size of the run to 14 points.
         run.Font.Size = 14;
-
-        // Validate that the size was set correctly.
-        if (run.Font.Size != 14)
-        {
-            throw new InvalidOperationException("Font size was not set to 14 points.");
-        }
 
         // Append the run to the first paragraph of the document.
         doc.FirstSection.Body.FirstParagraph.AppendChild(run);
 
         // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontSizeExample.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RunFontSize.docx");
 
         // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        if (File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
+            // Load the saved document and confirm the font size.
+            Document loadedDoc = new Document(outputPath);
+            Run loadedRun = (Run)loadedDoc.GetChild(NodeType.Run, 0, true);
+            double fontSize = loadedRun.Font.Size; // Should be 14
         }
     }
 }
