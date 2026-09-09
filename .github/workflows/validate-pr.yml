@@ -12,6 +12,9 @@ on:
       - ready_for_review
       - labeled
       - unlabeled
+  issue_comment:
+    types:
+      - created
 
 permissions:
   contents: write
@@ -26,12 +29,31 @@ jobs:
   validate:
     name: Build and run changed examples
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        (
+          contains(github.event.comment.body, '/validate') ||
+          contains(github.event.comment.body, '/merge')
+        )
+      )
 
     steps:
       - name: Checkout PR
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Checkout commented PR
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        shell: bash
+        run: |
+          gh pr checkout "$PR_NUMBER"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -41,9 +63,19 @@ jobs:
       - name: Get changed C# files
         id: changed
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          BASE="${{ github.event.pull_request.base.sha }}"
-          HEAD="${{ github.event.pull_request.head.sha }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            PR_NUMBER="${{ github.event.issue.number }}"
+            BASE_REF=$(gh pr view "$PR_NUMBER" --json baseRefName --jq '.baseRefName')
+            git fetch origin "$BASE_REF" --prune
+            BASE="origin/$BASE_REF"
+            HEAD="HEAD"
+          fi
           MERGE_BASE=$(git merge-base "$BASE" "$HEAD")
 
           echo "PR base:    $BASE"
@@ -235,6 +267,16 @@ jobs:
   no-cs-deletes:
     name: URL stability - no C# deletes
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        (
+          contains(github.event.comment.body, '/validate') ||
+          contains(github.event.comment.body, '/merge')
+        )
+      )
 
     steps:
       - name: Checkout PR
@@ -242,12 +284,31 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout commented PR
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        shell: bash
+        run: |
+          gh pr checkout "$PR_NUMBER"
+
       - name: Detect deleted C# files
         id: deletes
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          BASE="${{ github.event.pull_request.base.sha }}"
-          HEAD="${{ github.event.pull_request.head.sha }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            PR_NUMBER="${{ github.event.issue.number }}"
+            BASE_REF=$(gh pr view "$PR_NUMBER" --json baseRefName --jq '.baseRefName')
+            git fetch origin "$BASE_REF" --prune
+            BASE="origin/$BASE_REF"
+            HEAD="HEAD"
+          fi
           MERGE_BASE=$(git merge-base "$BASE" "$HEAD")
           DELETED=$(git diff --name-only --diff-filter=D "$MERGE_BASE" "$HEAD" -- '*.cs' || true)
 
@@ -295,15 +356,35 @@ jobs:
       - validate
       - no-cs-deletes
     if: >
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.draft == false &&
-      startsWith(github.event.pull_request.head.ref, 'agentic/publish/')
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.draft == false &&
+        startsWith(github.event.pull_request.head.ref, 'agentic/publish/')
+      ) ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        contains(github.event.comment.body, '/merge')
+      )
 
     steps:
       - name: Merge PR
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
         shell: bash
         run: |
-          gh pr merge "$PR_URL" --squash --delete-branch
+          HEAD_REF=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
+          IS_DRAFT=$(gh pr view "$PR_NUMBER" --json isDraft --jq '.isDraft')
+
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "PR is draft, skipping auto-merge."
+            exit 0
+          fi
+
+          if [[ "$HEAD_REF" != agentic/publish/* ]]; then
+            echo "PR branch '$HEAD_REF' is not an agentic publish branch, skipping auto-merge."
+            exit 0
+          fi
+
+          gh pr merge "$PR_NUMBER" --squash --delete-branch
