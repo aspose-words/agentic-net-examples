@@ -2,11 +2,10 @@
   "product": "Aspose.Words",
   "platform": ".NET",
   "framework": "net8.0",
-  "package_version": "26.7.0",
-  "run_id": "20260802_190455_803b68",
+  "package_version": "26.8.0",
   "total_examples": 1795,
   "total_categories": 29,
-  "last_updated": "2026-08-04",
+  "last_updated": "2026-09-02",
   "categories": [
     {
       "name": "barcode-image",
@@ -49,13 +48,12 @@
         "Aspose.Words",
         "Aspose.Words.Fields",
         "System.IO",
-        "Aspose.Drawing",
         "Aspose.Words.Drawing",
         "Aspose.Words.Replacing",
         "Aspose.BarCode.Generation",
+        "Aspose.Drawing",
         "Aspose.Drawing.Imaging",
         "Aspose.Words.Saving",
-        "Aspose.Words.BuildingBlocks",
         "System.Collections.Generic",
         "Aspose.Drawing.Drawing2D",
         "Aspose.BarCode",
@@ -66,7 +64,6 @@
         "DocumentBuilder",
         "FieldType",
         "FieldDisplayBarcode",
-        "Directory",
         "Path",
         "NodeType",
         "MemoryStream",
@@ -76,6 +73,7 @@
         "File",
         "Font",
         "SaveFormat",
+        "Directory",
         "Range",
         "Field",
         "FindReplaceOptions",
@@ -89,8 +87,8 @@
         "Aspose.Drawing.Common"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0",
-        "Aspose.BarCode": "26.7.0",
+        "Aspose.Words": "26.8.0",
+        "Aspose.BarCode": "26.8.0",
         "Aspose.Drawing.Common": "25.11.0"
       }
     },
@@ -146,6 +144,7 @@
         "Aspose.Words",
         "Aspose.Words.Drawing",
         "Aspose.Words.Drawing.Charts",
+        "Aspose.Words.Tables",
         "System.Drawing",
         "Aspose.Words.Saving"
       ],
@@ -153,25 +152,25 @@
         "Document",
         "DocumentBuilder",
         "NodeType",
+        "File",
         "Shape",
         "Chart",
         "ChartType",
         "Paragraph",
-        "Directory",
-        "Path",
         "CellFormat",
-        "Node",
         "Font",
         "ChartSeries",
+        "Directory",
+        "Path",
         "SaveFormat",
         "MemoryStream",
-        "File"
+        "Run"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -216,13 +215,15 @@
         "System.Linq",
         "Aspose.Words",
         "Aspose.Words.Drawing",
-        "System.Xml.Linq",
         "System.Collections.Generic",
+        "System.Xml.Linq",
+        "Aspose.Words.Tables",
         "System.Text.Json",
         "System.Drawing",
-        "Aspose.Words.Tables",
         "Aspose.Words.Layout",
         "Aspose.Words.Saving",
+        "System.Text",
+        "Aspose.Words.Replacing",
         "Aspose.Words.Fields",
         "Aspose.Words.Notes",
         "Aspose.Words.Comparing"
@@ -232,23 +233,25 @@
         "DocumentBuilder",
         "NodeType",
         "Directory",
-        "File",
         "Path",
         "Paragraph",
         "Run",
-        "Node",
         "Font",
+        "File",
+        "Node",
+        "StyleIdentifier",
         "Style",
         "SaveFormat",
-        "Range",
+        "HtmlSaveOptions",
         "PdfSaveOptions",
+        "CompositeNode",
         "MemoryStream"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -293,14 +296,13 @@
         "Aspose.Words",
         "Aspose.Words.Comparing",
         "Aspose.Words.Saving",
+        "Aspose.Words.Tables",
         "System.Linq",
-        "Aspose.Words.Layout",
         "Aspose.Words.Drawing",
         "Aspose.Words.Drawing.Charts",
-        "Aspose.Words.Replacing",
-        "System.Drawing",
-        "Aspose.Words.Tables",
-        "System.Collections.Generic"
+        "System.Text",
+        "System.Collections.Generic",
+        "Aspose.Words.Replacing"
       ],
       "key_apis": [
         "Document",
@@ -309,26 +311,25 @@
         "Path",
         "SaveFormat",
         "MemoryStream",
-        "File",
         "Font",
         "CompareOptions",
-        "Node",
         "Paragraph",
+        "Node",
         "NodeType",
-        "Cell",
         "Table",
+        "Cell",
         "Shape",
         "Chart",
         "ChartType",
         "Row",
         "CellFormat",
-        "StyleIdentifier"
+        "File"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -377,42 +378,47 @@
         "Aspose.Words",
         "Aspose.Words.Markup",
         "System.IO",
-        "System.Collections.Generic",
         "Aspose.Words.Drawing",
+        "System.Collections.Generic",
+        "Aspose.Words.BuildingBlocks",
         "Newtonsoft.Json",
         "System.Globalization",
-        "Aspose.Words.Saving",
-        "System.Linq",
+        "System.Text",
         "Aspose.Words.Fields",
         "Aspose.Words.Tables",
         "System.Xml.Linq",
+        "System.Linq",
+        "System.Drawing",
         "Aspose.Words.Themes",
         "System.Net.Http",
         "System.Threading.Tasks",
         "System.Xml",
         "System.Xml.Xsl",
-        "System.Text"
+        "Aspose.Words.Saving"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
-        "Range",
-        "Run",
-        "File",
-        "Directory",
-        "Path",
         "Paragraph",
+        "Run",
         "MemoryStream",
         "Shape",
-        "PdfSaveOptions",
-        "NodeType",
+        "ImageData",
+        "Directory",
+        "File",
+        "Path",
+        "SaveFormat",
+        "Range",
+        "Font",
+        "Field",
+        "FieldType",
         "Table",
         "Row",
         "Cell",
+        "NodeType",
         "Style",
-        "Font",
-        "FieldType",
-        "SaveFormat",
+        "Node",
+        "PdfSaveOptions",
         "HtmlSaveOptions"
       ],
       "required_packages": [
@@ -420,7 +426,7 @@
         "Newtonsoft.Json"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -545,46 +551,42 @@
         "System.Net.Http",
         "Aspose.Drawing",
         "Aspose.Drawing.Imaging",
-        "Aspose.Drawing.Drawing2D",
+        "Aspose.Words.Drawing",
         "System.Linq",
         "System.Net",
         "System.Net.Mail",
         "System.Text",
-        "Aspose.Words.Loading",
-        "Aspose.Words.Fields",
+        "System.Net.Mime",
+        "Aspose.Drawing.Drawing2D",
         "Aspose.Words.Replacing",
-        "Aspose.Words.Drawing",
-        "System.Text.RegularExpressions",
-        "Aspose.Words.BuildingBlocks",
-        "Aspose.Words.Tables",
-        "Aspose.Words.Layout",
-        "System.Collections.Generic"
+        "System.Drawing",
+        "System.Collections.Generic",
+        "Aspose.Words.Loading",
+        "Aspose.Words.Layout"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
         "SaveFormat",
+        "Directory",
         "File",
+        "Path",
         "PdfSaveOptions",
         "MemoryStream",
-        "Directory",
-        "Path",
+        "Font",
         "ImageSaveOptions",
         "HtmlSaveOptions",
-        "Font",
-        "Cell",
         "Range",
         "StyleIdentifier",
-        "FindReplaceOptions",
-        "Row",
-        "Table"
+        "Paragraph",
+        "FindReplaceOptions"
       ],
       "required_packages": [
         "Aspose.Words",
         "Aspose.Drawing.Common"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0",
+        "Aspose.Words": "26.8.0",
         "Aspose.Drawing.Common": "25.11.0"
       }
     },
@@ -632,14 +634,14 @@
         "Aspose.Words.Fields",
         "System.Collections.Generic",
         "Aspose.Words.Drawing",
+        "System.Text",
         "Aspose.Words.Saving",
         "System.Linq",
         "System.IO.Compression",
-        "Newtonsoft.Json",
-        "System.Text",
         "Aspose.Words.Notes",
-        "System.Collections.Concurrent",
-        "System.Threading.Tasks"
+        "Aspose.Words.Loading",
+        "System.Threading.Tasks",
+        "Newtonsoft.Json"
       ],
       "key_apis": [
         "Document",
@@ -647,29 +649,30 @@
         "Node",
         "File",
         "Paragraph",
+        "NodeType",
         "SaveFormat",
         "Range",
         "Field",
-        "NodeType",
-        "Run",
-        "Table",
-        "Cell",
-        "MemoryStream",
-        "Font",
-        "CompositeNode",
-        "StyleIdentifier",
-        "Path",
         "FieldType",
+        "Run",
+        "Cell",
+        "Table",
+        "MemoryStream",
+        "StyleIdentifier",
+        "CompositeNode",
         "Directory",
+        "Path",
         "Shape",
-        "ImageData"
+        "ImageData",
+        "Font",
+        "LoadOptions"
       ],
       "required_packages": [
         "Aspose.Words",
         "Newtonsoft.Json"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -749,31 +752,35 @@
         "Aspose.Drawing",
         "Newtonsoft.Json",
         "System.Text.RegularExpressions",
-        "System.Collections.Generic",
         "System.Text",
-        "System.Globalization",
+        "System.Collections.Generic",
+        "Aspose.Words.Saving",
+        "System.Linq",
         "Aspose.Words.Fields",
+        "System.Globalization",
+        "Aspose.Words.Drawing",
         "Aspose.Words.Tables"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
+        "Path",
         "Range",
         "FindReplaceOptions",
-        "Path",
         "Directory",
+        "Field",
         "File",
         "Paragraph",
         "SaveFormat",
         "MemoryStream",
         "NodeType",
-        "Node",
         "StyleIdentifier",
-        "Font",
+        "Run",
         "FieldType",
         "Style",
-        "Run",
-        "Table"
+        "Font",
+        "Table",
+        "Node"
       ],
       "required_packages": [
         "Aspose.Words",
@@ -781,7 +788,7 @@
         "Newtonsoft.Json"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0",
+        "Aspose.Words": "26.8.0",
         "Aspose.Drawing.Common": "25.11.0"
       }
     },
@@ -830,16 +837,15 @@
         "System",
         "Aspose.Words",
         "System.IO",
-        "Aspose.Words.Drawing",
-        "Aspose.Words.Saving",
-        "System.Diagnostics",
-        "Aspose.Words.Fonts",
-        "Aspose.Words.Themes",
         "Aspose.Drawing",
-        "Newtonsoft.Json",
+        "Aspose.Words.Drawing",
         "Aspose.Words.Settings",
+        "Aspose.Words.Tables",
+        "Aspose.Words.Fonts",
         "System.Globalization",
         "Aspose.Words.Loading",
+        "Aspose.Words.Saving",
+        "System.Text.RegularExpressions",
         "Aspose.Words.Replacing",
         "System.Collections.Generic"
       ],
@@ -849,14 +855,16 @@
         "Run",
         "Font",
         "DocumentBuilder",
+        "Directory",
         "File",
         "Path",
-        "Directory",
-        "SaveFormat",
         "Style",
         "NodeType",
+        "SaveFormat",
         "LoadOptions",
         "PdfSaveOptions",
+        "Range",
+        "FindReplaceOptions",
         "StyleIdentifier"
       ],
       "required_packages": [
@@ -864,7 +872,7 @@
         "Aspose.Drawing.Common"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0",
+        "Aspose.Words": "26.8.0",
         "Aspose.Drawing.Common": "25.11.0"
       }
     },
@@ -909,30 +917,26 @@
         "Aspose.Words",
         "Aspose.Words.Fields",
         "System.IO",
-        "System.Text.Json",
         "System.Collections.Generic",
-        "Aspose.Words.Tables"
+        "System.Text.Json"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
         "Range",
-        "Directory",
         "Path",
-        "Font",
         "FieldType",
         "Field",
-        "NodeType",
+        "Directory",
         "Paragraph",
         "ProtectionType",
-        "Run",
         "File"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -983,36 +987,41 @@
       ],
       "required_namespaces": [
         "System",
-        "System.Globalization",
         "System.IO",
         "Aspose.Words",
         "Aspose.Words.Settings",
+        "System.Globalization",
         "Aspose.Words.Saving",
         "Aspose.Words.Tables",
         "System.Collections.Generic",
+        "Aspose.Words.Replacing",
         "System.Diagnostics",
+        "Aspose.Words.Loading",
         "Aspose.Words.Notes"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
         "File",
-        "Font",
         "SaveFormat",
+        "Font",
+        "Paragraph",
+        "Table",
+        "Cell",
+        "StyleIdentifier",
+        "ImageSaveOptions",
         "Path",
         "Directory",
-        "StyleIdentifier",
-        "Paragraph",
-        "ImageSaveOptions",
         "NodeType",
         "Run",
-        "Style"
+        "Range",
+        "FindReplaceOptions"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -1147,27 +1156,27 @@
         "System.Linq",
         "Aspose.Words",
         "Aspose.Words.Drawing",
-        "Aspose.Drawing",
         "Aspose.Words.Saving",
+        "Aspose.Drawing",
         "Aspose.Drawing.Imaging",
         "Aspose.Drawing.Drawing2D",
         "System.IO.Compression",
         "System.Collections.Generic",
-        "Newtonsoft.Json",
         "Aspose.Words.Tables",
         "Aspose.Words.Notes",
-        "System.Globalization",
         "Aspose.Words.Rendering",
-        "Aspose.Words.Loading",
         "System.Text",
-        "System.Xml",
+        "System.Xml.Linq",
         "Aspose.Words.Markup",
-        "Aspose.Words.Drawing.Charts",
+        "Newtonsoft.Json",
+        "Aspose.Words.Loading",
+        "System.Drawing",
         "Aspose.Words.Math",
         "Aspose.Words.Properties",
-        "System.Xml.Linq",
+        "Aspose.Words.Drawing.Charts",
         "System.Diagnostics",
         "System.ComponentModel",
+        "System.Xml",
         "System.Security.Cryptography"
       ],
       "key_apis": [
@@ -1179,21 +1188,21 @@
         "Shape",
         "ImageData",
         "MemoryStream",
-        "File",
         "Font",
         "SaveFormat",
+        "File",
         "ImageSaveOptions",
-        "Paragraph",
         "Node",
+        "Paragraph",
         "Table",
         "Row",
         "Cell",
+        "HtmlSaveOptions",
+        "Watermark",
+        "PdfSaveOptions",
         "Chart",
         "ChartType",
-        "PdfSaveOptions",
-        "StyleIdentifier",
-        "LoadOptions",
-        "HtmlSaveOptions"
+        "StyleIdentifier"
       ],
       "required_packages": [
         "Aspose.Words",
@@ -1201,7 +1210,7 @@
         "Newtonsoft.Json"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0",
+        "Aspose.Words": "26.8.0",
         "Aspose.Drawing.Common": "25.11.0"
       }
     },
@@ -1253,20 +1262,19 @@
         "Aspose.Words",
         "Aspose.Words.Saving",
         "Aspose.Words.Loading",
-        "System.Drawing",
         "System.Text",
         "System.Text.RegularExpressions",
         "Aspose.Words.Replacing",
+        "Aspose.Words.Drawing",
         "System.Data",
         "Aspose.Words.MailMerging",
-        "Aspose.Words.Drawing",
         "System.Globalization",
         "Aspose.Words.Tables",
         "Aspose.Words.Notes",
-        "Aspose.Words.Fields",
         "System.Collections.Generic",
         "System.Linq",
-        "Aspose.Words.Layout",
+        "Aspose.Words.BuildingBlocks",
+        "Aspose.Words.Fields",
         "System.Net.Http"
       ],
       "key_apis": [
@@ -1281,6 +1289,7 @@
         "HtmlSaveOptions",
         "Paragraph",
         "Style",
+        "StyleIdentifier",
         "Font",
         "Node",
         "CompositeNode",
@@ -1289,7 +1298,7 @@
         "FindReplaceOptions",
         "Table",
         "Run",
-        "Row",
+        "Cell",
         "PdfSaveOptions",
         "FieldType",
         "MemoryStream"
@@ -1298,7 +1307,7 @@
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -1713,60 +1722,61 @@
       "required_namespaces": [
         "System",
         "System.Collections.Generic",
-        "System.IO",
         "Aspose.Words",
         "Aspose.Words.Reporting",
+        "System.IO",
         "System.Text",
         "Aspose.Words.Tables",
-        "Aspose.Words.Drawing",
         "System.Linq",
         "System.Globalization",
-        "System.Text.RegularExpressions",
+        "System.Threading",
+        "Aspose.Words.Replacing",
         "System.Threading.Tasks",
-        "System.Collections",
-        "Newtonsoft.Json",
-        "Aspose.Words.Lists",
-        "System.Data",
         "Aspose.Words.Saving",
+        "System.Collections",
+        "Aspose.Words.Drawing",
+        "System.Text.RegularExpressions",
+        "Newtonsoft.Json",
+        "System.Data",
+        "Aspose.Words.Lists",
         "Aspose.Words.Drawing.Charts",
-        "System.Net.Http",
+        "Aspose.Words.Markup",
         "Aspose.Words.Fields",
         "System.Xml.Linq",
         "System.Text.Json",
-        "System.Threading",
         "System.Diagnostics",
-        "Aspose.Words.Replacing",
+        "System.Runtime.CompilerServices",
         "System.Reflection"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
         "ReportingEngine",
+        "Path",
         "Table",
         "Directory",
         "File",
-        "Path",
-        "Shape",
-        "Cell",
         "NodeType",
         "Paragraph",
         "Run",
+        "StyleIdentifier",
         "JsonDataSource",
         "Range",
+        "FindReplaceOptions",
         "SaveFormat",
-        "StyleIdentifier",
-        "Row",
+        "Shape",
         "MemoryStream",
         "ImageData",
         "ChartType",
         "Chart",
+        "Cell",
+        "Font",
         "Field",
         "FieldType",
         "XmlDataSource",
-        "Font",
         "HtmlSaveOptions",
-        "PdfSaveOptions",
-        "FindReplaceOptions"
+        "Node",
+        "PdfSaveOptions"
       ],
       "required_packages": [
         "Aspose.Words",
@@ -1774,7 +1784,7 @@
         "System.Text.Encoding.CodePages"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0",
+        "Aspose.Words": "26.8.0",
         "System.Text.Encoding.CodePages": "9.0.2"
       }
     },
@@ -1816,13 +1826,12 @@
       ],
       "required_namespaces": [
         "System",
-        "System.IO",
         "Aspose.Words",
         "Aspose.Words.Lists",
+        "System.IO",
         "System.Drawing",
         "Aspose.Words.Saving",
-        "Aspose.Words.Settings",
-        "System.Linq"
+        "Aspose.Words.Settings"
       ],
       "key_apis": [
         "Document",
@@ -1833,14 +1842,13 @@
         "Paragraph",
         "Run",
         "StyleIdentifier",
-        "SaveFormat",
         "NodeType"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -1881,31 +1889,29 @@
       ],
       "required_namespaces": [
         "System",
-        "Aspose.Words",
-        "Aspose.Words.Tables",
-        "System.Data",
         "System.IO",
+        "Aspose.Words",
         "Aspose.Words.MailMerging",
+        "System.Data",
+        "Aspose.Words.Fields",
+        "Aspose.Words.Tables",
         "System.Collections.Generic",
         "SkiaSharp",
-        "Aspose.Words.Fields",
         "System.Globalization",
-        "System.Collections",
+        "Aspose.Words.Settings",
         "Aspose.Words.Saving",
-        "System.IO.Compression",
-        "System.Text",
-        "Aspose.Words.BuildingBlocks"
+        "System.Collections"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
-        "Directory",
         "Path",
-        "File",
         "Font",
+        "Directory",
+        "File",
+        "Range",
         "SaveFormat",
         "Field",
-        "Cell",
         "StyleIdentifier",
         "Table"
       ],
@@ -1913,7 +1919,7 @@
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -1961,9 +1967,8 @@
         "System.Linq",
         "Aspose.Words.Saving",
         "Aspose.Words.Rendering",
-        "System.Collections.Generic",
-        "System.Text",
-        "Aspose.Words.Tables"
+        "Aspose.Words.Loading",
+        "System.Collections.Generic"
       ],
       "key_apis": [
         "Document",
@@ -1979,13 +1984,14 @@
         "Node",
         "CompositeNode",
         "Range",
-        "StyleIdentifier"
+        "StyleIdentifier",
+        "Font"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2031,7 +2037,6 @@
         "System.Runtime.InteropServices",
         "Aspose.Words.Drawing",
         "System.Text",
-        "System.IO.Compression",
         "System.Linq",
         "System.Collections.Generic"
       ],
@@ -2051,7 +2056,7 @@
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2099,42 +2104,43 @@
         "System",
         "Aspose.Words",
         "System.IO",
-        "Aspose.Words.Tables",
-        "System.Linq",
+        "Aspose.Words.Drawing",
+        "System.Drawing",
         "System.Text",
         "Aspose.Words.Saving",
         "Aspose.Words.Loading",
-        "System.Drawing",
         "Aspose.Words.Replacing",
         "System.Collections.Generic",
-        "Aspose.Words.Lists",
-        "Aspose.Words.Drawing",
         "Aspose.Words.Fonts",
-        "Aspose.Words.Fields"
+        "Aspose.Words.Fields",
+        "Aspose.Words.Tables",
+        "System.Linq"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
-        "Path",
         "Paragraph",
         "Directory",
+        "Path",
         "StyleIdentifier",
+        "Run",
         "Style",
         "Font",
         "NodeType",
         "File",
         "MemoryStream",
         "Range",
-        "Run",
-        "Field",
+        "Node",
         "Table",
+        "Field",
+        "FieldType",
         "Cell"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2255,32 +2261,29 @@
       ],
       "required_namespaces": [
         "System",
-        "System.IO",
         "Aspose.Words",
         "Aspose.Words.Drawing",
+        "System.IO",
         "Aspose.Words.Tables",
-        "Aspose.Words.BuildingBlocks",
-        "Aspose.Words.Saving",
         "Aspose.Words.Notes",
         "System.Drawing",
         "Aspose.Words.Fields",
-        "System.Linq",
+        "Aspose.Words.Saving",
         "System.Data",
-        "System.Globalization",
         "Aspose.Words.Lists",
         "System.Collections.Generic",
-        "Aspose.Words.Properties",
         "Aspose.Words.Settings",
+        "System.Globalization",
         "Aspose.Words.Loading",
         "Aspose.Words.Drawing.Charts"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
-        "Directory",
-        "Path",
         "Shape",
         "Font",
+        "Directory",
+        "Path",
         "StyleIdentifier",
         "Table",
         "Paragraph",
@@ -2290,19 +2293,20 @@
         "FieldType",
         "NodeType",
         "Cell",
+        "CellFormat",
+        "SaveFormat",
         "Node",
         "Row",
-        "CellFormat",
         "Run",
-        "SaveFormat",
-        "File",
-        "PdfSaveOptions"
+        "HtmlSaveOptions",
+        "PdfSaveOptions",
+        "File"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2343,33 +2347,34 @@
       ],
       "required_namespaces": [
         "System",
-        "Aspose.Words",
         "System.IO",
-        "Aspose.Words.Saving",
+        "Aspose.Words",
         "System.Text",
         "Aspose.Words.Fields",
-        "Aspose.Words.Replacing",
+        "Aspose.Words.Drawing",
         "System.Collections.Generic",
-        "System.Data"
+        "Aspose.Words.Replacing",
+        "System.Data",
+        "Aspose.Words.Saving"
       ],
       "key_apis": [
         "Document",
         "DocumentBuilder",
-        "Range",
         "Directory",
         "Path",
-        "SaveFormat",
+        "Range",
+        "File",
+        "Node",
+        "CompositeNode",
         "NodeType",
         "Paragraph",
-        "FindReplaceOptions",
-        "Run",
-        "File"
+        "FindReplaceOptions"
       ],
       "required_packages": [
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2455,9 +2460,10 @@
         "Aspose.Words.Saving",
         "Aspose.Drawing",
         "Aspose.Drawing.Imaging",
-        "Aspose.Words.Fonts",
-        "System.Threading.Tasks",
         "System.Linq",
+        "Aspose.Words.Fonts",
+        "Aspose.Words.Drawing",
+        "System.Threading.Tasks",
         "System.Text",
         "System.Text.RegularExpressions",
         "System.Threading"
@@ -2471,6 +2477,7 @@
         "File",
         "ImageSaveOptions",
         "MemoryStream",
+        "StyleIdentifier",
         "Font",
         "PdfSaveOptions",
         "Run"
@@ -2480,7 +2487,7 @@
         "Aspose.Drawing.Common"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0",
+        "Aspose.Words": "26.8.0",
         "Aspose.Drawing.Common": "25.11.0"
       }
     },
@@ -2562,7 +2569,7 @@
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2642,7 +2649,7 @@
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2714,7 +2721,7 @@
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2803,7 +2810,7 @@
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2872,7 +2879,7 @@
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -2950,7 +2957,7 @@
         "Aspose.Words"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     },
     {
@@ -3210,8 +3217,9 @@
         "Newtonsoft.Json"
       ],
       "package_versions": {
-        "Aspose.Words": "26.7.0"
+        "Aspose.Words": "26.8.0"
       }
     }
-  ]
+  ],
+  "run_id": "20260830_195242_46e1a9"
 }
