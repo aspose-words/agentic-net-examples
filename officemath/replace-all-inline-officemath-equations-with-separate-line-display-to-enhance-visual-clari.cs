@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
@@ -9,67 +8,94 @@ public class ReplaceInlineOfficeMath
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // 1. Create a sample document with inline OfficeMath equations.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph with an inline equation.
-        builder.Writeln("Paragraph with an inline equation:");
-        builder.Write("The fraction ");
-        InsertInlineEquation(builder, @"\f(1,2)"); // creates 1/2 as inline equation
-        builder.Writeln(" appears here.");
+        // First paragraph.
+        builder.Writeln("This paragraph contains two inline equations:");
+        builder.Font.Size = 12;
+        builder.Write("The first equation is ");
+        InsertInlineEquation(builder, @"\f(1,2)"); // fraction 1/2
+        builder.Write(", and the second one is ");
+        InsertInlineEquation(builder, @"\r(3,x)"); // cube root of x
+        builder.Writeln(".");
 
-        // Second paragraph with another inline equation.
-        builder.Writeln("Another paragraph:");
-        builder.Write("Integral example: ");
-        InsertInlineEquation(builder, @"\i \su(n=1,5,n)"); // creates a summation integral as inline equation
-        builder.Writeln(" end of line.");
+        // Second paragraph.
+        builder.Writeln("Another paragraph with an inline equation:");
+        builder.Write("Euler's identity: ");
+        InsertInlineEquation(builder, @"\i e^{i\pi}+1=0"); // exponential identity
+        builder.Writeln(".");
 
-        // Process the document: replace all inline OfficeMath equations with display equations.
-        foreach (OfficeMath om in doc.GetChildNodes(NodeType.OfficeMath, true).OfType<OfficeMath>())
+        // Save the original document.
+        string originalPath = Path.Combine(outputDir, "Original.docx");
+        doc.Save(originalPath);
+
+        // 2. Load the document (simulating a separate load step).
+        Document loadedDoc = new Document(originalPath);
+
+        // 3. Change all top‑level inline OfficeMath equations to display mode.
+        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        foreach (OfficeMath officeMath in mathNodes)
         {
-            // Target only top‑level equations (OMathPara) that are currently inline.
-            if (om.MathObjectType == MathObjectType.OMathPara &&
-                om.DisplayType == OfficeMathDisplayType.Inline)
+            if (officeMath.MathObjectType == MathObjectType.OMathPara &&
+                officeMath.DisplayType == OfficeMathDisplayType.Inline)
             {
-                om.DisplayType = OfficeMathDisplayType.Display;
-                om.Justification = OfficeMathJustification.Left;
+                officeMath.DisplayType = OfficeMathDisplayType.Display;
+                officeMath.Justification = OfficeMathJustification.Left;
             }
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Output.docx");
-        doc.Save(outputPath);
+        // 4. Save the modified document.
+        string resultPath = Path.Combine(outputDir, "Result.docx");
+        loadedDoc.Save(resultPath);
 
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+        // 5. Simple validation – ensure the result file exists and contains at least one displayed equation.
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("The result document was not saved.");
+
+        Document validationDoc = new Document(resultPath);
+        NodeCollection resultMaths = validationDoc.GetChildNodes(NodeType.OfficeMath, true);
+        bool hasDisplay = false;
+        foreach (OfficeMath om in resultMaths)
+        {
+            if (om.MathObjectType == MathObjectType.OMathPara &&
+                om.DisplayType == OfficeMathDisplayType.Display)
+            {
+                hasDisplay = true;
+                break;
+            }
+        }
+
+        if (!hasDisplay)
+            throw new InvalidOperationException("No OfficeMath equations were set to display mode.");
     }
 
-    // Helper method that inserts an EQ field, converts it to a real OfficeMath node,
-    // sets it to inline display, and returns the created OfficeMath object.
-    private static OfficeMath InsertInlineEquation(DocumentBuilder builder, string eqArguments)
+    // Inserts an EQ field, writes the EQ arguments, updates the field,
+    // converts it to a real OfficeMath node, inserts the node, and removes the field.
+    private static void InsertInlineEquation(DocumentBuilder builder, string eqArguments)
     {
-        // Insert an EQ field.
+        // Insert an EQ field (the field code initially contains only "EQ").
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        // Write the EQ arguments (e.g., "\f(1,2)").
+
+        // Write the EQ arguments (including the leading backslash) into the field separator.
         builder.MoveTo(field.Separator);
         builder.Write(eqArguments);
-        // Return the builder to the paragraph containing the field.
-        builder.MoveTo(field.Start.ParentNode);
+
+        // Update the field so that Aspose.Words parses the arguments.
+        field.Update();
 
         // Convert the field to an OfficeMath object.
         OfficeMath officeMath = field.AsOfficeMath();
-        if (officeMath != null)
-        {
-            // Insert the OfficeMath node before the field start and remove the field.
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            field.Remove();
+        if (officeMath == null)
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
 
-            // Ensure the equation is initially inline.
-            officeMath.DisplayType = OfficeMathDisplayType.Inline;
-        }
-
-        return officeMath;
+        // Insert the OfficeMath node before the field start and remove the original field.
+        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+        field.Remove();
     }
 }

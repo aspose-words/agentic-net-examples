@@ -1,10 +1,11 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Math;
 using Aspose.Words.Fields;
+using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
-public class Program
+public class OfficeMathTypeDemo
 {
     public static void Main()
     {
@@ -18,56 +19,52 @@ public class Program
         // Insert a radical equation: cube root of x
         InsertOfficeMath(builder, @"\r(3,x)");
 
-        // Save the document to disk.
-        string outputPath = "OfficeMathTypes.docx";
-        doc.Save(outputPath);
+        // Save the document with the created equations.
+        const string outputPath = "OfficeMathTypes.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
 
-        // Validate that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+        // Reload the document to demonstrate enumeration of OfficeMath nodes.
+        Document loadedDoc = new Document(outputPath);
+        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
 
-        // Enumerate all OfficeMath nodes in the document.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath om in mathNodes)
+        Console.WriteLine($"Total OfficeMath nodes found: {mathNodes.Count}");
+        for (int i = 0; i < mathNodes.Count; i++)
         {
-            // Retrieve the MathObjectType of the node.
-            MathObjectType type = om.MathObjectType;
-            Console.WriteLine($"OfficeMath node: MathObjectType = {type}");
+            OfficeMath om = (OfficeMath)mathNodes[i];
+            string typeDescription = om.MathObjectType switch
+            {
+                MathObjectType.Fraction => "Fraction",
+                MathObjectType.Radical => "Radical",
+                _ => $"Other ({om.MathObjectType})"
+            };
 
-            // Determine whether the node is a fraction or a radical.
-            if (type == MathObjectType.Fraction)
-                Console.WriteLine("-> This node represents a fraction.");
-            else if (type == MathObjectType.Radical)
-                Console.WriteLine("-> This node represents a radical.");
-            else
-                Console.WriteLine("-> This node is of another type.");
+            Console.WriteLine($"OfficeMath #{i + 1}: {typeDescription}");
         }
     }
 
-    // Helper method that creates a real OfficeMath node from an EQ field using the deterministic bootstrap workflow.
+    // Helper that inserts an EQ field, converts it to a real OfficeMath node,
+    // and removes the original field.
     private static void InsertOfficeMath(DocumentBuilder builder, string eqArguments)
     {
-        // Insert an EQ field placeholder.
+        // Insert an EQ field.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the EQ arguments (e.g., "\f(1,2)" or "\r(3,x)").
+        // Write the EQ arguments after the field separator.
         builder.MoveTo(field.Separator);
         builder.Write(eqArguments);
-
-        // Return the builder to the paragraph containing the field.
+        // Return the builder to the paragraph that contains the field.
         builder.MoveTo(field.Start.ParentNode);
 
-        // Convert the EQ field to a real OfficeMath object.
+        // Convert the field to an OfficeMath object.
         OfficeMath officeMath = field.AsOfficeMath();
-
-        // If conversion succeeded, replace the field with the OfficeMath node.
         if (officeMath != null)
         {
+            // Insert the OfficeMath before the field start node.
             field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+            // Remove the original field from the document.
             field.Remove();
         }
 
-        // Add a new paragraph after the equation for readability.
+        // Add a new paragraph after the inserted equation for readability.
         builder.InsertParagraph();
     }
 }
