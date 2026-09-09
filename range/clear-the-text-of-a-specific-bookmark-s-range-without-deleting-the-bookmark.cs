@@ -1,39 +1,31 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder to add content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a bookmark named "SampleBookmark" with some text inside it.
-        string bookmarkName = "SampleBookmark";
+        // Insert a bookmark with some text inside it.
+        const string bookmarkName = "MyBookmark";
         builder.StartBookmark(bookmarkName);
-        builder.Write("This text will be cleared.");
+        builder.Write("Text inside the bookmark.");
         builder.EndBookmark(bookmarkName);
 
-        // Save the original document (optional, just for reference).
-        string originalPath = Path.Combine(Environment.CurrentDirectory, "Original.docx");
-        doc.Save(originalPath);
-
-        // Access the bookmark and clear its text while keeping the bookmark itself.
+        // Retrieve the bookmark from the document.
         Bookmark bookmark = doc.Range.Bookmarks[bookmarkName];
-        if (bookmark != null)
-        {
-            // Setting the Text property to an empty string removes the enclosed text.
-            bookmark.Text = string.Empty;
-        }
 
-        // Verify that the bookmark still exists.
-        bool bookmarkExists = doc.Range.Bookmarks[bookmarkName] != null;
-        Console.WriteLine($"Bookmark exists after clearing text: {bookmarkExists}");
+        // Clear the text that the bookmark encloses while keeping the bookmark itself.
+        bookmark.Text = string.Empty;
 
-        // Save the modified document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ClearedBookmark.docx");
+        // Save the resulting document to verify the operation.
+        const string outputPath = "ClearBookmarkText.docx";
         doc.Save(outputPath);
+
+        // Output the bookmark's text after clearing to the console (should be empty).
+        Console.WriteLine($"Bookmark '{bookmark.Name}' text after clearing: '{bookmark.Text}'");
     }
 }

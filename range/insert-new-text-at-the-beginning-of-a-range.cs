@@ -7,22 +7,22 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add initial content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("World!");
 
-        // Insert new text at the very beginning of the document's range.
-        // Move the builder's cursor to the start of the document and write the text.
+        // Add some initial text to the document.
+        builder.Writeln("Original content.");
+
+        // Move the builder cursor to the very start of the document.
         builder.MoveToDocumentStart();
-        builder.Write("Hello ");
 
-        // Optional verification (can be removed in production).
-        string result = doc.GetText().Trim();
-        if (result != "Hello World!")
-            throw new InvalidOperationException("Text insertion failed.");
+        // Insert new text at the beginning of the document's range.
+        builder.Write("Inserted at start. ");
 
-        // Save the modified document.
-        doc.Save("InsertedText.docx");
+        // Save the resulting document.
+        const string outputFile = "Output.docx";
+        doc.Save(outputFile);
+
+        // Print the final document text to the console for verification.
+        Console.WriteLine(doc.GetText().Trim());
     }
 }

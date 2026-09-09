@@ -1,15 +1,16 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert several bookmarks with some text inside each.
+        // Insert five bookmarks with text inside each.
         for (int i = 1; i <= 5; i++)
         {
             string bookmarkName = $"MyBookmark_{i}";
@@ -19,16 +20,17 @@ public class Program
             builder.InsertBreak(BreakType.ParagraphBreak);
         }
 
-        // Locate the bookmark named "MyBookmark_3".
-        Bookmark bookmarkToRemove = doc.Range.Bookmarks["MyBookmark_3"];
-        if (bookmarkToRemove != null)
+        // Locate the specific bookmark by name.
+        string targetBookmarkName = "MyBookmark_3";
+        Bookmark targetBookmark = doc.Range.Bookmarks[targetBookmarkName];
+
+        // Remove the bookmark (the text remains in the document).
+        if (targetBookmark != null)
         {
-            // Remove the bookmark from the document (the text remains).
-            bookmarkToRemove.Remove();
+            targetBookmark.Remove();
         }
 
-        // Save the resulting document.
-        string outputPath = "RemovedBookmark.docx";
-        doc.Save(outputPath);
+        // Save the modified document.
+        doc.Save("Output.docx");
     }
 }

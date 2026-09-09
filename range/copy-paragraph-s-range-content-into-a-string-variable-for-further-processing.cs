@@ -1,32 +1,37 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
-public class Program
+namespace ParagraphRangeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Use DocumentBuilder to add a paragraph with some text.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample paragraph for range extraction.");
+            // Use DocumentBuilder to add some paragraphs.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is the first paragraph.");
+            builder.Writeln("This is the second paragraph.");
 
-        // Retrieve the first paragraph in the document.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+            // Retrieve the first paragraph from the document.
+            Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
 
-        // Copy the paragraph's range content into a string variable.
-        // The Range.Text property returns the text covered by the paragraph,
-        // including the paragraph break character. Trim to remove trailing whitespace.
-        string paragraphContent = paragraph.Range.Text.Trim();
+            // Copy the paragraph's range content into a string variable.
+            string paragraphContent = firstParagraph.Range.Text;
 
-        // Example of further processing: convert the extracted text to upper case.
-        string processedContent = paragraphContent.ToUpper();
+            // The range text includes the paragraph break character; trim if not needed.
+            paragraphContent = paragraphContent.Trim();
 
-        // Output the processed content to the console.
-        Console.WriteLine(processedContent);
+            // Example usage of the extracted text (write to console).
+            Console.WriteLine("Extracted paragraph text:");
+            Console.WriteLine(paragraphContent);
 
-        // Save the document to demonstrate the complete lifecycle.
-        doc.Save("ParagraphRangeCopy.docx");
+            // Save the document to the local file system (optional verification).
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "SampleDocument.docx");
+            doc.Save(outputPath);
+        }
     }
 }
