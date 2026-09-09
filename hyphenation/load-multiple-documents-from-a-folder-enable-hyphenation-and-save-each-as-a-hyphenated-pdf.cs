@@ -4,74 +4,72 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
 
-public class Program
+public class HyphenationBatchExample
 {
     public static void Main()
     {
-        // Prepare folders.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputPdfs");
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Prepare input and output folders.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdfs");
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
         // Create a minimal hyphenation dictionary for English (US).
-        string dictPath = Path.Combine(baseDir, "hyph_en_US.dic");
+        string dictPath = Path.Combine(Directory.GetCurrentDirectory(), "hyph_en_US.dic");
         File.WriteAllText(dictPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary once – it will be used for all documents.
+        // Register the dictionary so that Aspose.Words can hyphenate English text.
         Hyphenation.RegisterDictionary("en-US", dictPath);
 
-        // Create sample source documents.
-        CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"),
-            "extraordinarycharacteristically internationalization communication");
-        CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"),
-            "communication communication communication communication communication");
+        // Create a few sample DOCX files that will later be hyphenated.
+        CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docx"));
+        CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docx"));
 
-        // Process each document in the input folder.
-        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
+        // Process each document: enable hyphenation and save as PDF.
+        foreach (string docPath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            // Load the document.
-            Document doc = new Document(filePath);
+            Document doc = new Document(docPath);
 
             // Enable automatic hyphenation.
             doc.HyphenationOptions.AutoHyphenation = true;
 
-            // Optional: adjust page setup to increase chance of hyphenation.
-            doc.FirstSection.PageSetup.PageWidth = 200; // points
-            doc.FirstSection.PageSetup.LeftMargin = 20;
-            doc.FirstSection.PageSetup.RightMargin = 20;
+            // Apply the locale to all runs in the document so the registered dictionary is used.
+            foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+            {
+                run.Font.LocaleId = new CultureInfo("en-US").LCID;
+            }
 
-            // Save as PDF.
-            string outputFile = Path.Combine(outputDir,
-                Path.GetFileNameWithoutExtension(filePath) + ".pdf");
-            doc.Save(outputFile, SaveFormat.Pdf);
+            // Save as PDF with the same base name.
+            string pdfPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(docPath) + ".pdf");
+            doc.Save(pdfPath, SaveFormat.Pdf);
 
             // Validate that the PDF was created.
-            if (!File.Exists(outputFile))
-                throw new InvalidOperationException($"Failed to create PDF: {outputFile}");
+            if (!File.Exists(pdfPath))
+                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
         }
     }
 
-    // Helper method to create a simple DOCX with given text.
-    private static void CreateSampleDocument(string fileName, string text)
+    // Helper method to create a simple document containing long words that can be hyphenated.
+    private static void CreateSampleDocument(string filePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set language to English (US) so the registered dictionary applies.
+        // Use a narrow page width to force line wrapping.
+        doc.FirstSection.PageSetup.PageWidth = 200;
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
+
+        // Set the locale to English (US) so the registered dictionary applies.
         builder.Font.LocaleId = new CultureInfo("en-US").LCID;
-        builder.Writeln(text);
 
-        // Save the document.
-        doc.Save(fileName, SaveFormat.Docx);
+        // Write a paragraph with words that have hyphenation points defined in the dictionary.
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Verify creation.
-        if (!File.Exists(fileName))
-            throw new InvalidOperationException($"Failed to create source document: {fileName}");
+        doc.Save(filePath);
     }
 }
