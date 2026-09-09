@@ -1,49 +1,67 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class CloneOleObjectExample
 {
     public static void Main()
     {
-        // Create a source document and insert an OLE package object.
-        Document srcDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        // Prepare a folder for temporary files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
-        // Sample data to embed in the OLE package.
-        byte[] sampleData = Encoding.UTF8.GetBytes("Hello from OLE package");
-        using (MemoryStream dataStream = new MemoryStream(sampleData))
+        // Create a simple file that will be embedded as an OLE object.
+        string sampleFilePath = Path.Combine(workDir, "sample.txt");
+        File.WriteAllText(sampleFilePath, "This is sample text for the OLE object.");
+
+        // -----------------------------------------------------------------
+        // 1. Create a source document and embed the sample file as an OLE object.
+        // -----------------------------------------------------------------
+        string sourceDocPath = Path.Combine(workDir, "Source.docx");
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+
+        srcBuilder.Writeln("Source document with an embedded OLE object:");
+        using (FileStream fs = File.OpenRead(sampleFilePath))
         {
-            // Insert the OLE object as a package.
-            Shape oleShape = srcBuilder.InsertOleObject(dataStream, "Package", false, null);
-            // Set package metadata.
-            oleShape.OleFormat.OlePackage.FileName = "sample.txt";
-            oleShape.OleFormat.OlePackage.DisplayName = "Sample Text";
+            // Insert the OLE object as a package (generic container).
+            srcBuilder.InsertOleObject(fs, "Package", false, null);
         }
 
-        // Clone the source document (deep copy).
-        Document clonedDoc = srcDoc.Clone();
+        sourceDoc.Save(sourceDocPath);
 
-        // Retrieve the OLE shape from the cloned document.
-        Shape clonedShape = (Shape)clonedDoc.GetChild(NodeType.Shape, 0, true);
-        OleFormat clonedOle = clonedShape.OleFormat;
+        // -----------------------------------------------------------------
+        // 2. Load the source document and extract the OLE object's raw data.
+        // -----------------------------------------------------------------
+        Document loadedSource = new Document(sourceDocPath);
+        // Find the first shape that contains an OLE object.
+        Shape oleShape = (Shape)loadedSource.GetChild(NodeType.Shape, 0, true);
+        OleFormat oleFormat = oleShape.OleFormat;
 
-        // Extract the OLE data into a memory stream.
-        MemoryStream extractedStream = new MemoryStream();
-        clonedOle.Save(extractedStream);
-        extractedStream.Position = 0; // Reset stream position for reading.
+        // Save the OLE data into a memory stream.
+        MemoryStream oleDataStream = new MemoryStream();
+        oleFormat.Save(oleDataStream);
+        oleDataStream.Position = 0; // Reset for reading.
 
-        // Create a target document where the cloned OLE object will be inserted.
+        // Preserve the original ProgID (required for insertion).
+        string progId = oleFormat.ProgId;
+
+        // -----------------------------------------------------------------
+        // 3. Create a target document and insert the cloned OLE object.
+        // -----------------------------------------------------------------
+        string targetDocPath = Path.Combine(workDir, "Target.docx");
         Document targetDoc = new Document();
-        DocumentBuilder targetBuilder = new DocumentBuilder(targetDoc);
-        targetBuilder.Writeln("Cloned OLE object inserted below:");
+        DocumentBuilder tgtBuilder = new DocumentBuilder(targetDoc);
 
-        // Insert the extracted OLE data into the target document.
-        targetBuilder.InsertOleObject(extractedStream, clonedOle.ProgId, false, null);
+        tgtBuilder.Writeln("Target document with the cloned OLE object:");
+        // Insert the previously extracted OLE data.
+        tgtBuilder.InsertOleObject(oleDataStream, progId, false, null);
 
-        // Save the resulting document.
-        targetDoc.Save("ClonedOleObject.docx");
+        targetDoc.Save(targetDocPath);
+
+        // Inform the user where the files are located.
+        Console.WriteLine("Source document saved to: " + sourceDocPath);
+        Console.WriteLine("Target document saved to: " + targetDocPath);
     }
 }
