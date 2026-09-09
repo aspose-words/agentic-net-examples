@@ -1,52 +1,53 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-namespace ListRestartExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a new document and a builder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Create a numbered list based on the default template.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        // Ensure the list restarts at each section (optional, helps when using section breaks).
+        list.IsRestartAtEachSection = true;
+
+        // Define three chapters.
+        for (int chapter = 1; chapter <= 3; chapter++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Define a base numbered list template.
-            List baseList = doc.Lists.Add(ListTemplate.NumberDefault);
-
-            // -------------------- Chapter 1 --------------------
             // Insert a heading for the chapter.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Chapter 1");
+            builder.Writeln($"Chapter {chapter}");
 
-            // Create a copy of the base list and reset its starting number.
-            List chapter1List = doc.Lists.AddCopy(baseList);
-            chapter1List.ListLevels[0].StartAt = 1; // Restart numbering at 1.
+            // Start a new section so that the list can restart if needed.
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-            // Apply the list to the following paragraphs.
-            builder.ListFormat.List = chapter1List;
-            builder.Writeln("Item 1");
-            builder.Writeln("Item 2");
-            builder.Writeln("Item 3");
-            builder.ListFormat.RemoveNumbers(); // End the list.
+            // Reset the starting number of the first level to 1 for this chapter.
+            list.ListLevels[0].StartAt = 1;
 
-            // -------------------- Chapter 2 --------------------
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Chapter 2");
+            // Apply the list to subsequent paragraphs.
+            builder.ListFormat.List = list;
+            builder.ListFormat.ListLevelNumber = 0; // first level
 
-            // Create another list copy for the second chapter and reset its start.
-            List chapter2List = doc.Lists.AddCopy(baseList);
-            chapter2List.ListLevels[0].StartAt = 1; // Restart numbering at 1.
+            // Add five items to the list.
+            for (int i = 1; i <= 5; i++)
+            {
+                builder.Writeln($"Item {i} of Chapter {chapter}");
+            }
 
-            builder.ListFormat.List = chapter2List;
-            builder.Writeln("Item A");
-            builder.Writeln("Item B");
-            builder.Writeln("Item C");
+            // End the list for this chapter.
             builder.ListFormat.RemoveNumbers();
-
-            // Save the document to disk.
-            doc.Save("NumberedListByChapter.docx");
         }
+
+        // Save the document.
+        doc.Save(Path.Combine(artifactsDir, "NumberedListRestartPerChapter.docx"));
     }
 }

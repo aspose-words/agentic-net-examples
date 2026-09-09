@@ -1,7 +1,7 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using System.Drawing;
 
 public class Program
 {
@@ -13,27 +13,27 @@ public class Program
         // Add a numbered list to the document.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Use the list for a couple of paragraphs so the list is actually stored in the document.
+        // Use DocumentBuilder to add a few list items.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.ListFormat.List = list;
         builder.Writeln("Item 1");
         builder.Writeln("Item 2");
         builder.ListFormat.RemoveNumbers();
 
-        // Retrieve the same list by its unique identifier.
+        // Store the unique identifier of the created list.
         int listId = list.ListId;
-        List retrievedList = doc.Lists.GetListByListId(listId);
 
-        // Adjust properties of the first level of the retrieved list.
+        // Retrieve the same list from the collection by its identifier.
+        List retrievedList = doc.Lists.GetListByListId(listId);
         if (retrievedList != null)
         {
-            ListLevel level0 = retrievedList.ListLevels[0];
-            level0.Font.Color = Color.Blue;      // Change the bullet/number color.
-            level0.StartAt = 5;                  // Start numbering at 5.
-            level0.Alignment = ListLevelAlignment.Right; // Align the number to the right.
+            // Modify properties of the first level of the list.
+            // Change the font color to blue and set the starting number to 10.
+            retrievedList.ListLevels[0].Font.Color = Color.Blue;
+            retrievedList.ListLevels[0].StartAt = 10;
         }
 
-        // Save the modified document.
-        doc.Save("ListAdjusted.docx");
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }

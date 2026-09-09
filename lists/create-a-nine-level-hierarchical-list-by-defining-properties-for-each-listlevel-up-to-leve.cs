@@ -3,45 +3,58 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace ListHierarchyExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a multilevel list based on the default numbered template.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Define custom formatting for each of the nine list levels (0‑8).
-        for (int i = 0; i < 9; i++)
+        public static void Main()
         {
-            ListLevel level = list.ListLevels[i];
+            // Create a new blank document.
+            Document doc = new Document();
 
-            // Example customizations: font, size, color, numbering style and positions.
-            level.Font.Name = "Arial";
-            level.Font.Size = 12 + i; // Increment size per level.
-            level.Font.Color = Color.FromArgb((i * 30) % 256, (i * 60) % 256, (i * 90) % 256);
-            level.NumberStyle = NumberStyle.Arabic; // Simple Arabic numbers for all levels.
-            level.NumberFormat = "\x0000"; // Use the default number placeholder.
-            level.NumberPosition = -36 - i * 5; // Shift number position leftwards.
-            level.TextPosition = 144 + i * 10; // Indent text for each level.
-            level.TabPosition = 144 + i * 10; // Align tab position with text.
+            // Create a DocumentBuilder which will be used to insert content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add a multilevel list based on the default numbered template.
+            // All Aspose.Words lists contain 9 levels (0‑8).
+            List multilevelList = doc.Lists.Add(ListTemplate.NumberDefault);
+
+            // Define custom formatting for each of the nine list levels.
+            for (int level = 0; level < 9; level++)
+            {
+                ListLevel listLevel = multilevelList.ListLevels[level];
+
+                // Example customizations:
+                listLevel.Font.Name = "Arial";
+                listLevel.Font.Size = 12 + level;               // Increment size per level.
+                listLevel.Font.Color = Color.FromArgb(20 * level, 0, 255 - 20 * level);
+                listLevel.NumberStyle = NumberStyle.Arabic;    // Use Arabic numbers for all levels.
+                listLevel.NumberFormat = $"%{level}.";         // Simple format showing the level index.
+                listLevel.NumberPosition = -36 - (level * 10); // Indent numbers further for deeper levels.
+                listLevel.TextPosition = 144 + (level * 20);   // Indent text after the number.
+                listLevel.TabPosition = listLevel.TextPosition;
+                listLevel.Alignment = ListLevelAlignment.Left;
+                listLevel.TrailingCharacter = ListTrailingCharacter.Tab;
+            }
+
+            // Apply the list to the builder and write one item per level.
+            builder.ListFormat.List = multilevelList;
+
+            for (int level = 0; level < 9; level++)
+            {
+                // Set the current list level (0‑8) for the paragraph.
+                builder.ListFormat.ListLevelNumber = level;
+
+                // Write a paragraph that will appear at this level.
+                builder.Writeln($"Level {level + 1}");
+            }
+
+            // End the list formatting.
+            builder.ListFormat.RemoveNumbers();
+
+            // Save the document to the local file system.
+            string outputPath = "NineLevelHierarchy.docx";
+            doc.Save(outputPath);
         }
-
-        // Apply the list to the document and write a paragraph for each level.
-        builder.ListFormat.List = list;
-        for (int i = 0; i < 9; i++)
-        {
-            builder.ListFormat.ListLevelNumber = i; // Set current list level.
-            builder.Writeln($"Level {i + 1}");
-        }
-
-        // Remove list formatting from subsequent paragraphs (optional).
-        builder.ListFormat.RemoveNumbers();
-
-        // Save the document to a file in the current directory.
-        doc.Save("HierarchicalList.docx");
     }
 }
