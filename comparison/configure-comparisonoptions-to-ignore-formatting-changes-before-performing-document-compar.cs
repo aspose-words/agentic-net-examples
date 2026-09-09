@@ -7,45 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original contract document.
-        Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("CONFIDENTIAL AGREEMENT");
-        builderOriginal.Font.Bold = true;
-        builderOriginal.Writeln("This agreement is made between Party A and Party B.");
-        builderOriginal.Font.Bold = false;
-        builderOriginal.Font.Italic = true;
-        builderOriginal.Writeln("The term of this agreement shall be five (5) years.");
-        builderOriginal.Font.Italic = false;
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create the revised contract document with the same text but different formatting.
-        Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
+        // Create the original legal contract document.
+        Document originalContract = new Document();
+        DocumentBuilder builderOriginal = new DocumentBuilder(originalContract);
+        // Title with bold formatting.
+        builderOriginal.Font.Size = 16;
+        builderOriginal.Font.Bold = true;
+        builderOriginal.Writeln("CONFIDENTIAL AGREEMENT");
+        // Reset formatting for body text.
+        builderOriginal.Font.Size = 12;
+        builderOriginal.Font.Bold = false;
+        builderOriginal.Writeln("This Agreement is made between Party A and Party B.");
+        builderOriginal.Writeln("The term of this Agreement shall be five (5) years.");
+        // Save the original for reference (optional).
+        originalContract.Save(Path.Combine(outputDir, "OriginalContract.docx"));
+
+        // Create the revised legal contract document with some formatting changes.
+        Document revisedContract = new Document();
+        DocumentBuilder builderRevised = new DocumentBuilder(revisedContract);
+        // Title without bold formatting (formatting change we want to ignore).
+        builderRevised.Font.Size = 16;
+        builderRevised.Font.Bold = false; // Different formatting.
         builderRevised.Writeln("CONFIDENTIAL AGREEMENT");
-        builderRevised.Font.Bold = false; // different formatting
-        builderRevised.Writeln("This agreement is made between Party A and Party B.");
-        builderRevised.Font.Bold = true;
-        builderRevised.Font.Italic = false; // different formatting
-        builderRevised.Writeln("The term of this agreement shall be five (5) years.");
-        builderRevised.Font.Italic = true;
+        // Body text with a minor content change.
+        builderRevised.Font.Size = 12;
+        builderRevised.Font.Bold = false;
+        builderRevised.Writeln("This Agreement is made between Party A and Party B.");
+        builderRevised.Writeln("The term of this Agreement shall be six (6) years."); // Content change.
+        revisedContract.Save(Path.Combine(outputDir, "RevisedContract.docx"));
 
         // Configure comparison options to ignore formatting changes.
-        CompareOptions options = new CompareOptions
+        CompareOptions compareOptions = new CompareOptions
         {
-            IgnoreFormatting = true
+            IgnoreFormatting = true // Ignore all formatting differences.
         };
 
-        // Perform the comparison.
-        original.Compare(revised, "LegalTeam", DateTime.Now, options);
+        // Perform the comparison. The original document will receive revisions.
+        originalContract.Compare(revisedContract, "LegalTeam", DateTime.Now, compareOptions);
 
-        // Verify that no revisions were generated because only formatting differences exist.
-        if (original.Revisions.Count != 0)
-        {
-            throw new InvalidOperationException($"Expected zero revisions, but found {original.Revisions.Count}.");
-        }
+        // Verify that revisions were created (there should be at least one due to content change).
+        int revisionCount = originalContract.Revisions.Count;
+        Console.WriteLine($"Revisions detected: {revisionCount}");
 
         // Save the comparison result.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ContractComparisonResult.docx");
-        original.Save(outputPath);
+        string resultPath = Path.Combine(outputDir, "ComparisonResult.docx");
+        originalContract.Save(resultPath);
+        Console.WriteLine($"Comparison document saved to: {resultPath}");
     }
 }

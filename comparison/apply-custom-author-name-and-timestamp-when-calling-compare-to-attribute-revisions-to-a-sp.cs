@@ -1,8 +1,7 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
-public class Program
+public class CompareWithCustomAuthor
 {
     public static void Main()
     {
@@ -14,13 +13,13 @@ public class Program
         // Create the revised document with a modification.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the edited paragraph with changes.");
+        builderRevised.Writeln("This is the edited paragraph with a change.");
 
         // Define custom author name and timestamp for the comparison.
         string customAuthor = "CustomUser";
-        DateTime customDate = new DateTime(2023, 1, 1, 12, 0, 0);
+        DateTime customDate = new DateTime(2023, 12, 31, 23, 59, 59, DateTimeKind.Utc);
 
-        // Perform the comparison. Revisions will be attributed to the custom author and date.
+        // Perform the comparison. Revisions will be attributed to the custom author and timestamp.
         original.Compare(revised, customAuthor, customDate);
 
         // Verify that revisions were created.
@@ -32,11 +31,16 @@ public class Program
         // Output revision details to the console.
         foreach (Revision rev in original.Revisions)
         {
-            Console.WriteLine($"Revision by '{rev.Author}' on {rev.DateTime:u}: {rev.RevisionType}");
+            Console.WriteLine($"Revision Type: {rev.RevisionType}");
+            Console.WriteLine($"Author: {rev.Author}");
+            Console.WriteLine($"Date: {rev.DateTime:u}");
+            Console.WriteLine($"Changed Text: \"{rev.ParentNode.GetText().Trim()}\"");
+            Console.WriteLine();
         }
 
-        // Save the document that now contains the revisions.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.docx");
+        // Save the compared document (contains revisions) to the local folder.
+        string outputPath = "Compared.docx";
         original.Save(outputPath);
+        Console.WriteLine($"Comparison document saved to: {outputPath}");
     }
 }

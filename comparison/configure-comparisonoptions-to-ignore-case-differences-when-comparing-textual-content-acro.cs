@@ -9,14 +9,14 @@ public class Program
         // Create the original document with mixed‑case text.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello World!");
+        builderOriginal.Writeln("Hello World.");
 
-        // Create the revised document that differs only by case.
+        // Create the revised document with the same text but different case.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("hello world!");
+        builderRevised.Writeln("hello world.");
 
-        // Configure comparison to ignore case changes.
+        // Configure comparison options to ignore case changes.
         CompareOptions compareOptions = new CompareOptions
         {
             IgnoreCaseChanges = true
@@ -25,12 +25,11 @@ public class Program
         // Perform the comparison.
         original.Compare(revised, "Author", DateTime.Now, compareOptions);
 
-        // Verify that no revisions were created because case differences are ignored.
+        // Because case differences are ignored, there should be no revisions.
         if (original.Revisions.Count != 0)
-            throw new InvalidOperationException("Revisions were created despite ignoring case changes.");
+            throw new InvalidOperationException("Revisions were generated despite ignoring case changes.");
 
         // Save the result document.
-        string outputPath = "ComparisonIgnoreCase.docx";
-        original.Save(outputPath);
+        original.Save("ComparisonIgnoreCase.docx");
     }
 }

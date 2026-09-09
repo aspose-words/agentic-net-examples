@@ -1,37 +1,40 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Comparing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the original document with some text.
+        // Create the original document.
         Document original = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(original);
-        builder1.Writeln("Hello world.");
-        builder1.Writeln("This line will stay the same.");
+        DocumentBuilder builderOriginal = new DocumentBuilder(original);
+        builderOriginal.Writeln("This is the original paragraph.");
+        builderOriginal.Writeln("It has two lines.");
 
-        // Create the revised document that contains a change.
+        // Create the revised document with some changes.
         Document revised = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(revised);
-        builder2.Writeln("Hello changed world."); // Modified line.
-        builder2.Writeln("This line will stay the same."); // Unchanged line.
+        DocumentBuilder builderRevised = new DocumentBuilder(revised);
+        builderRevised.Writeln("This is the edited paragraph."); // changed text
+        builderRevised.Writeln("It has two lines."); // same line
+        builderRevised.Writeln("An additional line was added."); // new line
 
-        // Compare the documents. Revisions are added to the original document.
-        original.Compare(revised, "Author", DateTime.Now);
+        // Compare the documents. The comparison adds revisions to the original document.
+        original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Ensure that the comparison produced at least one revision.
+        // Verify that revisions were created.
         if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after comparison.");
+            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
 
-        // Accept all revisions, turning the original into the revised version.
+        // Accept all revisions, turning the original document into the revised version.
         original.Revisions.AcceptAll();
 
-        // Verify that all revisions have been accepted.
+        // Ensure all revisions have been accepted.
         if (original.Revisions.Count != 0)
-            throw new InvalidOperationException("All revisions should be accepted.");
+            throw new InvalidOperationException("Revisions were not fully accepted.");
 
-        // Save the cleaned (revision‑free) document.
-        original.Save("CleanedDocument.docx");
+        // Save the cleaned document.
+        string outputPath = "CleanedDocument.docx";
+        original.Save(outputPath);
     }
 }
