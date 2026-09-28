@@ -1,57 +1,50 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 
-public class BatchClearRangeExample
+public class Program
 {
     public static void Main()
     {
-        // Define folders for input and output documents.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        // Create a folder for the sample documents.
+        string folder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
+        Directory.CreateDirectory(folder);
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
-
-        // Sample document names.
+        // Names of the documents to process.
         string[] docNames = { "Doc1.docx", "Doc2.docx", "Doc3.docx" };
+        List<string> docPaths = new List<string>();
 
-        // Create sample source documents with some content.
+        // Create sample documents with some text.
         foreach (string name in docNames)
         {
-            string inputPath = Path.Combine(inputFolder, name);
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is the content of {name}.");
-            doc.Save(inputPath);
+            string path = Path.Combine(folder, name);
+            CreateSampleDocument(path, $"This is sample content for {name}");
+            docPaths.Add(path);
         }
 
-        // Batch process: load each document, clear its entire range, and save the result.
-        foreach (string name in docNames)
+        // Batch process: clear the content of each document using Document.Range.Delete().
+        foreach (string path in docPaths)
         {
-            string inputPath = Path.Combine(inputFolder, name);
-            string outputPath = Path.Combine(outputFolder, name);
-
-            // Load the document.
-            Document doc = new Document(inputPath);
-
-            // Delete all characters in the document's range, effectively clearing the content.
-            doc.Range.Delete();
-
-            // Save the cleared document.
-            doc.Save(outputPath);
+            Document doc = new Document(path);
+            doc.Range.Delete();               // Remove all nodes from the document.
+            doc.Save(path);                    // Overwrite the original file.
         }
 
-        // Optional verification: ensure that the output documents are empty.
-        foreach (string name in docNames)
+        // Simple verification: output the length of the remaining text (should be 0 or minimal).
+        foreach (string path in docPaths)
         {
-            string outputPath = Path.Combine(outputFolder, name);
-            Document clearedDoc = new Document(outputPath);
-            string text = clearedDoc.Range.Text.Trim();
-
-            // The text should be empty after deletion.
-            Console.WriteLine($"{name} cleared: {(string.IsNullOrEmpty(text) ? "Yes" : "No")}");
+            Document doc = new Document(path);
+            Console.WriteLine($"{Path.GetFileName(path)} text length after clear: {doc.Range.Text.Length}");
         }
+    }
+
+    // Helper method to create a simple document with a single paragraph of text.
+    private static void CreateSampleDocument(string filePath, string text)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(text);
+        doc.Save(filePath);
     }
 }

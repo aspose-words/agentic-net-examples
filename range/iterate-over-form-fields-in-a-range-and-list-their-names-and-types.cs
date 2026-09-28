@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -7,41 +6,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a combo box form field.
-        builder.Write("Choose a value from this combo box: ");
-        FormField comboBox = builder.InsertComboBox("MyComboBox", new[] { "One", "Two", "Three" }, 0);
-        comboBox.CalculateOnExit = true;
-
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
-        // Insert a check box form field.
-        builder.Write("Click this check box to tick/untick it: ");
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 50);
-        checkBox.IsCheckBoxExactSize = true;
-
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
         // Insert a text input form field.
-        builder.Write("Enter text here: ");
-        FormField textInput = builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Placeholder text", 50);
-        textInput.EntryMacro = "EntryMacro";
-        textInput.ExitMacro = "ExitMacro";
+        // Parameters: name, type, format, default text, max length.
+        builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "", 0);
+        builder.Writeln();
 
-        // Get the collection of all form fields in the document's range.
-        FormFieldCollection formFields = doc.Range.FormFields;
+        // Insert a checkbox form field.
+        builder.InsertCheckBox("CheckBox1", true, 0);
+        builder.Writeln();
 
-        // Iterate over the collection and print each field's name and type.
-        using (IEnumerator<FormField> enumerator = formFields.GetEnumerator())
+        // Insert a dropdown (combo box) form field.
+        // Parameters: name, list of items, selected index.
+        string[] items = new string[] { "Choice1", "Choice2" };
+        FormField dropdown = builder.InsertComboBox("DropDown1", items, 0);
+        builder.Writeln();
+
+        // Save the document (optional, demonstrates that the document is valid).
+        doc.Save("SampleFormFields.docx");
+
+        // Iterate over all form fields in the document's range and list their names and types.
+        foreach (FormField field in doc.Range.FormFields)
         {
-            while (enumerator.MoveNext())
-            {
-                FormField field = enumerator.Current;
-                Console.WriteLine($"Name: {field.Name}, Type: {field.Type}");
-            }
+            Console.WriteLine($"Name: {field.Name}, Type: {field.Type}");
         }
     }
 }

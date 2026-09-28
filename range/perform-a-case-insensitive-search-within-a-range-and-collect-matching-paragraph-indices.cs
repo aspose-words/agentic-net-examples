@@ -5,76 +5,68 @@ using Aspose.Words.Replacing;
 
 public class Program
 {
-    // Callback that records the index of each paragraph containing a match.
-    private class MatchRecorder : IReplacingCallback
+    public static void Main()
     {
-        private readonly List<int> _paragraphIndices;
+        // Create a sample document with several paragraphs.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello World");
+        builder.Writeln("This is a sample paragraph.");
+        builder.Writeln("Another line with hello.");
+        builder.Writeln("No match here.");
+        builder.Writeln("HELLO again!");
 
-        public MatchRecorder(List<int> paragraphIndices)
+        // Term to search for (case‑insensitive).
+        string searchTerm = "hello";
+
+        // Collector for paragraph indices that contain the term.
+        var collector = new ParagraphIndexCollector(doc);
+
+        // Configure case‑insensitive search and attach the callback.
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            _paragraphIndices = paragraphIndices;
-        }
+            MatchCase = false,
+            ReplacingCallback = collector   // Use the callback via options.
+        };
 
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        // Perform the search. No actual replacement occurs because the callback returns Skip.
+        doc.Range.Replace(searchTerm, string.Empty, options);
+
+        // Output the collected paragraph indices.
+        Console.WriteLine($"Paragraph indices containing the term \"{searchTerm}\":");
+        foreach (int index in collector.ParagraphIndices)
         {
-            // Find the paragraph that contains the match.
-            Node node = args.MatchNode;
-            while (node != null && node.NodeType != NodeType.Paragraph)
-                node = node.ParentNode;
-
-            if (node is Paragraph paragraph)
-            {
-                // The paragraph's parent story is a Body (or HeaderFooter, etc.).
-                // Retrieve the collection of paragraphs from that story.
-                var body = paragraph.ParentNode as CompositeNode;
-                if (body != null)
-                {
-                    var paragraphs = body.GetChildNodes(NodeType.Paragraph, true);
-                    int index = paragraphs.IndexOf(paragraph);
-                    _paragraphIndices.Add(index);
-                }
-            }
-
-            // Skip actual replacement; we only want to record matches.
-            return ReplaceAction.Skip;
+            Console.WriteLine(index);
         }
     }
 
-    public static void Main()
+    // Callback that records the index of each paragraph where a match is found.
+    private class ParagraphIndexCollector : IReplacingCallback
     {
-        // Create a sample document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        private readonly Document _document;
+        public List<int> ParagraphIndices { get; } = new List<int>();
 
-        builder.Writeln("Aspose.Words is a powerful library.");
-        builder.Writeln("This example demonstrates a case‑insensitive search.");
-        builder.Writeln("Search for the word 'example' in this document.");
-        builder.Writeln("Another line without the keyword.");
-        builder.Writeln("EXAMPLE appears in different case.");
-
-        // Prepare a list to hold paragraph indices where the term is found.
-        List<int> matchingParagraphIndices = new List<int>();
-
-        // Configure find/replace options for a case‑insensitive search.
-        FindReplaceOptions options = new FindReplaceOptions
+        public ParagraphIndexCollector(Document document)
         {
-            MatchCase = false, // case‑insensitive
-            ReplacingCallback = new MatchRecorder(matchingParagraphIndices)
-        };
-
-        // Perform a find operation without modifying the document.
-        // The pattern is the word we are searching for.
-        string searchTerm = "example";
-        doc.Range.Replace(searchTerm, searchTerm, options);
-
-        // Output the collected paragraph indices.
-        Console.WriteLine("Paragraph indices containing the term \"{0}\":", searchTerm);
-        foreach (int idx in matchingParagraphIndices)
-        {
-            Console.WriteLine(idx);
+            _document = document;
         }
 
-        // Save the document (optional, demonstrates the lifecycle rule).
-        doc.Save("SampleDocument.docx");
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs e)
+        {
+            // The match node is a Run; get its parent paragraph.
+            if (e.MatchNode is Run run)
+            {
+                Paragraph paragraph = run.ParentParagraph;
+                NodeCollection allParagraphs = _document.GetChildNodes(NodeType.Paragraph, true);
+                int index = allParagraphs.IndexOf(paragraph);
+                if (index >= 0 && !ParagraphIndices.Contains(index))
+                {
+                    ParagraphIndices.Add(index);
+                }
+            }
+
+            // Skip actual replacement.
+            return ReplaceAction.Skip;
+        }
     }
 }

@@ -1,39 +1,41 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-namespace RangeFormFieldValidation
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add sample paragraphs.
+        builder.Writeln("This is a sample document.");
+        builder.Writeln("ReplaceMe"); // Text that will be replaced.
+
+        // Validate that the document's range contains no form fields.
+        if (doc.Range.FormFields.Count == 0)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Add sample text that we intend to replace later.
-            builder.Writeln("Hello _Name_!");
-
-            // Validate that the whole document range contains no form fields.
-            // The FormFields collection is available on the Range object.
-            if (doc.Range.FormFields.Count == 0)
-            {
-                // Since there are no form fields, perform the replacement.
-                int replacements = doc.Range.Replace("_Name_", "World");
-                Console.WriteLine($"Replacements made: {replacements}");
-            }
-            else
-            {
-                Console.WriteLine("The range contains form fields; replacement skipped.");
-            }
-
-            // Save the resulting document.
-            doc.Save("Result.docx");
-
-            // Output the final document text to the console for verification.
-            Console.WriteLine("Final document text:");
-            Console.WriteLine(doc.GetText().Trim());
+            // Perform the text replacement because no form fields are present.
+            FindReplaceOptions options = new FindReplaceOptions();
+            doc.Range.Replace("ReplaceMe", "ReplacedText", options);
         }
+        else
+        {
+            // If form fields exist, skip replacement (could log or handle as needed).
+            Console.WriteLine("Document contains form fields; replacement aborted.");
+        }
+
+        // Save the resulting document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        doc.Save(outputPath);
+
+        // Optional verification: ensure the replacement occurred.
+        bool replacementSucceeded = doc.Range.Text.Contains("ReplacedText");
+        Console.WriteLine(replacementSucceeded
+            ? "Replacement completed successfully."
+            : "Replacement was not performed.");
     }
 }

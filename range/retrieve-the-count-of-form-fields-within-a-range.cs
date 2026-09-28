@@ -1,36 +1,36 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.BuildingBlocks;
 using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a combo box form field.
-        builder.Write("Choose a value: ");
-        builder.InsertComboBox("ComboBox", new[] { "One", "Two", "Three" }, 0);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Insert several legacy form fields.
+        builder.InsertCheckBox("CheckBox1", false, 0);
+        builder.Writeln();
 
-        // Insert a check box form field.
-        builder.Write("Check this box: ");
-        builder.InsertCheckBox("CheckBox", false, 50);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Insert a text input form field using the correct enum.
+        builder.InsertTextInput(
+            "TextInput1",
+            TextFormFieldType.Regular,
+            "",
+            "Default text",
+            0);
+        builder.Writeln();
 
-        // Insert a text input form field.
-        builder.Write("Enter text: ");
-        builder.InsertTextInput("TextInput", TextFormFieldType.Regular, "", "Placeholder", 50);
+        builder.InsertComboBox("ComboBox1", new string[] { "OptionA", "OptionB", "OptionC" }, 0);
+        builder.Writeln();
 
-        // Retrieve the count of form fields in the whole document range.
+        // Retrieve the count of form fields within the document's range.
         int formFieldCount = doc.Range.FormFields.Count;
 
-        // Output the count.
-        Console.WriteLine($"Number of form fields in the document: {formFieldCount}");
-
-        // Save the document (optional, demonstrates that the document is valid).
-        doc.Save("FormFieldsCount.docx");
+        // Output the result.
+        Console.WriteLine($"Number of form fields in the document range: {formFieldCount}");
     }
 }

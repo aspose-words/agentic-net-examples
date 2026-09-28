@@ -5,30 +5,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document (contains one default section).
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add text to the first section.
-        builder.Writeln("Section 1 - Hello World!");
+        // First (default) section already has a Body, add a paragraph to it.
+        Section firstSection = doc.FirstSection;
+        Paragraph para1 = new Paragraph(doc);
+        para1.AppendChild(new Run(doc, "This is the first section."));
+        firstSection.Body.AppendChild(para1);
 
-        // Insert a section break to start a new section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Create a second section.
+        Section secondSection = new Section(doc);
+        // A Section must contain a Body node; add it explicitly.
+        Body secondBody = new Body(doc);
+        secondSection.AppendChild(secondBody);
+        // Add a paragraph to the second section's body.
+        Paragraph para2 = new Paragraph(doc);
+        para2.AppendChild(new Run(doc, "This is the second section."));
+        secondBody.AppendChild(para2);
+        // Add the second section to the document.
+        doc.Sections.Add(secondSection);
 
-        // Add text to the second section.
-        builder.Writeln("Section 2 - Aspose.Words example.");
+        // Save the document locally.
+        const string fileName = "Sample.docx";
+        doc.Save(fileName);
 
-        // Save the document locally (optional, demonstrates the save rule).
-        const string outputPath = "Sections.docx";
-        doc.Save(outputPath);
+        // Load the document back from the file.
+        Document loadedDoc = new Document(fileName);
 
-        // Iterate through each section and extract its plain text via the section's Range.Text property.
-        for (int i = 0; i < doc.Sections.Count; i++)
+        // Iterate through each section and output its plain text.
+        int sectionIndex = 1;
+        foreach (Section section in loadedDoc.Sections)
         {
-            Section section = doc.Sections[i];
-            // Trim removes trailing control characters such as section breaks.
-            string plainText = section.Range.Text.Trim();
-            Console.WriteLine($"Section {i + 1} text: {plainText}");
+            string sectionText = section.Range.Text;
+            Console.WriteLine($"Section {sectionIndex} text:");
+            Console.WriteLine(sectionText);
+            sectionIndex++;
         }
     }
 }

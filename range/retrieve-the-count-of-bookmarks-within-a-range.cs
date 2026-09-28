@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -9,23 +10,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three bookmarks with some text inside each.
-        for (int i = 1; i <= 3; i++)
+        // Insert first paragraph with a bookmark.
+        builder.StartBookmark("bm1");
+        builder.Writeln("First paragraph.");
+        builder.EndBookmark("bm1");
+
+        // Insert second paragraph with a bookmark.
+        builder.StartBookmark("bm2");
+        builder.Writeln("Second paragraph.");
+        builder.EndBookmark("bm2");
+
+        // Insert third paragraph with a bookmark.
+        builder.StartBookmark("bm3");
+        builder.Writeln("Third paragraph.");
+        builder.EndBookmark("bm3");
+
+        // Save the document (optional, demonstrates lifecycle handling).
+        doc.Save("BookmarksDemo.docx");
+
+        // Get the second paragraph.
+        Paragraph secondParagraph = doc.FirstSection.Body.Paragraphs[1];
+
+        // Count bookmarks that are fully contained within the second paragraph.
+        int bookmarkCount = 0;
+        foreach (Bookmark bookmark in doc.Range.Bookmarks)
         {
-            string bookmarkName = $"MyBookmark_{i}";
-            builder.StartBookmark(bookmarkName);
-            builder.Write($"Text inside {bookmarkName}.");
-            builder.EndBookmark(bookmarkName);
-            builder.Writeln(); // Add a paragraph break after each bookmark.
+            // Determine the paragraph that contains the bookmark start.
+            Paragraph bookmarkParagraph = bookmark.BookmarkStart.GetAncestor(NodeType.Paragraph) as Paragraph;
+
+            // If the bookmark start resides in the second paragraph, count it.
+            if (bookmarkParagraph == secondParagraph)
+                bookmarkCount++;
         }
 
-        // Retrieve the collection of bookmarks that exist in the whole document range.
-        BookmarkCollection bookmarks = doc.Range.Bookmarks;
-
-        // Get the count of bookmarks.
-        int bookmarkCount = bookmarks.Count;
-
-        // Output the count to the console.
-        Console.WriteLine($"Number of bookmarks in the document range: {bookmarkCount}");
+        // Output the result.
+        Console.WriteLine($"Number of bookmarks within the selected range: {bookmarkCount}");
     }
 }

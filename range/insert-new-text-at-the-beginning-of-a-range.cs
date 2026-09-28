@@ -7,22 +7,17 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Add initial content.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is the original document text.");
 
-        // Add some initial text to the document.
-        builder.Writeln("Original content.");
+        // Insert new text at the very beginning of the document.
+        DocumentBuilder insertBuilder = new DocumentBuilder(doc);
+        insertBuilder.MoveToDocumentStart();
+        insertBuilder.Write("Inserted at start. ");
 
-        // Move the builder cursor to the very start of the document.
-        builder.MoveToDocumentStart();
-
-        // Insert new text at the beginning of the document's range.
-        builder.Write("Inserted at start. ");
-
-        // Save the resulting document.
-        const string outputFile = "Output.docx";
-        doc.Save(outputFile);
-
-        // Print the final document text to the console for verification.
-        Console.WriteLine(doc.GetText().Trim());
+        // Save the modified document.
+        doc.Save("Result.docx");
     }
 }

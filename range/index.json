@@ -9,7 +9,7 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.8.0"
+      "Aspose.Words": "26.9.0"
     },
     "required_namespaces": [
       "System",
@@ -143,8 +143,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 7,
@@ -308,8 +308,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 22,

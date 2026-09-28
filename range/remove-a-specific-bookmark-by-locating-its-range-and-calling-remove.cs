@@ -1,36 +1,38 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert five bookmarks with text inside each.
-        for (int i = 1; i <= 5; i++)
-        {
-            string bookmarkName = $"MyBookmark_{i}";
-            builder.StartBookmark(bookmarkName);
-            builder.Write($"Text inside {bookmarkName}.");
-            builder.EndBookmark(bookmarkName);
-            builder.InsertBreak(BreakType.ParagraphBreak);
-        }
+        // Build a simple paragraph with a bookmark.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a paragraph before the bookmark.");
+
+        // Insert a bookmark named "MyBookmark" around some text.
+        builder.StartBookmark("MyBookmark");
+        builder.Writeln("This text is inside the bookmark.");
+        builder.EndBookmark("MyBookmark");
+
+        builder.Writeln("This is a paragraph after the bookmark.");
+
+        // Save the document before removing the bookmark (optional verification step).
+        string beforePath = "DocumentBeforeRemoval.docx";
+        doc.Save(beforePath);
 
         // Locate the specific bookmark by name.
-        string targetBookmarkName = "MyBookmark_3";
-        Bookmark targetBookmark = doc.Range.Bookmarks[targetBookmarkName];
-
-        // Remove the bookmark (the text remains in the document).
-        if (targetBookmark != null)
+        Bookmark bookmark = doc.Range.Bookmarks["MyBookmark"];
+        if (bookmark != null)
         {
-            targetBookmark.Remove();
+            // Remove the bookmark by calling its Remove method.
+            bookmark.Remove();
         }
 
-        // Save the modified document.
-        doc.Save("Output.docx");
+        // Save the document after the bookmark has been removed.
+        string afterPath = "DocumentAfterRemoval.docx";
+        doc.Save(afterPath);
     }
 }

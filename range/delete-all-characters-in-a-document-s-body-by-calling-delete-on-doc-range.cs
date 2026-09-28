@@ -5,17 +5,19 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add some sample text.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add some sample text to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is some sample text that will be deleted.");
+        builder.Writeln("Hello World!");
+        builder.Writeln("This is a second paragraph.");
 
-        // Delete all characters in the document's body by calling Delete on the document's Range.
+        // Save the original document (optional, just for reference).
+        doc.Save("original.docx");
+
+        // Delete all characters in the document's body by deleting the whole document range.
         doc.Range.Delete();
 
-        // Save the resulting (empty) document to a file in the current directory.
-        doc.Save("DeletedContent.docx");
+        // Save the resulting document after deletion.
+        doc.Save("deleted.docx");
     }
 }
