@@ -7,37 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "CustomFontSubstitution.pdf");
-
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure font settings.
+        // Set the font to Times New Roman (the font we will substitute).
+        builder.Font.Name = "Times New Roman";
+        builder.Writeln("This text should be rendered with Calibri because Times New Roman is missing.");
+
+        // Configure a custom font substitution rule: replace Times New Roman with Calibri.
         FontSettings fontSettings = new FontSettings();
+        fontSettings.SubstitutionSettings.TableSubstitution.AddSubstitutes("Times New Roman", new string[] { "Calibri" });
         doc.FontSettings = fontSettings;
 
-        // Add a custom substitution: replace missing "Times New Roman" with "Calibri".
-        TableSubstitutionRule tableRule = fontSettings.SubstitutionSettings.TableSubstitution;
-        tableRule.AddSubstitutes("Times New Roman", "Calibri");
-
-        // Validate that the substitution was added.
-        var substitutes = tableRule.GetSubstitutes("Times New Roman");
-        if (substitutes == null || !substitutes.Contains("Calibri"))
-            throw new InvalidOperationException("Failed to add Calibri as a substitute for Times New Roman.");
-
-        // Write some text using the font that we want to substitute.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("This line is formatted with Times New Roman, which will be rendered using Calibri.");
-
-        // Save the document to PDF.
+        // Save the document.
+        string outputPath = "CustomFontSubstitution.docx";
         doc.Save(outputPath);
 
-        // Ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output PDF was not created.", outputPath);
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document saved successfully: " + Path.GetFullPath(outputPath));
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Fonts;
 
 public class Program
 {
@@ -8,30 +9,47 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a run with some text.
-        Run run = new Run(doc, "Bold, Italic, Underlined");
+        // Insert a paragraph with a single run of text.
+        builder.Write("Sample text for font styling.");
 
-        // Apply bold, italic and underline formatting using the Font properties.
+        // Retrieve the run we just added.
+        Paragraph paragraph = doc.FirstSection.Body.Paragraphs[0];
+        Run run = (Run)paragraph.Runs[0];
+
+        // Apply bold, italic, and underline formatting.
         run.Font.Bold = true;
         run.Font.Italic = true;
-        run.Font.Underline = Aspose.Words.Underline.Single;
+        // The correct enum for underline style is Underline (not UnderlineType).
+        run.Font.Underline = Underline.Single;
 
         // Validate that the properties were set correctly.
-        if (!run.Font.Bold || !run.Font.Italic || run.Font.Underline != Aspose.Words.Underline.Single)
-            throw new InvalidOperationException("Font formatting was not applied as expected.");
+        bool isBold = run.Font.Bold;
+        bool isItalic = run.Font.Italic;
+        bool isUnderline = run.Font.Underline == Underline.Single;
 
-        // Append the run to the first paragraph of the document.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
+        if (isBold && isItalic && isUnderline)
+        {
+            Console.WriteLine("Bold, italic, and underline applied successfully.");
+        }
+        else
+        {
+            Console.WriteLine("Font formatting validation failed.");
+        }
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FormattedRun.docx");
-
-        // Save the document.
+        // Save the document to disk.
+        string outputPath = "FormattedRun.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully at: {Path.GetFullPath(outputPath)}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

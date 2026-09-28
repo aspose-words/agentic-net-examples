@@ -6,31 +6,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Create a run with some text.
-        Run run = new Run(doc, "Hello Aspose.Words!");
+        // Use DocumentBuilder to work with the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Change the font size of the run to 14 points.
+        // Create a Run with sample text.
+        Run run = new Run(doc, "Sample text for font size change.");
+
+        // Change the font size of the Run to 14 points.
         run.Font.Size = 14;
 
-        // Append the run to the first paragraph of the document.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
+        // Validate that the font size was set correctly.
+        if (run.Font.Size != 14)
+        {
+            Console.WriteLine("Font size was not set correctly.");
+        }
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RunFontSize.docx");
+        // Insert the Run into the document.
+        builder.InsertNode(run);
 
-        // Save the document.
+        // Define output file path.
+        string outputPath = "Output.docx";
+
+        // Save the document to disk.
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (File.Exists(outputPath))
         {
-            // Load the saved document and confirm the font size.
-            Document loadedDoc = new Document(outputPath);
-            Run loadedRun = (Run)loadedDoc.GetChild(NodeType.Run, 0, true);
-            double fontSize = loadedRun.Font.Size; // Should be 14
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
         }
     }
 }

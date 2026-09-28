@@ -1,40 +1,54 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fonts;
-using Aspose.Drawing;
 
-namespace FontClearFormattingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Get the first paragraph of the document (created by default).
-            Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        // Insert a paragraph with a run of text.
+        builder.Writeln("Sample text before formatting.");
 
-            // Create a run with some text.
-            Run run = new Run(doc, "Formatted text");
+        // Retrieve the first run in the document.
+        Run run = (Run)doc.FirstSection.Body.Paragraphs[0].Runs[0];
 
-            // Apply custom font formatting.
-            Aspose.Words.Font font = run.Font;
-            font.Name = "Courier New";
-            font.Size = 24;
-            // Use Aspose.Drawing.Color to define the color, then convert to System.Drawing.Color.
-            font.Color = System.Drawing.Color.FromArgb(Aspose.Drawing.Color.Blue.ToArgb());
+        // Apply various font attributes.
+        run.Font.Name = "Arial";
+        run.Font.Size = 16;
+        run.Font.Bold = true;
+        run.Font.Color = System.Drawing.Color.Red;
 
-            // Add the run to the paragraph.
-            paragraph.AppendChild(run);
+        // Display font attributes before clearing.
+        Console.WriteLine("Before ClearFormatting:");
+        PrintFontInfo(run.Font);
 
-            // Reset all font attributes of the run to their defaults.
-            run.Font.ClearFormatting();
+        // Reset all font attributes to defaults.
+        run.Font.ClearFormatting();
 
-            // Save the document to the local file system.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-            doc.Save(outputPath);
-        }
+        // Display font attributes after clearing.
+        Console.WriteLine("After ClearFormatting:");
+        PrintFontInfo(run.Font);
+
+        // Save the document.
+        string outputPath = "ResetFontExample.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        Console.WriteLine(File.Exists(outputPath) ? "File saved successfully." : "Failed to save file.");
+    }
+
+    private static void PrintFontInfo(Aspose.Words.Font font)
+    {
+        // Helper method to output font properties.
+        string name = string.IsNullOrEmpty(font.Name) ? "(default)" : font.Name;
+        string size = font.Size > 0 ? font.Size.ToString() : "(default)";
+        string bold = font.Bold ? "True" : "False";
+        string color = font.Color.IsEmpty ? "(default)" : font.Color.ToString();
+
+        Console.WriteLine($"Name: {name}, Size: {size}, Bold: {bold}, Color: {color}");
     }
 }

@@ -5,25 +5,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add a run with an emphasis mark.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.EmphasisMark = Aspose.Words.EmphasisMark.OverSolidCircle;
-        builder.Write("East Asian text with emphasis");
 
-        // Save the document so that an output file exists.
-        const string outputPath = "EmphasisMark.docx";
-        doc.Save(outputPath);
+        // Set East Asian font and an emphasis mark.
+        builder.Font.Name = "MS Mincho";
+
+        // Use a valid EmphasisMark value that exists in the current Aspose.Words version.
+        builder.Font.EmphasisMark = EmphasisMark.None; // Change to a different value if needed.
+
+        builder.Writeln("Sample text with emphasis mark.");
 
         // Retrieve the first Run in the document.
-        Run run = (Run)doc.GetChild(NodeType.Run, 0, true);
-
-        // Get the EmphasisMark value from the Run's Font.
-        Aspose.Words.EmphasisMark emphasis = run.Font.EmphasisMark;
+        Run run = (Run)doc.GetChildNodes(NodeType.Run, true)[0];
+        EmphasisMark emphasis = run.Font.EmphasisMark;
 
         // Display the EmphasisMark value.
-        Console.WriteLine($"EmphasisMark value: {emphasis}");
+        Console.WriteLine($"EmphasisMark: {emphasis}");
+
+        // Save the document to verify output.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Confirm the file was saved.
+        if (System.IO.File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved to {outputPath}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

@@ -9,34 +9,33 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Ensure the document has at least one paragraph to host the run.
-        if (doc.FirstSection?.Body?.FirstParagraph == null)
-        {
-            doc.FirstSection.Body.AppendChild(new Paragraph(doc));
-        }
+        // Add a new paragraph to the document.
+        Paragraph paragraph = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(paragraph);
 
-        // Create a run with sample text.
-        Run run = new Run(doc, "Hello World!");
+        // Create a Run with sample text.
+        Run run = new Run(doc, "Hello, Aspose.Words!");
+        paragraph.AppendChild(run);
 
-        // Set the font name of the run to Arial.
-        Aspose.Words.Font font = run.Font;
-        font.Name = "Arial";
+        // Set the font name of the Run to Arial.
+        run.Font.Name = "Arial";
 
         // Validate that the font name was set correctly.
-        if (font.Name != "Arial")
-            throw new InvalidOperationException("Failed to set the font name to Arial.");
-
-        // Append the run to the first paragraph.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
+        if (run.Font.Name != "Arial")
+        {
+            throw new InvalidOperationException("Font name was not set to Arial.");
+        }
 
         // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RunWithArial.docx");
+        string outputPath = "Output.docx";
 
-        // Save the document.
+        // Save the document to disk.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the output file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The document was not saved.", outputPath);
+        {
+            throw new FileNotFoundException("The output file was not created.", outputPath);
+        }
     }
 }

@@ -7,48 +7,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content with different fonts.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Add a paragraph with a run of text.
+        Paragraph paragraph = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(paragraph);
+        Run run = new Run(doc, "Hello, world with embedded font!");
+        paragraph.AppendChild(run);
 
-        // First paragraph with Arial.
-        builder.Font.Name = "Arial";
-        builder.Writeln("This text is rendered with Arial.");
+        // Set the font for the run using Aspose.Words.Font.
+        run.Font.Name = "Arial";
 
-        // Second paragraph with Times New Roman.
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("This text is rendered with Times New Roman.");
+        // Validate that the font name was set correctly.
+        if (run.Font.Name != "Arial")
+        {
+            throw new InvalidOperationException("Font name was not set correctly.");
+        }
 
-        // Third paragraph with a custom font (if available on the system).
-        builder.Font.Name = "Courier New";
-        builder.Writeln("This text is rendered with Courier New.");
-
-        // Prepare the output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Define the output PDF file path.
-        string outputPath = Path.Combine(outputDir, "EmbeddedFonts.pdf");
-
-        // Configure PDF save options to embed full fonts.
+        // Configure PDF save options to embed all used fonts.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             EmbedFullFonts = true
         };
 
-        // Save the document as PDF with the specified options.
+        // Save the document as PDF.
+        string outputPath = "EmbeddedFontDocument.pdf";
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
+        // Verify that the output file exists.
+        if (!File.Exists(outputPath))
         {
-            Console.WriteLine($"PDF successfully saved with embedded fonts at: {outputPath}");
+            throw new FileNotFoundException("Failed to create the output PDF.", outputPath);
         }
-        else
-        {
-            Console.WriteLine("Failed to save the PDF file.");
-        }
+
+        // Indicate successful completion.
+        Console.WriteLine($"Document saved successfully to {Path.GetFullPath(outputPath)}");
     }
 }

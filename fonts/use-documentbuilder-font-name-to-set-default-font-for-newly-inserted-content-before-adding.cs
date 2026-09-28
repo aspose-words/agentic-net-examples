@@ -6,32 +6,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Define output file path
+        string outputPath = "DefaultFont.docx";
+
+        // Create a new blank document
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Initialize DocumentBuilder for the document
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the default font name for all subsequently inserted text.
-        builder.Font.Name = "Arial";
+        // Set the default font name for all subsequently inserted content
+        string desiredFont = "Arial";
+        builder.Font.Name = desiredFont;
 
-        // Verify that the font name was set correctly.
-        if (builder.Font.Name != "Arial")
+        // Validate that the font name was set correctly
+        if (!string.Equals(builder.Font.Name, desiredFont, StringComparison.OrdinalIgnoreCase))
         {
-            Console.WriteLine("Failed to set the default font.");
-            return;
+            throw new InvalidOperationException($"Failed to set font name to '{desiredFont}'.");
         }
 
-        // Insert text that will use the default font.
-        builder.Writeln("This text is formatted with the default Arial font.");
+        // Insert a paragraph using the default font
+        builder.Writeln("This paragraph is formatted with the default font set to Arial.");
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DefaultFontExample.docx");
-
-        // Save the document to the specified path.
+        // Save the document to disk
         doc.Save(outputPath);
 
-        // Confirm that the file was created.
-        Console.WriteLine(File.Exists(outputPath) ? "Document saved successfully." : "Document save failed.");
+        // Verify that the file was created
+        if (!File.Exists(outputPath))
+        {
+            throw new FileNotFoundException($"The document was not saved to '{outputPath}'.");
+        }
+
+        // Optional: indicate success (no user interaction required)
+        Console.WriteLine("Document created successfully at " + Path.GetFullPath(outputPath));
     }
 }

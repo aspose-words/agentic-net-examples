@@ -1,45 +1,45 @@
-using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Drawing;
+using System;
+using System.IO;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Get the first paragraph of the document (it always exists in a new document).
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        // Use DocumentBuilder to add a paragraph with a run of text.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This run will be blue.");
 
-        // Create a run with sample text.
-        Run run = new Run(doc, "Hello Aspose!");
+        // Retrieve the first run in the first paragraph.
+        Run run = doc.FirstSection.Body.Paragraphs[0].Runs[0];
 
-        // Create Aspose.Drawing.Color.Blue and convert it to System.Drawing.Color.
+        // Create a blue color using Aspose.Drawing.Color.
         Aspose.Drawing.Color asposeBlue = Aspose.Drawing.Color.Blue;
-        System.Drawing.Color sysBlue = System.Drawing.Color.FromArgb(asposeBlue.ToArgb());
 
-        // Assign the System.Drawing.Color to the run's font.
-        run.Font.Color = sysBlue;
+        // Convert Aspose.Drawing.Color to System.Drawing.Color as required by Font.Color.
+        System.Drawing.Color systemBlue = System.Drawing.Color.FromArgb(asposeBlue.ToArgb());
 
-        // Append the run to the paragraph.
-        paragraph.AppendChild(run);
+        // Assign the blue color to the run's font.
+        run.Font.Color = systemBlue;
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RunBlueColor.docx");
+        // Validate that the color was set correctly.
+        if (run.Font.Color.ToArgb() != systemBlue.ToArgb())
+        {
+            throw new Exception("Font color assignment failed.");
+        }
 
-        // Save the document.
+        // Save the document to a file.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
+        // Ensure the output file exists.
+        if (!File.Exists(outputPath))
         {
-            Console.WriteLine("Document saved successfully: " + outputPath);
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
+            throw new Exception("Output file was not created.");
         }
     }
 }

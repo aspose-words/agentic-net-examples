@@ -1,55 +1,53 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Fonts;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare directories and file names
+        string baseDir = Path.Combine(Path.GetTempPath(), "AsposeFontDemo");
+        Directory.CreateDirectory(baseDir);
+        string originalPath = Path.Combine(baseDir, "original.docx");
+        string substitutedPath = Path.Combine(baseDir, "substituted.docx");
 
-        // Step 1: Create a sample document that uses a font that likely does not exist.
-        string sourceDocPath = Path.Combine(outputDir, "MissingFont.docx");
-        Document tempDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(tempDoc);
-        builder.Font.Name = "MissingFont";
-        builder.Writeln("This text is formatted with a missing font.");
-        tempDoc.Save(sourceDocPath);
+        // Create a document that uses a non‑existent font
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "NonExistentFont";
+        builder.Writeln("This text uses a font that is not installed on the system.");
+        doc.Save(originalPath);
 
-        // Step 2: Configure FontSettings to substitute missing fonts with a known font (e.g., Arial).
+        // Configure FontSettings for automatic substitution
         FontSettings fontSettings = new FontSettings();
+        fontSettings.SubstitutionSettings.DefaultFontSubstitution.Enabled = true;
         fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial";
 
-        // Step 3: Create LoadOptions and assign the FontSettings.
-        LoadOptions loadOptions = new LoadOptions();
-        loadOptions.FontSettings = fontSettings;
+        // Load the document and apply the FontSettings
+        Document loadedDoc = new Document(originalPath);
+        loadedDoc.FontSettings = fontSettings;
 
-        // Step 4: Load the document using the configured LoadOptions.
-        Document doc = new Document(sourceDocPath, loadOptions);
+        // Save the document after substitution
+        loadedDoc.Save(substitutedPath);
 
-        // Optional: Keep original font metrics after substitution.
-        doc.LayoutOptions.KeepOriginalFontMetrics = true;
+        // Validate that the font was substituted
+        Run firstRun = (Run)loadedDoc.GetChild(NodeType.Run, 0, true);
+        string substitutedFontName = firstRun.Font.Name ?? string.Empty;
+        bool outputExists = File.Exists(substitutedPath);
 
-        // Step 5: Attach a warning callback to capture any font substitution warnings.
-        WarningInfoCollection warningCollector = new WarningInfoCollection();
-        doc.WarningCallback = warningCollector;
-
-        // Step 6: Save the loaded document to PDF; missing fonts will be substituted automatically.
-        string pdfPath = Path.Combine(outputDir, "Result.pdf");
-        doc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Output any captured warnings to the console.
-        foreach (WarningInfo info in warningCollector)
+        var result = new
         {
-            if (info.WarningType == WarningType.FontSubstitution)
-                Console.WriteLine(info.Description);
-        }
+            OriginalFont = "NonExistentFont",
+            SubstitutedFont = substitutedFontName,
+            OutputFile = substitutedPath,
+            OutputExists = outputExists
+        };
 
-        // Indicate completion.
-        Console.WriteLine($"Document saved to: {pdfPath}");
+        // Output validation result as JSON
+        string jsonResult = JsonConvert.SerializeObject(result, Formatting.Indented);
+        Console.WriteLine(jsonResult);
     }
 }

@@ -10,25 +10,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph of text.
-        builder.Writeln("This paragraph will have double line spacing.");
+        // Add a paragraph with default line spacing.
+        builder.Writeln("This paragraph uses the default line spacing.");
 
-        // Set line spacing to double (24 points) using the Multiple rule.
+        // Set line spacing to double for subsequent paragraphs.
         builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 24; // 2 * 12 points (default line height)
+        builder.ParagraphFormat.LineSpacing = 2.0;
 
-        // Validate that the settings were applied correctly.
-        bool ruleIsMultiple = builder.ParagraphFormat.LineSpacingRule == LineSpacingRule.Multiple;
-        bool spacingIsDouble = Math.Abs(builder.ParagraphFormat.LineSpacing - 24) < 0.001;
+        // Add a paragraph that will inherit the double line spacing.
+        builder.Writeln("This paragraph has double line spacing.");
 
-        Console.WriteLine($"LineSpacingRule set to Multiple: {ruleIsMultiple}");
-        Console.WriteLine($"LineSpacing set to double (24 points): {spacingIsDouble}");
+        // Validate that the line spacing was set correctly.
+        if (builder.ParagraphFormat.LineSpacingRule != LineSpacingRule.Multiple ||
+            Math.Abs(builder.ParagraphFormat.LineSpacing - 2.0) > 0.0001)
+        {
+            throw new InvalidOperationException("Line spacing was not set to double.");
+        }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DoubleLineSpacing.docx");
+        // Save the document to disk.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
-        Console.WriteLine($"Document saved successfully: {File.Exists(outputPath)}");
+        if (!File.Exists(outputPath))
+        {
+            throw new FileNotFoundException("The output file was not created.", outputPath);
+        }
     }
 }

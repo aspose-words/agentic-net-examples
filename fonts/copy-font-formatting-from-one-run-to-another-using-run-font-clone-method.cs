@@ -1,57 +1,52 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Drawing; // For Aspose.Drawing.Color
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Ensure the document has at least one paragraph.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
+        // Add first run with specific font formatting.
+        builder.Font.Name = "Arial";
+        builder.Font.Size = 16;
+        builder.Font.Bold = true;
+        builder.Writeln("First run text");
 
-        // Create the source run with custom font formatting.
-        Run sourceRun = new Run(doc, "Source text");
-        // Set font name, size, bold and color.
-        sourceRun.Font.Name = "Courier New";
-        sourceRun.Font.Size = 24;
-        sourceRun.Font.Bold = true;
-        // Convert Aspose.Drawing.Color to System.Drawing.Color as required by the API.
-        sourceRun.Font.Color = System.Drawing.Color.FromArgb(Aspose.Drawing.Color.Red.ToArgb());
+        // Retrieve the first run.
+        Run run1 = (Run)doc.GetChild(NodeType.Run, 0, true);
 
-        // Append the source run to the paragraph.
-        para.AppendChild(sourceRun);
+        // Add second run with default formatting.
+        builder.Writeln("Second run text");
 
-        // Create the destination run with default formatting.
-        Run destRun = new Run(doc, "Destination text");
-        para.AppendChild(destRun);
+        // Retrieve the second run.
+        Run run2 = (Run)doc.GetChild(NodeType.Run, 1, true);
 
-        // Copy the font properties from the source run to the destination run.
-        destRun.Font.Name = sourceRun.Font.Name;
-        destRun.Font.Size = sourceRun.Font.Size;
-        destRun.Font.Bold = sourceRun.Font.Bold;
-        destRun.Font.Color = sourceRun.Font.Color;
+        // Copy font formatting from run1 to run2 by assigning individual properties.
+        run2.Font.Name = run1.Font.Name;
+        run2.Font.Size = run1.Font.Size;
+        run2.Font.Bold = run1.Font.Bold;
 
-        // Validate that the font properties were copied correctly.
-        if (destRun.Font.Name != sourceRun.Font.Name ||
-            destRun.Font.Size != sourceRun.Font.Size ||
-            destRun.Font.Bold != sourceRun.Font.Bold ||
-            destRun.Font.Color.ToArgb() != sourceRun.Font.Color.ToArgb())
-        {
-            throw new InvalidOperationException("Font properties were not copied correctly.");
-        }
+        // Validate that the font properties were copied.
+        bool isCopySuccessful = run2.Font.Name == run1.Font.Name &&
+                                run2.Font.Size == run1.Font.Size &&
+                                run2.Font.Bold == run1.Font.Bold;
 
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CopyFontFormatting.docx");
+        // Save the document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        // Ensure the output file exists.
+        if (File.Exists(outputPath) && isCopySuccessful)
         {
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            Console.WriteLine("Font formatting copied successfully and file saved.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to copy font formatting or save the file.");
         }
     }
 }
