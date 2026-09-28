@@ -1,32 +1,30 @@
 using System;
+using System.Data;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add merge fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello <<FirstName>> <<LastName>>,");
+        builder.Writeln("Your order <<OrderNumber>> has been shipped.");
 
-        // Insert merge fields into the document.
-        builder.Write("Dear ");
-        builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
-        builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName", "<LastName>");
-        builder.Writeln(":");
-        builder.InsertField("MERGEFIELD Message", "<Message>");
+        // Prepare a data source for mail merge.
+        DataTable table = new DataTable("Customers");
+        table.Columns.Add("FirstName");
+        table.Columns.Add("LastName");
+        table.Columns.Add("OrderNumber");
+        table.Rows.Add("John", "Doe", "12345");
+        table.Rows.Add("Jane", "Smith", "67890");
 
-        // Prepare data for a single record mail merge.
-        string[] fieldNames = { "FirstName", "LastName", "Message" };
-        object[] fieldValues = { "John", "Doe", "Hello! This document was created with Aspose.Words mail merge." };
-
-        // Execute the mail merge.
-        doc.MailMerge.Execute(fieldNames, fieldValues);
+        // Execute mail merge.
+        doc.MailMerge.Execute(table);
 
         // Save the merged document as PDF.
-        string outputPath = "MergedDocument.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        doc.Save("MergedOutput.pdf", SaveFormat.Pdf);
     }
 }

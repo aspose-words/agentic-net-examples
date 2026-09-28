@@ -1,60 +1,43 @@
 using System;
-using System.Data;
 using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
-using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add a merge field for the date.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Report Date:");
+        builder.InsertField("MERGEFIELD Date \\* MERGEFORMAT");
 
-        // Insert a MERGEFIELD with a date format switch.
-        // The field will display the date according to the format we provide in the callback.
-        builder.InsertField("MERGEFIELD Date \\@ \"dddd, d MMMM yyyy\"");
-
-        // Prepare a data source with a single DateTime value.
-        DataTable table = new DataTable("Data");
-        table.Columns.Add("Date", typeof(DateTime));
-        table.Rows.Add(new DateTime(2020, 1, 1));
-
-        // Assign a custom field merging callback that formats the date using a specific culture.
+        // Assign a custom callback to format the date during mail merge.
         doc.MailMerge.FieldMergingCallback = new DateFormattingCallback();
 
-        // Execute the mail merge.
-        doc.MailMerge.Execute(table);
+        // Execute mail merge with the current date.
+        doc.MailMerge.Execute(
+            new string[] { "Date" },
+            new object[] { DateTime.Now });
 
-        // Output the merged result to the console.
-        Console.WriteLine(doc.Range.Text.Trim());
+        // Save the resulting document.
+        doc.Save("FormattedDateOutput.docx");
     }
 
-    // Custom callback that formats DateTime values using the German culture.
+    // Custom callback to format date fields using a specific culture.
     private class DateFormattingCallback : IFieldMergingCallback
     {
-        public void FieldMerging(FieldMergingArgs args)
+        public void FieldMerging(FieldMergingArgs e)
         {
-            // Ensure the field value is a DateTime.
-            if (args.FieldValue is DateTime dateValue)
+            if (e.FieldName == "Date" && e.FieldValue is DateTime dt)
             {
-                // Use German culture for formatting.
-                CultureInfo germanCulture = new CultureInfo("de-DE");
-                // Apply the same format as defined in the field switch.
-                string formatted = dateValue.ToString("dddd, d MMMM yyyy", germanCulture);
-                // Set the Text property to insert the formatted date.
-                args.Text = formatted;
-            }
-            else
-            {
-                // For non‑DateTime fields, fall back to the default behavior.
-                args.Text = null;
+                // Format the date as "dd MMMM yyyy" in French culture.
+                e.Text = dt.ToString("dd MMMM yyyy", new CultureInfo("fr-FR"));
             }
         }
 
-        // Required by the interface but not used in this example.
+        // Required by the interface but not used for image fields.
         public void ImageFieldMerging(ImageFieldMergingArgs args) { }
     }
 }

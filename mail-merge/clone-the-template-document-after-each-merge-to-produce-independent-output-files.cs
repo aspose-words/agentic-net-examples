@@ -1,48 +1,35 @@
 using System;
-using System.Data;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutputs");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a simple mail‑merge template in memory.
+        // Create a template document in memory.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Write("Dear ");
-        builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
-        builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName", "<LastName>");
-        builder.Writeln(":");
-        builder.InsertField("MERGEFIELD Message", "<Message>");
+        builder.Writeln("Dear <<Name>>,");
+        builder.Writeln("Your order <<OrderNumber>> has been shipped.");
+        builder.Writeln("Thank you for shopping with us.");
 
-        // Build a data source with several records.
-        DataTable data = new DataTable("Customers");
-        data.Columns.Add("FirstName");
-        data.Columns.Add("LastName");
-        data.Columns.Add("Message");
-        data.Rows.Add("John", "Doe", "Welcome to our service!");
-        data.Rows.Add("Jane", "Smith", "Your order has shipped.");
-        data.Rows.Add("Bob", "Johnson", "Thank you for your feedback.");
+        // Data for mail merge.
+        string[] names = { "John Doe", "Jane Smith", "Bob Johnson" };
+        int[] orderNumbers = { 1001, 1002, 1003 };
 
-        // Perform a separate merge for each record, cloning the template each time.
-        for (int i = 0; i < data.Rows.Count; i++)
+        // Perform mail merge for each record, cloning the template each time.
+        for (int i = 0; i < names.Length; i++)
         {
-            // Deep clone the template so each output file is independent.
-            Document mergedDoc = (Document)template.Clone(true);
+            // Clone the template to get an independent document.
+            Document output = (Document)template.Clone(true);
 
-            // Execute mail merge for the current DataRow.
-            mergedDoc.MailMerge.Execute(data.Rows[i]);
+            // Execute mail merge with a single record.
+            output.MailMerge.Execute(
+                new string[] { "Name", "OrderNumber" },
+                new object[] { names[i], orderNumbers[i] });
 
-            // Save the merged document with a unique name.
-            string outFile = Path.Combine(outputDir, $"MergedDocument_{i + 1}.docx");
-            mergedDoc.Save(outFile);
+            // Save the result to a separate file.
+            string fileName = $"Output_{i + 1}.docx";
+            output.Save(fileName);
         }
     }
 }

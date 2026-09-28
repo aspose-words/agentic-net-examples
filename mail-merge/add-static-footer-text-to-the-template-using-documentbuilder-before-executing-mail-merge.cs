@@ -1,7 +1,7 @@
 using System;
-using System.Data;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Fields;
 
 public class Program
 {
@@ -11,47 +11,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ------------------------------------------------------------
-        // Add a static footer that will appear on every page.
-        // ------------------------------------------------------------
-        // Move the builder to the primary footer of the first section.
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        // Write the static text.
-        builder.Write("Confidential – For internal use only");
-        // Add a line break after the footer text.
-        builder.Writeln();
-
-        // ------------------------------------------------------------
-        // Build a simple mail‑merge template.
-        // ------------------------------------------------------------
-        // Move back to the main body of the document.
-        builder.MoveToDocumentEnd();
+        // Insert some merge fields into the body of the document.
         builder.Writeln("Dear ");
-        builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
-        builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName", "<LastName>");
-        builder.Writeln(":");
-        builder.InsertField("MERGEFIELD Message", "<Message>");
 
-        // ------------------------------------------------------------
-        // Prepare sample data for the mail merge.
-        // ------------------------------------------------------------
-        DataTable table = new DataTable("Data");
-        table.Columns.Add("FirstName");
-        table.Columns.Add("LastName");
-        table.Columns.Add("Message");
+        // Insert MERGEFIELD Name.
+        builder.InsertField(FieldType.FieldMergeField, true);
+        builder.Write(" Name");
 
-        table.Rows.Add("John", "Doe", "Welcome to Aspose.Words!");
-        table.Rows.Add("Jane", "Smith", "Your order has been shipped.");
+        builder.Writeln(",");
 
-        // ------------------------------------------------------------
-        // Execute the mail merge.
-        // ------------------------------------------------------------
-        doc.MailMerge.Execute(table);
+        builder.Writeln("Your order number is ");
 
-        // ------------------------------------------------------------
-        // Save the resulting document.
-        // ------------------------------------------------------------
-        doc.Save("MailMergeWithFooter.docx");
+        // Insert MERGEFIELD OrderNumber.
+        builder.InsertField(FieldType.FieldMergeField, true);
+        builder.Write(" OrderNumber");
+
+        builder.Writeln(".");
+
+        // Add static footer text using DocumentBuilder.
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("This is a static footer added before mail merge.");
+
+        // Prepare data for mail merge.
+        string[] fieldNames = { "Name", "OrderNumber" };
+        object[] fieldValues = { "John Doe", "12345" };
+
+        // Execute mail merge.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
+
+        // Save the result to a file.
+        doc.Save("MergedDocument.docx");
     }
 }

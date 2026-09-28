@@ -1,98 +1,49 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
 
-namespace MailMergeBatchExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a template document with merge fields.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Dear <<Name>>,");
+        builder.Writeln("Your appointment is scheduled on <<Date>>.");
+        builder.Writeln("Thank you.");
+
+        // Prepare a collection of data objects.
+        var data = new List<Person>
         {
-            // Create a blank document and add merge fields.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.InsertField("MERGEFIELD FullName");
-            builder.InsertParagraph();
-            builder.InsertField("MERGEFIELD Address");
-            builder.InsertParagraph();
+            new Person { Name = "Alice", Date = DateTime.Today.AddDays(1).ToString("MMMM dd, yyyy") },
+            new Person { Name = "Bob", Date = DateTime.Today.AddDays(2).ToString("MMMM dd, yyyy") },
+            new Person { Name = "Charlie", Date = DateTime.Today.AddDays(3).ToString("MMMM dd, yyyy") }
+        };
 
-            // Prepare a collection of data objects.
-            List<Customer> customers = new List<Customer>
-            {
-                new Customer("Thomas Hardy", "120 Hanover Sq., London"),
-                new Customer("Paolo Accorti", "Via Monte Bianco 34, Torino")
-            };
+        // Perform mail merge for each object and save the merged document.
+        int index = 1;
+        foreach (var person in data)
+        {
+            // Clone the template for each merge operation.
+            Document mergedDoc = (Document)template.Clone(true);
 
-            // Wrap the collection in a custom mail‑merge data source.
-            CustomerMailMergeDataSource dataSource = new CustomerMailMergeDataSource(customers);
+            // Execute mail merge with the current object's data.
+            mergedDoc.MailMerge.Execute(
+                new[] { "Name", "Date" },
+                new object[] { person.Name, person.Date });
 
-            // Execute the mail merge. All records will be merged into the same document,
-            // each record producing a new copy of the document content.
-            doc.MailMerge.Execute(dataSource);
-
-            // Save the merged document.
-            doc.Save("MergedCustomers.docx");
+            // Save the merged document to a file.
+            string fileName = $"MergedDocument_{index}.docx";
+            mergedDoc.Save(fileName);
+            index++;
         }
     }
 
-    // Simple data entity used for the mail merge.
-    public class Customer
+    // Simple class representing the data source for mail merge.
+    public class Person
     {
-        public Customer(string fullName, string address)
-        {
-            FullName = fullName;
-            Address = address;
-        }
-
-        public string FullName { get; }
-        public string Address { get; }
-    }
-
-    // Custom data source that implements IMailMergeDataSource.
-    public class CustomerMailMergeDataSource : IMailMergeDataSource
-    {
-        private readonly IList<Customer> _customers;
-        private int _recordIndex = -1;
-
-        public CustomerMailMergeDataSource(IList<Customer> customers)
-        {
-            _customers = customers;
-        }
-
-        // Name of the data source (used only for regions).
-        public string TableName => "Customer";
-
-        // Move to the next record in the collection.
-        public bool MoveNext()
-        {
-            if (_recordIndex < _customers.Count - 1)
-            {
-                _recordIndex++;
-                return true;
-            }
-            return false;
-        }
-
-        // Return the value for the requested field name.
-        public bool GetValue(string fieldName, out object fieldValue)
-        {
-            switch (fieldName)
-            {
-                case "FullName":
-                    fieldValue = _customers[_recordIndex].FullName;
-                    return true;
-                case "Address":
-                    fieldValue = _customers[_recordIndex].Address;
-                    return true;
-                default:
-                    fieldValue = null;
-                    return false;
-            }
-        }
-
-        // No child data sources are used in this example.
-        public IMailMergeDataSource GetChildDataSource(string tableName) => null;
+        public string Name { get; set; }
+        public string Date { get; set; }
     }
 }
