@@ -4,60 +4,43 @@ using Aspose.Words.Fields;
 
 public class Program
 {
-    // Entry point of the console application.
     public static void Main()
     {
-        // Path for the initial document and the updated document.
-        const string initialDocPath = "FormFields.docx";
-        const string updatedDocPath = "FormFields_Updated.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create a new document and insert a checkbox form field.
-        // -----------------------------------------------------------------
+        // Create a new document and insert a checkbox form field named "MyCheckBox".
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertCheckBox("MyCheckBox", false, 0);
+        // Save the initial document.
+        doc.Save("initial.docx");
 
-        // Insert a paragraph with a checkbox named "MyCheckBox".
-        builder.Writeln("Toggle this checkbox based on configuration:");
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
-        // Optional: set a readable size for the checkbox.
-        checkBox.IsCheckBoxExactSize = true;
-        checkBox.CheckBoxSize = 12.0;
+        // Load the document to simulate a separate operation.
+        Document loadedDoc = new Document("initial.docx");
 
-        // Save the document that contains the form field.
-        doc.Save(initialDocPath);
+        // Read external configuration: environment variable "TOGGLE_CHECKBOX".
+        // If the variable is set to "true" (case‑insensitive), the checkbox will be toggled.
+        string toggleSetting = Environment.GetEnvironmentVariable("TOGGLE_CHECKBOX");
+        bool shouldToggle = string.Equals(toggleSetting, "true", StringComparison.OrdinalIgnoreCase);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document (simulating a separate operation) and
-        //    update the checkbox state according to external configuration.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(initialDocPath);
-        FormFieldCollection formFields = loadedDoc.Range.FormFields;
+        // Retrieve the checkbox form field by name.
+        FormField checkBoxField = loadedDoc.Range.FormFields["MyCheckBox"];
+        if (checkBoxField == null)
+        {
+            throw new InvalidOperationException("Checkbox form field 'MyCheckBox' was not found.");
+        }
 
-        // Validate that the expected form field exists.
-        FormField? targetField = formFields["MyCheckBox"];
-        if (targetField == null)
-            throw new InvalidOperationException("Form field 'MyCheckBox' was not found.");
+        // Verify that the field is indeed a checkbox.
+        if (checkBoxField.Type != FieldType.FieldFormCheckBox)
+        {
+            throw new InvalidOperationException("Form field 'MyCheckBox' is not a checkbox.");
+        }
 
-        // Read external configuration. Here we use an environment variable.
-        // Expected values: "true" or "false" (case‑insensitive). Default is false.
-        bool desiredState = GetDesiredCheckedStateFromEnv();
+        // Toggle the checked state if required.
+        if (shouldToggle)
+        {
+            checkBoxField.Checked = !checkBoxField.Checked;
+        }
 
-        // Toggle the checkbox state.
-        targetField.Checked = desiredState;
-
-        // Save the updated document.
-        loadedDoc.Save(updatedDocPath);
-    }
-
-    // Reads the environment variable "CHECKBOX_CHECKED" and converts it to a bool.
-    // Returns false if the variable is missing or cannot be parsed.
-    private static bool GetDesiredCheckedStateFromEnv()
-    {
-        string? envValue = Environment.GetEnvironmentVariable("CHECKBOX_CHECKED");
-        if (string.IsNullOrWhiteSpace(envValue))
-            return false;
-
-        return bool.TryParse(envValue.Trim(), out bool result) && result;
+        // Save the modified document.
+        loadedDoc.Save("output.docx");
     }
 }

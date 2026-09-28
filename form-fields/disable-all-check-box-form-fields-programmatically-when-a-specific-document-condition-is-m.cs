@@ -10,42 +10,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a marker text that will be used as the condition to disable check boxes.
-        builder.Writeln("Document condition: DisableCheckBoxes");
-
-        // Insert some sample check box form fields.
-        builder.Write("Option 1: ");
-        FormField checkBox1 = builder.InsertCheckBox("CheckBox1", false, 0);
+        // Insert three checkbox form fields with distinct names.
+        builder.InsertCheckBox("CheckBox1", false, 0);
+        builder.Writeln();
+        builder.InsertCheckBox("CheckBox2", true, 0);
+        builder.Writeln();
+        builder.InsertCheckBox("CheckBox3", false, 0);
         builder.Writeln();
 
-        builder.Write("Option 2: ");
-        FormField checkBox2 = builder.InsertCheckBox("CheckBox2", true, 0);
-        builder.Writeln();
+        // Save the initial document (optional, shows the state before disabling).
+        doc.Save("initial.docx");
 
-        // Insert a non‑checkbox form field to demonstrate that only check boxes are affected.
-        builder.InsertTextInput("TextInput1", TextFormFieldType.Regular, "", "Enter text", 50);
-        builder.Writeln();
+        // Condition that determines whether checkboxes should be disabled.
+        bool disableCheckBoxes = true; // Change as needed.
 
-        // Determine whether the specific condition is present in the document.
-        // Here we simply look for the marker text added earlier.
-        bool conditionMet = doc.GetText().Contains("DisableCheckBoxes");
-
-        if (conditionMet)
+        if (disableCheckBoxes)
         {
             // Iterate through all form fields in the document.
-            FormFieldCollection formFields = doc.Range.FormFields;
-            foreach (FormField field in formFields)
+            foreach (FormField field in doc.Range.FormFields)
             {
-                // Check if the field is a check box.
+                // Only process checkbox fields.
                 if (field.Type == FieldType.FieldFormCheckBox)
                 {
-                    // Disable the check box so it cannot be edited in Word.
+                    // Disable the checkbox so it cannot be edited in the UI.
                     field.Enabled = false;
                 }
             }
         }
 
-        // Save the modified document.
-        doc.Save("Output.docx");
+        // Save the modified document where checkboxes are disabled.
+        doc.Save("output.docx");
     }
 }

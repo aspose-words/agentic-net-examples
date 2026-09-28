@@ -1,58 +1,57 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the original and modified documents.
-        const string originalPath = "FormFields.docx";
-        const string modifiedPath = "FormFields_Modified.docx";
+        // Step 1: Create a sample DOCX with a combo box (dropdown) form field.
+        Document createDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(createDoc);
 
-        // -------------------------------------------------
-        // 1. Create a sample DOCX with a combo box field.
-        // -------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert a combo box named "MyCombo" with three options, defaulting to the first one.
+        string[] items = new string[] { "Option A", "Option B", "Option C" };
+        builder.InsertComboBox("MyCombo", items, 0);
 
-        // Add some prompt text.
-        builder.Write("Pick a fruit: ");
+        // Save the initial document.
+        const string inputPath = "input.docx";
+        createDoc.Save(inputPath);
 
-        // Define the items for the combo box and insert it.
-        string[] items = { "Apple", "Banana", "Cherry" };
-        // InsertComboBox creates a legacy combo box form field.
-        builder.InsertComboBox("FruitCombo", items, 0); // Default selection is the first item (Apple).
+        // Step 2: Load the document we just created.
+        Document loadDoc = new Document(inputPath);
 
-        // Save the document that contains the form field.
-        doc.Save(originalPath);
+        // Access the form fields collection.
+        var formFields = loadDoc.Range.FormFields;
 
-        // -------------------------------------------------
-        // 2. Load the document and modify the combo box selection.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(originalPath);
+        // Retrieve the combo box by name.
+        var comboField = formFields["MyCombo"];
+        if (comboField == null)
+        {
+            throw new InvalidOperationException("Combo box 'MyCombo' was not found in the document.");
+        }
 
-        // Access the collection of form fields.
-        FormFieldCollection formFields = loadedDoc.Range.FormFields;
+        // Change the selected value programmatically.
+        // Ensure the new value exists in the dropdown items.
+        string newSelection = "Option C";
+        bool exists = false;
+        foreach (string item in comboField.DropDownItems)
+        {
+            if (item == newSelection)
+            {
+                exists = true;
+                break;
+            }
+        }
 
-        // Retrieve the combo box by its name.
-        FormField comboBox = formFields["FruitCombo"];
-        if (comboBox == null)
-            throw new InvalidOperationException("The combo box 'FruitCombo' was not found in the document.");
+        if (!exists)
+        {
+            throw new InvalidOperationException($"The value '{newSelection}' is not a valid option for the combo box.");
+        }
 
-        // Validate that the field is indeed a drop‑down.
-        if (comboBox.Type != FieldType.FieldFormDropDown)
-            throw new InvalidOperationException("The field 'FruitCombo' is not a drop‑down form field.");
+        comboField.Result = newSelection; // Update the selection.
 
-        // Change the selected item to "Banana" (index 1).
-        comboBox.DropDownSelectedIndex = 1;
-
-        // Alternatively, you could set the Result property:
-        // comboBox.Result = "Banana";
-
-        // -------------------------------------------------
-        // 3. Save the modified document.
-        // -------------------------------------------------
-        loadedDoc.Save(modifiedPath);
+        // Step 3: Save the modified document.
+        const string outputPath = "output.docx";
+        loadDoc.Save(outputPath);
     }
 }

@@ -6,44 +6,59 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder for inserting form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field.
-        builder.Write("Enter your name: ");
-        FormField textField = builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
-        textField.Result = "John Doe";
+        FormField textField = builder.InsertTextInput(
+            "TextField1",                     // field name
+            TextFormFieldType.Regular,        // field type
+            "",                               // format (none)
+            "Default text",                   // default text
+            0);                               // max length (0 = unlimited)
 
         // Insert a checkbox form field.
-        builder.InsertBreak(BreakType.ParagraphBreak);
-        builder.Write("Accept terms: ");
-        FormField checkBox = builder.InsertCheckBox("AcceptTerms", false, 15);
-        checkBox.Checked = false;
+        FormField checkBox = builder.InsertCheckBox(
+            "CheckBox1",                      // field name
+            true,                             // default state (checked)
+            0);                               // size (default)
 
-        // Insert a combo box (dropdown) form field.
-        builder.InsertBreak(BreakType.ParagraphBreak);
-        builder.Write("Select a fruit: ");
-        FormField comboBox = builder.InsertComboBox("FruitChoice", new[] { "Apple", "Banana", "Cherry" }, 0);
-        comboBox.Result = "Apple";
+        // Insert a dropdown (combo box) form field with predefined items.
+        // The overload requires the field name, an array of item texts, and the selected index.
+        FormField comboBox = builder.InsertComboBox(
+            "DropDown1",                       // field name
+            new[] { "Option 1", "Option 2", "Option 3" }, // items
+            0);                                // selected index (first item)
 
-        // Ensure the document contains at least one form field.
-        if (doc.Range.FormFields.Count == 0)
+        // Save the document with the created form fields.
+        const string outputPath = "FormFields.docx";
+        doc.Save(outputPath);
+
+        // Load the document (demonstrates reading from a file).
+        Document loadedDoc = new Document(outputPath);
+
+        // Ensure that at least one form field exists.
+        if (loadedDoc.Range.FormFields == null || loadedDoc.Range.FormFields.Count == 0)
         {
-            throw new InvalidOperationException("The document does not contain any form fields.");
+            throw new InvalidOperationException("No form fields were found in the document.");
         }
 
         // Iterate through all form fields and log their Result values.
-        foreach (FormField field in doc.Range.FormFields)
+        foreach (FormField field in loadedDoc.Range.FormFields)
         {
-            if (field != null)
-            {
-                // For debugging purposes, output the field name and its current result.
-                Console.WriteLine($"Field Name: {field.Name}, Result: {field.Result}");
-            }
+            // Guard against null (should not happen in the collection).
+            if (field == null)
+                continue;
+
+            // For checkboxes, Result returns "True"/"False".
+            // For dropdowns, Result returns the selected item text.
+            string result = field.Result ?? string.Empty;
+
+            Console.WriteLine($"Field Name: {field.Name}, Result: {result}");
         }
 
-        // Save the document (even though we only read fields, saving satisfies the lifecycle rule).
-        doc.Save("FormFields.docx");
+        // Optionally, save the document again after reading (no changes made here).
+        loadedDoc.Save("FormFields_Processed.docx");
     }
 }

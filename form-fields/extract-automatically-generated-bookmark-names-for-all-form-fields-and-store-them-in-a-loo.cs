@@ -7,68 +7,64 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field.
-        builder.Write("Enter your name: ");
         FormField textField = builder.InsertTextInput(
-            "TextField1",                     // field name (bookmark will be created with this name)
-            TextFormFieldType.Regular,        // type of text field
-            "",                               // default text
-            "John Doe",                       // placeholder text
-            30);                              // maximum length
+            "TextField1",               // name
+            TextFormFieldType.Regular, // type
+            "",                         // format
+            "Default text",             // default value
+            0);                         // max length
 
         // Insert a checkbox form field.
-        builder.Writeln(); // move to next line
-        builder.Write("Accept terms: ");
         FormField checkBox = builder.InsertCheckBox(
-            "CheckBox1",                      // field name
-            false,                            // default unchecked
-            50);                              // size in points
+            "CheckBox1", // name
+            false,       // default state
+            0);          // size
 
-        // Insert a dropdown (combo box) form field.
-        builder.Writeln();
-        builder.Write("Select a fruit: ");
+        // Insert a combo box (dropdown) form field.
+        // The selectedIndex must be within the bounds of the items array.
+        // Start with a single placeholder item.
         FormField comboBox = builder.InsertComboBox(
-            "DropDown1",                      // field name
-            new[] { "Apple", "Banana", "Cherry" }, // items
-            0);                               // default selected index
+            "ComboBox1",                     // name
+            new[] { "Placeholder" },        // initial items
+            0);                              // selected index (valid)
 
-        // Save the document containing the form fields.
-        const string docPath = "FormFields.docx";
-        doc.Save(docPath);
+        // Add real items to the combo box.
+        comboBox.DropDownItems.Clear(); // Remove placeholder.
+        comboBox.DropDownItems.Add("Item 1");
+        comboBox.DropDownItems.Add("Item 2");
+        comboBox.DropDownItems.Add("Item 3");
 
-        // Access the collection of form fields.
-        FormFieldCollection formFields = doc.Range.FormFields;
+        // Save the document with the form fields.
+        string filePath = "FormFields.docx";
+        doc.Save(filePath);
 
-        // Ensure that at least one form field exists.
-        if (formFields.Count == 0)
-            throw new InvalidOperationException("The document does not contain any form fields.");
+        // Extract automatically generated bookmark names for all form fields.
+        Dictionary<string, string> fieldBookmarkLookup = new Dictionary<string, string>();
 
-        // Dictionary to hold the mapping: form field name -> automatically generated bookmark name.
-        // For legacy form fields the bookmark name is identical to the field name.
-        Dictionary<string, string> fieldBookmarkLookup = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (FormField field in formFields)
+        foreach (FormField field in doc.Range.FormFields)
         {
-            // Validate that the field has a name.
-            if (string.IsNullOrEmpty(field.Name))
-                continue; // Skip unnamed fields (should not happen with Insert* methods).
+            if (field == null)
+                continue;
 
-            // The bookmark created by Insert* methods uses the same name as the form field.
-            string bookmarkName = field.Name;
+            // Each legacy form field creates a bookmark with the same name.
+            Bookmark bookmark = doc.Range.Bookmarks[field.Name];
+            string bookmarkName = bookmark != null ? bookmark.Name : string.Empty;
 
-            // Store the mapping.
             fieldBookmarkLookup[field.Name] = bookmarkName;
         }
 
-        // Output the lookup dictionary to the console.
-        Console.WriteLine("Form field to bookmark mapping:");
+        // Output the lookup dictionary (demonstration purpose).
         foreach (KeyValuePair<string, string> kvp in fieldBookmarkLookup)
         {
-            Console.WriteLine($"Field Name: \"{kvp.Key}\"  ->  Bookmark Name: \"{kvp.Value}\"");
+            Console.WriteLine($"Form Field Name: {kvp.Key}, Bookmark Name: {kvp.Value}");
         }
+
+        // Save the processed document.
+        doc.Save("FormFields_Processed.docx");
     }
 }

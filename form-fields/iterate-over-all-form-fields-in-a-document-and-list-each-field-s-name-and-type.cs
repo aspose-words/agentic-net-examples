@@ -11,29 +11,39 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field.
-        builder.Write("Enter your name: ");
-        FormField textField = builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
+        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Default text", 0);
+        builder.Writeln(); // Add a line break.
 
         // Insert a checkbox form field.
-        builder.InsertBreak(BreakType.ParagraphBreak);
-        builder.Write("Accept terms: ");
-        FormField checkBox = builder.InsertCheckBox("AcceptTerms", false, 50);
+        builder.InsertCheckBox("CheckBoxField", true, 0);
+        builder.Writeln();
 
-        // Insert a combo box (dropdown) form field.
-        builder.InsertBreak(BreakType.ParagraphBreak);
-        builder.Write("Select a fruit: ");
-        string[] items = { "Apple", "Banana", "Cherry" };
-        FormField comboBox = builder.InsertComboBox("FruitChoice", items, 0);
+        // Insert a dropdown (combo box) form field.
+        string[] items = { "Option 1", "Option 2", "Option 3" };
+        builder.InsertComboBox("DropDownField", items, 0);
+        builder.Writeln();
 
-        // Save the document (required by the rules).
-        doc.Save("FormFields.docx");
+        // Save the document with the created form fields.
+        const string outputPath = "FormFields.docx";
+        doc.Save(outputPath);
 
-        // Iterate over all form fields and list their name and type.
-        FormFieldCollection formFields = doc.Range.FormFields;
-        foreach (FormField field in formFields)
+        // Ensure that the document contains at least one form field.
+        if (doc.Range.FormFields.Count == 0)
         {
-            // Field.Type returns a FieldType enum value.
-            Console.WriteLine($"{field.Name}: {field.Type}");
+            throw new InvalidOperationException("The document does not contain any form fields.");
+        }
+
+        // Iterate over all form fields and output their name and type.
+        foreach (FormField field in doc.Range.FormFields)
+        {
+            // Guard against null (should not happen, but follows nullable safety rules).
+            if (field == null)
+                continue;
+
+            string fieldName = field.Name;
+            string fieldType = field.Type.ToString();
+
+            Console.WriteLine($"Field Name: {fieldName}, Field Type: {fieldType}");
         }
     }
 }

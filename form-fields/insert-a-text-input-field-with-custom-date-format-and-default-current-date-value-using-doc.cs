@@ -10,26 +10,16 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a label for the form field.
-        builder.Writeln("Enter date (dd/MM/yyyy):");
+        // Define the name, custom date format, and default value (current date).
+        string fieldName = "DateField";
+        string dateFormat = "MM/dd/yyyy";
+        string defaultValue = DateTime.Now.ToString(dateFormat);
 
-        // Insert a text input form field that accepts dates.
-        // - Name: "DateField"
-        // - Type: Date (allows only valid date values)
-        // - Format: custom date format "dd/MM/yyyy"
-        // - Initial value: empty (will be set below)
-        // - MaxLength: 0 (no length limit)
-        FormField dateField = builder.InsertTextInput(
-            "DateField",
-            TextFormFieldType.Date,
-            "dd/MM/yyyy",
-            "",
-            0);
+        // Insert a text input form field with the custom date format and default value.
+        // Use the overload that requires TextFormFieldType and maxLength.
+        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, dateFormat, defaultValue, 0);
 
-        // Set the default value of the field to the current date.
-        dateField.SetTextInputValue(DateTime.Now);
-
-        // Save the document to a file.
-        doc.Save("FormWithDateField.docx");
+        // Save the document to disk.
+        doc.Save("Output.docx");
     }
 }

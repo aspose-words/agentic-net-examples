@@ -10,21 +10,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some introductory text.
-        builder.Writeln("Please fill in the form field below:");
-
         // Insert a text input form field.
-        // Parameters: name, type, format, default text, max length (0 = unlimited).
-        builder.InsertTextInput("UserInput", TextFormFieldType.Regular, "", "Enter your text here", 0);
+        builder.Writeln("Please enter your name:");
+        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 0);
+        builder.Writeln();
+
+        // Insert a checkbox form field.
+        // The third parameter is the size of the checkbox (in points). Use 0 for default size.
+        builder.Writeln("Subscribe to newsletter:");
+        builder.InsertCheckBox("SubscribeField", true, 0);
+        builder.Writeln();
+
+        // Insert a dropdown (combo box) form field with items.
+        builder.Writeln("Select your country:");
+        builder.InsertComboBox("CountryField", new string[] { "USA", "Canada", "United Kingdom" }, 0);
+        builder.Writeln();
+
+        // Save the document before protection (optional).
+        doc.Save("FormFields.docx");
 
         // Protect the document so that only form fields can be edited.
-        doc.Protect(ProtectionType.AllowOnlyFormFields);
+        doc.Protect(ProtectionType.AllowOnlyFormFields, "myPassword");
 
         // Save the protected document.
-        const string outputPath = "ProtectedFormFields.docx";
-        doc.Save(outputPath);
-
-        // Inform that the file has been created (no user interaction required).
-        Console.WriteLine($"Document saved to '{outputPath}'.");
+        doc.Save("FormFields_Protected.docx");
     }
 }

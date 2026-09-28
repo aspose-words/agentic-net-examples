@@ -2,48 +2,58 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace ComboBoxFormFieldExample
 {
-    // Reusable method that inserts a combo box form field.
-    // Parameters:
-    //   builder      - DocumentBuilder positioned where the field should be inserted.
-    //   name         - Name of the form field (bookmark will be created automatically).
-    //   items        - Array of strings that will appear in the drop‑down list.
-    //   defaultIndex - Zero‑based index of the item that should be selected by default.
-    // Returns the inserted FormField instance.
-    public static FormField AddComboBox(DocumentBuilder builder, string name, string[] items, int defaultIndex)
+    public class Program
     {
-        if (builder == null) throw new ArgumentNullException(nameof(builder));
-        if (items == null) throw new ArgumentNullException(nameof(items));
-        if (defaultIndex < 0 || defaultIndex >= items.Length)
-            throw new ArgumentOutOfRangeException(nameof(defaultIndex), "Default index must be within the items array.");
+        // Reusable method that adds a combo box form field to the specified document.
+        // Parameters:
+        //   doc          - The Aspose.Words Document to modify.
+        //   fieldName    - Unique name for the combo box form field.
+        //   items        - Array of string items to populate the combo box.
+        //   defaultIndex - Zero‑based index of the item that should be selected by default.
+        public static void AddComboBox(Document doc, string fieldName, string[] items, int defaultIndex)
+        {
+            if (doc == null) throw new ArgumentNullException(nameof(doc));
+            if (string.IsNullOrEmpty(fieldName)) throw new ArgumentException("Field name must be provided.", nameof(fieldName));
+            if (items == null || items.Length == 0) throw new ArgumentException("At least one item must be supplied.", nameof(items));
+            if (defaultIndex < 0 || defaultIndex >= items.Length) throw new ArgumentOutOfRangeException(nameof(defaultIndex));
 
-        // Insert the combo box using the Aspose.Words API.
-        FormField comboBox = builder.InsertComboBox(name, items, defaultIndex);
-        return comboBox;
-    }
+            // Use DocumentBuilder to insert the combo box at the end of the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertComboBox(fieldName, items, defaultIndex);
 
-    public static void Main()
-    {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Validate that the field was added correctly.
+            FormField comboBox = doc.Range.FormFields[fieldName];
+            if (comboBox == null)
+                throw new InvalidOperationException($"Form field '{fieldName}' was not found after insertion.");
 
-        // Write a prompt before the combo box.
-        builder.Write("Please select a fruit: ");
+            // Ensure the field type is ComboBox.
+            if (comboBox.Type != FieldType.FieldFormDropDown)
+                throw new InvalidOperationException($"Form field '{fieldName}' is not a combo box.");
 
-        // Define the items for the combo box.
-        string[] fruitItems = { "Apple", "Banana", "Cherry", "Date" };
+            // Verify the default selected value matches the expected item.
+            string expectedValue = items[defaultIndex];
+            if (!string.Equals(comboBox.Result, expectedValue, StringComparison.Ordinal))
+                throw new InvalidOperationException($"Default value mismatch. Expected '{expectedValue}', got '{comboBox.Result}'.");
+        }
 
-        // Insert the combo box with "Banana" selected by default (index 1).
-        FormField fruitCombo = AddComboBox(builder, "FruitCombo", fruitItems, 1);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Optionally, demonstrate accessing the field after insertion.
-        // Verify that the selected item matches the default index.
-        if (fruitCombo.DropDownSelectedIndex != 1 || fruitCombo.Result != "Banana")
-            throw new InvalidOperationException("Combo box was not initialized correctly.");
+            // Define combo box parameters.
+            string comboBoxName = "CountrySelector";
+            string[] countryItems = new[] { "USA", "Canada", "Mexico", "Germany", "France" };
+            int defaultItemIndex = 2; // Select "Mexico" by default.
 
-        // Save the document to disk.
-        doc.Save("ComboBoxFormField.docx");
+            // Add the combo box form field.
+            AddComboBox(doc, comboBoxName, countryItems, defaultItemIndex);
+
+            // Save the document to disk.
+            string outputPath = "ComboBoxFormField.docx";
+            doc.Save(outputPath);
+        }
     }
 }
