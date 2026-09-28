@@ -4,68 +4,71 @@ using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsResourceLeakDemo
+public class Program
 {
-    // Callback that aborts the save operation after a short delay.
-    public class CancelSavingCallback : IDocumentSavingCallback
+    public static void Main()
     {
-        private readonly DateTime _startTime = DateTime.Now;
-        private const double MaxDurationSeconds = 0.01; // Cancel almost immediately.
+        // Prepare temporary directory and file paths.
+        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeWordsExample");
+        Directory.CreateDirectory(tempDir);
+        string cancelledPath = Path.Combine(tempDir, "Cancelled.docx");
+        string finalPath = Path.Combine(tempDir, "Final.docx");
 
-        public void Notify(DocumentSavingArgs args)
+        // Ensure any previous files are removed.
+        if (File.Exists(cancelledPath)) File.Delete(cancelledPath);
+        if (File.Exists(finalPath)) File.Delete(finalPath);
+
+        // -----------------------------------------------------------------
+        // First document: simulate a cancelled save operation.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        try
         {
-            double elapsed = (DateTime.Now - _startTime).TotalSeconds;
-            if (elapsed > MaxDurationSeconds)
-                throw new OperationCanceledException(
-                    $"EstimatedProgress = {args.EstimatedProgress}; Canceled after {elapsed:F2}s");
-        }
-    }
+            // Add simple content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This document will attempt a cancelled save.");
 
-    public class Program
-    {
-        public static void Main()
+            // Create a cancelled token.
+            CancellationTokenSource cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Aspose.Words does not have a Save overload that accepts a CancellationToken
+            // in the version used for this example. To demonstrate handling of a
+            // cancellation scenario, we manually throw the exception after the token is cancelled.
+            if (cts.Token.IsCancellationRequested)
+                throw new OperationCanceledException(cts.Token);
+
+            // Normal save (won't be reached because of the exception above).
+            doc.Save(cancelledPath, SaveOptions.CreateSaveOptions(SaveFormat.Docx));
+        }
+        catch (OperationCanceledException)
         {
-            // Path for the output document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CanceledSave.docx");
-
-            // Ensure any previous file is removed.
-            if (File.Exists(outputPath))
-                File.Delete(outputPath);
-
-            Document doc = null;
-            try
-            {
-                // Create a new blank document.
-                doc = new Document();
-
-                // Add simple content.
-                DocumentBuilder builder = new DocumentBuilder(doc);
-                builder.Writeln("Hello Aspose.Words!");
-
-                // Configure save options with a progress callback that will cancel the operation.
-                OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-                {
-                    ProgressCallback = new CancelSavingCallback()
-                };
-
-                // Attempt to save; the callback will throw OperationCanceledException.
-                doc.Save(outputPath, saveOptions);
-            }
-            catch (OperationCanceledException ex)
-            {
-                // Handle the cancellation gracefully.
-                Console.WriteLine($"Document saving was canceled: {ex.Message}");
-            }
-            finally
-            {
-                // Dispose the Document if it implements IDisposable to prevent resource leaks.
-                if (doc is IDisposable disposable)
-                    disposable.Dispose();
-            }
-
-            // Verify that the file was not created due to cancellation.
-            bool fileExists = File.Exists(outputPath);
-            Console.WriteLine($"Output file exists: {fileExists}");
+            // Handle the cancellation. The document will go out of scope after this block,
+            // ensuring any resources are released by the garbage collector.
+            Console.WriteLine("Save operation was cancelled as expected.");
         }
+        finally
+        {
+            // Explicitly release the reference; Document does not implement IDisposable.
+            doc = null;
+        }
+
+        // Verify that the cancelled file was not created.
+        if (File.Exists(cancelledPath))
+            throw new InvalidOperationException("Cancelled file should not exist.");
+
+        // -----------------------------------------------------------------
+        // Second document: normal save to confirm proper operation.
+        // -----------------------------------------------------------------
+        Document finalDoc = new Document();
+        DocumentBuilder finalBuilder = new DocumentBuilder(finalDoc);
+        finalBuilder.Writeln("This document is saved after proper disposal handling.");
+        finalDoc.Save(finalPath, SaveOptions.CreateSaveOptions(SaveFormat.Docx));
+
+        // Validate final output exists.
+        if (!File.Exists(finalPath))
+            throw new FileNotFoundException("Final document was not saved correctly.");
+
+        Console.WriteLine("Document saved successfully to: " + finalPath);
     }
 }

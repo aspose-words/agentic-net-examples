@@ -1,66 +1,43 @@
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Aspose.Words;
 
 public class Program
 {
-    public static void Main()
+    public static async Task Main()
     {
-        // Create a simple Word document and save it locally.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words!");
-        string docPath = "sample.docx";
-        doc.Save(docPath); // Save using the standard Save method.
+        var cts = new CancellationTokenSource();
 
-        // Set up a cancellation token source that will be used to stop processing.
-        using CancellationTokenSource cts = new CancellationTokenSource();
-
-        // Start a background task that repeatedly loads and processes the document.
-        Task processingTask = Task.Run(() => ProcessDocumentLoop(docPath, cts.Token));
-
-        // Simulate a low‑code UI button click after a short delay.
-        // In a real UI this would be an event handler; here we just delay and then cancel.
-        Task.Delay(500).ContinueWith(_ => cts.Cancel());
-
-        try
+        // Simulate a UI button that cancels the operation after a short delay
+        Task buttonTask = Task.Run(async () =>
         {
-            // Wait for the processing task to complete (it will end when cancelled).
-            processingTask.Wait();
-        }
-        catch (AggregateException ae)
-        {
-            // Expect a TaskCanceledException wrapped in AggregateException.
-            foreach (var ex in ae.InnerExceptions)
-            {
-                if (ex is OperationCanceledException) continue;
-                Console.Error.WriteLine($"Unexpected exception: {ex}");
-            }
-        }
+            await Task.Delay(1000); // wait 1 second before "click"
+            cts.Cancel(); // button click triggers cancellation
+        });
 
-        // Clean up the sample file.
-        if (File.Exists(docPath))
-            File.Delete(docPath);
+        // Long-running work that observes the cancellation token
+        Task workTask = Task.Run(() => DoWork(cts.Token));
+
+        await Task.WhenAll(buttonTask, workTask);
     }
 
-    // Continuously loads the document and performs a trivial operation until cancelled.
-    private static void ProcessDocumentLoop(string path, CancellationToken token)
+    private static void DoWork(CancellationToken token)
     {
-        while (true)
+        try
         {
-            token.ThrowIfCancellationRequested();
+            for (int i = 0; i < 10; i++)
+            {
+                token.ThrowIfCancellationRequested();
+                // Simulate work
+                Thread.Sleep(500);
+                Console.WriteLine($"Working... step {i + 1}");
+            }
 
-            // Load the document using the constructor that takes a file name.
-            Document loadedDoc = new Document(path);
-
-            // Perform a simple operation: count words.
-            string text = loadedDoc.GetText();
-            int wordCount = text.Split(new[] { ' ', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
-
-            // Simulate work by sleeping briefly.
-            Thread.Sleep(100);
+            Console.WriteLine("Work completed.");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Work was cancelled.");
         }
     }
 }

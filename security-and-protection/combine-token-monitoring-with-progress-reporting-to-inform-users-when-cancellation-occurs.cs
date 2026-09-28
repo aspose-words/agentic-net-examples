@@ -3,76 +3,70 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Create a sample document with many paragraphs.
+        var doc = new Document();
         var builder = new DocumentBuilder(doc);
-
-        // Add many paragraphs to make the save operation take noticeable time.
-        for (int i = 0; i < 2000; i++)
+        for (int i = 0; i < 500; i++)
         {
             builder.Writeln($"Paragraph {i + 1}");
         }
 
-        // Set up a cancellation token that will be triggered after a short delay.
-        using var cts = new CancellationTokenSource();
-        // Cancel after 200 milliseconds.
-        Task.Delay(200).ContinueWith(_ => cts.Cancel());
+        string sourcePath = "source.docx";
+        doc.Save(sourcePath);
 
-        // Configure save options with a progress callback that monitors the token.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            ProgressCallback = new SavingProgressCallback(cts.Token)
-        };
+        // Load the document for processing.
+        var loadedDoc = new Document(sourcePath);
 
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ProcessedDocument.docx");
+        // Set up cancellation to occur after a short delay.
+        var cts = new CancellationTokenSource();
+        Task.Delay(100).ContinueWith(_ => cts.Cancel());
+
+        // Progress reporter that writes percentage to the console.
+        var progress = new Progress<double>(p => Console.WriteLine($"Progress: {p:P0}"));
 
         try
         {
-            // Attempt to save the document. The callback may throw if cancellation occurs.
-            doc.Save(outputPath, saveOptions);
-            Console.WriteLine("Document saved successfully.");
-        }
-        catch (OperationCanceledException ex)
-        {
-            // Inform the user that the operation was canceled and provide progress info.
-            Console.WriteLine($"Saving was canceled. Details: {ex.Message}");
-        }
+            // Process the document while monitoring cancellation and reporting progress.
+            ProcessDocument(loadedDoc, cts.Token, progress);
 
-        // Verify whether the output file exists (it may be incomplete if canceled).
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Output file exists at: {outputPath}");
+            // Save the processed document.
+            string outputPath = "processed.docx";
+            loadedDoc.Save(outputPath);
+
+            // Validate that the output file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create output file: {outputPath}");
+
+            Console.WriteLine($"Document saved to {outputPath}");
         }
-        else
+        catch (OperationCanceledException)
         {
-            Console.WriteLine("Output file was not created.");
+            Console.WriteLine("Processing was cancelled by the token.");
         }
     }
 
-    // Implements IDocumentSavingCallback to receive progress notifications during saving.
-    private class SavingProgressCallback : IDocumentSavingCallback
+    private static void ProcessDocument(Document doc, CancellationToken token, IProgress<double> progress)
     {
-        private readonly CancellationToken _cancellationToken;
+        // Retrieve all paragraphs in the document.
+        var paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        int total = paragraphs.Count;
 
-        public SavingProgressCallback(CancellationToken cancellationToken)
+        for (int i = 0; i < total; i++)
         {
-            _cancellationToken = cancellationToken;
-        }
+            // Throw if cancellation has been requested.
+            token.ThrowIfCancellationRequested();
 
-        public void Notify(DocumentSavingArgs args)
-        {
-            // If cancellation has been requested, abort the save operation.
-            if (_cancellationToken.IsCancellationRequested)
-            {
-                throw new OperationCanceledException(
-                    $"EstimatedProgress = {args.EstimatedProgress}; Save operation was canceled.");
-            }
+            // Simulate work: append a marker to each paragraph.
+            var paragraph = (Paragraph)paragraphs[i];
+            paragraph.AppendChild(new Run(doc, " [processed]"));
+
+            // Report progress as a fraction of total work completed.
+            progress.Report((i + 1) / (double)total);
         }
     }
 }

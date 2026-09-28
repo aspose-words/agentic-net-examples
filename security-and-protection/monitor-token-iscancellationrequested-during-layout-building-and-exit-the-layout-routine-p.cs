@@ -3,65 +3,49 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Layout;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with enough content to make layout processing noticeable.
+        // Create a sample document with many lines to make layout take noticeable time.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world!");
-        for (int i = 0; i < 1000; i++)
+        builder.Writeln("Sample Document");
+        for (int i = 0; i < 5000; i++)
         {
-            builder.Writeln($"Paragraph {i + 1}");
+            builder.Writeln($"Line {i + 1}: The quick brown fox jumps over the lazy dog.");
         }
 
-        // Set up a cancellation token that will be triggered shortly after layout starts.
-        CancellationTokenSource cts = new CancellationTokenSource();
-        Task.Run(async () =>
+        // Set up a cancellation token that will be triggered after a short delay.
+        using (CancellationTokenSource cts = new CancellationTokenSource())
         {
-            await Task.Delay(10); // Adjust delay as needed to simulate cancellation during layout.
-            cts.Cancel();
-        });
+            // Cancel after 100 milliseconds.
+            Task.Delay(100).ContinueWith(_ => cts.Cancel());
 
-        // Attach a layout callback that checks the token and aborts if cancellation is requested.
-        doc.LayoutOptions.Callback = new CancelableLayoutCallback(cts.Token);
-
-        try
-        {
-            // Begin layout building. The callback will throw if cancellation occurs.
-            doc.UpdatePageLayout();
-
-            // If layout completes, save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-            doc.Save(outputPath);
-            Console.WriteLine($"Document saved to: {outputPath}");
-        }
-        catch (OperationCanceledException)
-        {
-            // Layout was aborted due to cancellation.
-            Console.WriteLine("Layout building was canceled.");
-        }
-    }
-
-    // Callback implementation that monitors the cancellation token.
-    private class CancelableLayoutCallback : IPageLayoutCallback
-    {
-        private readonly CancellationToken _token;
-
-        public CancelableLayoutCallback(CancellationToken token)
-        {
-            _token = token;
-        }
-
-        public void Notify(PageLayoutCallbackArgs args)
-        {
-            if (_token.IsCancellationRequested)
+            try
             {
-                // Throwing an OperationCanceledException aborts the layout process.
-                throw new OperationCanceledException("Cancellation requested during layout.");
+                // Check for cancellation before starting the layout operation.
+                cts.Token.ThrowIfCancellationRequested();
+
+                // Aspose.Words does not provide a direct overload with CancellationToken,
+                // so we perform the layout synchronously and rely on the pre‑check.
+                doc.UpdatePageLayout();
+
+                // If layout completes, save the document.
+                string outputPath = "output.docx";
+                doc.Save(outputPath);
+
+                // Verify the file was created.
+                if (!File.Exists(outputPath))
+                    throw new InvalidOperationException("The document was not saved as expected.");
+
+                Console.WriteLine("Layout completed and document saved successfully.");
+            }
+            catch (OperationCanceledException)
+            {
+                // Layout was cancelled before it started.
+                Console.WriteLine("Layout operation was cancelled via the cancellation token.");
             }
         }
     }

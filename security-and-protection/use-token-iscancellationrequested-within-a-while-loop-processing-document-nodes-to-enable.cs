@@ -1,59 +1,58 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with several paragraphs.
+        // Create a simple document with several paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 1; i <= 10; i++)
+        for (int p = 1; p <= 5; p++)
         {
-            builder.Writeln($"Paragraph {i}");
+            builder.Writeln($"Paragraph {p}");
         }
-
-        // Save the source document locally.
-        string sourcePath = "Source.docx";
-        doc.Save(sourcePath);
-
-        // Load the document back from the file system.
-        Document loadedDoc = new Document(sourcePath);
 
         // Prepare a cancellation token source.
-        using CancellationTokenSource cts = new CancellationTokenSource();
+        CancellationTokenSource cts = new CancellationTokenSource();
 
-        // Retrieve all paragraphs in the document.
-        NodeCollection paragraphs = loadedDoc.GetChildNodes(NodeType.Paragraph, true);
-        int index = 0;
-
-        // Process paragraphs in a while loop, checking for cancellation.
-        while (index < paragraphs.Count)
+        // Simulate external cancellation after a short delay.
+        Task.Run(() =>
         {
-            // Exit gracefully if cancellation is requested.
+            Thread.Sleep(100); // Cancel after 100 ms.
+            cts.Cancel();
+        });
+
+        // Process document nodes in a while loop, checking for cancellation.
+        NodeCollection nodes = doc.GetChildNodes(NodeType.Any, true);
+        int index = 0;
+        while (index < nodes.Count)
+        {
             if (cts.Token.IsCancellationRequested)
+            {
+                Console.WriteLine("Cancellation requested. Exiting processing loop.");
                 break;
+            }
 
-            Paragraph para = (Paragraph)paragraphs[index];
-
-            // Example processing: append a marker to each paragraph.
-            para.AppendChild(new Run(loadedDoc, " - processed"));
-
+            // Example processing: output node type.
+            Node node = nodes[index];
+            Console.WriteLine($"Processing node {index + 1}/{nodes.Count}: {node.NodeType}");
             index++;
-
-            // For demonstration, request cancellation after processing five paragraphs.
-            if (index == 5)
-                cts.Cancel();
         }
 
-        // Save the processed document.
+        // Save the (potentially partially processed) document.
         string outputPath = "Processed.docx";
-        loadedDoc.Save(outputPath);
+        doc.Save(outputPath);
 
-        // Verify that the output file was created.
+        // Validate that the file was saved.
         if (!File.Exists(outputPath))
-            throw new Exception("The processed document was not saved successfully.");
+        {
+            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
+        }
+
+        Console.WriteLine($"Document saved to {Path.GetFullPath(outputPath)}");
     }
 }

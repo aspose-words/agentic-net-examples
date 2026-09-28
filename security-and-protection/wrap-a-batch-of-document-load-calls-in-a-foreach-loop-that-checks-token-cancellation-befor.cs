@@ -6,47 +6,50 @@ using Aspose.Words;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
         // Prepare a temporary folder for sample documents.
-        string artifactsDir = Path.Combine(Path.GetTempPath(), "AsposeWordsDemo");
-        Directory.CreateDirectory(artifactsDir);
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsSample");
+        Directory.CreateDirectory(tempFolder);
 
-        // Create a batch of sample documents.
-        var filePaths = new List<string>();
+        // Create a few sample DOCX files.
+        var sampleFiles = new List<string>();
         for (int i = 1; i <= 3; i++)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is sample document #{i}.");
-            string filePath = Path.Combine(artifactsDir, $"Doc{i}.docx");
+            string filePath = Path.Combine(tempFolder, $"Sample{i}.docx");
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is sample document {i}.");
             doc.Save(filePath);
-            filePaths.Add(filePath);
+            sampleFiles.Add(filePath);
         }
 
         // Set up a cancellation token (not cancelled in this example).
-        using CancellationTokenSource cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
+        CancellationToken token = cts.Token;
 
-        // Iterate over the batch, checking cancellation before each load.
-        foreach (string path in filePaths)
+        // Batch load documents, checking cancellation before each load.
+        foreach (string file in sampleFiles)
         {
-            if (cts.Token.IsCancellationRequested)
+            if (token.IsCancellationRequested)
             {
                 Console.WriteLine("Loading operation was cancelled.");
                 break;
             }
 
             // Load the document.
-            Document loadedDoc = new Document(path);
-            Console.WriteLine($"Loaded '{Path.GetFileName(path)}' with text: {loadedDoc.GetText().Trim()}");
+            Document loadedDoc = new Document(file);
+
+            // Simple operation to prove the document was loaded (e.g., count sections).
+            Console.WriteLine($"Loaded '{Path.GetFileName(file)}' with {loadedDoc.Sections.Count} section(s).");
         }
 
-        // Clean up temporary files (optional).
-        foreach (string path in filePaths)
+        // Clean up temporary files.
+        foreach (string file in sampleFiles)
         {
-            if (File.Exists(path))
-                File.Delete(path);
+            if (File.Exists(file))
+                File.Delete(file);
         }
-        Directory.Delete(artifactsDir, true);
+        Directory.Delete(tempFolder, true);
     }
 }

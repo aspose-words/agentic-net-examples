@@ -5,72 +5,67 @@ using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsCancellationDemo
+public class Program
 {
-    // Callback that checks the cancellation token and aborts the save operation.
-    public class SavingProgressCallback : IDocumentSavingCallback
+    // Helper method that runs the synchronous Save inside a Task and observes the cancellation token.
+    private static async Task SaveDocumentAsync(Document doc, string path, SaveOptions options, CancellationToken token)
     {
-        private readonly CancellationToken _cancellationToken;
-
-        public SavingProgressCallback(CancellationToken cancellationToken)
+        // Run the save operation on a background thread so it can be cancelled before it starts.
+        await Task.Run(() =>
         {
-            _cancellationToken = cancellationToken;
-        }
+            // Throw if cancellation was already requested.
+            token.ThrowIfCancellationRequested();
 
-        public void Notify(DocumentSavingArgs args)
-        {
-            if (_cancellationToken.IsCancellationRequested)
-                throw new OperationCanceledException("Document saving was canceled via token.");
-        }
+            // Perform the actual save.
+            doc.Save(path, options);
+        }, token);
     }
 
-    public class Program
+    public static async Task Main(string[] args)
     {
-        public static async Task Main()
+        // Create a sample document with many paragraphs to make the save operation take noticeable time.
+        Document doc = new Document();
+        for (int i = 0; i < 5000; i++)
         {
-            // Prepare output directory.
-            string outputDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
-            Directory.CreateDirectory(outputDir);
-            string outputPath = Path.Combine(outputDir, "LargeDocument.docx");
+            Paragraph para = new Paragraph(doc);
+            para.AppendChild(new Run(doc, $"Paragraph {i + 1}"));
+            doc.FirstSection.Body.AppendChild(para);
+        }
 
-            // Create a large document to make the save operation take noticeable time.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            for (int i = 0; i < 5000; i++)
-            {
-                builder.Writeln($"Paragraph {i + 1}");
-            }
+        // Define the output file path.
+        string outputPath = Path.Combine(Path.GetTempPath(), "AsyncSave.docx");
 
-            // Set up a cancellation token that will be triggered after a short delay.
-            using CancellationTokenSource cts = new CancellationTokenSource();
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(200);
-                cts.Cancel();
-            });
+        // Ensure any previous file is removed.
+        if (File.Exists(outputPath))
+            File.Delete(outputPath);
 
-            // Configure save options with a progress callback that respects the token.
-            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-            {
-                ProgressCallback = new SavingProgressCallback(cts.Token)
-            };
+        // ---------- Normal asynchronous save (no cancellation) ----------
+        await SaveDocumentAsync(doc, outputPath, new OoxmlSaveOptions(), CancellationToken.None);
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Document was not saved as expected.");
+
+        // ---------- Asynchronous save with cancellation ----------
+        using (CancellationTokenSource cts = new CancellationTokenSource())
+        {
+            // Cancel the token after 10 milliseconds.
+            cts.CancelAfter(10);
 
             try
             {
-                // Perform the save operation on a background thread so it can be cancelled.
-                await Task.Run(() => doc.Save(outputPath, saveOptions), cts.Token);
-                Console.WriteLine("Document saved successfully.");
+                // Attempt to save the document asynchronously with the cancellable token.
+                await SaveDocumentAsync(doc, outputPath, new OoxmlSaveOptions(), cts.Token);
+                // If the operation completes without cancellation, indicate success.
+                Console.WriteLine("Document saved successfully (cancellation did not occur).");
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Document saving was canceled.");
+                // Expected path when the token is cancelled during the save operation.
+                Console.WriteLine("Document save was cancelled via CancellationToken.");
             }
-
-            // Verify whether the file was created.
-            if (File.Exists(outputPath))
-                Console.WriteLine($"Output file exists at: {outputPath}");
-            else
-                Console.WriteLine("Output file was not created.");
         }
+
+        // Clean up the temporary file.
+        if (File.Exists(outputPath))
+            File.Delete(outputPath);
     }
 }
