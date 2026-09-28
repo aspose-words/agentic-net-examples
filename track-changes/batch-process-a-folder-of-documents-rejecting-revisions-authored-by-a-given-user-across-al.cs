@@ -1,60 +1,68 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 
 public class Program
 {
-    // Criteria that matches revisions authored by a specific user.
-    private class RevisionAuthorCriteria : IRevisionCriteria
-    {
-        private readonly string _author;
-        public RevisionAuthorCriteria(string author) => _author = author;
-        public bool IsMatch(Revision revision) => revision.Author == _author;
-    }
-
+    // Entry point of the console application.
     public static void Main()
     {
-        // Folder paths (relative to the executable directory).
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
-        string targetAuthor = "John Doe";
+        // Folder that will contain sample documents.
+        string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
+        Directory.CreateDirectory(folderPath);
 
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Create sample documents with revisions from two different authors.
+        CreateSampleDocument(Path.Combine(folderPath, "Sample1.docx"));
+        CreateSampleDocument(Path.Combine(folderPath, "Sample2.docx"));
 
-        // If the input folder is empty, create sample documents with revisions.
-        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
+        // Author whose revisions should be rejected.
+        string targetAuthor = "UserA";
+
+        // Process each .docx file in the folder.
+        foreach (string filePath in Directory.GetFiles(folderPath, "*.docx"))
         {
-            CreateSampleDocument(Path.Combine(inputFolder, "DocWithTargetAuthor.docx"), targetAuthor, "Text added by target author.");
-            CreateSampleDocument(Path.Combine(inputFolder, "DocWithOtherAuthor.docx"), "Jane Smith", "Text added by other author.");
-        }
-
-        // Process each .docx file in the input folder.
-        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
-        {
+            // Load the document.
             Document doc = new Document(filePath);
 
-            // Reject all revisions authored by the target user.
-            doc.Revisions.Reject(new RevisionAuthorCriteria(targetAuthor));
+            // Collect revisions authored by the target user.
+            var revisionsToReject = doc.Revisions
+                .Cast<Revision>()
+                .Where(r => string.Equals(r.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
-            // Save the processed document to the output folder, preserving the original file name.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
-            doc.Save(outputPath);
+            // Reject each matching revision.
+            foreach (Revision rev in revisionsToReject)
+            {
+                rev.Reject();
+            }
+
+            // Save the modified document (overwrite original).
+            doc.Save(filePath);
         }
+
+        // Indicate processing is complete.
+        Console.WriteLine("Revision rejection completed for author: " + targetAuthor);
     }
 
-    // Helper method to create a sample document with a single revision by the specified author.
-    private static void CreateSampleDocument(string filePath, string author, string text)
+    // Creates a sample document with revisions from two authors.
+    private static void CreateSampleDocument(string filePath)
     {
+        // Start with a clean document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start tracking revisions with the given author.
-        doc.StartTrackRevisions(author, DateTime.Now);
-        builder.Writeln(text);
+        // First revision authored by UserA.
+        doc.StartTrackRevisions("UserA", DateTime.Now);
+        builder.Writeln("This is a line added by UserA.");
         doc.StopTrackRevisions();
 
-        // Save the sample document.
+        // Second revision authored by UserB.
+        doc.StartTrackRevisions("UserB", DateTime.Now);
+        builder.Writeln("This is a line added by UserB.");
+        doc.StopTrackRevisions();
+
+        // Save the document.
         doc.Save(filePath);
     }
 }

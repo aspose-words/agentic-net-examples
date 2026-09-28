@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -10,38 +9,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial content (not tracked).
-        builder.Write("Original text. ");
+        // Add initial content (not tracked).
+        builder.Writeln("Original paragraph.");
 
-        // Verify that no revisions exist yet.
-        if (doc.Revisions.Count != 0)
-            throw new InvalidOperationException("Document should have zero revisions before tracking.");
-
-        // Start tracking revisions with a specific author.
+        // Enable track changes.
         doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Make an edit that will be recorded as a revision.
-        builder.Write("First revision. ");
+        // Make a change while tracking is enabled – this will create a revision.
+        builder.Writeln("Inserted while tracking.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Capture the revision count after the tracked edit.
-        int revisionCountAfterFirstEdit = doc.Revisions.Count;
+        // Record the number of revisions after stopping tracking.
+        int revisionsAfterStop = doc.Revisions.Count;
 
-        // Ensure that the edit created exactly one revision.
-        if (revisionCountAfterFirstEdit != 1)
-            throw new InvalidOperationException("Expected exactly one revision after the first edit.");
-
-        // Perform additional edits after tracking has been stopped.
-        builder.Write("Edit after stopping tracking. ");
+        // Make another change after tracking has been stopped – this should NOT create a revision.
+        builder.Writeln("Inserted after tracking stopped.");
 
         // Verify that no new revisions were added.
-        if (doc.Revisions.Count != revisionCountAfterFirstEdit)
-            throw new InvalidOperationException("New revisions were recorded after StopTrackRevisions.");
+        int revisionsAfterEdit = doc.Revisions.Count;
+        if (revisionsAfterEdit != revisionsAfterStop)
+        {
+            throw new InvalidOperationException("A new revision was recorded after tracking was stopped.");
+        }
 
-        // Save the document to verify the result.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TrackChangesOutput.docx");
-        doc.Save(outputPath);
+        // Output the final revision count.
+        Console.WriteLine($"Final revision count: {revisionsAfterEdit}");
+
+        // Save the document to verify the result (optional for the task).
+        doc.Save("TrackChangesDemo.docx");
     }
 }

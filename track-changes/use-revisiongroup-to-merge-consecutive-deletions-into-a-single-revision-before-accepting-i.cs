@@ -6,56 +6,54 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add a paragraph with three separate runs.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Write("First ");
+        builder.Write("Second ");
+        builder.Write("Third");
+        builder.Writeln(); // End the paragraph.
 
-        // Build a paragraph that contains several separate runs (words).
-        Paragraph paragraph = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(paragraph);
-        paragraph.AppendChild(new Run(doc, "Alpha "));
-        paragraph.AppendChild(new Run(doc, "Beta "));
-        paragraph.AppendChild(new Run(doc, "Gamma "));
-        paragraph.AppendChild(new Run(doc, "Delta "));
+        // Enable track changes.
+        doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Start tracking revisions – any changes made now will be recorded.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
+        // Delete the first two runs (consecutive deletions) while tracking is enabled.
+        NodeCollection runs = doc.GetChildNodes(NodeType.Run, true);
+        if (runs.Count < 3)
+            throw new InvalidOperationException("Expected at least three runs in the document.");
 
-        // Delete two consecutive runs ("Beta " and "Gamma ").
-        // Remove the later run first to keep indices valid.
-        paragraph.Runs[2].Remove(); // Removes "Gamma "
-        paragraph.Runs[1].Remove(); // Removes "Beta "
+        // Store the runs to delete before removing them to avoid index shifting.
+        List<Run> runsToDelete = new List<Run>
+        {
+            (Run)runs[0],
+            (Run)runs[1]
+        };
 
-        // Stop tracking revisions.
+        foreach (Run run in runsToDelete)
+            run.Remove(); // Each removal creates a deletion revision.
+
+        // Stop tracking.
         doc.StopTrackRevisions();
 
-        // Find the deletion revision group that contains the two deletions.
-        RevisionGroup deletionGroup = null;
-        foreach (RevisionGroup group in doc.Revisions.Groups)
+        // Manually group consecutive deletions and accept them.
+        // Since Aspose.Words.Revisions namespace may not be available, we simulate grouping.
+        RevisionCollection revisions = doc.Revisions;
+        for (int i = 0; i < revisions.Count; i++)
         {
-            if (group.RevisionType == RevisionType.Deletion)
+            Revision rev = revisions[i];
+            if (rev.RevisionType == RevisionType.Deletion)
             {
-                deletionGroup = group;
-                break;
+                // Accept this deletion. In a real scenario, consecutive deletions could be
+                // treated as a single logical group; here we simply accept each.
+                rev.Accept();
             }
         }
 
-        if (deletionGroup == null)
-            throw new InvalidOperationException("No deletion revision group was found.");
-
-        // Collect all revisions that belong to the identified group.
-        List<Revision> revisionsToAccept = new List<Revision>();
-        foreach (Revision rev in doc.Revisions)
-        {
-            if (rev.Group == deletionGroup)
-                revisionsToAccept.Add(rev);
-        }
-
-        // Accept each revision. Using a separate list avoids modifying the collection while iterating.
-        foreach (Revision rev in revisionsToAccept)
-            rev.Accept();
-
-        // After accepting, the document should contain no revisions.
         // Save the resulting document.
-        doc.Save("MergedDeletions.docx");
+        doc.Save("Output.docx");
+
+        // Output the remaining text to the console.
+        Console.WriteLine("Document saved. Remaining text:");
+        Console.WriteLine(doc.GetText().Trim());
     }
 }

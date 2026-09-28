@@ -9,50 +9,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial content that is not a revision.
-        builder.Writeln("Initial content. ");
+        // Add initial content.
+        builder.Writeln("Original text.");
 
-        // First author makes a revision.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
-        builder.Writeln("John's revision text. ");
+        // Start tracking revisions with a specific author.
+        string targetAuthor = "John Doe";
+        doc.StartTrackRevisions(targetAuthor, DateTime.Now);
+
+        // Make a change that will be recorded as a revision.
+        builder.Writeln("Added text.");
+
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Second author makes a revision.
-        doc.StartTrackRevisions("Jane Smith", DateTime.Now);
-        builder.Writeln("Jane's revision text. ");
-        doc.StopTrackRevisions();
-
-        // At this point the document has two insertion revisions.
-        Console.WriteLine($"Revisions before rejection: {doc.Revisions.Count}");
-
-        // Reject all revisions authored by "Jane Smith".
+        // Reject revisions authored by the target author.
+        // Iterate backwards to avoid modifying the collection during enumeration.
         for (int i = doc.Revisions.Count - 1; i >= 0; i--)
         {
             Revision rev = doc.Revisions[i];
-            if (rev.Author == "Jane Smith")
+            if (rev.Author == targetAuthor)
                 rev.Reject();
         }
 
-        // Verify that no revision from Jane Smith remains.
-        bool janeRevisionExists = false;
-        foreach (Revision rev in doc.Revisions)
-        {
-            if (rev.Author == "Jane Smith")
-            {
-                janeRevisionExists = true;
-                break;
-            }
-        }
-
-        Console.WriteLine($"Revisions after rejection: {doc.Revisions.Count}");
-        Console.WriteLine($"Jane's revision still present: {janeRevisionExists}");
-
-        // Confirm that the text added by Jane is no longer in the document.
-        string docText = doc.GetText();
-        bool janeTextPresent = docText.Contains("Jane's revision text");
-        Console.WriteLine($"Jane's revision text present in document: {janeTextPresent}");
+        // Validate that the rejected revision is no longer present.
+        if (doc.GetText().Contains("Added text"))
+            throw new Exception("The revision was not successfully rejected.");
 
         // Save the resulting document.
-        doc.Save("RevisionsResult.docx");
+        doc.Save("Result.docx");
     }
 }

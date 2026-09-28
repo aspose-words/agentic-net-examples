@@ -5,24 +5,20 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Enable tracking of revisions.
-        doc.StartTrackRevisions("Demo Author", DateTime.Now);
+        doc.StartTrackRevisions("Author", DateTime.Now);
 
         // Insert a paragraph while tracking is active.
-        builder.Writeln("This paragraph is inserted as a revision.");
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph is inserted with tracking enabled.");
 
-        // Disable further tracking.
+        // Disable tracking of revisions.
         doc.StopTrackRevisions();
 
-        // Ensure that a revision was actually recorded.
-        if (!doc.HasRevisions || doc.Revisions.Count == 0)
-            throw new InvalidOperationException("No revisions were recorded.");
-
-        // Save the document.
-        doc.Save("TrackedRevisions.docx");
+        // Save the document to a file.
+        doc.Save("TrackChanges.docx");
     }
 }

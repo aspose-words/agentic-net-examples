@@ -9,33 +9,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial content that is not a revision.
-        builder.Write("This is the original content. ");
+        // Add initial content.
+        builder.Writeln("Original paragraph.");
 
         // Start tracking revisions.
         doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Make changes that will be recorded as revisions.
-        builder.Write("This text is added while tracking. ");
+        // Insert a new paragraph while tracking is enabled.
+        builder.Writeln("Inserted paragraph while tracking.");
 
-        // Stop tracking to finish creating revisions.
+        // Delete the original paragraph to create a deletion revision.
+        Paragraph originalParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        originalParagraph.Remove();
+
+        // Change formatting of the inserted paragraph to create a format revision.
+        builder.Font.Bold = true;
+        builder.Writeln("Bold text added.");
+
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // At this point the document should contain revisions.
+        // Verify that revisions exist.
         if (!doc.HasRevisions)
-            throw new Exception("Expected revisions were not created.");
+            throw new InvalidOperationException("Expected revisions were not created.");
 
-        // Reject all revisions in the document.
+        // Reject all revisions using the RevisionCollection API.
         doc.Revisions.RejectAll();
 
         // Verify that no revisions remain.
         if (doc.HasRevisions)
-            throw new Exception("Revisions were not fully rejected.");
+            throw new InvalidOperationException("Revisions were not fully rejected.");
 
-        // Save the resulting document (optional, demonstrates file output).
-        doc.Save("RejectedRevisions.docx");
+        // Save the resulting document.
+        doc.Save("Result.docx");
 
         // Indicate success.
-        Console.WriteLine("All tracked changes were rejected; HasRevisions = false.");
+        Console.WriteLine("All revisions rejected successfully; HasRevisions = false.");
     }
 }

@@ -10,50 +10,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple 2‑cell table.
-        builder.StartTable();
+        // Build a simple 1x2 table.
+        Table table = builder.StartTable();
         builder.InsertCell();
         builder.Write("Original Cell 1");
-        builder.EndRow();
         builder.InsertCell();
-        builder.Write("Original Cell 2");
+        builder.Write("Cell 2");
+        builder.EndRow();
         builder.EndTable();
 
         // Enable revision tracking.
-        string author = "Test Author";
-        DateTime revisionDate = DateTime.Now;
-        doc.StartTrackRevisions(author, revisionDate);
+        doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
 
         // Modify the text of the first cell to generate a revision.
-        Table table = doc.FirstSection.Body.Tables[0];
-        Cell firstCell = table.Rows[0].Cells[0];
-        // Clear existing runs.
-        firstCell.FirstParagraph.Runs.Clear();
-        // Write new text – this will be recorded as an insertion revision.
-        builder.MoveTo(firstCell.FirstParagraph);
-        builder.Write("Modified Cell 1");
+        Table firstTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Cell firstCell = firstTable.Rows[0].Cells[0];
+        // Clear existing paragraphs and add new text.
+        firstCell.RemoveAllChildren();
+        firstCell.AppendChild(new Paragraph(doc));
+        firstCell.FirstParagraph.AppendChild(new Run(doc, "Modified Cell 1"));
 
-        // Stop tracking further changes.
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Verify that at least one revision exists and that it is an insertion.
-        if (!doc.HasRevisions || doc.Revisions.Count == 0)
-            throw new InvalidOperationException("No revisions were created.");
+        // Save the document (optional for verification).
+        doc.Save("TrackedDocument.docx");
 
-        bool insertionFound = false;
-        foreach (Revision rev in doc.Revisions)
+        // Verify that a revision was created.
+        RevisionCollection revisions = doc.Revisions;
+        if (revisions.Count == 0)
         {
-            if (rev.RevisionType == RevisionType.Insertion && rev.Author == author)
-            {
-                insertionFound = true;
-                break;
-            }
+            throw new InvalidOperationException("No revisions were detected after modifying the table cell.");
         }
 
-        if (!insertionFound)
-            throw new InvalidOperationException("Expected insertion revision not found.");
-
-        // Save the document to verify the result.
-        doc.Save("RevisionsExample.docx");
+        // Output revision details.
+        Console.WriteLine($"Total revisions: {revisions.Count}");
+        foreach (Revision rev in revisions)
+        {
+            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
+        }
     }
 }

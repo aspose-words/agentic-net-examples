@@ -1,49 +1,39 @@
 using System;
-using System.IO;
-using System.Drawing;
 using Aspose.Words;
 
-public class TrackChangesDemo
+public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
-        string samplePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.docx");
-        Document sampleDoc = new Document();
-        DocumentBuilder sampleBuilder = new DocumentBuilder(sampleDoc);
-        sampleBuilder.Writeln("This is the original paragraph.");
-        sampleDoc.Save(samplePath);
-
-        // Load the document.
-        Document doc = new Document(samplePath);
+        // Create a new document with some initial content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello world!");
+        builder.Writeln("This is a sample paragraph.");
 
         // Enable revision tracking.
-        doc.StartTrackRevisions("Alice", DateTime.Now);
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Apply a formatting change (won't be recorded as a revision, but performed while tracking).
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        Run firstRun = (Run)firstParagraph.Runs[0];
+        // Apply a formatting change: make the first run bold (creates a FormatChange revision).
+        Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+        Run firstRun = (Run)firstParagraph.GetChildNodes(NodeType.Run, true)[0];
         firstRun.Font.Bold = true;
-        // Correct property name for color.
-        firstRun.Font.Color = Color.Blue;
 
-        // Insert new text to generate an insertion revision.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This line was added while tracking changes.");
+        // Insert a new paragraph (creates an Insertion revision).
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Inserted paragraph while tracking.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the revised document.
-        string revisedPath = Path.Combine(Directory.GetCurrentDirectory(), "revised.docx");
-        doc.Save(revisedPath);
-
-        // List resulting revision types.
-        Console.WriteLine("Revisions found in the document:");
+        // List all revisions with their types, authors, and dates.
+        Console.WriteLine($"Total revisions: {doc.Revisions.Count}");
         foreach (Revision rev in doc.Revisions)
         {
-            string text = rev.ParentNode?.GetText().Trim() ?? string.Empty;
-            Console.WriteLine($"- Type: {rev.RevisionType}, Author: {rev.Author}, Text: \"{text}\"");
+            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
         }
+
+        // Save the document (optional, demonstrates that revisions are persisted).
+        doc.Save("TrackedDocument.docx");
     }
 }

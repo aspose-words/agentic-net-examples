@@ -2,8 +2,9 @@ using System;
 using System.IO;
 using System.Text;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
-public class RevisionExportUtility
+public class Program
 {
     public static void Main()
     {
@@ -11,54 +12,57 @@ public class RevisionExportUtility
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content that will not be a revision.
-        builder.Writeln("Original content.");
+        // Add initial content.
+        builder.Writeln("This is the first paragraph.");
+        builder.Writeln("This is the second paragraph.");
+        builder.Writeln("This is the third paragraph.");
 
-        // Enable tracking of revisions with a specific author and timestamp.
-        doc.StartTrackRevisions("Alice", DateTime.Now);
+        // Enable track changes.
+        string author = "John Doe";
+        DateTime revisionDate = DateTime.Now;
+        doc.StartTrackRevisions(author, revisionDate);
 
-        // Perform edits that will be recorded as revisions.
-        builder.Writeln("Added line 1.");
-        builder.Writeln("Added line 2.");
+        // Perform some modifications to generate revisions.
+        // Insert a new paragraph.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("This is an inserted paragraph.");
 
-        // Create a deletion revision by removing the first run.
-        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
+        // Delete the second paragraph.
+        Paragraph secondParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 1, true);
+        secondParagraph.Remove();
 
-        // Stop tracking further changes.
+        // Change formatting of the first paragraph (make it bold).
+        Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        firstParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (optional, demonstrates lifecycle usage).
-        doc.Save("RevisionsDemo.docx");
+        // Save the document (optional, demonstrates that the document contains revisions).
+        string docPath = "Sample.docx";
+        doc.Save(docPath);
 
-        // Export revision metadata to a CSV file.
-        ExportRevisionsToCsv(doc, "RevisionsMetadata.csv");
-    }
+        // Export revision metadata to CSV.
+        StringBuilder csvBuilder = new StringBuilder();
+        csvBuilder.AppendLine("RevisionIndex,RevisionType,Author,DateTime,Text");
 
-    private static void ExportRevisionsToCsv(Document doc, string csvPath)
-    {
-        var sb = new StringBuilder();
-
-        // CSV header.
-        sb.AppendLine("Index,RevisionType,Author,DateTime,Text");
-
-        int index = 0;
-        foreach (Revision rev in doc.Revisions)
+        RevisionCollection revisions = doc.Revisions;
+        for (int i = 0; i < revisions.Count; i++)
         {
-            // Retrieve the text associated with the revision, handling possible nulls.
-            string text = rev.ParentNode != null
-                ? rev.ParentNode.GetText().Replace("\r", " ").Replace("\n", " ").Trim()
-                : string.Empty;
+            Revision rev = revisions[i];
+            string revType = rev.RevisionType.ToString();
+            string revAuthor = rev.Author;
+            string revDate = rev.DateTime.ToString("o"); // ISO 8601 format
+            string revText = rev.ParentNode?.GetText()?.Replace("\r", " ").Replace("\n", " ").Trim();
 
-            // Escape commas in the text field.
-            if (text.Contains(","))
-                text = $"\"{text}\"";
+            // Escape commas in text.
+            if (revText != null && revText.Contains(","))
+                revText = $"\"{revText}\"";
 
-            // Append a CSV line with ISO 8601 date format for consistency.
-            sb.AppendLine($"{index},{rev.RevisionType},{rev.Author},{rev.DateTime:o},{text}");
-            index++;
+            csvBuilder.AppendLine($"{i},{revType},{revAuthor},{revDate},{revText}");
         }
 
-        // Write the CSV content to the specified file.
-        File.WriteAllText(csvPath, sb.ToString());
+        string csvPath = "Revisions.csv";
+        File.WriteAllText(csvPath, csvBuilder.ToString(), Encoding.UTF8);
     }
 }

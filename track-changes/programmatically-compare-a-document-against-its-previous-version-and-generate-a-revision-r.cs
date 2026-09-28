@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 
@@ -7,41 +8,52 @@ public class Program
     public static void Main()
     {
         // Create the original document.
-        Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
-        builder.Writeln("This is the original document.");
-        builder.Writeln("Second line of the original.");
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("Hello World");
+        builder.Writeln("This is a sample document.");
 
-        // Clone the original to create an edited version.
-        Document edited = (Document)original.Clone(true);
-        DocumentBuilder editedBuilder = new DocumentBuilder(edited);
-
-        // Modify the edited document: change existing text and add a new line.
-        edited.FirstSection.Body.Paragraphs[0].Runs[0].Text = "This is the edited document.";
-        editedBuilder.Writeln("An additional line added in the edited version.");
-
-        // Ensure both documents have no revisions before comparison.
-        if (original.HasRevisions || edited.HasRevisions)
-            throw new InvalidOperationException("Documents should not contain revisions before comparison.");
-
-        // Compare the original document with the edited version.
-        original.Compare(edited, "Comparer", DateTime.Now);
-
-        // Build a revision report in memory.
-        StringBuilder report = new StringBuilder();
-        report.AppendLine("Revision Report:");
-        report.AppendLine("----------------");
-
-        foreach (Revision revision in original.Revisions)
+        // Save the original document to a memory stream.
+        using (MemoryStream originalStream = new MemoryStream())
         {
-            report.AppendLine($"Author: {revision.Author}");
-            report.AppendLine($"Date: {revision.DateTime}");
-            report.AppendLine($"Type: {revision.RevisionType}");
-            report.AppendLine($"Changed Text: \"{revision.ParentNode.GetText().Trim()}\"");
-            report.AppendLine();
-        }
+            originalDoc.Save(originalStream, SaveFormat.Docx);
+            originalStream.Position = 0;
 
-        // Output the report to the console.
-        Console.WriteLine(report.ToString());
+            // Load two separate copies: one will stay unchanged, the other will be modified.
+            Document unchangedDoc = new Document(originalStream);
+            originalStream.Position = 0;
+            Document modifiedDoc = new Document(originalStream);
+
+            // Enable track changes and make modifications.
+            modifiedDoc.StartTrackRevisions("User1", DateTime.Now);
+            DocumentBuilder modBuilder = new DocumentBuilder(modifiedDoc);
+            modBuilder.Writeln("Added a new paragraph.");
+
+            // Delete the first paragraph to generate a deletion revision.
+            Paragraph firstParagraph = (Paragraph)modifiedDoc.FirstSection.Body.FirstParagraph;
+            firstParagraph.Remove();
+
+            modifiedDoc.StopTrackRevisions();
+
+            // Compare the unchanged document against the modified one.
+            // The comparison result (with revisions) is stored in unchangedDoc.
+            unchangedDoc.Compare(modifiedDoc, "Comparer", DateTime.Now);
+
+            // Build a revision report in memory.
+            StringBuilder report = new StringBuilder();
+            report.AppendLine("Revision Report:");
+            foreach (Revision rev in unchangedDoc.Revisions)
+            {
+                report.AppendLine($"Type: {rev.RevisionType}");
+                report.AppendLine($"Author: {rev.Author}");
+                report.AppendLine($"Date: {rev.DateTime}");
+                string text = rev.ParentNode?.GetText()?.Trim() ?? string.Empty;
+                report.AppendLine($"Text: {text}");
+                report.AppendLine("---");
+            }
+
+            // Output the report.
+            Console.WriteLine(report.ToString());
+        }
     }
 }

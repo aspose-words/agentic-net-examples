@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,35 +6,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // Create a sample document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world! This is a sample document.");
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "original.docx");
-        doc.Save(originalPath);
+        builder.Writeln("This is a sample document. Hello World!");
 
-        // Load the document.
-        Document loadedDoc = new Document(originalPath);
+        // Save the sample document locally.
+        string samplePath = "Sample.docx";
+        doc.Save(samplePath);
 
-        // Enable track changes.
-        loadedDoc.StartTrackRevisions("Alice", DateTime.Now);
+        // Load the document from the file.
+        Document loadedDoc = new Document(samplePath);
 
-        // Perform a find-and-replace operation that will be recorded as a revision.
-        loadedDoc.Range.Replace("Hello", "Hi", new FindReplaceOptions());
+        // Enable track changes with an author name and current date.
+        loadedDoc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Stop tracking revisions.
+        // Perform a find-and-replace operation while tracking is enabled.
+        loadedDoc.Range.Replace("World", "Aspose", new FindReplaceOptions());
+
+        // Stop tracking changes.
         loadedDoc.StopTrackRevisions();
 
-        // List generated revisions.
-        Console.WriteLine($"Total revisions: {loadedDoc.Revisions.Count}");
+        // Save the modified document.
+        string modifiedPath = "Modified.docx";
+        loadedDoc.Save(modifiedPath);
+
+        // List all generated revisions.
         foreach (Revision rev in loadedDoc.Revisions)
         {
-            string text = rev.ParentNode?.GetText()?.Trim() ?? string.Empty;
-            Console.WriteLine($"Revision Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}, Text: \"{text}\"");
+            Console.WriteLine($"Revision Type: {rev.RevisionType}");
+            Console.WriteLine($"Author: {rev.Author}");
+            Console.WriteLine($"Date: {rev.DateTime}");
+            Console.WriteLine($"Text: {rev.ParentNode?.GetText().Trim()}");
+            Console.WriteLine("---");
         }
-
-        // Save the modified document.
-        string revisedPath = Path.Combine(Directory.GetCurrentDirectory(), "revised.docx");
-        loadedDoc.Save(revisedPath);
     }
 }
