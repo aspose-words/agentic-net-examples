@@ -3,88 +3,81 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D; // For InterpolationMode
 
 public class Program
 {
     public static void Main()
     {
-        // Deterministic file names
-        const string inputImagePath = "input.png";
-        const string docPath = "original.docx";
-        const string previewPrefix = "preview_";
+        // Create a sample PNG image.
+        string inputImagePath = "input.png";
+        CreateSamplePng(inputImagePath, 200, 200);
 
-        // 1. Create a sample PNG image (200x200) and save it as input.png
-        const int sampleWidth = 200;
-        const int sampleHeight = 200;
-        using (Bitmap bitmap = new Bitmap(sampleWidth, sampleHeight))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(Color.White);
-            using (Pen pen = new Pen(Color.Red, 5))
-            {
-                graphics.DrawRectangle(pen, 10, 10, sampleWidth - 20, sampleHeight - 20);
-            }
-            bitmap.Save(inputImagePath);
-        }
-
-        // 2. Insert the image into a new Word document
+        // Create a Word document and insert the PNG image.
+        string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(inputImagePath);
         doc.Save(docPath);
 
-        // 3. Load the document and process each PNG image
+        // Load the document (demonstrates load lifecycle).
         Document loadedDoc = new Document(docPath);
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int previewIndex = 0;
 
-        foreach (Shape shape in shapes)
+        // Extract PNG images and generate 50% size previews.
+        int imageIndex = 0;
+        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Process only PNG images
-            if (shape.ImageData.ImageType != ImageType.Png)
-                continue;
-
-            // Extract the image bytes into a memory stream
-            using (MemoryStream imageStream = new MemoryStream())
+            if (shape.HasImage)
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0;
+                // Save the extracted original image.
+                string extractedPath = $"extracted-{imageIndex}.png";
+                shape.ImageData.Save(extractedPath);
 
-                // Load the image using Aspose.Drawing
-                using (Bitmap originalBitmap = new Bitmap(imageStream))
-                {
-                    // Calculate 50% dimensions
-                    int newWidth = originalBitmap.Width / 2;
-                    int newHeight = originalBitmap.Height / 2;
+                // Resize the extracted image to 50% of its original dimensions.
+                string previewPath = $"preview-{imageIndex}.png";
+                ResizePngHalf(extractedPath, previewPath);
 
-                    // Create a new bitmap for the resized preview
-                    using (Bitmap previewBitmap = new Bitmap(newWidth, newHeight))
-                    using (Graphics g = Graphics.FromImage(previewBitmap))
-                    {
-                        // High-quality scaling
-                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        g.DrawImage(originalBitmap, new Rectangle(0, 0, newWidth, newHeight));
+                // Validate that the preview file was created.
+                if (!File.Exists(previewPath))
+                    throw new InvalidOperationException($"Resized preview not created: {previewPath}");
 
-                        // Save the preview image
-                        string previewPath = $"{previewPrefix}{previewIndex}.png";
-                        previewBitmap.Save(previewPath);
-                        previewIndex++;
-                    }
-                }
+                imageIndex++;
             }
         }
 
-        // Validation: ensure at least one preview was generated
-        if (previewIndex == 0)
-            throw new InvalidOperationException("No PNG images were found to generate previews.");
+        // Ensure at least one preview image was generated.
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No PNG images were extracted from the document.");
+    }
 
-        // Optional cleanup (commented out to keep artifacts)
-        // File.Delete(inputImagePath);
-        // File.Delete(docPath);
+    // Creates a deterministic PNG image using Aspose.Drawing.
+    private static void CreateSamplePng(string path, int width, int height)
+    {
+        Bitmap bitmap = new Bitmap(width, height);
+        Graphics g = Graphics.FromImage(bitmap);
+        g.Clear(Color.White);
+        using (SolidBrush brush = new SolidBrush(Color.Blue))
+        {
+            g.FillRectangle(brush, 20, 20, width - 40, height - 40);
+        }
+        g.Dispose();
+        bitmap.Save(path);
+        bitmap.Dispose();
+    }
+
+    // Resizes a PNG image to 50% of its original size.
+    private static void ResizePngHalf(string sourcePath, string destPath)
+    {
+        Bitmap sourceBitmap = new Bitmap(sourcePath);
+        int newWidth = sourceBitmap.Width / 2;
+        int newHeight = sourceBitmap.Height / 2;
+
+        Bitmap destBitmap = new Bitmap(newWidth, newHeight);
+        Graphics g = Graphics.FromImage(destBitmap);
+        g.DrawImage(sourceBitmap, 0, 0, newWidth, newHeight);
+        g.Dispose();
+
+        destBitmap.Save(destPath);
+        sourceBitmap.Dispose();
+        destBitmap.Dispose();
     }
 }

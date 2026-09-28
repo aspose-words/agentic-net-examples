@@ -1,117 +1,119 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create a deterministic sample JPEG image.
+        string sampleImagePath = "sample.jpg";
+        CreateSampleJpeg(sampleImagePath);
 
-        // 1. Create a sample JPEG image.
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.jpg");
-        CreateSampleJpeg(sampleImagePath, 200, 200);
-
-        // 2. Create a Word document and insert the JPEG image.
+        // Build a document and insert the JPEG image twice.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleImagePath);
-        string originalDocPath = Path.Combine(artifactsDir, "original.docx");
+        builder.Writeln();
+        builder.InsertImage(sampleImagePath);
+        string originalDocPath = "original.docx";
         doc.Save(originalDocPath);
 
-        // 3. Load the document, extract JPEG images, apply motion blur, and re‑embed them.
-        Document loadedDoc = new Document(originalDocPath);
-        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true).Cast<Shape>()
-                              .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Jpeg)
-                              .ToList();
+        // Load the document for processing.
+        Document loadDoc = new Document(originalDocPath);
+        NodeCollection shapeNodes = loadDoc.GetChildNodes(NodeType.Shape, true);
+        int imageIndex = 0;
 
-        if (!shapes.Any())
-            throw new InvalidOperationException("No JPEG images were found in the document.");
-
-        foreach (var shape in shapes)
+        foreach (Shape shape in shapeNodes)
         {
-            // Extract the image to a memory stream.
-            using (MemoryStream originalStream = new MemoryStream())
+            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Jpeg)
             {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
-
-                // Load the image into a bitmap.
-                using (Bitmap originalBitmap = new Bitmap(originalStream))
+                // Extract the JPEG image to a memory stream.
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    // Apply a simple horizontal motion blur.
-                    using (Bitmap blurredBitmap = ApplyHorizontalMotionBlur(originalBitmap))
+                    shape.ImageData.Save(ms);
+                    ms.Position = 0;
+
+                    // Load the image into a bitmap.
+                    using (Bitmap originalBitmap = new Bitmap(ms))
                     {
-                        // Save the blurred bitmap back to a stream.
-                        using (MemoryStream blurredStream = new MemoryStream())
+                        // Apply a simple horizontal motion blur.
+                        using (Bitmap blurredBitmap = ApplyMotionBlur(originalBitmap, 10))
                         {
-                            blurredBitmap.Save(blurredStream, ImageFormat.Jpeg);
-                            blurredStream.Position = 0;
+                            // Save the blurred image to a temporary file.
+                            string blurredPath = $"blurred_{imageIndex}.jpg";
+                            blurredBitmap.Save(blurredPath);
+                            if (!File.Exists(blurredPath))
+                                throw new Exception($"Blurred image not saved: {blurredPath}");
 
                             // Replace the shape's image with the blurred version.
-                            shape.ImageData.SetImage(blurredStream);
+                            shape.ImageData.SetImage(blurredPath);
                         }
                     }
                 }
+                imageIndex++;
             }
         }
 
-        // 4. Save the modified document.
-        string processedDocPath = Path.Combine(artifactsDir, "processed.docx");
-        loadedDoc.Save(processedDocPath);
-
-        // Validation.
-        if (!File.Exists(processedDocPath))
-            throw new InvalidOperationException("The processed document was not saved.");
-
-        Console.WriteLine("Processing complete. Files are located in: " + artifactsDir);
+        // Save the final document.
+        string outputDocPath = "output.docx";
+        loadDoc.Save(outputDocPath);
+        if (!File.Exists(outputDocPath))
+            throw new Exception("Output document was not created.");
     }
 
-    // Creates a deterministic JPEG image with simple graphics.
-    private static void CreateSampleJpeg(string filePath, int width, int height)
+    // Creates a simple deterministic JPEG image.
+    private static void CreateSampleJpeg(string path)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        int width = 200;
+        int height = 100;
+        Bitmap bitmap = new Bitmap(width, height);
+        Graphics g = Graphics.FromImage(bitmap);
+        g.Clear(Color.White);
+        using (SolidBrush brush = new SolidBrush(Color.Blue))
         {
-            graphics.Clear(Color.White);
-            // Draw a red ellipse.
-            graphics.FillEllipse(new SolidBrush(Color.Red), 20, 20, width - 40, height - 40);
-            // Save as JPEG.
-            bitmap.Save(filePath, ImageFormat.Jpeg);
+            g.FillRectangle(brush, 20, 20, 160, 60);
         }
+        g.Dispose();
+        bitmap.Save(path);
+        bitmap.Dispose();
+
+        if (!File.Exists(path))
+            throw new Exception($"Sample JPEG not created: {path}");
     }
 
-    // Applies a basic horizontal motion blur by averaging neighboring pixels.
-    private static Bitmap ApplyHorizontalMotionBlur(Bitmap source)
+    // Applies a basic horizontal motion blur to a bitmap.
+    private static Bitmap ApplyMotionBlur(Bitmap src, int length)
     {
-        int w = source.Width;
-        int h = source.Height;
-        Bitmap result = new Bitmap(w, h);
+        int width = src.Width;
+        int height = src.Height;
+        Bitmap dest = new Bitmap(width, height);
 
-        for (int y = 0; y < h; y++)
+        for (int y = 0; y < height; y++)
         {
-            for (int x = 0; x < w; x++)
+            for (int x = 0; x < width; x++)
             {
-                // Gather colors of the current pixel and its immediate horizontal neighbours.
-                Color cCenter = source.GetPixel(x, y);
-                Color cLeft = x > 0 ? source.GetPixel(x - 1, y) : cCenter;
-                Color cRight = x < w - 1 ? source.GetPixel(x + 1, y) : cCenter;
-
-                // Average the RGB components.
-                int r = (cLeft.R + cCenter.R + cRight.R) / 3;
-                int g = (cLeft.G + cCenter.G + cRight.G) / 3;
-                int b = (cLeft.B + cCenter.B + cRight.B) / 3;
-
-                result.SetPixel(x, y, Color.FromArgb(r, g, b));
+                int rSum = 0, gSum = 0, bSum = 0, count = 0;
+                for (int k = 0; k < length; k++)
+                {
+                    int nx = x + k;
+                    if (nx >= width) break;
+                    Color col = src.GetPixel(nx, y);
+                    rSum += col.R;
+                    gSum += col.G;
+                    bSum += col.B;
+                    count++;
+                }
+                int r = rSum / count;
+                int g = gSum / count;
+                int b = bSum / count;
+                Color avg = Color.FromArgb(r, g, b);
+                dest.SetPixel(x, y, avg);
             }
         }
 
-        return result;
+        return dest;
     }
 }

@@ -9,66 +9,106 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample BMP image.
+        // Step 1: Create a deterministic BMP image to be used as sample input.
         const string sampleBmpPath = "sample.bmp";
-        using (Bitmap bmp = new Bitmap(200, 200))
-        {
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                g.Clear(Color.LightBlue);
-                // Draw a simple rectangle.
-                g.DrawRectangle(new Pen(Color.DarkBlue, 5), 20, 20, 160, 160);
-            }
-            bmp.Save(sampleBmpPath);
-        }
+        CreateSampleBmp(sampleBmpPath, 200, 200);
 
-        // Create a Word document and insert the BMP image.
-        const string docPath = "document.docx";
+        // Step 2: Create a Word document and insert the BMP image.
+        const string docPath = "input.docx";
+        CreateWordDocumentWithImage(docPath, sampleBmpPath);
+
+        // Step 3: Load the document, extract BMP images, resize them to 640x480, and save.
+        const int targetWidth = 640;
+        const int targetHeight = 480;
+        int resizedCount = ExtractAndResizeBmpImages(docPath, targetWidth, targetHeight);
+
+        // Validation: ensure at least one image was resized.
+        if (resizedCount == 0)
+            throw new InvalidOperationException("No BMP images were extracted and resized.");
+
+        Console.WriteLine($"Successfully resized {resizedCount} BMP image(s).");
+    }
+
+    private static void CreateSampleBmp(string filePath, int width, int height)
+    {
+        // Create a bitmap and fill it with a solid color.
+        Bitmap bitmap = new Bitmap(width, height);
+        Graphics graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(Color.LightBlue);
+        // Optionally draw a simple rectangle.
+        graphics.DrawRectangle(Pens.Black, 10, 10, width - 20, height - 20);
+        // Save the bitmap as BMP.
+        bitmap.Save(filePath, ImageFormat.Bmp);
+        // Clean up.
+        graphics.Dispose();
+        bitmap.Dispose();
+
+        // Verify the file was created.
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("Failed to create sample BMP image.", filePath);
+    }
+
+    private static void CreateWordDocumentWithImage(string docPath, string imagePath)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleBmpPath);
+        // Insert the BMP image into the document.
+        builder.InsertImage(imagePath);
+        // Save the document.
         doc.Save(docPath);
+        // Verify the file was created.
+        if (!File.Exists(docPath))
+            throw new FileNotFoundException("Failed to create Word document.", docPath);
+    }
 
-        // Load the document and extract images.
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+    private static int ExtractAndResizeBmpImages(string docPath, int targetWidth, int targetHeight)
+    {
+        Document doc = new Document(docPath);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int resizedImages = 0;
+        int index = 0;
+
         foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Extract image bytes.
-            byte[] imageBytes = shape.ImageData.ImageBytes;
-            using (MemoryStream ms = new MemoryStream(imageBytes))
-            {
-                ms.Position = 0;
-                using (Bitmap original = new Bitmap(ms))
-                {
-                    // Resize to 640x480.
-                    using (Bitmap resized = new Bitmap(640, 480))
-                    {
-                        using (Graphics g = Graphics.FromImage(resized))
-                        {
-                            g.Clear(Color.White);
-                            g.DrawImage(original, 0, 0, 640, 480);
-                        }
+            // Save the extracted image to a temporary BMP file.
+            string extractedPath = $"extracted-{index}.bmp";
+            shape.ImageData.Save(extractedPath);
 
-                        string resizedPath = $"resized-{imageIndex}.bmp";
-                        resized.Save(resizedPath);
-                        imageIndex++;
+            // Ensure the extracted file is a BMP (by extension, as per creation rules).
+            if (Path.GetExtension(extractedPath).Equals(".bmp", StringComparison.OrdinalIgnoreCase))
+            {
+                // Load the extracted BMP.
+                using (Bitmap original = new Bitmap(extractedPath))
+                {
+                    // Create a new bitmap with the target size.
+                    using (Bitmap resized = new Bitmap(targetWidth, targetHeight))
+                    {
+                        using (Graphics graphics = Graphics.FromImage(resized))
+                        {
+                            // Draw the original image scaled to the new dimensions.
+                            graphics.DrawImage(original, 0, 0, targetWidth, targetHeight);
+                        }
+                        // Save the resized BMP.
+                        string resizedPath = $"resized-{index}.bmp";
+                        resized.Save(resizedPath, ImageFormat.Bmp);
+                        // Validate the resized file exists.
+                        if (!File.Exists(resizedPath))
+                            throw new InvalidOperationException($"Resized image was not saved: {resizedPath}");
+                        resizedImages++;
                     }
                 }
             }
+
+            // Clean up the extracted temporary file.
+            if (File.Exists(extractedPath))
+                File.Delete(extractedPath);
+
+            index++;
         }
 
-        // Validate that at least one resized image was created.
-        string[] resizedFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "resized-*.bmp");
-        if (resizedFiles.Length == 0)
-            throw new InvalidOperationException("No resized BMP images were created.");
-
-        // Cleanup (optional): delete temporary files.
-        // File.Delete(sampleBmpPath);
-        // File.Delete(docPath);
+        return resizedImages;
     }
 }

@@ -1,64 +1,100 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Math;          // Needed for OfficeMath type
-using Aspose.Words.Rendering;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
+using Aspose.Words.Math;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Folder for all generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Create a deterministic sample image using Aspose.Drawing.
+        const string sampleImagePath = "sample.png";
+        const int imgWidth = 100;
+        const int imgHeight = 100;
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample document that contains an equation (OfficeMath).
-        // -----------------------------------------------------------------
+        // Create bitmap and draw a simple rectangle.
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        graphics.Clear(Aspose.Drawing.Color.White);
+        graphics.DrawRectangle(new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 2), 10, 10, imgWidth - 20, imgHeight - 20);
+        bitmap.Save(sampleImagePath);
+        graphics.Dispose();
+        bitmap.Dispose();
+
+        // Verify that the sample image was created.
+        if (!File.Exists(sampleImagePath))
+            throw new FileNotFoundException("Failed to create the sample image.", sampleImagePath);
+
+        // Create a new Word document and insert an equation followed by the sample image.
+        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple equation using the EQ field syntax.
-        // The field will be stored as an OfficeMath node.
+        // Insert a simple equation using a field (EQ). This creates an OfficeMath node.
         builder.InsertField("EQ \\o(\\a\\b,\\c\\d)");
 
-        // Optional: save the sample document for inspection.
-        string samplePath = Path.Combine(outputDir, "SampleWithEquation.docx");
-        doc.Save(samplePath);
+        // Insert the previously created image.
+        builder.InsertImage(sampleImagePath);
 
-        // ---------------------------------------------------------------
-        // 2. Locate all OfficeMath (equation) objects in the document.
-        // ---------------------------------------------------------------
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        if (mathNodes.Count == 0)
-        {
-            Console.WriteLine("No equation objects were found in the document.");
-            return;
-        }
+        // Save the document.
+        doc.Save(docPath);
 
-        // ---------------------------------------------------------------
-        // 3. Render each equation to a PNG image and save it.
-        // ---------------------------------------------------------------
+        // Verify that the document was saved.
+        if (!File.Exists(docPath))
+            throw new FileNotFoundException("Failed to save the sample document.", docPath);
+
+        // Load the document for extraction.
+        Document loadedDoc = new Document(docPath);
+
+        // Extract images that are located within equation (OfficeMath) objects.
+        NodeCollection officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        int extractedCount = 0;
         int imageIndex = 0;
-        foreach (OfficeMath math in mathNodes)
-        {
-            // Configure image saving options – PNG format with a larger scale.
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
-            {
-                Scale = 5 // Render the equation five times larger than its default size.
-            };
 
-            string imagePath = Path.Combine(outputDir, $"Equation_{imageIndex}.png");
-            math.GetMathRenderer().Save(imagePath, saveOptions);
-            Console.WriteLine($"Extracted equation saved as: {imagePath}");
-            imageIndex++;
+        foreach (OfficeMath officeMath in officeMathNodes)
+        {
+            NodeCollection shapeNodes = officeMath.GetChildNodes(NodeType.Shape, true);
+            foreach (Shape shape in shapeNodes)
+            {
+                if (shape.HasImage)
+                {
+                    string outputImagePath = $"EquationImage-{imageIndex}.png";
+                    shape.ImageData.Save(outputImagePath);
+                    if (!File.Exists(outputImagePath))
+                        throw new InvalidOperationException($"Failed to save extracted image to {outputImagePath}.");
+                    extractedCount++;
+                    imageIndex++;
+                }
+            }
         }
 
-        // ---------------------------------------------------------------
-        // 4. Validate that at least one image was produced.
-        // ---------------------------------------------------------------
-        if (imageIndex == 0)
-            throw new InvalidOperationException("Failed to extract any equation images.");
+        // If no images were found inside equations, fallback to extracting all images in the document.
+        if (extractedCount == 0)
+        {
+            NodeCollection allShapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+            foreach (Shape shape in allShapes)
+            {
+                if (shape.HasImage)
+                {
+                    string outputImagePath = $"DocumentImage-{imageIndex}.png";
+                    shape.ImageData.Save(outputImagePath);
+                    if (!File.Exists(outputImagePath))
+                        throw new InvalidOperationException($"Failed to save extracted image to {outputImagePath}.");
+                    extractedCount++;
+                    imageIndex++;
+                }
+            }
+        }
+
+        // Validate that at least one image was extracted.
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
+
+        // Optional cleanup (commented out to keep output files).
+        // File.Delete(sampleImagePath);
+        // File.Delete(docPath);
     }
 }

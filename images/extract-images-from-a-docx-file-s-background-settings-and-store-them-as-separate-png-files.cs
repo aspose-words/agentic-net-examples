@@ -2,81 +2,94 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class ExtractBackgroundImages
+public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string backgroundImagePath = "background.png";
-        const string documentPath = "DocumentWithBackground.docx";
-        const string extractedImagePath = "ExtractedBackground.png";
+        // Create a deterministic sample background image.
+        const string backgroundImagePath = "bg.png";
+        CreateSampleImage(backgroundImagePath, 800, 600);
 
-        // -------------------------------------------------
-        // 1. Create a deterministic sample image (PNG).
-        // -------------------------------------------------
-        const int imgWidth = 200;
-        const int imgHeight = 200;
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        // Create a DOCX document and add the image as a background-like shape.
+        const string docPath = "sample.docx";
+        CreateDocumentWithBackgroundImage(docPath, backgroundImagePath);
+
+        // Extract images from the document's background settings (shape images) and save as PNG files.
+        ExtractBackgroundImages(docPath);
+    }
+
+    private static void CreateSampleImage(string filePath, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill with a solid color.
                 graphics.Clear(Color.LightBlue);
-                // Draw a simple rectangle.
-                using (Pen pen = new Pen(Color.DarkBlue, 5))
-                {
-                    graphics.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
-                }
+                // Draw a simple rectangle for visual distinction.
+                graphics.DrawRectangle(new Pen(Color.DarkBlue, 5), 50, 50, width - 100, height - 100);
             }
-
-            // Save the image to the local file system.
-            bitmap.Save(backgroundImagePath, ImageFormat.Png);
+            bitmap.Save(filePath, ImageFormat.Png);
         }
 
-        // -------------------------------------------------
-        // 2. Create a DOCX document and set the background shape.
-        // -------------------------------------------------
+        if (!File.Exists(filePath))
+            throw new InvalidOperationException($"Failed to create sample image at '{filePath}'.");
+    }
+
+    private static void CreateDocumentWithBackgroundImage(string docPath, string imagePath)
+    {
+        // Initialize a new empty document.
         Document doc = new Document();
-        // Create a rectangle shape that will serve as the background.
-        Shape backgroundShape = new Shape(doc, ShapeType.Rectangle);
-        // Assign the previously created image to the shape.
-        backgroundShape.ImageData.SetImage(backgroundImagePath);
-        // Optionally adjust size to match the page.
+
+        // Ensure the image file exists.
+        if (!File.Exists(imagePath))
+            throw new FileNotFoundException($"Image file not found: {imagePath}");
+
+        // Create a shape that covers the whole page and place it behind the text.
+        Shape backgroundShape = new Shape(doc, ShapeType.Image);
+        backgroundShape.ImageData.SetImage(imagePath);
         backgroundShape.Width = doc.FirstSection.PageSetup.PageWidth;
         backgroundShape.Height = doc.FirstSection.PageSetup.PageHeight;
-        // Set the shape as the document background.
-        doc.BackgroundShape = backgroundShape;
+        backgroundShape.WrapType = WrapType.None;
+        backgroundShape.BehindText = true;
 
-        // Save the document containing the background image.
-        doc.Save(documentPath, SaveFormat.Docx);
+        // Append the shape to the first paragraph of the document.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(backgroundShape);
 
-        // -------------------------------------------------
-        // 3. Load the document and extract the background image.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(documentPath);
-        Shape bgShape = loadedDoc.BackgroundShape;
+        // Save the document.
+        doc.Save(docPath);
 
-        if (bgShape == null || !bgShape.HasImage)
-            throw new InvalidOperationException("No background image found in the document.");
+        if (!File.Exists(docPath))
+            throw new InvalidOperationException($"Failed to save document at '{docPath}'.");
+    }
 
-        // Determine the appropriate file extension based on the image type.
-        string extension = FileFormatUtil.ImageTypeToExtension(bgShape.ImageData.ImageType);
-        // Ensure we save as PNG regardless of original format.
-        string outputPath = Path.ChangeExtension(extractedImagePath, extension);
+    private static void ExtractBackgroundImages(string docPath)
+    {
+        // Load the document.
+        Document doc = new Document(docPath);
 
-        // Save the extracted image.
-        bgShape.ImageData.Save(outputPath);
+        // Collect all shape nodes.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int extractedCount = 0;
 
-        // -------------------------------------------------
-        // 4. Validate that the image file was created.
-        // -------------------------------------------------
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("Failed to extract the background image.", outputPath);
+        for (int i = 0; i < shapeNodes.Count; i++)
+        {
+            Shape shape = (Shape)shapeNodes[i];
+            if (shape.HasImage)
+            {
+                string outputFileName = $"background-{extractedCount + 1}.png";
+                shape.ImageData.Save(outputFileName);
+                extractedCount++;
 
-        // The program finishes here without any interactive prompts.
+                if (!File.Exists(outputFileName))
+                    throw new InvalidOperationException($"Failed to save extracted image '{outputFileName}'.");
+            }
+        }
+
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No background images were extracted from the document.");
     }
 }

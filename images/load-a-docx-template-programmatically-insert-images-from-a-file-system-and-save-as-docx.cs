@@ -1,93 +1,74 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Drawing;          // Aspose.Drawing.Common provides Bitmap, Graphics, Color
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-namespace AsposeWordsImageInsertExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Define file names.
-            const string templatePath = "Template.docx";
-            const string outputPath = "Output.docx";
-            const string imagePath1 = "Image1.png";
-            const string imagePath2 = "Image2.png";
+        // Define deterministic file names.
+        const string imagePath = "input.png";
+        const string templatePath = "template.docx";
+        const string outputPath = "output.docx";
 
-            // -----------------------------------------------------------------
-            // 1. Create a simple DOCX template if it does not already exist.
-            // -----------------------------------------------------------------
-            if (!File.Exists(templatePath))
+        // -------------------------------------------------
+        // Create a sample image using Aspose.Drawing.
+        // -------------------------------------------------
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                Document templateDoc = new Document();
-                DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
-                templateBuilder.Writeln("This is a template document.");
-                templateDoc.Save(templatePath);
+                // Fill background with white.
+                g.Clear(Color.White);
+                // Optionally draw a simple rectangle.
+                g.DrawRectangle(Pens.Black, 10, 10, imgWidth - 20, imgHeight - 20);
             }
 
-            // ---------------------------------------------------------------
-            // 2. Create deterministic sample images using Aspose.Drawing.
-            // ---------------------------------------------------------------
-            CreateSampleImage(imagePath1, 200, 150, Aspose.Drawing.Color.LightBlue);
-            CreateSampleImage(imagePath2, 150, 200, Aspose.Drawing.Color.LightCoral);
-
-            // ---------------------------------------------------------------
-            // 3. Load the template document.
-            // ---------------------------------------------------------------
-            Document doc = new Document(templatePath);
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // ---------------------------------------------------------------
-            // 4. Insert the images into the document.
-            // ---------------------------------------------------------------
-            // Ensure the image files exist before insertion.
-            if (!File.Exists(imagePath1) || !File.Exists(imagePath2))
-                throw new FileNotFoundException("One or more image files were not created.");
-
-            builder.Writeln(); // Add a blank paragraph before images.
-            builder.InsertImage(imagePath1);
-            builder.Writeln(); // Separate the images with a paragraph break.
-            builder.InsertImage(imagePath2);
-
-            // ---------------------------------------------------------------
-            // 5. Save the resulting document.
-            // ---------------------------------------------------------------
-            doc.Save(outputPath, SaveFormat.Docx);
-
-            // ---------------------------------------------------------------
-            // 6. Validate that the output file was created.
-            // ---------------------------------------------------------------
-            if (!File.Exists(outputPath))
-                throw new Exception("The output document was not saved correctly.");
-
-            // Optional: clean up generated files (comment out if you want to keep them).
-            //File.Delete(templatePath);
-            //File.Delete(imagePath1);
-            //File.Delete(imagePath2);
+            // Save the image to a local file.
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // Helper method to create a PNG image with a solid background color.
-        private static void CreateSampleImage(string fileName, int width, int height, Aspose.Drawing.Color backgroundColor)
-        {
-            // Create a bitmap with the requested dimensions.
-            using (Bitmap bitmap = new Bitmap(width, height))
-            {
-                // Obtain a graphics object to draw on the bitmap.
-                using (Graphics graphics = Graphics.FromImage(bitmap))
-                {
-                    // Fill the entire bitmap with the specified background color.
-                    graphics.Clear(backgroundColor);
-                }
+        // Ensure the image file exists before proceeding.
+        if (!File.Exists(imagePath))
+            throw new Exception($"Image file '{imagePath}' was not created.");
 
-                // Save the bitmap to the specified file path.
-                bitmap.Save(fileName);
-            }
+        // -------------------------------------------------
+        // Create a simple DOCX template.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
+        templateBuilder.Writeln("This is a template document.");
+        templateDoc.Save(templatePath);
 
-            // Verify that the image file was created.
-            if (!File.Exists(fileName))
-                throw new Exception($"Failed to create image file: {fileName}");
-        }
+        // Ensure the template file exists.
+        if (!File.Exists(templatePath))
+            throw new Exception($"Template file '{templatePath}' was not created.");
+
+        // -------------------------------------------------
+        // Load the template, insert the image, and save the result.
+        // -------------------------------------------------
+        Document doc = new Document(templatePath);
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a paragraph before the image for clarity.
+        builder.Writeln("Inserted image below:");
+
+        // Insert the image from the file system.
+        builder.InsertImage(imagePath);
+
+        // Save the modified document.
+        doc.Save(outputPath);
+
+        // Validate that the output document was created.
+        if (!File.Exists(outputPath))
+            throw new Exception($"Output file '{outputPath}' was not created.");
+
+        // Optionally, clean up temporary files (commented out to keep files for inspection).
+        // File.Delete(imagePath);
+        // File.Delete(templatePath);
     }
 }

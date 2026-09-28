@@ -1,149 +1,132 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
-    // Convert HSV to RGB (values 0‑1) and return an Aspose.Drawing.Color.
-    private static Color ColorFromHsv(float h, float s, float v)
-    {
-        // h: 0‑360, s and v: 0‑1
-        h = h % 360f;
-        int hi = (int)Math.Floor(h / 60f) % 6;
-        float f = h / 60f - (float)Math.Floor(h / 60f);
-        float p = v * (1f - s);
-        float q = v * (1f - f * s);
-        float t = v * (1f - (1f - f) * s);
-
-        float r = 0, g = 0, b = 0;
-        switch (hi)
-        {
-            case 0: r = v; g = t; b = p; break;
-            case 1: r = q; g = v; b = p; break;
-            case 2: r = p; g = v; b = t; break;
-            case 3: r = p; g = q; b = v; break;
-            case 4: r = t; g = p; b = v; break;
-            case 5: r = v; g = p; b = q; break;
-        }
-
-        return Color.FromArgb(
-            (int)(r * 255f),
-            (int)(g * 255f),
-            (int)(b * 255f));
-    }
-
-    // Rotate the hue of a bitmap by 180 degrees.
-    private static void RotateHue180(Bitmap bitmap)
-    {
-        int width = bitmap.Width;
-        int height = bitmap.Height;
-
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                Color original = bitmap.GetPixel(x, y);
-                float hue = original.GetHue();               // 0‑360
-                float saturation = original.GetSaturation(); // 0‑1
-                float brightness = original.GetBrightness(); // 0‑1
-
-                hue = (hue + 180f) % 360f;
-                Color rotated = ColorFromHsv(hue, saturation, brightness);
-                bitmap.SetPixel(x, y, rotated);
-            }
-        }
-    }
-
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic sample PNG image.
-        // -----------------------------------------------------------------
-        const string sampleImagePath = "sample.png";
+        // Create a deterministic sample PNG image.
+        const string inputImagePath = "input.png";
         const int imgWidth = 200;
         const int imgHeight = 200;
-
-        using (Bitmap bmp = new Bitmap(imgWidth, imgHeight))
-        using (Graphics g = Graphics.FromImage(bmp))
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        using (Graphics g = Graphics.FromImage(bitmap))
         {
-            // Fill background with white.
+            // Fill with a gradient for visual testing.
             g.Clear(Color.White);
-            // Draw a red rectangle.
-            using (var brush = new SolidBrush(Color.Red))
+            for (int y = 0; y < imgHeight; y++)
             {
-                g.FillRectangle(brush, 20, 20, 160, 160);
+                int red = (y * 255) / imgHeight;
+                using (Brush brush = new SolidBrush(Color.FromArgb(red, 0, 255 - red)))
+                {
+                    g.FillRectangle(brush, 0, y, imgWidth, 1);
+                }
             }
-            // Save as PNG.
-            bmp.Save(sampleImagePath, ImageFormat.Png);
+            bitmap.Save(inputImagePath);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Create a Word document and insert the sample PNG image.
-        // -----------------------------------------------------------------
+        // Create a Word document and insert the sample image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        const string docPath = "sample.docx";
+        builder.InsertImage(inputImagePath);
+        const string docPath = "Document.docx";
         doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document, extract PNG images, rotate hue, and save.
-        // -----------------------------------------------------------------
+        // Reload the document to ensure proper image extraction.
         Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        int extractedCount = 0;
+        for (int i = 0; i < shapes.Count; i++)
         {
-            if (!shape.HasImage) continue;
-            if (shape.ImageData.ImageType != ImageType.Png) continue;
+            Shape shape = (Shape)shapes[i];
+            if (!shape.HasImage)
+                continue;
 
-            // Save original image to a memory stream.
-            using (MemoryStream originalMs = new MemoryStream())
+            // Extract the image to a memory stream.
+            using (MemoryStream imgStream = new MemoryStream())
             {
-                shape.ImageData.Save(originalMs);
-                originalMs.Position = 0;
+                shape.ImageData.Save(imgStream);
+                imgStream.Position = 0;
 
-                // Load the image into an Aspose.Drawing.Bitmap.
-                using (Bitmap bitmap = new Bitmap(originalMs))
+                // Load the image into a bitmap.
+                using (Bitmap srcBitmap = new Bitmap(imgStream))
                 {
-                    // Apply hue rotation.
-                    RotateHue180(bitmap);
-
-                    // Save the rotated image to a deterministic file (optional verification).
-                    string rotatedPath = $"extracted_{imageIndex}_rotated.png";
-                    using (FileStream fileOut = new FileStream(rotatedPath, FileMode.Create, FileAccess.Write))
+                    // Apply hue rotation of 180 degrees.
+                    using (Bitmap dstBitmap = new Bitmap(srcBitmap.Width, srcBitmap.Height))
                     {
-                        bitmap.Save(fileOut, ImageFormat.Png);
-                    }
+                        for (int y = 0; y < srcBitmap.Height; y++)
+                        {
+                            for (int x = 0; x < srcBitmap.Width; x++)
+                            {
+                                Color srcColor = srcBitmap.GetPixel(x, y);
+                                double a = srcColor.A / 255.0;
+                                double r = srcColor.R / 255.0;
+                                double g = srcColor.G / 255.0;
+                                double b = srcColor.B / 255.0;
 
-                    // Replace the image inside the document with the rotated one.
-                    using (MemoryStream rotatedMs = new MemoryStream())
-                    {
-                        bitmap.Save(rotatedMs, ImageFormat.Png);
-                        rotatedMs.Position = 0;
-                        shape.ImageData.SetImage(rotatedMs);
+                                // Convert RGB to HSV.
+                                double max = Math.Max(r, Math.Max(g, b));
+                                double min = Math.Min(r, Math.Min(g, b));
+                                double delta = max - min;
+
+                                double h = 0;
+                                if (delta != 0)
+                                {
+                                    if (max == r)
+                                        h = 60 * (((g - b) / delta) % 6);
+                                    else if (max == g)
+                                        h = 60 * (((b - r) / delta) + 2);
+                                    else
+                                        h = 60 * (((r - g) / delta) + 4);
+                                }
+                                if (h < 0) h += 360;
+
+                                double s = (max == 0) ? 0 : delta / max;
+                                double v = max;
+
+                                // Rotate hue by 180 degrees.
+                                h = (h + 180) % 360;
+
+                                // Convert HSV back to RGB.
+                                double c = v * s;
+                                double xVal = c * (1 - Math.Abs(((h / 60) % 2) - 1));
+                                double m = v - c;
+
+                                double r1, g1, b1;
+                                if (h < 60) { r1 = c; g1 = xVal; b1 = 0; }
+                                else if (h < 120) { r1 = xVal; g1 = c; b1 = 0; }
+                                else if (h < 180) { r1 = 0; g1 = c; b1 = xVal; }
+                                else if (h < 240) { r1 = 0; g1 = xVal; b1 = c; }
+                                else if (h < 300) { r1 = xVal; g1 = 0; b1 = c; }
+                                else { r1 = c; g1 = 0; b1 = xVal; }
+
+                                int outR = (int)Math.Round((r1 + m) * 255);
+                                int outG = (int)Math.Round((g1 + m) * 255);
+                                int outB = (int)Math.Round((b1 + m) * 255);
+                                int outA = (int)Math.Round(a * 255);
+
+                                Color dstColor = Color.FromArgb(outA, outR, outG, outB);
+                                dstBitmap.SetPixel(x, y, dstColor);
+                            }
+                        }
+
+                        // Save the processed image.
+                        string outputPath = $"extracted-{i + 1}.png";
+                        dstBitmap.Save(outputPath);
+                        extractedCount++;
                     }
                 }
             }
-
-            imageIndex++;
         }
 
-        // -----------------------------------------------------------------
-        // 4. Save the modified document.
-        // -----------------------------------------------------------------
-        const string outputDocPath = "output.docx";
-        loadedDoc.Save(outputDocPath);
+        // Validation: ensure at least one image was processed.
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No PNG images were extracted and processed.");
 
-        // Validation: ensure at least one rotated image was created.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No PNG images were found to process.");
-
-        Console.WriteLine("Hue rotation applied to extracted PNG images successfully.");
+        // Cleanup: optional removal of intermediate files can be added here.
     }
 }

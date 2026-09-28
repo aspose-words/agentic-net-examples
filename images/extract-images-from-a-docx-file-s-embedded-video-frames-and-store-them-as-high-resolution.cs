@@ -1,74 +1,79 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-namespace ExtractVideoFrameImages
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a sample high‑resolution image that will act as a video frame.
+        const string frameImagePath = "frame.png";
+        const int width = 800;
+        const int height = 600;
+
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
         {
-            // Prepare output folder.
-            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
-
-            // -----------------------------------------------------------------
-            // 1. Create a sample high‑resolution image that will act as a video frame.
-            // -----------------------------------------------------------------
-            string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-            using (Bitmap bitmap = new Bitmap(800, 600))
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.CornflowerBlue);
-                // Additional deterministic drawing can be added here if needed.
-                bitmap.Save(sampleImagePath, ImageFormat.Png);
-            }
+                g.Clear(Aspose.Drawing.Color.White);
 
-            // -----------------------------------------------------------------
-            // 2. Create a DOCX document and insert the sample image.
-            // -----------------------------------------------------------------
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.InsertImage(sampleImagePath);
-            string docPath = Path.Combine(artifactsDir, "VideoFrames.docx");
-            doc.Save(docPath);
-
-            // -----------------------------------------------------------------
-            // 3. Load the document and extract all images (video frames) as PNG.
-            // -----------------------------------------------------------------
-            Document loadedDoc = new Document(docPath);
-            NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-
-            int extractedCount = 0;
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
-            {
-                if (shape.HasImage)
+                // Draw a simple rectangle with some text to identify the frame.
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
                 {
-                    // Force PNG output regardless of original format.
-                    string outputPath = Path.Combine(artifactsDir, $"extracted_{extractedCount}.png");
+                    g.DrawRectangle(pen, 50, 50, width - 100, height - 100);
+                }
 
-                    // Get the image bytes from the shape.
-                    byte[] imageBytes = shape.ImageData.ToByteArray();
-
-                    // Load the bytes into an Aspose.Drawing.Image and save as PNG.
-                    using (MemoryStream ms = new MemoryStream(imageBytes))
-                    using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(ms))
-                    using (Bitmap bmp = new Bitmap(img))
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 48, Aspose.Drawing.FontStyle.Bold))
+                {
+                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.DarkRed))
                     {
-                        bmp.Save(outputPath, ImageFormat.Png);
+                        g.DrawString("Video Frame", font, brush, new Aspose.Drawing.PointF(150, height / 2 - 30));
                     }
-
-                    extractedCount++;
                 }
             }
 
-            // Validate that at least one image was extracted.
-            if (extractedCount == 0)
-                throw new InvalidOperationException("No images were extracted from the document.");
+            bitmap.Save(frameImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
         }
+
+        // Create a DOCX document and insert the sample image (simulating a video frame).
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(frameImagePath);
+        const string docPath = "sample.docx";
+        doc.Save(docPath);
+
+        // Reload the document to simulate a separate extraction step.
+        Document loadedDoc = new Document(docPath);
+
+        // Extract all images from the document (including those representing video frames).
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int extractedCount = 0;
+
+        foreach (Shape shape in shapes)
+        {
+            if (shape.HasImage)
+            {
+                string outputImagePath = $"extracted-{extractedCount + 1}.png";
+                shape.ImageData.Save(outputImagePath);
+                if (!File.Exists(outputImagePath))
+                {
+                    throw new InvalidOperationException($"Failed to save extracted image to '{outputImagePath}'.");
+                }
+                extractedCount++;
+            }
+        }
+
+        // Validate that at least one image was extracted.
+        if (extractedCount == 0)
+        {
+            throw new InvalidOperationException("No images were extracted from the document.");
+        }
+
+        // Optional cleanup (commented out to keep output files for verification).
+        // File.Delete(frameImagePath);
+        // File.Delete(docPath);
     }
 }

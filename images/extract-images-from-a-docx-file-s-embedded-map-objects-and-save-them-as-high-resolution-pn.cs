@@ -1,95 +1,79 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Drawing;               // Aspose.Drawing namespace for graphics objects
-using Aspose.Drawing.Imaging;      // For ImageFormat
+using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define deterministic file and folder names.
-        const string workDir = "Work";
-        const string mapImagePath = workDir + "/map.png";
-        const string docPath = workDir + "/sample.docx";
-        const string outputDir = workDir + "/Extracted";
+        // Create a deterministic high‑resolution PNG that will act as the map image.
+        const string mapImagePath = "map.png";
+        const int width = 800;
+        const int height = 600;
 
-        // Ensure required folders exist.
-        Directory.CreateDirectory(workDir);
-        Directory.CreateDirectory(outputDir);
-
-        // -------------------------------------------------
-        // 1. Create a sample high‑resolution PNG image.
-        // -------------------------------------------------
-        const int imgWidth = 1200;
-        const int imgHeight = 800;
-
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background.
-                g.Clear(Aspose.Drawing.Color.LightBlue);
-
-                // Draw a simple map‑like rectangle.
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 5))
-                {
-                    g.DrawRectangle(pen, 100, 100, imgWidth - 200, imgHeight - 200);
-                }
-
-                // Add some text.
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 48, Aspose.Drawing.FontStyle.Bold))
-                using (Aspose.Drawing.Brush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.DarkRed))
-                {
-                    g.DrawString("Sample Map", font, brush, new Aspose.Drawing.PointF(250, 350));
-                }
+                // Fill background with white.
+                graphics.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle to visualize the image.
+                graphics.DrawRectangle(
+                    new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5),
+                    50, 50, width - 100, height - 100);
             }
 
-            // Save the bitmap as PNG.
-            bitmap.Save(mapImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+            // Save the image as PNG.
+            bitmap.Save(mapImagePath);
         }
 
-        // -------------------------------------------------
-        // 2. Create a DOCX document and embed the PNG image.
-        // -------------------------------------------------
+        // Create a new Word document and insert the map image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(mapImagePath); // Insert the image as an inline shape.
+        builder.InsertImage(mapImagePath);
+        const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the document and extract all embedded images.
-        // -------------------------------------------------
+        // Reload the document to simulate extraction from an existing file.
         Document loadedDoc = new Document(docPath);
+
+        // Collect all Shape nodes that contain images.
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-
+        int extractedCount = 0;
         int imageIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+
+        foreach (Shape shape in shapeNodes)
         {
-            if (!shape.HasImage)
-                continue;
+            if (shape.HasImage)
+            {
+                // Generate a deterministic file name for each extracted image.
+                string extractedImagePath = $"extracted-image-{imageIndex}.png";
 
-            // Force PNG extension for the extracted file.
-            string extractedPath = Path.Combine(outputDir, $"ExtractedImage_{imageIndex}.png");
+                // Save the image data as PNG. The original image is already PNG,
+                // so the format is preserved.
+                shape.ImageData.Save(extractedImagePath);
 
-            // Save the image data directly to the file.
-            shape.ImageData.Save(extractedPath);
+                // Validate that the file was created.
+                if (!File.Exists(extractedImagePath))
+                {
+                    throw new InvalidOperationException($"Failed to save extracted image to '{extractedImagePath}'.");
+                }
 
-            // Validate that the file was created.
-            if (!File.Exists(extractedPath))
-                throw new InvalidOperationException($"Failed to save image {extractedPath}");
-
-            Console.WriteLine($"Extracted image saved to: {extractedPath}");
-            imageIndex++;
+                extractedCount++;
+                imageIndex++;
+            }
         }
 
         // Ensure at least one image was extracted.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No images were found in the document.");
+        if (extractedCount == 0)
+        {
+            throw new InvalidOperationException("No images were extracted from the document.");
+        }
 
-        Console.WriteLine("Image extraction completed successfully.");
+        // Clean up temporary files (optional).
+        // File.Delete(mapImagePath);
+        // File.Delete(docPath);
     }
 }

@@ -2,87 +2,83 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using System.Linq;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the output folder exists.
-        const string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic sample JPEG image using Aspose.Drawing.
-        // -----------------------------------------------------------------
+        // Create a deterministic sample JPEG image.
         const string sampleImagePath = "sample.jpg";
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200))
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                // Fill background.
-                graphics.Clear(Aspose.Drawing.Color.LightBlue);
-
-                // Draw a simple ellipse.
-                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Orange))
+                g.Clear(Color.White);
+                using (SolidBrush brush = new SolidBrush(Color.Red))
                 {
-                    graphics.FillEllipse(brush, 20, 20, 160, 160);
+                    g.FillRectangle(brush, 10, 10, 80, 80);
                 }
             }
-
-            // Save the bitmap as a JPEG file.
-            bitmap.Save(sampleImagePath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+            bitmap.Save(sampleImagePath, ImageFormat.Jpeg);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Create a DOCX document and insert the JPEG image several times.
-        // -----------------------------------------------------------------
+        // Create a Word document and insert the JPEG image.
+        const string inputDocPath = "input.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleImagePath);
-        builder.InsertParagraph();
-        builder.InsertImage(sampleImagePath);
+        doc.Save(inputDocPath);
 
-        // Save the document to the output folder.
-        string docPath = Path.Combine(outputDir, "input.docx");
-        doc.Save(docPath);
-
-        // -----------------------------------------------------------------
-        // 3. Load the document and process all JPEG images.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
+        // Load the document and process JPEG images.
+        Document loadedDoc = new Document(inputDocPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-
         int imageIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+
+        foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only JPEG images.
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
+            ImageData imgData = shape.ImageData;
+            if (imgData.ImageType != ImageType.Jpeg)
                 continue;
 
-            // Apply grayscale filter to the image.
-            shape.ImageData.GrayScale = true;
+            // Extract image to a memory stream.
+            using (MemoryStream ms = new MemoryStream())
+            {
+                imgData.Save(ms);
+                ms.Position = 0; // Reset position before reading.
 
-            // Determine the appropriate file extension for the image type.
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string outputImagePath = Path.Combine(outputDir, $"extracted_{imageIndex}{extension}");
+                // Load bitmap from stream.
+                using (Bitmap bmp = new Bitmap(ms))
+                {
+                    // Apply grayscale filter.
+                    for (int y = 0; y < bmp.Height; y++)
+                    {
+                        for (int x = 0; x < bmp.Width; x++)
+                        {
+                            Color pixel = bmp.GetPixel(x, y);
+                            int gray = (int)(pixel.R * 0.3 + pixel.G * 0.59 + pixel.B * 0.11);
+                            Color grayColor = Color.FromArgb(gray, gray, gray);
+                            bmp.SetPixel(x, y, grayColor);
+                        }
+                    }
 
-            // Save the processed image to disk.
-            shape.ImageData.Save(outputImagePath);
-            imageIndex++;
+                    // Save the processed image.
+                    string outputImagePath = $"extracted-{imageIndex}.jpg";
+                    bmp.Save(outputImagePath, ImageFormat.Jpeg);
+                    imageIndex++;
+                }
+            }
         }
 
-        // Validate that at least one image was extracted and processed.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No JPEG images were found and processed.");
+        // Validate that at least one grayscale image was saved.
+        string[] outputFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "extracted-*.jpg");
+        if (outputFiles.Length == 0)
+            throw new InvalidOperationException("No JPEG images were extracted and processed.");
 
-        // Optional cleanup of the temporary sample image.
-        // File.Delete(sampleImagePath);
+        // Cleanup: optional removal of intermediate files can be added here.
     }
 }

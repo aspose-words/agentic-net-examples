@@ -1,121 +1,112 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;               // Aspose.Drawing.Common namespace
-using Aspose.Drawing.Imaging;
+using Aspose.Words.Loading;
+using Aspose.Words.Saving;
+using Aspose.Drawing;
 using Newtonsoft.Json;
 
 public class Program
 {
-    // Model for JSON manifest
-    public class DocumentManifest
-    {
-        public string DocumentName { get; set; }
-        public List<string> Images { get; set; } = new List<string>();
-    }
-
     public static void Main()
     {
-        // Define folders
-        string baseDir = Directory.GetCurrentDirectory();
+        // Base working directory
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchProcessing");
         string inputDir = Path.Combine(baseDir, "InputDocs");
-        string imagesDir = Path.Combine(baseDir, "ExtractedImages");
-        string manifestPath = Path.Combine(baseDir, "manifest.json");
-
-        // Ensure clean environment
-        if (Directory.Exists(inputDir)) Directory.Delete(inputDir, true);
-        if (Directory.Exists(imagesDir)) Directory.Delete(imagesDir, true);
+        string outputDir = Path.Combine(baseDir, "ExtractedImages");
         Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(imagesDir);
+        Directory.CreateDirectory(outputDir);
 
-        // -------------------------------------------------
-        // Step 1: Create deterministic sample images
-        // -------------------------------------------------
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 200, 200, Aspose.Drawing.Color.LightBlue);
+        // Create sample images
+        string imagePath1 = Path.Combine(baseDir, "sample1.png");
+        CreateSampleImage(imagePath1, 100, 100, Aspose.Drawing.Color.LightBlue);
+        string imagePath2 = Path.Combine(baseDir, "sample2.png");
+        CreateSampleImage(imagePath2, 120, 80, Aspose.Drawing.Color.LightCoral);
 
-        // -------------------------------------------------
-        // Step 2: Create sample ODT documents containing the image
-        // -------------------------------------------------
-        for (int docIndex = 1; docIndex <= 2; docIndex++)
+        // Create sample ODT documents containing the images
+        CreateSampleDocument(Path.Combine(inputDir, "Doc1.odt"), imagePath1);
+        CreateSampleDocument(Path.Combine(inputDir, "Doc2.odt"), imagePath2);
+        CreateSampleDocument(Path.Combine(inputDir, "Doc3.odt"), imagePath1, imagePath2); // document with two images
+
+        // Prepare manifest collection
+        var manifest = new List<ManifestEntry>();
+        int globalImageIndex = 1;
+
+        // Process each ODT file
+        foreach (string docPath in Directory.GetFiles(inputDir, "*.odt"))
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            var loadOptions = new LoadOptions { LoadFormat = LoadFormat.Odt };
+            Document doc = new Document(docPath, loadOptions);
 
-            // Insert a paragraph and the sample image
-            builder.Writeln($"Document {docIndex} with an image.");
-            builder.InsertImage(sampleImagePath);
-
-            string odtPath = Path.Combine(inputDir, $"SampleDocument{docIndex}.odt");
-            doc.Save(odtPath, SaveFormat.Odt);
-        }
-
-        // -------------------------------------------------
-        // Step 3: Batch process ODT files, extract images, build manifest
-        // -------------------------------------------------
-        List<DocumentManifest> manifest = new List<DocumentManifest>();
-
-        foreach (string odtFile in Directory.GetFiles(inputDir, "*.odt"))
-        {
-            Document doc = new Document(odtFile);
-            string docName = Path.GetFileName(odtFile);
-
-            // Collect shapes that actually contain images
-            var imageShapes = doc.GetChildNodes(NodeType.Shape, true)
-                                 .Cast<Shape>()
-                                 .Where(s => s.HasImage)
-                                 .ToList();
-
-            if (!imageShapes.Any())
-                throw new InvalidOperationException($"No images found in document '{docName}'.");
-
-            DocumentManifest entry = new DocumentManifest { DocumentName = docName };
-
-            int imageIndex = 0;
-            foreach (Shape shape in imageShapes)
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+            foreach (Shape shape in shapes)
             {
-                // Determine proper file extension for the image type
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imageFileName = $"{Path.GetFileNameWithoutExtension(docName)}_image_{imageIndex}{extension}";
-                string imageFullPath = Path.Combine(imagesDir, imageFileName);
+                if (shape.HasImage)
+                {
+                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_img{globalImageIndex}.png";
+                    string imageFullPath = Path.Combine(outputDir, imageFileName);
+                    shape.ImageData.Save(imageFullPath);
 
-                // Save the image to disk
-                shape.ImageData.Save(imageFullPath);
-                entry.Images.Add(imageFileName);
-                imageIndex++;
+                    // Record manifest entry
+                    manifest.Add(new ManifestEntry
+                    {
+                        SourceDocument = Path.GetFileName(docPath),
+                        ImageFile = imageFileName,
+                        ImageIndex = globalImageIndex
+                    });
+
+                    globalImageIndex++;
+                }
             }
-
-            manifest.Add(entry);
         }
 
-        // -------------------------------------------------
-        // Step 4: Serialize manifest to JSON
-        // -------------------------------------------------
-        string json = JsonConvert.SerializeObject(manifest, Formatting.Indented);
-        File.WriteAllText(manifestPath, json);
+        // Validate that images were extracted
+        if (manifest.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the ODT files.");
 
-        // Simple validation output
-        Console.WriteLine($"Processed {manifest.Count} document(s).");
-        Console.WriteLine($"Extracted images are stored in: {imagesDir}");
-        Console.WriteLine($"JSON manifest written to: {manifestPath}");
+        // Serialize manifest to JSON
+        string manifestJson = JsonConvert.SerializeObject(manifest, Formatting.Indented);
+        string manifestPath = Path.Combine(baseDir, "manifest.json");
+        File.WriteAllText(manifestPath, manifestJson);
+
+        // Validate manifest file creation
+        if (!File.Exists(manifestPath))
+            throw new InvalidOperationException("Failed to create the manifest JSON file.");
     }
 
-    // Helper: creates a deterministic bitmap and saves it to a file
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color background)
+    // Creates a deterministic PNG image using Aspose.Drawing
+    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        graphics.Clear(fillColor);
+        bitmap.Save(filePath);
+        graphics.Dispose();
+        bitmap.Dispose();
+    }
+
+    // Creates an ODT document and inserts the provided images
+    private static void CreateSampleDocument(string docPath, params string[] imagePaths)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        foreach (string imgPath in imagePaths)
         {
-            graphics.Clear(background);
-            // Draw a simple rectangle for visual distinction
-            using (Pen pen = new Pen(Aspose.Drawing.Color.DarkBlue, 5))
-            {
-                graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-            }
-            bitmap.Save(filePath, ImageFormat.Png);
+            if (!File.Exists(imgPath))
+                throw new FileNotFoundException($"Image file not found: {imgPath}");
+            builder.InsertImage(imgPath);
+            builder.Writeln(); // separate images
         }
+        doc.Save(docPath, SaveFormat.Odt);
+    }
+
+    // Manifest entry definition
+    private class ManifestEntry
+    {
+        public string SourceDocument { get; set; }
+        public string ImageFile { get; set; }
+        public int ImageIndex { get; set; }
     }
 }

@@ -1,94 +1,109 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Aspose.Drawing.Common provides Bitmap, Graphics, Color
+using Aspose.Drawing;
 
-public class Program
+namespace ImageExtractionBySection
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare folders
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // 1. Create a deterministic sample image (100x100, solid blue)
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 100, 100, Aspose.Drawing.Color.Blue);
-
-        // 2. Build a document with several sections, each containing the sample image
-        string docPath = Path.Combine(artifactsDir, "DocumentWithSections.docx");
-        BuildDocumentWithSections(docPath, sampleImagePath);
-
-        // 3. Load the document and extract images per section
-        ExtractImagesBySection(docPath, artifactsDir);
-    }
-
-    // Creates a PNG image using Aspose.Drawing and saves it to the specified path.
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
-    {
-        var bitmap = new Bitmap(width, height);
-        var graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(fillColor);
-        bitmap.Save(filePath);
-        graphics.Dispose();
-        bitmap.Dispose();
-    }
-
-    // Builds a document that contains three sections, each with the same image.
-    private static void BuildDocumentWithSections(string docPath, string imagePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        for (int i = 1; i <= 3; i++)
+        public static void Main()
         {
-            builder.Writeln($"Section {i}");
-            // Insert the sample image inline.
-            builder.InsertImage(imagePath);
-            // Add a section break after each section except the last.
-            if (i < 3)
-                builder.InsertBreak(BreakType.SectionBreakNewPage);
+            // Prepare deterministic file names and folders
+            string workFolder = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+            Directory.CreateDirectory(workFolder);
+            string inputImagePath = Path.Combine(workFolder, "sample.png");
+            string documentPath = Path.Combine(workFolder, "sample.docx");
+            string outputFolder = Path.Combine(workFolder, "ExtractedImages");
+            Directory.CreateDirectory(outputFolder);
+
+            // Create a sample image using Aspose.Drawing
+            CreateSampleImage(inputImagePath);
+
+            // Build a Word document with two sections, each containing an image
+            BuildDocumentWithSections(documentPath, inputImagePath);
+
+            // Load the document and extract images per section
+            ExtractImagesBySection(documentPath, outputFolder);
+
+            // Validate that at least one image was extracted
+            int extractedCount = Directory.GetFiles(outputFolder, "*.png").Length;
+            if (extractedCount == 0)
+                throw new InvalidOperationException("No images were extracted from the document.");
+
+            // Optionally, clean up (comment out if you want to inspect files)
+            // Directory.Delete(workFolder, true);
         }
 
-        doc.Save(docPath);
-    }
-
-    // Extracts images from each section and saves them using a section‑based identifier.
-    private static void ExtractImagesBySection(string docPath, string outputDir)
-    {
-        var doc = new Document(docPath);
-        int totalSaved = 0;
-
-        for (int secIndex = 0; secIndex < doc.Sections.Count; secIndex++)
+        private static void CreateSampleImage(string filePath)
         {
-            Section section = doc.Sections[secIndex];
-            // Collect all Shape nodes that contain images within this section.
-            var shapes = section.GetChildNodes(NodeType.Shape, true)
-                               .OfType<Shape>()
-                               .Where(s => s.HasImage)
-                               .ToList();
-
-            if (!shapes.Any())
-                throw new InvalidOperationException($"No images found in section {secIndex + 1}.");
-
-            int imageIndex = 0;
-            foreach (Shape shape in shapes)
+            const int width = 200;
+            const int height = 100;
+            using (Bitmap bitmap = new Bitmap(width, height))
             {
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string fileName = $"Section{secIndex + 1}_Image{imageIndex}{extension}";
-                string fullPath = Path.Combine(outputDir, fileName);
-                shape.ImageData.Save(fullPath);
-                imageIndex++;
-                totalSaved++;
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.Clear(Color.White);
+                    // Draw a simple rectangle
+                    graphics.DrawRectangle(new Aspose.Drawing.Pen(Color.Blue, 3), 10, 10, width - 20, height - 20);
+                }
+                bitmap.Save(filePath);
             }
+
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException("Failed to create the sample image.", filePath);
         }
 
-        if (totalSaved == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
+        private static void BuildDocumentWithSections(string docPath, string imagePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        Console.WriteLine($"Extraction complete. {totalSaved} image(s) saved to \"{outputDir}\".");
+            // First section with an image
+            builder.InsertImage(imagePath);
+            // Insert a section break (new page)
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+            // Second section with the same image (could be different)
+            builder.InsertImage(imagePath);
+
+            // Save the document
+            doc.Save(docPath, SaveFormat.Docx);
+
+            if (!File.Exists(docPath))
+                throw new FileNotFoundException("Failed to save the sample document.", docPath);
+        }
+
+        private static void ExtractImagesBySection(string docPath, string outputFolder)
+        {
+            Document doc = new Document(docPath);
+            int totalExtracted = 0;
+
+            for (int secIndex = 0; secIndex < doc.Sections.Count; secIndex++)
+            {
+                Section section = doc.Sections[secIndex];
+                NodeCollection shapeNodes = section.Body.GetChildNodes(NodeType.Shape, true);
+                int imageIndex = 0;
+
+                foreach (Shape shape in shapeNodes)
+                {
+                    if (shape.HasImage)
+                    {
+                        imageIndex++;
+                        string outFile = Path.Combine(outputFolder,
+                            $"section-{secIndex + 1}-image-{imageIndex}.png");
+                        shape.ImageData.Save(outFile);
+                        if (!File.Exists(outFile))
+                            throw new InvalidOperationException($"Failed to save extracted image to {outFile}.");
+                        totalExtracted++;
+                    }
+                }
+            }
+
+            if (totalExtracted == 0)
+                throw new InvalidOperationException("No images were found in any section.");
+        }
     }
 }

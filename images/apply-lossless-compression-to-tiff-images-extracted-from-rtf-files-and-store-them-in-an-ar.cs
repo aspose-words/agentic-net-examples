@@ -2,95 +2,120 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Directories for artifacts
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare working directories
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "work");
+        Directory.CreateDirectory(workDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample image using Aspose.Drawing (deterministic PNG)
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        using (Bitmap bitmap = new Bitmap(200, 100))
-        using (Graphics g = Graphics.FromImage(bitmap))
-        {
-            g.Clear(Aspose.Drawing.Color.White);
-            // Draw a simple rectangle
-            g.FillRectangle(new SolidBrush(Aspose.Drawing.Color.Blue), 10, 10, 180, 80);
-            bitmap.Save(sampleImagePath, ImageFormat.Png);
-        }
+        // 1. Create a sample TIFF image
+        string sampleTiffPath = Path.Combine(workDir, "sample.tif");
+        CreateSampleTiff(sampleTiffPath);
 
-        // ---------------------------------------------------------------
-        // 2. Build a sample RTF document that contains the image
-        // ---------------------------------------------------------------
-        Document rtfDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(rtfDoc);
-        builder.Writeln("Sample RTF document with an image:");
-        builder.InsertImage(sampleImagePath);
-        string rtfPath = Path.Combine(artifactsDir, "sample.rtf");
-        rtfDoc.Save(rtfPath, SaveFormat.Rtf);
+        // 2. Create an RTF document and embed the TIFF image
+        string rtfPath = Path.Combine(workDir, "sample.rtf");
+        CreateRtfWithImage(rtfPath, sampleTiffPath);
 
-        // ---------------------------------------------------------------
-        // 3. Load the RTF document and extract all images
-        // ---------------------------------------------------------------
-        Document loadedRtf = new Document(rtfPath);
-        NodeCollection shapeNodes = loadedRtf.GetChildNodes(NodeType.Shape, true);
+        // 3. Load the RTF document and extract images
+        Document doc = new Document(rtfPath);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-
-        // Prepare a zip archive to store the resulting TIFF files
-        string zipPath = Path.Combine(artifactsDir, "ImagesArchive.zip");
-        using (FileStream zipStream = new FileStream(zipPath, FileMode.Create))
-        using (ZipArchive zip = new ZipArchive(zipStream, ZipArchiveMode.Create))
+        string[] compressedImagePaths = new string[shapeNodes.Count];
+        foreach (Shape shape in shapeNodes)
         {
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            if (shape.HasImage)
             {
-                if (!shape.HasImage)
-                    continue;
-
-                // -------------------------------------------------------
-                // 4. Convert the extracted image to a losslessly compressed TIFF
-                // -------------------------------------------------------
-                // Retrieve the raw image bytes from the shape
-                byte[] imageBytes = shape.ImageData.ToByteArray();
-
-                // Create a temporary document that contains only this image
-                Document tempDoc = new Document();
-                DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-                tempBuilder.InsertImage(imageBytes);
-
-                // Configure TIFF save options with lossless LZW compression
-                ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+                // Save extracted image to a temporary file
+                string extractedPath = Path.Combine(workDir, $"extracted_{imageIndex}.tif");
+                using (MemoryStream imgStream = new MemoryStream())
                 {
-                    TiffCompression = TiffCompression.Lzw
-                };
+                    shape.ImageData.Save(imgStream);
+                    imgStream.Position = 0;
+                    File.WriteAllBytes(extractedPath, imgStream.ToArray());
+                }
 
-                // Save the temporary document as a TIFF file (in memory)
-                string tiffFileName = $"ExtractedImage_{imageIndex}.tiff";
-                string tiffFullPath = Path.Combine(artifactsDir, tiffFileName);
-                tempDoc.Save(tiffFullPath, tiffOptions);
+                // Apply lossless compression (re‑save as TIFF using default compression)
+                string compressedPath = Path.Combine(workDir, $"compressed_{imageIndex}.tif");
+                using (Bitmap bitmap = new Bitmap(extractedPath))
+                {
+                    // Re‑save the bitmap as TIFF (default compression is lossless)
+                    bitmap.Save(compressedPath, ImageFormat.Tiff);
+                }
 
-                // Add the TIFF file to the zip archive
-                zip.CreateEntryFromFile(tiffFullPath, tiffFileName);
-
-                // Clean up the temporary TIFF file
-                File.Delete(tiffFullPath);
-
+                compressedImagePaths[imageIndex] = compressedPath;
                 imageIndex++;
             }
-
-            // Validation: ensure at least one image was added to the archive
-            if (imageIndex == 0)
-                throw new InvalidOperationException("No images were extracted from the RTF document.");
         }
 
-        Console.WriteLine($"Extraction complete. {imageIndex} image(s) archived to: {zipPath}");
+        if (imageIndex == 0)
+            throw new Exception("No images were extracted from the RTF document.");
+
+        // 4. Store compressed images in a ZIP archive
+        string zipPath = Path.Combine(workDir, "images.zip");
+        using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
+        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+        {
+            for (int i = 0; i < imageIndex; i++)
+            {
+                string filePath = compressedImagePaths[i];
+                if (File.Exists(filePath))
+                {
+                    string entryName = Path.GetFileName(filePath);
+                    archive.CreateEntryFromFile(filePath, entryName);
+                }
+            }
+        }
+
+        // Validation
+        if (!File.Exists(zipPath))
+            throw new Exception("ZIP archive was not created.");
+
+        using (ZipArchive archive = ZipFile.OpenRead(zipPath))
+        {
+            if (archive.Entries.Count == 0)
+                throw new Exception("ZIP archive contains no entries.");
+        }
+
+        // Clean up (optional)
+        // Directory.Delete(workDir, true);
+    }
+
+    private static void CreateSampleTiff(string path)
+    {
+        int width = 200;
+        int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Pen pen = new Pen(Aspose.Drawing.Color.Blue, 5))
+                {
+                    g.DrawEllipse(pen, 10, 10, width - 20, height - 20);
+                }
+                using (Brush brush = new SolidBrush(Aspose.Drawing.Color.Red))
+                {
+                    g.FillRectangle(brush, 50, 50, 100, 100);
+                }
+            }
+            bitmap.Save(path, ImageFormat.Tiff);
+        }
+    }
+
+    private static void CreateRtfWithImage(string rtfPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(imagePath);
+        doc.Save(rtfPath, SaveFormat.Rtf);
     }
 }

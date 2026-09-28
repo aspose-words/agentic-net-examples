@@ -5,101 +5,86 @@ using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class ReplaceLowResolutionImages
+public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string lowResImagePath = "lowres.png";
-        const string highResImagePath = "highres.png";
-        const string inputDocPath = "input.docx";
-        const string outputDocPath = "output.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create sample low‑resolution image (72 DPI, 100x100 pixels).
-        // -----------------------------------------------------------------
-        using (Bitmap lowResBitmap = new Bitmap(100, 100))
+        // Create sample low‑resolution image (100x100)
+        const string lowResPath = "low.png";
+        using (Bitmap lowBmp = new Bitmap(100, 100))
         {
-            using (Graphics g = Graphics.FromImage(lowResBitmap))
+            using (Graphics g = Graphics.FromImage(lowBmp))
             {
                 g.Clear(Color.White);
-                // Draw a simple rectangle to make the image visible.
-                g.DrawRectangle(Pens.Black, 10, 10, 80, 80);
+                using (Pen pen = new Pen(Color.Red, 5))
+                {
+                    g.DrawRectangle(pen, 10, 10, 80, 80);
+                }
             }
-
-            // Set low DPI.
-            lowResBitmap.SetResolution(72f, 72f);
-            lowResBitmap.Save(lowResImagePath, ImageFormat.Png);
+            lowBmp.Save(lowResPath, ImageFormat.Png);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Create sample high‑resolution image (300 DPI, 500x500 pixels).
-        // -----------------------------------------------------------------
-        using (Bitmap highResBitmap = new Bitmap(500, 500))
+        // Create sample high‑resolution image (500x500)
+        const string highResPath = "high.png";
+        using (Bitmap highBmp = new Bitmap(500, 500))
         {
-            using (Graphics g = Graphics.FromImage(highResBitmap))
+            using (Graphics g = Graphics.FromImage(highBmp))
             {
                 g.Clear(Color.White);
-                // Draw a larger rectangle.
-                g.DrawRectangle(Pens.Blue, 50, 50, 400, 400);
+                using (Pen pen = new Pen(Color.Blue, 10))
+                {
+                    g.DrawEllipse(pen, 50, 50, 400, 400);
+                }
             }
-
-            // Set high DPI.
-            highResBitmap.SetResolution(300f, 300f);
-            highResBitmap.Save(highResImagePath, ImageFormat.Png);
+            highBmp.Save(highResPath, ImageFormat.Png);
         }
 
-        // -----------------------------------------------------------------
-        // 3. Create a Word document that contains the low‑resolution image.
-        // -----------------------------------------------------------------
+        // Create a Word document containing the low‑resolution image
+        const string inputDocPath = "docLowRes.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the low‑resolution image three times.
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertImage(lowResImagePath);
-            builder.Writeln(); // Add a line break between images.
-        }
-
-        // Save the source document.
+        builder.InsertImage(lowResPath);
         doc.Save(inputDocPath);
 
-        // -----------------------------------------------------------------
-        // 4. Load the document and replace low‑resolution images.
-        // -----------------------------------------------------------------
+        // Load the document and replace low‑resolution images with high‑resolution ones
         Document loadedDoc = new Document(inputDocPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int replacedCount = 0;
 
-        // Threshold DPI below which an image is considered low resolution.
-        const double dpiThreshold = 150.0;
-
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapes.OfType<Shape>())
+        foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            ImageSize size = shape.ImageData.ImageSize;
-            // If either horizontal or vertical DPI is below the threshold, replace the image.
-            if (size.HorizontalResolution < dpiThreshold || size.VerticalResolution < dpiThreshold)
+            // Load the image bytes into Aspose.Drawing.Image to inspect pixel dimensions
+            using (MemoryStream imgStream = new MemoryStream(shape.ImageData.ImageBytes))
             {
-                // Replace with the high‑resolution image.
-                shape.ImageData.SetImage(highResImagePath);
+                imgStream.Position = 0;
+                using (Image img = Image.FromStream(imgStream))
+                {
+                    // Define low‑resolution threshold (e.g., width or height <= 150 pixels)
+                    if (img.Width <= 150 && img.Height <= 150)
+                    {
+                        shape.ImageData.SetImage(highResPath);
+                        replacedCount++;
+                    }
+                }
             }
         }
 
-        // Save the modified document.
+        const string outputDocPath = "docReplaced.docx";
         loadedDoc.Save(outputDocPath);
 
-        // -----------------------------------------------------------------
-        // 5. Validate that the output file was created.
-        // -----------------------------------------------------------------
+        // Validation
         if (!File.Exists(outputDocPath))
-            throw new InvalidOperationException($"Failed to create output document: {outputDocPath}");
+            throw new Exception($"Output document was not created: {outputDocPath}");
 
-        // Optional: clean up temporary files (comment out if you want to inspect them).
-        // File.Delete(lowResImagePath);
-        // File.Delete(highResImagePath);
+        if (replacedCount == 0)
+            throw new Exception("No low‑resolution images were found to replace.");
+
+        // Clean up temporary files (optional)
+        // File.Delete(lowResPath);
+        // File.Delete(highResPath);
         // File.Delete(inputDocPath);
     }
 }

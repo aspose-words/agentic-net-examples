@@ -1,69 +1,106 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = "Artifacts";
-        Directory.CreateDirectory(artifactsDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample PNG image that will be inserted into the document.
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        // Step 1: Create a deterministic sample PNG image.
+        const string sampleImagePath = "sample.png";
+        using (Aspose.Drawing.Bitmap bmp = new Aspose.Drawing.Bitmap(200, 200))
         {
-            // Fill background.
-            graphics.Clear(Color.LightGray);
-            // Draw a simple rectangle.
-            graphics.DrawRectangle(new Pen(Color.Blue, 5), 20, 20, 160, 160);
-            // Save the bitmap as PNG.
-            bitmap.Save(sampleImagePath);
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bmp))
+            {
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
+                {
+                    g.DrawEllipse(pen, 20, 20, 160, 160);
+                }
+            }
+            bmp.Save(sampleImagePath);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Create a Word document and insert the PNG image.
-        // -----------------------------------------------------------------
+        // Step 2: Create a Word document and insert the PNG image.
+        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleImagePath);
-        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
         doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document, find all PNG images, enhance contrast, and save them.
-        // -----------------------------------------------------------------
+        // Step 3: Reload the document (simulating a separate operation).
         Document loadedDoc = new Document(docPath);
+
+        // Step 4: Extract all PNG images, enhance contrast, and save them.
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
-        {
-            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Png)
-            {
-                // Enhance contrast (value range 0.0 – 1.0, default 0.5).
-                shape.ImageData.Contrast = 1.0; // maximum contrast
 
-                // Save the modified image to disk.
-                string outImagePath = Path.Combine(artifactsDir, $"extracted_{imageIndex}.png");
-                shape.ImageData.Save(outImagePath);
-                imageIndex++;
+        foreach (Shape shape in shapeNodes)
+        {
+            if (!shape.HasImage)
+                continue;
+
+            // Verify the image is a PNG using ImageType.
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
+
+            // Save the original image to a memory stream.
+            using (MemoryStream ms = new MemoryStream())
+            {
+                shape.ImageData.Save(ms);
+                ms.Position = 0;
+
+                // Load the image into a bitmap.
+                using (Aspose.Drawing.Bitmap originalBitmap = new Aspose.Drawing.Bitmap(ms))
+                {
+                    // Prepare contrast enhancement.
+                    const float contrastFactor = 1.2f; // Increase contrast by 20%
+                    float t = (1.0f - contrastFactor) / 2.0f;
+                    float[][] matrixValues = new float[][]
+                    {
+                        new float[] { contrastFactor, 0, 0, 0, 0 },
+                        new float[] { 0, contrastFactor, 0, 0, 0 },
+                        new float[] { 0, 0, contrastFactor, 0, 0 },
+                        new float[] { 0, 0, 0, 1, 0 },
+                        new float[] { t, t, t, 0, 1 }
+                    };
+                    ColorMatrix contrastMatrix = new ColorMatrix(matrixValues);
+                    ImageAttributes imgAttr = new ImageAttributes();
+                    imgAttr.SetColorMatrix(contrastMatrix);
+
+                    // Create a new bitmap to hold the enhanced image.
+                    using (Aspose.Drawing.Bitmap enhancedBitmap = new Aspose.Drawing.Bitmap(originalBitmap.Width, originalBitmap.Height))
+                    {
+                        using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(enhancedBitmap))
+                        {
+                            g.DrawImage(
+                                originalBitmap,
+                                new Rectangle(0, 0, enhancedBitmap.Width, enhancedBitmap.Height),
+                                0,
+                                0,
+                                originalBitmap.Width,
+                                originalBitmap.Height,
+                                GraphicsUnit.Pixel,
+                                imgAttr);
+                        }
+
+                        // Save the enhanced image.
+                        string outputPath = $"extracted-{imageIndex}-enhanced.png";
+                        enhancedBitmap.Save(outputPath);
+                        if (!File.Exists(outputPath))
+                            throw new InvalidOperationException($"Failed to save enhanced image to '{outputPath}'.");
+                    }
+                }
             }
+
+            imageIndex++;
         }
 
-        // -----------------------------------------------------------------
-        // 4. Validate that at least one image was saved.
-        // -----------------------------------------------------------------
+        // Validation: ensure at least one image was processed.
         if (imageIndex == 0)
-            throw new InvalidOperationException("No PNG images were extracted from the document.");
-
-        // The program finishes automatically.
+            throw new InvalidOperationException("No PNG images were found and processed in the document.");
     }
 }

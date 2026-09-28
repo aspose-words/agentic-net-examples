@@ -1,10 +1,7 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Words.Loading;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -12,96 +9,101 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        string secureFolder = Path.Combine(artifactsDir, "SecureArchive");
-        Directory.CreateDirectory(artifactsDir);
-        Directory.CreateDirectory(secureFolder);
+        // Prepare deterministic folders
+        string inputImagePath = "input.png";
+        string documentPath = "sample.docx";
+        string archiveFolder = "SecureArchive";
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample PNG image using Aspose.Drawing.
-        // -----------------------------------------------------------------
-        string pngPath = Path.Combine(artifactsDir, "sample.png");
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics g = Graphics.FromImage(bitmap))
+        // Ensure the archive folder exists
+        Directory.CreateDirectory(archiveFolder);
+
+        // -------------------------------------------------
+        // Step 1: Create a sample PNG image using Aspose.Drawing
+        // -------------------------------------------------
+        const int width = 200;
+        const int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            g.Clear(Color.White);
-            // Draw a simple red ellipse.
-            g.FillEllipse(Brushes.Red, 20, 20, 160, 160);
-            // Save as PNG.
-            bitmap.Save(pngPath, ImageFormat.Png);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                // Fill background with white
+                g.Clear(Color.White);
+                // Draw a simple red rectangle
+                g.FillRectangle(new SolidBrush(Color.Red), 50, 50, 100, 100);
+            }
+            // Save the PNG image to a deterministic file
+            bitmap.Save(inputImagePath, ImageFormat.Png);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Insert the PNG image into a Word document.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // Step 2: Create a Word document and insert the PNG image
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(pngPath);
-        // Save the document (optional, just to have a file on disk).
-        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
-        doc.Save(docPath, SaveFormat.Docx);
+        builder.InsertImage(inputImagePath);
+        // Save the document (optional, just to demonstrate lifecycle)
+        doc.Save(documentPath);
 
-        // -----------------------------------------------------------------
-        // 3. Extract PNG images from the document and convert them to
-        //    grayscale BMP files saved in a secure folder.
-        // -----------------------------------------------------------------
-        var shapeNodes = doc.GetChildNodes(NodeType.Shape, true)
-                            .Cast<Shape>()
-                            .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Png)
-                            .ToList();
-
+        // -------------------------------------------------
+        // Step 3: Extract PNG images, convert each to grayscale BMP, and save to the secure folder
+        // -------------------------------------------------
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-        foreach (var shape in shapeNodes)
+
+        foreach (Shape shape in shapeNodes)
         {
-            // Obtain the image bytes.
+            if (!shape.HasImage)
+                continue;
+
+            // Process only PNG images
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
+
+            // Save the shape image to a memory stream
             using (MemoryStream imageStream = new MemoryStream())
             {
                 shape.ImageData.Save(imageStream);
-                imageStream.Position = 0; // Reset before reading.
+                imageStream.Position = 0; // Reset before reading
 
-                // Load the PNG into a bitmap.
-                using (Bitmap sourceBitmap = new Bitmap(imageStream))
+                // Load the PNG into a bitmap
+                using (Bitmap pngBitmap = new Bitmap(imageStream))
                 {
-                    // Create a new bitmap for the grayscale version.
-                    using (Bitmap grayBitmap = new Bitmap(sourceBitmap.Width, sourceBitmap.Height))
+                    // Create a new bitmap for the grayscale version
+                    using (Bitmap grayBitmap = new Bitmap(pngBitmap.Width, pngBitmap.Height))
                     {
-                        // Draw the source bitmap onto the new bitmap.
-                        using (Graphics g = Graphics.FromImage(grayBitmap))
+                        // Convert each pixel to grayscale
+                        for (int y = 0; y < pngBitmap.Height; y++)
                         {
-                            g.DrawImage(sourceBitmap, 0, 0, sourceBitmap.Width, sourceBitmap.Height);
-                        }
-
-                        // Convert each pixel to grayscale.
-                        for (int y = 0; y < grayBitmap.Height; y++)
-                        {
-                            for (int x = 0; x < grayBitmap.Width; x++)
+                            for (int x = 0; x < pngBitmap.Width; x++)
                             {
-                                Color pixel = grayBitmap.GetPixel(x, y);
-                                int gray = (int)(pixel.R * 0.3 + pixel.G * 0.59 + pixel.B * 0.11);
-                                Color grayColor = Color.FromArgb(gray, gray, gray);
+                                Color originalColor = pngBitmap.GetPixel(x, y);
+                                // Compute luminance using standard Rec. 601 coefficients
+                                int luminance = (int)(0.299 * originalColor.R + 0.587 * originalColor.G + 0.114 * originalColor.B);
+                                Color grayColor = Color.FromArgb(luminance, luminance, luminance);
                                 grayBitmap.SetPixel(x, y, grayColor);
                             }
                         }
 
-                        // Save the grayscale bitmap as BMP in the secure folder.
-                        string outputPath = Path.Combine(secureFolder, $"extracted_{imageIndex}.bmp");
+                        // Save the grayscale bitmap as BMP in the secure archive folder
+                        string outputPath = Path.Combine(archiveFolder, $"image-{imageIndex}.bmp");
                         grayBitmap.Save(outputPath, ImageFormat.Bmp);
+                        imageIndex++;
                     }
                 }
             }
-
-            imageIndex++;
         }
 
-        // -----------------------------------------------------------------
-        // 4. Validation – ensure at least one BMP file was created.
-        // -----------------------------------------------------------------
-        if (imageIndex == 0 || !Directory.EnumerateFiles(secureFolder, "*.bmp").Any())
+        // -------------------------------------------------
+        // Validation: Ensure at least one BMP file was created
+        // -------------------------------------------------
+        string[] bmpFiles = Directory.GetFiles(archiveFolder, "*.bmp");
+        if (bmpFiles.Length == 0)
         {
-            throw new InvalidOperationException("No grayscale BMP files were created.");
+            throw new InvalidOperationException("No BMP files were created in the secure archive folder.");
         }
 
-        // Program completed successfully.
+        // Optional: Clean up intermediate files (comment out if you need to inspect them)
+        // File.Delete(inputImagePath);
+        // File.Delete(documentPath);
     }
 }
