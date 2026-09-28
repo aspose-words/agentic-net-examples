@@ -1,86 +1,73 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableBorderDemo
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and a DocumentBuilder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a table with 4 rows and 3 columns.
+        builder.StartTable();
+        for (int row = 0; row < 4; row++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table.
-            Table table = builder.StartTable();
-
-            // ---------- First Row ----------
-            // Apply a thick red border to the first row via RowFormat.
-            builder.RowFormat.Borders.LineStyle = LineStyle.Single;
-            builder.RowFormat.Borders.LineWidth = 2.0; // points
-            builder.RowFormat.Borders.Color = Color.Red;
-
-            // Create three cells for the first row.
-            builder.InsertCell();
-            builder.Write("First Row, Cell 1");
-            builder.InsertCell();
-            builder.Write("First Row, Cell 2");
-            builder.InsertCell();
-            builder.Write("First Row, Cell 3");
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
             builder.EndRow();
-
-            // ---------- Middle Row(s) ----------
-            // Clear the previous row formatting so middle rows are not affected.
-            builder.RowFormat.ClearFormatting();
-
-            // Apply a thin green border to each inner cell via CellFormat.
-            builder.CellFormat.Borders.LineStyle = LineStyle.Single;
-            builder.CellFormat.Borders.LineWidth = 0.5; // points
-            builder.CellFormat.Borders.Color = Color.Green;
-
-            // Create a middle row with the same number of cells.
-            builder.InsertCell();
-            builder.Write("Middle Row, Cell 1");
-            builder.InsertCell();
-            builder.Write("Middle Row, Cell 2");
-            builder.InsertCell();
-            builder.Write("Middle Row, Cell 3");
-            builder.EndRow();
-
-            // ---------- Last Row ----------
-            // Clear cell formatting to avoid inheriting the green borders.
-            builder.CellFormat.ClearFormatting();
-
-            // Apply a thick blue border to the last row via RowFormat.
-            builder.RowFormat.Borders.LineStyle = LineStyle.Single;
-            builder.RowFormat.Borders.LineWidth = 2.0; // points
-            builder.RowFormat.Borders.Color = Color.Blue;
-
-            // Create three cells for the last row.
-            builder.InsertCell();
-            builder.Write("Last Row, Cell 1");
-            builder.InsertCell();
-            builder.Write("Last Row, Cell 2");
-            builder.InsertCell();
-            builder.Write("Last Row, Cell 3");
-            builder.EndRow();
-
-            // End the table.
-            builder.EndTable();
-
-            // Save the document to the current directory.
-            string outputPath = "TableBordersDemo.docx";
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-
-            // Inform the user (no interactive pause required).
-            Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
         }
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+
+        // Apply distinct border styles to the first row.
+        Row firstRow = table.FirstRow;
+        firstRow.RowFormat.Borders[BorderType.Top].LineStyle = LineStyle.Single;
+        firstRow.RowFormat.Borders[BorderType.Top].LineWidth = 2.0; // points
+        firstRow.RowFormat.Borders[BorderType.Top].Color = Color.Red;
+        firstRow.RowFormat.Borders[BorderType.Bottom].LineStyle = LineStyle.Double;
+        firstRow.RowFormat.Borders[BorderType.Bottom].LineWidth = 1.5;
+        firstRow.RowFormat.Borders[BorderType.Bottom].Color = Color.Blue;
+
+        // Apply distinct border styles to the last row.
+        Row lastRow = table.LastRow;
+        lastRow.RowFormat.Borders[BorderType.Top].LineStyle = LineStyle.Double;
+        lastRow.RowFormat.Borders[BorderType.Top].LineWidth = 1.5;
+        lastRow.RowFormat.Borders[BorderType.Top].Color = Color.Purple;
+        lastRow.RowFormat.Borders[BorderType.Bottom].LineStyle = LineStyle.Single;
+        lastRow.RowFormat.Borders[BorderType.Bottom].LineWidth = 2.0;
+        lastRow.RowFormat.Borders[BorderType.Bottom].Color = Color.Green;
+
+        // Apply thin gray borders to inner cells (excluding first and last rows).
+        for (int i = 1; i < table.Rows.Count - 1; i++)
+        {
+            Row innerRow = table.Rows[i];
+            foreach (Cell cell in innerRow.Cells)
+            {
+                cell.CellFormat.Borders[BorderType.Left].LineStyle = LineStyle.Single;
+                cell.CellFormat.Borders[BorderType.Left].LineWidth = 0.5;
+                cell.CellFormat.Borders[BorderType.Left].Color = Color.Gray;
+
+                cell.CellFormat.Borders[BorderType.Right].LineStyle = LineStyle.Single;
+                cell.CellFormat.Borders[BorderType.Right].LineWidth = 0.5;
+                cell.CellFormat.Borders[BorderType.Right].Color = Color.Gray;
+            }
+        }
+
+        // Save the document.
+        string outputPath = "TableBorders.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not created.");
     }
 }

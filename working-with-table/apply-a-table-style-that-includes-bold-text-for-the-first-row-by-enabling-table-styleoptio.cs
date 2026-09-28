@@ -12,43 +12,40 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+        builder.StartTable();
 
-        // First row – this row will be styled to appear bold.
+        // First row (header).
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Second row – regular formatting.
+        // Second row (data).
         builder.InsertCell();
-        builder.Write("Value 1");
+        builder.Writeln("Data 1");
         builder.InsertCell();
-        builder.Write("Value 2");
+        builder.Writeln("Data 2");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Apply a built‑in table style.
-        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Enable the conditional formatting for the first row.
+        // Apply a built‑in style.
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
+
+        // Enable bold text for the first row using the supported style option.
         table.StyleOptions = TableStyleOptions.FirstRow;
-
-        // Retrieve the style object that was applied to the table.
-        TableStyle appliedStyle = (TableStyle)doc.Styles[table.StyleIdentifier];
-
-        // Make the text in the first row bold via the conditional style.
-        appliedStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
 
         // Save the document.
         string outputPath = "TableStyleFirstRowBold.docx";
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new InvalidOperationException("The output file was not created.");
     }
 }

@@ -11,41 +11,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table. The StartTable method returns the Table node.
-        Table table = builder.StartTable();
-
-        // First row, first cell.
+        // Build a simple 2‑cell table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1, Row 1");
-
-        // First row, second cell.
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2, Row 1");
+        builder.Writeln("Cell 2");
         builder.EndRow();
-
-        // Second row, first cell.
-        builder.InsertCell();
-        builder.Write("Cell 1, Row 2");
-
-        // Second row, second cell.
-        builder.InsertCell();
-        builder.Write("Cell 2, Row 2");
-        builder.EndRow();
-
-        // Finish the table.
         builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
         // Align the table to the center of the page.
         table.Alignment = TableAlignment.Center;
 
-        // Save the document to a file in the current directory.
-        string outputPath = "AlignedTable.docx";
+        // Save the document.
+        string outputPath = "CenteredTable.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+            throw new FileNotFoundException("The output file was not created.", outputPath);
     }
 }

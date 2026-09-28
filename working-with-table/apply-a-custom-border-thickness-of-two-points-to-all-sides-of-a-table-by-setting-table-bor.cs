@@ -1,44 +1,47 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableBorders
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table.
-            Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
-            // Insert a few cells with sample text.
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        builder.InsertCell();
+        builder.Writeln("Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+        builder.EndRow();
 
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndRow();
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.EndRow();
 
-            // End the table construction.
-            builder.EndTable();
+        builder.EndTable();
 
-            // Apply a 2‑point single line border to all sides of the table.
-            // This sets line style, width (in points) and color for every border.
-            table.SetBorders(LineStyle.Single, 2.0, Color.Black);
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-            // Save the document to the local file system.
-            string outputPath = "TableWithCustomBorders.docx";
-            doc.Save(outputPath);
-        }
+        // Apply a custom border thickness of two points to all sides of the table.
+        // The correct overload is SetBorders(LineStyle, lineWidth, Color).
+        table.SetBorders(LineStyle.Single, 2.0, Color.Black);
+
+        // Save the document.
+        string outputPath = "TableBorders.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Output document was not created.");
     }
 }

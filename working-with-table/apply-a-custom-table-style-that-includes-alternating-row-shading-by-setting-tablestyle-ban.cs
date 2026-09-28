@@ -2,63 +2,57 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with a header row and a few data rows.
-        Table table = builder.StartTable();
+        // Build a simple table.
+        builder.StartTable();
 
         // Header row.
         builder.InsertCell();
-        builder.Write("Item");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Write("Header 2");
         builder.EndRow();
 
         // Data rows.
-        string[] items = { "Apples", "Bananas", "Carrots" };
-        int[] quantities = { 20, 40, 50 };
-
-        for (int i = 0; i < items.Length; i++)
+        for (int i = 1; i <= 4; i++)
         {
             builder.InsertCell();
-            builder.Write(items[i]);
+            builder.Write($"Row {i} Col 1");
             builder.InsertCell();
-            builder.Write(quantities[i].ToString());
+            builder.Write($"Row {i} Col 2");
             builder.EndRow();
         }
 
-        // Finish the table.
         builder.EndTable();
 
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
         // Create a custom table style.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyBandingStyle");
-
-        // Define the banding interval (alternating rows).
-        customStyle.RowStripe = 1; // Alternate every row.
-
-        // Set shading for odd rows.
-        customStyle.ConditionalStyles[ConditionalStyleType.OddRowBanding].Shading.BackgroundPatternColor = Color.LightGray;
-
-        // Set shading for even rows.
-        customStyle.ConditionalStyles[ConditionalStyleType.EvenRowBanding].Shading.BackgroundPatternColor = Color.White;
+        Style customStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
 
         // Apply the custom style to the table.
-        table.Style = customStyle;
+        table.StyleName = "MyCustomTableStyle";
 
-        // Enable row banding for the table.
+        // Enable banded rows (alternating row shading).
         table.StyleOptions = TableStyleOptions.RowBands;
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithAlternatingRowShading.docx");
+        // Save the document.
+        string outputPath = "TableWithBandedRows.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception("The output document was not created.");
+        }
     }
 }

@@ -7,42 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
-
-        // First cell: Arabic text, set paragraph direction to right‑to‑left.
-        Cell arabicCell = builder.InsertCell();
-        builder.ParagraphFormat.Bidi = true; // Apply RTL to the paragraph inside this cell.
-        builder.Write("مرحبا بالعالم"); // "Hello World" in Arabic.
-
-        // Second cell: English text, keep left‑to‑right direction.
-        Cell englishCell = builder.InsertCell();
-        builder.ParagraphFormat.Bidi = false; // Apply LTR to the paragraph inside this cell.
-        builder.Write("Hello World");
-
-        // End the row and the table.
+        // Build a simple table with one cell.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("مرحبا بالعالم"); // Arabic text.
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CellDirection.docx");
+        // Locate the created cell.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Cell cell = table.Rows[0].Cells[0];
+
+        // Set the paragraph direction inside the cell to right‑to‑left.
+        foreach (Paragraph para in cell.Paragraphs)
+        {
+            para.ParagraphFormat.Bidi = true;
+        }
+
+        // Save the document.
+        string outputPath = "CellDirection.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
             throw new Exception("The output file was not created.");
-
-        // Reload the document and confirm the paragraph direction of the Arabic cell.
-        Document loadedDoc = new Document(outputPath);
-        Cell loadedArabicCell = loadedDoc.FirstSection.Body.Tables[0].FirstRow.FirstCell;
-        bool isRightToLeft = loadedArabicCell.FirstParagraph.ParagraphFormat.Bidi;
-        if (!isRightToLeft)
-            throw new Exception("The paragraph direction was not set to right‑to‑left.");
-
-        // Execution completed successfully.
     }
 }

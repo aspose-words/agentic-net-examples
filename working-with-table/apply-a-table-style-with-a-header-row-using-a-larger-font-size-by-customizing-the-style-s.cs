@@ -1,59 +1,73 @@
 using System;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class TableStyleExample
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Create a custom table style.
+        Style tableStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+        // Default font size for the whole table.
+        tableStyle.Font.Size = 10;
 
-        // ----- Header row -----
+        // Build the table.
+        builder.StartTable();
+
+        // Header row – use a larger font size.
+        builder.Font.Size = 14; // Larger font for header cells.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
-        builder.InsertCell();
-        builder.Write("Header 3");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // ----- Data rows -----
-        for (int i = 1; i <= 3; i++)
-        {
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 1");
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 2");
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 3");
-            builder.EndRow();
-        }
+        // Reset font size for data rows.
+        builder.Font.Size = 10;
 
-        // Finish the table.
+        // First data row.
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 2");
+        builder.EndRow();
+
+        // Second data row.
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 2");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
-        // Create a custom table style.
-        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
-        // Default font size for the table.
-        tableStyle.Font.Size = 12;
-        // Larger font size for the first (header) row.
-        tableStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Size = 16;
-        // Optional: give the header row a light gray background.
-        tableStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightGray;
+        // Retrieve the created table (the first table in the document).
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply the style to the table.
-        table.Style = tableStyle;
-        // Enable the first‑row conditional formatting.
-        table.StyleOptions = TableStyleOptions.FirstRow;
+        // Apply the custom style to the table.
+        table.StyleName = "MyCustomTableStyle";
+
+        // Optional: give the header row a background color for visual distinction.
+        Row headerRow = table.FirstRow;
+        foreach (Cell cell in headerRow.Cells)
+        {
+            // Apply shading to each cell in the header row.
+            cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+        }
 
         // Save the document.
-        const string outputPath = "TableWithHeaderStyle.docx";
+        string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not saved correctly.");
     }
 }

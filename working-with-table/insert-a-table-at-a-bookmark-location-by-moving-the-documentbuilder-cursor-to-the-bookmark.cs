@@ -3,53 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableAtBookmarkExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a bookmark that will mark the position where the table will be placed.
-        builder.StartBookmark("MyTableBookmark");
-        builder.Writeln("Text before the table.");
-        builder.EndBookmark("MyTableBookmark");
+            // Add some text and a bookmark where the table will be inserted.
+            builder.Writeln("This is a paragraph before the table.");
+            builder.StartBookmark("InsertTableHere");
+            builder.Writeln("Bookmark location.");
+            builder.EndBookmark("InsertTableHere");
 
-        // Move the builder's cursor to the start of the bookmark (inside it) so that the table is inserted there.
-        // Parameters: bookmark name, isStart = true (move to start), isAfter = true (position after the start tag).
-        builder.MoveToBookmark("MyTableBookmark", true, true);
+            // Move the builder to the bookmark.
+            builder.MoveToBookmark("InsertTableHere");
 
-        // Build the table at the current cursor position.
-        Table table = builder.StartTable();
+            // Insert a table at the bookmark location.
+            builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
+            // First row.
+            builder.InsertCell();
+            builder.Write("Row 1, Cell 1");
+            builder.InsertCell();
+            builder.Write("Row 1, Cell 2");
+            builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
+            // Second row.
+            builder.InsertCell();
+            builder.Write("Row 2, Cell 1");
+            builder.InsertCell();
+            builder.Write("Row 2, Cell 2");
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            // End the table.
+            builder.EndTable();
 
-        // Add some text after the table to demonstrate normal flow.
-        builder.Writeln();
-        builder.Writeln("Text after the table.");
+            // Save the document.
+            string outputPath = "Output.docx";
+            doc.Save(outputPath);
 
-        // Save the document to a file in the current directory.
-        string outputPath = "TableAtBookmark.docx";
-        doc.Save(outputPath);
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("Failed to create the output document.");
 
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            // Indicate success.
+            Console.WriteLine("Document saved to " + Path.GetFullPath(outputPath));
+        }
     }
 }

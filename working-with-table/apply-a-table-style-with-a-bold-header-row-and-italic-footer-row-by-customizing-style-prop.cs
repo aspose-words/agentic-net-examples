@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
 public class Program
 {
@@ -12,60 +11,68 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑column table with a header row, two data rows and a footer row.
+        // Start a new table.
         Table table = builder.StartTable();
 
         // ----- Header row -----
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // ----- First data row -----
-        builder.InsertCell();
-        builder.Write("Data 1");
-        builder.InsertCell();
-        builder.Write("Data 2");
-        builder.EndRow();
-
-        // ----- Second data row -----
-        builder.InsertCell();
-        builder.Write("Data 3");
-        builder.InsertCell();
-        builder.Write("Data 4");
-        builder.EndRow();
+        // ----- Data rows -----
+        for (int i = 1; i <= 3; i++)
+        {
+            builder.InsertCell();
+            builder.Writeln($"Data {i}A");
+            builder.InsertCell();
+            builder.Writeln($"Data {i}B");
+            builder.EndRow();
+        }
 
         // ----- Footer row -----
         builder.InsertCell();
-        builder.Write("Footer 1");
+        builder.Writeln("Footer 1");
         builder.InsertCell();
-        builder.Write("Footer 2");
+        builder.Writeln("Footer 2");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Create a custom table style.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomStyle");
+        // Create a custom table style based on the built‑in "Table Grid" style.
+        Style customStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+        customStyle.BaseStyleName = "Table Grid";
 
-        // Make the first row (header) bold.
-        customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
+        // Apply the custom style to the table.
+        // Setting StyleName is sufficient; no need to set StyleIdentifier.
+        table.StyleName = "MyCustomTableStyle";
 
-        // Make the last row (footer) italic.
-        customStyle.ConditionalStyles[ConditionalStyleType.LastRow].Font.Italic = true;
+        // Make header row text bold.
+        Row headerRow = table.Rows[0];
+        foreach (Cell cell in headerRow.Cells)
+        {
+            Paragraph para = cell.FirstParagraph;
+            if (para != null && para.Runs.Count > 0)
+                para.Runs[0].Font.Bold = true;
+        }
 
-        // Optionally set a background color for the whole table.
-        customStyle.Shading.BackgroundPatternColor = Color.LightYellow;
+        // Make footer row text italic.
+        Row footerRow = table.Rows[table.Rows.Count - 1];
+        foreach (Cell cell in footerRow.Cells)
+        {
+            Paragraph para = cell.FirstParagraph;
+            if (para != null && para.Runs.Count > 0)
+                para.Runs[0].Font.Italic = true;
+        }
 
-        // Apply the style to the table.
-        table.Style = customStyle;
-
-        // Enable the conditional formatting for the first and last rows.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.LastRow;
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableStyleExample.docx");
+        // Save the document.
+        string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not created.");
     }
 }

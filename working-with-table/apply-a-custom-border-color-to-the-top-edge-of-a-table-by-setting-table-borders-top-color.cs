@@ -1,48 +1,48 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableBorderExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new empty document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table and add a simple 2x2 grid.
-            Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.EndRow();
 
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
 
-            // Finish the table.
-            builder.EndTable();
+        builder.EndTable();
 
-            // Apply a custom color to the top border of the table.
-            // Use SetBorder because Table.Borders is not guaranteed to exist.
-            table.SetBorder(BorderType.Top, LineStyle.Single, 1.5, Color.Crimson, true);
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+        // Apply a custom color to the top border of the table.
+        // Since Table.Borders is not available, set the top border on the first row.
+        Row firstRow = table.FirstRow;
+        firstRow.RowFormat.Borders.Top.LineStyle = LineStyle.Single;
+        firstRow.RowFormat.Borders.Top.LineWidth = 2.0; // points
+        firstRow.RowFormat.Borders.Top.Color = Color.Blue; // custom border color
 
-            // Save the document.
-            string outputPath = Path.Combine(outputDir, "TableWithTopBorder.docx");
-            doc.Save(outputPath);
-        }
+        // Save the document.
+        string outputPath = "TableBorderTopColor.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

@@ -1,68 +1,73 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace RowSpacingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 3‑row, 2‑column table.
+        builder.StartTable();
+
+        // Row 1
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 2");
+        builder.EndRow();
+
+        // Row 2
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 2");
+        builder.EndRow();
+
+        // Row 3
+        builder.InsertCell();
+        builder.Writeln("Row 3, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 3, Cell 2");
+        builder.EndRow();
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+
+        // Adjust spacing for each row.
+        // The current Aspose.Words version does not expose RowFormat.SpaceBefore/SpaceAfter.
+        // As an alternative, we can control the row height to simulate spacing.
+        for (int i = 0; i < table.Rows.Count; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Row row = table.Rows[i];
 
-            // Start a table.
-            Table table = builder.StartTable();
+            // First row gets a larger height to simulate extra space before it.
+            if (i == 0)
+            {
+                row.RowFormat.Height = 24.0; // points
+            }
+            else
+            {
+                row.RowFormat.Height = 12.0; // points
+            }
 
-            // First row.
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 2");
-            builder.EndRow();
-
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 2");
-            builder.EndRow();
-
-            // Third row.
-            builder.InsertCell();
-            builder.Write("Row 3, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 3, Cell 2");
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // -----------------------------------------------------------------
-            // NOTE:
-            // Aspose.Words RowFormat does not expose SpaceBefore/SpaceAfter
-            // properties. To influence the visual distance between rows you can
-            // adjust the row height (Height) together with the HeightRule, or
-            // insert empty rows as spacers. Below we demonstrate setting a
-            // minimum height for each row to create extra space.
-            // -----------------------------------------------------------------
-
-            // Row 0: add extra space by increasing its height.
-            table.Rows[0].RowFormat.Height = 30;               // height in points
-            table.Rows[0].RowFormat.HeightRule = HeightRule.AtLeast;
-
-            // Row 1: larger height for more spacing.
-            table.Rows[1].RowFormat.Height = 40;
-            table.Rows[1].RowFormat.HeightRule = HeightRule.AtLeast;
-
-            // Row 2: even larger height.
-            table.Rows[2].RowFormat.Height = 50;
-            table.Rows[2].RowFormat.HeightRule = HeightRule.AtLeast;
-
-            // Save the document.
-            const string outputPath = "RowSpacing.docx";
-            doc.Save(outputPath);
+            // Ensure the height is treated as an exact value.
+            row.RowFormat.HeightRule = HeightRule.Exactly;
         }
+
+        // Save the document.
+        string outputPath = "RowSpacing.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new Exception("Document was not saved successfully.");
     }
 }

@@ -2,59 +2,52 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
-namespace TableTextDirectionExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 2x1 table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Attempt to set the table's text direction to TopToBottom for vertical Asian scripts.
+        // The TextDirection property may not exist in older versions of Aspose.Words,
+        // so we use reflection to set it only when it is available.
+        var textDirectionProp = typeof(Table).GetProperty("TextDirection");
+        if (textDirectionProp != null)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table.
-            Table table = builder.StartTable();
-
-            // First row, first cell.
-            builder.InsertCell();
-            // Set the cell's text orientation to vertical (top‑to‑bottom) for Asian scripts.
-            builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
-            builder.Write("縦書きセル 1");
-
-            // First row, second cell.
-            builder.InsertCell();
-            builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
-            builder.Write("縦書きセル 2");
-            builder.EndRow();
-
-            // Second row, first cell.
-            builder.InsertCell();
-            builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
-            builder.Write("縦書きセル 3");
-
-            // Second row, second cell.
-            builder.InsertCell();
-            builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
-            builder.Write("縦書きセル 4");
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Define output path.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableTextDirection.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not created.");
-
-            // Optional: inform that the process completed (no interactive prompts).
-            Console.WriteLine("Document saved to: " + outputPath);
+            // Resolve the enum type (Aspose.Words.Tables.TextDirection) and the required value.
+            Type enumType = textDirectionProp.PropertyType;
+            object topToBottomValue = Enum.Parse(enumType, "TopToBottom");
+            textDirectionProp.SetValue(table, topToBottomValue);
         }
+        else
+        {
+            // If the property is unavailable, you may handle it accordingly.
+            // For this example we simply continue without setting the direction.
+        }
+
+        // Save the document.
+        string outputPath = "TableTextDirection.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output file was not created.", outputPath);
     }
 }

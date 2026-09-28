@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,33 +11,64 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 3x3 table.
-        Table table = builder.StartTable();
-        for (int row = 0; row < 3; row++)
-        {
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{row + 1}C{col + 1}");
-            }
-            builder.EndRow();
-        }
+        // Build a sample table with 3 columns and 3 rows.
+        builder.StartTable();
+
+        // First row (header)
+        builder.InsertCell();
+        builder.Writeln("Header 1");
+        builder.InsertCell();
+        builder.Writeln("Header 2");
+        builder.InsertCell();
+        builder.Writeln("Header 3");
+        builder.EndRow();
+
+        // Second row
+        builder.InsertCell();
+        builder.Writeln("Row 1, Col 1");
+        builder.InsertCell();
+        builder.Writeln("Row 1, Col 2");
+        builder.InsertCell();
+        builder.Writeln("Row 1, Col 3");
+        builder.EndRow();
+
+        // Third row
+        builder.InsertCell();
+        builder.Writeln("Row 2, Col 1");
+        builder.InsertCell();
+        builder.Writeln("Row 2, Col 2");
+        builder.InsertCell();
+        builder.Writeln("Row 2, Col 3");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
-        // Save the original table for reference.
-        doc.Save("TableBefore.docx");
+        // Retrieve the first table in the document.
+        Table table = doc.FirstSection.Body.Tables[0];
 
-        // Delete the second column (index 1) by removing the cell at that index from each row.
-        if (table.Rows.Count > 0 && table.Rows[0].Cells.Count > 1)
+        // Index of the column to delete (second column, zero‑based index 1).
+        int columnIndexToRemove = 1;
+
+        // Remove the cell at the specified column index from each row.
+        foreach (Row row in table.Rows)
         {
-            foreach (Row row in table.Rows)
+            // Ensure the row has enough cells.
+            if (row.Cells.Count > columnIndexToRemove)
             {
-                // Remove the cell at column index 1.
-                row.Cells.RemoveAt(1);
+                // Remove the cell; this effectively deletes the column.
+                row.Cells[columnIndexToRemove].Remove();
             }
         }
 
-        // Save the document after column removal.
-        doc.Save("TableAfter.docx");
+        // Save the modified document.
+        string outputPath = "DeletedColumn.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
     }
 }

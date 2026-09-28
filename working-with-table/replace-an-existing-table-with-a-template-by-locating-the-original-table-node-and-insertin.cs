@@ -3,87 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableReplace
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Prepare output folder.
-            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
+        // Create a source document with an original table.
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("Document before the table.");
+        srcBuilder.StartTable();
+        srcBuilder.InsertCell();
+        srcBuilder.Write("Original Cell 1");
+        srcBuilder.EndRow();
+        srcBuilder.EndTable();
+        srcBuilder.Writeln("Document after the table.");
+        sourceDoc.Save("original.docx");
 
-            // -----------------------------------------------------------------
-            // 1. Create a source document that contains an original table.
-            // -----------------------------------------------------------------
-            string originalPath = Path.Combine(artifactsDir, "Original.docx");
-            Document sourceDoc = new Document();
-            DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        // Locate the original table in the source document.
+        Table originalTable = sourceDoc.GetChild(NodeType.Table, 0, true) as Table;
+        if (originalTable == null)
+            throw new InvalidOperationException("Original table not found.");
 
-            srcBuilder.Writeln("Source document with the original table:");
-            srcBuilder.StartTable();
-            srcBuilder.InsertCell();
-            srcBuilder.Write("Original Cell 1");
-            srcBuilder.InsertCell();
-            srcBuilder.Write("Original Cell 2");
-            srcBuilder.EndRow();
-            srcBuilder.EndTable();
+        // Build a template table in a separate document.
+        Document templateDoc = new Document();
+        DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
+        tmplBuilder.StartTable();
+        tmplBuilder.InsertCell();
+        tmplBuilder.Write("Template Cell A");
+        tmplBuilder.InsertCell();
+        tmplBuilder.Write("Template Cell B");
+        tmplBuilder.EndRow();
+        tmplBuilder.EndTable();
 
-            sourceDoc.Save(originalPath);
+        // Import the template table into the source document.
+        NodeImporter importer = new NodeImporter(templateDoc, sourceDoc, ImportFormatMode.KeepSourceFormatting);
+        Table importedTable = importer.ImportNode(templateDoc.FirstSection.Body.Tables[0], true) as Table;
+        if (importedTable == null)
+            throw new InvalidOperationException("Failed to import template table.");
 
-            // -----------------------------------------------------------------
-            // 2. Create a template document that contains the replacement table.
-            // -----------------------------------------------------------------
-            string templatePath = Path.Combine(artifactsDir, "Template.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
+        // Replace the original table with the imported template table.
+        // Insert the new table after the original one, then remove the original.
+        originalTable.ParentNode.InsertAfter(importedTable, originalTable);
+        originalTable.Remove();
 
-            tmplBuilder.Writeln("Template document with the new table:");
-            tmplBuilder.StartTable();
-            tmplBuilder.InsertCell();
-            tmplBuilder.Write("New Cell A");
-            tmplBuilder.InsertCell();
-            tmplBuilder.Write("New Cell B");
-            tmplBuilder.EndRow();
-            tmplBuilder.EndTable();
+        // Save the resulting document.
+        sourceDoc.Save("result.docx");
 
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Load the source document and locate the original table node.
-            // -----------------------------------------------------------------
-            Document targetDoc = new Document(originalPath);
-            Table originalTable = (Table)targetDoc.GetChild(NodeType.Table, 0, true);
-            if (originalTable == null)
-                throw new InvalidOperationException("Original table not found in the source document.");
-
-            // -----------------------------------------------------------------
-            // 4. Load the template table and import it into the target document.
-            // -----------------------------------------------------------------
-            Document tmplDocForImport = new Document(templatePath);
-            Table templateTable = (Table)tmplDocForImport.GetChild(NodeType.Table, 0, true);
-            if (templateTable == null)
-                throw new InvalidOperationException("Template table not found in the template document.");
-
-            NodeImporter importer = new NodeImporter(tmplDocForImport, targetDoc, ImportFormatMode.KeepSourceFormatting);
-            Table importedTable = (Table)importer.ImportNode(templateTable, true);
-
-            // -----------------------------------------------------------------
-            // 5. Replace the original table with the imported template table.
-            // -----------------------------------------------------------------
-            // Insert the new table after the original one, then remove the original.
-            originalTable.ParentNode.InsertAfter(importedTable, originalTable);
-            originalTable.Remove();
-
-            // -----------------------------------------------------------------
-            // 6. Save the resulting document.
-            // -----------------------------------------------------------------
-            string resultPath = Path.Combine(artifactsDir, "Result.docx");
-            targetDoc.Save(resultPath);
-
-            // Verify that the output file was created.
-            if (!File.Exists(resultPath))
-                throw new FileNotFoundException("Result document was not saved correctly.", resultPath);
-        }
+        // Verify that the output file was created.
+        if (!File.Exists("result.docx"))
+            throw new InvalidOperationException("Result document was not saved.");
     }
 }

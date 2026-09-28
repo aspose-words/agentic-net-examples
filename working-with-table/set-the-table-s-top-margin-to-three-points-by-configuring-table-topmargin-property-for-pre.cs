@@ -11,22 +11,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with one cell.
-        Table table = builder.StartTable();
+        // Build a simple 1x1 table.
+        builder.StartTable();
         builder.InsertCell();
         builder.Write("Sample cell");
         builder.EndRow();
         builder.EndTable();
 
-        // Set the distance between the table top and surrounding text to 3 points.
-        table.DistanceTop = 3.0;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Save the document.
+        // Set the top padding of the table to three points.
+        // This provides the visual effect of a top margin for the table.
+        table.TopPadding = 3f;
+
+        // Save the document to a file.
         string outputPath = "TableTopMargin.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsCellMarginsExample
+namespace AsposeWordsTableMargins
 {
     public class Program
     {
@@ -13,47 +13,50 @@ namespace AsposeWordsCellMarginsExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table.
-            Table table = builder.StartTable();
+            // Begin a new table.
+            builder.StartTable();
 
-            // First cell with custom paddings (margins inside the cell).
-            Cell cell1 = builder.InsertCell();
-            builder.Write("First cell with custom margins.");
-            cell1.CellFormat.TopPadding = 10;      // 10 points top padding
-            cell1.CellFormat.BottomPadding = 10;   // 10 points bottom padding
-            cell1.CellFormat.LeftPadding = 15;     // 15 points left padding
-            cell1.CellFormat.RightPadding = 15;    // 15 points right padding
+            // Insert the first cell and add some text.
+            builder.InsertCell();
+            builder.Writeln("Cell with custom margins");
 
-            // Second cell with different custom paddings.
-            Cell cell2 = builder.InsertCell();
-            builder.Write("Second cell with different margins.");
-            cell2.CellFormat.TopPadding = 5;
-            cell2.CellFormat.BottomPadding = 5;
-            cell2.CellFormat.LeftPadding = 8;
-            cell2.CellFormat.RightPadding = 8;
+            // Retrieve the cell that was just created.
+            Cell firstCell = builder.CurrentParagraph.ParentNode as Cell;
+            if (firstCell == null)
+                throw new InvalidOperationException("Unable to retrieve the created cell.");
 
-            // End the first row.
+            // Apply custom margins using cell padding properties (values are in points).
+            firstCell.CellFormat.TopPadding = 10;      // Top margin
+            firstCell.CellFormat.BottomPadding = 10;   // Bottom margin
+            firstCell.CellFormat.LeftPadding = 15;     // Left margin
+            firstCell.CellFormat.RightPadding = 15;    // Right margin
+
+            // Insert a second cell without custom margins.
+            builder.InsertCell();
+            builder.Writeln("Regular cell");
+
+            // End the current row.
             builder.EndRow();
 
-            // Add a second row to demonstrate that paddings are per‑cell.
-            Cell cell3 = builder.InsertCell();
-            builder.Write("Third cell (default margins).");
-
-            Cell cell4 = builder.InsertCell();
-            builder.Write("Fourth cell (default margins).");
-
-            builder.EndRow();
-
-            // Finish the table.
+            // End the table.
             builder.EndTable();
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "CustomCellMargins.docx");
+            // Save the document to disk.
+            string outputPath = "CustomCellMargins.docx";
             doc.Save(outputPath);
 
-            // Simple verification that the file was created.
+            // Verify that the file was created.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
+                throw new Exception("The output document was not created.");
+
+            // Reload the document to confirm that margins were persisted.
+            Document loadedDoc = new Document(outputPath);
+            Table loadedTable = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+            Cell loadedCell = loadedTable.Rows[0].Cells[0];
+
+            // Simple validation of one margin (padding) value.
+            if (loadedCell.CellFormat.TopPadding != 10)
+                throw new Exception("Cell margin (padding) was not saved correctly.");
         }
     }
 }

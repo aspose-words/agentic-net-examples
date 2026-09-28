@@ -10,38 +10,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+        // Begin a table.
+        builder.StartTable();
 
-        // First row
+        // First cell.
         builder.InsertCell();
-        builder.Write("Cell 1,1");
+        Cell cell = builder.CurrentParagraph.ParentNode as Cell;
+        // Set padding to 5 points on all sides.
+        cell.CellFormat.LeftPadding = 5;
+        cell.CellFormat.RightPadding = 5;
+        cell.CellFormat.TopPadding = 5;
+        cell.CellFormat.BottomPadding = 5;
+        builder.Writeln("Cell 1");
+
+        // Second cell.
         builder.InsertCell();
-        builder.Write("Cell 1,2");
+        cell = builder.CurrentParagraph.ParentNode as Cell;
+        // Set padding to 5 points on all sides.
+        cell.CellFormat.LeftPadding = 5;
+        cell.CellFormat.RightPadding = 5;
+        cell.CellFormat.TopPadding = 5;
+        cell.CellFormat.BottomPadding = 5;
+        builder.Writeln("Cell 2");
+
+        // End the row and the table.
         builder.EndRow();
-
-        // Second row
-        builder.InsertCell();
-        builder.Write("Cell 2,1");
-        builder.InsertCell();
-        builder.Write("Cell 2,2");
-        builder.EndRow();
-
-        // Finish the table.
         builder.EndTable();
 
-        // Set padding of 5 points on all sides for every cell in the table.
-        foreach (Row row in table.Rows)
-        {
-            foreach (Cell cell in row.Cells)
-            {
-                // Use SetPaddings to apply left, top, right, bottom padding.
-                cell.CellFormat.SetPaddings(5, 5, 5, 5);
-            }
-        }
-
-        // Save the document to the current directory.
-        string outputPath = "CellPadding.docx";
+        // Save the document.
+        const string outputPath = "TableWithPadding.docx";
         doc.Save(outputPath);
+
+        // Simple validation that the file was created.
+        if (!System.IO.File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
     }
 }

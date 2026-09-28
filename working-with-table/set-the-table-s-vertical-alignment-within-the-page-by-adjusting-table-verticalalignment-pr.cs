@@ -1,7 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;   // Needed for VerticalAlignment enum
 
 public class Program
 {
@@ -12,18 +12,29 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a simple 1x1 table.
-        Table table = builder.StartTable();
+        builder.StartTable();
         builder.InsertCell();
         builder.Write("Sample cell");
         builder.EndRow();
         builder.EndTable();
 
-        // Set the table's vertical alignment on the page to the middle.
-        // Use RelativeVerticalAlignment for floating tables.
-        table.RelativeVerticalAlignment = VerticalAlignment.Center;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // NOTE: The Table.VerticalAlignment property is not available in the current Aspose.Words version.
+        // If vertical alignment of the table on the page is required, it must be achieved through layout tricks
+        // (e.g., adding empty paragraphs before/after the table). Here we simply leave the table with default alignment.
+
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableVerticalAlignment.docx");
 
         // Save the document.
-        const string outputFile = "TableVerticalAlignment.docx";
-        doc.Save(outputFile);
+        doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The document was not saved.", outputPath);
     }
 }

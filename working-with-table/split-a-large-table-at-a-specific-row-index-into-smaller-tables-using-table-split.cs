@@ -1,62 +1,70 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableSplitExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a sample table with 10 rows and 2 columns.
+        builder.StartTable();
+        for (int i = 1; i <= 10; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // First cell of the row.
+            builder.InsertCell();
+            builder.Writeln($"Row {i} Cell 1");
 
-            // Build a table with 10 rows and 2 columns.
-            Table table = builder.StartTable();
+            // Second cell of the row.
+            builder.InsertCell();
+            builder.Writeln($"Row {i} Cell 2");
 
-            for (int i = 1; i <= 10; i++)
-            {
-                // First cell of the row.
-                builder.InsertCell();
-                builder.Write($"Row {i}, Column 1");
-
-                // Second cell of the row.
-                builder.InsertCell();
-                builder.Write($"Row {i}, Column 2");
-
-                // End the current row.
-                builder.EndRow();
-            }
-
-            // Finish the table construction.
-            builder.EndTable();
-
-            // Split the table after the 5th row (zero‑based index 5).
-            int splitRowIndex = 5;
-
-            // Create a new table that will hold the rows after the split point.
-            Table newTable = new Table(doc);
-
-            // Move rows from the original table to the new table.
-            // Continue moving while there are rows at the split index.
-            while (table.Rows.Count > splitRowIndex)
-            {
-                // Get the row that should be moved.
-                Row rowToMove = table.Rows[splitRowIndex];
-
-                // Detach the row from the original table.
-                rowToMove.Remove();
-
-                // Append the detached row to the new table.
-                newTable.Rows.Add(rowToMove);
-            }
-
-            // Insert the newly created table immediately after the original one.
-            table.ParentNode.InsertAfter(newTable, table);
-
-            // Save the resulting document.
-            doc.Save("TableSplitResult.docx");
+            // End the current row.
+            builder.EndRow();
         }
+        // End the table construction.
+        builder.EndTable();
+
+        // Retrieve the created table (the first table in the document).
+        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (originalTable == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Index at which to split the table (zero‑based). Rows from this index onward will move to a new table.
+        int splitIndex = 5;
+
+        // Clone the original table without its rows to obtain a new empty table with the same formatting.
+        Table newTable = (Table)originalTable.Clone(false);
+        // Insert the new table right after the original table in the document.
+        originalTable.ParentNode.InsertAfter(newTable, originalTable);
+
+        // Move rows starting from splitIndex from the original table to the new table.
+        while (originalTable.Rows.Count > splitIndex)
+        {
+            Row rowToMove = originalTable.Rows[splitIndex];
+            // Remove the row from the original table.
+            originalTable.Rows.RemoveAt(splitIndex);
+            // Append the removed row to the new table.
+            newTable.Rows.Add(rowToMove);
+        }
+
+        // Validate row counts of the resulting tables.
+        int originalRowCount = originalTable.Rows.Count; // Expected: 5
+        int newRowCount = newTable.Rows.Count;           // Expected: 5
+
+        Console.WriteLine($"Original table rows after split: {originalRowCount}");
+        Console.WriteLine($"New table rows after split: {newRowCount}");
+
+        // Save the document containing the split tables.
+        string outputPath = "SplitTable.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

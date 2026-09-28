@@ -3,43 +3,50 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableMarginExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new document and a DocumentBuilder for constructing content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table.
-            Table table = builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-            // Insert a few cells with sample text.
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        // Insert first row with two cells.
+        builder.InsertCell();
+        builder.Writeln("Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+        builder.EndRow();
 
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndTable();
+        // Insert second row with two cells.
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.EndRow();
 
-            // Apply custom margins: left indent and right distance.
-            table.LeftIndent = 30;          // Left margin in points.
-            table.DistanceRight = 30;       // Right margin in points (alternative to RightIndent).
+        // End the table.
+        builder.EndTable();
 
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
+        // Retrieve the created table (the first table in the document).
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-            // Save the document.
-            string outputPath = Path.Combine(outputDir, "TableWithMargins.docx");
-            doc.Save(outputPath);
-        }
+        // Apply custom left indent.
+        table.LeftIndent = 20.0; // Indent in points.
+
+        // NOTE: Setting Table.RightIndent is prohibited by the rule set, so it is omitted.
+
+        // Save the document to a file.
+        string outputPath = "TableWithIndent.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output file was not created.");
+
+        // The program ends here without waiting for user input.
     }
 }

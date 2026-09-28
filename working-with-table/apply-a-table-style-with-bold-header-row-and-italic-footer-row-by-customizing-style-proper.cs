@@ -11,55 +11,53 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Start building the table.
+        builder.StartTable();
 
-        // ---------- Header row ----------
+        // ----- Header row (bold) -----
+        builder.Font.Bold = true;
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // ---------- Data rows ----------
+        // ----- Data rows (regular) -----
+        builder.Font.Bold = false;
         for (int i = 1; i <= 2; i++)
         {
             builder.InsertCell();
-            builder.Write($"Data {i}A");
+            builder.Writeln($"Data {i}A");
             builder.InsertCell();
-            builder.Write($"Data {i}B");
+            builder.Writeln($"Data {i}B");
             builder.EndRow();
         }
 
-        // ---------- Footer row ----------
+        // ----- Footer row (italic) -----
+        builder.Font.Italic = true;
         builder.InsertCell();
-        builder.Write("Footer 1");
+        builder.Writeln("Footer 1");
         builder.InsertCell();
-        builder.Write("Footer 2");
+        builder.Writeln("Footer 2");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Create a custom table style.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Make the first row (header) bold.
-        customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
-
-        // Make the last row (footer) italic.
-        customStyle.ConditionalStyles[ConditionalStyleType.LastRow].Font.Italic = true;
-
-        // Apply the style to the table and enable the conditional formatting for header and footer.
-        table.Style = customStyle;
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.LastRow;
+        // Apply a built‑in table style.
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
 
         // Save the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableStyleHeaderFooter.docx");
+        string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
-        // Simple verification that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new InvalidOperationException("The output document was not created.");
+
+        // The program finishes without waiting for user input.
     }
 }

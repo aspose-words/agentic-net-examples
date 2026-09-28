@@ -1,8 +1,9 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsInsertRowExample
+namespace TableInsertRowExample
 {
     public class Program
     {
@@ -12,54 +13,46 @@ namespace AsposeWordsInsertRowExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build an initial 2x2 table.
-            Table table = builder.StartTable();
+            // Build a simple table with two rows and one cell each.
+            builder.StartTable();
 
             // First row.
             builder.InsertCell();
             builder.Write("Row 1, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 2");
             builder.EndRow();
 
             // Second row.
             builder.InsertCell();
             builder.Write("Row 2, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 2");
-            builder.EndTable(); // Ends the table construction.
+            builder.EndRow();
 
-            // At this point the table has two rows. We will insert a new row at index 1 (between the existing rows).
+            builder.EndTable();
 
-            // Create a new row that matches the table's column count.
-            Row newRow = new Row(doc);
+            // Retrieve the created table.
+            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+            if (table == null)
+                throw new InvalidOperationException("Table was not created.");
 
-            // First cell of the new row.
-            Cell cell1 = new Cell(doc);
-            cell1.AppendChild(new Paragraph(doc));
-            cell1.FirstParagraph.AppendChild(new Run(doc, "Inserted Row, Cell 1"));
-            newRow.AppendChild(cell1);
+            // Clone the first row to preserve formatting.
+            Row newRow = (Row)table.Rows[0].Clone(true);
 
-            // Second cell of the new row.
-            Cell cell2 = new Cell(doc);
-            cell2.AppendChild(new Paragraph(doc));
-            cell2.FirstParagraph.AppendChild(new Run(doc, "Inserted Row, Cell 2"));
-            newRow.AppendChild(cell2);
+            // Change the text of the new row's cell.
+            Cell newCell = newRow.Cells[0];
+            // Clear existing runs.
+            newCell.Paragraphs[0].Runs.Clear();
+            // Add new text.
+            newCell.Paragraphs[0].AppendChild(new Run(doc, "Inserted Row, Cell 1"));
 
-            // Insert the new row at the desired index using the RowCollection.Insert method.
-            // The index is zero‑based; 1 means after the first row.
+            // Insert the new row at index 1 (between the original rows).
             table.Rows.Insert(1, newRow);
 
-            // Simple validation to ensure the row was inserted.
-            if (table.Rows.Count != 3)
-                throw new InvalidOperationException("Row insertion failed; expected 3 rows.");
-
-            // Save the document to the local file system.
-            string outputPath = "InsertRowExample.docx";
+            // Save the document.
+            string outputPath = "InsertedRow.docx";
             doc.Save(outputPath);
 
-            // Inform that the process completed successfully.
-            Console.WriteLine($"Document saved to '{outputPath}'. Table now contains {table.Rows.Count} rows.");
+            // Verify that the file was saved.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not created.", outputPath);
         }
     }
 }

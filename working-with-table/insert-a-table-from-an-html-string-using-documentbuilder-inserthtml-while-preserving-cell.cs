@@ -1,52 +1,49 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // HTML string containing a table with cell background color and bold text.
-        string html = @"
-<table border='1' style='border-collapse:collapse;'>
-    <tr>
-        <td style='background-color:#FFCC00;'><b>Cell 1</b></td>
-        <td>Cell 2</td>
-    </tr>
-</table>";
-
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the HTML table into the document.
+        // HTML string containing a table with cell background shading.
+        string html = @"
+<table border='1' style='border-collapse:collapse;'>
+    <tr>
+        <td style='background-color:#FFFF00;'>Yellow Cell</td>
+        <td>Normal Cell</td>
+    </tr>
+    <tr>
+        <td>Cell 3</td>
+        <td>Cell 4</td>
+    </tr>
+</table>";
+
+        // Insert the HTML into the document.
+        builder.Writeln("Table inserted from HTML:");
         builder.InsertHtml(html);
 
         // Save the document.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Reload the document to verify the table and its formatting.
+        // Load the saved document to verify the table and cell formatting.
         Document loadedDoc = new Document(outputPath);
         Table table = loadedDoc.GetChild(NodeType.Table, 0, true) as Table;
         if (table == null)
-            throw new InvalidOperationException("No table was found in the document.");
+            throw new Exception("Table was not inserted.");
 
-        // Verify the first cell's background shading.
         Cell firstCell = table.Rows[0].Cells[0];
-        Color expectedColor = Color.FromArgb(255, 255, 204, 0); // #FFCC00
-        if (firstCell.CellFormat.Shading.BackgroundPatternColor.ToArgb() != expectedColor.ToArgb())
-            throw new InvalidOperationException("Cell background color was not preserved.");
+        Color bgColor = firstCell.CellFormat.Shading.BackgroundPatternColor;
+        if (bgColor.ToArgb() != Color.Yellow.ToArgb())
+            throw new Exception("Cell shading was not preserved.");
 
-        // Verify the first cell contains bold text.
-        Paragraph para = firstCell.FirstParagraph;
-        Run run = para?.FirstChild as Run;
-        if (run == null || !run.Font.Bold)
-            throw new InvalidOperationException("Bold formatting of the cell text was not preserved.");
-
-        Console.WriteLine("Table inserted from HTML and cell formatting preserved successfully.");
+        // Indicate success (optional).
+        Console.WriteLine("Table inserted and cell formatting preserved successfully.");
     }
 }

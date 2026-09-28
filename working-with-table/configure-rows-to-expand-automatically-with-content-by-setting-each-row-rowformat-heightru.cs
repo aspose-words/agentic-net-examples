@@ -11,51 +11,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
-        Table table = builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1.");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2.");
-        // Ensure the row expands automatically.
-        builder.RowFormat.HeightRule = HeightRule.Auto;
-        builder.EndRow();
+        // Add three rows with two cells each.
+        for (int rowIndex = 0; rowIndex < 3; rowIndex++)
+        {
+            // First cell.
+            builder.InsertCell();
+            builder.Writeln($"Row {rowIndex + 1}, Cell 1");
+            // Second cell.
+            builder.InsertCell();
+            // Insert multiple lines to demonstrate automatic height expansion.
+            builder.Writeln($"Row {rowIndex + 1}, Cell 2 - Line 1");
+            builder.Writeln($"Row {rowIndex + 1}, Cell 2 - Line 2");
+            builder.Writeln($"Row {rowIndex + 1}, Cell 2 - Line 3");
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1 with a longer text that should cause the row to expand automatically.");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2.");
-        builder.RowFormat.HeightRule = HeightRule.Auto;
-        builder.EndRow();
+            // End the current row.
+            builder.EndRow();
+        }
 
-        // Third row.
-        builder.InsertCell();
-        builder.Write("Row 3, Cell 1.");
-        builder.InsertCell();
-        builder.Write("Row 3, Cell 2 with even longer content to demonstrate automatic row height adjustment.");
-        builder.RowFormat.HeightRule = HeightRule.Auto;
-        builder.EndRow();
-
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // As an extra safety measure, iterate all rows and set HeightRule to Auto.
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Set each row's HeightRule to Auto so rows expand with content.
         foreach (Row row in table.Rows)
         {
             row.RowFormat.HeightRule = HeightRule.Auto;
         }
 
-        // Save the document to a file in the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RowsAutoHeight.docx");
+        // Save the document.
+        string outputPath = "TableAutoHeight.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("The document was not saved correctly.");
-        }
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

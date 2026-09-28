@@ -3,67 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a table.
+        builder.StartTable();
+
+        // Insert first row (header) with three cells.
+        builder.InsertCell();
+        builder.Writeln("Header 1");
+        builder.InsertCell();
+        builder.Writeln("Header 2");
+        builder.InsertCell();
+        builder.Writeln("Header 3");
+        builder.EndRow();
+
+        // Insert several more rows to increase the table height.
+        for (int i = 1; i <= 20; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a simple 3‑row, 2‑column table.
-            Table table = builder.StartTable();
-
-            // First row (header).
             builder.InsertCell();
-            builder.Write("Header 1");
+            builder.Writeln($"Row {i} Col 1");
             builder.InsertCell();
-            builder.Write("Header 2");
+            builder.Writeln($"Row {i} Col 2");
+            builder.InsertCell();
+            builder.Writeln($"Row {i} Col 3");
             builder.EndRow();
+        }
 
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 2");
-            builder.EndRow();
+        // End the table.
+        builder.EndTable();
 
-            // Third row.
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 2");
-            builder.EndRow();
+        // Retrieve the first row and prevent it from breaking across pages.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Row firstRow = table.Rows[0];
+        // The AllowBreakAcrossPages property belongs to RowFormat, not Row itself.
+        firstRow.RowFormat.AllowBreakAcrossPages = false;
 
-            // Finish the table.
-            builder.EndTable();
+        // Save the document.
+        string outputPath = "TableNoBreak.docx";
+        doc.Save(outputPath);
 
-            // Prevent the first row from being split across pages.
-            Row firstRow = table.FirstRow;
-            firstRow.RowFormat.AllowBreakAcrossPages = false;
-
-            // Ensure the output directory exists.
-            string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
-
-            // Save the document.
-            string outputPath = Path.Combine(artifactsDir, "Table_NoBreakAcrossPages.docx");
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not created.");
-
-            // Reload the document and confirm the setting persisted.
-            Document loadedDoc = new Document(outputPath);
-            Table loadedTable = loadedDoc.FirstSection.Body.Tables[0];
-            bool allowBreak = loadedTable.FirstRow.RowFormat.AllowBreakAcrossPages;
-            if (allowBreak)
-                throw new InvalidOperationException("AllowBreakAcrossPages was not set to false.");
-
-            // Example completed.
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
     }
 }

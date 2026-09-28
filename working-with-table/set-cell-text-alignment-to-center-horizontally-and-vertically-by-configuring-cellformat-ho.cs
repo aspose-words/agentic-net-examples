@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,41 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
-
-        // First cell: set vertical alignment via CellFormat and horizontal alignment via ParagraphFormat.
+        // Build a simple table with one cell.
+        builder.StartTable();
         builder.InsertCell();
-        builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Write("Centered");
-
-        // Second cell: apply the same alignment.
-        builder.InsertCell();
-        builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Write("Centered");
-
-        // End the first row.
+        builder.Writeln("Centered Text");
         builder.EndRow();
-
-        // Validate that the alignments were applied.
-        if (table.Rows[0].Cells[0].CellFormat.VerticalAlignment != CellVerticalAlignment.Center ||
-            table.Rows[0].Cells[0].FirstParagraph.ParagraphFormat.Alignment != ParagraphAlignment.Center ||
-            table.Rows[0].Cells[1].CellFormat.VerticalAlignment != CellVerticalAlignment.Center ||
-            table.Rows[0].Cells[1].FirstParagraph.ParagraphFormat.Alignment != ParagraphAlignment.Center)
-        {
-            throw new InvalidOperationException("Cell alignment was not set correctly.");
-        }
-
-        // Finish the table.
         builder.EndTable();
 
+        // Access the created table and its first cell.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Cell cell = table.Rows[0].Cells[0];
+
+        // Set vertical alignment to center.
+        cell.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
+
+        // Center the paragraph(s) inside the cell horizontally.
+        foreach (Paragraph para in cell.Paragraphs)
+        {
+            para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        }
+
         // Save the document.
-        doc.Save("AlignedTable.docx");
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
     }
 }

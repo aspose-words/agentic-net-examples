@@ -7,47 +7,57 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Define the number of columns for the table.
+        int columnCount = 4;
 
         // Start the table.
         builder.StartTable();
 
-        // First row with a merged cell spanning three columns.
+        // ----- First row: merged cell spanning all columns -----
+        // Insert the first cell and mark it as the start of a horizontal merge.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Writeln("Merged Header");
+        Cell firstCell = (Cell)builder.CurrentParagraph.ParentNode;
+        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Write("Merged Header");
 
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // Insert the remaining cells of the first row and mark them as continuation of the merge.
+        for (int i = 1; i < columnCount; i++)
+        {
+            builder.InsertCell();
+            Cell mergedCell = (Cell)builder.CurrentParagraph.ParentNode;
+            mergedCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+            // Content inside merged cells is optional; leaving it empty.
+        }
 
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-
+        // End the first row.
         builder.EndRow();
 
-        // Second row with regular cells.
-        builder.InsertCell();
-        builder.Writeln("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Row 1, Cell 2");
-        builder.InsertCell();
-        builder.Writeln("Row 1, Cell 3");
+        // ----- Second row: normal cells (optional, just to show table structure) -----
+        for (int i = 0; i < columnCount; i++)
+        {
+            builder.InsertCell();
+            builder.Write($"Row 2, Col {i + 1}");
+        }
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Save the document.
-        string fileName = "MergedCellTable.docx";
-        doc.Save(fileName);
+        // Save the document to a file.
+        string outputPath = "MergedTable.docx";
+        doc.Save(outputPath);
 
-        // Verify the file was created.
-        if (!File.Exists(fileName))
-            throw new Exception($"Failed to create the output file: {fileName}");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
 
-        // Output confirmation.
-        Console.WriteLine($"Document saved successfully: {Path.GetFullPath(fileName)}");
+        // Optionally, inform that the process completed successfully.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

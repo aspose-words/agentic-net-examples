@@ -1,115 +1,120 @@
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
-namespace TableFromXmlExample
+public class ImportTableFromXml
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Sample XML defining a table with column widths and simple style.
+        string xmlContent = @"
+<Table>
+  <Columns>
+    <Column Width='100' />
+    <Column Width='150' />
+  </Columns>
+  <Rows>
+    <Row>
+      <Cell>Header 1</Cell>
+      <Cell>Header 2</Cell>
+    </Row>
+    <Row>
+      <Cell>Data 1</Cell>
+      <Cell>Data 2</Cell>
+    </Row>
+  </Rows>
+  <Style>
+    <BorderColor>#0000FF</BorderColor>
+    <ShadingColor>#FFFFCC</ShadingColor>
+  </Style>
+</Table>";
+
+        // Parse the XML.
+        XDocument xDoc = XDocument.Parse(xmlContent);
+        XElement tableElem = xDoc.Element("Table");
+        if (tableElem == null) throw new Exception("Invalid XML: missing Table element.");
+
+        // Extract column widths.
+        List<double> columnWidths = tableElem.Element("Columns")?
+            .Elements("Column")
+            .Select(c => (double)double.Parse(c.Attribute("Width")?.Value ?? "0"))
+            .ToList() ?? new List<double>();
+
+        // Extract rows and cells.
+        List<List<string>> rows = tableElem.Element("Rows")?
+            .Elements("Row")
+            .Select(r => r.Elements("Cell").Select(c => c.Value).ToList())
+            .ToList() ?? new List<List<string>>();
+
+        // Extract style information.
+        XElement styleElem = tableElem.Element("Style");
+        Color borderColor = Color.Black;
+        Color shadingColor = Color.Empty;
+        if (styleElem != null)
         {
-            // XML definition of the table.
-            const string xml = @"
-<TableDefinition>
-    <Columns>
-        <Column Width='120' />
-        <Column Width='200' />
-        <Column Width='150' />
-    </Columns>
-    <Rows>
-        <Row>
-            <Cell>Product</Cell>
-            <Cell>Quantity</Cell>
-            <Cell>Price</Cell>
-        </Row>
-        <Row>
-            <Cell>Apples</Cell>
-            <Cell>20</Cell>
-            <Cell>$1.50</Cell>
-        </Row>
-        <Row>
-            <Cell>Bananas</Cell>
-            <Cell>35</Cell>
-            <Cell>$0.80</Cell>
-        </Row>
-    </Rows>
-    <Style>
-        <HeaderShadingColor>#D3D3D3</HeaderShadingColor>
-    </Style>
-</TableDefinition>";
+            string borderHex = styleElem.Element("BorderColor")?.Value;
+            if (!string.IsNullOrEmpty(borderHex))
+                borderColor = ColorTranslator.FromHtml(borderHex);
 
-            // Parse the XML.
-            XDocument xDoc = XDocument.Parse(xml);
-            var columnWidths = xDoc.Root
-                                   .Element("Columns")
-                                   .Elements("Column")
-                                   .Select(c => (double)c.Attribute("Width"))
-                                   .ToArray();
+            string shadingHex = styleElem.Element("ShadingColor")?.Value;
+            if (!string.IsNullOrEmpty(shadingHex))
+                shadingColor = ColorTranslator.FromHtml(shadingHex);
+        }
 
-            var rows = xDoc.Root
-                           .Element("Rows")
-                           .Elements("Row")
-                           .Select(r => r.Elements("Cell").Select(c => c.Value).ToArray())
-                           .ToArray();
+        // Create a new document and a builder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            string headerShadingHex = (string)xDoc.Root.Element("Style")?.Element("HeaderShadingColor");
-            Color headerShading = Color.Empty;
-            if (!string.IsNullOrEmpty(headerShadingHex))
+        // Start building the table.
+        builder.StartTable();
+
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
+        {
+            List<string> cells = rows[rowIndex];
+            for (int colIndex = 0; colIndex < cells.Count; colIndex++)
             {
-                headerShading = ColorTranslator.FromHtml(headerShadingHex);
-            }
+                // Insert a new cell.
+                builder.InsertCell();
 
-            // Create a new document and a builder.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+                // Write cell text.
+                builder.Write(cells[colIndex]);
 
-            // Start the table.
-            Table table = builder.StartTable();
-
-            // Build rows.
-            for (int rowIndex = 0; rowIndex < rows.Length; rowIndex++)
-            {
-                string[] cells = rows[rowIndex];
-                for (int colIndex = 0; colIndex < cells.Length; colIndex++)
+                // Apply column width if defined.
+                if (colIndex < columnWidths.Count && columnWidths[colIndex] > 0)
                 {
-                    // Insert a new cell.
-                    builder.InsertCell();
-
-                    // Set the column width.
                     builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(columnWidths[colIndex]);
-
-                    // Apply header shading to the first row.
-                    if (rowIndex == 0 && headerShading != Color.Empty)
-                    {
-                        builder.CellFormat.Shading.BackgroundPatternColor = headerShading;
-                    }
-
-                    // Write the cell text.
-                    builder.Write(cells[colIndex]);
                 }
 
-                // End the current row.
-                builder.EndRow();
+                // Apply shading if defined.
+                if (shadingColor != Color.Empty)
+                {
+                    builder.CellFormat.Shading.BackgroundPatternColor = shadingColor;
+                }
+
+                // Apply border color to all sides.
+                builder.CellFormat.Borders.Color = borderColor;
             }
 
-            // Finish the table.
-            builder.EndTable();
-
-            // Save the document.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
-            string outputPath = Path.Combine(outputDir, "TableFromXml.docx");
-            doc.Save(outputPath);
-
-            // Simple validation that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not created.");
-
-            // The program ends automatically; no user interaction required.
+            // End the current row.
+            builder.EndRow();
         }
+
+        // End the table.
+        builder.EndTable();
+
+        // Save the document.
+        string outputPath = "OutputTable.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
+
+        // Optional: clean up resources (handled by .NET runtime).
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -12,35 +13,49 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+        builder.StartTable();
 
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 2");
         builder.EndRow();
 
         builder.InsertCell();
-        builder.Write("Cell 3");
+        builder.Writeln("Cell 3");
         builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Writeln("Cell 4");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Apply a built‑in table style.
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // No conditional style options are required.
+        // Apply a built‑in style.
+        table.Style = doc.Styles["Table Grid"];
+
+        // Disable any style‑based shading options.
         table.StyleOptions = TableStyleOptions.None;
 
-        // Disable all cell shading.
-        table.ClearShading();
+        // Ensure all cells have no shading.
+        foreach (Row row in table.Rows)
+        {
+            foreach (Cell cell in row.Cells)
+            {
+                cell.CellFormat.Shading.ForegroundPatternColor = Color.Empty;
+                cell.CellFormat.Shading.BackgroundPatternColor = Color.Empty;
+            }
+        }
 
         // Save the document.
         string outputPath = "TableNoShading.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create '{outputPath}'.");
+            throw new Exception("Failed to create the output document.");
+
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

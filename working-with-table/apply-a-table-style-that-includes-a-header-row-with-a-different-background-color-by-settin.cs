@@ -4,61 +4,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableStyleExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
+        // Create a new document and a DocumentBuilder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple table with a header row.
+        builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
+
+        // Data row.
+        builder.InsertCell();
+        builder.Write("Data 1");
+        builder.InsertCell();
+        builder.Write("Data 2");
+        builder.EndRow();
+
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Apply a built‑in table style.
+        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
+
+        // Set a different background color for the header row cells.
+        Row headerRow = table.Rows[0];
+        foreach (Cell cell in headerRow.Cells)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a simple 2‑column table with a header row.
-            Table table = builder.StartTable();
-
-            // Header row.
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.EndRow();
-
-            // First data row.
-            builder.InsertCell();
-            builder.Write("Row 1, Col 1");
-            builder.InsertCell();
-            builder.Write("Row 1, Col 2");
-            builder.EndRow();
-
-            // Second data row.
-            builder.InsertCell();
-            builder.Write("Row 2, Col 1");
-            builder.InsertCell();
-            builder.Write("Row 2, Col 2");
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Create a custom table style.
-            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
-
-            // Set the background color for the header (first) row.
-            customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightGray;
-
-            // Optional: set a default background for the rest of the table.
-            customStyle.Shading.BackgroundPatternColor = Color.White;
-
-            // Apply the style to the table.
-            table.Style = customStyle;
-
-            // Enable the first‑row conditional formatting.
-            table.StyleOptions = TableStyleOptions.FirstRow;
-
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableStyleHeaderRow.docx");
-            doc.Save(outputPath);
+            cell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
         }
+
+        // Save the document.
+        string outputPath = "TableWithHeaderStyle.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not created.");
+
+        // Inform that the process completed.
+        Console.WriteLine($"Document saved to '{Path.GetFullPath(outputPath)}'.");
     }
 }

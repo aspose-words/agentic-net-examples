@@ -3,83 +3,75 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeTablesReport
+public class ReportWithMultipleTables
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Define the built‑in table styles to be applied.
+        StyleIdentifier[] styles = new StyleIdentifier[]
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            StyleIdentifier.TableGrid,
+            StyleIdentifier.LightShadingAccent1,
+            StyleIdentifier.MediumShading1Accent2
+        };
 
-            // Define a consistent spacing after each table (12 points).
-            const double spaceAfterTable = 12.0;
+        // Build a table for each style.
+        foreach (StyleIdentifier style in styles)
+        {
+            // Start a new table.
+            builder.StartTable();
 
-            // Create three tables, each with a distinct built‑in style.
-            for (int tableIndex = 0; tableIndex < 3; tableIndex++)
-            {
-                // Apply spacing after the table.
-                builder.ParagraphFormat.SpaceAfter = spaceAfterTable;
+            // Header row.
+            builder.InsertCell();
+            builder.Write("Header 1");
+            builder.InsertCell();
+            builder.Write("Header 2");
+            builder.EndRow();
 
-                // Start the table.
-                Table table = builder.StartTable();
+            // First data row.
+            builder.InsertCell();
+            builder.Write("Row 1, Col 1");
+            builder.InsertCell();
+            builder.Write("Row 1, Col 2");
+            builder.EndRow();
 
-                // ----- Header row -----
-                builder.InsertCell();
-                builder.Write($"Table {tableIndex + 1} Header 1");
-                builder.InsertCell();
-                builder.Write($"Table {tableIndex + 1} Header 2");
-                builder.EndRow();
+            // Second data row.
+            builder.InsertCell();
+            builder.Write("Row 2, Col 1");
+            builder.InsertCell();
+            builder.Write("Row 2, Col 2");
+            builder.EndRow();
 
-                // ----- Data rows -----
-                for (int row = 1; row <= 3; row++)
-                {
-                    builder.InsertCell();
-                    builder.Write($"Row {row} Col 1");
-                    builder.InsertCell();
-                    builder.Write($"Row {row} Col 2");
-                    builder.EndRow();
-                }
+            // End the table.
+            builder.EndTable();
 
-                // Finish the table.
-                table = builder.EndTable();
+            // Retrieve the table that was just created.
+            Table table = doc.LastSection.Body.Tables[doc.LastSection.Body.Tables.Count - 1];
 
-                // Apply a distinct built‑in style to each table.
-                switch (tableIndex)
-                {
-                    case 0:
-                        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
-                        break;
-                    case 1:
-                        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
-                        break;
-                    case 2:
-                        table.StyleIdentifier = StyleIdentifier.TableGrid;
-                        break;
-                }
+            // Apply the distinct style.
+            table.StyleIdentifier = style;
 
-                // Apply style options (first row as header, row banding).
-                table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-
-                // Ensure consistent cell spacing inside the table.
-                table.AllowCellSpacing = true;
-                table.CellSpacing = 5.0;
-
-                // Reset paragraph spacing so it does not affect following content.
-                builder.ParagraphFormat.SpaceAfter = 0;
-            }
-
-            // Save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ReportWithMultipleTables.docx");
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new Exception("The report file was not created.");
-
-            // Optionally, inform the user (no interactive pause required).
-            Console.WriteLine($"Report generated successfully: {outputPath}");
+            // Add an empty paragraph to create consistent spacing between tables.
+            builder.Writeln();
         }
+
+        // Define output file path.
+        string outputPath = "ReportWithTables.docx";
+
+        // Save the document.
+        doc.Save(outputPath);
+
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
+
+        // Inform that the process completed.
+        Console.WriteLine("Document created successfully.");
     }
 }

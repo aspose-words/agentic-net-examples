@@ -1,56 +1,56 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class TableStyleExample
 {
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a 2x2 table.
-        Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
-        // First row.
+        // First row
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 2");
         builder.EndRow();
 
-        // Second row.
+        // Second row
         builder.InsertCell();
-        builder.Write("Cell 3");
+        builder.Writeln("Cell 3");
         builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Writeln("Cell 4");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Create a custom table style.
-        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "LightGrayStyle");
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply a light gray background to all cells via the style's shading.
+        // Create a new table style.
+        Style style = doc.Styles.Add(StyleType.Table, "LightGrayTableStyle");
+        TableStyle tableStyle = (TableStyle)style;
+
+        // Set the shading of the style to light gray.
         tableStyle.Shading.BackgroundPatternColor = Color.LightGray;
+        tableStyle.Shading.Texture = TextureIndex.TextureNone;
 
-        // Assign the custom style to the table.
-        table.Style = tableStyle;
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithLightGrayStyle.docx");
+        // Apply the custom style to the table.
+        table.Style = style;
 
         // Save the document.
+        string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
             throw new Exception("The output document was not created.");
-
-        // Optionally, you could open the file automatically (commented out to avoid side effects).
-        // System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(outputPath) { UseShellExecute = true });
     }
 }

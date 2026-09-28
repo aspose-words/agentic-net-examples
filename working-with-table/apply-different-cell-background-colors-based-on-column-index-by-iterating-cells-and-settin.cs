@@ -1,52 +1,64 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableCellShadingExample
+public class TableShadingExample
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and a DocumentBuilder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a table.
+        builder.StartTable();
+
+        // Build a 3x4 table (3 rows, 4 columns) with sample text.
+        int rows = 3;
+        int columns = 4;
+        for (int r = 0; r < rows; r++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table and keep a reference to it.
-            Table table = builder.StartTable();
-
-            // Build a sample 3x4 table.
-            for (int row = 1; row <= 3; row++)
+            for (int c = 0; c < columns; c++)
             {
-                for (int col = 1; col <= 4; col++)
-                {
-                    builder.InsertCell();
-                    builder.Write($"R{row}C{col}");
-                }
-                builder.EndRow();
+                builder.InsertCell();
+                builder.Writeln($"R{r + 1}C{c + 1}");
             }
+            builder.EndRow();
+        }
 
-            // Finish the table.
-            builder.EndTable();
+        // End the table.
+        builder.EndTable();
 
-            // Iterate through all cells and apply background colors based on column index.
-            foreach (Row row in table.Rows)
+        // Retrieve the created table.
+        Table table = doc.FirstSection.Body.Tables[0];
+
+        // Iterate through each cell and apply background color based on column index.
+        for (int rowIndex = 0; rowIndex < table.Rows.Count; rowIndex++)
+        {
+            Row row = table.Rows[rowIndex];
+            for (int cellIndex = 0; cellIndex < row.Cells.Count; cellIndex++)
             {
-                for (int colIndex = 0; colIndex < row.Cells.Count; colIndex++)
-                {
-                    Cell cell = row.Cells[colIndex];
+                Cell cell = row.Cells[cellIndex];
 
-                    // Example: even columns get LightBlue, odd columns get LightGray.
-                    if (colIndex % 2 == 0)
-                        cell.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
-                    else
-                        cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-                }
+                // Choose a color: even columns LightGray, odd columns LightBlue.
+                Color bgColor = (cellIndex % 2 == 0) ? Color.LightGray : Color.LightBlue;
+
+                // Apply solid shading with the chosen background color.
+                // The default texture is None, so we only need to set the background color.
+                cell.CellFormat.Shading.BackgroundPatternColor = bgColor;
             }
+        }
 
-            // Save the document.
-            doc.Save("ColoredTable.docx");
+        // Save the document.
+        string outputPath = "TableShading.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
     }
 }

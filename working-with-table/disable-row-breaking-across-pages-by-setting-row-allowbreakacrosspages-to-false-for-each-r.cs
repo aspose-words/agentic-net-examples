@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,40 +11,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3‑row, 2‑column table.
-        Table table = builder.StartTable();
+        // Build a simple table with 5 rows and 2 columns.
+        builder.StartTable();
+        for (int i = 0; i < 5; i++)
+        {
+            // First cell of the row.
+            builder.InsertCell();
+            builder.Writeln($"Row {i + 1} Cell 1");
 
-        // Row 1
-        builder.InsertCell();
-        builder.Write("R1C1");
-        builder.InsertCell();
-        builder.Write("R1C2");
-        builder.EndRow();
+            // Second cell of the row.
+            builder.InsertCell();
+            builder.Writeln($"Row {i + 1} Cell 2");
 
-        // Row 2
-        builder.InsertCell();
-        builder.Write("R2C1");
-        builder.InsertCell();
-        builder.Write("R2C2");
-        builder.EndRow();
-
-        // Row 3
-        builder.InsertCell();
-        builder.Write("R3C1");
-        builder.InsertCell();
-        builder.Write("R3C2");
-        builder.EndRow();
-
-        // Finish the table.
+            // End the current row.
+            builder.EndRow();
+        }
+        // End the table.
         builder.EndTable();
 
-        // Disable breaking rows across pages for every row in the table.
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Disable breaking across pages for each row.
         foreach (Row row in table.Rows)
         {
             row.RowFormat.AllowBreakAcrossPages = false;
         }
 
         // Save the document.
-        doc.Save("Table.AllowBreakAcrossPages.docx");
+        string outputPath = "TableRowBreakDisabled.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

@@ -2,48 +2,45 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Header");
-        builder.InsertCell();
-        builder.Write("Value");
-        builder.EndRow();
+        // Build a simple 2x1 table.
+        builder.StartTable();
 
+        // First cell.
         builder.InsertCell();
-        builder.Write("Item 1");
-        builder.InsertCell();
-        builder.Write("10");
-        builder.EndRow();
+        builder.Writeln("Cell 1");
 
+        // Second cell.
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+
+        // End the row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Create a custom table style.
-        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
-        tableStyle.Shading.BackgroundPatternColor = Color.LightYellow;
-        tableStyle.Borders.Color = Color.DarkBlue;
-        tableStyle.Borders.LineStyle = LineStyle.Single;
-        tableStyle.Borders.LineWidth = 1.5;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Apply the style to the table via the Style property.
-        table.Style = tableStyle;
+        // Apply a built‑in table style by its correct name.
+        // The built‑in style is named "Table Grid" (note the space).
+        table.StyleName = "Table Grid";
 
         // Save the document.
         string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the output document.");
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

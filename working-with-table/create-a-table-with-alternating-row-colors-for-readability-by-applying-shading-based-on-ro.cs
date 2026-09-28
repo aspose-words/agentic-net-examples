@@ -1,50 +1,63 @@
 using System;
+using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a new document and a builder.
+        // Create a new blank document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the table.
+        // Start building a table.
         builder.StartTable();
 
-        // Build a table with 10 rows and 3 columns.
-        for (int row = 0; row < 10; row++)
+        int rows = 6;
+        int columns = 4;
+
+        // Fill the table with sample text.
+        for (int r = 0; r < rows; r++)
         {
-            for (int col = 0; col < 3; col++)
+            for (int c = 0; c < columns; c++)
             {
                 builder.InsertCell();
-                builder.Write($"Row {row + 1}, Col {col + 1}");
+                builder.Writeln($"Row {r + 1}, Cell {c + 1}");
             }
             builder.EndRow();
         }
 
         // Finish the table.
-        Table table = builder.EndTable();
+        builder.EndTable();
 
-        // Apply alternating background colors to rows.
+        // Retrieve the created table from the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Apply alternating row shading (light gray / white) based on row index.
         for (int i = 0; i < table.Rows.Count; i++)
         {
-            Color bgColor = (i % 2 == 0) ? Color.LightGray : Color.White;
-            foreach (Cell cell in table.Rows[i].Cells)
+            Row row = table.Rows[i];
+            Color shadeColor = (i % 2 == 0) ? Color.LightGray : Color.White;
+
+            foreach (Cell cell in row.Cells)
             {
-                cell.CellFormat.Shading.BackgroundPatternColor = bgColor;
+                // Configure solid fill shading.
+                cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+                cell.CellFormat.Shading.ForegroundPatternColor = shadeColor;
+                cell.CellFormat.Shading.BackgroundPatternColor = Color.Empty;
             }
         }
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingRows.docx");
+        // Save the document to disk.
+        string outputPath = "AlternatingRows.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
     }
 }

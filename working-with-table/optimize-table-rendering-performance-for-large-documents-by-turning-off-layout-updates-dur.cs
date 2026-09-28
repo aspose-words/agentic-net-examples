@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,48 +7,44 @@ public class OptimizeTableRendering
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to construct the table.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
+        // Define table dimensions.
+        const int rowCount = 500;   // Adjust as needed for a large document.
+        const int columnCount = 10;
 
-        // Insert the first cell of the first row (required before any formatting).
-        builder.InsertCell();
+        // Start the table.
+        builder.StartTable();
 
-        // Turn off automatic layout updates by postponing the layout refresh.
-        // Aspose.Words updates the layout lazily; we will force a single layout update
-        // after all rows have been added to avoid repeated recalculations.
-        // (No explicit property to disable layout; we simply avoid calling UpdatePageLayout
-        // until the batch operation is finished.)
-
-        // Add a large number of rows to the table.
-        const int rowCount = 5000; // Example large number for performance testing.
-        for (int i = 0; i < rowCount; i++)
+        // Populate the table with sample data.
+        for (int row = 0; row < rowCount; row++)
         {
-            // First cell of the row.
-            builder.InsertCell();
-            builder.Write($"Row {i + 1}, Cell 1");
-
-            // Second cell of the row.
-            builder.InsertCell();
-            builder.Write($"Row {i + 1}, Cell 2");
+            for (int col = 0; col < columnCount; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
 
             // End the current row.
             builder.EndRow();
         }
 
-        // End the table construction.
+        // End the table.
         builder.EndTable();
 
-        // After all modifications are done, update the layout once.
+        // Force a layout refresh after all modifications are done.
         doc.UpdatePageLayout();
 
-        // Save the document to verify the result.
-        const string outputPath = "OptimizedTable.docx";
+        // Save the document to disk.
+        string outputPath = "LargeTable.docx";
         doc.Save(outputPath);
 
-        Console.WriteLine($"Document saved to {outputPath}");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

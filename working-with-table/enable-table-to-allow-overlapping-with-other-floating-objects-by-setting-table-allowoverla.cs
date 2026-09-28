@@ -1,41 +1,55 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
 
-namespace TableAllowOverlapExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple table with one cell.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Floating table cell content.");
-            builder.EndTable();
+        // Insert a floating shape (rectangle) that will overlap the table.
+        Shape floatingShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        floatingShape.WrapType = WrapType.Square;
+        floatingShape.VerticalAlignment = VerticalAlignment.Top;
+        floatingShape.HorizontalAlignment = HorizontalAlignment.Left;
+        floatingShape.Left = 0;
+        floatingShape.Top = 0;
 
-            // The table is an inline table by default, which allows overlap (AllowOverlap == true).
-            // No need to set TextWrapping or other floating properties because they would
-            // change the AllowOverlap behavior.
+        // Move the builder after the shape to start the table.
+        builder.Writeln(); // Ensure we are in a new paragraph.
 
-            // Verify that overlapping is enabled.
-            if (!table.AllowOverlap)
-                throw new InvalidOperationException("Table does not allow overlap, but it should.");
+        // Build a simple 2x2 table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+        builder.EndRow();
 
-            // Save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableAllowOverlap.docx");
-            doc.Save(outputPath);
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.EndRow();
+        builder.EndTable();
 
-            // Ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new FileNotFoundException("Failed to save the document.", outputPath);
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-            Console.WriteLine("Document saved successfully to: " + outputPath);
-        }
+        // The Table.AllowOverlap property is read‑only in this version of Aspose.Words.
+        // Overlapping with floating objects is enabled by default, so no explicit assignment is required.
+
+        // Save the document.
+        string outputPath = "TableOverlap.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

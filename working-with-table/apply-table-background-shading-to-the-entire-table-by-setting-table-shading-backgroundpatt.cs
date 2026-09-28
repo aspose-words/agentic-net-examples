@@ -8,37 +8,49 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
-        Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
-        // First row, first cell.
         builder.InsertCell();
-        builder.Write("Cell 1");
-
-        // First row, second cell.
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
-
-        // End the first row.
+        builder.Writeln("Cell 2");
         builder.EndRow();
 
-        // End the table.
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Apply background shading to the entire table.
-        // Use SetShading with a solid texture and the desired background color.
-        table.SetShading(TextureIndex.TextureSolid, Color.Empty, Color.LightBlue);
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableShading.docx");
+        // Apply background shading to every cell in the table.
+        foreach (Row row in table.Rows)
+        {
+            foreach (Cell cell in row.Cells)
+            {
+                cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+            }
+        }
 
         // Save the document.
+        string outputPath = "TableShading.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception("The output document was not created.");
+        }
+
+        Console.WriteLine($"Document saved successfully to: {Path.GetFullPath(outputPath)}");
     }
 }

@@ -4,47 +4,51 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 5x3 table.
+        builder.StartTable();
+        for (int i = 0; i < 5; i++) // rows
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a 3x3 table.
-            Table table = builder.StartTable();
-            for (int row = 0; row < 3; row++)
+            for (int j = 0; j < 3; j++) // columns
             {
-                for (int col = 0; col < 3; col++)
-                {
-                    builder.InsertCell();
-                    builder.Write($"R{row + 1}C{col + 1}");
-                }
-                builder.EndRow();
+                builder.InsertCell();
+                builder.Writeln($"Row {i + 1}, Col {j + 1}");
+                // End the row after the last cell.
+                if (j == 2)
+                    builder.EndRow();
             }
-            builder.EndTable();
-
-            // Apply a custom border color to every cell in the first column.
-            foreach (Row tableRow in table.Rows)
-            {
-                Cell firstCell = tableRow.FirstCell;
-                // Set all four borders of the cell to the same color.
-                firstCell.CellFormat.Borders[BorderType.Left].Color = Color.Blue;
-                firstCell.CellFormat.Borders[BorderType.Right].Color = Color.Blue;
-                firstCell.CellFormat.Borders[BorderType.Top].Color = Color.Blue;
-                firstCell.CellFormat.Borders[BorderType.Bottom].Color = Color.Blue;
-            }
-
-            // Save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FirstColumnBorder.docx");
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
         }
+        builder.EndTable();
+
+        // Retrieve the first table in the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Apply a custom border color to the cells in the first column.
+        foreach (Row row in table.Rows)
+        {
+            Cell firstCell = row.Cells[0];
+            // Set the color for each side of the cell border.
+            firstCell.CellFormat.Borders[BorderType.Left].Color = Color.Red;
+            firstCell.CellFormat.Borders[BorderType.Right].Color = Color.Red;
+            firstCell.CellFormat.Borders[BorderType.Top].Color = Color.Red;
+            firstCell.CellFormat.Borders[BorderType.Bottom].Color = Color.Red;
+        }
+
+        // Save the document to disk.
+        string outputPath = "FirstColumnBorderColor.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

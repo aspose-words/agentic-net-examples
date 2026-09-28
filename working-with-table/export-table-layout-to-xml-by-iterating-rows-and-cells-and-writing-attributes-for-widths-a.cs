@@ -1,7 +1,6 @@
 using System;
 using System.IO;
-using System.Drawing;
-using System.Xml.Linq;
+using System.Xml;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -9,102 +8,115 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to construct a sample table.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table with some formatting.
-        Table table = builder.StartTable();
+        // Build a simple 2x2 table with custom widths and shading.
+        builder.StartTable();
 
-        // First row – header cells.
+        // First cell
         builder.InsertCell();
-        builder.Write("Header 1");
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+        builder.CellFormat.Shading.ForegroundPatternColor = System.Drawing.Color.LightBlue;
+        builder.Writeln("Cell 1,1");
 
+        // Second cell
         builder.InsertCell();
-        builder.Write("Header 2");
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
+        builder.CellFormat.Shading.ForegroundPatternColor = System.Drawing.Color.LightGreen;
+        builder.Writeln("Cell 1,2");
         builder.EndRow();
 
-        // Second row – data cells.
+        // Second row, first cell
         builder.InsertCell();
-        builder.Write("Cell A");
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(120);
+        builder.CellFormat.Shading.ForegroundPatternColor = System.Drawing.Color.LightCoral;
+        builder.Writeln("Cell 2,1");
 
+        // Second row, second cell
         builder.InsertCell();
-        builder.Write("Cell B");
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(130);
+        builder.CellFormat.Shading.ForegroundPatternColor = System.Drawing.Color.LightYellow;
+        builder.Writeln("Cell 2,2");
         builder.EndRow();
 
         builder.EndTable();
 
-        // Save the document to disk.
+        // Save the document (optional, just to have a physical file).
         string docPath = "SampleTable.docx";
         doc.Save(docPath);
 
-        // Verify that the document was saved.
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException("Failed to save the Word document.");
-
-        // Export the layout of all tables to an XML file.
-        XDocument xmlDoc = new XDocument(new XElement("Tables"));
-        int tableIndex = 0;
-
-        foreach (Table tbl in doc.GetChildNodes(NodeType.Table, true))
+        // Prepare XML writer for exporting table layout.
+        string xmlPath = "TableLayout.xml";
+        XmlWriterSettings settings = new XmlWriterSettings
         {
-            XElement tblElement = new XElement("Table",
-                new XAttribute("Index", tableIndex),
-                new XAttribute("Title", tbl.Title ?? string.Empty),
-                new XAttribute("Description", tbl.Description ?? string.Empty));
+            Indent = true,
+            Encoding = System.Text.Encoding.UTF8
+        };
 
-            int rowIndex = 0;
-            foreach (Row row in tbl.Rows)
+        using (XmlWriter writer = XmlWriter.Create(xmlPath, settings))
+        {
+            writer.WriteStartDocument();
+            writer.WriteStartElement("Tables");
+
+            // Iterate through all tables in the document.
+            NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+            int tableIndex = 0;
+            foreach (Table table in tables)
             {
-                XElement rowElement = new XElement("Row",
-                    new XAttribute("Index", rowIndex));
+                writer.WriteStartElement("Table");
+                writer.WriteAttributeString("Index", tableIndex.ToString());
 
-                int cellIndex = 0;
-                foreach (Cell cell in row.Cells)
+                // Iterate rows.
+                for (int rowIdx = 0; rowIdx < table.Rows.Count; rowIdx++)
                 {
-                    // Retrieve cell width (if set) and background color.
-                    double width = cell.CellFormat.Width;
-                    Color bgColor = cell.CellFormat.Shading.BackgroundPatternColor;
+                    Row row = table.Rows[rowIdx];
+                    writer.WriteStartElement("Row");
+                    writer.WriteAttributeString("Index", rowIdx.ToString());
 
-                    XElement cellElement = new XElement("Cell",
-                        new XAttribute("Index", cellIndex),
-                        new XAttribute("Width", width),
-                        new XAttribute("BackgroundColor", ColorToHex(bgColor)));
+                    // Iterate cells.
+                    for (int cellIdx = 0; cellIdx < row.Cells.Count; cellIdx++)
+                    {
+                        Cell cell = row.Cells[cellIdx];
+                        writer.WriteStartElement("Cell");
+                        writer.WriteAttributeString("RowIndex", rowIdx.ToString());
+                        writer.WriteAttributeString("ColumnIndex", cellIdx.ToString());
 
-                    // Add the cell's text content.
-                    string cellText = cell.ToString(SaveFormat.Text).Trim();
-                    cellElement.Add(new XElement("Text", cellText));
+                        // Width (points) – use PreferredWidth if set.
+                        double width = 0;
+                        if (cell.CellFormat.PreferredWidth != null &&
+                            cell.CellFormat.PreferredWidth.Type == PreferredWidthType.Points)
+                        {
+                            width = cell.CellFormat.PreferredWidth.Value;
+                        }
+                        writer.WriteAttributeString("WidthPoints", width.ToString());
 
-                    rowElement.Add(cellElement);
-                    cellIndex++;
+                        // Shading color (if any).
+                        var shadingColor = cell.CellFormat.Shading.ForegroundPatternColor;
+                        writer.WriteAttributeString("ShadingColor", shadingColor.IsEmpty ? "None" : shadingColor.Name);
+
+                        writer.WriteEndElement(); // Cell
+                    }
+
+                    writer.WriteEndElement(); // Row
                 }
 
-                tblElement.Add(rowElement);
-                rowIndex++;
+                writer.WriteEndElement(); // Table
+                tableIndex++;
             }
 
-            xmlDoc.Root.Add(tblElement);
-            tableIndex++;
+            writer.WriteEndElement(); // Tables
+            writer.WriteEndDocument();
         }
 
-        // Save the XML representation.
-        string xmlPath = "TableLayout.xml";
-        xmlDoc.Save(xmlPath);
-
-        // Verify that the XML file was created.
+        // Validate that the XML file was created.
         if (!File.Exists(xmlPath))
-            throw new InvalidOperationException("Failed to export table layout to XML.");
-    }
+        {
+            throw new Exception($"Failed to create XML report at '{xmlPath}'.");
+        }
 
-    // Helper method to convert a Color to a hex string (e.g., #RRGGBB).
-    private static string ColorToHex(Color color)
-    {
-        if (color.IsEmpty)
-            return string.Empty;
-        return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        // Optionally, output a simple confirmation (no user interaction required).
+        Console.WriteLine("Table layout exported to XML successfully.");
     }
 }

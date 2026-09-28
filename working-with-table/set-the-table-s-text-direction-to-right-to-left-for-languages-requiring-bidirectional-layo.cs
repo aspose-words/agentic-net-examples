@@ -7,40 +7,62 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-        // First row.
+        // First row, first cell with Arabic text.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 1");
+        builder.Writeln("مرحبا بالعالم");
+        // Set paragraph direction to right‑to‑left.
+        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
+
+        // First row, second cell with Hebrew text.
         builder.InsertCell();
-        builder.Write("Cell 2, Row 1");
+        builder.Writeln("שלום עולם");
+        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
+
+        // End the first row.
         builder.EndRow();
 
-        // Second row.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 2");
+        builder.Writeln("نص إضافي");
+        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
+
+        // Second row, second cell.
         builder.InsertCell();
-        builder.Write("Cell 2, Row 2");
-        builder.EndTable(); // Ends the table and moves the cursor after it.
+        builder.Writeln("טקסט נוסף");
+        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
 
-        // Set the table to be right‑to‑left (bidirectional).
-        table.Bidi = true;
+        // End the second row and the table.
+        builder.EndRow();
+        builder.EndTable();
 
-        // Define an output folder and file name.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "RightToLeftTable.docx");
+        // Ensure every paragraph inside the table is set to right‑to‑left.
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
+        {
+            foreach (Row row in table.Rows)
+            {
+                foreach (Cell cell in row.Cells)
+                {
+                    foreach (Paragraph para in cell.Paragraphs)
+                    {
+                        para.ParagraphFormat.Bidi = true;
+                    }
+                }
+            }
+        }
 
         // Save the document.
+        string outputPath = "TableRightToLeft.docx";
         doc.Save(outputPath);
 
-        // Simple validation that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new Exception("The output document was not created.");
     }
 }

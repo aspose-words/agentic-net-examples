@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -14,34 +13,41 @@ public class Program
 
         // Insert a floating textbox shape.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-        // Optional: set the textbox to be floating (default for TextBox shape).
-        textBox.WrapType = WrapType.None;
+        // Ensure the shape is positioned relative to the page (optional).
+        textBox.WrapType = WrapType.Inline;
 
-        // Move the builder cursor into the textbox so that subsequent content is placed there.
+        // Move the builder into the textbox's first paragraph.
+        // The textbox contains its own paragraph collection.
         builder.MoveTo(textBox.FirstParagraph);
 
         // Build a simple 2x2 table inside the textbox.
-        Table table = builder.StartTable();
+        builder.StartTable();
 
-        // First row.
+        // First row
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Writeln("Cell 1,1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 1,2");
         builder.EndRow();
 
-        // Second row.
+        // Second row
         builder.InsertCell();
-        builder.Write("Cell 3");
+        builder.Writeln("Cell 2,1");
         builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Writeln("Cell 2,2");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FloatingTextboxTable.docx");
+        // Save the document.
+        string outputPath = "FloatingTextboxTable.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

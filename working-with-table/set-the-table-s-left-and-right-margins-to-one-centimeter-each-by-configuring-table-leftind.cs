@@ -3,40 +3,42 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableMarginsExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a new table.
+        builder.StartTable();
+
+        // Insert a single cell with some text.
+        builder.InsertCell();
+        builder.Writeln("Sample cell");
+
+        // End the row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+
+        // Set left indent to 1 centimeter (approximately 28.35 points).
+        table.LeftIndent = 28.35f;
+
+        // Note: Aspose.Words does not provide a Table.RightIndent property.
+        // Right margin can be controlled via other layout settings if needed.
+
+        // Save the document to the local file system.
+        string outputPath = "TableIndent.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table and add a single cell with some text.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Sample cell content.");
-            builder.EndTable();
-
-            // Set the left indent of the table to 1 cm (1 cm = 28.35 points).
-            table.LeftIndent = 28.35;
-
-            // Aspose.Words does not provide a RightIndent property.
-            // As an alternative, set the right padding of the table to 1 cm.
-            // This adds space between the cell contents and the right border,
-            // effectively creating a right margin effect.
-            table.RightPadding = 28.35;
-
-            // Define the output file path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableMargins.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new InvalidOperationException("The output file was not created.");
         }
     }
 }

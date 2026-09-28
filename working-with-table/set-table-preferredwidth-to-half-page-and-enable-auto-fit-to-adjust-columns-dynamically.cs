@@ -11,41 +11,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
-        // First row with three cells.
+        // First row.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Header 2");
-        builder.InsertCell();
-        builder.Write("Header 3");
+        builder.Writeln("Cell 2");
         builder.EndRow();
 
-        // Second row with sample data.
+        // Second row.
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        builder.Writeln("Cell 3");
         builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 3");
+        builder.Writeln("Cell 4");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table construction.
         builder.EndTable();
+
+        // Retrieve the created table from the document.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
         // Set the table's preferred width to 50 % of the page width.
         table.PreferredWidth = PreferredWidth.FromPercent(50);
 
-        // Ensure auto‑fit is enabled so columns can adjust dynamically.
-        table.AllowAutoFit = true;
+        // Enable auto‑fit so columns adjust dynamically based on content.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TablePreferredWidth.docx");
+        // Save the document to disk.
+        string outputPath = "TablePreferredWidth.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation that the file was created.
         if (!File.Exists(outputPath))
             throw new Exception("The output document was not saved correctly.");
     }

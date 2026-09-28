@@ -11,33 +11,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3x3 table.
-        Table table = builder.StartTable();
+        // Build a simple table with 5 rows and 3 columns.
+        builder.StartTable();
 
-        for (int row = 0; row < 3; row++)
+        for (int row = 1; row <= 5; row++)
         {
-            for (int col = 0; col < 3; col++)
+            for (int col = 1; col <= 3; col++)
             {
                 builder.InsertCell();
-                builder.Write($"R{row + 1}C{col + 1}");
+                builder.Writeln($"Row {row}, Cell {col}");
             }
+
+            // End the current row.
             builder.EndRow();
         }
 
+        // End the table.
         builder.EndTable();
 
-        // Prevent each row from breaking across pages.
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Prevent rows from breaking across pages, which keeps the whole table on a single page.
         foreach (Row r in table.Rows)
         {
             r.RowFormat.AllowBreakAcrossPages = false;
         }
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableKeepTogether.docx");
+        string outputPath = "TableKeepTogether.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new FileNotFoundException($"Failed to save the document to '{outputPath}'.");
     }
 }

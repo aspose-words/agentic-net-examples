@@ -11,37 +11,48 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
-
-        // First row (header).
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow();
-
-        // Second row (data).
-        builder.InsertCell();
-        builder.Write("Row1 Col1");
-        builder.InsertCell();
-        builder.Write("Row1 Col2");
-        builder.EndRow();
-
-        // Finish the table.
+        // Build a 3x3 table.
+        builder.StartTable();
+        for (int row = 0; row < 3; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Write($"R{row + 1}C{col + 1}");
+            }
+            builder.EndRow();
+        }
         builder.EndTable();
 
-        // Create a custom table style.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Make the first column bold via the conditional style.
-        customStyle.ConditionalStyles[ConditionalStyleType.FirstColumn].Font.Bold = true;
+        // Apply a built‑in style.
+        table.Style = doc.Styles["Table Grid"];
 
-        // Apply the custom style to the table.
-        table.Style = customStyle;
-
-        // Enable the first‑column conditional formatting.
+        // Enable first‑column formatting in the style options.
         table.StyleOptions = TableStyleOptions.FirstColumn;
+
+        // Make the text in the first column bold.
+        foreach (Row row in table.Rows)
+        {
+            Cell firstCell = row.Cells[0];
+            Paragraph para = firstCell.FirstParagraph;
+            if (para != null)
+            {
+                if (para.Runs.Count > 0)
+                {
+                    foreach (Run run in para.Runs)
+                        run.Font.Bold = true;
+                }
+                else
+                {
+                    Run run = new Run(doc);
+                    run.Font.Bold = true;
+                    para.AppendChild(run);
+                }
+            }
+        }
 
         // Save the document.
         string outputPath = "TableStyleFirstColumnBold.docx";
@@ -49,6 +60,8 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

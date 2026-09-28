@@ -9,40 +9,44 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Create a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder cursor to the end of the document.
+        // Move the builder to the end of the document.
         builder.MoveToDocumentEnd();
 
-        // Start a table at the current position.
-        Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
-        // ---- First row ----
+        // First row.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2, Row 1");
+        builder.Write("Cell 2");
         builder.EndRow();
 
-        // ---- Second row ----
+        // Second row.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 2");
+        builder.Write("Cell 3");
         builder.InsertCell();
-        builder.Write("Cell 2, Row 2");
+        builder.Write("Cell 4");
         builder.EndRow();
 
-        // Finish the table. This moves the cursor just after the table.
+        // End the table.
         builder.EndTable();
 
         // Save the document to a file.
-        string outputPath = "OutputTable.docx";
+        string outputPath = "TableExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
 
-        // Indicate successful completion (optional).
-        Console.WriteLine("Document saved to: " + Path.GetFullPath(outputPath));
+        // Optionally, inform that the process completed.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

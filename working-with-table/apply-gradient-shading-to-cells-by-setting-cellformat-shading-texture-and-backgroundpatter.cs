@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,49 +13,56 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a table.
-        Table table = builder.StartTable();
+        builder.StartTable();
 
-        // ---- First row ----
-        // First cell with diagonal cross texture and light blue background.
+        // First row, first cell.
         builder.InsertCell();
-        builder.CellFormat.Shading.Texture = TextureIndex.TextureDiagonalCross;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
         builder.Writeln("Cell 1");
+        ApplyGradientShading(builder, TextureIndex.TextureDiagonalDown, Color.LightBlue);
 
-        // Second cell with horizontal texture and light green background.
+        // First row, second cell.
         builder.InsertCell();
-        builder.CellFormat.Shading.Texture = TextureIndex.TextureHorizontal;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
         builder.Writeln("Cell 2");
+        ApplyGradientShading(builder, TextureIndex.TextureDiagonalUp, Color.LightCoral);
 
         // End the first row.
         builder.EndRow();
 
-        // ---- Second row ----
-        // First cell with vertical texture and light coral background.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.CellFormat.Shading.Texture = TextureIndex.TextureVertical;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightCoral;
         builder.Writeln("Cell 3");
+        ApplyGradientShading(builder, TextureIndex.TextureHorizontal, Color.LightGreen);
 
-        // Second cell with cross texture and light yellow background.
+        // Second row, second cell.
         builder.InsertCell();
-        builder.CellFormat.Shading.Texture = TextureIndex.TextureCross;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightYellow;
         builder.Writeln("Cell 4");
+        ApplyGradientShading(builder, TextureIndex.TextureVertical, Color.LightGoldenrodYellow);
 
-        // End the second row.
+        // End the second row and the table.
         builder.EndRow();
-
-        // Finish the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GradientShadingTable.docx");
+        // Save the document.
+        string outputPath = "GradientShadingTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved successfully.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+    }
+
+    // Helper method to apply gradient shading to the current cell.
+    private static void ApplyGradientShading(DocumentBuilder builder, TextureIndex texture, Color backgroundColor)
+    {
+        // The builder is positioned inside the cell after InsertCell().
+        Cell cell = builder.CurrentParagraph.ParentNode as Cell;
+        if (cell == null)
+            throw new InvalidOperationException("Current node is not a cell.");
+
+        // Set the shading texture and background pattern color.
+        cell.CellFormat.Shading.Texture = texture;
+        cell.CellFormat.Shading.BackgroundPatternColor = backgroundColor;
+        // Optionally set a foreground color for the texture.
+        cell.CellFormat.Shading.ForegroundPatternColor = Color.White;
     }
 }

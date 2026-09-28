@@ -3,65 +3,58 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableFixedLayout
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a new table.
+        builder.StartTable();
+
+        // Insert three cells with sample text.
+        builder.InsertCell();
+        builder.Write("Column 1");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("Column 2");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("Column 3");
+        builder.EndRow();
+
+        // End the table.
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Disable AutoFit to use fixed layout.
+        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+
+        // Set explicit widths for each column (in points).
+        // Widths are applied to the cells in the first row.
+        double[] columnWidths = { 100.0, 150.0, 200.0 };
+        Row firstRow = table.FirstRow;
+
+        for (int i = 0; i < firstRow.Cells.Count && i < columnWidths.Length; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Cell cell = firstRow.Cells[i];
+            cell.CellFormat.Width = columnWidths[i];
+        }
 
-            // Start a new table.
-            Table table = builder.StartTable();
+        // Save the document.
+        string outputPath = "FixedLayoutTable.docx";
+        doc.Save(outputPath);
 
-            // First row, first cell – set explicit width.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-            builder.Writeln("Column 1");
-
-            // First row, second cell – set explicit width.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-            builder.Writeln("Column 2");
-
-            // First row, third cell – set explicit width.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-            builder.Writeln("Column 3");
-
-            // End the first row.
-            builder.EndRow();
-
-            // Add a second row with the same column widths.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-            builder.Writeln("Data 1");
-
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-            builder.Writeln("Data 2");
-
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-            builder.Writeln("Data 3");
-
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Disable AutoFit to enforce fixed column widths.
-            table.AutoFit(AutoFitBehavior.FixedColumnWidths);
-
-            // Save the document.
-            string outputPath = "FixedLayoutTable.docx";
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
     }
 }

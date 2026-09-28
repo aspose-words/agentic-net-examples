@@ -1,88 +1,97 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 using Aspose.Words.Tables;
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary template and the final output.
-        string templatePath = "Template.docx";
-        string outputPath = "Result.docx";
+        // Paths for the template and result documents.
+        const string templatePath = "Template.docx";
+        const string resultPath = "Result.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create a template document that contains a table with placeholders.
+        // Step 1: Create a template document that contains a table with
+        // placeholder text in each cell.
         // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Build a 2x2 table.
+        // Build a simple 2x2 table with placeholder text "{{Placeholder}}".
         builder.StartTable();
 
-        // First row.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Write("{{Name}}");          // Placeholder for a person's name.
-        builder.InsertCell();
-        builder.Write("{{Age}}");           // Placeholder for age.
+        builder.Writeln("{{Placeholder}}");
 
+        // First row, second cell.
+        builder.InsertCell();
+        builder.Writeln("{{Placeholder}}");
         builder.EndRow();
 
-        // Second row.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Write("{{City}}");          // Placeholder for city.
+        builder.Writeln("{{Placeholder}}");
+
+        // Second row, second cell.
         builder.InsertCell();
-        builder.Write("{{Country}}");       // Placeholder for country.
+        builder.Writeln("{{Placeholder}}");
+        builder.EndRow();
 
         builder.EndTable();
 
-        // Save the template to disk.
+        // Save the template document.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template, clone its table and import it into a new document.
+        // Step 2: Load the template document and clone its first table.
         // -----------------------------------------------------------------
-        Document sourceDoc = new Document(templatePath);
+        Document loadedTemplate = new Document(templatePath);
+        Table originalTable = (Table)loadedTemplate.GetChild(NodeType.Table, 0, true);
+        if (originalTable == null)
+            throw new InvalidOperationException("No table found in the template document.");
 
-        // Retrieve the first (and only) table from the template.
-        Table sourceTable = (Table)sourceDoc.GetChildNodes(NodeType.Table, true)[0];
+        // Deep clone the table (including its contents).
+        Table clonedTable = (Table)originalTable.Clone(true);
 
-        // Clone the table. The cloned node still belongs to sourceDoc.
-        Table clonedTable = (Table)sourceTable.Clone(true);
-
-        // Create the destination document.
-        Document destDoc = new Document();
+        // -----------------------------------------------------------------
+        // Step 3: Create a destination document and import the cloned table.
+        // -----------------------------------------------------------------
+        Document destDoc = new Document(); // Empty document with a single section.
 
         // Import the cloned table into the destination document.
-        NodeImporter importer = new NodeImporter(sourceDoc, destDoc, ImportFormatMode.KeepSourceFormatting);
-        Table importedTable = (Table)importer.ImportNode(clonedTable, true);
+        NodeImporter importer = new NodeImporter(loadedTemplate, destDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedTableNode = importer.ImportNode(clonedTable, true);
+        Table importedTable = (Table)importedTableNode;
 
-        // Append the imported table to the destination document's body.
+        // Append the imported table to the body of the destination document.
         destDoc.FirstSection.Body.AppendChild(importedTable);
 
         // -----------------------------------------------------------------
-        // 3. Replace placeholders in each cell using FindReplaceOptions.
+        // Step 4: Replace placeholder text in each cell using FindReplaceOptions.
         // -----------------------------------------------------------------
-        FindReplaceOptions replaceOptions = new FindReplaceOptions
+        FindReplaceOptions replaceOptions = new FindReplaceOptions();
+        // Example: make the replacement case‑insensitive.
+        replaceOptions.MatchCase = false;
+
+        foreach (Row row in importedTable.Rows)
         {
-            MatchCase = false,
-            FindWholeWordsOnly = false
-        };
-
-        // Perform replacements on the imported table's range.
-        importedTable.Range.Replace("{{Name}}", "John Doe", replaceOptions);
-        importedTable.Range.Replace("{{Age}}", "30", replaceOptions);
-        importedTable.Range.Replace("{{City}}", "New York", replaceOptions);
-        importedTable.Range.Replace("{{Country}}", "USA", replaceOptions);
+            foreach (Cell cell in row.Cells)
+            {
+                // Replace the placeholder with actual content.
+                cell.Range.Replace("{{Placeholder}}", "Replaced Text", replaceOptions);
+            }
+        }
 
         // -----------------------------------------------------------------
-        // 4. Save the resulting document.
+        // Step 5: Save the resulting document.
         // -----------------------------------------------------------------
-        destDoc.Save(outputPath);
+        destDoc.Save(resultPath);
 
         // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException($"Failed to create the result document at '{resultPath}'.");
     }
 }

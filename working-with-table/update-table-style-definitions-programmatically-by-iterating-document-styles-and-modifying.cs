@@ -4,66 +4,71 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableStyleUpdate
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add a custom table style.
+        Style customStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+        // Set an initial shading for the style (will be modified later).
+        TableStyle tableStyle = (TableStyle)customStyle;
+        tableStyle.Shading.BackgroundPatternColor = Color.LightGray;
+
+        // Build a simple 2x2 table and apply the custom style.
+        builder.StartTable();
+        builder.RowFormat.Height = 20;
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Retrieve the created table and assign the custom style.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        table.Style = customStyle; // assign the Style object, not its name
+
+        // Iterate through all styles in the document.
+        foreach (Style style in doc.Styles)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a simple 2x2 table.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
-
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndRow();
-            builder.EndTable();
-
-            // Create a custom table style and assign it to the table.
-            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
-            customStyle.CellSpacing = 5;
-            customStyle.Shading.BackgroundPatternColor = Color.AntiqueWhite;
-            customStyle.Borders.Color = Color.Blue;
-            customStyle.Borders.LineStyle = LineStyle.DotDash;
-            table.Style = customStyle;
-
-            // Iterate through all styles in the document.
-            foreach (Style style in doc.Styles)
+            // Process only table styles.
+            if (style.Type == StyleType.Table)
             {
-                // Process only table styles.
-                if (style.Type == StyleType.Table)
+                TableStyle ts = (TableStyle)style;
+
+                // Example modification: change shading background to LightBlue.
+                ts.Shading.BackgroundPatternColor = Color.LightBlue;
+
+                // Example modification: set all borders to a solid red line.
+                foreach (Border border in ts.Borders)
                 {
-                    TableStyle tblStyle = (TableStyle)style;
-
-                    // Example modifications:
-                    // Increase cell spacing.
-                    tblStyle.CellSpacing += 2;
-
-                    // Change shading to a light gray.
-                    tblStyle.Shading.BackgroundPatternColor = Color.LightGray;
-
-                    // Set borders to a solid single line.
-                    tblStyle.Borders.Color = Color.DarkGray;
-                    tblStyle.Borders.LineStyle = LineStyle.Single;
+                    border.LineStyle = LineStyle.Single;
+                    border.Color = Color.Red;
+                    border.LineWidth = 1.0; // points
                 }
+
+                // RowBandSize and ColumnBandSize are not available in this version,
+                // so they are omitted.
             }
+        }
 
-            // Convert any remaining style formatting to direct formatting.
-            doc.ExpandTableStylesToDirectFormatting();
+        // Save the document.
+        string outputPath = "UpdatedTableStyle.docx";
+        doc.Save(outputPath);
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UpdatedTableStyles.docx");
-            doc.Save(outputPath);
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception("The output document was not saved correctly.");
         }
     }
 }

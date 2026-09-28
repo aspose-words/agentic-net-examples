@@ -7,56 +7,67 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
-        Table table = builder.StartTable();
+        // Build a simple 3‑column table.
+        builder.StartTable();
 
-        // Define fixed column widths (in points). Example: three columns.
-        double[] columnWidths = { 100, 150, 200 };
-
-        // Build the first row and set the preferred width for each cell (column).
-        for (int i = 0; i < columnWidths.Length; i++)
-        {
-            // Set the preferred width for the current column.
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(columnWidths[i]);
-
-            // Insert the cell and add some sample text.
-            builder.InsertCell();
-            builder.Writeln($"Column {i + 1}");
-        }
-        // End the first row.
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Column 1");
+        builder.InsertCell();
+        builder.Writeln("Column 2");
+        builder.InsertCell();
+        builder.Writeln("Column 3");
         builder.EndRow();
 
-        // Add a second row with the same column widths.
-        for (int i = 0; i < columnWidths.Length; i++)
-        {
-            // PreferredWidth must be set again for each new cell.
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(columnWidths[i]);
-
-            builder.InsertCell();
-            builder.Writeln($"Data {i + 1}");
-        }
+        // Data row.
+        builder.InsertCell();
+        builder.Writeln("Data 1");
+        builder.InsertCell();
+        builder.Writeln("Data 2");
+        builder.InsertCell();
+        builder.Writeln("Data 3");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Disable AutoFit to enforce the fixed column widths.
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Disable AutoFit to enforce fixed column widths.
         table.AutoFit(AutoFitBehavior.FixedColumnWidths);
 
-        // Optional: apply a built‑in table style for visual appearance.
-        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+        // Define preferred widths for each column (using points; 1 inch = 72 points).
+        if (table.Rows.Count > 0 && table.Rows[0].Cells.Count >= 3)
+        {
+            // First column – 2 inches.
+            table.Rows[0].Cells[0].CellFormat.PreferredWidth =
+                PreferredWidth.FromPoints(2 * 72);
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FixedColumnWidthsTable.docx");
+            // Second column – 1.5 inches.
+            table.Rows[0].Cells[1].CellFormat.PreferredWidth =
+                PreferredWidth.FromPoints(1.5 * 72);
+
+            // Third column – 2.5 inches.
+            table.Rows[0].Cells[2].CellFormat.PreferredWidth =
+                PreferredWidth.FromPoints(2.5 * 72);
+        }
+
+        // Save the document.
+        string outputPath = "FixedWidthTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
+
+        // Confirmation (no user interaction required).
+        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

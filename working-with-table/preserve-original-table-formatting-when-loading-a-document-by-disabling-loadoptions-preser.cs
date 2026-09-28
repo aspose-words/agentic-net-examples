@@ -1,52 +1,65 @@
 using System;
+using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
+using Aspose.Words.Loading; // Required for LoadOptions
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create a sample document with a formatted table.
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample document with a formatted table.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Start the table.
+        builder.StartTable();
 
-        // Start a table.
-        Table table = builder.StartTable();
+        // First cell with shading and border.
+        builder.InsertCell();
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+        builder.CellFormat.Borders.LineStyle = LineStyle.Single;
+        builder.Writeln("Cell 1");
 
-        // First cell with light blue shading.
+        // Second cell with different shading.
         builder.InsertCell();
         builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
-        builder.Write("Cell 1");
-
-        // Second cell with light green shading.
-        builder.InsertCell();
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 2");
 
         // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
         // Save the original document.
-        string originalPath = Path.Combine(artifactsDir, "Original.docx");
-        doc.Save(originalPath);
+        const string originalPath = "Original.docx";
+        originalDoc.Save(originalPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document. No special LoadOptions are required because
-        //    the default loading behavior preserves the original table formatting.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(originalPath);
+        // Load the document without any special LoadOptions (default preserves formatting).
+        LoadOptions loadOptions = new LoadOptions(); // No PreserveFormatting property in this version.
+        Document loadedDoc = new Document(originalPath, loadOptions);
 
-        // Save the loaded document to verify that formatting is preserved.
-        string loadedPath = Path.Combine(artifactsDir, "LoadedPreserved.docx");
+        // Verify that the table formatting (shading) is still present.
+        Table table = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+        Cell firstCell = table.Rows[0].Cells[0];
+        Color shadingColor = firstCell.CellFormat.Shading.BackgroundPatternColor;
+
+        if (shadingColor.ToArgb() != Color.Yellow.ToArgb())
+        {
+            throw new InvalidOperationException("Table cell shading was not preserved after loading.");
+        }
+
+        // Save the loaded document.
+        const string loadedPath = "LoadedPreserved.docx";
         loadedDoc.Save(loadedPath);
+
+        // Validate that both files exist.
+        if (!File.Exists(originalPath) || !File.Exists(loadedPath))
+        {
+            throw new FileNotFoundException("One of the output files was not created.");
+        }
+
+        // Indicate successful completion (no interactive output required).
+        Console.WriteLine("Document processing completed successfully.");
     }
 }

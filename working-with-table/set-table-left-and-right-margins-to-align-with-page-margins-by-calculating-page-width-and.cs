@@ -3,56 +3,51 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableMarginAlignmentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Access the first (and only) section to retrieve page setup information.
-            PageSetup pageSetup = doc.FirstSection.PageSetup;
+        // Build a simple 2x2 table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
 
-            // Build a simple 2‑column table with a few rows.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
+        builder.EndTable();
 
-            // First row.
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.EndRow();
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Cell A1");
-            builder.InsertCell();
-            builder.Write("Cell A2");
-            builder.EndRow();
+        // Calculate page usable width based on page size and margins.
+        PageSetup pageSetup = doc.FirstSection.PageSetup;
+        double pageWidth = pageSetup.PageWidth;          // Total page width (points).
+        double leftMargin = pageSetup.LeftMargin;       // Left margin (points).
+        double rightMargin = pageSetup.RightMargin;     // Right margin (points).
 
-            // Finish the table.
-            builder.EndTable();
+        // Align table left edge with the left page margin.
+        table.LeftIndent = leftMargin;
 
-            // Align the table with the page margins.
-            // Left indent = left page margin.
-            table.LeftIndent = pageSetup.LeftMargin;
+        // Set table width so its right edge aligns with the right page margin.
+        double usableWidth = pageWidth - leftMargin - rightMargin;
+        table.PreferredWidth = PreferredWidth.FromPoints(usableWidth);
 
-            // Preferred width = page width minus left and right margins.
-            double pageWidth = pageSetup.PageWidth;
-            double leftMargin = pageSetup.LeftMargin;
-            double rightMargin = pageSetup.RightMargin;
-            table.PreferredWidth = PreferredWidth.FromPoints(pageWidth - leftMargin - rightMargin);
+        // Save the document.
+        string outputPath = "TableMargins.docx";
+        doc.Save(outputPath);
 
-            // Save the document.
-            string outputPath = "TableMarginsAligned.docx";
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
-        }
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new Exception("Document was not saved correctly.");
     }
 }

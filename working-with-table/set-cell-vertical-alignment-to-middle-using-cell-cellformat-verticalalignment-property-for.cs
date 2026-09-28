@@ -5,51 +5,45 @@ using Aspose.Words.Tables;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a table.
-        Table table = builder.StartTable();
+        builder.StartTable();
 
-        // First cell – set vertical alignment to middle (center).
+        // First cell – set vertical alignment to middle.
         builder.InsertCell();
-        builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-        builder.Write("First cell with centered text.");
+        builder.Writeln("Middle aligned");
+        Cell firstCell = (Cell)builder.CurrentParagraph.ParentNode;
+        firstCell.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
 
-        // Second cell – also set vertical alignment to middle.
+        // Second cell – default alignment.
         builder.InsertCell();
-        builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-        builder.Write("Second cell with centered text.");
+        builder.Writeln("Normal");
 
-        // End the first row.
+        // End the row and the table.
         builder.EndRow();
-
-        // Add a second row to demonstrate that previous rows are not affected.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1 (default alignment).");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2 (default alignment).");
-        builder.EndRow();
-
-        // Finish the table.
         builder.EndTable();
 
-        // Verify that the vertical alignment was applied.
-        if (table.Rows[0].Cells[0].CellFormat.VerticalAlignment != CellVerticalAlignment.Center ||
-            table.Rows[0].Cells[1].CellFormat.VerticalAlignment != CellVerticalAlignment.Center)
-        {
-            throw new InvalidOperationException("Vertical alignment was not set correctly.");
-        }
-
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
         // Save the document.
-        string outputPath = Path.Combine(outputDir, "TableWithVerticalAlignment.docx");
-        doc.Save(outputPath);
+        string filePath = "VerticalAlignmentTable.docx";
+        doc.Save(filePath);
+
+        // Verify that the file was created.
+        if (!File.Exists(filePath))
+            throw new Exception($"Failed to create the output file: {filePath}");
+
+        // Reload the document and verify the vertical alignment.
+        Document loadedDoc = new Document(filePath);
+        Table table = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+        Cell loadedFirstCell = table.Rows[0].Cells[0];
+        if (loadedFirstCell.CellFormat.VerticalAlignment != CellVerticalAlignment.Center)
+            throw new Exception("The cell vertical alignment was not set to middle as expected.");
+
+        // Indicate successful completion (optional).
+        Console.WriteLine("Document created and vertical alignment verified successfully.");
     }
 }

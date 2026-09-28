@@ -1,8 +1,7 @@
 using System;
-using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -12,39 +11,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder to the start of the document.
-        builder.MoveToDocumentStart();
+        // Insert a shape that will act as a watermark.
+        Shape watermark = new Shape(doc, ShapeType.TextPlainText);
+        watermark.TextPath.Text = "CONFIDENTIAL";
+        watermark.TextPath.FontFamily = "Arial";
+        watermark.Width = 500;
+        watermark.Height = 100;
+        watermark.Rotation = -40;
+        watermark.WrapType = WrapType.None;          // No text wrapping.
+        watermark.BehindText = true;                 // Place behind all text (including tables).
+        watermark.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        watermark.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        watermark.Left = 0;
+        watermark.Top = 0;
 
-        // Add a text watermark that will appear behind all content, including the table.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
-        {
-            FontFamily = "Arial",
-            FontSize = 36,
-            Color = Color.LightGray,
-            Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = false
-        };
-        doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
+        // Insert the watermark shape into the document.
+        builder.InsertNode(watermark);
 
-        // Build a simple 2x2 table that will appear over the watermark.
-        Table table = builder.StartTable();
+        // Add a paragraph after the watermark to host the table.
+        builder.Writeln();
 
+        // Build a simple table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 1");
         builder.EndRow();
 
         builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Writeln("Cell 2");
         builder.EndRow();
-
         builder.EndTable();
 
-        // Save the document to the local file system.
-        string outputPath = "WatermarkBehindTable.docx";
+        // Save the document.
+        string outputPath = "WatermarkTable.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not created.");
+
+        // The program ends here.
     }
 }

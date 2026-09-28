@@ -3,63 +3,49 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableStyleFirstRowExample
+public class TableStyleExample
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Initialize a DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Build a simple 2x2 table with a header row.
+        builder.StartTable();
 
-            // Start a new table.
-            Table table = builder.StartTable();
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Header 1");
+        builder.InsertCell();
+        builder.Writeln("Header 2");
+        builder.EndRow();
 
-            // Insert the header row cells.
-            builder.InsertCell();
-            builder.Write("Product");
-            builder.InsertCell();
-            builder.Write("Quantity");
-            // Finish the header row.
-            builder.EndRow();
+        // Data row.
+        builder.InsertCell();
+        builder.Writeln("Data 1");
+        builder.InsertCell();
+        builder.Writeln("Data 2");
+        builder.EndRow();
 
-            // Insert a few data rows.
-            builder.InsertCell();
-            builder.Write("Apples");
-            builder.InsertCell();
-            builder.Write("10");
-            builder.EndRow();
+        // End the table.
+        builder.EndTable();
 
-            builder.InsertCell();
-            builder.Write("Bananas");
-            builder.InsertCell();
-            builder.Write("20");
-            builder.EndRow();
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-            // End the table construction.
-            builder.EndTable();
+        // Apply a built‑in table style.
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
 
-            // Apply a built‑in table style that supports header rows.
-            table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        // Enable the FirstRow option so the header row receives special formatting.
+        table.StyleOptions |= TableStyleOptions.FirstRow;
 
-            // Enable the FirstRow style option so the first row is formatted as a header.
-            table.StyleOptions = TableStyleOptions.FirstRow;
+        // Save the document.
+        string outputPath = "TableStyleExample.docx";
+        doc.Save(outputPath);
 
-            // Optionally auto‑fit the table to its contents.
-            table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-            // Define the output file path.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableStyleFirstRow.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not saved correctly.");
     }
 }
