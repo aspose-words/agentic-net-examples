@@ -1,53 +1,72 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class InvoiceItem
-{
-    public string Description { get; set; } = string.Empty;
-    public decimal Amount { get; set; }
-}
-
-public class ReportModel
-{
-    public List<InvoiceItem> Items { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
+        // Register code page provider (required for some Aspose.Words features)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data
         var model = new ReportModel
         {
-            Items = new List<InvoiceItem>
+            Items =
             {
-                new InvoiceItem { Description = "Consulting", Amount = 1234.567m },
-                new InvoiceItem { Description = "Software License", Amount = 2500.0m },
-                new InvoiceItem { Description = "Support", Amount = 199.994m }
+                new Item { Description = "Consulting Services", Amount = 1234.5678m },
+                new Item { Description = "Software License", Amount = 250.5m },
+                new Item { Description = "Support Fee", Amount = 89.999m }
             }
         };
 
-        // Create a template document in memory.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create the template document programmatically
+        var templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Invoice Report");
+        builder.Writeln("Financial Report");
         builder.Writeln("<<foreach [item in Items]>>");
-        // Use System.Math static method to round the amount to 2 decimal places.
-        builder.Writeln("Item: <<[item.Description]>> - Amount: $<<[Math.Round(item.Amount, 2)]>>");
+        builder.Writeln("Description: <<[item.Description]>>");
+        builder.Writeln("Original Amount: <<[item.Amount]>>");
+        // Use a helper method defined in the root model to round the amount
+        builder.Writeln("Rounded Amount: <<[model.Round(item.Amount, 2)]>>");
         builder.Writeln("<</foreach>>");
 
-        // Configure the reporting engine.
-        var engine = new ReportingEngine();
-        // Register System.Math so its static members can be used in expressions.
-        engine.KnownTypes.Add(typeof(Math));
+        templateDoc.Save(templatePath);
 
-        // Build the report using the model as the root data source named "model".
-        engine.BuildReport(doc, model, "model");
+        // Load the template and build the report
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        doc.Save("InvoiceReport.docx");
+        // Save the generated report
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// Root data model
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+
+    // Helper method to round decimal values using System.Math
+    public decimal Round(decimal value, int digits)
+    {
+        // Math.Round works with double, so convert to double and back to decimal
+        return Convert.ToDecimal(Math.Round(Convert.ToDouble(value), digits));
+    }
+}
+
+// Item model representing a financial entry
+public class Item
+{
+    public string Description { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
 }

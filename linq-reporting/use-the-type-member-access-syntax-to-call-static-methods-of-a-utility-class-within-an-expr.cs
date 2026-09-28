@@ -1,62 +1,60 @@
 using System;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a blank document that will serve as the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a LINQ Reporting tag that calls a static utility method.
-        // The static method is accessed via the type name (Utility.FormatDate).
-        builder.Writeln("Order date: <<[Utility.FormatDate(OrderDate)]>>");
-
-        // Save the template to a temporary file.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-        doc.Save(templatePath);
-
-        // Load the template back (demonstrates load step).
-        Document template = new Document(templatePath);
-
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+        public static void Main()
         {
-            OrderDate = new DateTime(2023, 12, 25)
-        };
+            // Register code page provider for Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        // Register the utility class so its static members can be used in expressions.
-        engine.KnownTypes.Add(typeof(Utility));
+            // Sample data model.
+            var model = new ReportModel
+            {
+                Name = "World"
+            };
 
-        // Build the report using the model as the root data source named "model".
-        engine.BuildReport(template, model, "model");
+            // Create a template document with a LINQ Reporting tag that calls a static method.
+            const string templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        // Save the generated report.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-        template.Save(outputPath);
+            // Use type member access syntax (::) with the fully‑qualified type name.
+            builder.Writeln($"Hello <<[LinqReportingExample.Utility::UpperCase(Name)]>>!");
+            doc.Save(templatePath);
 
-        Console.WriteLine($"Report generated: {outputPath}");
+            // Load the template.
+            var template = new Document(templatePath);
+
+            // Build the report.
+            var engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.InlineErrorMessages
+            };
+            bool success = engine.BuildReport(template, model, "model");
+
+            // Save the generated report.
+            const string outputPath = "Report.docx";
+            template.Save(outputPath);
+
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        }
     }
-}
 
-// Sample data model used by the template.
-public class ReportModel
-{
-    // The date that will be formatted by the utility method.
-    public DateTime OrderDate { get; set; } = DateTime.MinValue;
-}
-
-// Utility class containing a static method that will be called from the template.
-public static class Utility
-{
-    // Formats a DateTime as a short date string.
-    public static string FormatDate(DateTime date)
+    // Simple data model.
+    public class ReportModel
     {
-        return date.ToString("d");
+        public string Name { get; set; } = string.Empty;
+    }
+
+    // Utility class with a static method used in the template.
+    public static class Utility
+    {
+        public static string UpperCase(string input) =>
+            input?.ToUpperInvariant() ?? string.Empty;
     }
 }

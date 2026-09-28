@@ -1,48 +1,53 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;   // JsonDataSource resides in this namespace
+using Aspose.Words.Reporting;
 
-class Program
+public class JsonReportExample
 {
-    static void Main()
+    public static void Main()
     {
-        // Sample JSON data representing a list of persons.
+        // Register code page provider for required encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Sample JSON data.
         string json = @"{
-            ""persons"": [
-                { ""Name"": ""Alice"", ""Age"": 30 },
-                { ""Name"": ""Bob"",   ""Age"": 25 },
-                { ""Name"": ""Carol"", ""Age"": 28 }
+            ""CustomerName"": ""John Doe"",
+            ""OrderDate"": ""2023-01-01"",
+            ""Items"": [
+                { ""Index"": 1, ""Name"": ""Item A"", ""Price"": 10.5 },
+                { ""Index"": 2, ""Name"": ""Item B"", ""Price"": 20.0 },
+                { ""Index"": 3, ""Name"": ""Item C"", ""Price"": 15.75 }
             ]
         }";
 
-        // Convert the JSON string to a memory stream.
-        using var jsonStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+        // Load JSON from a memory stream (JsonDataSource expects a path or stream).
+        using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        var dataSource = new JsonDataSource(jsonStream, new JsonDataLoadOptions());
 
-        // Create a JsonDataSource from the stream.
-        var jsonDataSource = new JsonDataSource(jsonStream);
-
-        // Build a simple template document with LINQ Reporting tags.
+        // Build the template document programmatically.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Template: iterate over the "persons" collection and output each person's data.
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Order Date: <<[order.OrderDate]>>");
+        builder.Writeln();
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Index]>>: <<[item.Name]>> - $<<[item.Price]>>");
         builder.Writeln("<</foreach>>");
 
-        // Populate the template with the JSON data.
+        // Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, jsonDataSource, "persons");
+        engine.BuildReport(doc, dataSource, "order");
 
-        // Save the generated report to a memory stream.
+        // Write the generated report to a memory stream.
         using var outputStream = new MemoryStream();
         doc.Save(outputStream, SaveFormat.Docx);
-
-        // Reset the stream position for potential further use.
         outputStream.Position = 0;
 
-        // For demonstration, write the size of the generated document.
-        Console.WriteLine($"Report generated. Size: {outputStream.Length} bytes.");
+        // Output the size of the generated document.
+        Console.WriteLine($"Report generated successfully. Size: {outputStream.Length} bytes.");
     }
 }

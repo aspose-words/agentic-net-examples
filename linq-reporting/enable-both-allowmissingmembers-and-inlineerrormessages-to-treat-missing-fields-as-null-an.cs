@@ -2,52 +2,65 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace LinqReportingExample
 {
-    // Simple data model with only one property.
-    public class ReportModel
+    // Simple data model with only the Name property.
+    public class Model
     {
-        public string Name { get; set; } = "John Doe";
-        // Note: Age property is intentionally omitted to demonstrate AllowMissingMembers.
+        public string Name { get; set; } = string.Empty;
+        // Age is intentionally omitted to demonstrate AllowMissingMembers.
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // File paths for the template and the generated report.
+            string templatePath = "Template.docx";
+            string outputPath = "Report.docx";
 
-            // Write a valid tag that references an existing member.
+            // -----------------------------------------------------------------
+            // Step 1: Create a Word template that contains LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Correct tag – will be replaced with the Name value.
             builder.Writeln("Customer Name: <<[model.Name]>>");
 
-            // Write a tag that references a missing member (Age). With AllowMissingMembers this will be treated as null.
+            // Missing member tag – Age does not exist in Model.
+            // With AllowMissingMembers this will be treated as null (empty output).
             builder.Writeln("Customer Age: <<[model.Age]>>");
 
-            // Write a malformed tag to trigger a syntax error. InlineErrorMessages will embed the error message.
-            builder.Writeln("Malformed Tag Example: <<[model.Name] -unknownSwitch>>");
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel();
+            // -----------------------------------------------------------------
+            // Step 2: Load the template for report generation.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
 
-            // Configure the reporting engine with both options.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages,
-                MissingMemberMessage = "Missing"
-            };
+            // -----------------------------------------------------------------
+            // Step 3: Prepare the data source.
+            // -----------------------------------------------------------------
+            Model data = new Model { Name = "John Doe" };
 
-            // Build the report. The overload with dataSourceName allows the template to reference the root object as "model".
-            bool success = engine.BuildReport(doc, model, "model");
+            // -----------------------------------------------------------------
+            // Step 4: Configure and run the ReportingEngine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages;
 
-            // Output the success flag (true indicates the template was parsed without fatal errors).
-            Console.WriteLine($"Report build success: {success}");
+            // Build the report. The returned bool indicates success (true) or failure (false).
+            bool success = engine.BuildReport(reportDoc, data, "model");
 
-            // Save the generated document.
-            const string outputPath = "ReportWithMissingMembers.docx";
-            doc.Save(outputPath);
-            Console.WriteLine($"Report saved to: {outputPath}");
+            // -----------------------------------------------------------------
+            // Step 5: Save the generated report.
+            // -----------------------------------------------------------------
+            reportDoc.Save(outputPath);
+
+            // Indicate the result (no interactive prompts).
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
         }
     }
 }

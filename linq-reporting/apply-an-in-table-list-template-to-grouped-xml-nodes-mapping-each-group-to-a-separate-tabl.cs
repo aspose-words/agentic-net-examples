@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -11,149 +12,128 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure output directory exists
-        Directory.CreateDirectory("output");
+        // Register code page provider for XML parsing.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample XML data
-        const string xmlPath = "data.xml";
-        File.WriteAllText(xmlPath,
-@"<Orders>
-    <Order>
-        <Id>1</Id>
-        <CustomerName>Acme Corp</CustomerName>
-        <ProductName>Widget A</ProductName>
-        <Price>19.99</Price>
-    </Order>
-    <Order>
-        <Id>2</Id>
-        <CustomerName>Acme Corp</CustomerName>
-        <ProductName>Widget B</ProductName>
-        <Price>29.99</Price>
-    </Order>
-    <Order>
-        <Id>3</Id>
-        <CustomerName>Beta Ltd</CustomerName>
-        <ProductName>Gadget X</ProductName>
-        <Price>49.50</Price>
-    </Order>
-    <Order>
-        <Id>4</Id>
-        <CustomerName>Beta Ltd</CustomerName>
-        <ProductName>Gadget Y</ProductName>
-        <Price>59.75</Price>
-    </Order>
-    <Order>
-        <Id>5</Id>
-        <CustomerName>Gamma Inc</CustomerName>
-        <ProductName>Thingamajig</ProductName>
-        <Price>99.00</Price>
-    </Order>
-</Orders>");
+        // -----------------------------------------------------------------
+        // Sample XML data.
+        // -----------------------------------------------------------------
+        string xmlContent = @"
+<Root>
+  <Product Category=""Electronics"">
+    <Name>Phone</Name>
+    <Quantity>10</Quantity>
+    <Price>299.99</Price>
+  </Product>
+  <Product Category=""Electronics"">
+    <Name>Laptop</Name>
+    <Quantity>5</Quantity>
+    <Price>799.99</Price>
+  </Product>
+  <Product Category=""Books"">
+    <Name>Novel</Name>
+    <Quantity>20</Quantity>
+    <Price>9.99</Price>
+  </Product>
+  <Product Category=""Books"">
+    <Name>Comics</Name>
+    <Quantity>15</Quantity>
+    <Price>4.99</Price>
+  </Product>
+</Root>";
+        const string xmlPath = "Data.xml";
+        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
 
-        // 2. Load XML and transform into grouped model
-        XDocument xDoc = XDocument.Load(xmlPath);
-        var flatOrders = xDoc.Root!
-            .Elements("Order")
-            .Select(o => new Order
+        // -----------------------------------------------------------------
+        // Transform XML into a grouped model.
+        // -----------------------------------------------------------------
+        XDocument xdoc = XDocument.Load(xmlPath);
+        List<Group> groups = xdoc.Root!
+            .Elements("Product")
+            .GroupBy(p => (string)p.Attribute("Category")!)
+            .Select(g => new Group
             {
-                Id = (int)o.Element("Id")!,
-                CustomerName = (string)o.Element("CustomerName")!,
-                ProductName = (string)o.Element("ProductName")!,
-                Price = (decimal)o.Element("Price")!
-            })
-            .ToList();
-
-        var groups = flatOrders
-            .GroupBy(o => o.CustomerName)
-            .Select(g => new CustomerGroup
-            {
-                CustomerName = g.Key,
-                Orders = g.Select(o => new Order
+                Category = g.Key,
+                Items = g.Select(i => new Item
                 {
-                    Id = o.Id,
-                    ProductName = o.ProductName,
-                    Price = o.Price
+                    Name = (string)i.Element("Name") ?? string.Empty,
+                    Quantity = (int?)i.Element("Quantity") ?? 0,
+                    Price = (decimal?)i.Element("Price") ?? 0m
                 }).ToList()
-            })
-            .ToList();
+            }).ToList();
 
         var model = new ReportModel { Groups = groups };
 
-        // 3. Build the LINQ Reporting template programmatically
-        const string templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // Build the template document programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Title
-        builder.Writeln("Orders Report");
+        builder.Writeln("Product Report");
         builder.Writeln();
 
-        // Outer foreach over groups
-        builder.Writeln("<<foreach [group in Model.Groups]>>");
-        builder.Writeln("Customer: <<[group.CustomerName]>>");
+        // Outer foreach – groups.
+        builder.Writeln("<<foreach [group in Groups]>>");
+        builder.Writeln("Category: <<[group.Category]>>");
         builder.Writeln();
 
-        // Header table for each group
-        Table headerTable = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Order Id");
-        builder.InsertCell();
-        builder.Writeln("Product");
-        builder.InsertCell();
-        builder.Writeln("Price");
+        // Inner foreach – items. The foreach tag is placed BEFORE the table
+        // so that no paragraph is written while the builder is inside a table.
+        builder.Writeln("<<foreach [item in group.Items]>>");
+        Table table = builder.StartTable();
+
+        // Header row (will be repeated for each item – acceptable for this demo).
+        builder.InsertCell(); builder.Writeln("Item Name");
+        builder.InsertCell(); builder.Writeln("Quantity");
+        builder.InsertCell(); builder.Writeln("Price");
         builder.EndRow();
-        builder.EndTable();
 
-        // Inner foreach over orders – each order gets its own row table
-        builder.Writeln("<<foreach [order in group.Orders]>>");
-        Table orderTable = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("<<[order.Id]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[order.ProductName]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[order.Price]>>");
+        // Data row.
+        builder.InsertCell(); builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Price]>>");
         builder.EndRow();
+
         builder.EndTable();
-        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>"); // End inner foreach.
 
-        // Blank line between groups
-        builder.Writeln();
+        builder.Writeln(); // Blank line between groups.
+        builder.Writeln("<</foreach>>"); // End outer foreach.
 
-        builder.Writeln("<</foreach>>");
+        // Save the template.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-        // Save the template
-        doc.Save(templatePath);
-
-        // 4. Load the template and generate the report
+        // -----------------------------------------------------------------
+        // Build the final report.
+        // -----------------------------------------------------------------
         var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "Model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // 5. Save the final report
-        const string outputPath = "output/OrdersReport.docx";
+        const string outputPath = "Report.docx";
         reportDoc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {outputPath}");
     }
 }
 
-// Data model classes
+// ---------------------------------------------------------------------
+// Data model.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public List<CustomerGroup> Groups { get; set; } = new();
+    public List<Group> Groups { get; set; } = new();
 }
 
-public class CustomerGroup
+public class Group
 {
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Order> Orders { get; set; } = new();
+    public string Category { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
 }
 
-public class Order
+public class Item
 {
-    public int Id { get; set; }
-    public string ProductName { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; }
     public decimal Price { get; set; }
-    public string CustomerName { get; set; } = string.Empty;
 }

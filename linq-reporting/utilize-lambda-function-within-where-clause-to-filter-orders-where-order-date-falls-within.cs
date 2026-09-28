@@ -2,18 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Order
 {
-    public int Id { get; set; }
     public DateTime OrderDate { get; set; }
     public string CustomerName { get; set; } = string.Empty;
+    public int OrderId { get; set; }
 }
 
-public class Model
+public class ReportModel
 {
     public List<Order> Orders { get; set; } = new();
 }
@@ -22,49 +21,53 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any legacy encodings Aspose might need.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // ---------- Prepare sample data ----------
+        // Prepare sample orders with various dates.
         var allOrders = new List<Order>
         {
-            new Order { Id = 1, OrderDate = DateTime.Today.AddDays(-5),  CustomerName = "Alice" },
-            new Order { Id = 2, OrderDate = DateTime.Today.AddDays(-20), CustomerName = "Bob"   },
-            new Order { Id = 3, OrderDate = DateTime.Today.AddMonths(-2), CustomerName = "Carol" },
-            new Order { Id = 4, OrderDate = DateTime.Today.AddDays(-30), CustomerName = "Dave"  },
-            new Order { Id = 5, OrderDate = DateTime.Today.AddDays(-1),  CustomerName = "Eve"   }
+            new Order { OrderId = 1, CustomerName = "Alice",   OrderDate = DateTime.Now.AddMonths(-2) },
+            new Order { OrderId = 2, CustomerName = "Bob",     OrderDate = DateTime.Now.AddMonths(-1).AddDays(-10) },
+            new Order { OrderId = 3, CustomerName = "Charlie", OrderDate = DateTime.Now.AddMonths(-1).AddDays(-2) },
+            new Order { OrderId = 4, CustomerName = "Diana",   OrderDate = DateTime.Now.AddDays(-5) },
+            new Order { OrderId = 5, CustomerName = "Eve",     OrderDate = DateTime.Now }
         };
 
-        // Filter orders placed within the last month using a lambda expression.
-        DateTime now = DateTime.Today;
-        DateTime monthAgo = now.AddMonths(-1);
-        var recentOrders = allOrders
-            .Where(o => o.OrderDate >= monthAgo && o.OrderDate < now)
+        // Determine the first day of the previous month and the first day of the current month.
+        DateTime now = DateTime.Now;
+        DateTime firstDayCurrentMonth = new DateTime(now.Year, now.Month, 1);
+        DateTime firstDayLastMonth = firstDayCurrentMonth.AddMonths(-1);
+
+        // Filter orders whose OrderDate falls within last month.
+        var filteredOrders = allOrders
+            .Where(o => o.OrderDate >= firstDayLastMonth && o.OrderDate < firstDayCurrentMonth)
             .ToList();
 
-        var model = new Model { Orders = recentOrders };
+        // Build the data model.
+        var model = new ReportModel { Orders = filteredOrders };
 
-        // ---------- Create the LINQ Reporting template ----------
-        string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Orders placed within the last month:");
-        // Use the root name "model" in the tags.
-        builder.Writeln("<<foreach [order in model.Orders]>>");
-        builder.Writeln("Id: <<[order.Id]>>, Date: <<[order.OrderDate]>>, Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Orders from Last Month:");
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Order ID: <<[order.OrderId]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Date: <<[order.OrderDate]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template before building the report.
-        templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // ---------- Load the template and build the report ----------
-        var loadedTemplate = new Document(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+
+        // Build the report using LINQ Reporting Engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // ---------- Save the final report ----------
-        string reportPath = "Report.docx";
-        loadedTemplate.Save(reportPath);
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

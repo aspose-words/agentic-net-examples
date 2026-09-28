@@ -3,61 +3,55 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Person
 {
-    // Simple data model with a collection to bind.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Create a DOCX template with LINQ Reporting tags.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        builder.Writeln("Persons Report");
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>   Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Register code page provider (required for some data sources).
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-            // Prepare sample data.
-            var model = new ReportModel
+            Persons = new List<Person>
             {
-                Persons = new List<Person>
-                {
-                    new() { Name = "Alice", Age = 30 },
-                    new() { Name = "Bob", Age = 45 },
-                    new() { Name = "Charlie", Age = 28 }
-                }
-            };
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 28 }
+            }
+        };
 
-            // Create a DOCX template with LINQ Reporting tags.
-            const string templatePath = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(doc, model, "model");
 
-            builder.Writeln("People List:");
-            builder.Writeln("<<foreach [person in Persons]>>");
-            builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
-            builder.Writeln("<</foreach>>");
-
-            templateDoc.Save(templatePath);
-
-            // Load the template for report generation.
-            var reportDoc = new Document(templatePath);
-
-            // Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // default options
-            engine.BuildReport(reportDoc, model); // root object is model; tags reference its members directly
-
-            // Save the generated report.
-            const string reportPath = "Report.docx";
-            reportDoc.Save(reportPath);
-        }
+        // Save the generated report.
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
 }

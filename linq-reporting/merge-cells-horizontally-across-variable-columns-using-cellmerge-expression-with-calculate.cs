@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
@@ -8,89 +11,85 @@ public class Program
 {
     public static void Main()
     {
-        // Sample data model
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
         var model = new ReportModel
         {
-            Categories = new()
+            Groups = new List<Group>
             {
-                new Category { Name = "Group A", Span = 2 },
-                new Category { Name = "Group B", Span = 3 }
-            },
-            Rows = new()
-            {
-                new DataRow { Values = new() { "A1", "A2", "B1", "B2", "B3" } },
-                new DataRow { Values = new() { "A3", "A4", "B4", "B5", "B6" } }
+                new Group { Name = "Group A", ColumnCount = 3 },
+                new Group { Name = "Group B", ColumnCount = 2 },
+                new Group { Name = "Group C", ColumnCount = 5 }
             }
         };
 
-        // Create template document
+        // Determine the maximum number of columns needed.
+        int maxColumns = model.Groups.Max(g => g.ColumnCount);
+
+        // Create the template document.
+        var templatePath = "template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Table with merged header cells:");
+        // Begin foreach over Groups.
+        builder.Writeln("<<foreach [g in Groups]>>");
 
-        // Start table
-        builder.StartTable();
+        // Start a table for each group.
+        Table table = builder.StartTable();
 
-        // First header row: merge cells horizontally using <<cellMerge>> tag
-        foreach (var cat in model.Categories)
+        for (int col = 0; col < maxColumns; col++)
         {
-            for (int i = 0; i < cat.Span; i++)
+            builder.InsertCell();
+
+            if (col == 0)
             {
-                builder.InsertCell();
-                builder.Writeln($"<<cellMerge>>{cat.Name}");
+                // First cell always contains the merge tag and the group name.
+                builder.Writeln("<<cellMerge>><<[g.Name]>>");
+            }
+            else
+            {
+                // Subsequent cells are added only if the group's ColumnCount exceeds the current index.
+                builder.Writeln($"<<if [g.ColumnCount > {col}]>><<cellMerge>><<[g.Name]>> <</if>>");
             }
         }
+
+        // End the row and the table.
         builder.EndRow();
-
-        // Second header row: sub‑column titles
-        int subIndex = 1;
-        foreach (var cat in model.Categories)
-        {
-            for (int i = 0; i < cat.Span; i++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"Sub {subIndex++}");
-            }
-        }
-        builder.EndRow();
-
-        // Data rows (filled directly, no LINQ tags needed)
-        foreach (var row in model.Rows)
-        {
-            foreach (var val in row.Values)
-            {
-                builder.InsertCell();
-                builder.Writeln(val);
-            }
-            builder.EndRow();
-        }
-
         builder.EndTable();
 
-        // Process the <<cellMerge>> tags
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "Model");
+        // End foreach.
+        builder.Writeln("<</foreach>>");
 
-        // Save the generated report
-        doc.Save("Report.docx");
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+
+        bool success = engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        var outputPath = Path.Combine("output", "Report.docx");
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
 }
 
-// Data model classes
+// Data model classes.
 public class ReportModel
 {
-    public List<Category> Categories { get; set; } = new();
-    public List<DataRow> Rows { get; set; } = new();
+    public List<Group> Groups { get; set; } = new();
 }
 
-public class Category
+public class Group
 {
     public string Name { get; set; } = "";
-    public int Span { get; set; }
-}
-
-public class DataRow
-{
-    public List<string> Values { get; set; } = new();
+    public int ColumnCount { get; set; }
 }

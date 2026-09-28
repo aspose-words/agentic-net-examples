@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -22,48 +21,40 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create the template document with LINQ Reporting tags.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // ---------- Create template ----------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Begin foreach over Tasks
-        builder.Writeln("<<foreach [task in Tasks]>>");
-        // Write task name
-        builder.Writeln("Task: <<[task.Name]>>");
-        // Conditional block: flag tasks with deadline less than 7 days
-        builder.Writeln("<<if [task.IsUpcoming]>>");
-        builder.Writeln(" - Upcoming!");
-        builder.Writeln("<</if>>");
-        // End foreach
+        builder.Writeln("<<foreach [t in Tasks]>>");
+        builder.Writeln("Task: <<[t.Name]>>");
+        builder.Writeln("Deadline: <<[t.Deadline]>>");
+        builder.Writeln("<<if [t.IsUpcoming]>>Upcoming!<</if>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
+        doc.Save(templatePath);
 
-        // ---------- Load template ----------
-        var doc = new Document(templatePath);
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
 
-        // ---------- Prepare data ----------
+        // Prepare sample data.
         var model = new ReportModel
         {
-            Tasks = new List<TaskItem>
+            Tasks = new()
             {
-                new TaskItem { Name = "Prepare report", Deadline = TimeSpan.FromDays(5) },
-                new TaskItem { Name = "Finalize budget", Deadline = TimeSpan.FromDays(10) },
-                new TaskItem { Name = "Team meeting", Deadline = TimeSpan.FromDays(2) }
+                new TaskItem { Name = "Prepare presentation", Deadline = TimeSpan.FromDays(3) },
+                new TaskItem { Name = "Submit report", Deadline = TimeSpan.FromDays(10) },
+                new TaskItem { Name = "Team meeting", Deadline = TimeSpan.FromDays(5) }
             }
         };
 
-        // ---------- Build report ----------
+        // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "model");
 
-        // ---------- Save output ----------
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,63 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Create template document with LINQ Reporting tags.
+        var templatePath = "template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("Report of Sections");
+        builder.Writeln();
+        builder.Writeln("<<foreach [sec in Sections]>>");
+        builder.Writeln("<<[sec.SectionLetter]>>. <<[sec.Title]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Document.Save(templatePath);
 
-        // 1. Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Load the template.
+        var doc = new Document(templatePath);
 
-        // Add a heading that will display the section number as an uppercase letter.
-        // The model provides a computed property SectionLetter for this purpose.
-        builder.Writeln("<<[model.SectionLetter]>>. Section Heading");
-
-        // Save the template to disk.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
-
-        // 2. Load the template document for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        // The model contains an integer Section and a derived property SectionLetter.
-        var model = new ReportModel { Section = 3 }; // Will be displayed as "C"
-
-        // 4. Build the report using Aspose.Words LINQ Reporting Engine.
-        ReportingEngine engine = new ReportingEngine
+        // Prepare data model.
+        var model = new ReportModel
         {
-            Options = ReportBuildOptions.None
+            Sections = new List<Section>
+            {
+                new Section { SectionNumber = 1, Title = "Introduction" },
+                new Section { SectionNumber = 2, Title = "Methodology" },
+                new Section { SectionNumber = 3, Title = "Results" },
+                new Section { SectionNumber = 4, Title = "Conclusion" }
+            }
         };
-        engine.BuildReport(reportDoc, model, "model");
 
-        // 5. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        Console.WriteLine($"Report generated: {reportPath}");
+        // Save the generated report.
+        var outputPath = "report.docx";
+        doc.Save(outputPath);
     }
 }
 
-// Data model used by the LINQ Reporting engine.
+// Root data model.
 public class ReportModel
 {
-    // Integer section number.
-    public int Section { get; set; }
+    public List<Section> Sections { get; set; } = new();
+}
 
-    // Computed property that converts the integer to an uppercase alphabetic letter (A‑Z).
-    // Values outside 1‑26 are wrapped around (e.g., 27 -> A).
-    public string SectionLetter
-    {
-        get
-        {
-            if (Section <= 0)
-                return string.Empty;
+// Section data model.
+public class Section
+{
+    public int SectionNumber { get; set; }
+    public string Title { get; set; } = string.Empty;
 
-            // Wrap the number to the range 1‑26.
-            int index = ((Section - 1) % 26) + 1;
-            char letter = (char)('A' + index - 1);
-            return letter.ToString();
-        }
-    }
+    // Convert integer to uppercase alphabetic letter (A, B, C, ...).
+    public string SectionLetter => ((char)('A' + SectionNumber - 1)).ToString();
 }

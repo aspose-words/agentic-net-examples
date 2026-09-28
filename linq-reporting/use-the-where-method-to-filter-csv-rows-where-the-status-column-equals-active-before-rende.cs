@@ -2,89 +2,73 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingCsvFilter
+public class Record
 {
-    // Simple data model representing a CSV row.
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public string Status { get; set; } = "";
-    }
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Status { get; set; } = "";
+}
 
-    // Wrapper class used as the root object for the LINQ Reporting engine.
-    public class ReportModel
-    {
-        public List<Person> persons { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Record> Records { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Create sample CSV data.
+        const string csvPath = "data.csv";
+        File.WriteAllText(csvPath,
+            "Id,Name,Status\n" +
+            "1,Alpha,Active\n" +
+            "2,Beta,Inactive\n" +
+            "3,Gamma,Active\n" +
+            "4,Delta,Inactive\n");
+
+        // Load CSV into a list of Record objects.
+        List<Record> allRecords = new();
+        foreach (var line in File.ReadAllLines(csvPath).Skip(1))
         {
-            // Register code page provider (required for some encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare sample CSV data.
-            string csvPath = "people.csv";
-            File.WriteAllLines(csvPath, new[]
+            var parts = line.Split(',');
+            if (parts.Length != 3) continue;
+            allRecords.Add(new Record
             {
-                "Name,Status",
-                "Alice,Active",
-                "Bob,Inactive",
-                "Charlie,Active",
-                "Diana,Inactive"
+                Id = int.Parse(parts[0]),
+                Name = parts[1],
+                Status = parts[2]
             });
-
-            // Load CSV rows into a list of Person objects.
-            List<Person> allPersons = File.ReadAllLines(csvPath)
-                .Skip(1) // Skip header.
-                .Select(line => line.Split(','))
-                .Where(parts => parts.Length == 2)
-                .Select(parts => new Person
-                {
-                    Name = parts[0].Trim(),
-                    Status = parts[1].Trim()
-                })
-                .ToList();
-
-            // Filter rows where Status equals "Active" using LINQ Where.
-            List<Person> activePersons = allPersons
-                .Where(p => string.Equals(p.Status, "Active", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            // Create the report template programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            // Insert a foreach tag that iterates over the filtered collection.
-            builder.Writeln("<<foreach [p in persons]>>");
-            builder.Writeln("Name: <<[p.Name]>> | Status: <<[p.Status]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template (optional, demonstrates lifecycle rule).
-            string templatePath = "template.docx";
-            template.Save(templatePath);
-
-            // Load the template back (simulating a separate load step).
-            Document doc = new Document(templatePath);
-
-            // Prepare the root model with the filtered data.
-            ReportModel model = new ReportModel
-            {
-                persons = activePersons
-            };
-
-            // Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // Save the final report.
-            string outputPath = "Report_ActivePersons.docx";
-            doc.Save(outputPath);
         }
+
+        // Filter rows where Status equals "Active".
+        List<Record> activeRecords = allRecords
+            .Where(r => r.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        // Prepare the model for the report.
+        ReportModel model = new() { Records = activeRecords };
+
+        // Create the LINQ Reporting template.
+        const string templatePath = "template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+        builder.Writeln("Active Records:");
+        builder.Writeln("<<foreach [rec in Records]>>");
+        builder.Writeln("Id: <<[rec.Id]>>, Name: <<[rec.Name]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
+
+        // Load the template and build the report.
+        Document reportDoc = new(templatePath);
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report.
+        const string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }

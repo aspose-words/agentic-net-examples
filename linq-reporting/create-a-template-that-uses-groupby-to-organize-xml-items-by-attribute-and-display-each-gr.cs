@@ -2,114 +2,90 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Item
+{
+    public string Category { get; set; } = "";
+    public string Name { get; set; } = "";
+}
+
+public class Group
+{
+    public string Key { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+    public List<Group> Groups { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
         // Prepare sample XML data.
-        string xml = @"<items>
-    <item category='Fruits' name='Apple' />
-    <item category='Fruits' name='Banana' />
-    <item category='Vegetables' name='Carrot' />
-    <item category='Fruits' name='Orange' />
-    <item category='Vegetables' name='Lettuce' />
-</items>";
-        string xmlPath = Path.Combine(Directory.GetCurrentDirectory(), "items.xml");
-        File.WriteAllText(xmlPath, xml);
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Items>
+    <Item Category=""Fruits"" Name=""Apple"" />
+    <Item Category=""Fruits"" Name=""Banana"" />
+    <Item Category=""Vegetables"" Name=""Carrot"" />
+    <Item Category=""Fruits"" Name=""Orange"" />
+    <Item Category=""Vegetables"" Name=""Lettuce"" />
+</Items>";
+        string xmlPath = "items.xml";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // Load XML and create a grouped data model.
-        ReportModel model = new ReportModel
+        // Load XML into model.
+        ReportModel model = new();
+        XDocument doc = XDocument.Load(xmlPath);
+        foreach (XElement elem in doc.Root!.Elements("Item"))
         {
-            Groups = LoadAndGroup(xmlPath)
-        };
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Outer foreach iterates over groups.
-        builder.Writeln("<<foreach [group in model.Groups]>>");
-        builder.Writeln("Group: <<[group.Category]>>");
-        builder.Writeln();
-
-        // Inner foreach iterates over items inside the current group.
-        builder.Writeln("<<foreach [item in group.Items]>>");
-        builder.Writeln("- <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document report = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this example.
-        engine.BuildReport(report, model, "model");
-
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        report.Save(reportPath);
-
-        Console.WriteLine("Report generated successfully:");
-        Console.WriteLine(reportPath);
-    }
-
-    // Loads the XML file, groups items by the 'category' attribute,
-    // and returns a list of Group objects ready for the report.
-    private static List<Group> LoadAndGroup(string xmlFilePath)
-    {
-        // Load XML into an XDocument.
-        var xdoc = System.Xml.Linq.XDocument.Load(xmlFilePath);
-
-        // Project XML elements into Item objects.
-        var items = xdoc.Root!
-            .Elements("item")
-            .Select(e => new Item
+            model.Items.Add(new Item
             {
-                Category = (string?)e.Attribute("category") ?? string.Empty,
-                Name = (string?)e.Attribute("name") ?? string.Empty
-            })
-            .ToList();
+                Category = (string?)elem.Attribute("Category") ?? "",
+                Name = (string?)elem.Attribute("Name") ?? ""
+            });
+        }
 
-        // Group items by Category.
-        var groups = items
+        // Create groups for reporting (Category -> Items).
+        model.Groups = model.Items
             .GroupBy(i => i.Category)
             .Select(g => new Group
             {
-                Category = g.Key,
+                Key = g.Key,
                 Items = g.ToList()
             })
             .ToList();
 
-        return groups;
+        // Create template document.
+        Document template = new();
+        DocumentBuilder builder = new(template);
+
+        builder.Writeln("Items grouped by Category:");
+        builder.Writeln("<<foreach [g in Groups]>>");
+        builder.Writeln("Category: <<[g.Key]>>");
+        builder.Writeln("<<foreach [i in g.Items]>>");
+        builder.Writeln("- <<[i.Name]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
+
+        string templatePath = "template.docx";
+        template.Save(templatePath);
+
+        // Load template for reporting.
+        Document reportDoc = new(templatePath);
+        ReportingEngine engine = new();
+
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "output.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Root data model passed to the reporting engine.
-public class ReportModel
-{
-    public List<Group> Groups { get; set; } = new();
-}
-
-// Represents a group of items sharing the same category.
-public class Group
-{
-    public string Category { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-// Simple item model.
-public class Item
-{
-    public string Category { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
 }

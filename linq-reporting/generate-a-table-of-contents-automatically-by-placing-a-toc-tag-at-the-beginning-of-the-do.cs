@@ -1,51 +1,74 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Reporting;
 
-public class GenerateTocExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a Table of Contents (TOC) field at the beginning of the document.
-        // The switches configure the TOC to include heading levels 1‑3 and make entries hyperlinked.
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-
-        // Add a page break so that the TOC appears on its own page.
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Populate the document with headings that will be captured by the TOC.
-        InsertHeading(builder, "Chapter 1 – Introduction", StyleIdentifier.Heading1);
-        InsertHeading(builder, "Section 1.1 – Overview", StyleIdentifier.Heading2);
-        InsertHeading(builder, "Section 1.2 – Details", StyleIdentifier.Heading2);
-        InsertHeading(builder, "Chapter 2 – Usage", StyleIdentifier.Heading1);
-        InsertHeading(builder, "Section 2.1 – Installation", StyleIdentifier.Heading2);
-        InsertHeading(builder, "Section 2.2 – Configuration", StyleIdentifier.Heading2);
-        InsertHeading(builder, "Subsection 2.2.1 – Advanced Settings", StyleIdentifier.Heading3);
-
-        // Update all fields in the document so that the TOC reflects the headings.
-        doc.UpdateFields();
-
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Prepare working directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(outputDir, "DocumentWithToc.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Paths for template and final report.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+
+        // -----------------------------------------------------------------
+        // 1. Create the document template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+
+        // Add some headings that will appear in the TOC.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 1: Introduction");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the introduction content.");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 2: Details");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Detailed information goes here.");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section 2.1: Subsection");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Subsection content.");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report using LINQ Reporting.
+        // -----------------------------------------------------------------
+        Document reportDoc = new(templatePath);
+
+        // The model is empty because the template does not reference any data.
+        var model = new ReportModel();
+
+        // Optional: enable reflection optimization for better performance.
+        ReportingEngine.UseReflectionOptimization = true;
+
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Insert a Table of Contents at the beginning of the document.
+        DocumentBuilder tocBuilder = new(reportDoc);
+        tocBuilder.MoveToDocumentStart();
+        tocBuilder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+
+        // Update fields so the TOC is generated.
+        reportDoc.UpdateFields();
+
+        // Save the final report.
+        reportDoc.Save(reportPath);
     }
 
-    // Helper method to insert a paragraph with a specific heading style.
-    private static void InsertHeading(DocumentBuilder builder, string text, StyleIdentifier styleId)
+    // Empty wrapper class required by the ReportingEngine.
+    public class ReportModel
     {
-        builder.ParagraphFormat.StyleIdentifier = styleId;
-        builder.Writeln(text);
-        // Reset to normal style after inserting the heading to avoid affecting subsequent text.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        // No properties needed for this example.
     }
 }

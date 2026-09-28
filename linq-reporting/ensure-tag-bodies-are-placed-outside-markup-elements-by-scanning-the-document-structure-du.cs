@@ -1,103 +1,97 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingTagPreprocess
+public class Model
 {
-    // Simple data model used by the template.
-    public class Order
+    // Sample property used in the template.
+    public string Name { get; set; } = "John Doe";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string CustomerName { get; set; } = "John Doe";
-        public List<Item> Items { get; set; } = new()
+        // Register the code page provider required by Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Create an output folder for the generated files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // The LINQ Reporting tag is placed inside the same run with surrounding text.
+        builder.Writeln("Hello <<[model.Name]>> world!");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and preprocess it.
+        //    Ensure that each tag resides in its own run (outside markup).
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Regular expression that matches a LINQ Reporting tag.
+        Regex tagRegex = new Regex(@"(<<[^>]+>>)", RegexOptions.Compiled);
+
+        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            new Item { Index = 1, Name = "Apple" },
-            new Item { Index = 2, Name = "Banana" }
-        };
-    }
-
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = string.Empty;
-    }
-
-    class Program
-    {
-        static void Main()
-        {
-            // 1. Create a template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            // Paragraph with a tag inside a run (simulating a malformed placement).
-            builder.Writeln("Order for <<[order.CustomerName]>>:");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln(" - Item <<[item.Index]>>: <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            const string templatePath = "TagTemplate.docx";
-            template.Save(templatePath);
-
-            // 2. Load the template back for preprocessing.
-            Document doc = new Document(templatePath);
-
-            // 3. Preprocess: ensure that tag bodies are placed outside markup elements.
-            //    For each paragraph, if a run contains a tag (<<...>>), move the whole tag
-            //    to its own paragraph before the original paragraph.
-            MoveTagsToSeparateParagraphs(doc);
-
-            // 4. Build the report using LINQ Reporting Engine.
-            ReportingEngine engine = new ReportingEngine();
-            Order data = new Order(); // sample data
-            engine.BuildReport(doc, data, "order");
-
-            // 5. Save the final report.
-            const string outputPath = "ReportResult.docx";
-            doc.Save(outputPath);
-            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
-        }
-
-        // Scans the document and moves any tag text (<<...>>) that is inside a run
-        // to a separate paragraph placed before the original paragraph.
-        private static void MoveTagsToSeparateParagraphs(Document doc)
-        {
-            // Collect paragraphs that need processing to avoid modifying the collection while iterating.
-            List<Paragraph> paragraphs = new List<Paragraph>();
-            foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
-                paragraphs.Add(para);
-
-            foreach (Paragraph para in paragraphs)
+            // Iterate backwards because we will modify the Runs collection.
+            for (int runIdx = paragraph.Runs.Count - 1; runIdx >= 0; runIdx--)
             {
-                // Search runs for tag patterns.
-                foreach (Run run in para.GetChildNodes(NodeType.Run, true))
+                Run run = (Run)paragraph.Runs[runIdx];
+                string text = run.Text;
+
+                // If the run does not contain a tag, skip it.
+                if (!tagRegex.IsMatch(text))
+                    continue;
+
+                // Split the run text into plain parts and tag parts.
+                string[] parts = tagRegex.Split(text);
+
+                // Remove the original run.
+                paragraph.Runs.RemoveAt(runIdx);
+
+                // Insert new runs for each non‑empty part, preserving order.
+                int insertIdx = runIdx;
+                foreach (string part in parts)
                 {
-                    string text = run.Text;
-                    int startIdx = text.IndexOf("<<", StringComparison.Ordinal);
-                    int endIdx = text.IndexOf(">>", StringComparison.Ordinal);
+                    if (string.IsNullOrEmpty(part))
+                        continue;
 
-                    // Simple detection of a tag inside the run.
-                    if (startIdx >= 0 && endIdx > startIdx)
-                    {
-                        string tag = text.Substring(startIdx, endIdx - startIdx + 2);
-
-                        // Remove the tag from the original run.
-                        string newRunText = text.Remove(startIdx, tag.Length);
-                        run.Text = newRunText;
-
-                        // Insert a new paragraph before the current one containing only the tag.
-                        Paragraph tagParagraph = (Paragraph)para.Clone(false);
-                        Run tagRun = new Run(doc, tag);
-                        tagParagraph.Runs.Clear();
-                        tagParagraph.Runs.Add(tagRun);
-                        para.ParentNode.InsertBefore(tagParagraph, para);
-                        // Only handle the first tag per run for this example.
-                        break;
-                    }
+                    Run newRun = (Run)run.Clone(false);
+                    newRun.Text = part;
+                    paragraph.Runs.Insert(insertIdx, newRun);
+                    insertIdx++;
                 }
             }
         }
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
+        Model model = new Model();
+
+        // -----------------------------------------------------------------
+        // 4. Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine(outputDir, "output.docx");
+        doc.Save(outputPath);
     }
 }

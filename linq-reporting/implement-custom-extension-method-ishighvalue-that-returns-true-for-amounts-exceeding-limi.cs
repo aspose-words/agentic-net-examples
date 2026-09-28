@@ -1,51 +1,70 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExtensionDemo
+public class Order
 {
-    // Extension methods must be defined in a static class.
-    public static class DecimalExtensions
-    {
-        // Returns true if the amount exceeds the specified limit.
-        public static bool IsHighValue(this decimal amount, decimal limit) => amount > limit;
-    }
+    public string Description { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
 
-    // Data model used as the root object for the report.
-    public class Order
-    {
-        // Sample amount property.
-        public decimal Amount { get; set; } = 0m;
-    }
+    // Returns true when the order amount exceeds the supplied limit.
+    public bool IsHighValue(decimal limit) => Amount > limit;
+}
 
-    public class Program
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // -----------------------------------------------------------------
+        // Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Begin foreach over the Orders collection.
+        builder.Writeln("<<foreach [order in model.Orders]>>");
+        // Output order description and amount.
+        builder.Writeln("Order: <<[order.Description]>> Amount: <<[order.Amount]>>");
+        // Use the custom method to test for high‑value orders.
+        builder.Writeln("<<if [order.IsHighValue(1000)]>>");
+        builder.Writeln(" - High value order!");
+        builder.Writeln("<</if>>");
+        // End foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // Sample data.
+        ReportModel model = new()
         {
-            // 1. Create a template document programmatically.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert a LINQ Reporting tag that calls the extension method on the Amount property.
-            // The tag will output "True" or "False" depending on the limit (100 in this case).
-            builder.Writeln("Amount: <<[order.Amount]>>");
-            builder.Writeln("Is high (limit 100): <<[order.Amount.IsHighValue(100)]>>");
-
-            // 2. Prepare the data source.
-            Order order = new Order { Amount = 150m };
-
-            // 3. Configure the reporting engine.
-            ReportingEngine engine = new ReportingEngine
+            Orders = new()
             {
-                // Allow the engine to use extension methods.
-                Options = ReportBuildOptions.AllowMissingMembers
-            };
+                new Order { Description = "Standard Item", Amount = 250m },
+                new Order { Description = "Premium Item", Amount = 1500m },
+                new Order { Description = "Basic Item", Amount = 75m }
+            }
+        };
 
-            // 4. Build the report using the template, data source, and root name.
-            engine.BuildReport(doc, order, "order");
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-            // 5. Save the generated report.
-            doc.Save("Report_Output.docx");
-        }
+        // Save the generated report.
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(reportPath);
     }
 }

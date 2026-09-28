@@ -2,70 +2,67 @@ using System;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Markup;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data in a DataTable.
-        DataTable employees = new DataTable("Employees");
-        employees.Columns.Add("Name", typeof(string));
-        employees.Columns.Add("Age", typeof(int));
-        employees.Rows.Add("Alice", 30);
-        employees.Rows.Add("Bob", 45);
-        employees.Rows.Add("Charlie", 28);
+        // Sample data source.
+        DataTable table = new DataTable("Employees");
+        table.Columns.Add("Id", typeof(int));
+        table.Columns.Add("Name", typeof(string));
+        table.Columns.Add("Age", typeof(int));
 
-        // -----------------------------------------------------------------
-        // Create a template document programmatically.
-        // The template contains LINQ Reporting tags inside content controls.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        table.Rows.Add(1, "Alice", 30);
+        table.Rows.Add(2, "Bob", 25);
+        table.Rows.Add(3, "Charlie", 35);
 
-        builder.Writeln("Employees Report");
-        builder.Writeln(); // blank line
+        // Create the template document programmatically.
+        string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Start a foreach block that iterates over the DataTable rows.
-        builder.Writeln("<<foreach [emp in Employees]>>");
-
-        // Content control for the employee name.
-        StructuredDocumentTag nameTag = new StructuredDocumentTag(template, SdtType.PlainText, MarkupLevel.Inline);
-        builder.InsertNode(nameTag);
-        builder.MoveTo(nameTag);
-        builder.Write("<<[emp.Name]>>");
-
-        // Separator.
-        builder.Write(" - ");
-
-        // Content control for the employee age.
-        StructuredDocumentTag ageTag = new StructuredDocumentTag(template, SdtType.PlainText, MarkupLevel.Inline);
-        builder.InsertNode(ageTag);
-        builder.MoveTo(ageTag);
-        builder.Write("<<[emp.Age]>>");
-
-        // End of the line for each employee.
+        // Heading.
+        builder.Writeln("Employee Report");
         builder.Writeln();
 
-        // Close the foreach block.
+        // Begin foreach loop over the DataTable rows.
+        builder.Writeln("<<foreach [row in Data]>>");
+
+        // Table that will be repeated for each row.
+        Table tbl = builder.StartTable();
+
+        // Id column.
+        builder.InsertCell();
+        builder.Write("<<[row.Id]>>");
+
+        // Name column.
+        builder.InsertCell();
+        builder.Write("<<[row.Name]>>");
+
+        // Age column.
+        builder.InsertCell();
+        builder.Write("<<[row.Age]>>");
+
+        // End the row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk (required before building the report).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Load the template and build the report using the ReportingEngine.
-        // -----------------------------------------------------------------
-        Document report = new Document(templatePath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Build the report using the DataTable as the root data source.
         ReportingEngine engine = new ReportingEngine();
-
-        // BuildReport with the DataTable as the data source.
-        // The third argument ("Employees") matches the root name used in the tags.
-        bool success = engine.BuildReport(report, employees, "Employees");
+        engine.BuildReport(reportDoc, table, "Data");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        report.Save(outputPath);
+        reportDoc.Save("Report.docx");
     }
 }

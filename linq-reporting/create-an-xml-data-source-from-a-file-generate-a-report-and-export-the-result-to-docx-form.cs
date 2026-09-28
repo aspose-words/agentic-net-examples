@@ -4,59 +4,51 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Enable code page provider for XML encoding support.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider for any required encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Create a sample XML data file.
-            const string xmlFileName = "People.xml";
-            File.WriteAllText(xmlFileName,
-@"<persons>
-    <person>
-        <Name>John Doe</Name>
-        <Age>30</Age>
-    </person>
-    <person>
-        <Name>Jane Smith</Name>
-        <Age>25</Age>
-    </person>
-</persons>", Encoding.UTF8);
+        // Prepare directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-            // Build the template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+        // Create sample XML data file.
+        string xmlPath = Path.Combine(outputDir, "data.xml");
+        string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Order>
+    <CustomerName>John Doe</CustomerName>
+    <Total>123.45</Total>
+</Order>";
+        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
 
-            // Heading.
-            builder.Writeln("People Report");
-            builder.Writeln();
+        // Create a Word template with LINQ Reporting tags.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // LINQ Reporting tags.
-            builder.Writeln("<<foreach [p in persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>");
-            builder.Writeln("Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
+        builder.Writeln("Customer Report");
+        builder.Writeln("----------------");
+        builder.Writeln("Customer: <<[CustomerName]>>");
+        builder.Writeln("Total: $<<[Total]>>");
+        builder.Writeln("----------------");
 
-            // Optional: save the template for inspection.
-            const string templateFileName = "ReportTemplate.docx";
-            template.Save(templateFileName);
+        templateDoc.Save(templatePath);
 
-            // Load the XML data source.
-            XmlDataSource dataSource = new XmlDataSource(xmlFileName);
+        // Load the template.
+        Document reportDoc = new Document(templatePath);
 
-            // Build the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(template, dataSource, "persons");
+        // Load XML data source.
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
 
-            // Save the generated report.
-            const string outputFileName = "PeopleReport.docx";
-            template.Save(outputFileName);
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        bool success = engine.BuildReport(reportDoc, xmlDataSource, "Order");
 
-            Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputFileName)}");
-        }
+        // Save the generated report.
+        string outputPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(outputPath);
     }
 }

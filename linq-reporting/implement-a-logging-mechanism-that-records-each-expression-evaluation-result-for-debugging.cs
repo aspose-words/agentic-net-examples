@@ -1,90 +1,129 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class Logger
-{
-    // Simple logger that writes to console and stores messages.
-    private static readonly List<string> _messages = new();
-
-    public static void Log(string message)
-    {
-        _messages.Add(message);
-        Console.WriteLine(message);
-    }
-
-    public static IReadOnlyList<string> Messages => _messages;
-}
-
-// Data model used by the LINQ Reporting engine.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Each item logs when its Value property is accessed.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-
-    private int _value;
-    public int Value
-    {
-        get
-        {
-            Logger.Log($"Evaluating Value for item '{Name}': {_value}");
-            return _value;
-        }
-        set => _value = value;
-    }
-}
-
 public class Program
 {
+    // Central log for expression evaluations.
+    public static List<string> EvaluationLog = new();
+
     public static void Main()
     {
-        // 1. Create a template document with LINQ Reporting tags.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Ensure output directory exists.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
 
-        // Header.
-        builder.Writeln("Report generated with expression logging:");
-        builder.Writeln();
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // foreach over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item: <<[item.Name]>>, Value: <<[item.Value]>>");
+        builder.Writeln("Order Report");
+        builder.Writeln("Order ID: <<[order.OrderId]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- Item: <<[item.Name]>> Qty: <<[item.Quantity]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to a temporary file.
-        const string templatePath = "ReportTemplate.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // 2. Prepare sample data.
-        var model = new ReportModel
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
+
+        // Prepare sample data.
+        Order order = new Order
         {
+            OrderId = 12345,
+            CustomerName = "John Doe",
             Items = new List<Item>
             {
-                new Item { Name = "Alpha", Value = 10 },
-                new Item { Name = "Beta", Value = 20 },
-                new Item { Name = "Gamma", Value = 30 }
+                new Item { Name = "Apple", Quantity = 5 },
+                new Item { Name = "Banana", Quantity = 3 },
+                new Item { Name = "Cherry", Quantity = 12 }
             }
         };
 
-        // 3. Load the template (simulating a separate load step).
-        var doc = new Document(templatePath);
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, order, "order");
 
-        // 4. Build the report using the ReportingEngine.
-        var engine = new ReportingEngine();
-        // No special options needed for logging; the property getters perform logging.
-        engine.BuildReport(doc, model, "model");
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        reportDoc.Save(reportPath);
 
-        // 5. Save the generated report.
-        const string outputPath = "ReportResult.docx";
-        doc.Save(outputPath);
+        // Write the evaluation log to a file.
+        string logPath = Path.Combine(outputDir, "evaluation_log.txt");
+        File.WriteAllLines(logPath, EvaluationLog);
 
-        // Optional: indicate completion.
-        Console.WriteLine($"Report generated and saved to '{outputPath}'.");
+        // Optionally, also output the log to console.
+        Console.WriteLine("Report generated at: " + Path.GetFullPath(reportPath));
+        Console.WriteLine("Evaluation log written to: " + Path.GetFullPath(logPath));
+    }
+}
+
+// Wrapper class for Order with logging in property getters.
+public class Order
+{
+    private int _orderId;
+    private string _customerName = "";
+    private List<Item> _items = new();
+
+    public int OrderId
+    {
+        get
+        {
+            Program.EvaluationLog.Add($"OrderId evaluated: {_orderId}");
+            return _orderId;
+        }
+        set => _orderId = value;
+    }
+
+    public string CustomerName
+    {
+        get
+        {
+            Program.EvaluationLog.Add($"CustomerName evaluated: {_customerName}");
+            return _customerName;
+        }
+        set => _customerName = value ?? "";
+    }
+
+    public List<Item> Items
+    {
+        get
+        {
+            Program.EvaluationLog.Add($"Items collection accessed, count: {_items.Count}");
+            return _items;
+        }
+        set => _items = value ?? new List<Item>();
+    }
+}
+
+// Wrapper class for Item with logging in property getters.
+public class Item
+{
+    private string _name = "";
+    private int _quantity;
+
+    public string Name
+    {
+        get
+        {
+            Program.EvaluationLog.Add($"Item.Name evaluated: {_name}");
+            return _name;
+        }
+        set => _name = value ?? "";
+    }
+
+    public int Quantity
+    {
+        get
+        {
+            Program.EvaluationLog.Add($"Item.Quantity evaluated: {_quantity}");
+            return _quantity;
+        }
+        set => _quantity = value;
     }
 }

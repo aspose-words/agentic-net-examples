@@ -1,47 +1,66 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-public class HtmlModel
+namespace AsposeWordsLinqReportingHtmlExample
 {
-    // HTML snippet that will be inserted into the paragraph.
-    public string HtmlSnippet { get; set; } = "<b>Bold Text</b> and <i>Italic Text</i>";
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model with an HTML snippet property.
+    public class ReportModel
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        // Initialize with sample HTML content.
+        public string HtmlSnippet { get; set; } = "<b>Bold Text</b> and <i>Italic Text</i>";
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for possible encoding needs.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Insert a paragraph that contains a LINQ Reporting HTML tag.
-        // The tag will be replaced with the value of HtmlSnippet at build time.
-        builder.Writeln("<<[model.HtmlSnippet] -html>>");
+            // Define file paths.
+            string templatePath = "template.docx";
+            string outputPath = "output.docx";
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+            // -------------------------------------------------
+            // Step 1: Create the template document programmatically.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+            // Write a paragraph that will contain the dynamic HTML.
+            builder.Writeln("Report:");
+            // Insert the LINQ Reporting HTML tag bound to the model's HtmlSnippet property.
+            builder.Writeln("<<html [model.HtmlSnippet]>>");
 
-        // Prepare the data source.
-        HtmlModel model = new HtmlModel();
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Create the reporting engine and generate the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
+            // -------------------------------------------------
+            // Step 2: Load the template for report generation.
+            // -------------------------------------------------
+            Document doc = new Document(templatePath);
 
-        // Save the final document.
-        loadedTemplate.Save(reportPath);
+            // -------------------------------------------------
+            // Step 3: Prepare the data model.
+            // -------------------------------------------------
+            ReportModel model = new ReportModel();
+
+            // -------------------------------------------------
+            // Step 4: Build the report using the LINQ Reporting engine.
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // -------------------------------------------------
+            // Step 5: Save the generated report.
+            // -------------------------------------------------
+            doc.Save(outputPath);
+
+            // Optional: indicate completion.
+            Console.WriteLine($"Report generated and saved to '{outputPath}'.");
+        }
     }
 }

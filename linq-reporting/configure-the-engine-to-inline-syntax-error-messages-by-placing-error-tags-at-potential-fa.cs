@@ -1,64 +1,57 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+public class Order
 {
-    public string Name { get; set; } = "John Doe";
-    // Intentionally omitted property 'Age' to trigger an inline error.
+    public string CustomerName { get; set; } = "John Doe";
+    // Additional properties can be added here.
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        // Register code page provider for potential encoding needs.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create a template document programmatically.
-        // -------------------------------------------------
+        // Prepare paths.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "output.docx");
+
+        // Create a template document with LINQ Reporting tags.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Valid tag – will be replaced with the person's name.
-        builder.Writeln("Name: <<[person.Name]>>");
-
-        // Invalid tag – property 'Age' does not exist on Person.
-        // With InlineErrorMessages enabled, the engine will insert <<error>> here.
-        builder.Writeln("Age: <<[person.Age]>>");
+        // Write tags: a valid tag and an intentionally invalid tag to trigger an inline error.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Missing property: <<[order.NonExisting]>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the template for reporting.
-        // -------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 3. Configure the ReportingEngine to inline error messages.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
+        // Prepare the data model.
+        Order order = new Order();
 
-        // Sample data source.
-        Person person = new Person();
+        // Configure the reporting engine to inline error messages.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report. The method returns true if parsing succeeded.
-        bool success = engine.BuildReport(loadedTemplate, person, "person");
+        // Build the report. The returned flag indicates overall success.
+        bool success = engine.BuildReport(doc, order, "order");
 
-        // -------------------------------------------------
-        // 4. Save the generated report.
-        // -------------------------------------------------
-        loadedTemplate.Save(reportPath);
+        // Save the generated report.
+        doc.Save(outputPath);
 
-        // Output the result to the console.
-        Console.WriteLine($"Report generation success flag: {success}");
-        Console.WriteLine($"Report saved to: {reportPath}");
+        // Optionally, write the result status to the console.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Output saved to: {outputPath}");
     }
 }

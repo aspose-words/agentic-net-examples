@@ -7,77 +7,75 @@ using Newtonsoft.Json;
 
 public class ReportModel
 {
-    public string Title { get; set; } = string.Empty;
-    public string AttachmentPath { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = "John Doe";
+    public string ReportDate { get; set; } = DateTime.Now.ToString("yyyy-MM-dd");
+    public string AttachmentFileName { get; set; } = "SampleAttachment.txt";
+    public string AttachmentBase64 { get; set; } = "";
+    public byte[] AttachmentContent => Convert.FromBase64String(AttachmentBase64);
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings used by Aspose.Words).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample attachment content and encode it as Base64.
+        string attachmentText = "This is a sample attachment file.";
+        byte[] attachmentBytes = Encoding.UTF8.GetBytes(attachmentText);
+        string attachmentBase64 = Convert.ToBase64String(attachmentBytes);
 
-        // Define file names.
-        const string outputFolder = "Output";
-        const string templatePath = "Output/template.docx";
-        const string jsonPath = "Output/data.json";
-        const string attachmentPath = "Output/attachment.txt";
-        const string resultPath = "Output/ReportResult.docx";
-
-        // Ensure the output folder exists.
-        Directory.CreateDirectory(outputFolder);
-
-        // -----------------------------------------------------------------
-        // 1. Create a simple attachment file that will be embedded.
-        // -----------------------------------------------------------------
-        File.WriteAllText(attachmentPath, "This is the content of the embedded attachment.", Encoding.UTF8);
-
-        // -----------------------------------------------------------------
-        // 2. Create a JSON file that holds the data for the report.
-        // -----------------------------------------------------------------
-        var model = new ReportModel
+        // Create the data model and fill the Base64 field.
+        ReportModel model = new()
         {
-            Title = "Sample LINQ Reporting",
-            AttachmentPath = attachmentPath // Path to the file we just created.
+            AttachmentBase64 = attachmentBase64
         };
-        string jsonContent = JsonConvert.SerializeObject(model, Formatting.Indented);
-        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+
+        // Serialize the model to a JSON file (simulating an external source).
+        string jsonPath = "data.json";
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model, Formatting.Indented));
+
+        // Load the JSON back into a model instance.
+        string jsonContent = File.ReadAllText(jsonPath);
+        ReportModel data = JsonConvert.DeserializeObject<ReportModel>(jsonContent)!;
 
         // -----------------------------------------------------------------
-        // 3. Build the template document programmatically.
+        // Create the template document programmatically.
         // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        Document template = new();
+        DocumentBuilder builder = new(template);
 
-        // Insert a title placeholder.
-        builder.Writeln("Report Title: <<[model.Title]>>");
-        builder.Writeln();
-
-        // Insert the document (attachment) placeholder.
-        // The <<doc>> tag embeds the document referenced by the expression.
-        builder.Writeln("Embedded Attachment:");
-        builder.Writeln("<<doc [model.AttachmentPath]>>");
+        // Insert LINQ Reporting tags.
+        builder.Writeln("Report for: <<[model.CustomerName]>>");
+        builder.Writeln("Date: <<[model.ReportDate]>>");
+        builder.Writeln("Attachment:");
+        // Bookmark where the attachment will be inserted.
+        builder.StartBookmark("Attachment");
+        builder.Writeln("[Attachment will be inserted here]");
+        builder.EndBookmark("Attachment");
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        string templatePath = "template.docx";
+        template.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 4. Load the template and the JSON data source.
+        // Load the template and build the report.
         // -----------------------------------------------------------------
-        var loadedTemplate = new Document(templatePath);
-        var jsonDataSource = new JsonDataSource(jsonPath);
+        Document reportDoc = new(templatePath);
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, data, "model");
 
         // -----------------------------------------------------------------
-        // 5. Build the report using ReportingEngine.
+        // Embed the attachment as an OLE object at the bookmark location.
         // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        // The root object name used in the template tags is "model".
-        engine.BuildReport(loadedTemplate, jsonDataSource, "model");
+        using (MemoryStream attachmentStream = new(data.AttachmentContent))
+        {
+            DocumentBuilder reportBuilder = new(reportDoc);
+            reportBuilder.MoveToBookmark("Attachment");
+            // Provide a valid ProgID for the OLE object (e.g., "Package" for generic files).
+            reportBuilder.InsertOleObject(attachmentStream, "Package", false, null);
+        }
 
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
-        loadedTemplate.Save(resultPath);
+        // Save the final report.
+        string outputPath = "output.docx";
+        reportDoc.Save(outputPath);
     }
 }

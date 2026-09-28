@@ -1,71 +1,68 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    public string BaseUrl { get; set; } = "";
+    public Dictionary<string, string> Parameters { get; set; } = new();
+    public string LinkText { get; set; } = "";
+
+    // Constructs the full URL with query parameters.
+    public string FullUrl
+    {
+        get
+        {
+            if (Parameters == null || Parameters.Count == 0)
+                return BaseUrl;
+
+            var query = string.Join("&",
+                Parameters.Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value)}"));
+            return $"{BaseUrl}?{query}";
+        }
+    }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample data model.
+        // Prepare sample data.
         var model = new ReportModel
         {
             BaseUrl = "https://example.com/search",
-            Params = new List<QueryParam>
+            Parameters = new Dictionary<string, string>
             {
-                new QueryParam { Name = "q", Value = "aspose" },
-                new QueryParam { Name = "page", Value = "1" }
+                { "q", "aspose" },
+                { "page", "1" }
             },
             LinkText = "Search Aspose"
         };
 
-        // Build the template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        // Insert a LINQ Reporting link tag that will be replaced with the constructed URI.
+        // Create a template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Dynamic Hyperlink Example:");
+        // LINQ Reporting link tag using the computed FullUrl and LinkText.
         builder.Writeln("<<link [model.FullUrl] [model.LinkText]>>");
 
-        // Populate the template using the ReportingEngine.
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        var loadedTemplate = new Document(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(loadedTemplate, model, "model");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        const string outputPath = "ReportOutput.docx";
+        loadedTemplate.Save(outputPath);
     }
-}
-
-// Root data model for the report.
-public class ReportModel
-{
-    // Base URL part (e.g., https://example.com/search)
-    public string BaseUrl { get; set; } = string.Empty;
-
-    // Collection of query parameters.
-    public List<QueryParam> Params { get; set; } = new();
-
-    // Text that will be displayed for the hyperlink.
-    public string LinkText { get; set; } = string.Empty;
-
-    // Full URL constructed from BaseUrl and Params.
-    public string FullUrl => BuildUrl();
-
-    // Helper method to build the complete URL with encoded query string.
-    private string BuildUrl()
-    {
-        if (string.IsNullOrEmpty(BaseUrl))
-            return string.Empty;
-
-        var query = string.Join("&",
-            Params.Select(p => $"{Uri.EscapeDataString(p.Name)}={Uri.EscapeDataString(p.Value)}"));
-
-        return string.IsNullOrEmpty(query) ? BaseUrl : $"{BaseUrl}?{query}";
-    }
-}
-
-// Simple key/value pair representing a single query parameter.
-public class QueryParam
-{
-    public string Name { get; set; } = string.Empty;
-    public string Value { get; set; } = string.Empty;
 }

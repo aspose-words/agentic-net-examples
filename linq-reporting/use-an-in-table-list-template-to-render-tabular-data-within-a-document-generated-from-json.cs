@@ -11,64 +11,74 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample JSON data.
-        string json = @"
-{
-  ""Products"": [
-    { ""Name"": ""Apple"",  ""Category"": ""Fruit"",  ""Price"": 0.5 },
-    { ""Name"": ""Carrot"", ""Category"": ""Vegetable"", ""Price"": 0.3 },
-    { ""Name"": ""Bread"",  ""Category"": ""Bakery"", ""Price"": 1.2 }
-  ]
-}";
-        const string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, json, Encoding.UTF8);
+        // Register code page provider for Aspose.Words (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Deserialize JSON into model.
-        ReportModel model = JsonConvert.DeserializeObject<ReportModel>(File.ReadAllText(jsonPath, Encoding.UTF8))!;
+        // Prepare sample JSON data
+        string jsonPath = "data.json";
+        var sampleData = new ReportModel
+        {
+            Products = new List<Product>
+            {
+                new Product { Index = 1, Name = "Apple" },
+                new Product { Index = 2, Name = "Banana" },
+                new Product { Index = 3, Name = "Cherry" }
+            }
+        };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Create the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Load JSON into model
+        var jsonContent = File.ReadAllText(jsonPath);
+        var model = JsonConvert.DeserializeObject<ReportModel>(jsonContent) ?? new ReportModel();
 
-        builder.Writeln("Product Report");
+        // Create template document programmatically
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Product List");
         builder.Writeln();
 
-        // Header row.
-        Table headerTable = builder.StartTable();
-        builder.InsertCell(); builder.Writeln("Name");
-        builder.InsertCell(); builder.Writeln("Category");
-        builder.InsertCell(); builder.Writeln("Price");
+        // Begin foreach loop – the whole table will be repeated for each product
+        builder.Writeln("<<foreach [product in Products]>>");
+
+        // Table for a single product
+        Table table = builder.StartTable();
+
+        // Header row
+        builder.InsertCell();
+        builder.Writeln("Index");
+        builder.InsertCell();
+        builder.Writeln("Name");
         builder.EndRow();
+
+        // Data row
+        builder.InsertCell();
+        builder.Writeln("<<[product.Index]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[product.Name]>>");
+        builder.EndRow();
+
+        // End table
         builder.EndTable();
 
-        // Data rows inside a foreach block.
-        builder.Writeln("<<foreach [p in Products]>>");
-        Table dataTable = builder.StartTable();
-        builder.InsertCell(); builder.Writeln("<<[p.Name]>>");
-        builder.InsertCell(); builder.Writeln("<<[p.Category]>>");
-        builder.InsertCell(); builder.Writeln("<<[p.Price]>>");
-        builder.EndRow();
-        builder.EndTable();
+        // End foreach loop
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, for inspection).
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
+        // Save the template (optional, for inspection)
+        doc.Save(templatePath);
 
-        // Build the report using the LINQ Reporting Engine.
-        ReportingEngine engine = new ReportingEngine();
-        bool success = engine.BuildReport(template, model, "model");
+        // Build the report using the LINQ Reporting engine
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "report.docx";
-        template.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        // Save the generated report
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
 }
 
-// Data model classes.
+// Data model classes
 public class ReportModel
 {
     public List<Product> Products { get; set; } = new();
@@ -76,7 +86,6 @@ public class ReportModel
 
 public class Product
 {
-    public string Name { get; set; } = "";
-    public string Category { get; set; } = "";
-    public decimal Price { get; set; }
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

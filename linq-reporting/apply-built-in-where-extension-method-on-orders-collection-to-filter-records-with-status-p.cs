@@ -8,8 +8,9 @@ using Aspose.Words.Reporting;
 public class Order
 {
     public int Id { get; set; }
-    public string Status { get; set; } = "";
     public string CustomerName { get; set; } = "";
+    public string Status { get; set; } = "";
+    public decimal Amount { get; set; }
 }
 
 public class ReportModel
@@ -21,38 +22,43 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Sample data with various statuses.
+        List<Order> orders = new()
         {
-            Orders = new List<Order>
-            {
-                new Order { Id = 1, Status = "Pending",   CustomerName = "Alice" },
-                new Order { Id = 2, Status = "Shipped",   CustomerName = "Bob"   },
-                new Order { Id = 3, Status = "Pending",   CustomerName = "Carol" },
-                new Order { Id = 4, Status = "Delivered", CustomerName = "Dave"  }
-            }
+            new Order { Id = 1, CustomerName = "Alice",   Status = "Pending",   Amount = 120.50m },
+            new Order { Id = 2, CustomerName = "Bob",     Status = "Completed", Amount = 75.00m },
+            new Order { Id = 3, CustomerName = "Charlie", Status = "Pending",   Amount = 200.00m },
+            new Order { Id = 4, CustomerName = "Diana",   Status = "Shipped",   Amount = 50.25m }
         };
 
-        // Filter the collection to only pending orders using LINQ.
-        model.Orders = model.Orders.Where(o => o.Status == "Pending").ToList();
+        // Apply LINQ Where to keep only pending orders.
+        List<Order> pendingOrders = orders.Where(o => o.Status == "Pending").ToList();
 
-        // Create a template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Wrap the filtered collection in a model for the reporting engine.
+        ReportModel model = new() { Orders = pendingOrders };
 
-        // Insert a simple LINQ Reporting tag that iterates over the Orders collection.
-        builder.Writeln("Pending Orders:");
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+        builder.Writeln("Pending Orders Report");
         builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("  Id: <<[order.Id]>>  Customer: <<[order.CustomerName]>>  Status: <<[order.Status]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Status: <<[order.Status]>>");
+        builder.Writeln("Amount: $<<[order.Amount]>>");
         builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // Build the report using the ReportingEngine.
-        var engine = new ReportingEngine();
+        // Load the template for report generation.
+        Document doc = new(templatePath);
+
+        // Build the report using the filtered data.
+        ReportingEngine engine = new();
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
+        string outputPath = "Report.docx";
         doc.Save(outputPath);
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

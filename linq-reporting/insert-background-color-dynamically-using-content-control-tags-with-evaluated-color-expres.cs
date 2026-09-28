@@ -1,53 +1,85 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;   // Required for Table type
 
-public class Program
+namespace LinqReportingBackgroundColorExample
 {
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Create a blank document that will serve as the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert LINQ Reporting tags.
-        // Iterate over the Items collection and apply a dynamic background color to each item name.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<backColor [item.ColorExpression]>><<[item.Name]>> <</backColor>>");
-        builder.Writeln("<</foreach>>");
-
-        // Prepare sample data.
-        ReportModel model = new ReportModel
-        {
-            Items =
-            {
-                new Item { Name = "Apple",  ColorExpression = "LightYellow" },
-                new Item { Name = "Banana", ColorExpression = "LightGreen" },
-                new Item { Name = "Cherry", ColorExpression = "#FFC0CB" } // HTML color code.
-            }
-        };
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated document.
-        doc.Save("ReportWithBackground.docx");
+        public List<Item> Items { get; set; } = new();
     }
-}
 
-// Root data model for the report.
-public class ReportModel
-{
-    // Initialize the collection to avoid nullable warnings.
-    public List<Item> Items { get; set; } = new();
-}
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public bool IsHighlighted { get; set; }
 
-// Individual item displayed in the report.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    // The expression that evaluates to a color name, HTML code, etc.
-    public string ColorExpression { get; set; } = string.Empty;
+        // Evaluated color expression for background color
+        public string BackgroundColor => IsHighlighted ? "LightGray" : "White";
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare output folder
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // -----------------------------------------------------------------
+            // Create a template document programmatically
+            // -----------------------------------------------------------------
+            string templatePath = Path.Combine(outputDir, "template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("Items List:");
+
+            // Begin foreach loop over Items
+            builder.Writeln("<<foreach [item in Items]>>");
+
+            // Create a table with one column to display item name with dynamic background color
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            // Apply backColor tag with evaluated color expression
+            builder.Writeln("<<backColor [item.BackgroundColor]>> <<[item.Name]>> <</backColor>>");
+            builder.EndRow();
+            builder.EndTable();
+
+            // End foreach loop
+            builder.Writeln("<</foreach>>");
+
+            // Save the template
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // Load the template for reporting
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
+
+            // Sample data
+            ReportModel model = new()
+            {
+                Items = new()
+                {
+                    new Item { Name = "Alpha",   IsHighlighted = true },
+                    new Item { Name = "Beta",    IsHighlighted = false },
+                    new Item { Name = "Gamma",   IsHighlighted = true },
+                    new Item { Name = "Delta",   IsHighlighted = false }
+                }
+            };
+
+            // Build the report using LINQ Reporting engine
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report
+            string outputPath = Path.Combine(outputDir, "output.docx");
+            doc.Save(outputPath);
+        }
+    }
 }

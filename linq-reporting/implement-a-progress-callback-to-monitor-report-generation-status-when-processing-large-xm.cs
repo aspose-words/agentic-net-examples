@@ -11,116 +11,103 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed.
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample XML data.
-        const string xmlFileName = "orders.xml";
-        CreateSampleXml(xmlFileName, 500); // 500 orders for demonstration.
+        // Prepare directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Load XML and build data model while reporting progress.
-        ReportModel model = new();
-        LoadXmlWithProgress(xmlFileName, model, ReportProgress);
+        // 1. Create a large XML data set.
+        string xmlPath = Path.Combine(outputDir, "products.xml");
+        CreateSampleXml(xmlPath, 200);
 
-        // Set additional model data required by the template.
-        model.CurrentDateTime = DateTime.Now;
-
-        // Create a Word template with LINQ Reporting tags.
-        const string templateFileName = "template.docx";
-        CreateTemplate(templateFileName);
-
-        // Load the template document.
-        Document doc = new(templateFileName);
-
-        // Build the report.
-        ReportingEngine engine = new();
-        engine.Options = ReportBuildOptions.InlineErrorMessages; // optional, provides detailed errors
-        ReportProgress(0); // Start of report generation.
-        bool success = engine.BuildReport(doc, model, "model");
-        ReportProgress(100); // End of report generation.
-
-        // Save the generated report.
-        const string outputFileName = "report.docx";
-        doc.Save(outputFileName, SaveFormat.Docx);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputFileName}'.");
-    }
-
-    // Progress callback that writes percentage to the console.
-    private static void ReportProgress(int percent)
-    {
-        Console.WriteLine($"Progress: {percent}%");
-    }
-
-    // Creates a sample XML file with a specified number of orders.
-    private static void CreateSampleXml(string filePath, int orderCount)
-    {
-        XElement root = new("Orders");
-        for (int i = 1; i <= orderCount; i++)
+        // 2. Parse XML with progress reporting.
+        ReportData data = new();
+        Action<int, int> progressCallback = (processed, total) =>
         {
-            root.Add(new XElement("Order",
-                new XElement("Id", i),
-                new XElement("CustomerName", $"Customer {i}")
-            ));
-        }
+            Console.WriteLine($"Parsing XML: {processed}/{total} items processed.");
+        };
+        ParseXmlWithProgress(xmlPath, data, progressCallback);
 
-        XDocument doc = new(root);
-        doc.Save(filePath);
+        // 3. Create a LINQ Reporting template.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        CreateTemplate(templatePath);
+
+        // 4. Load the template and build the report.
+        Document doc = new(templatePath);
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, data, "data");
+
+        // 5. Save the generated report.
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(reportPath);
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 
-    // Loads XML data into the model while invoking the progress callback.
-    private static void LoadXmlWithProgress(string filePath, ReportModel model, Action<int> progressCallback)
+    private static void CreateSampleXml(string path, int count)
     {
-        XDocument xdoc = XDocument.Load(filePath);
-        var orderElements = xdoc.Root?.Elements("Order") ?? Enumerable.Empty<XElement>();
-        int total = orderElements.Count();
+        XDocument doc = new(
+            new XElement("Products",
+                Enumerable.Range(1, count).Select(i =>
+                    new XElement("Product",
+                        new XElement("Id", i),
+                        new XElement("Name", $"Product {i}"),
+                        new XElement("Price", (i * 1.23).ToString("F2")),
+                        new XElement("Description", $"Description for product {i}.")
+                    ))
+            )
+        );
+        doc.Save(path);
+    }
+
+    private static void ParseXmlWithProgress(string xmlPath, ReportData data, Action<int, int> progress)
+    {
+        XDocument doc = XDocument.Load(xmlPath);
+        var productElements = doc.Root?.Elements("Product") ?? Enumerable.Empty<XElement>();
+        int total = productElements.Count();
         int processed = 0;
 
-        foreach (var elem in orderElements)
+        foreach (var elem in productElements)
         {
-            Order order = new()
+            Product p = new()
             {
-                Id = (int?)elem.Element("Id") ?? 0,
-                CustomerName = (string?)elem.Element("CustomerName") ?? string.Empty
+                Id = (int)elem.Element("Id")!,
+                Name = (string)elem.Element("Name")!,
+                Price = decimal.Parse((string)elem.Element("Price")!),
+                Description = (string)elem.Element("Description")!
             };
-            model.Orders.Add(order);
+            data.Products.Add(p);
             processed++;
-            int percent = (int)((double)processed / total * 100);
-            progressCallback(percent);
+            progress?.Invoke(processed, total);
         }
     }
 
-    // Creates a Word document template with LINQ Reporting tags.
-    private static void CreateTemplate(string filePath)
+    private static void CreateTemplate(string path)
     {
         Document doc = new();
         DocumentBuilder builder = new(doc);
 
-        builder.Writeln("Orders Report");
-        builder.Writeln("Generated on: <<[model.CurrentDateTime]>>");
-        builder.Writeln();
-
-        // Begin foreach loop over Orders collection.
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Product Report");
+        builder.Writeln("Total Products: <<[data.Products.Count]>>");
+        builder.Writeln("<<foreach [p in data.Products]>>");
+        builder.Writeln("Id: <<[p.Id]>>, Name: <<[p.Name]>>, Price: $<<[p.Price]>>");
+        builder.Writeln("Description: <<[p.Description]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(filePath, SaveFormat.Docx);
+        doc.Save(path);
     }
 }
 
-// Root data model for the report.
-public class ReportModel
+public class ReportData
 {
-    public List<Order> Orders { get; set; } = new();
-    public DateTime CurrentDateTime { get; set; } = DateTime.Now;
+    public List<Product> Products { get; set; } = new();
 }
 
-// Individual order data.
-public class Order
+public class Product
 {
     public int Id { get; set; }
-    public string CustomerName { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public string Description { get; set; } = string.Empty;
 }

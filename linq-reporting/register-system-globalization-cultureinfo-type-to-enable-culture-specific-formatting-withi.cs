@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,37 +8,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Ensure output directory exists
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Insert LINQ Reporting tags that format a date and a number using a specific culture.
-        builder.Writeln("Date (fr-FR): <<[model.Date.ToString(\"D\", CultureInfo.GetCultureInfo(\"fr-FR\"))]>>");
-        builder.Writeln("Amount (fr-FR): <<[model.Amount.ToString(\"C\", CultureInfo.GetCultureInfo(\"fr-FR\"))]>>");
+        // Create a template document with culture‑specific formatting tags
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Prepare the data source.
-        ReportModel model = new ReportModel
+        builder.Writeln("Report Date (fr‑FR): <<[model.FormattedReportDate]>>");
+        builder.Writeln("Total Amount (fr‑FR): <<[model.FormattedTotalAmount]>>");
+
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model
+        ReportModel model = new()
         {
-            Date = new DateTime(2023, 12, 31),
-            Amount = 12345.67
+            ReportDate = new DateTime(2023, 12, 31),
+            TotalAmount = 12345.67
         };
 
-        // Configure the reporting engine.
+        // Build the report
         ReportingEngine engine = new ReportingEngine();
-        // Register System.Globalization.CultureInfo to allow its static members in template expressions.
-        engine.KnownTypes.Add(typeof(CultureInfo));
-
-        // Build the report.
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+        // Save the generated report
+        string resultPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(resultPath);
+
+        // Indicate completion (no interactive input)
+        Console.WriteLine($"Report generated: {resultPath}");
     }
 }
 
-// Simple data model used by the template.
+// Data model used by the template
 public class ReportModel
 {
-    public DateTime Date { get; set; } = DateTime.Now;
-    public double Amount { get; set; } = 0.0;
+    public DateTime ReportDate { get; set; } = DateTime.MinValue;
+    public double TotalAmount { get; set; }
+
+    // Culture‑specific formatted properties
+    public string FormattedReportDate =>
+        ReportDate.ToString("d", CultureInfo.GetCultureInfo("fr-FR"));
+
+    public string FormattedTotalAmount =>
+        TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("fr-FR"));
 }

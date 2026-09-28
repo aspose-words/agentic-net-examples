@@ -1,37 +1,50 @@
 using System;
+using System.Collections.Generic;
+using Aspose.Words;
+using Aspose.Words.Reporting;
+
+public class Product
+{
+    public string Name { get; set; } = "";
+    public int Stock { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Sample product with zero stock
-        var product = new Product
+        // Sample data
+        var model = new ReportModel
         {
-            Name = "Widget",
-            Stock = 0
+            Products = new List<Product>
+            {
+                new Product { Name = "Apple", Stock = 10 },
+                new Product { Name = "Banana", Stock = 0 },
+                new Product { Name = "Orange", Stock = 5 }
+            }
         };
 
-        Console.WriteLine($"Product: {product.Name}");
+        // Create template document
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Display stock status
-        if (product.Stock > 0)
-        {
-            Console.WriteLine($"In stock: {product.Stock}");
-        }
-        else
-        {
-            // Stock is zero, show out‑of‑stock message
-            Console.WriteLine("Out of stock");
-        }
+        builder.Writeln("Product Report");
+        builder.Writeln("<<foreach [p in Products]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("<<if [p.Stock > 0]>>In stock: <<[p.Stock]>> <</if>>");
+        builder.Writeln("<<if [p.Stock == 0]>>Out of stock<</if>>");
+        builder.Writeln("<</foreach>>");
+
+        // Build report
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save output
+        doc.Save("ReportOutput.docx");
     }
-}
-
-// Simple data model for a product
-public class Product
-{
-    // Product name (initialized to avoid nullable warnings)
-    public string Name { get; set; } = string.Empty;
-
-    // Quantity available in stock
-    public int Stock { get; set; }
 }

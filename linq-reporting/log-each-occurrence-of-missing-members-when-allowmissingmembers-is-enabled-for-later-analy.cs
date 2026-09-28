@@ -1,29 +1,36 @@
 using System;
-using System.Data;
+using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Model
+{
+    // Existing member used in the template.
+    public string Name { get; set; } = "John Doe";
+
+    // Intentionally missing member to trigger logging.
+    // public string MissingProperty { get; set; }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        // Paths for template, output document, and log file.
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
+        string logPath = "missing_members.log";
 
         // -----------------------------------------------------------------
-        // 1. Create a template document that references missing members.
+        // 1. Create a simple template with a valid tag and a missing tag.
         // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        // The tag <<[missingObject.Name]>> refers to a member that does not exist.
-        builder.Writeln("Customer: <<[missingObject.Name]>>");
-
-        // A foreach loop over a missing collection.
-        builder.Writeln("<<foreach [item in missingObject]>>Item: <<[item]>> <</foreach>>");
+        builder.Writeln("Hello, <<[model.Name]>>!");
+        builder.Writeln("This will try to use a missing member: <<[model.MissingProperty]>>.");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
@@ -31,32 +38,69 @@ public class Program
         // -----------------------------------------------------------------
         // 2. Load the template for reporting.
         // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
+        Document reportDoc = new(templatePath);
 
         // -----------------------------------------------------------------
-        // 3. Configure the ReportingEngine to allow missing members.
+        // 3. Prepare the data model (does NOT contain MissingProperty).
         // -----------------------------------------------------------------
-        var engine = new ReportingEngine
+        Model model = new();
+
+        // -----------------------------------------------------------------
+        // 4. Configure the ReportingEngine to allow missing members.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
+
+        // Build the report.
+        bool success = engine.BuildReport(reportDoc, model, "model");
+
+        // -----------------------------------------------------------------
+        // 5. Retrieve and log each occurrence of missing members.
+        // -----------------------------------------------------------------
+        // Use reflection to obtain the MissingMemberLog property if it exists.
+        IList<string> missingMembers = new List<string>();
+        PropertyInfo? logProp = typeof(ReportingEngine).GetProperty("MissingMemberLog", BindingFlags.Instance | BindingFlags.Public);
+        if (logProp != null && typeof(IList<string>).IsAssignableFrom(logProp.PropertyType))
         {
-            Options = ReportBuildOptions.AllowMissingMembers,
-            MissingMemberMessage = "[Missing]"
-        };
+            missingMembers = (IList<string>?)logProp.GetValue(engine) ?? new List<string>();
+        }
 
-        // Build the report using an empty DataSet as the data source.
-        // The empty string for the data source name allows direct member access.
-        engine.BuildReport(reportDoc, new DataSet(), "");
+        // Ensure the log file directory exists.
+        string logDirectory = Path.GetDirectoryName(Path.GetFullPath(logPath)) ?? "";
+        if (!Directory.Exists(logDirectory))
+        {
+            Directory.CreateDirectory(logDirectory);
+        }
+
+        using (StreamWriter logWriter = new(logPath, false))
+        {
+            if (missingMembers.Count == 0)
+            {
+                logWriter.WriteLine("No missing members were encountered.");
+                Console.WriteLine("No missing members were encountered.");
+            }
+            else
+            {
+                logWriter.WriteLine("Missing members encountered during report generation:");
+                Console.WriteLine("Missing members encountered during report generation:");
+                foreach (string entry in missingMembers)
+                {
+                    logWriter.WriteLine(entry);
+                    Console.WriteLine(entry);
+                }
+            }
+        }
 
         // -----------------------------------------------------------------
-        // 4. Log each occurrence of the missing member placeholder.
+        // 6. Save the generated report.
         // -----------------------------------------------------------------
-        string documentText = reportDoc.GetText();
-        int missingCount = Regex.Matches(documentText, Regex.Escape("[Missing]")).Count;
+        // Ensure the output directory exists.
+        string outputDirectory = Path.GetDirectoryName(Path.GetFullPath(outputPath)) ?? "";
+        if (!Directory.Exists(outputDirectory))
+        {
+            Directory.CreateDirectory(outputDirectory);
+        }
 
-        Console.WriteLine($"Missing members logged: {missingCount}");
-
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(reportPath);
+        reportDoc.Save(outputPath);
     }
 }

@@ -1,71 +1,89 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Required for the Table class
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files.
-        string xmlPath = "persons.xml";
-        string templatePath = "template.docx";
-        string outputPath = "output.docx";
+        // Register code page provider for any required encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create a simple XML data source file.
+        // Prepare working directory.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(workDir);
+
+        // Create sample XML data source.
+        string xmlPath = Path.Combine(workDir, "data.xml");
         File.WriteAllText(xmlPath,
-@"<persons>
-    <person>
-        <Name>John Doe</Name>
-        <Age>30</Age>
-    </person>
-    <person>
-        <Name>Jane Smith</Name>
-        <Age>25</Age>
-    </person>
-</persons>");
+            @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Orders>
+    <Order>
+        <Id>1001</Id>
+        <Customer>John Doe</Customer>
+    </Order>
+    <Order>
+        <Id>1002</Id>
+        <Customer>Jane Smith</Customer>
+    </Order>
+    <Order>
+        <Id>1003</Id>
+        <Customer>Bob Johnson</Customer>
+    </Order>
+</Orders>", Encoding.UTF8);
 
-        // 2. Build the template document with LINQ Reporting tags.
+        // Create the template document programmatically.
+        string templatePath = Path.Combine(workDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("People Report");
-        builder.Writeln("<<foreach [p in persons]>>");
+        // Title.
+        builder.Writeln("Orders Report");
+        builder.Writeln();
 
-        // Start a table that will be repeated for each person.
-        Table table = builder.StartTable();
-
-        // Header row.
+        // Header table (appears once).
+        Table headerTable = builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("Name");
+        builder.Writeln("Order ID");
         builder.InsertCell();
-        builder.Writeln("Age");
+        builder.Writeln("Customer");
         builder.EndRow();
-
-        // Data row – values are filled by the reporting engine.
-        builder.InsertCell();
-        builder.Writeln("<<[p.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[p.Age]>>");
-        builder.EndRow();
-
-        // Finish the table and the foreach block.
         builder.EndTable();
+
+        // Begin foreach loop over Orders.
+        builder.Writeln("<<foreach [order in Orders]>>");
+
+        // Data rows table (repeated for each order).
+        Table dataTable = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("<<[order.Id]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[order.Customer]>>");
+        builder.EndRow();
+        builder.EndTable();
+
+        // End foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // 3. Load the template and the XML data source.
-        Document doc = new Document(templatePath);
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // 4. Build the report.
+        // Build the report using the XML data source.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource, "persons");
+        XmlDataSource xmlData = new XmlDataSource(xmlPath);
+        engine.BuildReport(reportDoc, xmlData, "Orders");
 
-        // 5. Save the generated report.
-        doc.Save(outputPath);
+        // Save the generated report.
+        string reportPath = Path.Combine(workDir, "report.docx");
+        reportDoc.Save(reportPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }

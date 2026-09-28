@@ -1,32 +1,56 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
+
+public class ReportModel
+{
+    // No properties needed for this simple example.
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Add some content to generate multiple pages.
-        builder.Writeln("First page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third page content.");
+        // Create a template document.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Move the cursor to the primary footer and insert the dynamic page number tag.
+        // Insert a footer with a dynamic page number field.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("{=PageNumber}");
+        builder.Write("Page ");
+        builder.InsertField("{=PageNumber}");
+        builder.Write(" of ");
+        builder.InsertField("{=NUMPAGES}");
 
-        // Build the report (no data source is required for the footer tag).
+        // Add sample content to generate multiple pages.
+        builder.MoveToDocumentStart();
+        for (int i = 0; i < 5; i++)
+        {
+            builder.Writeln($"This is sample paragraph {i + 1}. Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+        }
+
+        // Save the template to disk.
+        string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
+
+        // Prepare a dummy root model.
+        ReportModel model = new ReportModel();
+
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, new object());
+        engine.BuildReport(doc, model, "model");
 
-        // Save the resulting document.
-        doc.Save("DynamicFooter.docx");
+        // Save the final report.
+        string outputPath = "ReportOutput.docx";
+        doc.Save(outputPath);
     }
 }

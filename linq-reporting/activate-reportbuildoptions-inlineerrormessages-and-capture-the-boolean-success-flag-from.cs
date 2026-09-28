@@ -1,45 +1,47 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model used as the root object for the report.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
+        // Prepare folders
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+
+        // Create a template document with a LINQ Reporting tag.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Hello <<[model.Name]>>!");
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Sample data model.
+        Model model = new Model { Name = "World" };
+
+        // Configure the reporting engine with InlineErrorMessages option.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // Build the report and capture the success flag.
+        bool success = engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        reportDoc.Save(resultPath);
+
+        // Output the success flag.
+        Console.WriteLine($"Report build success: {success}");
     }
+}
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Create a sample data object.
-            var person = new Person
-            {
-                Name = "John Doe",
-                Age = 30
-            };
-
-            // Create a new blank document and insert a LINQ Reporting tag.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            // The tag references the root object name "person".
-            builder.Writeln("<<[person.Name]>> is <<[person.Age]>> years old.");
-
-            // Configure the reporting engine to inline error messages.
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
-
-            // Build the report and capture the success flag.
-            bool success = engine.BuildReport(doc, person, "person");
-
-            // Save the resulting document.
-            doc.Save("ReportOutput.docx");
-
-            // Output the success flag (no interactive input required).
-            Console.WriteLine($"Report build success: {success}");
-        }
-    }
+// Public data model class used by the template.
+public class Model
+{
+    public string Name { get; set; } = string.Empty;
 }

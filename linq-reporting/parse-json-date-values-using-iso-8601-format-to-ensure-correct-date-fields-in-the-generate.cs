@@ -1,58 +1,69 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
+
+public class Order
+{
+    public string CustomerName { get; set; } = "";
+    public DateTime OrderDate { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample JSON data with ISO 8601 date strings.
-        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "people.json");
-        File.WriteAllText(jsonPath,
-            @"[
-                { ""Name"": ""John Doe"", ""BirthDate"": ""1990-05-15T00:00:00Z"" },
-                { ""Name"": ""Jane Smith"", ""BirthDate"": ""1985-12-01T00:00:00Z"" }
-            ]");
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a template document containing LINQ Reporting tags.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
+        // Prepare folders.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+
+        // Create the template document.
+        string templatePath = Path.Combine(outputDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("People Report");
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Birth Date: <<[p.BirthDate]>>");
+        builder.Writeln("Orders Report");
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Date: <<[order.OrderDate.ToString(\"yyyy-MM-dd\")]>>");
         builder.Writeln("<</foreach>>");
 
         templateDoc.Save(templatePath);
 
+        // Create sample JSON data with ISO 8601 dates.
+        string jsonPath = Path.Combine(outputDir, "data.json");
+        string jsonContent = @"{
+  ""Orders"": [
+    { ""CustomerName"": ""Alice"", ""OrderDate"": ""2023-08-15T14:30:00Z"" },
+    { ""CustomerName"": ""Bob"",   ""OrderDate"": ""2023-09-01T09:15:00Z"" }
+  ]
+}";
+        File.WriteAllText(jsonPath, jsonContent);
+
+        // Load and deserialize JSON data.
+        string json = File.ReadAllText(jsonPath);
+        ReportModel model = JsonConvert.DeserializeObject<ReportModel>(json) ?? new ReportModel();
+
         // Load the template for reporting.
         Document reportDoc = new Document(templatePath);
 
-        // Configure JSON parsing to recognize ISO 8601 date formats.
-        JsonDataLoadOptions loadOptions = new JsonDataLoadOptions
-        {
-            ExactDateTimeParseFormats = new List<string>
-            {
-                "yyyy-MM-ddTHH:mm:ssZ",
-                "yyyy-MM-ddTHH:mm:sszzz",
-                "yyyy-MM-ddTHH:mm:ss"
-            }
-        };
-
-        // Create a JSON data source using the options above.
-        JsonDataSource dataSource = new JsonDataSource(jsonPath, loadOptions);
-
         // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(reportDoc, dataSource, "persons");
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(outputPath);
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        reportDoc.Save(reportPath);
     }
 }

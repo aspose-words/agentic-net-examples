@@ -3,17 +3,6 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class LinkItem
-{
-    public string Url { get; set; } = "";
-    public string DisplayText { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<LinkItem> Items { get; set; } = new();
-}
-
 public class Program
 {
     public static void Main()
@@ -21,39 +10,50 @@ public class Program
         // Prepare sample data.
         var model = new ReportModel
         {
-            Items = new List<LinkItem>
+            Links = new List<LinkItem>
             {
-                new LinkItem { Url = "https://example.com/first", DisplayText = "First Site" },
-                new LinkItem { Url = "https://example.com/second", DisplayText = "" }, // Empty display text.
-                new LinkItem { Url = "https://example.com/third", DisplayText = "Third Site" }
+                new LinkItem { Url = "https://example.com/page1", LinkText = "Example Page 1" },
+                new LinkItem { Url = "https://example.com/page2", LinkText = "" }, // Empty display text, should fallback to URL.
+                new LinkItem { Url = "https://example.com/page3", LinkText = null } // Null display text, should fallback to URL.
             }
         };
 
-        // Create a template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create the LINQ Reporting template programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // If DisplayText is empty, use the URL as the link text.
-        builder.Writeln("<<if [string.IsNullOrEmpty(item.DisplayText)]>>");
-        builder.Writeln("<<link [item.Url] [item.Url]>>");
-        builder.Writeln("<</if>>");
-
-        // If DisplayText is not empty, use it as the link text.
-        builder.Writeln("<<if [!string.IsNullOrEmpty(item.DisplayText)]>>");
-        builder.Writeln("<<link [item.Url] [item.DisplayText]>>");
-        builder.Writeln("<</if>>");
-
-        // End the foreach loop.
+        // Insert a foreach loop over the Links collection.
+        builder.Writeln("<<foreach [link in Links]>>");
+        // Insert a link tag where the display text falls back to the URL if LinkText is null or empty.
+        builder.Writeln("<<link [link.Url] [string.IsNullOrEmpty(link.LinkText) ? link.Url : link.LinkText]>>");
         builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
 
         // Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated document.
-        doc.Save("HyperlinkReport.docx");
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<LinkItem> Links { get; set; } = new();
+}
+
+// Individual link item.
+public class LinkItem
+{
+    public string Url { get; set; } = "";
+    public string? LinkText { get; set; }
 }

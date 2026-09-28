@@ -1,81 +1,92 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
-namespace AsposeWordsLinqReportingPdfA
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Working directory.
+        string workDir = Directory.GetCurrentDirectory();
+
+        // File paths.
+        string dataFile = Path.Combine(workDir, "data.xml");
+        string templateFile = Path.Combine(workDir, "template.docx");
+        string outputPdf = Path.Combine(workDir, "Report.pdf");
+
+        // Create sample XML data source.
+        File.WriteAllText(dataFile,
+@"<Orders>
+    <Order>
+        <CustomerName>John Doe</CustomerName>
+        <OrderDate>2023-01-15</OrderDate>
+        <Total>199.99</Total>
+    </Order>
+    <Order>
+        <CustomerName>Jane Smith</CustomerName>
+        <OrderDate>2023-02-03</OrderDate>
+        <Total>349.50</Total>
+    </Order>
+</Orders>");
+
+        // Build the template document with LINQ Reporting tags.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Orders Report");
+        builder.Writeln();
+
+        // Begin foreach loop over Orders.
+        builder.Writeln("<<foreach [order in Orders]>>");
+
+        // Create a table for each iteration (header + data row).
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Customer");
+        builder.InsertCell();
+        builder.Writeln("Date");
+        builder.InsertCell();
+        builder.Writeln("Total");
+        builder.EndRow();
+
+        // Data row bound to the current order.
+        builder.InsertCell();
+        builder.Writeln("<<[order.CustomerName]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[order.OrderDate]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[order.Total]>>");
+        builder.EndRow();
+
+        // End the table for this iteration.
+        builder.EndTable();
+
+        // End foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        templateDoc.Save(templateFile);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templateFile);
+
+        // Load XML data source.
+        var xmlData = new XmlDataSource(dataFile);
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, xmlData, "Orders");
+
+        // Save as PDF/A-1b.
+        var pdfOptions = new PdfSaveOptions
         {
-            // Register code page provider for XML encoding support.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Define file names.
-            const string templatePath = "Template.docx";
-            const string xmlDataPath = "Data.xml";
-            const string outputPdfPath = "Report.pdf";
-
-            // -----------------------------------------------------------------
-            // 1. Create a simple XML data source file.
-            // -----------------------------------------------------------------
-            const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<persons>
-    <person>
-        <Name>John Doe</Name>
-        <Age>30</Age>
-    </person>
-    <person>
-        <Name>Jane Smith</Name>
-        <Age>25</Age>
-    </person>
-    <person>
-        <Name>Bob Johnson</Name>
-        <Age>40</Age>
-    </person>
-</persons>";
-            File.WriteAllText(xmlDataPath, xmlContent, Encoding.UTF8);
-
-            // -----------------------------------------------------------------
-            // 2. Build the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("People Report");
-            builder.Writeln("==============");
-            builder.Writeln();
-            // LINQ Reporting foreach tag.
-            builder.Writeln("<<foreach [person in persons]>>");
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Load the template and bind the XML data source.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            XmlDataSource xmlDataSource = new XmlDataSource(xmlDataPath);
-
-            ReportingEngine engine = new ReportingEngine();
-            // Build the report; the data source name must match the tag reference ("persons").
-            engine.BuildReport(reportDoc, xmlDataSource, "persons");
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report as PDF/A compliant document.
-            // -----------------------------------------------------------------
-            PdfSaveOptions pdfOptions = new PdfSaveOptions
-            {
-                // PDF/A-1b compliance.
-                Compliance = PdfCompliance.PdfA1b
-            };
-            reportDoc.Save(outputPdfPath, pdfOptions);
-        }
+            Compliance = PdfCompliance.PdfA1b
+        };
+        reportDoc.Save(outputPdf, pdfOptions);
     }
 }

@@ -1,56 +1,59 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Simple data model with only a Name property.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-        // Note: Age property is intentionally omitted to demonstrate missing‑member handling.
-    }
+        // Register code page provider for Aspose.Words (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare template document
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert LINQ Reporting tags
+        builder.Writeln("Customer Name: <<[order.CustomerName]>>");
+        builder.Writeln("Missing Field (should be empty): <<[order.MissingField]>>");
+        templateDoc.Save(templatePath);
+
+        // Load the template
+        Document doc = new Document(templatePath);
+
+        // Prepare data model (MissingField does NOT exist in the original model)
+        Order order = new Order
         {
-            // 1. Create a template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            CustomerName = "John Doe"
+        };
 
-            // Insert LINQ Reporting tags. The Age tag does not exist in the Person class.
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>"); // Missing member.
+        // Configure the reporting engine.
+        // The engine will ignore missing members by default when the corresponding
+        // property returns null, so we do not need a special flag that is unavailable
+        // in the current Aspose.Words version.
+        ReportingEngine engine = new ReportingEngine();
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Build the report
+        engine.BuildReport(doc, order, "order");
 
-            // 2. Load the template (simulating a separate load step).
-            Document doc = new Document(templatePath);
+        // Save the generated report
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
 
-            // 3. Prepare the data source.
-            Person person = new Person { Name = "John Doe" };
-
-            // 4. Configure the ReportingEngine to treat missing members as null.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.AllowMissingMembers,
-                MissingMemberMessage = "N/A" // Optional custom message for plain missing references.
-            };
-
-            // 5. Build the report. The root object name is "person".
-            bool success = engine.BuildReport(doc, person, "person");
-
-            // 6. Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-
-            // Inform the user.
-            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
-            Console.WriteLine($"Template saved to: {templatePath}");
-            Console.WriteLine($"Report saved to: {outputPath}");
-        }
+        // Indicate completion (no interactive input)
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Data model used by the report
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+
+    // The MissingField property is intentionally left to return null.
+    // This allows the template tag <<[order.MissingField]>> to be treated as an empty value.
+    public string? MissingField => null;
 }

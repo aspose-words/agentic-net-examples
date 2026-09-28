@@ -1,80 +1,56 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class DiscountReport
 {
-    // Data model classes
+    public static void Main()
+    {
+        // Register code page provider for any encoding needs.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Create a template document.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Add static fields.
+        builder.Writeln("Customer: <<[model.CustomerName]>>");
+        builder.Writeln("Total: $<<[model.Total]>>");
+
+        // Conditional block: display discount only when it is greater than zero.
+        builder.Writeln("<<if [model.Discount > 0]>>Discount: $<<[model.Discount]>> <</if>>");
+
+        // Save the template to disk.
+        const string templatePath = "DiscountTemplate.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Prepare sample data.
+        ReportModel model = new ReportModel
+        {
+            CustomerName = "John Doe",
+            Total = 120.00,
+            Discount = 15.00 // Change to 0 to hide the discount line.
+        };
+
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        const string outputPath = "DiscountReport.docx";
+        reportDoc.Save(outputPath);
+    }
+
+    // Data model used by the template.
     public class ReportModel
     {
-        // Collection of items to be displayed in the report
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public decimal Discount { get; set; }
-
-        // Helper property used in the conditional tag
-        public bool HasDiscount => Discount > 0;
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // Step 1: Create the template document programmatically
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            // Header
-            builder.Writeln("Item Report");
-            builder.Writeln();
-
-            // Begin foreach loop over Items
-            builder.Writeln("<<foreach [item in Items]>>");
-
-            // Item name and price
-            builder.Writeln("Name: <<[item.Name]>>");
-            builder.Writeln("Price: $<<[item.Price]>>");
-
-            // Conditional block: display discount only when it exists
-            builder.Writeln("<<if [item.HasDiscount]>>Discount: $<<[item.Discount]>> <</if>>");
-
-            // Add a separator line between items
-            builder.Writeln("--------------------");
-
-            // End foreach loop
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to a file (required before building the report)
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // Step 2: Load the template document
-            Document reportDoc = new Document(templatePath);
-
-            // Step 3: Prepare sample data
-            ReportModel model = new()
-            {
-                Items = new List<Item>
-                {
-                    new Item { Name = "Laptop", Price = 1200m, Discount = 150m },
-                    new Item { Name = "Smartphone", Price = 800m, Discount = 0m },
-                    new Item { Name = "Headphones", Price = 150m, Discount = 20m }
-                }
-            };
-
-            // Step 4: Build the report using the LINQ Reporting engine
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Step 5: Save the generated report
-            const string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        public string CustomerName { get; set; } = "";
+        public double Total { get; set; }
+        public double Discount { get; set; }
     }
 }

@@ -7,33 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample JSON file containing an array of person objects.
-        string jsonPath = "people.json";
+        // Prepare file paths
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string jsonPath = Path.Combine(workDir, "Data.json");
+        string reportPath = Path.Combine(workDir, "Report.docx");
+
+        // Create sample JSON data (array of objects)
         string jsonContent = @"[
             { ""Name"": ""Alice"", ""Age"": 30 },
-            { ""Name"": ""Bob"", ""Age"": 25 },
+            { ""Name"": ""Bob"",   ""Age"": 25 },
             { ""Name"": ""Charlie"", ""Age"": 28 }
         ]";
         File.WriteAllText(jsonPath, jsonContent);
 
-        // Build the template document in memory.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert LINQ Reporting tags that will iterate over the JSON array.
-        builder.Writeln("<<foreach [p in persons]>>");
+        // Build the template document with LINQ Reporting tags
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [p in data]>>");
         builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
+        template.Save(templatePath);
 
-        // Load the JSON data source.
-        JsonDataSource dataSource = new JsonDataSource(jsonPath);
+        // Load the template for reporting
+        Document reportDoc = new Document(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
+        // Load JSON data source
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+
+        // Build the report
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, dataSource, "persons");
+        engine.BuildReport(reportDoc, jsonDataSource, "data");
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        // Save the generated report
+        reportDoc.Save(reportPath);
+
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }

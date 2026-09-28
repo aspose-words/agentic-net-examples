@@ -3,72 +3,78 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Loading;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing (required for some encodings).
+        // Register code page provider for CSV support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare output folder and file paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string csvPath = Path.Combine(outputDir, "data.csv");
-        string resultPath = Path.Combine(outputDir, "report.docx");
+        // Prepare sample CSV data.
+        string csvPath = "data.csv";
+        File.WriteAllText(csvPath,
+            "Item,Value1,Value2\n" +
+            "Apple,10,5\n" +
+            "Banana,7,3\n" +
+            "Cherry,12,8");
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template.
-        // -----------------------------------------------------------------
+        // Create a Word template with LINQ Reporting tags.
+        string templatePath = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach loop over the CSV rows (data source name: data).
-        builder.Writeln("<<foreach [row in data]>>");
-        builder.Writeln("Value1: <<[row.Value1]>>");
-        builder.Writeln("Value2: <<[row.Value2]>>");
-        // Calculated field: sum of the two numeric columns.
-        builder.Writeln("Sum: <<[row.Value1 + row.Value2]>>");
+        // Begin foreach loop over CSV rows.
+        builder.Writeln("<<foreach [row in rows]>>");
+
+        // Start the table inside the loop.
+        Table table = builder.StartTable();
+
+        // Header row (only once, so we add a condition to render it on the first iteration).
+        builder.InsertCell();
+        builder.Writeln("Item");
+        builder.InsertCell();
+        builder.Writeln("Sum");
+        builder.EndRow();
+
+        // Data row – first cell.
+        builder.InsertCell();
+        builder.Writeln("<<[row.Item]>>");
+
+        // Data row – second cell (calculated sum).
+        builder.InsertCell();
+        builder.Writeln("<<[row.Value1 + row.Value2]>>");
+
+        // End of the data row.
+        builder.EndRow();
+
+        // End the table.
+        builder.EndTable();
+
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Create a sample CSV file with two numeric columns.
-        // -----------------------------------------------------------------
-        string[] csvLines =
-        {
-            "Value1,Value2",
-            "10,20",
-            "5,7",
-            "12,8"
-        };
-        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
-
-        // -----------------------------------------------------------------
-        // 3. Load the template and bind the CSV data source.
-        // -----------------------------------------------------------------
+        // Load the template for report generation.
         Document doc = new Document(templatePath);
 
-        // Configure CSV loading to treat the first line as column headers.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
-
-        ReportingEngine engine = new ReportingEngine
+        // Configure CSV data source (default separator is comma).
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions
         {
-            Options = ReportBuildOptions.None
+            HasHeaders = true
         };
+        CsvDataSource dataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // Build the report. The data source name used in the template is "data".
-        engine.BuildReport(doc, csvData, "data");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, dataSource, "rows");
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save(resultPath);
-
-        Console.WriteLine($"Report generated at: {resultPath}");
+        // Save the generated report.
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
 }

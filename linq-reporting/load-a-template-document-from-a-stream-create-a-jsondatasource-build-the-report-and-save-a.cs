@@ -2,61 +2,47 @@ using System;
 using System.IO;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting; // JsonDataSource resides in this namespace
+using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Simple data model that matches the JSON structure.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+        // Create a template document in memory.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider for possible legacy encodings.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Insert a simple LINQ Reporting foreach loop over "orders".
+        builder.Writeln("<<foreach [order in orders]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Amount: <<[order.Amount]>>");
+        builder.Writeln("<</foreach>>");
 
-            // ---------- 1. Create a template document in memory ----------
-            // The template contains LINQ Reporting tags that reference the root object "person".
-            using var templateStream = new MemoryStream();
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // Save the template to a memory stream.
+        using var templateStream = new MemoryStream();
+        templateDoc.Save(templateStream, SaveFormat.Docx);
+        templateStream.Position = 0; // Reset before loading.
 
-            builder.Writeln("Person Report");
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
+        // Load the template document from the stream.
+        var reportDoc = new Document(templateStream);
 
-            // Save the template to the memory stream.
-            templateDoc.Save(templateStream, SaveFormat.Docx);
-            templateStream.Position = 0; // Reset for reading.
+        // Prepare sample JSON data with a root array named "orders".
+        string json = @"{
+            ""orders"": [
+                { ""CustomerName"": ""Alice"", ""Amount"": 123.45 },
+                { ""CustomerName"": ""Bob"",   ""Amount"": 67.89 }
+            ]
+        }";
 
-            // ---------- 2. Prepare JSON data source ----------
-            // Sample JSON representing a single Person object.
-            const string json = @"{ ""Name"": ""John Doe"", ""Age"": 30 }";
-            var jsonBytes = Encoding.UTF8.GetBytes(json);
-            using var jsonStream = new MemoryStream(jsonBytes);
-            jsonStream.Position = 0; // Ensure the stream is at the beginning.
+        // Create a JsonDataSource from the JSON string.
+        using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        var jsonDataSource = new JsonDataSource(jsonStream);
 
-            // Create a JsonDataSource from the JSON stream.
-            var jsonDataSource = new JsonDataSource(jsonStream);
+        // Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, jsonDataSource, "orders");
 
-            // ---------- 3. Load the template document from the stream ----------
-            var reportDoc = new Document(templateStream);
-
-            // ---------- 4. Build the report ----------
-            var engine = new ReportingEngine();
-            // The root object name used in the template is "person".
-            engine.BuildReport(reportDoc, jsonDataSource, "person");
-
-            // ---------- 5. Save the generated report as RTF ----------
-            const string outputPath = "PersonReport.rtf";
-            reportDoc.Save(outputPath, SaveFormat.Rtf);
-
-            Console.WriteLine($"Report generated and saved to '{outputPath}'.");
-        }
+        // Save the generated report as RTF.
+        reportDoc.Save("Report.rtf");
     }
 }

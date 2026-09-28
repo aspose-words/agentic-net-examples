@@ -1,61 +1,48 @@
 using System;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
+using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // ---------- Create template ----------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Prepare sample data model with image bytes from an embedded Base64 PNG
-        ReportModel model = new()
+        // Insert a textbox that will hold the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+        builder.MoveTo(textBox.FirstParagraph);
+        // Image tag that will receive a byte[] with the image data.
+        builder.Write("<<image [model.ImageData] -fitSize>>");
+
+        // Save the template.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // ---------- Prepare data ----------
+        var model = new ReportModel
         {
+            // Use a small embedded PNG image (1x1 transparent pixel) to avoid network calls.
             ImageData = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=")
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=")
         };
 
-        // Create a template document programmatically
-        string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // ---------- Build report ----------
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Load the template
-        Document doc = new(templatePath);
-
-        // Build the report using LINQ Reporting Engine
-        ReportingEngine engine = new();
-        bool success = engine.BuildReport(doc, model, "model");
-
-        // Save the generated report
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
-
-        // Indicate completion (no interactive input)
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
-    }
-
-    private static void CreateTemplate(string path)
-    {
-        Document template = new();
-        DocumentBuilder builder = new(template);
-
-        // Insert a textbox to host the image tag
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
-        builder.MoveTo(textBox.FirstParagraph);
-        // Image tag referencing the ImageData property of the model
-        builder.Write("<<image [ImageData] -fitSize>>");
-
-        // Save the template
-        template.Save(path);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
-// Data model used by the report
+// Public data model used by the template.
 public class ReportModel
 {
-    // Image data to be inserted into the report (byte array)
+    // Image data as a byte array; the image tag can consume this type.
     public byte[] ImageData { get; set; } = Array.Empty<byte>();
 }

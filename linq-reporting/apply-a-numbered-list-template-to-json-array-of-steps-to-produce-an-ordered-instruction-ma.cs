@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
@@ -11,71 +10,68 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words operations).
+        // Register code page provider for Aspose.Words (required for some encodings)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Create sample JSON data representing the steps of an instruction manual.
-        // -----------------------------------------------------------------
-        var steps = new List<Step>
-        {
-            new Step { Description = "Preheat the oven to 180°C." },
-            new Step { Description = "Mix flour, sugar and butter in a bowl." },
-            new Step { Description = "Add eggs and whisk until smooth." },
-            new Step { Description = "Pour the batter into a greased pan." },
-            new Step { Description = "Bake for 25 minutes or until golden brown." }
-        };
+        // Prepare sample JSON data representing an array of steps
+        string json = @"{
+            ""Steps"": [
+                { ""Description"": ""Preheat the oven to 180°C."" },
+                { ""Description"": ""Mix flour and sugar in a bowl."" },
+                { ""Description"": ""Add eggs and stir until smooth."" },
+                { ""Description"": ""Pour batter into a greased pan."" },
+                { ""Description"": ""Bake for 30 minutes."" }
+            ]
+        }";
 
-        string jsonPath = "steps.json";
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(steps, Formatting.Indented));
+        // Deserialize JSON into the data model
+        InstructionManual manual = JsonConvert.DeserializeObject<InstructionManual>(json)!;
 
-        // -----------------------------------------------------------------
-        // 2. Build the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = "Template.docx";
-
-        // Create a blank document and a builder.
+        // Create the LINQ Reporting template programmatically
+        string templatePath = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Apply a numbered list style to the paragraph that will contain the loop.
-        builder.ListFormat.List = templateDoc.Lists.Add(ListTemplate.NumberDefault);
+        // Title
+        builder.Writeln("Instruction Manual");
+        builder.Writeln();
 
-        // Insert the LINQ Reporting tags.
-        // <<restartNum>> ensures numbering starts at 1 for this list.
-        // The foreach iterates over the JSON array named "steps".
-        // Inside the loop we output the Description property of each step.
-        builder.Writeln("<<restartNum>><<foreach [step in steps]>><<[step.Description]>> <</foreach>>");
+        // Begin foreach over the Steps collection
+        builder.Writeln("<<foreach [step in Steps]>>");
 
-        // Save the template to disk.
+        // Set the paragraph style to a numbered list
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.ListNumber;
+
+        // Restart numbering for each step and insert the step description
+        builder.Writeln("<<restartNum>><<[step.Description]>>");
+
+        // End foreach block
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and generate the report using the JSON data source.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Load the template (ensures BuildReport is called after loading)
+        Document doc = new Document(templatePath);
 
-        // Create a JsonDataSource that reads the JSON file created earlier.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
-
-        // Initialize the reporting engine.
+        // Build the report using the data model
         ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, manual, "manual");
 
-        // Build the report. The root data source name must match the name used in the template ("steps").
-        engine.BuildReport(reportDoc, jsonDataSource, "steps");
-
-        // -----------------------------------------------------------------
-        // 4. Save the final instruction manual.
-        // -----------------------------------------------------------------
+        // Save the generated instruction manual
         string outputPath = "InstructionManual.docx";
-        reportDoc.Save(outputPath);
+        doc.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model for the JSON array (used only for serialization above).
-// ---------------------------------------------------------------------
+// Root data model for the report
+public class InstructionManual
+{
+    public List<Step> Steps { get; set; } = new();
+}
+
+// Model representing a single step
 public class Step
 {
-    public string Description { get; set; } = string.Empty;
+    public string Description { get; set; } = "";
 }

@@ -3,65 +3,79 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-public class Program
+namespace LinqReportingContextualAccess
 {
-    // Simple data model.
-    public class Order
+    public class Program
     {
-        public List<Customer> Customers { get; set; } = new();
+        public static void Main()
+        {
+            // Register code page provider for any encoding needs.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare folders.
+            string workDir = Directory.GetCurrentDirectory();
+            string templatePath = Path.Combine(workDir, "template.docx");
+            string outputPath = Path.Combine(workDir, "output.docx");
+
+            // -------------------------------------------------
+            // 1. Create the template document with LINQ tags.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("Product List:");
+            // Data band: foreach over Products collection.
+            builder.Writeln("<<foreach [p in Products]>>");
+            // Use contextual member access (no 'p.' prefix).
+            builder.Writeln(" - <<[Name]>> : $<<[Price]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // 2. Load the template for report generation.
+            // -------------------------------------------------
+            Document doc = new Document(templatePath);
+
+            // -------------------------------------------------
+            // 3. Prepare the data model.
+            // -------------------------------------------------
+            ReportModel model = new()
+            {
+                Products = new List<Product>
+                {
+                    new Product { Name = "Apple", Price = 0.99m },
+                    new Product { Name = "Banana", Price = 0.59m },
+                    new Product { Name = "Cherry", Price = 2.49m }
+                }
+            };
+
+            // -------------------------------------------------
+            // 4. Build the report.
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // -------------------------------------------------
+            // 5. Save the generated report.
+            // -------------------------------------------------
+            doc.Save(outputPath);
+        }
     }
 
-    public class Customer
+    // Root data model.
+    public class ReportModel
+    {
+        public List<Product> Products { get; set; } = new();
+    }
+
+    // Item class used inside the data band.
+    public class Product
     {
         public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
-
-    public static void Main()
-    {
-        // Prepare sample data.
-        var order = new Order
-        {
-            Customers = new List<Customer>
-            {
-                new Customer { Name = "Alice", Age = 30 },
-                new Customer { Name = "Bob",   Age = 45 },
-                new Customer { Name = "Carol", Age = 27 }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Data band (foreach) that iterates over Order.Customers.
-        // Inside the band we refer to member names directly (Name, Age)
-        // without specifying the object reference (c.).
-        builder.Writeln("<<foreach [c in Customers]>>");
-        builder.Writeln("Name: <<[Name]>>   Age: <<[Age]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        var loadedDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-
-        // The root object is 'order' and its name in the template is "order".
-        // The template uses the property 'Customers' of the root object.
-        engine.BuildReport(loadedDoc, order, "order");
-
-        // Save the generated report.
-        var outputPath = "Report.docx";
-        loadedDoc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        public decimal Price { get; set; }
     }
 }

@@ -1,94 +1,51 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Order
+{
+    public int Id { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+}
+
 public class Program
 {
-    // Simple data model with a collection of orders.
-    public class Order
-    {
-        public string CustomerName { get; set; } = "";
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public int Quantity { get; set; }
-    }
-
     public static void Main()
     {
-        // Ensure the output directory exists.
-        const string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create a template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write a simple report that iterates over a collection named "orders".
-        builder.Writeln("<<foreach [order in orders]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Name]>> (Qty: <<[item.Quantity]>>)");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template document.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare sample data.
-        // -----------------------------------------------------------------
-        var orders = new List<Order>
+        // Prepare sample data collection.
+        List<Order> orders = new()
         {
-            new Order
-            {
-                CustomerName = "Alice Johnson",
-                Items = new List<Item>
-                {
-                    new Item { Name = "Apple", Quantity = 3 },
-                    new Item { Name = "Banana", Quantity = 5 }
-                }
-            },
-            new Order
-            {
-                CustomerName = "Bob Smith",
-                Items = new List<Item>
-                {
-                    new Item { Name = "Orange", Quantity = 2 },
-                    new Item { Name = "Grapes", Quantity = 1 }
-                }
-            }
+            new Order { Id = 1, CustomerName = "Alice" },
+            new Order { Id = 2, CustomerName = "Bob" },
+            new Order { Id = 3, CustomerName = "Charlie" }
         };
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using the overload that specifies the collection name.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // The third argument is the name of the data source as referenced in the template tags.
+        // Create a template document with LINQ Reporting tags.
+        Document template = new();
+        DocumentBuilder builder = new(template);
+
+        builder.Writeln("Orders Report");
+        builder.Writeln("<<foreach [order in orders]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>, Customer: <<[order.CustomerName]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, but ensures the document is fully created before building).
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for report generation.
+        Document doc = new(templatePath);
+
+        // Build the report using the collection name overload.
+        ReportingEngine engine = new();
         bool success = engine.BuildReport(doc, orders, "orders");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        doc.Save(reportPath);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-        Console.WriteLine(success
-            ? $"Report generated successfully: {reportPath}"
-            : "Report generation failed.");
+        // Indicate completion (no interactive input).
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
 }

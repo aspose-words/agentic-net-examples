@@ -1,63 +1,63 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingConditionalExample
+public class Program
 {
-    // Simple data model representing an order.
-    public class Order
+    public static void Main()
     {
-        // Customer name – initialized to avoid nullable warnings.
-        public string CustomerName { get; set; } = "John Doe";
+        // Register code page provider (required for some Aspose.Words features).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Order total – non‑nullable decimal.
-        public decimal Total { get; set; } = 0m;
-    }
+        // Paths for template and output documents.
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
 
-    public class Program
-    {
-        public static void Main()
+        // -------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Write static content.
+        builder.Writeln("Order Report");
+        builder.Writeln("==============");
+        builder.Writeln("Total Amount: <<[order.Total]>>");
+
+        // Conditional block: show discount label only when Total > 100.
+        builder.Writeln("<<if [order.Total > 100]>>Discount Applied!<</if>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // Load the template for report generation.
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // Sample data model.
+        Order order = new()
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            Total = 150.00m // Change this value to test the condition.
+        };
 
-            // Insert placeholders for data fields.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("Total: <<[order.Total]>>");
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, order, "order");
 
-            // Conditional block – the label appears only when Total > 100.
-            builder.Writeln("<<if [order.Total > 100]>>Discount Applied<</if>>");
+        // Save the generated report.
+        reportDoc.Save(outputPath);
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Prepare sample data.
-            // -----------------------------------------------------------------
-            Order sampleOrder = new Order
-            {
-                CustomerName = "Alice Smith",
-                Total = 150.75m // Change this value to test the condition.
-            };
-
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
-
-            // The root object name in the template is "order".
-            engine.BuildReport(reportDoc, sampleOrder, "order");
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Public data model class.
+public class Order
+{
+    // Initialize to avoid nullable warnings.
+    public decimal Total { get; set; } = 0m;
 }

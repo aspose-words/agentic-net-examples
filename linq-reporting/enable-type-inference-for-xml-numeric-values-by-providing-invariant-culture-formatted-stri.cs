@@ -1,6 +1,6 @@
 using System;
-using System.Globalization;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,50 +8,59 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare XML data with numeric values formatted using invariant culture.
-        // Invariant culture ensures that numbers are represented with '.' as decimal separator,
-        // which allows Aspose.Words LINQ Reporting to infer the correct numeric type.
-        string xmlContent =
+        // Register code page provider (required for some data sources)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare output folder
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+
+        // Create XML data source with invariant‑culture formatted numeric strings
+        string xmlPath = Path.Combine(outputDir, "Data.xml");
+        File.WriteAllText(xmlPath,
             @"<?xml version=""1.0"" encoding=""utf-8""?>
-<persons>
-    <person>
-        <Name>John</Name>
-        <Age>" + 30.ToString(CultureInfo.InvariantCulture) + @"</Age>
-        <Salary>" + (12345.67m).ToString(CultureInfo.InvariantCulture) + @"</Salary>
-    </person>
-    <person>
-        <Name>Jane</Name>
-        <Age>" + 25.ToString(CultureInfo.InvariantCulture) + @"</Age>
-        <Salary>" + (9876.54m).ToString(CultureInfo.InvariantCulture) + @"</Salary>
-    </person>
-</persons>";
+<Orders>
+    <Order>
+        <Id>1</Id>
+        <Amount>1234.56</Amount>
+    </Order>
+    <Order>
+        <Id>2</Id>
+        <Amount>7890.12</Amount>
+    </Order>
+    <Order>
+        <Id>3</Id>
+        <Amount>345.67</Amount>
+    </Order>
+</Orders>", Encoding.UTF8);
 
-        // Write the XML to a temporary file.
-        string xmlPath = Path.Combine(Environment.CurrentDirectory, "persons.xml");
-        File.WriteAllText(xmlPath, xmlContent);
+        // Create a template document programmatically
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Create a template document programmatically.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert LINQ Reporting tags.
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("Salary: <<[person.Salary]>>");
+        // Insert LINQ Reporting tags
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>   Amount: <<[order.Amount]>>");
         builder.Writeln("<</foreach>>");
 
-        // Load the XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
+        // Save the template
+        templateDoc.Save(templatePath);
 
-        // Build the report. The root object name must match the top‑level XML element ("persons").
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource, "persons");
+        // Load the template for reporting
+        var doc = new Document(templatePath);
 
-        // Save the generated report.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-        doc.Save(outputPath);
+        // Create XmlDataSource (no schema file needed)
+        var xmlDataSource = new XmlDataSource(xmlPath);
 
-        Console.WriteLine($"Report generated: {outputPath}");
+        // Build the report
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, xmlDataSource, "Orders");
+
+        // Save the generated report
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(reportPath);
+
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }

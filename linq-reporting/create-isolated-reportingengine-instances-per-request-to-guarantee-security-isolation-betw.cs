@@ -1,90 +1,93 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingIsolationExample
 {
-    public static void Main()
+    // Sample data models
+    public class Order
     {
-        // Create the template document once.
-        const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
-
-        // Sample data for two isolated requests.
-        var order1 = new Order
-        {
-            CustomerName = "Alice Johnson",
-            Services = new List<Service>
-            {
-                new Service { Name = "Consulting" },
-                new Service { Name = "Support" }
-            }
-        };
-
-        var order2 = new Order
-        {
-            CustomerName = "Bob Smith",
-            Services = new List<Service>
-            {
-                new Service { Name = "Installation" },
-                new Service { Name = "Training" },
-                new Service { Name = "Maintenance" }
-            }
-        };
-
-        // Process each request with its own ReportingEngine instance.
-        ProcessReport(order1, templatePath, "Report1.docx");
-        ProcessReport(order2, templatePath, "Report2.docx");
+        public string CustomerName { get; set; } = "";
+        public List<Service> Services { get; set; } = new();
     }
 
-    // Creates a simple Word template containing LINQ Reporting tags.
-    private static void CreateTemplate(string path)
+    public class Service
     {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Services:");
-        builder.Writeln("<<foreach [service in order.Services]>>- <<[service.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(path);
+        public string Name { get; set; } = "";
     }
 
-    // Generates a report for a single request using an isolated ReportingEngine.
-    private static void ProcessReport(Order data, string templatePath, string outputPath)
+    class Program
     {
-        // Load the template fresh for this request.
-        var doc = new Document(templatePath);
-
-        // Each request gets its own ReportingEngine instance.
-        var engine = new ReportingEngine
+        static void Main()
         {
-            Options = ReportBuildOptions.None
-        };
+            // Ensure output directory exists
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+            Directory.CreateDirectory(outputDir);
 
-        // Build the report; the root object name must match the tag prefix.
-        bool success = engine.BuildReport(doc, data, "order");
+            // Path for the template document
+            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
 
-        // Optionally, handle build failures (e.g., when InlineErrorMessages is used).
-        if (!success)
-        {
-            Console.WriteLine($"Report generation failed for {outputPath}");
+            // Create the LINQ Reporting template programmatically
+            CreateTemplate(templatePath);
+
+            // Simulate two independent user requests
+            var orderUserA = new Order
+            {
+                CustomerName = "Alice Johnson",
+                Services = new List<Service>
+                {
+                    new Service { Name = "Consultation" },
+                    new Service { Name = "Implementation" }
+                }
+            };
+
+            var orderUserB = new Order
+            {
+                CustomerName = "Bob Smith",
+                Services = new List<Service>
+                {
+                    new Service { Name = "Support" },
+                    new Service { Name = "Maintenance" },
+                    new Service { Name = "Upgrade" }
+                }
+            };
+
+            // Process each request with its own ReportingEngine instance
+            ProcessRequest(orderUserA, templatePath, Path.Combine(outputDir, "Report_A.docx"));
+            ProcessRequest(orderUserB, templatePath, Path.Combine(outputDir, "Report_B.docx"));
         }
 
-        doc.Save(outputPath);
+        // Creates a simple Word template containing LINQ Reporting tags
+        private static void CreateTemplate(string path)
+        {
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Services:");
+            builder.Writeln("<<foreach [svc in order.Services]>>");
+            builder.Writeln("- <<[svc.Name]>>");
+            builder.Writeln("<</foreach>>");
+
+            doc.Save(path);
+        }
+
+        // Generates a report for a single request using an isolated ReportingEngine
+        private static void ProcessRequest(Order order, string templatePath, string outputPath)
+        {
+            // Load the template document
+            var doc = new Document(templatePath);
+
+            // Each request gets its own ReportingEngine instance
+            var engine = new ReportingEngine();
+
+            // Build the report using the order object as the root with name "order"
+            engine.BuildReport(doc, order, "order");
+
+            // Save the generated report
+            doc.Save(outputPath);
+        }
     }
-}
-
-// Public data model aligned with the template tags.
-public class Order
-{
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Service> Services { get; set; } = new();
-}
-
-public class Service
-{
-    public string Name { get; set; } = string.Empty;
 }

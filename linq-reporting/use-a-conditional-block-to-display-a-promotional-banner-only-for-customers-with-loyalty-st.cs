@@ -1,70 +1,71 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Customer
-{
-    // Sample properties – initialize to avoid nullable warnings
-    public string Name { get; set; } = "John Doe";
-    public bool IsLoyal { get; set; } = true;
-    public string LoyaltyLevel { get; set; } = "Gold";
-}
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a template document with a conditional block.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Greeting
+        // Paths for template and output.
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
+
+        // -------------------------------------------------
+        // Step 1: Create the LINQ Reporting template.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Write a greeting line.
         builder.Writeln("Dear <<[customer.Name]>>,");
         builder.Writeln();
 
-        // Conditional promotional banner – shown only when IsLoyal is true
+        // Conditional block: show promotional banner only for loyal customers.
         builder.Writeln("<<if [customer.IsLoyal]>>");
-        builder.Writeln("=== Exclusive Offer for <<[customer.LoyaltyLevel]>> Members! ===");
-        builder.Writeln("Get 20% off on your next purchase.");
+        builder.Writeln("<<[customer.PromoBanner]>>");
         builder.Writeln("<</if>>");
 
-        builder.Writeln();
-        builder.Writeln("Thank you for being with us.");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Save the template to disk (required by the workflow)
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template back (simulating a real‑world scenario)
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // Step 2: Load the template back for report generation.
+        // -------------------------------------------------
         Document doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare sample data
-        // -----------------------------------------------------------------
-        Customer customer = new Customer
+        // -------------------------------------------------
+        // Step 3: Prepare sample data.
+        // -------------------------------------------------
+        Customer sampleCustomer = new Customer
         {
-            Name = "Alice Smith",
-            IsLoyal = true,               // Change to false to hide the banner
-            LoyaltyLevel = "Platinum"
+            Name = "John Doe",
+            IsLoyal = true,
+            PromoBanner = "Exclusive Offer: 20% Discount on your next purchase!"
         };
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using ReportingEngine
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // Step 4: Build the report.
+        // -------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        // No special options are needed for this simple example
-        engine.BuildReport(doc, customer, "customer");
+        engine.BuildReport(doc, sampleCustomer, "customer");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report
-        // -----------------------------------------------------------------
-        const string outputPath = "Report.docx";
+        // -------------------------------------------------
+        // Step 5: Save the generated report.
+        // -------------------------------------------------
         doc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {outputPath}");
     }
+}
+
+// Public data model for the report.
+public class Customer
+{
+    public string Name { get; set; } = string.Empty;
+    public bool IsLoyal { get; set; }
+    public string PromoBanner { get; set; } = string.Empty;
 }

@@ -3,63 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace LinqReportingReflectionOptimization
 {
+    // Simple data model used by the template.
+    public class Model
+    {
+        public string Name { get; set; } = "World";
+    }
+
     public class Program
     {
         public static void Main()
         {
-            // Prepare file paths.
-            string workDir = Directory.GetCurrentDirectory();
-            string templatePath = Path.Combine(workDir, "template.docx");
-            string resultPath = Path.Combine(workDir, "result.docx");
+            // Prepare folders.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+            Directory.CreateDirectory(outputDir);
 
-            // -----------------------------------------------------------------
-            // 1. Create a simple template document with a LINQ Reporting tag.
-            // -----------------------------------------------------------------
+            // Create a template document with a LINQ Reporting tag.
+            string templatePath = Path.Combine(outputDir, "template.docx");
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
             builder.Writeln("Hello <<[model.Name]>>!");
             templateDoc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template for reporting.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
+            // Load the template for report generation.
+            Document loadedTemplate = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Prepare the data model.
-            // -----------------------------------------------------------------
-            var model = new ReportModel { Name = "Aspose.Words" };
+            // Prepare the data source.
+            Model model = new Model();
 
-            // -----------------------------------------------------------------
-            // 4. Disable reflection optimization only for this report generation.
-            // -----------------------------------------------------------------
-            bool originalOptimization = ReportingEngine.UseReflectionOptimization;
+            // Disable reflection optimization only for this report generation.
+            bool previousOptimizationSetting = ReportingEngine.UseReflectionOptimization;
             ReportingEngine.UseReflectionOptimization = false;
-
             try
             {
                 ReportingEngine engine = new ReportingEngine();
-                // Build the report using the model and the root name "model".
-                engine.BuildReport(doc, model, "model");
+                engine.BuildReport(loadedTemplate, model, "model");
             }
             finally
             {
-                // Restore the original optimization setting.
-                ReportingEngine.UseReflectionOptimization = originalOptimization;
+                // Restore the original setting.
+                ReportingEngine.UseReflectionOptimization = previousOptimizationSetting;
             }
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            doc.Save(resultPath);
+            // Save the generated report.
+            string resultPath = Path.Combine(outputDir, "result.docx");
+            loadedTemplate.Save(resultPath);
         }
-    }
-
-    // Simple data model used by the template.
-    public class ReportModel
-    {
-        public string Name { get; set; } = string.Empty;
     }
 }

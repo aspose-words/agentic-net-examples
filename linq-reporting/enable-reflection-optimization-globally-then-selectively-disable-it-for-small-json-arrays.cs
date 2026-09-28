@@ -1,91 +1,100 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-public class Program
+namespace LinqReportingReflectionOptimization
 {
-    public static void Main()
+    public class Program
     {
-        // Enable reflection optimization globally.
-        ReportingEngine.UseReflectionOptimization = true;
-
-        // Prepare the template document.
-        const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
-
-        // Create sample JSON data files.
-        const string largeJsonPath = "large.json";
-        const string smallJsonPath = "small.json";
-        CreateJsonFile(largeJsonPath, 100); // Large array.
-        CreateJsonFile(smallJsonPath, 2);   // Small array.
-
-        // Generate report for large JSON (optimization stays enabled).
-        GenerateReport(templatePath, largeJsonPath, "items", "LargeReport.docx");
-
-        // Disable reflection optimization for small JSON arrays.
-        ReportingEngine.UseReflectionOptimization = false;
-
-        // Generate report for small JSON (optimization disabled).
-        GenerateReport(templatePath, smallJsonPath, "items", "SmallReport.docx");
-
-        // Reset to default if needed.
-        ReportingEngine.UseReflectionOptimization = true;
-    }
-
-    // Creates a simple template with a foreach loop over a collection named "items".
-    private static void CreateTemplate(string path)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Use static DateTime.Now; add DateTime to known types at runtime.
-        builder.Writeln("Report generated on: <<[DateTime.Now]>>");
-        builder.Writeln();
-        builder.Writeln("<<foreach [item in items]>>");
-        builder.Writeln("Name: <<[item.Name]>>, Value: <<[item.Value]>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(path);
-    }
-
-    // Generates a JSON file containing an array of objects with Name and Value properties.
-    private static void CreateJsonFile(string path, int count)
-    {
-        var items = new List<Dictionary<string, object>>();
-        for (int i = 1; i <= count; i++)
+        public static void Main()
         {
-            items.Add(new Dictionary<string, object>
-            {
-                ["Name"] = $"Item{i}",
-                ["Value"] = i * 10
-            });
+            // Register code page provider required by Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Enable reflection optimization globally.
+            ReportingEngine.UseReflectionOptimization = true;
+
+            // Create sample JSON data files.
+            string largeJsonPath = "large.json";
+            string smallJsonPath = "small.json";
+            CreateSampleJsonFiles(largeJsonPath, smallJsonPath);
+
+            // Create and save the template document.
+            string templatePath = "template.docx";
+            CreateTemplate(templatePath);
+
+            // Load the template for the large data report.
+            Document largeTemplate = new Document(templatePath);
+            var largeData = LoadJsonData(largeJsonPath);
+            var largeEngine = new ReportingEngine();
+            largeEngine.BuildReport(largeTemplate, largeData, "data");
+            largeTemplate.Save("LargeReport.docx");
+
+            // Disable reflection optimization for the small data report.
+            ReportingEngine.UseReflectionOptimization = false;
+
+            // Load a fresh copy of the template for the small data report.
+            Document smallTemplate = new Document(templatePath);
+            var smallData = LoadJsonData(smallJsonPath);
+            var smallEngine = new ReportingEngine();
+            smallEngine.BuildReport(smallTemplate, smallData, "data");
+            smallTemplate.Save("SmallReport.docx");
         }
 
-        string json = System.Text.Json.JsonSerializer.Serialize(items);
-        File.WriteAllText(path, json);
-    }
+        // Model classes matching the JSON structure.
+        public class DataModel
+        {
+            public List<Item> Items { get; set; } = new();
+        }
 
-    // Builds a report using the specified template and JSON data source.
-    private static void GenerateReport(string templatePath, string jsonPath, string rootName, string outputPath)
-    {
-        // Load the template.
-        Document doc = new Document(templatePath);
+        public class Item
+        {
+            public string Name { get; set; } = "";
+            public int Quantity { get; set; }
+        }
 
-        // Create a JSON data source.
-        JsonDataSource dataSource = new JsonDataSource(jsonPath);
+        // Generates sample JSON files for large and small data sets.
+        private static void CreateSampleJsonFiles(string largePath, string smallPath)
+        {
+            var largeModel = new DataModel();
+            for (int i = 1; i <= 1000; i++)
+            {
+                largeModel.Items.Add(new Item { Name = $"Product {i}", Quantity = i });
+            }
+            File.WriteAllText(largePath, JsonConvert.SerializeObject(largeModel));
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
+            var smallModel = new DataModel
+            {
+                Items = new List<Item>
+                {
+                    new Item { Name = "Apple", Quantity = 5 },
+                    new Item { Name = "Banana", Quantity = 3 }
+                }
+            };
+            File.WriteAllText(smallPath, JsonConvert.SerializeObject(smallModel));
+        }
 
-        // Register DateTime type to allow static member access in the template.
-        engine.KnownTypes.Add(typeof(DateTime));
+        // Loads JSON data into a strongly typed object for reporting.
+        private static object LoadJsonData(string path)
+        {
+            string json = File.ReadAllText(path);
+            return JsonConvert.DeserializeObject<DataModel>(json)!;
+        }
 
-        // Use the overload that specifies the root name.
-        engine.BuildReport(doc, dataSource, rootName);
-
-        // Save the generated report.
-        doc.Save(outputPath);
+        // Creates a simple Word template containing LINQ Reporting tags.
+        private static void CreateTemplate(string path)
+        {
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Items Report");
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("- <<[item.Name]>> : <<[item.Quantity]>>");
+            builder.Writeln("<</foreach>>");
+            doc.Save(path);
+        }
     }
 }

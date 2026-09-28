@@ -1,69 +1,52 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Program
 {
-    // Data model used by the LINQ Reporting template.
-    public class ReportModel
+    public static void Main()
     {
-        // Nullable discount value.
-        public decimal? Discount { get; set; }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Nullable tax value.
-        public decimal? Tax { get; set; }
-
-        // Combined value using the lifted addition operator.
-        // If either operand is null, the result is null.
-        public decimal? Combined => Discount + Tax;
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data with nullable decimal fields.
+        var order = new Order
         {
-            // -----------------------------------------------------------------
-            // 1. Create a simple Word template with a LINQ Reporting tag.
-            // -----------------------------------------------------------------
-            string templatePath = "Template.docx";
+            Discount = 5.5m,   // non‑null value
+            Tax = null         // null value to demonstrate lifted addition
+        };
 
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a Word template programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Write a line that will display the combined value.
-            builder.Writeln("Combined value: <<[model.Combined]>>");
+        builder.Writeln("Discount: <<[order.Discount]>>");
+        builder.Writeln("Tax: <<[order.Tax]>>");
+        builder.Writeln("Combined (Discount + Tax): <<[order.Discount + order.Tax]>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        doc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Prepare sample data.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
-            {
-                Discount = 12.5m,
-                Tax = 3.75m
-                // If you want to test null handling, set either property to null.
-            };
+        // Load the template (optional, can reuse the same Document instance).
+        var template = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
+        // Build the report using LINQ Reporting Engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, order, "order");
 
-            ReportingEngine engine = new ReportingEngine();
-            // The root object name used in the template tags is "model".
-            engine.BuildReport(reportDoc, model, "model");
+        // Save the generated report.
+        var reportPath = "Report.docx";
+        template.Save(reportPath);
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-
-            // Inform the user (optional, not required for non‑interactive execution).
-            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
-        }
+        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
     }
+}
+
+// Data model with nullable decimal fields.
+public class Order
+{
+    public decimal? Discount { get; set; } = 0m;
+    public decimal? Tax { get; set; } = 0m;
 }

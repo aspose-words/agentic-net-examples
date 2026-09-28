@@ -1,85 +1,137 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
-    // Entry point of the console application.
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider for any required encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Step 1: Create a DOCX template with LINQ Reporting tags.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        CreateTemplate(templatePath);
+        // Prepare sample image (1x1 PNG) as a byte array.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        // Optional: write the image to disk for reference.
+        File.WriteAllBytes("sample.png", pngBytes);
 
-        // Step 2: Prepare sample data model.
-        ReportModel model = new ReportModel
+        // Build sample data model.
+        ReportModel model = new()
         {
-            CustomerName = "John Doe",
-            Items = new List<Item>
+            Title = "Sales Report",
+            CustomerName = "Acme Corp",
+            DescriptionHtml = "<b>Quarterly performance summary.</b>",
+            Items = new()
             {
-                new Item { Index = 1, Name = "Apple" },
-                new Item { Index = 2, Name = "Banana" },
-                new Item { Index = 3, Name = "Cherry" }
+                new Item { Index = 1, Name = "Widget", Price = 75.00m },
+                new Item { Index = 2, Name = "Gadget", Price = 150.00m },
+                new Item { Index = 3, Name = "Doohickey", Price = 45.00m }
+            },
+            Images = new()
+            {
+                new ImageData { Data = pngBytes },
+                new ImageData { Data = pngBytes }
             }
         };
 
-        // Step 3: Load the template and build the report.
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine
+        // -----------------------------------------------------------------
+        // Create DOCX template with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document template = new();
+        DocumentBuilder builder = new(template);
+
+        // Simple text fields.
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln("Customer: <<[model.CustomerName]>>");
+        builder.Writeln("<<[model.DescriptionHtml] -html>>");
+        builder.Writeln();
+
+        // Items table – repeated rows.
+        builder.Writeln("<<foreach [item in Items]>>");
+        Table itemsTable = builder.StartTable();
+
+        // Index cell.
+        builder.InsertCell();
+        builder.Writeln("<<[item.Index]>>");
+
+        // Name cell.
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+
+        // Price cell with conditional background.
+        builder.InsertCell();
+        builder.Writeln(
+            "<<if [item.Price > 100]>>" +
+            "<<backColor [\"LightGray\"]>><<[item.Price]>> <</backColor>><</if>>" +
+            "<<if [item.Price <= 100]>>" +
+            "<<[item.Price]>> <</if>>");
+
+        builder.EndRow();
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+
+        // Images section – each image inside a textbox within a table cell.
+        builder.Writeln("<<foreach [img in Images]>>");
+        Table imgTable = builder.StartTable();
+        builder.InsertCell();
+
+        Shape txtBox = builder.InsertShape(ShapeType.TextBox, 200, 200);
+        builder.MoveTo(txtBox.FirstParagraph);
+        builder.Writeln("<<image [img.Data] -fitSize>>");
+
+        builder.EndRow();
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template and generate the final report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new(templatePath);
+        ReportingEngine engine = new()
         {
             Options = ReportBuildOptions.None
         };
-        // The root object name used in the template is "model".
         engine.BuildReport(reportDoc, model, "model");
 
-        // Step 4: Save the populated document as PDF.
-        string pdfPath = Path.Combine(outputDir, "Report.pdf");
-        reportDoc.Save(pdfPath, SaveFormat.Pdf);
-    }
+        // Ensure output directory exists.
+        Directory.CreateDirectory("output");
 
-    // Creates a simple DOCX file containing LINQ Reporting tags.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a title.
-        builder.Writeln("Customer Order Report");
-        builder.Writeln();
-
-        // Insert a placeholder for the customer's name.
-        builder.Writeln("Customer: <<[model.CustomerName]>>");
-        builder.Writeln();
-
-        // Begin a foreach loop over the collection of items.
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        // Each iteration writes the item's index and name.
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-        // End the foreach block.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to the specified path.
-        doc.Save(filePath);
+        // Save the final report as PDF.
+        string pdfPath = Path.Combine("output", "Report.pdf");
+        reportDoc.Save(pdfPath);
     }
 }
 
-// Root data model referenced by the template (named "model").
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public string CustomerName { get; set; } = string.Empty;
+    public string Title { get; set; } = "";
+    public string CustomerName { get; set; } = "";
+    public string DescriptionHtml { get; set; } = "";
     public List<Item> Items { get; set; } = new();
+    public List<ImageData> Images { get; set; } = new();
 }
 
-// Simple item class used in the collection.
 public class Item
 {
     public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public decimal Price { get; set; }
+}
+
+public class ImageData
+{
+    public byte[] Data { get; set; } = Array.Empty<byte>();
 }

@@ -4,42 +4,56 @@ using Aspose.Words.Reporting;
 
 public class FeatureModel
 {
-    // Nullable booleans to demonstrate lifted logical AND.
-    public bool? IsActive { get; set; } = false;
-    public bool? HasLicense { get; set; } = false;
-
-    // Lifted logical AND – result is null if either operand is null.
-    // The '&' operator is the lifted version for nullable booleans.
-    public bool? FeatureAvailable => IsActive & HasLicense;
+    // Nullable booleans to demonstrate lifted logical operations.
+    public bool? IsActive { get; set; } = true;
+    public bool? HasLicense { get; set; } = true;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a template document with a LINQ Reporting tag.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-        builder.Writeln("Feature available: <<[model.FeatureAvailable]>>");
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
         const string templatePath = "Template.docx";
-        template.Save(templatePath);
 
-        // 2. Load the template for reporting.
-        var doc = new Document(templatePath);
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
+        builder.Writeln("Feature Availability Report");
+
+        // Use null‑coalescing to safely evaluate nullable booleans.
+        builder.Writeln("<<if [(model.IsActive ?? false) && (model.HasLicense ?? false)]>>Feature is AVAILABLE<</if>>");
+        builder.Writeln("<<if [!((model.IsActive ?? false) && (model.HasLicense ?? false))]>>Feature is NOT AVAILABLE<</if>>");
+
+        // Save the template so it can be loaded for reporting.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template for report generation.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
         // 3. Prepare sample data.
+        // -----------------------------------------------------------------
         var model = new FeatureModel
         {
-            IsActive = true,      // change to false or null to test other outcomes
-            HasLicense = true
+            IsActive = true,
+            HasLicense = false   // Change values to see different outcomes.
         };
 
-        // 4. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
+        // 4. Build the report.
+        // -----------------------------------------------------------------
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
+        // -----------------------------------------------------------------
         // 5. Save the generated report.
-        const string reportPath = "Report.docx";
-        doc.Save(reportPath);
+        // -----------------------------------------------------------------
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

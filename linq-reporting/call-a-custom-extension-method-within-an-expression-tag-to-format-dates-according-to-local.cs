@@ -1,19 +1,26 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace LinqReportingDateFormatting
 {
-    // Extension method used in the template expression.
-    public static class DateExtensions
+    // Extension method to format DateTime according to a locale string.
+    public static class DateTimeExtensions
     {
-        // Formats the given DateTime according to the specified locale (culture name).
-        public static string Format(this DateTime date, string locale)
+        public static string FormatDate(this DateTime date, string locale)
         {
-            var culture = new CultureInfo(locale);
-            // Example format: full date pattern of the culture.
-            return date.ToString(culture.DateTimeFormat.LongDatePattern, culture);
+            try
+            {
+                var culture = new CultureInfo(locale);
+                return date.ToString(culture);
+            }
+            catch
+            {
+                // Fallback to invariant culture if the locale is invalid.
+                return date.ToString(CultureInfo.InvariantCulture);
+            }
         }
     }
 
@@ -21,57 +28,59 @@ namespace AsposeWordsLinqReportingExample
     public class Order
     {
         public DateTime OrderDate { get; set; } = DateTime.Now;
+        public string CustomerName { get; set; } = "John Doe";
+        public List<OrderItem> Items { get; set; } = new();
+
+        // Wrapper method that can be called from LINQ Reporting expressions.
+        public string FormatDate(string locale) => OrderDate.FormatDate(locale);
     }
 
-    // Wrapper root object for the report.
-    public class ReportModel
+    public class OrderItem
     {
-        public Order Order { get; set; } = new();
+        public int Index { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public decimal Price { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string outputPath = "Report.docx";
+            // Prepare sample data.
+            var order = new Order
+            {
+                OrderDate = new DateTime(2023, 12, 25, 14, 30, 0),
+                CustomerName = "Alice Smith",
+                Items = new List<OrderItem>
+                {
+                    new OrderItem { Index = 1, ProductName = "Widget", Price = 19.99m },
+                    new OrderItem { Index = 2, ProductName = "Gadget", Price = 29.99m }
+                }
+            };
 
-            // -------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // Create a template document with LINQ Reporting tags.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-            // Insert a line that uses the custom extension method to format the date.
-            // The expression calls DateExtensions.Format(date, locale).
-            builder.Writeln("Order date (French locale): <<[DateExtensions.Format(Order.OrderDate, \"fr-FR\")]>>");
-            builder.Writeln("Order date (Japanese locale): <<[DateExtensions.Format(Order.OrderDate, \"ja-JP\")]>>");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Order Date (en-US): <<[order.FormatDate(\"en-US\")]>>");
+            builder.Writeln("Order Date (fr-FR): <<[order.FormatDate(\"fr-FR\")]>>");
+            builder.Writeln("");
+            builder.Writeln("<<foreach [item in order.Items]>>");
+            builder.Writeln("Item <<[item.Index]>>: <<[item.ProductName]>> - $<<[item.Price]>>");
+            builder.Writeln("<</foreach>>");
 
-            // Save the template to disk (required before building the report).
-            templateDoc.Save(templatePath);
+            doc.Save(templatePath);
 
-            // -------------------------------------------------
-            // 2. Load the template and prepare the data source.
-            // -------------------------------------------------
-            var doc = new Document(templatePath);
-            var model = new ReportModel(); // Root object with sample data.
-
-            // -------------------------------------------------
-            // 3. Configure and run the LINQ Reporting engine.
-            // -------------------------------------------------
+            // Load the template and build the report.
+            var reportDoc = new Document(templatePath);
             var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, order, "order");
 
-            // Register the static class that contains the extension method so the engine can invoke it.
-            engine.KnownTypes.Add(typeof(DateExtensions));
-
-            // Build the report using the root object name "model".
-            engine.BuildReport(doc, model, "model");
-
-            // -------------------------------------------------
-            // 4. Save the generated report.
-            // -------------------------------------------------
-            doc.Save(outputPath);
+            // Save the generated report.
+            var outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

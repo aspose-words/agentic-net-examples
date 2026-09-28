@@ -1,97 +1,95 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Lists;
 using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the output folder exists.
-        Directory.CreateDirectory("Output");
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create a simple JSON file with grouped data.
-        const string jsonPath = "Output/Data.json";
-        File.WriteAllText(jsonPath,
-            @"{
-  ""Categories"": [
-    {
-      ""Name"": ""Fruits"",
-      ""Items"": [ ""Apple"", ""Banana"", ""Cherry"" ]
-    },
-    {
-      ""Name"": ""Vegetables"",
-      ""Items"": [ ""Carrot"", ""Lettuce"" ]
-    }
-  ]
-}");
+        // ---------- Create sample JSON data ----------
+        string json = @"
+[
+  {
+    ""Name"": ""Fruits"",
+    ""Items"": [
+      { ""Name"": ""Apple"" },
+      { ""Name"": ""Banana"" },
+      { ""Name"": ""Orange"" }
+    ]
+  },
+  {
+    ""Name"": ""Vegetables"",
+    ""Items"": [
+      { ""Name"": ""Carrot"" },
+      { ""Name"": ""Broccoli"" },
+      { ""Name"": ""Spinach"" }
+    ]
+  }
+]";
+        const string jsonPath = "data.json";
+        File.WriteAllText(jsonPath, json);
 
-        // 2. Deserialize JSON into a strongly‑typed model.
-        RootModel model = JsonConvert.DeserializeObject<RootModel>(File.ReadAllText(jsonPath))!;
+        // Deserialize JSON into model objects.
+        List<Category> categories = JsonConvert.DeserializeObject<List<Category>>(File.ReadAllText(jsonPath)) ?? new();
+        var reportData = new ReportData { Categories = categories };
 
-        // 3. Build the LINQ Reporting template programmatically.
-        const string templatePath = "Output/Template.docx";
-        CreateTemplate(templatePath);
+        // ---------- Create the LINQ Reporting template ----------
+        const string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // 4. Load the template and run the reporting engine.
-        Document doc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(doc, model, "model");
-
-        // 5. Save the generated report.
-        const string reportPath = "Output/Report.docx";
-        doc.Save(reportPath);
-    }
-
-    // Creates a Word document that contains LINQ Reporting tags and a bulleted list style.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create a bulleted list that will be used for both levels.
-        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
-
-        // Begin outer loop over categories.
+        // Outer foreach: categories.
         builder.Writeln("<<foreach [cat in Categories]>>");
-
-        // Category name – level 0 bullet.
-        builder.ListFormat.List = bulletList;
-        builder.ListFormat.ListLevelNumber = 0;
+        // Category name as a heading (bold).
+        builder.Font.Bold = true;
         builder.Writeln("<<[cat.Name]>>");
+        builder.Font.Bold = false;
 
-        // Begin inner loop over items.
+        // Inner foreach: items within a category.
         builder.Writeln("<<foreach [item in cat.Items]>>");
+        // Apply bullet list formatting for each item.
+        builder.ListFormat.ApplyBulletDefault();
+        builder.Writeln("<<[item.Name]>>");
+        // Reset list formatting after the line.
+        builder.ListFormat.RemoveNumbers();
+        builder.Writeln("<</foreach>>"); // End inner foreach.
 
-        // Item – level 1 bullet.
-        builder.ListFormat.List = bulletList;
-        builder.ListFormat.ListLevelNumber = 1;
-        builder.Writeln("<<[item]>>");
-
-        // End inner loop.
-        builder.Writeln("<</foreach>>");
-
-        // End outer loop.
-        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>"); // End outer foreach.
 
         // Save the template.
-        doc.Save(filePath);
-    }
+        templateDoc.Save(templatePath);
 
-    // Root object that matches the JSON structure.
-    public class RootModel
-    {
-        public List<Category> Categories { get; set; } = new();
-    }
+        // ---------- Load the template and build the report ----------
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, reportData, "data");
 
-    // Category with a name and a collection of items.
-    public class Category
-    {
-        public string Name { get; set; } = string.Empty;
-        public List<string> Items { get; set; } = new();
+        // Save the generated report.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
+}
+
+// ---------- Data model ----------
+public class ReportData
+{
+    public List<Category> Categories { get; set; } = new();
+}
+
+public class Category
+{
+    public string Name { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
 }

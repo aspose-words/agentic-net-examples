@@ -3,70 +3,58 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingColorExample
 {
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Status = "Success" },
-                new Item { Status = "Failed" },
-                new Item { Status = "Pending" }
-            }
-        };
-
-        // Create the template document programmatically.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        // Begin a foreach loop over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Use textColor tag with a color expression based on the item's status.
-        // The Color property of Item returns a color name string.
-        builder.Writeln("<<textColor [item.Color]>>Status: <<[item.Status]>> <</textColor>>");
-
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to a temporary file.
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // Load the template for reporting.
-        var loadedTemplate = new Document(templatePath);
-
-        // Build the report using the ReportingEngine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "report.docx";
-        loadedTemplate.Save(outputPath);
+        public List<Item> Items { get; set; } = new();
     }
-}
 
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
 
-// Item model with a computed Color property.
-public class Item
-{
-    public string Status { get; set; } = string.Empty;
-
-    // Returns a color name based on the status.
-    public string Color =>
-        Status switch
+    public class Program
+    {
+        public static void Main()
         {
-            "Success" => "Green",
-            "Failed" => "Red",
-            "Pending" => "Orange",
-            _ => "Black"
-        };
+            // Create sample data
+            var model = new ReportModel
+            {
+                Items = new()
+                {
+                    new Item { Name = "Task 1", Status = "Open" },
+                    new Item { Name = "Task 2", Status = "Closed" },
+                    new Item { Name = "Task 3", Status = "InProgress" }
+                }
+            };
+
+            // Create the template document programmatically
+            var templatePath = "template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Task Status Report");
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Task: <<[item.Name]>> - ");
+            builder.Writeln("<<textColor [item.Status == \"Open\" ? \"Green\" : (item.Status == \"Closed\" ? \"Red\" : \"Orange\")]>>");
+            builder.Writeln("<<[item.Status]>>");
+            builder.Writeln("<</textColor>>");
+            builder.Writeln("<</foreach>>");
+
+            doc.Save(templatePath);
+
+            // Load the template and build the report
+            var templateDoc = new Document(templatePath);
+            var engine = new ReportingEngine();
+            engine.BuildReport(templateDoc, model, "model");
+
+            // Save the generated report
+            var outputPath = "ReportOutput.docx";
+            templateDoc.Save(outputPath);
+        }
+    }
 }

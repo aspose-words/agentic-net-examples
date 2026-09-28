@@ -6,60 +6,68 @@ using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
 public class Program
 {
-    // Simple data model for the report.
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public string Role { get; set; } = "";
-    }
-
     public static void Main()
     {
-        // Prepare sample XML data.
-        const string xmlFile = "people.xml";
-        File.WriteAllText(xmlFile,
-@"<people>
-    <person name='John Doe' role='Admin' />
-    <person name='Jane Smith' role='User' />
-    <person name='Bob Johnson' role='admin' />
-    <person name='Alice Brown' role='Guest' />
-</people>");
+        // Sample XML data with a Category attribute.
+        string xmlContent = @"
+<Products>
+    <Product Name='Laptop' Category='Electronics' />
+    <Product Name='Desk' Category='Furniture' />
+    <Product Name='Smartphone' Category='electronics' />
+    <Product Name='Chair' Category='Furniture' />
+    <Product Name='Headphones' Category='ELECTRONICS' />
+</Products>";
 
-        // Load XML and filter nodes where the 'role' attribute equals "admin" (case‑insensitive).
-        XDocument xDoc = XDocument.Load(xmlFile);
-        List<Person> filteredPersons = xDoc.Root!
-            .Elements("person")
-            .Where(p => string.Equals((string?)p.Attribute("role"), "admin", StringComparison.OrdinalIgnoreCase))
-            .Select(p => new Person
+        // Load XML and filter items where Category equals "electronics" (case‑insensitive).
+        XDocument xDoc = XDocument.Parse(xmlContent);
+        List<Item> filteredItems = xDoc.Root!
+            .Elements("Product")
+            .Where(e => string.Equals((string?)e.Attribute("Category"), "electronics", StringComparison.OrdinalIgnoreCase))
+            .Select(e => new Item
             {
-                Name = (string?)p.Attribute("name") ?? "",
-                Role = (string?)p.Attribute("role") ?? ""
+                Name = (string?)e.Attribute("Name") ?? string.Empty,
+                Category = (string?)e.Attribute("Category") ?? string.Empty
             })
             .ToList();
 
-        // Create a template document with LINQ Reporting tags.
-        const string templateFile = "template.docx";
+        // Prepare the LINQ Reporting template.
+        string templatePath = "Template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Filtered persons (role = admin):");
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Role: <<[p.Role]>>");
+        builder.Writeln("Filtered Products (Category = Electronics):");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln(" - <<[item.Name]>> (<<[item.Category]>>)");
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templateFile);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Load the template and build the report using the filtered data.
-        Document reportDoc = new Document(templateFile);
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
+
+        // Create the root data model.
+        ReportModel model = new ReportModel { Items = filteredItems };
+
+        // Build the report using Aspose.Words LINQ Reporting Engine.
         ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // The root object name must match the tag reference ("persons").
-        engine.BuildReport(reportDoc, filteredPersons, "persons");
-
-        // Save the final report.
-        const string outputFile = "report.docx";
-        reportDoc.Save(outputFile);
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

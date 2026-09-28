@@ -1,66 +1,79 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
 public class Item
 {
-    public string Category { get; set; } = "";
     public string Name { get; set; } = "";
-    public double Value { get; set; }
+    public string Category { get; set; } = "";
+    public int Value { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         // Prepare sample JSON data.
-        var items = new List<Item>
-        {
-            new Item { Category = "Fruits", Name = "Apple",  Value = 1.2 },
-            new Item { Category = "Fruits", Name = "Banana", Value = 0.8 },
-            new Item { Category = "Vegetables", Name = "Carrot", Value = 0.5 },
-            new Item { Category = "Fruits", Name = "Orange", Value = 1.0 },
-            new Item { Category = "Vegetables", Name = "Lettuce", Value = 0.7 }
-        };
+        string jsonContent = @"[
+            { ""Name"": ""Apple"",  ""Category"": ""Fruits"",  ""Value"": 5 },
+            { ""Name"": ""Banana"", ""Category"": ""Fruits"",  ""Value"": 3 },
+            { ""Name"": ""Carrot"", ""Category"": ""Vegetables"", ""Value"": 4 },
+            { ""Name"": ""Broccoli"", ""Category"": ""Vegetables"", ""Value"": 6 },
+            { ""Name"": ""Chicken"", ""Category"": ""Meat"", ""Value"": 8 }
+        ]";
+
         string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(items, Formatting.Indented));
+        File.WriteAllText(jsonPath, jsonContent);
 
-        // Create the template document with LINQ Reporting tags.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Load JSON into model.
+        var items = JsonConvert.DeserializeObject<List<Item>>(File.ReadAllText(jsonPath)) ?? new();
+        var model = new ReportModel { Items = items };
+
+        // Create template document.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Title
         builder.Writeln("Report grouped by Category");
-        builder.Writeln("");
+        builder.Writeln();
 
-        // Outer foreach iterates over groups created by GroupBy.
-        builder.Writeln("<<foreach [g in items.GroupBy(i => i.Category)]>>");
-        builder.Writeln("Category: <<[g.Key]>>");
-        builder.Writeln("");
+        // Grouping using LINQ Reporting tags.
+        builder.Writeln("<<foreach [catGroup in Items.GroupBy(i => i.Category)]>>");
+        builder.Writeln("Category: <<[catGroup.Key]>>");
+        builder.Writeln("<</foreach>>"); // Close outer foreach after inner content.
 
-        // Inner foreach iterates over items within the current group.
-        builder.Writeln("<<foreach [item in g]>>");
+        // Items within each category.
+        builder.Writeln("<<foreach [catGroup in Items.GroupBy(i => i.Category)]>>");
+        builder.Writeln("<<foreach [item in catGroup]>>");
         builder.Writeln("- <<[item.Name]>> : <<[item.Value]>>");
         builder.Writeln("<</foreach>>");
-        builder.Writeln("");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save template.
+        doc.Save(templatePath);
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
-
-        // Load JSON data as a data source.
-        var jsonDataSource = new JsonDataSource(jsonPath);
-
-        // Build the report using the data source named "items".
+        // Load template for reporting.
+        var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, jsonDataSource, "items");
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        doc.Save("ReportOutput.docx");
+        // Save final report.
+        var outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }

@@ -1,50 +1,53 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class CustomerInfo
 {
-    // Sample data model.
-    public class CustomerInfo
+    public string Name { get; set; } = "";
+    public string Email { get; set; } = "";
+
+    public CustomerInfo(string name, string email)
     {
-        public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
-        public string Email { get; set; } = "john.doe@example.com";
+        Name = name;
+        Email = email;
     }
+}
 
-    // Wrapper for the root object used in the template.
-    public class ReportModel
+public class Program
+{
+    public static void Main()
     {
-        public CustomerInfo Customer { get; set; } = new CustomerInfo();
-    }
+        // Enable code page support required by Aspose.Words in some environments.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Create a blank document and a builder to insert LINQ Reporting tags.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Sample data.
+        var customer = new CustomerInfo("John Doe", "john.doe@example.com");
 
-            // Insert template tags that reference the CustomerInfo properties.
-            builder.Writeln("Customer Report");
-            builder.Writeln("----------------");
-            builder.Writeln("Name : <<[model.Customer.Name]>>");
-            builder.Writeln("Age  : <<[model.Customer.Age]>>");
-            builder.Writeln("Email: <<[model.Customer.Email]>>");
+        // Create a template document.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Customer Report");
+        builder.Writeln("Name: <<[CustomerInfo.Name]>>");
+        builder.Writeln("Email: <<[CustomerInfo.Email]>>");
+        templateDoc.Save(templatePath);
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel();
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
 
-            // Register the external type so its members can be accessed in the template.
-            ReportingEngine engine = new ReportingEngine();
-            engine.KnownTypes.Add(typeof(CustomerInfo));
+        // Configure the reporting engine.
+        var engine = new ReportingEngine();
 
-            // Build the report using the template, data source, and root name.
-            engine.BuildReport(doc, model, "model");
+        // Build the report using the CustomerInfo instance as the root object named "CustomerInfo".
+        engine.BuildReport(reportDoc, customer, "CustomerInfo");
 
-            // Save the generated document.
-            doc.Save("CustomerReport.docx");
-        }
+        // Save the generated report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

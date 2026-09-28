@@ -1,74 +1,77 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Program
 {
-    // Simple data model – only Name is defined.
-    public class Model
-    {
-        public string Name { get; set; } = "John Doe";
-        // Age is intentionally omitted to trigger a missing‑member warning.
-    }
-
     public static void Main()
     {
-        // Paths for the temporary template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath   = "Report.docx";
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
+        // Prepare sample data.
+        var order = new Order
+        {
+            CustomerName = "Acme Corp",
+            Items = new()
+            {
+                new Item { Name = "Widget", Description = "Standard widget" },
+                new Item { Name = "Gadget", Description = null }, // Missing description to trigger <<error>>
+                new Item { Name = "Doohickey", Description = "Multi‑purpose tool" }
+            }
+        };
+
+        // Create template document with LINQ Reporting tags.
+        string templatePath = "template.docx";
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
 
-        // Normal field – will be filled correctly.
-        builder.Writeln("Name: <<[model.Name]>>");
-
-        // Missing field – there is no Age property in Model.
-        // This will cause a warning/error during report generation.
-        builder.Writeln("Age: <<[model.Age]>>");
-
-        // The <<error>> tag will be replaced with the inline error message
-        // when the ReportingEngine is configured with InlineErrorMessages.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln();
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>>");
+        builder.Writeln("<<if [item.Description]>> Description: <<[item.Description]>> <</if>>");
+        // Insert <<error>> placeholder to capture missing data warnings.
         builder.Writeln("<<error>>");
+        builder.Writeln("<</foreach>>");
 
-        // Save the template to disk (required by the lifecycle rule).
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the template back before building the report.
-        // -------------------------------------------------
+        // Load the template for report generation.
         var doc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 3. Prepare the data source.
-        // -------------------------------------------------
-        var model = new Model();
-
-        // -------------------------------------------------
-        // 4. Configure and run the ReportingEngine.
-        // -------------------------------------------------
+        // Configure reporting engine to show inline error messages.
         var engine = new ReportingEngine
         {
-            // InlineErrorMessages makes the engine insert error messages
-            // directly into the document where parsing problems occur.
             Options = ReportBuildOptions.InlineErrorMessages
         };
 
-        // BuildReport returns a bool indicating success when InlineErrorMessages is set.
-        bool success = engine.BuildReport(doc, model, "model");
+        // Build the report.
+        bool success = engine.BuildReport(doc, order, "order");
 
-        // -------------------------------------------------
-        // 5. Save the generated report.
-        // -------------------------------------------------
-        doc.Save(reportPath);
+        // Save the generated report.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
 
-        // Output the result to the console.
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
-        Console.WriteLine($"Template:  {Path.GetFullPath(templatePath)}");
-        Console.WriteLine($"Report:    {Path.GetFullPath(reportPath)}");
+        // Output the result status.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Output saved to: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Data model classes.
+public class Order
+{
+    public string CustomerName { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public string? Description { get; set; }
 }

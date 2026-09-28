@@ -1,74 +1,89 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Lists;
 
 public class Program
 {
     public static void Main()
     {
-        // Create output folder.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(workDir);
+        // Register code page provider for possible CSV encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create a sample CSV file.
-        string csvPath = Path.Combine(workDir, "data.csv");
-        File.WriteAllText(csvPath,
-            "Id,Name,Value\r\n" +
-            "1,Alpha,30\r\n" +
-            "2,Beta,60\r\n" +
-            "3,Gamma,45\r\n" +
-            "4,Delta,80\r\n");
+        // Prepare sample CSV data.
+        string csvPath = "data.csv";
+        File.WriteAllText(csvPath, @"Id,Name,Category,Value
+1,Alpha,A,100
+2,Beta,B,200
+3,Gamma,A,150
+4,Delta,C,300
+5,Epsilon,A,120");
 
-        // 2. Build the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Load CSV rows into objects.
+        List<CsvRow> allRows = new();
+        foreach (var line in File.ReadAllLines(csvPath, Encoding.UTF8))
+        {
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("Id,"))
+                continue; // Skip header or empty lines.
 
-        // Create a numbered list style and apply it to subsequent paragraphs.
-        List numberedList = template.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = numberedList;
+            string[] parts = line.Split(',');
+            if (parts.Length != 4)
+                continue;
 
-        // Insert LINQ Reporting tags.
-        // The <<restartNum>> tag must be placed immediately before <<foreach>> in the same numbered paragraph.
-        builder.Writeln("<<restartNum>><<foreach [row in csv]>>");
+            allRows.Add(new CsvRow
+            {
+                Id = parts[0],
+                Name = parts[1],
+                Category = parts[2],
+                Value = parts[3]
+            });
+        }
 
-        // Conditional formatting: rows with Value > 50 get a light gray background.
-        builder.Writeln(
-            "<<if [row.Value > 50]>>" +
-            "<<backColor [\"LightGray\"]>><<[row.Name]>> <</backColor>><</if>>" +
-            "<<if [row.Value <= 50]>>" +
-            "<<[row.Name]>>" +
-            "<</if>>");
+        // Filter rows where Category == "A".
+        ReportModel model = new()
+        {
+            Items = allRows.FindAll(r => r.Category == "A")
+        };
 
-        // End of the foreach block.
+        // Create a Word template programmatically.
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        builder.Writeln("Filtered Items (Category = A):");
+        builder.ListFormat.ApplyNumberDefault();
+
+        // Restart numbering and start foreach loop.
+        builder.Writeln("<<restartNum>><<foreach [item in Items]>>");
+        // Custom formatting: blue text for the name.
+        builder.Writeln("<<textColor [\"Blue\"]>><<[item.Name]>> <</textColor>> - <<[item.Value]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, just for inspection).
-        string templatePath = Path.Combine(workDir, "template.docx");
-        template.Save(templatePath);
+        builder.ListFormat.RemoveNumbers();
 
-        // 3. Prepare CSV data source with load options.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions
-        {
-            HasHeaders = true,
-            Delimiter = ',',
-            QuoteChar = '"',
-            CommentChar = '#'
-        };
-        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
-        // 4. Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-
-        // The data source name used in the template tags is "csv".
-        engine.BuildReport(template, csvData, "csv");
-
-        // 5. Save the generated report.
-        string reportPath = Path.Combine(workDir, "report.docx");
-        template.Save(reportPath);
-
-        Console.WriteLine("Report generated at: " + reportPath);
+        // Save the result.
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Report generated: {outputPath}");
     }
+}
+
+// Data model for a CSV row.
+public class CsvRow
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string Value { get; set; } = string.Empty;
+}
+
+// Wrapper model passed to the reporting engine.
+public class ReportModel
+{
+    public List<CsvRow> Items { get; set; } = new();
 }

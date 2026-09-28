@@ -1,87 +1,78 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Replacing;
+
+public class Order
+{
+    public int Value { get; set; } = 10;
+    public int Divisor { get; set; } = 0; // Will cause divide‑by‑zero in the template
+}
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Simple data fields.
-        builder.Writeln("Customer: <<[model.CustomerName]>>");
-        builder.Writeln("Items:");
-
-        // Loop over the collection.
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        // Faulty expression (division by zero) – will generate an inline error message.
-        builder.Writeln(" - <<[item.Index]>>: <<[item.Name]>> - Price: <<[item.Price]>> - Faulty: <<[item.Price / 0]>>");
-        builder.Writeln("<</foreach>>");
+        // Prepare working directory and file paths
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "output.docx");
 
         // -----------------------------------------------------------------
-        // 2. Prepare the data model.
+        // 1. Create the template document with a faulty expression tag.
         // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Result of division: <<[order.Value / order.Divisor]>>");
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template (simulating a separate load step).
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
+        Order order = new Order();
+
+        // -----------------------------------------------------------------
+        // 4. Configure the reporting engine to embed inline error messages.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // -----------------------------------------------------------------
+        // 5. Build the report with error handling.
+        //    If an exception occurs, replace the faulty tag with a placeholder.
+        // -----------------------------------------------------------------
+        bool success = false;
+        try
         {
-            CustomerName = "Acme Corp",
-            Items = new List<Item>
-            {
-                new Item { Index = 1, Name = "Widget", Price = 9.99 },
-                new Item { Index = 2, Name = "Gadget", Price = 19.99 }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 3. Build the report with inline error messages enabled.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
+            success = engine.BuildReport(doc, order, "order");
+        }
+        catch (Exception ex)
         {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
-
-        // Returns false because the template contains an expression error.
-        bool success = engine.BuildReport(doc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 4. If errors occurred, replace the inline error text with a placeholder.
-        // -----------------------------------------------------------------
-        if (!success)
-        {
-            // The engine inserts messages that contain the word "Error".
-            // Use FindReplaceOptions to perform a case‑insensitive replace.
+            // Replace the problematic expression with a placeholder text.
             FindReplaceOptions replaceOptions = new FindReplaceOptions
             {
-                MatchCase = false // ignore case
+                MatchCase = false,
+                FindWholeWordsOnly = true
             };
-
-            doc.Range.Replace("Error", "[Error]", replaceOptions);
+            doc.Range.Replace("<<[order.Value / order.Divisor]>>", "N/A", replaceOptions);
+            Console.WriteLine($"Error during report generation: {ex.Message}");
         }
 
         // -----------------------------------------------------------------
-        // 5. Save the resulting document.
+        // 6. Save the generated report.
         // -----------------------------------------------------------------
-        doc.Save("Report.docx");
+        doc.Save(outputPath);
+
+        // -----------------------------------------------------------------
+        // 7. Inform the user about the result.
+        // -----------------------------------------------------------------
+        Console.WriteLine($"Report build success: {success}");
+        Console.WriteLine($"Output saved to: {outputPath}");
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model classes (public, non‑nullable members are initialized).
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
 }

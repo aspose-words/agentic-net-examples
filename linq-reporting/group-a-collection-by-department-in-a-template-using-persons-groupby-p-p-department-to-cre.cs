@@ -3,6 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+    public string Department { get; set; } = "";
+}
+
+public class DepartmentGroup
+{
+    public string Department { get; set; } = "";
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class ReportModel
+{
+    public List<DepartmentGroup> Departments { get; set; } = new();
+}
 
 public class Program
 {
@@ -12,40 +31,69 @@ public class Program
         List<Person> persons = new()
         {
             new Person { Name = "Alice", Age = 30, Department = "HR" },
-            new Person { Name = "Bob", Age = 45, Department = "IT" },
+            new Person { Name = "Bob", Age = 25, Department = "IT" },
             new Person { Name = "Charlie", Age = 28, Department = "HR" },
             new Person { Name = "Diana", Age = 35, Department = "Finance" },
-            new Person { Name = "Evan", Age = 40, Department = "IT" }
+            new Person { Name = "Evan", Age = 22, Department = "IT" }
         };
 
-        // Create a template document.
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
+        // Group by department.
+        ReportModel model = new()
+        {
+            Departments = persons
+                .GroupBy(p => p.Department)
+                .Select(g => new DepartmentGroup
+                {
+                    Department = g.Key,
+                    Persons = g.ToList()
+                })
+                .ToList()
+        };
 
-        builder.Writeln("Report grouped by Department:");
-        // Outer loop – groups by Department.
-        builder.Writeln("<<foreach [deptGroup in persons.GroupBy(p => p.Department)]>>");
-        builder.Writeln("Department: <<[deptGroup.Key]>>");
-        // Inner loop – persons inside the current group.
-        builder.Writeln("<<foreach [p in deptGroup]>>");
-        builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
+        // Create template.
+        string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        // Build the report using the LINQ Reporting engine.
+        builder.Writeln("Employees grouped by Department");
+        builder.Writeln();
+
+        // Outer foreach over departments.
+        builder.Writeln("<<foreach [dept in Departments]>>");
+        builder.Writeln("Department: <<[dept.Department]>>");
+        builder.Writeln();
+
+        // Inner foreach over persons – each person gets its own table (avoids table state issues).
+        builder.Writeln("<<foreach [p in dept.Persons]>>");
+
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Age");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[p.Age]>>");
+        builder.EndRow();
+
+        builder.EndTable();
+
+        builder.Writeln("<</foreach>>"); // End inner foreach.
+        builder.Writeln("<</foreach>>"); // End outer foreach.
+
+        // Save template.
+        templateDoc.Save(templatePath);
+
+        // Load template and build report.
+        Document reportDoc = new(templatePath);
         ReportingEngine engine = new();
-        // Pass the collection as a data source named "persons".
-        engine.BuildReport(doc, persons, "persons");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        // Save final report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Simple data model.
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-    public string Department { get; set; } = "";
 }

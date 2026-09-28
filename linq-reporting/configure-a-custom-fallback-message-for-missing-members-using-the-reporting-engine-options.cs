@@ -1,5 +1,4 @@
 using System;
-using System.Data;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -8,52 +7,44 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string resultPath = Path.Combine(workDir, "Result.docx");
+        // Register code page provider for any required encodings.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create a template document with tags that refer to a missing member.
-        // -------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a simple template with a missing member reference.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Customer Name: <<[model.Name]>>");
+        builder.Writeln("Missing Property: <<[model.MissingProperty]>>");
+        templateDoc.Save(templatePath);
 
-        // Tag that tries to access a missing object's property.
-        builder.Writeln("<<[missingObject.First().Id]>>");
-
-        // Foreach loop over a missing collection.
-        builder.Writeln("<<foreach [in missingObject]>><<[Id]>><</foreach>>");
-
-        // Save the template to disk (required by the lifecycle rule).
-        template.Save(templatePath);
-
-        // -------------------------------------------------
-        // 2. Load the template back (simulating a real scenario).
-        // -------------------------------------------------
+        // Load the template for reporting.
         Document doc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 3. Configure the ReportingEngine to allow missing members
-        //    and provide a custom fallback message.
-        // -------------------------------------------------
+        // Prepare the data model.
+        var model = new ReportModel
+        {
+            Name = "John Doe"
+        };
+
+        // Configure the reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-        engine.MissingMemberMessage = "Member not found";
 
-        // Use an empty DataSet as the data source because the template
-        // does not need any real data.
-        DataSet emptyData = new DataSet();
+        // Enable inline error messages so missing members are shown in the output.
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report. The third parameter (data source name) is optional
-        // when we do not reference the data source object itself in the template.
-        engine.BuildReport(doc, emptyData, "");
+        // Build the report. The method returns true if the report was built without fatal errors.
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // -------------------------------------------------
-        // 4. Save the generated report.
-        // -------------------------------------------------
-        doc.Save(resultPath);
+        // Save the generated document.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
+    }
 
-        Console.WriteLine($"Report generated: {resultPath}");
+    // Public data model class.
+    public class ReportModel
+    {
+        // Initialized to avoid nullable warnings.
+        public string Name { get; set; } = "";
     }
 }

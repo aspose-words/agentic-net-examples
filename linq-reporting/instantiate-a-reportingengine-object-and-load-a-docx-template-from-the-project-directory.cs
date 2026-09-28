@@ -1,46 +1,46 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public string Name { get; set; } = "John Doe";
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Define template file path in the project directory.
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Define file paths.
         string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
 
-        // Create a simple template if it does not exist.
-        if (!File.Exists(templatePath))
-        {
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            // Insert a LINQ Reporting tag that references the model.
-            builder.Writeln("Hello, <<[person.Name]>>!");
-            templateDoc.Save(templatePath);
-        }
+        // Create a simple DOCX template with a LINQ Reporting tag.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        templateDoc.Save(templatePath);
 
-        // Load the template document.
+        // Load the template from disk.
         Document doc = new Document(templatePath);
 
-        // Instantiate the ReportingEngine.
+        // Prepare sample data.
+        Order order = new Order
+        {
+            CustomerName = "John Doe"
+        };
+
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-
-        // Prepare a data source.
-        Person person = new Person();
-
-        // Build the report using the loaded template and the data source.
-        engine.BuildReport(doc, person, "person");
+        engine.BuildReport(doc, order, "order");
 
         // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
         doc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {outputPath}");
     }
+}
+
+// Public data model class.
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
 }

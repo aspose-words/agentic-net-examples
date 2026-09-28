@@ -1,103 +1,104 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create the data model.
-        ReportModel model = new ReportModel
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
+        ReportModel model = new()
         {
-            Orders = new List<Order>
+            Orders = new()
             {
                 new Order
                 {
-                    Customer = "Alice",
-                    Items = new List<Item>
+                    CustomerName = "Alice",
+                    Items = new()
                     {
-                        new Item { Name = "Apple",  Quantity = 3, Price = 0.5m },
-                        new Item { Name = "Banana", Quantity = 2, Price = 0.3m }
+                        new OrderItem { Name = "Apple", Quantity = 3, UnitPrice = 0.5m },
+                        new OrderItem { Name = "Banana", Quantity = 2, UnitPrice = 0.3m }
                     }
                 },
                 new Order
                 {
-                    Customer = "Bob",
-                    Items = new List<Item>
+                    CustomerName = "Bob",
+                    Items = new()
                     {
-                        new Item { Name = "Orange", Quantity = 5, Price = 0.4m },
-                        new Item { Name = "Grape",  Quantity = 1, Price = 1.2m }
+                        new OrderItem { Name = "Orange", Quantity = 5, UnitPrice = 0.4m },
+                        new OrderItem { Name = "Grapes", Quantity = 1, UnitPrice = 2.0m }
                     }
                 }
             }
         };
 
-        // 2. Build the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a template document programmatically.
+        string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
         builder.Writeln("Orders Report");
-        builder.Writeln();
-
-        // Outer foreach over Orders.
         builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Customer: <<[order.Customer]>>");
-        builder.Writeln();
-
-        // Inner foreach over Items of the current order.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
         builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Name]>>: Qty <<[item.Quantity]>>, Price <<[item.Price]>>");
+        builder.Writeln("Item: <<[item.Name]>> | Qty: <<[item.Quantity]>> | Unit: <<[item.UnitPrice]>> | Total: <<[item.Total]>>");
         builder.Writeln("<</foreach>>");
-
-        // Order total using a pre‑computed property.
-        builder.Writeln("Order Total: <<[order.Total]>>");
+        // Use the computed OrderTotal property.
+        builder.Writeln("Order Total: <<[order.OrderTotal]>>");
         builder.Writeln("<</foreach>>");
-        builder.Writeln();
-
-        // Grand total across all orders.
+        // Grand total across all orders using a pre‑computed property.
         builder.Writeln("Grand Total: <<[model.GrandTotal]>>");
 
-        // 3. Save the template (optional, shown for completeness).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // 4. Load the template (demonstrating the load step required before BuildReport).
+        // Load the template for reporting.
         Document doc = new Document(templatePath);
 
-        // 5. Build the report using the LINQ Reporting engine.
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // 6. Save the generated report.
-        const string outputPath = "Report.docx";
+        // Save the generated report.
+        string outputPath = "Report.docx";
         doc.Save(outputPath);
     }
 }
 
-// Data model classes – all members are public and non‑nullable to avoid warnings.
+// Root model.
 public class ReportModel
 {
     public List<Order> Orders { get; set; } = new();
 
-    // Grand total calculated from all orders.
-    public decimal GrandTotal => Orders.Sum(o => o.Total);
+    // Computed grand total for all orders.
+    public decimal GrandTotal => Orders.Sum(o => o.OrderTotal);
 }
 
+// Order model with a computed total.
 public class Order
 {
-    public string Customer { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
+    public string CustomerName { get; set; } = string.Empty;
+    public List<OrderItem> Items { get; set; } = new();
 
-    // Total for this order.
-    public decimal Total => Items.Sum(i => i.Price * i.Quantity);
+    // Computed order total for aggregation.
+    public decimal OrderTotal => Items.Sum(i => i.Total);
 }
 
-public class Item
+// Order item model.
+public class OrderItem
 {
     public string Name { get; set; } = string.Empty;
     public int Quantity { get; set; }
-    public decimal Price { get; set; }
+    public decimal UnitPrice { get; set; }
+
+    // Computed line total.
+    public decimal Total => Quantity * UnitPrice;
 }

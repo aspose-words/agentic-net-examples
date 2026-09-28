@@ -1,73 +1,74 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-public class Program
+public class Item
 {
-    public static void Main()
-    {
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Items = new()
-            {
-                new Item { Score = 92 },
-                new Item { Score = 67 },
-                new Item { Score = 45 }
-            }
-        };
-
-        // Create a template document programmatically.
-        var templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Add a heading.
-        builder.Writeln("Dynamic Text Color Example");
-        builder.Writeln();
-
-        // Begin a foreach loop over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Insert a paragraph with a textColor tag that uses a conditional expression.
-        // The color changes based on the numeric Score value.
-        builder.Writeln(
-            "<<textColor [item.Score > 80 ? \"Green\" : item.Score > 50 ? \"Orange\" : \"Red\"]>>" +
-            "Score: <<[item.Score]>>" +
-            "<</textColor>>");
-
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // Load the template for reporting.
-        var loadedDoc = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting Engine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(loadedDoc, model, "model");
-
-        // Save the generated report.
-        var outputPath = "Report_Output.docx";
-        loadedDoc.Save(outputPath);
-
-        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
-    }
+    public int Value { get; set; }
+    public string Description { get; set; } = string.Empty;
 }
 
-// Root data model for the report.
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
 
-// Simple item containing a numeric value.
-public class Item
+public class Program
 {
-    public int Score { get; set; }
+    public static void Main()
+    {
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Create template document.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Dynamic Text Color Report");
+        builder.Writeln();
+
+        // Begin foreach loop over Items.
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Write a line with value colored based on thresholds.
+        // Red > 100, Orange > 50, otherwise Green.
+        builder.Writeln(
+            "Value: " +
+            "<<textColor [item.Value > 100 ? \"Red\" : (item.Value > 50 ? \"Orange\" : \"Green\")]>>" +
+            "<<[item.Value]>>" +
+            "<</textColor>>");
+
+        // End foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var template = new Document(templatePath);
+
+        // Prepare sample data.
+        var model = new ReportModel
+        {
+            Items = new()
+            {
+                new Item { Value = 30, Description = "Low" },
+                new Item { Value = 75, Description = "Medium" },
+                new Item { Value = 120, Description = "High" }
+            }
+        };
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, model, "model");
+
+        // Save the generated report.
+        var outputPath = "output.docx";
+        template.Save(outputPath);
+    }
 }

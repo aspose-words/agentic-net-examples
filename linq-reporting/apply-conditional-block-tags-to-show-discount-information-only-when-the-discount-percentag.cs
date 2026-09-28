@@ -1,63 +1,67 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingConditionalDiscount
+public class Program
 {
-    // Data model for the report.
-    public class Order
+    public static void Main()
     {
-        public string CustomerName { get; set; } = "John Doe";
-        public double Total { get; set; } = 250.0;
-        public double DiscountPercentage { get; set; } = 15.0; // Set to 0 to hide discount block.
-    }
+        // Ensure output directory exists
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
 
-    public class Program
-    {
-        public static void Main()
+        // Create the template document with LINQ Reporting tags
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Write a simple report that lists orders and shows discount only when > 0
+        builder.Writeln("Order Report");
+        builder.Writeln("==============");
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>");
+        builder.Writeln("<<if [order.DiscountPercent > 0]>>Discount: <<[order.DiscountPercent]>>%<</if>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        template.Save(templatePath);
+
+        // Load the template for report generation
+        Document doc = new Document(templatePath);
+
+        // Prepare sample data
+        ReportModel model = new ReportModel
         {
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "DiscountTemplate.docx");
-            string reportPath   = Path.Combine(Environment.CurrentDirectory, "DiscountReport.docx");
+            Orders = new List<Order>
+            {
+                new Order { Id = 1, DiscountPercent = 15 },
+                new Order { Id = 2, DiscountPercent = 0 },
+                new Order { Id = 3, DiscountPercent = 5 }
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Simple report layout with a conditional block that shows discount only when > 0.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("Total: <<[order.Total]>>");
-            builder.Writeln("<<if [order.DiscountPercentage > 0]>>Discount: <<[order.DiscountPercentage]>>%<</if>>");
+        // Save the generated report
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(reportPath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back (required by the workflow).
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            Order sampleOrder = new Order(); // Uses the default values defined above.
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using the LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            // No special options are needed for this example.
-            engine.BuildReport(loadedTemplate, sampleOrder, "order");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            loadedTemplate.Save(reportPath);
-
-            // The example finishes without waiting for user input.
-        }
+        Console.WriteLine($"Report generated: {reportPath}");
     }
+}
+
+// Data model classes
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Order
+{
+    public int Id { get; set; }
+    public int DiscountPercent { get; set; }
 }

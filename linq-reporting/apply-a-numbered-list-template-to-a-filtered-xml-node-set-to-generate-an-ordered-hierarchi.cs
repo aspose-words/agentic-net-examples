@@ -1,98 +1,99 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Xml.Linq;
 using Aspose.Words;
-using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // Create a sample XML file that will serve as the data source.
-        // -----------------------------------------------------------------
-        const string xmlPath = "report.xml";
-        File.WriteAllText(xmlPath,
-@"<Report>
-  <Sections>
+        // Register code page provider for any encoding needs.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Sample XML data.
+        string xmlContent = @"
+<Report>
     <Section>
-      <Title>Section 1</Title>
-      <Items>
-        <Item>Item 1.1</Item>
-        <Item>Item 1.2</Item>
-      </Items>
+        <Title>Fruits</Title>
+        <Entry>
+            <Name>Apple</Name>
+            <Type>Important</Type>
+        </Entry>
+        <Entry>
+            <Name>Banana</Name>
+            <Type>Regular</Type>
+        </Entry>
+        <Entry>
+            <Name>Cherry</Name>
+            <Type>Important</Type>
+        </Entry>
     </Section>
     <Section>
-      <Title>Section 2</Title>
-      <Items>
-        <Item>Item 2.1</Item>
-      </Items>
+        <Title>Vegetables</Title>
+        <Entry>
+            <Name>Carrot</Name>
+            <Type>Regular</Type>
+        </Entry>
+        <Entry>
+            <Name>Broccoli</Name>
+            <Type>Important</Type>
+        </Entry>
     </Section>
-  </Sections>
-</Report>");
+</Report>";
 
-        // -----------------------------------------------------------------
-        // Create the template document programmatically.
-        // -----------------------------------------------------------------
-        const string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Parse XML into a strongly‑typed model.
+        ReportModel model = ParseXmlToModel(xmlContent);
 
-        // Top‑level numbered list (1., 2., …).
-        List topList = templateDoc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = topList;
+        // Build the template document.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Begin looping over the Section elements.
-        builder.Writeln("<<foreach [sec in report.Sections]>>");
-        // Restart numbering for each top‑level item and write the section title.
-        builder.Writeln("<<restartNum>><<[sec.Title]>>");
+        // Outer numbered list for sections.
+        builder.Writeln("<<foreach [section in model.Sections]>>");
+        builder.Writeln("1. <<[section.Title]>>");
 
-        // Sub‑list for the items belonging to the current section.
-        List subList = templateDoc.Lists.Add(ListTemplate.NumberArabicParenthesis);
-        builder.ListFormat.List = subList;
-        builder.Writeln("<<foreach [itm in sec.Items]>>");
-        builder.Writeln("<<[itm]>>");
+        // Inner numbered list for filtered entries (restart numbering for each section).
+        builder.Writeln("   <<restartNum>><<foreach [entry in section.Entry]>>");
+        builder.Writeln("      <<if [entry.Type == \"Important\"]>><<[entry.Name]>> <</if>>");
+        builder.Writeln("<</foreach>>");
         builder.Writeln("<</foreach>>");
 
-        // End the outer foreach.
-        builder.Writeln("<</foreach>>");
+        // Save the template.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        template.Save(templatePath);
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template and build the report using a strongly‑typed model.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-        ReportModel model = LoadReportModel(xmlPath);
-
-        var engine = new ReportingEngine();
-        // The root object name used in the template tags is "report".
-        engine.BuildReport(doc, model, "report");
+        // Load the template and generate the report.
+        Document report = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, model, "model");
 
         // Save the generated report.
-        doc.Save("ReportResult.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        report.Save(outputPath);
     }
 
-    // Loads the XML file into a strongly‑typed object graph that matches the template tags.
-    private static ReportModel LoadReportModel(string xmlPath)
+    private static ReportModel ParseXmlToModel(string xml)
     {
-        var xDoc = XDocument.Load(xmlPath);
-        var model = new ReportModel();
+        XDocument doc = XDocument.Parse(xml);
+        ReportModel model = new ReportModel();
 
-        foreach (var xSection in xDoc.Root?.Element("Sections")?.Elements("Section") ?? new XElement[0])
+        foreach (XElement sectionElem in doc.Root?.Elements("Section") ?? Enumerable.Empty<XElement>())
         {
-            var section = new SectionModel
+            Section section = new Section
             {
-                Title = (string?)xSection.Element("Title") ?? string.Empty,
-                Items = new List<string>()
+                Title = (string?)sectionElem.Element("Title") ?? string.Empty,
+                Entry = sectionElem.Elements("Entry")
+                                   .Select(e => new Entry
+                                   {
+                                       Name = (string?)e.Element("Name") ?? string.Empty,
+                                       Type = (string?)e.Element("Type") ?? string.Empty
+                                   })
+                                   .ToList()
             };
-
-            foreach (var xItem in xSection.Element("Items")?.Elements("Item") ?? new XElement[0])
-                section.Items.Add((string?)xItem ?? string.Empty);
-
             model.Sections.Add(section);
         }
 
@@ -100,16 +101,20 @@ public class Program
     }
 }
 
-// ---------------------------------------------------------------------
-// Public data model classes that match the template expressions.
-// ---------------------------------------------------------------------
+// Data model classes.
 public class ReportModel
 {
-    public List<SectionModel> Sections { get; set; } = new();
+    public List<Section> Sections { get; set; } = new();
 }
 
-public class SectionModel
+public class Section
 {
     public string Title { get; set; } = string.Empty;
-    public List<string> Items { get; set; } = new();
+    public List<Entry> Entry { get; set; } = new();
+}
+
+public class Entry
+{
+    public string Name { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
 }

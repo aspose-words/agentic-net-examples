@@ -3,74 +3,63 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace LinqReportingExtensionExample
 {
-    // Data model classes
-    public class Item
+    // Data model representing a person.
+    public class Person
     {
-        public int Value { get; set; } = 0;
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+
+        // Instance method used inside the template's if condition.
+        public bool IsAdult() => Age >= 18;
     }
 
+    // Wrapper model passed as the root object to the reporting engine.
     public class ReportModel
     {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    // Extension method used inside the template's if condition
-    public static class ItemExtensions
-    {
-        // Returns true if the item's Value is an even number
-        public static bool IsEven(this Item item) => item != null && item.Value % 2 == 0;
+        public List<Person> Persons { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Prepare sample data
+            // Prepare sample data.
             var model = new ReportModel
             {
-                Items = new List<Item>
+                Persons = new()
                 {
-                    new Item { Value = 1 },
-                    new Item { Value = 2 },
-                    new Item { Value = 3 },
-                    new Item { Value = 4 }
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 15 },
+                    new Person { Name = "Charlie", Age = 22 }
                 }
             };
 
-            // Create a template document programmatically
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // Create the template document programmatically.
+            const string templatePath = "template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // LINQ Reporting tags
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Item: <<[item.Value]>>");
-            builder.Writeln("<<if [item.IsEven()]>> (Even) <</if>>");
+            // Write LINQ Reporting tags.
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>");
+            builder.Writeln("<<if [p.IsAdult()]>> (Adult) <</if>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template
-            doc.Save(templatePath);
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-            // Load the template for reporting
-            var template = new Document(templatePath);
+            // Load the template for report generation.
+            var doc = new Document(templatePath);
 
-            // Configure the reporting engine
-            var engine = new ReportingEngine
-            {
-                // Allow the engine to resolve extension methods and missing members
-                Options = ReportBuildOptions.AllowMissingMembers
-            };
-            // Register the type that contains the extension method
-            engine.KnownTypes.Add(typeof(ItemExtensions));
+            // Build the report using the model.
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-            // Build the report using the model as the root object named "model"
-            engine.BuildReport(template, model, "model");
-
-            // Save the generated report
-            var outputPath = "Report.docx";
-            template.Save(outputPath);
+            // Save the generated report.
+            const string outputPath = "output.docx";
+            doc.Save(outputPath);
         }
     }
 }

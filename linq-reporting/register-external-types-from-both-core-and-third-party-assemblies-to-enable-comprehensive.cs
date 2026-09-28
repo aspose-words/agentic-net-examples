@@ -1,52 +1,54 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
-
-public class Person
-{
-    public string Name { get; set; } = "John Doe";
-    public int Age { get; set; } = 30;
-}
+using Newtonsoft.Json.Linq;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new Person();
+        // Create output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Build the template document with LINQ Reporting tags
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Insert LINQ Reporting tags.
-        builder.Writeln("Static Math.PI value: <<[Math.PI]>>");
-        builder.Writeln("Person name: <<[model.Name]>>");
-        builder.Writeln("Person age: <<[model.Age]>>");
-        builder.Writeln("Serialized JSON (HTML escaped): <<[JsonConvert.SerializeObject(model)] -html>>");
+        builder.Writeln("Value of Math.PI: <<[model.MathPI]>>");
+        builder.Writeln("JSON value (JObject.Parse): <<[model.JsonValue]>>");
 
-        // Save the template.
-        doc.Save(templatePath);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+        // Prepare the model that supplies the data for the template
+        ReportModel model = new ReportModel();
 
-        // Configure the reporting engine.
-        var engine = new ReportingEngine();
+        // Load the template for report generation
+        Document reportDoc = new Document(templatePath);
 
-        // Register core and third‑party types for static member access.
-        engine.KnownTypes.Add(typeof(Math));               // Core .NET type.
-        engine.KnownTypes.Add(typeof(JsonConvert));        // Third‑party type from Newtonsoft.Json.
-
-        // Build the report using the model as the root object named "model".
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        var outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Save the generated report
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
+
+        Console.WriteLine($"Report generated at: {reportPath}");
+    }
+
+    // Model class exposing the values used in the template
+    public class ReportModel
+    {
+        public double MathPI { get; set; } = Math.PI;
+        public int JsonValue { get; set; }
+
+        public ReportModel()
+        {
+            JObject obj = JObject.Parse("{\"value\":123}");
+            JsonValue = (int)obj["value"]!;
+        }
     }
 }

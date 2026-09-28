@@ -2,111 +2,69 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Lists;
 
 public class Program
 {
     public static void Main()
     {
         // Prepare sample data.
-        var model = new ReportModel
+        ReportModel model = new()
         {
             Groups = new()
             {
-                new OrderGroup
+                new Group
                 {
-                    GroupName = "Electronics",
-                    Orders = new()
-                    {
-                        new Order { Name = "Smartphone", Quantity = 5 },
-                        new Order { Name = "Laptop", Quantity = 2 }
-                    }
+                    Name = "Fruits",
+                    Items = new() { "Apple", "Banana", "Cherry" }
                 },
-                new OrderGroup
+                new Group
                 {
-                    GroupName = "Books",
-                    Orders = new()
-                    {
-                        new Order { Name = "C# in Depth", Quantity = 3 },
-                        new Order { Name = "ASP.NET Core Guide", Quantity = 4 }
-                    }
+                    Name = "Vegetables",
+                    Items = new() { "Carrot", "Lettuce", "Pepper" }
                 }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        // Title.
-        builder.Writeln("Orders Report");
-        builder.Writeln();
+        // Create the template document.
+        Document template = new();
+        DocumentBuilder builder = new(template);
 
         // Outer foreach over groups.
-        builder.Writeln("<<foreach [group in Model.Groups]>>");
+        builder.Writeln("<<foreach [group in model.Groups]>>");
         // Group name.
-        builder.Writeln("<<[group.GroupName]>>");
-        builder.Writeln();
-
-        // Start a numbered list for the orders of the current group.
-        builder.ListFormat.List = template.Lists.Add(ListTemplate.NumberDefault);
-
-        // Restart numbering for each group, then iterate over orders.
-        builder.Writeln("<<restartNum>><<foreach [order in group.Orders]>>" +
-                        "<<[order.Name]>> - <<[order.Quantity]>>" +
-                        "<</foreach>>");
-
-        // End the list for this group.
+        builder.Writeln("<<[group.Name]>>");
+        // Numbered list of items with restartNum before inner foreach.
+        builder.ListFormat.ApplyNumberDefault();
+        builder.Writeln("<<restartNum>><<foreach [item in group.Items]>> <<[item]>> <</foreach>>");
         builder.ListFormat.RemoveNumbers();
-
-        // Close the outer foreach.
+        // End outer foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
+        // Save the template.
+        const string templatePath = "template.docx";
         template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
+        // Load the template for reporting.
+        Document doc = new(templatePath);
 
-        // The root object name in the template is "Model".
-        bool success = engine.BuildReport(doc, model, "Model");
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
+        // Save the final document.
+        const string outputPath = "output.docx";
         doc.Save(outputPath);
-
-        // Optional: indicate success (no console interaction required).
-        // In a real scenario you might log this information.
-        if (!success)
-        {
-            throw new InvalidOperationException("Report generation failed.");
-        }
     }
 }
 
-// ---------------------------------------------------------------------
 // Data model classes.
-// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public List<OrderGroup> Groups { get; set; } = new();
+    public List<Group> Groups { get; set; } = new();
 }
 
-public class OrderGroup
+public class Group
 {
-    public string GroupName { get; set; } = "";
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Order
-{
-    public string Name { get; set; } = "";
-    public int Quantity { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public List<string> Items { get; set; } = new();
 }

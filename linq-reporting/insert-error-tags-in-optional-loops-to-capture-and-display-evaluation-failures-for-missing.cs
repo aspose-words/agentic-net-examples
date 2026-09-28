@@ -9,65 +9,86 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features)
+        // Register code page provider (required for some encodings)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample data
-        var model = new ReportModel
+        // Create a temporary folder for the example files
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(workDir);
+
+        // Paths for template and result documents
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string resultPath = Path.Combine(workDir, "Report.docx");
+
+        // -------------------------------------------------
+        // Step 1: Build the LINQ Reporting template document
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("LINQ Reporting Example with Inline Error Messages");
+        builder.Writeln();
+        // Optional loop over Items collection
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Normal field
+        builder.Writeln("Name: <<[item.Name]>> <<error>>");
+        // Intentional missing field to trigger an error
+        builder.Writeln("Missing: <<[item.NonExisting]>> <<error>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+
+        // Save the template to disk
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // Step 2: Load the template document for reporting
+        // -------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // -------------------------------------------------
+        // Step 3: Prepare sample data model
+        // -------------------------------------------------
+        ReportModel model = new ReportModel
         {
-            Title = "Sample LINQ Reporting",
             Items = new List<Item>
             {
                 new Item { Name = "Alice" },
-                new Item { Name = "Bob" }
-                // Note: Item does NOT have an Age property – this will cause an evaluation error.
+                new Item { Name = "Bob" },
+                // This item will have a null Name to demonstrate handling of null values
+                new Item { Name = null }
             }
         };
 
-        // Create a template document programmatically
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Report Title: <<[model.Title]>>");
-        builder.Writeln();
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        builder.Writeln("- Name: <<[item.Name]>>");
-        // Attempt to access a missing property 'Age' and capture the error with <<error>>
-        builder.Writeln("- Age: <<[item.Age]>> <<error>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template (optional, for inspection)
-        const string templatePath = "Template.docx";
-        doc.Save(templatePath);
-
-        // Load the template for reporting
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // -------------------------------------------------
+        // Step 4: Build the report with InlineErrorMessages option
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the generated report
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // -------------------------------------------------
+        // Step 5: Save the generated report
+        // -------------------------------------------------
+        doc.Save(resultPath);
 
-        // Output simple status (no interactive input)
+        // Output simple status (no interactive prompts)
         Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Report saved to: {Path.GetFullPath(outputPath)}");
+        Console.WriteLine($"Template saved to: {templatePath}");
+        Console.WriteLine($"Report saved to: {resultPath}");
     }
 }
 
+// -------------------------------------------------
 // Data model classes
+// -------------------------------------------------
 public class ReportModel
 {
-    public string Title { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
 }
 
 public class Item
 {
-    public string Name { get; set; } = string.Empty;
-    // No Age property – used to demonstrate missing data handling.
+    // Name may be null to illustrate missing data handling
+    public string? Name { get; set; }
 }

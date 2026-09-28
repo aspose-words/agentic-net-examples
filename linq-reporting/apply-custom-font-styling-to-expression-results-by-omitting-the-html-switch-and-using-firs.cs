@@ -1,35 +1,67 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace LinqReportingFirstCharStyling
 {
-    // Sample data property.
-    public string Name { get; set; } = "";
-}
-
-public class Program
-{
-    public static void Main()
+    // Sample data model.
+    public class ReportModel
     {
-        // Create a blank document and a builder to insert the LINQ Reporting template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public List<Person> Persons { get; set; } = new();
+    }
 
-        // Template:
-        // - The first character of the Name property is wrapped in a textColor tag (red).
-        // - The remaining characters are output without additional formatting.
-        builder.Writeln(
-            "<<textColor [\"Red\"]>><<[model.Name.Substring(0,1)]>><</textColor>><<[model.Name.Substring(1)]>>");
+    public class Person
+    {
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+    }
 
-        // Prepare the data source.
-        ReportModel model = new ReportModel { Name = "Aspose.Words" };
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare sample data.
+            var model = new ReportModel
+            {
+                Persons = new()
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 25 },
+                    new Person { Name = "Charlie", Age = 35 }
+                }
+            };
 
-        // Build the report using the model as the root object named "model".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Create the template document programmatically.
+            var templatePath = "Template.docx";
+            var builder = new DocumentBuilder();
+            builder.Writeln("People Report");
+            builder.Writeln();
 
-        // Save the resulting document.
-        doc.Save("CustomFontStyling.docx");
+            // Begin foreach loop over Persons.
+            builder.Writeln("<<foreach [p in Persons]>>");
+
+            // Write each person's name with the first character in red.
+            // First character styled with textColor, rest normal.
+            builder.Writeln(
+                "<<textColor [\"Red\"]>><<[p.Name.Substring(0,1)]>><</textColor>><<[p.Name.Substring(1)]>> (Age: <<[p.Age]>>)");
+
+            // End foreach loop.
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            builder.Document.Save(templatePath);
+
+            // Load the template for report generation.
+            var templateDoc = new Document(templatePath);
+
+            // Build the report.
+            var engine = new ReportingEngine();
+            engine.BuildReport(templateDoc, model, "model");
+
+            // Save the final report.
+            var outputPath = "Report.docx";
+            templateDoc.Save(outputPath);
+        }
     }
 }

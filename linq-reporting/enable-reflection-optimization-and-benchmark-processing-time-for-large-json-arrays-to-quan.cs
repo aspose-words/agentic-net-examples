@@ -7,102 +7,76 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
+public class Person
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
+}
+
+public class DataModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for possible encoding needs.
+        // Register code page provider (required for Aspose.Words).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare output folder.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // Create a large JSON array.
+        const int itemCount = 20000;
+        var model = new DataModel();
+        for (int i = 1; i <= itemCount; i++)
+        {
+            model.Persons.Add(new Person
+            {
+                Id = i,
+                Name = $"Person {i}",
+                Age = 20 + (i % 30)
+            });
+        }
 
-        // File paths.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string jsonPath = Path.Combine(outputDir, "data.json");
-        string resultPathOptimized = Path.Combine(outputDir, "result_optimized.docx");
-        string resultPathNonOptimized = Path.Combine(outputDir, "result_nonoptimized.docx");
+        // Serialize to JSON file.
+        const string jsonPath = "data.json";
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model));
 
-        // Create a large JSON array (e.g., 20,000 items).
-        CreateLargeJson(jsonPath, 20000);
+        // Create LINQ Reporting template.
+        const string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Persons Report");
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Id: <<[person.Id]>>, Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // Create the LINQ Reporting template.
-        CreateTemplate(templatePath);
+        // Load data from JSON.
+        var json = File.ReadAllText(jsonPath);
+        var data = JsonConvert.DeserializeObject<DataModel>(json)!;
 
         // Benchmark without reflection optimization.
         ReportingEngine.UseReflectionOptimization = false;
-        TimeSpan timeWithout = BuildReport(templatePath, jsonPath, resultPathNonOptimized, "json");
+        var docWithoutOpt = new Document(templatePath);
+        var engineWithoutOpt = new ReportingEngine();
+        var swWithout = Stopwatch.StartNew();
+        bool successWithout = engineWithoutOpt.BuildReport(docWithoutOpt, data, "data");
+        swWithout.Stop();
+        const string outputWithout = "report_without_opt.docx";
+        docWithoutOpt.Save(outputWithout);
+        Console.WriteLine($"Without optimization: {swWithout.ElapsedMilliseconds} ms, success = {successWithout}");
 
-        // Benchmark with reflection optimization enabled.
+        // Benchmark with reflection optimization.
         ReportingEngine.UseReflectionOptimization = true;
-        TimeSpan timeWith = BuildReport(templatePath, jsonPath, resultPathOptimized, "json");
-
-        // Output the measured times.
-        Console.WriteLine($"Processing time without reflection optimization: {timeWithout.TotalMilliseconds} ms");
-        Console.WriteLine($"Processing time with reflection optimization: {timeWith.TotalMilliseconds} ms");
-    }
-
-    // Generates a JSON file containing a large array of items.
-    private static void CreateLargeJson(string path, int count)
-    {
-        var items = new List<Item>();
-        for (int i = 1; i <= count; i++)
-        {
-            items.Add(new Item { Index = i, Name = $"Item {i}" });
-        }
-
-        var root = new Root { items = items };
-        string json = JsonConvert.SerializeObject(root);
-        File.WriteAllText(path, json);
-    }
-
-    // Creates a Word template with LINQ Reporting tags.
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Report of items:");
-        builder.Writeln("<<foreach [item in json.items]>>");
-        builder.Writeln("Index: <<[item.Index]>>, Name: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(path);
-    }
-
-    // Builds the report, measures processing time, and saves the result.
-    private static TimeSpan BuildReport(string templatePath, string jsonPath, string resultPath, string dataSourceName)
-    {
-        var doc = new Document(templatePath);
-
-        // Ensure the JSON root object is generated so that 'json.items' can be accessed.
-        var jsonLoadOptions = new JsonDataLoadOptions
-        {
-            AlwaysGenerateRootObject = true
-        };
-        var jsonDataSource = new JsonDataSource(jsonPath, jsonLoadOptions);
-
-        var engine = new ReportingEngine();
-
-        var stopwatch = Stopwatch.StartNew();
-        engine.BuildReport(doc, jsonDataSource, dataSourceName);
-        stopwatch.Stop();
-
-        doc.Save(resultPath);
-        return stopwatch.Elapsed;
-    }
-
-    // Root object for JSON serialization.
-    public class Root
-    {
-        public List<Item> items { get; set; } = new();
-    }
-
-    // Item definition used in the JSON array.
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = "";
+        var docWithOpt = new Document(templatePath);
+        var engineWithOpt = new ReportingEngine();
+        var swWith = Stopwatch.StartNew();
+        bool successWith = engineWithOpt.BuildReport(docWithOpt, data, "data");
+        swWith.Stop();
+        const string outputWith = "report_with_opt.docx";
+        docWithOpt.Save(outputWith);
+        Console.WriteLine($"With optimization: {swWith.ElapsedMilliseconds} ms, success = {successWith}");
     }
 }

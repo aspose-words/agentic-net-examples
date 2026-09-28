@@ -1,56 +1,47 @@
 using System;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model with a currency value.
-    public class ReportModel
+    public static void Main()
     {
-        // Initialize to avoid nullable warnings.
-        public decimal Amount { get; set; } = 1234.56m;
-    }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Sample data model.
+        Order order = new Order
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            Price = 1234.56m
+        };
 
-            // Insert a line that formats the currency value using a .NET format string.
-            // The expression tag evaluates C# code, applying the currency format.
-            builder.Writeln("Amount: <<[string.Format(\"{0:C}\", model.Amount)]>>");
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Insert a line that formats the price using a .NET format string.
+        builder.Writeln("Total: <<[order.Price.ToString(\"$#,##0.00\")]>>");
 
-            // -----------------------------------------------------------------
-            // 2. Load the template back (required before building the report).
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
+        // Save the template.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            var model = new ReportModel();
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 4. Build the report using the LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-            // The root object name in the template is "model".
-            engine.BuildReport(doc, model, "model");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, order, "order");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// Public data model class.
+public class Order
+{
+    public decimal Price { get; set; } = 0m;
 }

@@ -1,96 +1,78 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 using Aspose.Words.Reporting;
 
-public class ReportModel
-{
-    // No properties needed for this simple example.
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code pages (required for some encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a document template that contains a chart.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Prepare a sample image file
+        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
+        if (!File.Exists(imagePath))
+        {
+            // 1x1 transparent PNG
+            byte[] pngBytes = Convert.FromBase64String(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+            File.WriteAllBytes(imagePath, pngBytes);
+        }
 
-        // Insert a column chart.
+        // Create the template document
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Insert a chart (valid placement)
         Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
 
-        // Intentionally place a prohibited tag inside the chart title for validation demo.
-        chartShape.Chart.Title.Text = "<<image [model.ImagePath]>>";
+        // Move to the end of the document (outside the chart) and insert valid LINQ Reporting tags
+        builder.MoveToDocumentEnd();
+        builder.Writeln("<<image [model.ImagePath]>>");
+        builder.Writeln("<<bookmark [model.BookmarkName]>>Bookmarked Content<</bookmark>>");
+        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
 
-        // Save the template (optional, just to illustrate the file exists).
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
+        // Save the template (optional, demonstrates persistence)
+        string templatePath = "template.docx";
+        template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Validate that no image, bookmark, or link tags are inside chart elements.
-        // -----------------------------------------------------------------
-        bool hasProhibitedTags = false;
-        string[] prohibitedPrefixes = { "<<image", "<<bookmark", "<<link" };
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
 
-        // Iterate over all shapes that contain charts.
-        foreach (Shape shape in templateDoc.GetChildNodes(NodeType.Shape, true))
+        // Prepare model data
+        ReportModel model = new()
         {
-            if (shape.HasChart)
-            {
-                // Check the chart title for prohibited tags.
-                string titleText = shape.Chart.Title?.Text ?? string.Empty;
-                if (!string.IsNullOrEmpty(titleText))
-                {
-                    foreach (string prefix in prohibitedPrefixes)
-                    {
-                        if (titleText.Contains(prefix, StringComparison.Ordinal))
-                        {
-                            hasProhibitedTags = true;
-                            Console.WriteLine(
-                                $"Prohibited tag \"{prefix}\" found in chart title: \"{titleText}\"");
-                        }
-                    }
-                }
-
-                // Additional checks (e.g., legend, axis titles) could be added here similarly.
-            }
-        }
-
-        if (!hasProhibitedTags)
-        {
-            Console.WriteLine("Validation passed: no prohibited tags inside chart elements.");
-        }
-
-        // -----------------------------------------------------------------
-        // Step 3: Generate a clean report (chart without prohibited tags) using ReportingEngine.
-        // -----------------------------------------------------------------
-        Document cleanTemplate = new Document();
-        DocumentBuilder cleanBuilder = new DocumentBuilder(cleanTemplate);
-
-        Shape cleanChart = cleanBuilder.InsertChart(ChartType.Column, 400, 300);
-        cleanChart.Chart.Title.Text = "Sales Overview";
-
-        const string cleanTemplatePath = "CleanTemplate.docx";
-        cleanTemplate.Save(cleanTemplatePath);
-
-        // Load the clean template and build the report.
-        Document reportDoc = new Document(cleanTemplatePath);
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
+            ImagePath = imagePath,
+            BookmarkName = "SampleBookmark",
+            Url = "https://example.com",
+            LinkText = "Example Site"
         };
-        engine.BuildReport(reportDoc, new ReportModel(), "model");
 
-        const string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
-        Console.WriteLine($"Report generated successfully: {reportPath}");
+        // Build the report with inline error messages to capture validation errors
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+        bool success = engine.BuildReport(doc, model, "model");
+
+        // Save the resulting document
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        doc.Save(resultPath);
+
+        // Output validation result
+        Console.WriteLine($"Report build success: {success}");
+        Console.WriteLine($"Result saved to: {resultPath}");
     }
+}
+
+// Data model used by the LINQ Reporting engine
+public class ReportModel
+{
+    public string ImagePath { get; set; } = "";
+    public string BookmarkName { get; set; } = "";
+    public string Url { get; set; } = "";
+    public string LinkText { get; set; } = "";
 }

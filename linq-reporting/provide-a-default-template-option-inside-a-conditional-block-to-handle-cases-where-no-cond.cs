@@ -1,64 +1,50 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    // Initialize to avoid nullable warnings.
+    public string Status { get; set; } = string.Empty;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for possible legacy encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 15 },
-                new Person { Name = "Bob",   Age = 30 },
-                new Person { Name = "Carol", Age = 70 },
-                new Person { Name = "Dave",  Age = -1 } // Unexpected age to trigger default.
-            }
-        };
+        // Create a template document with conditional tags.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Create a template document with LINQ Reporting tags.
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Conditional blocks using double‑quoted string literals (required by LINQ Reporting syntax).
+        builder.Writeln("<<if [model.Status == \"Approved\"]>>Approved<</if>>");
+        builder.Writeln("<<if [model.Status == \"Pending\"]>>Pending<</if>>");
+        // Default block when none of the above conditions are true.
+        builder.Writeln("<<if [model.Status != \"Approved\" && model.Status != \"Pending\"]>>Unknown<</if>>");
 
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Category: ");
-        builder.Writeln("<<if [person.Age < 18]>>Minor<</if>>");
-        builder.Writeln("<<if [person.Age >= 65]>>Senior<</if>>");
-        builder.Writeln("<<if [person.Age >= 18 && person.Age < 65]>>Adult<</if>>");
-        // Default option when none of the above conditions are true.
-        builder.Writeln("<<if [person.Age < 0]>>Unknown<</if>>");
-        builder.Writeln("<</foreach>>");
-
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template and build the report.
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
+
+        // Sample data where no condition matches to trigger the default block.
+        ReportModel model = new ReportModel { Status = "Other" };
+
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        doc.Save(resultPath);
+
+        Console.WriteLine($"Report generated: {resultPath}");
     }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

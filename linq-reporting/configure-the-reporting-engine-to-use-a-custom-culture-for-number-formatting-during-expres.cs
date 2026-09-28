@@ -6,7 +6,7 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Sample numeric value that will be formatted according to the custom culture.
+    // Sample numeric value to demonstrate culture‑specific formatting.
     public decimal Price { get; set; } = 1234.56m;
 }
 
@@ -14,20 +14,25 @@ public class Program
 {
     public static void Main()
     {
-        // Set a custom culture (French) for the current thread.
-        // This culture uses a comma as the decimal separator.
-        Thread.CurrentThread.CurrentCulture = new CultureInfo("fr-FR");
-
-        // Create the template document and insert a LINQ Reporting tag.
+        // Create a new blank document and a builder to insert LINQ Reporting tags.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Tag that will output the numeric value using the current culture.
         builder.Writeln("Price: <<[model.Price]>>");
 
-        // Build the report using the custom culture.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, new ReportModel(), "model");
+        // Prepare the data source.
+        ReportModel model = new();
 
-        // Save the generated document.
+        // Set the thread culture to French (France) so that number formatting uses a comma.
+        Thread.CurrentThread.CurrentCulture = new CultureInfo("fr-FR");
+        Thread.CurrentThread.CurrentUICulture = new CultureInfo("fr-FR");
+
+        // Build the report using the document template, the data source, and the root name "model".
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
         doc.Save("Report.docx");
     }
 }

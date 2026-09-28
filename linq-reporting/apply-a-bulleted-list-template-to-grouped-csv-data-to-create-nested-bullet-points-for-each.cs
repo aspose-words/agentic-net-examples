@@ -2,132 +2,98 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
-using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the working directory exists.
-        string workDir = Directory.GetCurrentDirectory();
+        // Register code page provider for CSV handling.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample CSV data.
-        string csvPath = Path.Combine(workDir, "data.csv");
-        File.WriteAllLines(csvPath, new[]
-        {
-            "Category,Item",
-            "Fruits,Apple",
-            "Fruits,Banana",
-            "Fruits,Orange",
-            "Vegetables,Carrot",
-            "Vegetables,Tomato",
-            "Vegetables,Potato"
-        });
+        // Create sample CSV data.
+        string csvPath = "data.csv";
+        File.WriteAllText(csvPath,
+@"Category,Item
+Fruits,Apple
+Fruits,Banana
+Fruits,Orange
+Vegetables,Carrot
+Vegetables,Tomato
+Vegetables,Spinach
+Grains,Rice
+Grains,Wheat");
 
-        // 2. Load CSV and build a hierarchical model.
-        ReportModel model = BuildModelFromCsv(csvPath);
-
-        // 3. Create the LINQ Reporting template programmatically.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        CreateTemplate(templatePath);
-
-        // 4. Load the template and build the report.
-        Document templateDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(templateDoc, model, "model");
-
-        // 5. Save the generated report.
-        string outputPath = Path.Combine(workDir, "output.docx");
-        templateDoc.Save(outputPath);
-    }
-
-    // Parses the CSV file and groups items by category.
-    private static ReportModel BuildModelFromCsv(string csvFile)
-    {
-        var groups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var line in File.ReadLines(csvFile).Skip(1)) // Skip header
-        {
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            var parts = line.Split(',');
-            if (parts.Length != 2)
-                continue;
-
-            string category = parts[0].Trim();
-            string item = parts[1].Trim();
-
-            if (!groups.TryGetValue(category, out var list))
-            {
-                list = new List<string>();
-                groups[category] = list;
-            }
-
-            list.Add(item);
-        }
+        // Load CSV and group by Category.
+        var lines = File.ReadAllLines(csvPath);
+        var data = lines.Skip(1)
+                        .Select(l => l.Split(','))
+                        .Select(parts => new { Category = parts[0].Trim(), Item = parts[1].Trim() })
+                        .ToList();
 
         var model = new ReportModel
         {
-            Groups = groups.Select(g => new CategoryGroup
-            {
-                Category = g.Key,
-                Items = g.Value
-            }).ToList()
+            Categories = data.GroupBy(d => d.Category)
+                            .Select(g => new Category
+                            {
+                                Name = g.Key,
+                                Items = g.Select(x => x.Item).ToList()
+                            })
+                            .ToList()
         };
 
-        return model;
-    }
+        // Create the template document programmatically.
+        string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-    // Creates a Word document containing the LINQ Reporting tags.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Grouped Items Report");
+        builder.Writeln();
 
-        // Create a bulleted list style.
-        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
-        builder.ListFormat.List = bulletList;
+        // Outer foreach for categories.
+        builder.Writeln("<<foreach [cat in Categories]>>");
+        builder.ListFormat.ApplyBulletDefault();
+        builder.Writeln("<<[cat.Name]>>");
 
-        // Begin outer foreach over groups.
-        builder.Writeln("<<foreach [group in model.Groups]>>");
-
-        // Category line – top‑level bullet.
-        builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("<<[group.Category]>>");
-
-        // Begin inner foreach over items.
-        builder.Writeln("<<foreach [item in group.Items]>>");
-
-        // Item line – second‑level bullet.
-        builder.ListFormat.ListLevelNumber = 1;
+        // Inner foreach for items (indented bullet).
+        builder.ListFormat.ListLevelNumber = 1; // Indent one level.
+        builder.Writeln("<<foreach [item in cat.Items]>>");
         builder.Writeln("<<[item]>>");
-
-        // End inner foreach.
         builder.Writeln("<</foreach>>");
 
-        // End outer foreach.
+        // Reset indentation and close outer foreach.
+        builder.ListFormat.ListLevelNumber = 0;
         builder.Writeln("<</foreach>>");
-
-        // Reset list formatting for any following content.
         builder.ListFormat.RemoveNumbers();
 
-        doc.Save(filePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+
+        // Build the report.
+        engine.BuildReport(doc, model, "model");
+
+        // Save the final document.
+        string outputPath = Path.Combine("output", "report.docx");
+        Directory.CreateDirectory("output");
+        doc.Save(outputPath);
     }
 }
 
-// Root data model.
+// Data model classes.
 public class ReportModel
 {
-    public List<CategoryGroup> Groups { get; set; } = new();
+    public List<Category> Categories { get; set; } = new();
 }
 
-// Represents a category and its items.
-public class CategoryGroup
+public class Category
 {
-    public string Category { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public List<string> Items { get; set; } = new();
 }

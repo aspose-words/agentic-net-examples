@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Required for Table type
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -11,60 +12,93 @@ public class Program
         // Sample data model.
         var model = new ReportModel
         {
-            Items = new List<Item>
+            Groups = new()
             {
-                new Item { Name = "Apple",  Value = 10 },
-                new Item { Name = "Banana", Value = 20 },
-                new Item { Name = "Cherry", Value = 30 }
+                new Group
+                {
+                    Name = "Group A",
+                    Items = new()
+                    {
+                        new Item { Description = "Item 1", Quantity = 10 },
+                        new Item { Description = "Item 2", Quantity = 20 }
+                    }
+                },
+                new Group
+                {
+                    Name = "Group B",
+                    Items = new()
+                    {
+                        new Item { Description = "Item 3", Quantity = 30 }
+                    }
+                }
             }
         };
 
         // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
+        // Create the template document programmatically.
         // -----------------------------------------------------------------
-        const string templatePath = "Template.docx";
-        var builder = new DocumentBuilder(); // Creates a new blank document.
+        string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Open a foreach block before the table.
-        builder.Writeln("<<foreach [item in Items]>>");
+        // Outer foreach – iterate over groups.
+        builder.Writeln("<<foreach [group in Groups]>>");
 
-        // Build the table that will be repeated for each item.
-        Table table = builder.StartTable();
-
-        // Header row – two horizontally merged cells.
+        // -------------------------------------------------------------
+        // Header table – contains a single row with merged cells.
+        // -------------------------------------------------------------
+        Table headerTable = builder.StartTable();
         builder.InsertCell();
-        builder.Write("<<cellMerge>>Category");
+        builder.Write("<<cellMerge -horz>><<[group.Name]>>");
         builder.InsertCell();
-        builder.Write("<<cellMerge>>Category");
+        builder.Write("<<cellMerge -horz>><<[group.Name]>>");
         builder.EndRow();
-
-        // Data row – tags will be replaced for each item.
-        builder.InsertCell();
-        builder.Write("<<[item.Name]>>");
-        builder.InsertCell();
-        builder.Write("<<[item.Value]>>");
-        builder.EndRow();
-
-        // Finish the table.
         builder.EndTable();
 
-        // Close the foreach block.
+        // -------------------------------------------------------------
+        // Items tables – one table per item (simplified safe pattern).
+        // -------------------------------------------------------------
+        builder.Writeln("<<foreach [item in group.Items]>>");
+        Table itemsTable = builder.StartTable();
+
+        // Column titles (appears for each item – acceptable for demo).
+        builder.InsertCell();
+        builder.Writeln("Description");
+        builder.InsertCell();
+        builder.Writeln("Qty");
+        builder.EndRow();
+
+        // Data row.
+        builder.InsertCell();
+        builder.Writeln("<<[item.Description]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Quantity]>>");
+        builder.EndRow();
+
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        builder.Document.Save(templatePath);
+        // Close outer foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
+        // Load the template and build the report.
         // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Populate the template with the data model (root name "model").
-        engine.BuildReport(doc, model, "model");
+        // Save the final report.
+        string reportPath = "Report.docx";
+        reportDoc.Save(reportPath);
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
     }
 }
 
@@ -73,11 +107,17 @@ public class Program
 // ---------------------------------------------------------------------
 public class ReportModel
 {
+    public List<Group> Groups { get; set; } = new();
+}
+
+public class Group
+{
+    public string Name { get; set; } = "";
     public List<Item> Items { get; set; } = new();
 }
 
 public class Item
 {
-    public string Name { get; set; } = "";
-    public int Value { get; set; }
+    public string Description { get; set; } = "";
+    public int Quantity { get; set; }
 }

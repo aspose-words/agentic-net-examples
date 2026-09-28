@@ -1,57 +1,53 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Model
 {
-    // Initialize to avoid nullable warnings.
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = "World";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple template with a LINQ Reporting tag.
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Create a simple template document with a LINQ Reporting tag.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
         builder.Writeln("Hello <<[model.Name]>>!");
 
-        // Save the template to disk.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-        template.Save(templatePath);
+        // Prepare the root data object.
+        Model model = new Model();
 
-        // Load the template back.
-        Document doc = new Document(templatePath);
-
-        // Prepare the data source.
-        Model model = new Model { Name = "World" };
-
-        // Build the first report – this must succeed.
+        // Create the reporting engine and build the first report.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        bool success = engine.BuildReport(template, model, "model");
+        Console.WriteLine($"First BuildReport succeeded: {success}");
 
-        // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        doc.Save(outputPath);
-
-        // Attempt to set restricted types after the first BuildReport.
+        // Attempt to call SetRestrictedTypes after the first BuildReport.
         try
         {
-            // This call should throw an exception because restricted types cannot be changed after building a report.
-            ReportingEngine.SetRestrictedTypes(typeof(string));
-            Console.WriteLine("SetRestrictedTypes did not throw an exception (unexpected).");
-        }
-        catch (ArgumentException ex)
-        {
-            // Documented exception type.
-            Console.WriteLine($"Caught expected ArgumentException: {ex.Message}");
+            // SetRestrictedTypes is a static method; calling it after BuildReport should throw.
+            ReportingEngine.SetRestrictedTypes(new[] { typeof(string) });
+            Console.WriteLine("SetRestrictedTypes did NOT throw an exception as expected.");
         }
         catch (InvalidOperationException ex)
         {
-            // Actual exception type thrown by the current library version.
-            Console.WriteLine($"Caught expected InvalidOperationException: {ex.Message}");
+            Console.WriteLine($"Expected exception caught: {ex.Message}");
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unexpected exception type caught: {ex.GetType().Name} - {ex.Message}");
+        }
+
+        // Save the generated document to verify output.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        template.Save(outputPath);
+        Console.WriteLine($"Output document saved to: {outputPath}");
     }
 }

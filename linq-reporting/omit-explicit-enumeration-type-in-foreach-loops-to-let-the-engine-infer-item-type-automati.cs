@@ -4,67 +4,64 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-public class Item
+namespace LinqReportingInferenceExample
 {
-    public int Index { get; set; }
-    public string Name { get; set; } = "";
-}
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model for the report.
+    public class ReportModel
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Paths for template and output.
-        string templatePath = "Template.docx";
-        string outputPath = "Report.docx";
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = "";
+    }
 
-        // -----------------------------------------------------------------
-        // Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template document.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // Prepare sample data.
-        // -----------------------------------------------------------------
-        Order order = new Order { CustomerName = "John Doe" };
-
-        // Use a foreach loop with 'var' to let the compiler infer the type.
-        foreach (var i in Enumerable.Range(1, 5))
+    public class Program
+    {
+        public static void Main()
         {
-            order.Items.Add(new Item { Index = i, Name = $"Product {i}" });
+            // Register code page provider for any encoding needs.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample data.
+            var model = new ReportModel
+            {
+                Items = new()
+                {
+                    new Item { Index = 1, Name = "Alpha" },
+                    new Item { Index = 2, Name = "Beta" },
+                    new Item { Index = 3, Name = "Gamma" }
+                }
+            };
+
+            // Create the template document programmatically.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Report Items:");
+            // Foreach tag without explicit type; the engine infers the item type.
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("- <<[item.Index]>>: <<[item.Name]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            doc.Save(templatePath);
+
+            // Load the template for report generation.
+            var reportDoc = new Document(templatePath);
+
+            // Build the report using the LINQ Reporting engine.
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated report.
+            var outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
         }
-
-        // -----------------------------------------------------------------
-        // Build the report using the LINQ Reporting engine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, order, "order");
-
-        // Save the generated report.
-        doc.Save(outputPath);
     }
 }

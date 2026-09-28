@@ -1,76 +1,62 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
-
-#nullable enable
-
-public class ReportModel
-{
-    // The image stream may be null to simulate a missing image.
-    public Stream? ImageStream { get; set; }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary template and output documents.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Output.docx";
+        // Create output directory.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
 
-        // -------------------------------------------------
-        // 1. Create a template document containing an image tag.
-        // -------------------------------------------------
+        // Create the template document with an image tag inside a textbox.
+        string templatePath = Path.Combine(outputDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Image tags must be placed inside a textbox.
-        var textBox = builder.InsertShape(Aspose.Words.Drawing.ShapeType.TextBox, 200, 120);
+        // Insert a textbox to host the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-        // The tag references the ImageStream property of the model.
         builder.Write("<<image [model.ImageStream]>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the template back (required by the workflow).
-        // -------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 3. Prepare the data model with a null image stream.
-        // -------------------------------------------------
-        var model = new ReportModel
-        {
-            ImageStream = null // Intentionally null to test graceful failure.
-        };
+        // Prepare the model with a null image stream.
+        ReportModel model = new ReportModel();
 
-        // -------------------------------------------------
-        // 4. Build the report using InlineErrorMessages option.
-        // -------------------------------------------------
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
+        // Configure the reporting engine to use inline error messages.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // BuildReport returns false when an error occurs and InlineErrorMessages is set.
-        bool success = engine.BuildReport(loadedTemplate, model, "model");
+        // Build the report.
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-        // -------------------------------------------------
-        // 5. Verify the result and output information.
-        // -------------------------------------------------
-        Console.WriteLine($"BuildReport succeeded: {success}");
+        // Save the generated document.
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        reportDoc.Save(resultPath);
+
+        // Verify that the engine reported failure due to the null image stream.
         if (!success)
         {
-            // The engine should have inserted an error message into the document.
-            string documentText = loadedTemplate.GetText();
-            Console.WriteLine("Document contains error message:");
-            Console.WriteLine(documentText);
+            Console.WriteLine("Test Passed: BuildReport returned false for null image stream.");
         }
+        else
+        {
+            Console.WriteLine("Test Failed: BuildReport succeeded unexpectedly.");
+        }
+    }
 
-        // Save the resulting document for inspection.
-        loadedTemplate.Save(outputPath);
+    // Model class used by the LINQ Reporting template.
+    public class ReportModel
+    {
+        // Intentionally null to simulate a missing image.
+        public Stream? ImageStream { get; set; } = null;
     }
 }

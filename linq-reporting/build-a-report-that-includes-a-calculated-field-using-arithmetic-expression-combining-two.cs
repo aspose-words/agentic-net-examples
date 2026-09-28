@@ -1,64 +1,85 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for temporary files
-        string jsonPath = "orders.json";
-        string templatePath = "template.docx";
-        string outputPath = "Report.docx";
+        // Sample JSON data.
+        string json = @"{
+  ""Items"": [
+    { ""Name"": ""Apple"",  ""Price"": 0.5, ""Quantity"": 10 },
+    { ""Name"": ""Banana"", ""Price"": 0.3, ""Quantity"": 5 },
+    { ""Name"": ""Orange"", ""Price"": 0.8, ""Quantity"": 7 }
+  ]
+}";
+        // Deserialize JSON into model.
+        Order order = JsonConvert.DeserializeObject<Order>(json)!;
 
-        // 1. Create sample JSON data
-        var orders = new List<Order>
-        {
-            new Order { Price = 10.5m, Quantity = 3 },
-            new Order { Price = 7.2m,  Quantity = 5 }
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(orders));
+        // Create a Word template programmatically.
+        const string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // 2. Build the template document with LINQ Reporting tags
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Items Report");
+        builder.Writeln();
 
-        // Begin a foreach loop over the JSON array
-        builder.Writeln("<<foreach [order in orders]>>");
-        builder.Writeln("Price: <<[order.Price]>>");
-        builder.Writeln("Quantity: <<[order.Quantity]>>");
-        // Calculated field: Price * Quantity
-        builder.Writeln("Total: <<[order.Price * order.Quantity]>>");
+        // Header table (static, not repeated).
+        Table headerTable = builder.StartTable();
+        builder.InsertCell(); builder.Writeln("Name");
+        builder.InsertCell(); builder.Writeln("Price");
+        builder.InsertCell(); builder.Writeln("Quantity");
+        builder.InsertCell(); builder.Writeln("Total (Price * Quantity)");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Data rows – wrapped in a foreach block.
+        builder.Writeln("<<foreach [item in Items]>>");
+        Table dataTable = builder.StartTable();
+        builder.InsertCell(); builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Price]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Price * item.Quantity]>>");
+        builder.EndRow();
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // 3. Load the template document (as required before BuildReport)
-        var loadedTemplate = new Document(templatePath);
-
-        // 4. Create a JSON data source
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
-
-        // 5. Build the report
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
-        // The root name "orders" must match the name used in the template tags
-        engine.BuildReport(loadedTemplate, jsonDataSource, "orders");
 
-        // 6. Save the generated report
-        loadedTemplate.Save(outputPath);
-    }
+        // Build the report using the root object name "order".
+        engine.BuildReport(reportDoc, order, "order");
 
-    // Simple POCO matching the JSON structure (used only for creating sample JSON)
-    public class Order
-    {
-        public decimal Price { get; set; }
-        public int Quantity { get; set; }
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Data model classes.
+public class Order
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public decimal Price { get; set; }
+    public int Quantity { get; set; }
 }

@@ -3,52 +3,59 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data – some entries will produce empty paragraphs.
-        var model = new ReportModel
+        // Create a simple data model.
+        ReportModel model = new()
         {
-            Persons = new List<Person>
+            Items = new()
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "", Age = 0 },          // Will result in an empty paragraph.
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = null!, Age = 0 }        // Will also result in an empty paragraph.
+                new Item { Name = "Apple" },
+                new Item { Name = "Banana" },
+                new Item { Name = "Cherry" }
             }
         };
 
         // Build the template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // LINQ Reporting foreach loop with a conditional that may output nothing.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("<<if [p.Name != null && p.Name != \"\"]>><<[p.Name]>> - <<[p.Age]>> <</if>>");
+        builder.Writeln("Items List:");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("<<[item.Name]>>");
         builder.Writeln("<</foreach>>");
+        // An empty paragraph that would normally remain after the foreach.
+        builder.Writeln("");
 
-        // Configure the reporting engine to remove empty paragraphs after processing.
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
+        // Save the template to disk.
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
 
-        // Build the report using the model as the root data source named "model".
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
+
+        // Configure the reporting engine to remove empty paragraphs.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+
+        // Build the report.
         engine.BuildReport(doc, model, "model");
 
         // Save the final document.
-        doc.Save("Report.docx");
+        const string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
 }

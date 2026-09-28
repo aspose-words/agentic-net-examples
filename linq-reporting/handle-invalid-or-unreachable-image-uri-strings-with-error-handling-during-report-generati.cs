@@ -4,79 +4,118 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
+
+public class Product
+{
+    public string Name { get; set; } = "";
+    public string ImagePath { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create output folder.
+        // Prepare output folder.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a tiny red PNG image (1x1 pixel) and save it locally.
+        // Create a tiny transparent PNG (1x1 pixel) to use as a valid image.
         string validImagePath = Path.Combine(outputDir, "valid.png");
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=");
+        byte[] pngBytes = new byte[]
+        {
+            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
+            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+            0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
+            0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
+            0x54,0x78,0x9C,0x63,0x60,0x00,0x00,0x00,
+            0x02,0x00,0x01,0xE2,0x21,0xBC,0x33,0x00,
+            0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
+            0x42,0x60,0x82
+        };
         File.WriteAllBytes(validImagePath, pngBytes);
 
-        // Prepare the data model.
+        // Build data model with one valid and one invalid image path.
         var model = new ReportModel
         {
-            Title = "Image URI Error Handling Demo",
-            Items = new List<ReportItem>
+            Products = new List<Product>
             {
-                new ReportItem { ImageUri = validImagePath },                                 // Valid local file.
-                new ReportItem { ImageUri = "https://example.com/missing.jpg" }, // Invalid remote URI.
-                new ReportItem { ImageUri = @"C:\nonexistent\image.png" }      // Invalid local path.
+                new() { Name = "Valid Image", ImagePath = validImagePath },
+                new() { Name = "Invalid Image", ImagePath = Path.Combine(outputDir, "nonexistent.jpg") }
             }
         };
 
-        // Build the template document programmatically.
+        // Replace any missing image with the placeholder so the engine does not throw.
+        foreach (var product in model.Products)
+        {
+            if (!File.Exists(product.ImagePath))
+                product.ImagePath = validImagePath;
+        }
+
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        string templatePath = Path.Combine(outputDir, "template.docx");
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Title.
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln();
+        builder.Writeln("Product Report");
+        builder.Writeln("<<foreach [p in Products]>>");
 
-        // Begin foreach over Items.
-        builder.Writeln("<<foreach [item in model.Items]>>");
+        // Start a table for each product (header + data row).
+        Table table = builder.StartTable();
 
-        // Insert a textbox that will hold the image.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Image");
+        builder.EndRow();
+
+        // Data row.
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
+
+        // Insert a textbox that will host the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 150, 150);
         builder.MoveTo(textBox.FirstParagraph);
-        // Image tag inside the textbox. Use -fitSize to keep original dimensions.
-        builder.Write("<<image [item.ImageUri] -fitSize>>");
+        builder.Write("<<image [p.ImagePath] -fitSize>>");
 
-        // End foreach.
+        // Return cursor to the table cell after the shape.
+        builder.MoveTo(table.LastRow.LastCell.LastParagraph);
+        builder.EndRow();
+
+        builder.EndTable();
+
         builder.Writeln("<</foreach>>");
 
-        // Configure the reporting engine to inline error messages.
+        // Save the template.
+        doc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template and generate the report.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
+
         var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report.
-        bool success = engine.BuildReport(doc, model, "model");
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        string outputPath = Path.Combine(outputDir, "ReportWithImages.docx");
-        doc.Save(outputPath);
+        string outputPath = Path.Combine(outputDir, "report.docx");
+        reportDoc.Save(outputPath);
 
-        // Output the result.
-        Console.WriteLine($"Report generation success flag: {success}");
-        Console.WriteLine($"Report saved to: {outputPath}");
+        // Output status.
+        Console.WriteLine(success
+            ? "Report generated successfully."
+            : "Report generated with errors (see inline messages).");
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public string Title { get; set; } = string.Empty;
-    public List<ReportItem> Items { get; set; } = new();
-}
-
-// Item containing an image URI (could be a file path or a web URL).
-public class ReportItem
-{
-    public string ImageUri { get; set; } = string.Empty;
 }

@@ -1,69 +1,65 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+#nullable enable
 
 public class Program
 {
     public static void Main()
     {
-        // Create a template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("<<foreach [item in Persons]>>");
-        builder.Writeln("Name: <<[item.Name]>>");
-        builder.Writeln("Age: <<[item.Age]>>");
+        // Create output folder.
+        string folder = "Output";
+        Directory.CreateDirectory(folder);
+
+        // 1. Create the template document.
+        string templatePath = Path.Combine(folder, "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Persons Report:");
+        // LINQ Reporting foreach tag.
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save and reload the template to simulate a real file workflow.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // 2. Load the template for reporting.
         Document doc = new Document(templatePath);
 
-        // Prepare the data model. The collection contains objects with and without the 'Age' member.
-        ReportModel model = new ReportModel
+        // 3. Prepare the data model with an empty collection (treated as absent enumeration).
+        ReportModel model = new()
         {
-            Persons = new List<object>
-            {
-                new Person { Name = "John", Age = 30 },
-                new Dummy { Name = "Jane" },          // Missing 'Age' member.
-                new Person { Name = "Bob", Age = 25 }
-            }
+            Persons = new() // Empty list instead of null to avoid exceptions.
         };
 
-        // Configure the reporting engine to treat missing members as null.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.AllowMissingMembers,
-            MissingMemberMessage = "" // Optional: suppress custom missing member text.
-        };
+        // 4. Create the reporting engine (no special options needed for this scenario).
+        ReportingEngine engine = new();
 
-        // Build the report using the model as the root object named "model".
+        // 5. Build the report.
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
+        // 6. Save the generated report.
+        string outputPath = Path.Combine(folder, "Report.docx");
         doc.Save(outputPath);
 
         Console.WriteLine($"Report generated: {outputPath}");
     }
 }
 
-// Root data model.
+// Data model classes.
 public class ReportModel
 {
-    public List<object> Persons { get; set; } = new();
+    // When empty, the foreach loop produces no output.
+    public List<Person> Persons { get; set; } = new();
 }
 
-// Object with both Name and Age members.
 public class Person
 {
     public string Name { get; set; } = "";
     public int Age { get; set; }
-}
-
-// Object missing the Age member.
-public class Dummy
-{
-    public string Name { get; set; } = "";
 }

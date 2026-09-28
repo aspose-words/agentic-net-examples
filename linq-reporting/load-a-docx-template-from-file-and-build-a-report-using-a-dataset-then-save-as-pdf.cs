@@ -4,65 +4,66 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class LinqReportingExample
+public class Program
 {
     public static void Main()
     {
+        // Register code page provider for any encoding needs.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
         // Paths for the template and the final PDF.
-        const string templatePath = "Template.docx";
-        const string outputPdfPath = "Report.pdf";
+        string templatePath = "template.docx";
+        string outputPdfPath = "report.pdf";
 
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         // 1. Create a DOCX template with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -------------------------------------------------
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        // Add a title.
-        builder.Writeln("People Report");
+        builder.Writeln("Product Report");
         builder.Writeln();
 
-        // Begin a foreach loop over the DataSet's table "People".
-        // The root object name is "ds" (for DataSet) and the table name is "People".
-        builder.Writeln("<<foreach [person in ds.People]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age:  <<[person.Age]>>");
+        // Begin a foreach loop over the DataTable named "Products".
+        builder.Writeln("<<foreach [row in Products]>>");
+        // Write each product's name and price.
+        builder.Writeln("Name: <<[row.Name]>>");
+        builder.Writeln("Price: $<<[row.Price]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Prepare a DataSet with sample data.
-        // -----------------------------------------------------------------
-        DataSet dataSet = new DataSet();
+        // -------------------------------------------------
+        // 2. Load the template back from file.
+        // -------------------------------------------------
+        Document doc = new(templatePath);
 
-        DataTable peopleTable = new DataTable("People");
-        peopleTable.Columns.Add("Name", typeof(string));
-        peopleTable.Columns.Add("Age", typeof(int));
+        // -------------------------------------------------
+        // 3. Prepare a DataSet with sample data.
+        // -------------------------------------------------
+        DataSet dataSet = new();
+        DataTable productsTable = new("Products");
+        productsTable.Columns.Add("Name", typeof(string));
+        productsTable.Columns.Add("Price", typeof(decimal));
 
-        peopleTable.Rows.Add("Alice", 30);
-        peopleTable.Rows.Add("Bob",   45);
-        peopleTable.Rows.Add("Carol", 27);
+        // Add sample rows.
+        productsTable.Rows.Add("Apple", 0.99m);
+        productsTable.Rows.Add("Banana", 0.59m);
+        productsTable.Rows.Add("Cherry", 2.49m);
 
-        dataSet.Tables.Add(peopleTable);
+        dataSet.Tables.Add(productsTable);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // -------------------------------------------------
+        // 4. Build the report using ReportingEngine.
+        // -------------------------------------------------
+        ReportingEngine engine = new();
+        // No special options required for this simple example.
+        engine.BuildReport(doc, dataSet, "DataSet");
 
-        ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this simple example.
-        engine.Options = ReportBuildOptions.None;
-
-        // Build the report using the DataSet as the data source.
-        // The root name "ds" must match the name used in the template tags.
-        engine.BuildReport(reportDoc, dataSet, "ds");
-
-        // -----------------------------------------------------------------
-        // 4. Save the generated report as PDF.
-        // -----------------------------------------------------------------
-        reportDoc.Save(outputPdfPath, SaveFormat.Pdf);
+        // -------------------------------------------------
+        // 5. Save the generated report as PDF.
+        // -------------------------------------------------
+        doc.Save(outputPdfPath, SaveFormat.Pdf);
     }
 }

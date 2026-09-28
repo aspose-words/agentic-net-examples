@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,71 +8,64 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        string csvPath = Path.Combine(outputDir, "Data.csv");
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string resultPath = Path.Combine(outputDir, "Report.docx");
+        // Paths for the template, CSV data, and output report.
+        const string templatePath = "template.docx";
+        const string csvPath = "data.csv";
+        const string outputPath = "report.docx";
 
         // -----------------------------------------------------------------
-        // 1. Generate a large CSV file line by line (streaming, no full load).
+        // 1. Create a sample large CSV file with headers and many rows.
         // -----------------------------------------------------------------
-        using (var writer = new StreamWriter(csvPath))
+        using (var writer = new StreamWriter(csvPath, false, Encoding.UTF8))
         {
-            // Write header.
-            writer.WriteLine("Name,Age,Country");
-
-            // Write many rows.
-            for (int i = 1; i <= 5000; i++)
+            writer.WriteLine("Id,Name,Age");
+            for (int i = 1; i <= 1000; i++)
             {
-                writer.WriteLine($"Person {i},{20 + (i % 30)},{(i % 2 == 0 ? "USA" : "UK")}");
+                writer.WriteLine($"{i},Person {i},{20 + (i % 30)}");
             }
         }
 
-        // ---------------------------------------------------------------
-        // 2. Create a simple Word template with LINQ Reporting tags.
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // 2. Build the Word template containing LINQ Reporting tags.
+        // -----------------------------------------------------------------
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("People Report");
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>, Country: <<[person.Country]>>");
+        builder.Writeln("CSV Data Report");
+        builder.Writeln("<<foreach [row in CsvData]>>");
+        builder.Writeln("Id: <<[row.Id]>>, Name: <<[row.Name]>>, Age: <<[row.Age]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // ---------------------------------------------------------------
-        // 3. Load the template for report generation.
-        // ---------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 3. Load the template back for report generation.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
 
-        // ---------------------------------------------------------------
-        // 4. Prepare CSV data source using a stream (no full file load).
-        // ---------------------------------------------------------------
-        var loadOptions = new CsvDataLoadOptions(hasHeaders: true);
-        loadOptions.Delimiter = ',';
-
-        using (FileStream csvStream = File.OpenRead(csvPath))
+        // -----------------------------------------------------------------
+        // 4. Create a CsvDataSource that streams the CSV file.
+        // -----------------------------------------------------------------
+        using (var csvStream = new FileStream(csvPath, FileMode.Open, FileAccess.Read, FileShare.Read))
         {
-            var csvDataSource = new CsvDataSource(csvStream, loadOptions);
+            var csvOptions = new CsvDataLoadOptions
+            {
+                HasHeaders = true // Use default separator (comma), quote and comment characters.
+            };
 
-            // -----------------------------------------------------------
-            // 5. Build the report using ReportingEngine.
-            // -----------------------------------------------------------
+            var csvDataSource = new CsvDataSource(csvStream, csvOptions);
+
+            // -----------------------------------------------------------------
+            // 5. Build the report using the ReportingEngine.
+            // -----------------------------------------------------------------
             var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, csvDataSource, "persons");
+            engine.BuildReport(doc, csvDataSource, "CsvData");
         }
 
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
         // 6. Save the generated report.
-        // ---------------------------------------------------------------
-        reportDoc.Save(resultPath);
-
-        // Inform the user (no interactive input required).
-        Console.WriteLine($"Report generated at: {resultPath}");
+        // -----------------------------------------------------------------
+        doc.Save(outputPath);
     }
 }

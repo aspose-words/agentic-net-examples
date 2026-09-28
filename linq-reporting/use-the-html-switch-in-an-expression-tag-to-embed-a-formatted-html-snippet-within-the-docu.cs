@@ -1,52 +1,43 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingHtmlExample
+public class ReportModel
 {
-    // Simple data model containing an HTML snippet.
-    public class ReportModel
+    // HTML snippet that will be inserted into the document.
+    public string HtmlSnippet { get; set; } = "<p style=\"color:blue;\">This is <b>bold</b> and <i>italic</i> text.</p>";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Initialize with a formatted HTML fragment.
-        public string HtmlSnippet { get; set; } = "<p style='color:red; font-size:14pt;'>Hello <b>World</b> from <i>HTML</i>!</p>";
-    }
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string outputPath = "Report.docx";
+        // -----------------------------------------------------------------
+        // Create the template document with a LINQ Reporting HTML expression.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Insert the HTML expression tag that will render the HTML snippet.
+        builder.Writeln("<<[model.HtmlSnippet] -html>>");
 
-            // Insert the LINQ Reporting tag that will embed the HTML snippet.
-            // The "-html" switch tells the engine to treat the expression result as HTML.
-            builder.Writeln("<<[model.HtmlSnippet] -html>>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // -------------------------------------------------
+        // Load the template and build the report with data.
+        // -------------------------------------------------
+        var doc = new Document(templatePath);
+        var model = new ReportModel();
 
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel();
-
-            // Create the reporting engine and generate the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the final document.
-            reportDoc.Save(outputPath);
-        }
+        // Save the final report.
+        doc.Save(outputPath);
     }
 }

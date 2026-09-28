@@ -1,111 +1,78 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
-namespace AsposeWordsLinqReportingBatch
+public class Program
 {
-    // Sample data model classes
-    public class Order
+    public static void Main()
     {
-        public string CustomerName { get; set; } = "Acme Corp";
-        public List<Item> Items { get; set; } = new();
-    }
+        // Register code page provider for any encoding needs.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = "";
-    }
+        // Prepare folders for templates and output reports.
+        string baseDir = Directory.GetCurrentDirectory();
+        string templateDir = Path.Combine(baseDir, "Templates");
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(templateDir);
+        Directory.CreateDirectory(outputDir);
 
-    public class Program
-    {
-        public static void Main()
+        // Create three identical template files programmatically.
+        for (int i = 1; i <= 3; i++)
         {
-            // Prepare folders
-            string baseDir = Directory.GetCurrentDirectory();
-            string templatesDir = Path.Combine(baseDir, "Templates");
-            string outputDir = Path.Combine(baseDir, "Output");
-            Directory.CreateDirectory(templatesDir);
-            Directory.CreateDirectory(outputDir);
+            string templatePath = Path.Combine(templateDir, $"Template{i}.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Create a few template files programmatically
-            for (int i = 1; i <= 3; i++)
-            {
-                string templatePath = Path.Combine(templatesDir, $"Template{i}.docx");
-                CreateTemplate(templatePath);
-            }
-
-            // Prepare a single data source that will be used for all reports
-            Order sampleOrder = new Order
-            {
-                CustomerName = "Acme Corporation",
-                Items = new List<Item>
-                {
-                    new Item { Index = 1, Name = "Widget A" },
-                    new Item { Index = 2, Name = "Widget B" },
-                    new Item { Index = 3, Name = "Widget C" }
-                }
-            };
-
-            // Process each template in the folder
-            foreach (string templateFile in Directory.GetFiles(templatesDir, "*.docx"))
-            {
-                // Load the template document
-                Document doc = new Document(templateFile);
-
-                // Configure the reporting engine
-                ReportingEngine engine = new ReportingEngine();
-                engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-
-                // Build the report using the same data source for every template
-                engine.BuildReport(doc, sampleOrder, "order");
-
-                // Save the generated report
-                string outputFileName = Path.GetFileNameWithoutExtension(templateFile) + "_Report.docx";
-                string outputPath = Path.Combine(outputDir, outputFileName);
-                doc.Save(outputPath);
-            }
-        }
-
-        // Creates a simple DOCX template with LINQ Reporting tags
-        private static void CreateTemplate(string filePath)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Header with customer name
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln();
-
-            // Begin foreach loop for items
+            builder.Writeln("Report for <<[order.CustomerName]>>");
             builder.Writeln("<<foreach [item in order.Items]>>");
-
-            // Table with header and data rows
-            Table table = builder.StartTable();
-
-            // Header row
-            builder.InsertCell();
-            builder.Writeln("Index");
-            builder.InsertCell();
-            builder.Writeln("Item Name");
-            builder.EndRow();
-
-            // Data row (repeated for each item)
-            builder.InsertCell();
-            builder.Writeln("<<[item.Index]>>");
-            builder.InsertCell();
-            builder.Writeln("<<[item.Name]>>");
-            builder.EndRow();
-
-            // End of table and foreach block
-            builder.EndTable();
+            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk
-            doc.Save(filePath);
+            templateDoc.Save(templatePath);
+        }
+
+        // Sample data model.
+        Order order = new Order
+        {
+            CustomerName = "Acme Corp",
+            Items = new List<Item>
+            {
+                new() { Index = 1, Name = "Widget" },
+                new() { Index = 2, Name = "Gadget" },
+                new() { Index = 3, Name = "Doohickey" }
+            }
+        };
+
+        // Configure the reporting engine.
+        ReportingEngine.UseReflectionOptimization = true;
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // Process each template file, generate a report, and save it.
+        foreach (string templateFile in Directory.GetFiles(templateDir, "*.docx"))
+        {
+            Document reportDoc = new Document(templateFile);
+            bool success = engine.BuildReport(reportDoc, order, "order");
+            // success indicates whether the report was built without errors when InlineErrorMessages is set.
+
+            string outputPath = Path.Combine(outputDir, $"Report_{Path.GetFileName(templateFile)}");
+            reportDoc.Save(outputPath);
         }
     }
+}
+
+// Data model classes.
+public class Order
+{
+    public string CustomerName { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = "";
 }

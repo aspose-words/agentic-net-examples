@@ -1,56 +1,70 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace LinqReportingReflectionOptimization
 {
-    // Simple data entity.
-    public class Person
+    // Sample data model
+    public class Order
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
+        public string CustomerName { get; set; } = "John Doe";
+        public List<Item> Items { get; set; } = new();
     }
 
-    // Wrapper model that will be passed to the reporting engine.
-    public class ReportModel
+    public class Item
     {
-        public List<Person> Persons { get; set; } = new();
+        public int Index { get; set; }
+        public string Name { get; set; } = "";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Enable reflection optimization to speed up processing of large collections.
-            ReportingEngine.UseReflectionOptimization = true;
+            // Register code page provider for Aspose.Words (required for some environments)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Create a blank document and build the template with LINQ Reporting tags.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            // Template: iterate over the Persons collection and output each person's data.
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Prepare sample data.
-            var model = new ReportModel
+            // Prepare sample data
+            var order = new Order
             {
-                Persons = new List<Person>
+                CustomerName = "Acme Corp",
+                Items = new List<Item>
                 {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 45 },
-                    new Person { Name = "Charlie", Age = 28 }
+                    new Item { Index = 1, Name = "Widget A" },
+                    new Item { Index = 2, Name = "Widget B" },
+                    new Item { Index = 3, Name = "Widget C" }
                 }
             };
 
-            // Build the report using the model. The root name in the template is "model".
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            // Create a template document programmatically
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Save the generated report.
-            doc.Save("ReportWithReflectionOptimization.docx");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("<<foreach [item in order.Items]>>");
+            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            const string templatePath = "template.docx";
+            template.Save(templatePath);
+
+            // Load the template for reporting
+            var doc = new Document(templatePath);
+
+            // Enable reflection optimization for better performance on large collections
+            ReportingEngine.UseReflectionOptimization = true;
+
+            // Build the report
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, order, "order");
+
+            // Save the generated report
+            const string outputPath = "report.docx";
+            doc.Save(outputPath);
         }
     }
 }

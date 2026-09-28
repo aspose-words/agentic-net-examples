@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -9,88 +8,65 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare working directories.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string outputPath = Path.Combine(workDir, "Report.html");
 
         // -----------------------------------------------------------------
-        // 1. Create a Word template with LINQ Reporting tags.
+        // 1. Create the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
-        string templatePath = Path.Combine(outputDir, "Template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Apply a dynamic text color using the <<textColor>> tag.
-        // The color expression will be taken from item.Color.
-        builder.Writeln("<<textColor [item.Color]>>");
-        builder.Writeln("<<[item.Text]>>");
+        // Insert a paragraph with dynamic text color and background color.
+        // The colors are taken from the model properties.
+        builder.Writeln("<<textColor [model.Color]>>");
+        builder.Writeln("<<backColor [model.BackColor]>>Dynamic Colored Text<</backColor>>");
         builder.Writeln("<</textColor>>");
 
-        // End the foreach block.
-        builder.Writeln("<</foreach>>");
+        // Insert an HTML snippet to demonstrate HTML export.
+        builder.Writeln("<<[model.HtmlSnippet] -html>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and prepare the data model.
+        // 2. Load the template and build the report.
         // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
+        Document reportDoc = new Document(templatePath);
 
-        // Sample data model.
-        ReportModel model = new()
+        // Sample data model with color properties.
+        ReportModel model = new ReportModel
         {
-            Items = new()
-            {
-                new Item { Text = "First line - red",   Color = "Red" },
-                new Item { Text = "Second line - green", Color = "Green" },
-                new Item { Text = "Third line - blue",  Color = "Blue" }
-            }
+            Color = "Blue",
+            BackColor = "LightGray",
+            HtmlSnippet = "<b>Bold HTML content</b>"
         };
 
-        // -----------------------------------------------------------------
-        // 3. Build the report using the LINQ Reporting engine.
-        // -----------------------------------------------------------------
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
         // -----------------------------------------------------------------
-        // 4. Save the final document as HTML, preserving the colors.
+        // 3. Export the final document to HTML, preserving colors.
         // -----------------------------------------------------------------
-        HtmlSaveOptions htmlOptions = new()
-        {
-            // Export colors as they appear in the document.
-            ExportFontResources = true,
-            ExportImagesAsBase64 = true,
-            // Optional: specify a folder for external resources (not needed for base64).
-            ImagesFolder = Path.Combine(outputDir, "Images")
-        };
-
-        string htmlPath = Path.Combine(outputDir, "Report.html");
-        doc.Save(htmlPath, htmlOptions);
-
-        Console.WriteLine($"Report generated: {htmlPath}");
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
+        reportDoc.Save(outputPath, htmlOptions);
     }
 }
 
 // ---------------------------------------------------------------------
-// Data model classes used by the LINQ Reporting engine.
+// Data model used by the template.
 // ---------------------------------------------------------------------
 public class ReportModel
 {
-    // Collection referenced by the template's foreach tag.
-    public List<Item> Items { get; set; } = new();
-}
+    // Text color name or HTML color code.
+    public string Color { get; set; } = "Black";
 
-public class Item
-{
-    // Text to display.
-    public string Text { get; set; } = string.Empty;
+    // Background color name or HTML color code.
+    public string BackColor { get; set; } = "White";
 
-    // Color name or HTML color code used by the <<textColor>> tag.
-    public string Color { get; set; } = string.Empty;
+    // HTML snippet to be inserted as raw HTML.
+    public string HtmlSnippet { get; set; } = string.Empty;
 }

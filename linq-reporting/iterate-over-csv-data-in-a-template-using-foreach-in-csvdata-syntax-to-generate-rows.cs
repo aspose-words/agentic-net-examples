@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,35 +8,42 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a simple CSV file with headers.
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.csv");
-        File.WriteAllText(csvPath,
-            "Name,Age,Country\n" +
-            "Alice,30,USA\n" +
-            "Bob,25,Canada\n" +
-            "Charlie,35,UK");
+        // Register code page provider for CSV handling.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a template document programmatically.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Prepare sample CSV data.
+        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "data.csv");
+        File.WriteAllText(csvPath, "Id,Name,Amount\n1,Apple,10.5\n2,Banana,20\n3,Cherry,15.75");
 
-        // Insert a foreach tag that iterates over the CSV data source named "csvData".
-        builder.Writeln("<<foreach [in csvData]>>");
-        // Inside the loop output each column value.
-        builder.Writeln("<<[Name]>>\t<<[Age]>>\t<<[Country]>>");
+        // Create a template document with LINQ Reporting tags.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("<<foreach [row in csvData]>>");
+        builder.Writeln("Id: <<[row.Id]>>, Name: <<[row.Name]>>, Amount: <<[row.Amount]>>");
         builder.Writeln("<</foreach>>");
 
-        // Load the CSV data as a data source.
-        var loadOptions = new CsvDataLoadOptions(hasHeaders: true);
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // Save the template.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        template.Save(templatePath);
 
-        // Build the report using the ReportingEngine.
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
+
+        // Configure CSV data source options (only HasHeaders is supported in this version).
+        CsvDataLoadOptions csvOptions = new CsvDataLoadOptions
+        {
+            HasHeaders = true
+        };
+
+        // Load CSV data source.
+        CsvDataSource csvData = new CsvDataSource(csvPath, csvOptions);
+
+        // Build the report using the CSV data source.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        engine.BuildReport(doc, csvDataSource, "csvData");
+        engine.BuildReport(reportDoc, csvData, "csvData");
 
         // Save the generated report.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        doc.Save(outputPath);
+        reportDoc.Save(outputPath);
     }
 }

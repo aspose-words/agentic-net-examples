@@ -1,83 +1,73 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
 public class Program
 {
     public static void Main()
     {
-        // Create sample data.
-        var model = new ReportModel
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data
+        ReportModel model = new()
         {
-            Orders = new List<Order>
+            Sections = new()
             {
-                new Order
+                new Section
                 {
-                    ClientName = "Acme Corp",
-                    Services = new List<Service>
-                    {
-                        new Service { Name = "Consulting" },
-                        new Service { Name = "Support" }
-                    }
+                    Title = "Section A",
+                    Items = new() { "Item A1", "Item A2", "Item A3" }
                 },
-                new Order
+                new Section
                 {
-                    ClientName = "Globex Inc",
-                    Services = new List<Service>
-                    {
-                        new Service { Name = "Implementation" },
-                        new Service { Name = "Training" },
-                        new Service { Name = "Maintenance" }
-                    }
+                    Title = "Section B",
+                    Items = new() { "Item B1", "Item B2" }
                 }
             }
         };
 
-        // Build the template document programmatically.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Create the template document programmatically
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach over the orders collection.
-        builder.Writeln("<<foreach [order in Orders]>>");
-        // Output the client name.
-        builder.Writeln("<<[order.ClientName]>>");
-        // Numbered list of services – restart numbering for each order.
-        builder.Writeln("1. <<restartNum>><<foreach [service in order.Services]>> <<[service.Name]>> <</foreach>>");
-        // End the orders foreach.
+        // Begin outer foreach over sections
+        builder.Writeln("<<foreach [section in Model.Sections]>>");
+        // Section title
+        builder.Writeln("<<[section.Title]>>");
+        // Numbered list of items with restartNum before inner foreach
+        builder.Writeln("1. <<restartNum>><<foreach [item in section.Items]>> <<[item]>> <</foreach>>");
+        // End outer foreach
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, demonstrates the lifecycle rule).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template to disk
+        string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-        // Load the template (demonstrates the load rule).
-        var doc = new Document(templatePath);
+        // Load the template for reporting
+        Document reportDoc = new Document(templatePath);
 
-        // Build the report using LINQ Reporting.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Build the report using LINQ Reporting Engine
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "Model");
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        // Save the generated report
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
-// Root data model.
+// Data model classes
 public class ReportModel
 {
-    public List<Order> Orders { get; set; } = new();
+    public List<Section> Sections { get; set; } = new();
 }
 
-// Order with a collection of services.
-public class Order
+public class Section
 {
-    public string ClientName { get; set; } = string.Empty;
-    public List<Service> Services { get; set; } = new();
-}
-
-// Simple service item.
-public class Service
-{
-    public string Name { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public List<string> Items { get; set; } = new();
 }

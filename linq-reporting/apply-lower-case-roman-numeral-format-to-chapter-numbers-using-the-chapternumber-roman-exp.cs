@@ -1,44 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Chapter
-{
-    public int Number { get; set; }
-    public string Title { get; set; } = string.Empty;
-}
-
-public class ReportModel
-{
-    public List<Chapter> Chapters { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Begin a foreach loop over the Chapters collection.
-        builder.Writeln("<<foreach [chapter in Chapters]>>");
-        // Use the roman format (lower‑case) for the chapter number.
-        builder.Writeln("Chapter <<[chapter.Number]:roman>>: <<[chapter.Title]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // 2. Load the template for reporting.
-        Document doc = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        ReportModel model = new ReportModel
+        // Prepare sample data.
+        ReportModel model = new()
         {
-            Chapters = new List<Chapter>
+            Chapters = new()
             {
                 new Chapter { Number = 1, Title = "Introduction" },
                 new Chapter { Number = 2, Title = "Getting Started" },
@@ -46,11 +23,40 @@ public class Program
             }
         };
 
-        // 4. Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Create the template document programmatically.
+        string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // 5. Save the generated report.
-        doc.Save("Report.docx");
+        builder.Writeln("Report of Chapters");
+        builder.Writeln();
+        builder.Writeln("<<foreach [c in Chapters]>>");
+        builder.Writeln("Chapter <<[c.Number]:roman>>: <<[c.Title]>>");
+        builder.Writeln("<</foreach>>");
+
+        templateDoc.Save(templatePath);
+
+        // Load the template and build the report.
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+public class ReportModel
+{
+    public List<Chapter> Chapters { get; set; } = new();
+}
+
+public class Chapter
+{
+    public int Number { get; set; }
+    public string Title { get; set; } = string.Empty;
 }

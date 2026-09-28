@@ -2,79 +2,75 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary files.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
-        const string logPath = "ErrorLog.txt";
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document with a valid tag and an invalid tag.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare folders
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Valid expression – will be replaced with the model's Name property.
-        builder.Writeln("Hello <<[model.Name]>>");
+        // Paths for template, result and log files
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        string logPath = Path.Combine(outputDir, "errors.log");
 
-        // Invalid expression – missing a closing bracket, will cause a syntax error.
-        builder.Writeln("This line contains an invalid tag: <<[model.Invalid>>");
+        // -------------------------------------------------
+        // Create a template document with an invalid expression
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Save the template to disk so that it can be loaded later.
-        template.Save(templatePath);
+        builder.Writeln("Report Header");
+        // Invalid expression: property 'MissingProperty' does not exist in the model
+        builder.Writeln("<<[model.MissingProperty]>>");
 
-        // -----------------------------------------------------------------
-        // 2. Load the template back (ensures the document is fully loaded before building).
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        // Save the template to disk
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        var model = new Model(); // Model.Name is initialized in the class definition.
+        // -------------------------------------------------
+        // Load the template for report generation
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 4. Configure the ReportingEngine without InlineErrorMessages.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
+        // Sample data model (does NOT contain MissingProperty)
+        ReportModel model = new ReportModel
         {
-            // No InlineErrorMessages flag – syntax errors will throw an exception.
-            Options = ReportBuildOptions.None
+            Title = "Sample Report"
         };
 
-        // -----------------------------------------------------------------
-        // 5. Attempt to build the report and capture any syntax errors.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // Build the report without InlineErrorMessages option
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+
         try
         {
-            // The root object name used in the template tags is "model".
-            bool success = engine.BuildReport(loadedTemplate, model, "model");
+            // InlineErrorMessages flag is NOT set, so syntax errors will raise an exception
+            engine.BuildReport(reportDoc, model, "model");
 
-            // If BuildReport returns true, the report was generated without syntax errors.
-            if (success)
-            {
-                loadedTemplate.Save(reportPath);
-                Console.WriteLine($"Report generated successfully: {reportPath}");
-            }
+            // If no exception, save the generated document
+            reportDoc.Save(resultPath);
         }
         catch (Exception ex)
         {
-            // Log the exception details to a file.
+            // Log the syntax error details to a file
             File.WriteAllText(logPath, ex.ToString());
-            Console.WriteLine($"An error occurred while building the report. Details logged to: {logPath}");
+
+            // Optionally, still save the partially generated document
+            reportDoc.Save(resultPath);
         }
     }
-}
 
-// ---------------------------------------------------------------------
-// Simple data model used by the template.
-// ---------------------------------------------------------------------
-public class Model
-{
-    // Initialized to avoid nullable warnings.
-    public string Name { get; set; } = "World";
+    // Simple public data model used by the template
+    public class ReportModel
+    {
+        // Property that exists (used for demonstration)
+        public string Title { get; set; } = string.Empty;
+    }
 }

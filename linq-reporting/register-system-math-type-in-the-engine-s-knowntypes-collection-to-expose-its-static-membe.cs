@@ -3,52 +3,37 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Model
+{
+    // No properties needed for this example.
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Define a folder for the generated files.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "output");
-        Directory.CreateDirectory(outputDir);
+        // Define file paths.
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
 
-        // Path of the template document.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        // Path of the final report.
-        string resultPath = Path.Combine(outputDir, "Result.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create a template document that contains a LINQ Reporting tag.
-        // -----------------------------------------------------------------
+        // Create a new document and add a LINQ Reporting tag that uses System.Math.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        // The tag uses the static member Math.PI. After registration it will be resolved.
-        builder.Writeln("Value of PI: <<[Math.PI]>>");
-        // Save the template so that it can be loaded later (required by the lifecycle rule).
+        builder.Writeln("Rounded value of Pi (2 decimals): <<[Math.Round(3.14159, 2)]>>");
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template document.
-        // -----------------------------------------------------------------
+        // Load the template document.
         Document doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Configure the ReportingEngine.
-        // -----------------------------------------------------------------
+        // Create the reporting engine and register System.Math as a known type.
         ReportingEngine engine = new ReportingEngine();
-        // Register System.Math so its static members are accessible in the template.
         engine.KnownTypes.Add(typeof(System.Math));
 
-        // No data source is required for static members, but an object must be supplied.
-        // The overload with three parameters allows us to omit a data source name.
-        engine.BuildReport(doc, new object());
+        // Build the report using an empty model as the root object.
+        Model model = new Model();
+        engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save(resultPath);
-
-        // Inform the user where the files are located.
-        Console.WriteLine($"Template saved to: {templatePath}");
-        Console.WriteLine($"Report saved to:   {resultPath}");
+        // Save the generated report.
+        doc.Save(outputPath);
     }
 }

@@ -3,59 +3,54 @@ using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class ReportModel
+{
+    public string CompanyName { get; set; } = "";
+    public DateTime ReportDate { get; set; }
+}
+
 public class Program
 {
     public static void Main()
     {
-        // -------------------- Prepare sample data --------------------
+        // Prepare sample data in a DataSet.
         DataSet dataSet = new DataSet();
+        DataTable infoTable = new DataTable("Info");
+        infoTable.Columns.Add("CompanyName", typeof(string));
+        infoTable.Columns.Add("ReportDate", typeof(DateTime));
+        infoTable.Rows.Add("Acme Corp", DateTime.Today);
+        dataSet.Tables.Add(infoTable);
 
-        DataTable employeesTable = new DataTable("Employees");
-        employeesTable.Columns.Add("Name", typeof(string));
-        employeesTable.Columns.Add("Position", typeof(string));
-        employeesTable.Columns.Add("Salary", typeof(decimal));
+        // Create a simple template document with LINQ Reporting tags.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report for <<[model.CompanyName]>>");
+        builder.Writeln("Date: <<[model.ReportDate]>>");
+        // Save the template to disk (required before loading for reporting).
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-        employeesTable.Rows.Add("John Doe", "Manager", 75000m);
-        employeesTable.Rows.Add("Jane Smith", "Developer", 65000m);
-        employeesTable.Rows.Add("Bob Johnson", "Tester", 55000m);
+        // Load the template document.
+        Document reportDoc = new Document(templatePath);
 
-        dataSet.Tables.Add(employeesTable);
-
-        // -------------------- Create a template document --------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        builder.Writeln("Employee Report");
-        // Insert the current date directly; using a LINQ Reporting tag for DateTime causes a parsing error.
-        builder.Writeln($"Generated on: {DateTime.Now}");
-        builder.Writeln();
-
-        // Loop through the Employees table using LINQ Reporting tags.
-        builder.Writeln("<<foreach [emp in Employees]>>");
-        builder.Writeln("Name: <<[emp.Name]>>");
-        builder.Writeln("Position: <<[emp.Position]>>");
-        builder.Writeln("Salary: <<[emp.Salary]>>");
-        builder.Writeln("<</foreach>>");
-
-        // -------------------- Build the report --------------------
-        ReportingEngine engine = new ReportingEngine();
-        // The data source name ("ds") can be used in the template if needed.
-        engine.BuildReport(template, dataSet, "ds");
-
-        // -------------------- Set custom document properties based on the data --------------------
-        int employeeCount = employeesTable.Rows.Count;
-        decimal totalSalary = 0m;
-        foreach (DataRow row in employeesTable.Rows)
+        // Map DataSet values to a strongly‑typed model.
+        DataRow row = dataSet.Tables["Info"].Rows[0];
+        ReportModel model = new ReportModel
         {
-            totalSalary += (decimal)row["Salary"];
-        }
+            CompanyName = row["CompanyName"].ToString(),
+            ReportDate = (DateTime)row["ReportDate"]
+        };
 
-        // Add custom properties to the generated document.
-        // Use the overload that accepts a double for the decimal value.
-        template.CustomDocumentProperties.Add("EmployeeCount", employeeCount);
-        template.CustomDocumentProperties.Add("TotalSalary", (double)totalSalary);
+        // Generate the report using ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // -------------------- Save the final report --------------------
-        template.Save("EmployeeReport.docx");
+        // Set custom document properties based on the DataSet values.
+        reportDoc.CustomDocumentProperties.Add("CompanyName", model.CompanyName);
+        reportDoc.CustomDocumentProperties.Add("ReportDate", model.ReportDate);
+
+        // Save the final report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

@@ -1,44 +1,77 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Simple data model used by the template.
-    public class ReportModel
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-    }
+        // Register code page provider (required for some Aspose.Words features).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Paths for the template and the generated report.
+        string templatePath = "Template.docx";
+        string reportPath = "ReportWithErrors.docx";
+
+        // -----------------------------------------------------------------
+        // Step 1: Create a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Write a heading.
+        builder.Writeln("LINQ Reporting Inline Error Example");
+        builder.Writeln();
+
+        // Correct tag – will be replaced with the model's Name.
+        builder.Writeln("Customer Name: <<[model.Name]>>");
+
+        // Incorrect tag – references a non‑existent property, will trigger an error.
+        builder.Writeln("Missing Property: <<[model.MissingProperty]>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Step 2: Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // Step 3: Prepare the data model.
+        // -----------------------------------------------------------------
+        var model = new SampleModel
         {
-            // Create a blank document that will serve as the template.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            Name = "John Doe"
+        };
 
-            // Valid tag – will be replaced with the value of ReportModel.Name.
-            builder.Writeln("Customer: <<[model.Name]>>");
+        // -----------------------------------------------------------------
+        // Step 4: Configure the ReportingEngine to inline error messages.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Invalid tag – the property does not exist on ReportModel.
-            // With InlineErrorMessages enabled the engine will insert "<<error>>" at this location.
-            builder.Writeln("Missing property: <<[model.NonExistent]>>");
+        // Build the report. The method returns false because there is an error.
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel { Name = "John Doe" };
+        // -----------------------------------------------------------------
+        // Step 5: Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(reportPath);
 
-            // Configure the reporting engine to inline error messages.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
-
-            // Build the report. The boolean indicates whether parsing succeeded.
-            bool success = engine.BuildReport(template, model, "model");
-
-            Console.WriteLine($"Report build success: {success}");
-
-            // Save the generated document. It will contain "<<error>>" where the syntax error occurred.
-            template.Save("ReportWithInlineErrors.docx");
-        }
+        // Output the result status.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Report saved to: {Path.GetFullPath(reportPath)}");
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model used by the template.
+// ---------------------------------------------------------------------
+public class SampleModel
+{
+    // Non‑nullable property with an initializer to avoid warnings.
+    public string Name { get; set; } = string.Empty;
 }
