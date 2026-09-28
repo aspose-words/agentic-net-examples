@@ -7,89 +7,99 @@ public class ExtractMixedRange
 {
     public static void Main()
     {
-        // -------------------- Create a sample source document --------------------
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
+        // -----------------------------------------------------------------
+        // Create a sample source document containing a table and paragraphs.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Intro paragraph (outside the extraction range).
-        builder.Writeln("Intro paragraph before the table.");
+        // Intro paragraph.
+        builder.Writeln("Intro paragraph.");
 
-        // Build a 2x2 table.
-        Table table = builder.StartTable();
+        // Table – the first cell will be the start of the extraction range.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell A1");
+        builder.Write("StartCell"); // Start node.
         builder.InsertCell();
-        builder.Write("Cell B1");
+        builder.Write("Cell2");
         builder.EndRow();
+
+        // Second row.
         builder.InsertCell();
-        builder.Write("Cell A2");
+        builder.Write("Cell3");
         builder.InsertCell();
-        builder.Write("Cell B2");
+        builder.Write("Cell4");
+        builder.EndRow();
         builder.EndTable();
 
-        // Paragraph that will serve as the end boundary of the extraction.
-        builder.Writeln("Target paragraph – this marks the end of the extracted range.");
+        // Paragraphs after the table.
+        builder.Writeln("Middle paragraph.");
+        builder.Writeln("End paragraph."); // End node.
 
-        // Additional content after the extraction range.
-        builder.Writeln("Paragraph after the extracted range.");
-
-        // Save the source document.
+        // Save the source document to a deterministic local file.
         const string sourcePath = "source.docx";
-        source.Save(sourcePath);
+        sourceDoc.Save(sourcePath);
 
-        // -------------------- Load the source document --------------------
-        Document loaded = new Document(sourcePath);
+        // -----------------------------------------------------------------
+        // Load the document for extraction.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
 
-        // Locate the first cell of the first table (start of the range).
-        Table firstTable = loaded.GetChildNodes(NodeType.Table, true)[0] as Table;
+        // Locate the start cell (first cell of the first table).
+        Table firstTable = loadedDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
         if (firstTable == null)
-            throw new InvalidOperationException("No table found in the document.");
+            throw new InvalidOperationException("No table found in the source document.");
 
-        Cell startCell = firstTable.FirstRow.FirstCell;
+        Cell startCell = firstTable.Rows[0].Cells[0];
         if (startCell == null)
-            throw new InvalidOperationException("The table does not contain any cells.");
+            throw new InvalidOperationException("Start cell not found.");
 
-        // Locate the paragraph that contains the specific marker text (end of the range).
-        Paragraph endParagraph = null;
-        foreach (Paragraph para in loaded.FirstSection.Body.Paragraphs)
-        {
-            if (para.GetText().Contains("Target paragraph"))
-            {
-                endParagraph = para;
-                break;
-            }
-        }
+        // Locate the end paragraph (the last paragraph in the document).
+        Paragraph endParagraph = loadedDoc.FirstSection.Body.Paragraphs[
+            loadedDoc.FirstSection.Body.Paragraphs.Count - 1];
         if (endParagraph == null)
             throw new InvalidOperationException("End paragraph not found.");
 
-        // -------------------- Prepare the destination document --------------------
-        Document result = new Document();
-        result.RemoveAllChildren(); // Ensure a clean document.
+        // Locate the paragraph that follows the table (the middle paragraph).
+        Paragraph middleParagraph = firstTable.NextSibling as Paragraph;
+        if (middleParagraph == null)
+            throw new InvalidOperationException("Middle paragraph not found.");
 
-        // Create a new section and body for the result document.
-        Section resultSection = new Section(result);
-        result.AppendChild(resultSection);
-        Body resultBody = new Body(result);
+        // -----------------------------------------------------------------
+        // Build the result document that will contain the extracted range.
+        // -----------------------------------------------------------------
+        Document resultDoc = new Document();
+        resultDoc.RemoveAllChildren(); // Remove the default empty section.
+
+        Section resultSection = new Section(resultDoc);
+        resultDoc.AppendChild(resultSection);
+
+        Body resultBody = new Body(resultDoc);
         resultSection.AppendChild(resultBody);
 
-        // -------------------- Import the required nodes --------------------
-        // Use NodeImporter to import nodes from the source into the destination.
-        NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
+        // Use NodeImporter to import nodes from the source document into the result document.
+        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Import the whole table (which contains the start cell) into the result.
+        // Import the whole table (contains the start cell) and append it.
         Node importedTable = importer.ImportNode(firstTable, true);
         resultBody.AppendChild(importedTable);
 
-        // Import the end paragraph into the result.
-        Node importedParagraph = importer.ImportNode(endParagraph, true);
-        resultBody.AppendChild(importedParagraph);
+        // Import the middle paragraph and append it.
+        Node importedMiddle = importer.ImportNode(middleParagraph, true);
+        resultBody.AppendChild(importedMiddle);
 
-        // -------------------- Save the extracted content --------------------
+        // Import the end paragraph and append it.
+        Node importedEnd = importer.ImportNode(endParagraph, true);
+        resultBody.AppendChild(importedEnd);
+
+        // Save the extracted content.
         const string resultPath = "extracted.docx";
-        result.Save(resultPath);
+        resultDoc.Save(resultPath);
 
-        // Verify that the output file was created.
+        // Validate that the output file was created.
         if (!File.Exists(resultPath))
             throw new InvalidOperationException("The extracted document was not created.");
+
+        Console.WriteLine("Extraction completed successfully.");
     }
 }

@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -10,80 +10,97 @@ public class Program
 {
     public static void Main()
     {
-        // Base temporary directory for the example.
-        string baseDir = Path.Combine(Path.GetTempPath(), "AsposeImagesExtraction");
-        string docsDir = Path.Combine(baseDir, "Docs");
-        string imagesDir = Path.Combine(baseDir, "Extracted");
-        string zipPath = Path.Combine(baseDir, "AllImages.zip");
+        // Prepare a temporary folder for sample documents.
+        string docsFolder = Path.Combine(Directory.GetCurrentDirectory(), "SampleDocs");
+        Directory.CreateDirectory(docsFolder);
 
-        // Ensure a clean environment.
-        if (Directory.Exists(baseDir))
-            Directory.Delete(baseDir, true);
-        Directory.CreateDirectory(docsDir);
-        Directory.CreateDirectory(imagesDir);
+        // Create sample documents each containing an image shape.
+        CreateSampleDocument(Path.Combine(docsFolder, "doc1.docx"));
+        CreateSampleDocument(Path.Combine(docsFolder, "doc2.docx"));
 
-        // Sample PNG image (1x1 pixel, transparent) encoded in Base64.
-        const string pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(pngBase64);
+        // Path for the resulting ZIP archive.
+        string zipPath = Path.Combine(Directory.GetCurrentDirectory(), "ExtractedImages.zip");
 
-        // Create a few sample documents, each containing an image.
-        for (int docIndex = 0; docIndex < 3; docIndex++)
+        // Ensure any existing ZIP is removed.
+        if (File.Exists(zipPath))
+            File.Delete(zipPath);
+
+        // Create the ZIP archive and add extracted images.
+        using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
+        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            using (MemoryStream imgStream = new MemoryStream(pngBytes))
+            // Process each document in the collection.
+            foreach (string docPath in Directory.GetFiles(docsFolder, "*.docx"))
             {
-                builder.InsertImage(imgStream);
-            }
-            string docPath = Path.Combine(docsDir, $"Document{docIndex}.docx");
-            doc.Save(docPath);
-        }
+                Document doc = new Document(docPath);
 
-        // List to keep track of extracted image file paths.
-        List<string> extractedImageFiles = new List<string>();
+                // Find all shape nodes that contain images.
+                List<Shape> imageShapes = doc.GetChildNodes(NodeType.Shape, true)
+                                            .OfType<Shape>()
+                                            .Where(s => s.HasImage)
+                                            .ToList();
 
-        // Process each document in the collection.
-        string[] docFiles = Directory.GetFiles(docsDir, "*.docx");
-        foreach (string docFile in docFiles)
-        {
-            Document loadedDoc = new Document(docFile);
-            NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 0;
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
-            {
-                if (shape.HasImage)
+                // Extract each image and add it to the ZIP.
+                for (int i = 0; i < imageShapes.Count; i++)
                 {
-                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}{extension}";
-                    string imagePath = Path.Combine(imagesDir, imageFileName);
-                    shape.ImageData.Save(imagePath);
-                    extractedImageFiles.Add(imagePath);
-                    imageIndex++;
+                    Shape shape = imageShapes[i];
+                    using (MemoryStream imageStream = new MemoryStream())
+                    {
+                        shape.ImageData.Save(imageStream);
+                        imageStream.Position = 0;
+
+                        string imageExtension = GetImageExtension(shape.ImageData.ImageType);
+                        string entryName = $"{Path.GetFileNameWithoutExtension(docPath)}_Image{i + 1}{imageExtension}";
+                        ZipArchiveEntry entry = archive.CreateEntry(entryName, CompressionLevel.Optimal);
+                        using (Stream entryStream = entry.Open())
+                        {
+                            imageStream.CopyTo(entryStream);
+                        }
+                    }
                 }
             }
         }
 
-        // Validate that at least one image was extracted.
-        if (extractedImageFiles.Count == 0)
-            throw new InvalidOperationException("No images were extracted from the document collection.");
+        // Validation: ensure the ZIP file was created and contains entries.
+        if (!File.Exists(zipPath))
+            throw new InvalidOperationException("ZIP archive was not created.");
 
-        // Create a ZIP archive containing all extracted images.
-        using (FileStream zipStream = new FileStream(zipPath, FileMode.Create))
-        using (ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Create))
+        using (ZipArchive archive = ZipFile.OpenRead(zipPath))
         {
-            foreach (string imageFile in extractedImageFiles)
-            {
-                string entryName = Path.GetFileName(imageFile);
-                archive.CreateEntryFromFile(imageFile, entryName);
-            }
+            if (archive.Entries.Count == 0)
+                throw new InvalidOperationException("No images were added to the ZIP archive.");
+        }
+    }
+
+    // Helper method to create a sample document with a single PNG image.
+    private static void CreateSampleDocument(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // A tiny 1x1 pixel PNG image (base64 encoded).
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        using (MemoryStream imageStream = new MemoryStream(pngBytes))
+        {
+            builder.InsertImage(imageStream);
         }
 
-        // Verify that the ZIP file was created successfully.
-        if (!File.Exists(zipPath) || new FileInfo(zipPath).Length == 0)
-            throw new InvalidOperationException("Failed to create the ZIP archive with extracted images.");
+        doc.Save(filePath);
+    }
 
-        // Example completed successfully.
-        Console.WriteLine("Images extracted and packaged into ZIP file at:");
-        Console.WriteLine(zipPath);
+    // Helper to map Aspose.Words.Drawing.ImageType to a file extension.
+    private static string GetImageExtension(ImageType imageType)
+    {
+        return imageType switch
+        {
+            ImageType.Jpeg => ".jpg",
+            ImageType.Png => ".png",
+            ImageType.Gif => ".gif",
+            ImageType.Bmp => ".bmp",
+            ImageType.Emf => ".emf",
+            ImageType.Wmf => ".wmf",
+            _ => ".img"
+        };
     }
 }

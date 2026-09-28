@@ -4,62 +4,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class ExtractionBetweenHeadings
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a source document that contains two headings and some
-        //    content between them.
-        // -----------------------------------------------------------------
-        string sourcePath = "source.docx";
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        // ---------- Create source document ----------
+        Document source = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(source);
+        srcBuilder.Writeln("Document Title");
 
-        // First heading (start marker)
         srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        srcBuilder.Writeln("Start Heading");
+        srcBuilder.Writeln("Heading 1");
 
-        // Content to be extracted
         srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        srcBuilder.Writeln("Paragraph 1 between headings.");
-        srcBuilder.Writeln("Paragraph 2 between headings.");
+        srcBuilder.Writeln("Paragraph A under Heading 1.");
+        srcBuilder.Writeln("Paragraph B under Heading 1.");
 
-        // Insert a simple table as part of the extracted range
-        srcBuilder.StartTable();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell A1");
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell B1");
-        srcBuilder.EndRow();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell A2");
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell B2");
-        srcBuilder.EndTable();
-
-        // Second heading (end marker)
         srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        srcBuilder.Writeln("End Heading");
+        srcBuilder.Writeln("Heading 2");
 
-        // Save the source document
-        sourceDoc.Save(sourcePath);
+        srcBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        srcBuilder.Writeln("Paragraph C under Heading 2.");
 
-        // -----------------------------------------------------------------
-        // 2. Load the source document and locate the two heading paragraphs.
-        // -----------------------------------------------------------------
-        Document loadedSource = new Document(sourcePath);
+        source.Save("source.docx");
+
+        // ---------- Create template document with a bookmark ----------
+        Document template = new Document();
+        DocumentBuilder tmplBuilder = new DocumentBuilder(template);
+        tmplBuilder.Writeln("Template Header");
+        tmplBuilder.StartBookmark("InsertHere");
+        tmplBuilder.Writeln("[Placeholder]");
+        tmplBuilder.EndBookmark("InsertHere");
+        template.Save("template.docx");
+
+        // ---------- Load documents ----------
+        Document srcDoc = new Document("source.docx");
+        Document tmplDoc = new Document("template.docx");
+
+        // ---------- Locate start and end headings ----------
         Paragraph startHeading = null;
         Paragraph endHeading = null;
 
-        foreach (Paragraph para in loadedSource.GetChildNodes(NodeType.Paragraph, true))
+        foreach (Paragraph para in srcDoc.FirstSection.Body.Paragraphs)
         {
-            string text = para.GetText().Trim();
             if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
             {
-                if (text == "Start Heading")
+                string text = para.GetText().Trim();
+                if (text == "Heading 1")
                     startHeading = para;
-                else if (text == "End Heading")
+                else if (text == "Heading 2")
                     endHeading = para;
             }
         }
@@ -67,64 +60,53 @@ public class Program
         if (startHeading == null || endHeading == null)
             throw new InvalidOperationException("Required headings were not found in the source document.");
 
-        // -----------------------------------------------------------------
-        // 3. Collect all nodes that lie between the two headings (exclusive).
-        // -----------------------------------------------------------------
-        List<Node> nodesToExtract = new List<Node>();
+        // ---------- Collect nodes between the two headings ----------
+        List<Node> nodesToCopy = new List<Node>();
         Node current = startHeading.NextSibling;
         while (current != null && current != endHeading)
         {
-            Node next = current.NextSibling; // Preserve next node before we move it
-            nodesToExtract.Add(current);
-            current = next;
+            nodesToCopy.Add(current);
+            current = current.NextSibling;
         }
 
-        if (nodesToExtract.Count == 0)
+        if (nodesToCopy.Count == 0)
             throw new InvalidOperationException("No content found between the specified headings.");
 
-        // -----------------------------------------------------------------
-        // 4. Create a template document where the extracted content will be inserted.
-        // -----------------------------------------------------------------
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
-        tmplBuilder.Writeln("=== Template Header ===");
-        tmplBuilder.Writeln("Content will be inserted below:");
-        templateDoc.Save(templatePath);
+        // ---------- Locate the bookmark in the template ----------
+        Bookmark insertBookmark = tmplDoc.Range.Bookmarks["InsertHere"];
+        if (insertBookmark == null)
+            throw new InvalidOperationException("Insert bookmark not found in the template document.");
 
-        // Load the template
-        Document loadedTemplate = new Document(templatePath);
+        Paragraph bookmarkParagraph = insertBookmark.BookmarkStart.ParentNode as Paragraph;
+        if (bookmarkParagraph == null)
+            throw new InvalidOperationException("Bookmark is not placed inside a paragraph.");
 
-        // -----------------------------------------------------------------
-        // 5. Import the extracted nodes into the template document.
-        // -----------------------------------------------------------------
-        // We'll insert after the last paragraph of the template body.
-        Paragraph insertionPoint = loadedTemplate.FirstSection.Body.LastParagraph;
-
-        NodeImporter importer = new NodeImporter(loadedSource, loadedTemplate, ImportFormatMode.KeepSourceFormatting);
-
-        foreach (Node node in nodesToExtract)
+        // ---------- Remove the placeholder run inside the bookmark paragraph ----------
+        foreach (Run run in bookmarkParagraph.Runs)
         {
-            // Import the node (deep clone) into the destination document.
-            Node importedNode = importer.ImportNode(node, true);
-            // Insert after the current insertion point.
-            insertionPoint.ParentNode.InsertAfter(importedNode, insertionPoint);
-            // Update the insertion point so subsequent nodes are appended in order.
-            insertionPoint = importedNode as Paragraph ?? insertionPoint;
+            if (run.Text.Contains("[Placeholder]"))
+            {
+                run.Remove();
+                break;
+            }
         }
 
-        // -----------------------------------------------------------------
-        // 6. Save the resulting document.
-        // -----------------------------------------------------------------
-        string resultPath = "result.docx";
-        loadedTemplate.Save(resultPath);
+        // ---------- Import and insert cloned nodes ----------
+        NodeImporter importer = new NodeImporter(srcDoc, tmplDoc, ImportFormatMode.KeepSourceFormatting);
+        Node insertionPoint = bookmarkParagraph;
 
-        // Validate that the result file was created.
-        if (!File.Exists(resultPath))
+        foreach (Node node in nodesToCopy)
+        {
+            Node importedNode = importer.ImportNode(node, true);
+            insertionPoint.ParentNode.InsertAfter(importedNode, insertionPoint);
+            insertionPoint = importedNode;
+        }
+
+        // ---------- Save the resulting document ----------
+        tmplDoc.Save("result.docx");
+
+        // ---------- Validate output ----------
+        if (!File.Exists("result.docx"))
             throw new InvalidOperationException("Result document was not created.");
-
-        // Optional: clean up intermediate files (comment out if you want to inspect them)
-        // File.Delete(sourcePath);
-        // File.Delete(templatePath);
     }
 }

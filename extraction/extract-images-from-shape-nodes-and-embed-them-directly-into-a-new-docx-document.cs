@@ -8,69 +8,77 @@ public class Program
 {
     public static void Main()
     {
-        // Create a source document that contains an image inside a shape.
+        // -------------------------------------------------
+        // Create a sample source document that contains an image inside a shape.
+        // -------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
 
-        // A tiny PNG image (1x1 pixel) encoded as Base64.
+        // 1x1 pixel PNG image (base64 encoded).
         byte[] pngBytes = Convert.FromBase64String(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=");
         using (MemoryStream imageStream = new MemoryStream(pngBytes))
         {
-            // Insert the image as an inline shape.
             sourceBuilder.InsertImage(imageStream);
         }
 
-        // Save the source document to the local file system.
         const string sourcePath = "source.docx";
         sourceDoc.Save(sourcePath);
 
-        // Load the source document for extraction.
-        Document loadedSource = new Document(sourcePath);
+        // -------------------------------------------------
+        // Load the source document and locate all shapes that contain images.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
+        var imageShapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                                   .OfType<Shape>()
+                                   .Where(s => s.HasImage)
+                                   .ToList();
 
-        // Create a new destination document where extracted images will be embedded.
+        if (imageShapes.Count == 0)
+            throw new InvalidOperationException("No image-bearing shapes were found in the source document.");
+
+        // -------------------------------------------------
+        // Prepare an empty destination document.
+        // -------------------------------------------------
         Document destDoc = new Document();
+        destDoc.RemoveAllChildren(); // Ensure the document is empty.
+
+        // Build the minimal required structure: Section -> Body.
+        Section destSection = new Section(destDoc);
+        destDoc.AppendChild(destSection);
+        Body destBody = new Body(destDoc);
+        destSection.AppendChild(destBody);
+
+        // Use a DocumentBuilder positioned at the start of the body.
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.MoveToDocumentStart();
 
-        // Ensure the destination document has at least one paragraph to host images.
-        destBuilder.Writeln("Extracted Images:");
-
-        // Find all shape nodes that contain images.
-        var shapeNodes = loadedSource.GetChildNodes(NodeType.Shape, true)
-                                     .OfType<Shape>()
-                                     .Where(s => s.HasImage);
-
-        int extractedCount = 0;
-        foreach (Shape shape in shapeNodes)
+        // -------------------------------------------------
+        // Extract each image from the source shape and embed it into the destination document.
+        // -------------------------------------------------
+        foreach (Shape shape in imageShapes)
         {
-            // Save the image data of the shape into a memory stream.
-            using (MemoryStream imgStream = new MemoryStream())
+            using (MemoryStream extractedImage = new MemoryStream())
             {
-                shape.ImageData.Save(imgStream);
-                imgStream.Position = 0; // Reset stream before reading.
+                // Save the image data from the shape into a memory stream.
+                shape.ImageData.Save(extractedImage);
+                extractedImage.Position = 0; // Reset stream position before reading.
 
                 // Insert the image into the destination document.
-                destBuilder.InsertImage(imgStream);
-                destBuilder.Writeln(); // Add a line break after each image.
-                extractedCount++;
+                destBuilder.InsertImage(extractedImage);
+                // Add a paragraph break after each image for readability.
+                destBuilder.Writeln();
             }
         }
 
-        // Validate that at least one image was extracted and inserted.
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No images were extracted from the source document.");
-
-        // Save the destination document containing the embedded images.
-        const string destPath = "extracted_images.docx";
+        // -------------------------------------------------
+        // Save the destination document containing the extracted images.
+        // -------------------------------------------------
+        const string destPath = "extracted-images.docx";
         destDoc.Save(destPath);
 
-        // Additional validation: ensure the destination document now contains image shapes.
-        var destImageShapes = destDoc.GetChildNodes(NodeType.Shape, true)
-                                    .OfType<Shape>()
-                                    .Count(s => s.HasImage);
-        if (destImageShapes == 0)
-            throw new InvalidOperationException("The destination document does not contain any embedded images.");
-
-        // Execution completed successfully.
+        // Verify that the output file was created.
+        if (!File.Exists(destPath))
+            throw new InvalidOperationException("The destination document was not created as expected.");
     }
 }

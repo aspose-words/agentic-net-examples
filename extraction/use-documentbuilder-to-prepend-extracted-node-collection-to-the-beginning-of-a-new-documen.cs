@@ -1,68 +1,79 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-public class Program
+namespace ExtractionExample
 {
-    public static void Main()
+    public class Program
     {
-        // -----------------------------------------------------------------
-        // 1. Create a source document with sample paragraphs.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
-        sourceBuilder.Writeln("Paragraph 1");
-        sourceBuilder.Writeln("Paragraph 2");
-        sourceBuilder.Writeln("Paragraph 3");
-        sourceBuilder.Writeln("Paragraph 4");
-        sourceDoc.Save("source.docx");
-
-        // -----------------------------------------------------------------
-        // 2. Extract the first three paragraphs from the source document.
-        // -----------------------------------------------------------------
-        NodeCollection allParagraphs = sourceDoc.GetChildNodes(NodeType.Paragraph, true);
-        List<Node> extractedParagraphs = new List<Node>();
-        int paragraphsToExtract = Math.Min(3, allParagraphs.Count);
-        for (int i = 0; i < paragraphsToExtract; i++)
+        public static void Main()
         {
-            extractedParagraphs.Add(allParagraphs[i]);
+            // -----------------------------------------------------------------
+            // Create a sample source document with several paragraphs.
+            // -----------------------------------------------------------------
+            Document sourceDoc = new Document();
+            DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+            srcBuilder.Writeln("First paragraph.");
+            srcBuilder.Writeln("Second paragraph.");
+            srcBuilder.Writeln("Third paragraph.");
+
+            const string sourcePath = "source.docx";
+            sourceDoc.Save(sourcePath);
+
+            // -----------------------------------------------------------------
+            // Load the source document.
+            // -----------------------------------------------------------------
+            Document loadedSource = new Document(sourcePath);
+
+            // Extract all paragraph nodes from the source document.
+            NodeCollection paragraphNodes = loadedSource.GetChildNodes(NodeType.Paragraph, true);
+            if (paragraphNodes == null || paragraphNodes.Count == 0)
+                throw new InvalidOperationException("No paragraphs were found in the source document.");
+
+            // -----------------------------------------------------------------
+            // Create a new destination document with a clean structure.
+            // -----------------------------------------------------------------
+            Document resultDoc = new Document();
+            resultDoc.RemoveAllChildren(); // Remove the default empty section/body.
+
+            Section section = new Section(resultDoc);
+            resultDoc.AppendChild(section);
+            Body body = new Body(resultDoc);
+            section.AppendChild(body);
+
+            // Add an existing paragraph that will appear after the prepended content.
+            Paragraph existingParagraph = new Paragraph(resultDoc);
+            existingParagraph.AppendChild(new Run(resultDoc, "Existing content in the new document."));
+            body.AppendChild(existingParagraph);
+
+            // -----------------------------------------------------------------
+            // Import (clone) the extracted paragraphs into the new document.
+            // Use NodeImporter to transfer nodes between documents.
+            // -----------------------------------------------------------------
+            NodeImporter importer = new NodeImporter(loadedSource, resultDoc, ImportFormatMode.KeepSourceFormatting);
+
+            foreach (Paragraph para in paragraphNodes)
+            {
+                // Import the paragraph (deep clone) into the destination document.
+                Node importedNode = importer.ImportNode(para, true);
+                // Insert before the existing paragraph so the extracted content appears at the start.
+                body.InsertBefore(importedNode, existingParagraph);
+            }
+
+            // -----------------------------------------------------------------
+            // Save the resulting document.
+            // -----------------------------------------------------------------
+            const string resultPath = "result.docx";
+            resultDoc.Save(resultPath, SaveFormat.Docx);
+
+            // Verify that the output file was created.
+            if (!File.Exists(resultPath))
+                throw new InvalidOperationException("The result document was not created.");
+
+            // Optional cleanup (comment out if you want to inspect the files).
+            // File.Delete(sourcePath);
+            // File.Delete(resultPath);
         }
-
-        // -----------------------------------------------------------------
-        // 3. Create a new destination document and build a clean structure.
-        // -----------------------------------------------------------------
-        Document destDoc = new Document();
-        // Remove the default section/paragraph that Aspose.Words creates.
-        destDoc.RemoveAllChildren();
-
-        // Add a new section with a body.
-        Section destSection = new Section(destDoc);
-        destDoc.AppendChild(destSection);
-        Body destBody = new Body(destDoc);
-        destSection.AppendChild(destBody);
-
-        // Use NodeImporter to import nodes from the source document into the destination.
-        NodeImporter importer = new NodeImporter(sourceDoc, destDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Append the extracted paragraphs in their original order.
-        foreach (Node paragraph in extractedParagraphs)
-        {
-            Node importedNode = importer.ImportNode(paragraph, true);
-            destBody.AppendChild(importedNode);
-        }
-
-        // -----------------------------------------------------------------
-        // 4. Save the destination document.
-        // -----------------------------------------------------------------
-        destDoc.Save("result.docx");
-
-        // -----------------------------------------------------------------
-        // 5. Validate that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists("result.docx"))
-            throw new InvalidOperationException("The result document was not created.");
-
-        Console.WriteLine("Document created successfully: result.docx");
     }
 }
