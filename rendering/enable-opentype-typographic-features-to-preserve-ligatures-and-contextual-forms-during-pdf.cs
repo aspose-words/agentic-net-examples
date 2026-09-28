@@ -1,38 +1,37 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Fonts;
 
 public class Program
 {
     public static void Main()
     {
-        // Define the folder where the output PDF will be saved.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Choose a font that supports OpenType ligatures (e.g., Calibri).
-        builder.Font.Name = "Calibri";
-        builder.Font.Size = 24;
+        // Configure font settings to use the system fonts folder.
+        FontSettings fontSettings = new FontSettings();
+        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        fontSettings.SetFontsFolder(fontsFolder, false);
+        doc.FontSettings = fontSettings;
 
-        // Write text that contains ligatures and contextual forms.
-        builder.Writeln("Office");                     // Contains the "ff" ligature.
-        builder.Writeln("efficient");                  // Contains the "fi" ligature.
-        builder.Writeln("ﬂ (fl ligature) and ﬁ (fi ligature) demonstration.");
+        // Add a paragraph containing text with ligatures (fi, fl, ffi).
+        Paragraph paragraph = new Paragraph(doc);
+        Run run = new Run(doc, "office affinity file");
+        run.Font.Name = "Calibri"; // Calibri supports OpenType ligatures.
+        run.Font.Size = 24;
+        paragraph.AppendChild(run);
+        doc.FirstSection.Body.AppendChild(paragraph);
 
-        // Save the document as PDF. The default rendering preserves OpenType features when possible.
-        string pdfPath = Path.Combine(artifactsDir, "Ligatures.pdf");
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, pdfOptions);
+        // Render the document to PDF.
+        string outputPath = "Output.pdf";
+        doc.Save(outputPath, SaveFormat.Pdf);
 
         // Verify that the PDF file was created.
-        if (!File.Exists(pdfPath))
-            throw new FileNotFoundException("PDF file was not created.", pdfPath);
-
-        Console.WriteLine($"PDF saved to: {pdfPath}");
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"PDF file was not created at '{outputPath}'.");
+        }
     }
 }

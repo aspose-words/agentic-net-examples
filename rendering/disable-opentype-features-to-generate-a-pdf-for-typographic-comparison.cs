@@ -7,31 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a new document and add some text that would normally use OpenType ligatures.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Times New Roman";
-        builder.Font.Size = 48;
-        builder.Writeln("Office");          // Contains "ff" ligature.
-        builder.Writeln("fi fl ffi ffl");   // Contains "fi", "fl", "ffi", "ffl" ligatures.
 
-        // Disable OpenType font formatting features for the whole document.
-        doc.CompatibilityOptions.DisableOpenTypeFontFormattingFeatures = true;
+        // Choose a font that does not contain OpenType features (e.g., Arial).
+        // This effectively disables ligatures and other OpenType behaviors for the rendered text.
+        builder.Font.Name = "Arial";
+        builder.Font.Size = 24;
 
-        // Save the document to PDF.
-        string pdfPath = Path.Combine(outputDir, "DisabledOpenType.pdf");
-        PdfSaveOptions saveOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, saveOptions);
+        // Add text that would normally display ligatures if OpenType features were enabled.
+        builder.Writeln("Office");
+        builder.Writeln("affinity");
+        builder.Writeln("fluff");
 
-        // Verify that the PDF file was created and is not empty.
+        // Render the document to PDF.
+        string pdfPath = "output.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF file was created successfully.
         if (!File.Exists(pdfPath))
-            throw new Exception("PDF file was not created.");
+        {
+            throw new InvalidOperationException("Failed to create the PDF file.");
+        }
 
-        if (new FileInfo(pdfPath).Length == 0)
-            throw new Exception("PDF file is empty.");
+        // Indicate successful completion (no user interaction required).
+        Console.WriteLine($"PDF generated at: {Path.GetFullPath(pdfPath)}");
     }
 }

@@ -7,37 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // Define output paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string pdfPath = Path.Combine(outputDir, "RenderedDocument.pdf");
+        // Output PDF path
+        const string outputPath = "RenderedDocument.pdf";
 
-        // Create a new blank document.
+        // Create a new blank document
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text using a font that is unlikely to exist on the system.
-        builder.Font.Name = "MissingFont";
-        builder.Writeln("This text uses a missing font. Font substitution is disabled, so the text will be rendered with the original metrics.");
+        // Add a paragraph with text that uses a font unlikely to be installed
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Sample text with a missing font.");
+        run.Font.Name = "NonExistentFont123"; // Non‑existent font
+        para.AppendChild(run);
+        doc.FirstSection.Body.AppendChild(para);
 
-        // Configure FontSettings to disable all font substitution rules.
+        // Configure font settings to disable automatic font substitution.
+        // The SubstitutionSettings.Enabled property may not exist in some versions,
+        // so we set it via reflection when available.
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SubstitutionSettings.FontNameSubstitution.Enabled = false;
-        fontSettings.SubstitutionSettings.FontConfigSubstitution.Enabled = false;
-        fontSettings.SubstitutionSettings.TableSubstitution.Enabled = false;
-        fontSettings.SubstitutionSettings.FontInfoSubstitution.Enabled = false;
-        fontSettings.SubstitutionSettings.DefaultFontSubstitution.Enabled = false;
-
-        // Assign the configured FontSettings to the document.
+        var substitutionSettings = fontSettings.SubstitutionSettings;
+        var enabledProp = substitutionSettings.GetType().GetProperty("Enabled");
+        if (enabledProp != null && enabledProp.CanWrite)
+        {
+            enabledProp.SetValue(substitutionSettings, false);
+        }
         doc.FontSettings = fontSettings;
 
-        // Render the document to PDF.
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // Render the document to PDF
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+        // Verify that the PDF file was created
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the rendered PDF at '{outputPath}'.");
+        }
 
-        // Optionally, you could add further validation here (e.g., file size check).
+        Console.WriteLine($"Document rendered successfully to '{outputPath}'.");
     }
 }

@@ -8,43 +8,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create an output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string tiffPath = Path.Combine(outputDir, "Ligatures.tiff");
-
-        // Build a simple document containing characters that form ligatures.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial";      // Arial includes common ligatures.
-        builder.Font.Size = 48;
-        builder.Writeln("Office");        // Contains "ff".
-        builder.Writeln("Affix");         // Contains "fi".
-        builder.Writeln("Fluff");         // Contains "fl".
 
-        // If custom fonts are required, configure FontSettings here.
-        // FontSettings fontSettings = new FontSettings();
-        // fontSettings.SetFontsFolder(@"C:\MyFonts", true);
-        // doc.FontSettings = fontSettings;
+        // Use a font that supports ligatures (e.g., Calibri).
+        builder.Font.Name = "Calibri";
 
-        // Set up TIFF rendering options.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.Resolution = 300;                 // 300 DPI for good quality.
-        options.UseAntiAliasing = true;           // Enable anti‑aliasing.
-        options.UseHighQualityRendering = true;   // Use high‑quality rendering.
+        // Add a line containing ligature characters.
+        builder.Writeln("Office: fi fl ffi ffl");
 
-        // Render all pages. Use an explicit int array to avoid ambiguity with the PageSet constructors.
-        options.PageSet = new PageSet(new int[] { 0 });
+        // Configure FontSettings to point to the system fonts folder.
+        FontSettings fontSettings = new FontSettings();
+        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        if (Directory.Exists(fontsFolder))
+        {
+            fontSettings.SetFontsFolder(fontsFolder, false);
+        }
+        doc.FontSettings = fontSettings;
 
-        // Save the document as a multi‑page TIFF.
-        doc.Save(tiffPath, options);
+        // Render the document to a TIFF image.
+        string outputPath = "output.tiff";
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the TIFF file was created.
-        if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("TIFF file was not created.");
+        }
 
-        // Output the result (optional).
-        long fileSize = new FileInfo(tiffPath).Length;
-        Console.WriteLine($"TIFF saved to '{tiffPath}' ({fileSize} bytes).");
+        // Output the file size for confirmation.
+        Console.WriteLine($"TIFF saved successfully. Size: {new FileInfo(outputPath).Length} bytes");
     }
 }

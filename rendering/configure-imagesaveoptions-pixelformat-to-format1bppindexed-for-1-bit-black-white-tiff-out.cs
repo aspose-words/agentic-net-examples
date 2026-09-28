@@ -7,31 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
-
-        // Prepare an output folder.
+        // Prepare output directory
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "1bpp.tiff");
 
-        // Configure ImageSaveOptions for 1‑bit black‑white TIFF.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        // Create a simple Word document
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document rendered as a 1‑bit black‑white TIFF image.");
+
+        // Configure image save options for 1‑bit TIFF
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // CCITT4 compression works well with 1‑bpp images.
-            TiffCompression = TiffCompression.Ccitt4
+            PixelFormat = ImagePixelFormat.Format1bppIndexed
         };
 
-        // Save the document as a TIFF image.
-        doc.Save(outputPath, options);
+        // Define output file path
+        string outputPath = Path.Combine(outputDir, "sample_1bpp.tiff");
 
-        // Verify that the file was created.
+        // Save the document as TIFF
+        doc.Save(outputPath, saveOptions);
+
+        // Verify that the file was created
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("TIFF file was not created.");
+        {
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+        }
 
-        Console.WriteLine($"TIFF saved to: {outputPath}");
+        Console.WriteLine($"TIFF image saved successfully to: {outputPath}");
     }
 }

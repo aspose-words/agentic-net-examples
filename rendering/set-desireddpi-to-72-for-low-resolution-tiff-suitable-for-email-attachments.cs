@@ -7,30 +7,29 @@ public class Program
 {
     public static void Main()
     {
-        // Output file path for the low‑resolution TIFF.
-        const string outputPath = "LowResolution.tiff";
-
-        // Create a simple document with some text.
+        // Create a simple document with some sample text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a low‑resolution TIFF suitable for email attachments.");
+        builder.Writeln("Sample text for low‑resolution TIFF.");
 
-        // Configure image save options for TIFF.
-        // The DesiredDpi property does not exist; use the Resolution property instead.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Set both horizontal and vertical DPI to 72.
-            Resolution = 72
-        };
+        // Configure TIFF save options to use a low DPI (72).
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // The Resolution property sets the DPI for the rendered image.
+        saveOptions.Resolution = 72;
+
+        // Define the output file path.
+        string outputPath = "LowResolution.tiff";
 
         // Save the document as a TIFF image using the configured options.
-        doc.Save(outputPath, options);
+        doc.Save(outputPath, saveOptions);
 
-        // Verify that the file was created.
+        // Verify that the TIFF file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+        {
+            throw new Exception($"Failed to create TIFF file at {outputPath}");
+        }
 
         // Indicate success.
-        Console.WriteLine("TIFF file created successfully at: " + Path.GetFullPath(outputPath));
+        Console.WriteLine("TIFF saved successfully.");
     }
 }

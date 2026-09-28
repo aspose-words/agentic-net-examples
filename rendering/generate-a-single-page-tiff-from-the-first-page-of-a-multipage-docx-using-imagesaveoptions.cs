@@ -7,33 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare a temporary folder for the example files.
+        string outputFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsExample");
+        Directory.CreateDirectory(outputFolder);
 
-        // Create a sample multi‑page document.
+        // Paths for the source DOCX and the resulting TIFF.
+        string docPath = Path.Combine(outputFolder, "sample.docx");
+        string tiffPath = Path.Combine(outputFolder, "firstPage.tiff");
+
+        // Create a multi‑page DOCX document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Page 1 – first page.");
+        builder.Writeln("This is the content of the first page.");
+        // Insert a page break to create a second page.
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 – second page.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 – third page.");
+        builder.Writeln("This is the content of the second page.");
+        // Save the source document.
+        doc.Save(docPath);
 
-        // Configure image save options to render only the first page as a single‑page TIFF.
+        // Load the document from the file system.
+        Document loadedDoc = new Document(docPath);
+
+        // Configure ImageSaveOptions to produce a single‑page TIFF of the first page.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.PageSet = new PageSet(0);                     // Zero‑based index of the first page.
-        options.PageLayout = MultiPageLayout.SinglePage();   // Ensure a single‑page output.
+        // PageSet uses zero‑based page index; 0 selects the first page.
+        options.PageSet = new PageSet(0);
 
-        // Save the first page as TIFF.
-        string tiffPath = Path.Combine(outputDir, "FirstPage.tiff");
-        doc.Save(tiffPath, options);
+        // Render and save the first page as a TIFF image.
+        loadedDoc.Save(tiffPath, options);
 
-        // Verify that the file was created.
+        // Verify that the TIFF file was created.
         if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+        {
+            throw new Exception("The TIFF file was not created as expected.");
+        }
 
-        Console.WriteLine($"TIFF file successfully created at: {tiffPath}");
+        // Optionally, output the location of the generated file.
+        Console.WriteLine($"First page TIFF saved to: {tiffPath}");
     }
 }

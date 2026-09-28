@@ -7,31 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "VerticallyStretched.tiff");
-
-        // Create a simple document.
+        // Create a simple document with one paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for a vertically stretched TIFF image.");
+        builder.Writeln("Sample text for vertically stretched TIFF.");
 
-        // Configure image save options: set horizontal DPI to 72 and vertical DPI to 144.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure image save options for TIFF with custom DPI.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            HorizontalResolution = 72f,
-            VerticalResolution = 144f
+            // Horizontal DPI
+            HorizontalResolution = 72,
+            // Vertical DPI (stretched)
+            VerticalResolution = 144
         };
 
-        // Save the document as a TIFF image using the specified DPI settings.
-        doc.Save(outputPath, options);
+        // Define output file path.
+        string outputPath = "stretched_output.tiff";
+
+        // Save the document as a TIFF image using the specified options.
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+        {
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+        }
 
-        // Optionally, indicate success (no interactive output required).
-        Console.WriteLine("TIFF image saved successfully to: " + outputPath);
+        // Indicate success.
+        Console.WriteLine($"TIFF image saved successfully to '{outputPath}'.");
     }
 }

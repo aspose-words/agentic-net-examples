@@ -7,28 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string outputPath = Path.Combine(artifactsDir, "HighResolution.tiff");
-
-        // Create a simple document.
+        // Create a simple document with one paragraph.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document will be saved as a high‑resolution TIFF image.");
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Hello World!");
+        para.AppendChild(run);
+        doc.FirstSection.Body.AppendChild(para);
 
-        // Configure image save options for TIFF with 300 dpi.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.Resolution = 300; // Desired DPI for both horizontal and vertical resolution.
+        // Configure image save options for TIFF with high resolution (300 DPI).
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            // Set the resolution (DPI) for the output image.
+            Resolution = 300
+        };
 
-        // Save the document as a TIFF image.
-        doc.Save(outputPath, options);
+        // Define output file path.
+        string outputPath = "output.tiff";
 
-        // Verify that the file was created.
+        // Save the document as a TIFF image using the specified options.
+        doc.Save(outputPath, saveOptions);
+
+        // Verify that the TIFF file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+        {
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+        }
 
-        // Optional: indicate success (no interactive input required).
-        Console.WriteLine("TIFF image saved successfully at: " + outputPath);
+        // Confirmation message.
+        Console.WriteLine($"TIFF image saved successfully at '{Path.GetFullPath(outputPath)}' with 300 DPI.");
     }
 }

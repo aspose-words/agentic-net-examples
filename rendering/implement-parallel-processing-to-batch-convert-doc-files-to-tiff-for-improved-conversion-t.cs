@@ -1,58 +1,61 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders for source DOCX files and resulting TIFF files.
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(dataDir);
-        Directory.CreateDirectory(outputDir);
+        // Create a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeBatchConvert");
+        if (Directory.Exists(workFolder))
+            Directory.Delete(workFolder, true);
+        Directory.CreateDirectory(workFolder);
 
-        // Create a few sample DOCX documents locally.
-        const int sampleCount = 5;
+        // Number of sample DOCX files to generate.
+        int sampleCount = 5;
+
+        // Generate sample DOCX documents.
         for (int i = 1; i <= sampleCount; i++)
         {
+            // Create a new blank document.
             Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            builder.Writeln($"Sample document {i} - Page 1.");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Sample document {i} - Page 2.");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Sample document {i} - Page 3.");
-
-            string docPath = Path.Combine(dataDir, $"Sample{i}.docx");
+            // Add a paragraph with sample text.
+            var builder = new Aspose.Words.DocumentBuilder(doc);
+            builder.Writeln($"This is sample document #{i}.");
+            // Save the document as DOCX.
+            string docPath = Path.Combine(workFolder, $"Sample{i}.docx");
             doc.Save(docPath);
         }
 
-        // Gather all DOCX files that need to be converted.
-        string[] sourceFiles = Directory.GetFiles(dataDir, "*.docx");
+        // Get all DOCX files in the working folder.
+        string[] docFiles = Directory.GetFiles(workFolder, "*.docx");
 
-        // Convert each document to a multipage TIFF in parallel.
-        Parallel.ForEach(sourceFiles, sourceFile =>
+        // Convert each DOCX to a multipage TIFF in parallel.
+        Parallel.ForEach(docFiles, docFile =>
         {
             // Load the source document.
-            Document doc = new Document(sourceFile);
+            Document srcDoc = new Document(docFile);
 
-            // Determine the output TIFF file path.
-            string tiffPath = Path.Combine(outputDir,
-                Path.GetFileNameWithoutExtension(sourceFile) + ".tiff");
+            // Determine output TIFF path.
+            string tiffPath = Path.ChangeExtension(docFile, ".tiff");
 
-            // Save the document as TIFF. Each page becomes a frame in the TIFF.
-            doc.Save(tiffPath, SaveFormat.Tiff);
+            // Save the document as TIFF (each page becomes a frame).
+            srcDoc.Save(tiffPath, SaveFormat.Tiff);
 
             // Verify that the TIFF file was created.
             if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF: {tiffPath}");
+                throw new InvalidOperationException($"Failed to create TIFF for '{docFile}'.");
         });
 
-        // Optional: report the number of files processed.
-        Console.WriteLine($"Converted {sourceFiles.Length} documents to TIFF format.");
+        // Optional: Verify that the number of TIFF files matches the number of DOCX files.
+        int tiffCount = Directory.GetFiles(workFolder, "*.tiff").Length;
+        if (tiffCount != sampleCount)
+            throw new InvalidOperationException("Mismatch between source DOCX files and generated TIFF files.");
+
+        // Cleanup: delete the temporary folder (optional).
+        // Directory.Delete(workFolder, true);
     }
 }

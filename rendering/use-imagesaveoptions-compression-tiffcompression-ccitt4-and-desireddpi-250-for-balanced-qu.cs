@@ -7,36 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a simple document.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document will be saved as a black‑and‑white TIFF image.");
-        builder.Writeln("Using CCITT4 compression and a DPI of 250 for balanced quality.");
+        builder.Writeln("This is a sample black‑and‑white TIFF rendered with CCITT4 compression at 250 DPI.");
 
-        // Configure image save options for TIFF.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure TIFF save options.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Apply CCITT4 compression (good for B/W images).
             TiffCompression = TiffCompression.Ccitt4,
-            // Set both horizontal and vertical resolution (DPI) to 250.
-            Resolution = 250,
-            // Render as black‑and‑white.
-            ImageColorMode = ImageColorMode.BlackAndWhite
+            Resolution = 250
         };
 
-        // Save the document as a TIFF file.
-        string outputPath = Path.Combine(outputDir, "BalancedBw.tiff");
-        doc.Save(outputPath, options);
+        // Define output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.tiff");
+
+        // Save the document as a TIFF image.
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("TIFF file was not created.");
+        {
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+        }
 
-        // Report success.
-        Console.WriteLine($"TIFF saved to: {outputPath}");
+        // Output a confirmation (non‑interactive).
+        Console.WriteLine($"TIFF file successfully saved to: {outputPath}");
     }
 }

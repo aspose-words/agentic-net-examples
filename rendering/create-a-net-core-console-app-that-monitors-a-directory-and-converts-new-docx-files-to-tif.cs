@@ -1,83 +1,67 @@
 using System;
 using System.IO;
-using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
 public class Program
 {
-    // Event used to signal that a file has been processed.
-    private static readonly ManualResetEventSlim ProcessedEvent = new ManualResetEventSlim(false);
-
     public static void Main()
     {
-        // Define input and output folders relative to the current directory.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Input");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Create a temporary folder that will be watched.
+        string watchFolder = Path.Combine(Path.GetTempPath(), "DocxWatchDemo");
+        Directory.CreateDirectory(watchFolder);
 
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Create a sample DOCX file in the folder (simulating a new file arriving).
+        string sampleDocPath = Path.Combine(watchFolder, "SampleDocument.docx");
+        CreateSampleDocument(sampleDocPath);
 
-        // Set up a watcher that looks for newly created DOCX files.
-        using (FileSystemWatcher watcher = new FileSystemWatcher(inputFolder, "*.docx"))
+        // Process each DOCX file found in the folder.
+        foreach (string docxFile in Directory.GetFiles(watchFolder, "*.docx"))
         {
-            watcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite;
-            watcher.Created += (sender, e) => OnNewDocx(e.FullPath, outputFolder);
-            watcher.EnableRaisingEvents = true;
+            // Load the DOCX document.
+            Document doc = new Document(docxFile);
 
-            // Create a sample DOCX file to trigger the watcher.
-            CreateSampleDocx(Path.Combine(inputFolder, "Sample.docx"));
-
-            // Wait until the file is processed or timeout after 10 seconds.
-            ProcessedEvent.Wait(TimeSpan.FromSeconds(10));
-        }
-    }
-
-    // Called when a new DOCX file appears in the monitored folder.
-    private static void OnNewDocx(string docxPath, string outputFolder)
-    {
-        try
-        {
-            // Load the newly created document.
-            Document doc = new Document(docxPath);
-
-            // Configure image save options for TIFF output.
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+            // Configure TIFF save options – render all pages into a single multipage TIFF.
+            ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // Optional: set resolution (dpi) if desired.
-                Resolution = 300
+                // Render every page of the source document.
+                PageSet = PageSet.All
             };
 
-            // Build the output file path with the same name but .tiff extension.
-            string tiffPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
+            // Determine the output TIFF path.
+            string tiffPath = Path.ChangeExtension(docxFile, ".tiff");
 
             // Save the document as a multipage TIFF.
-            doc.Save(tiffPath, options);
+            doc.Save(tiffPath, tiffOptions);
 
             // Verify that the TIFF file was created.
             if (!File.Exists(tiffPath))
                 throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
 
-            // Signal that processing is complete.
-            ProcessedEvent.Set();
+            // Move the processed DOCX to a subfolder to avoid re‑processing.
+            string processedFolder = Path.Combine(watchFolder, "Processed");
+            Directory.CreateDirectory(processedFolder);
+            string destDocxPath = Path.Combine(processedFolder, Path.GetFileName(docxFile));
+            File.Move(docxFile, destDocxPath);
         }
-        catch (Exception ex)
-        {
-            // In a real application you would handle logging here.
-            Console.Error.WriteLine($"Error processing '{docxPath}': {ex.Message}");
-            ProcessedEvent.Set(); // Ensure the program can exit even on error.
-        }
+
+        // Cleanup: delete the temporary folder and its contents.
+        // Comment out the following line if you wish to inspect the files after execution.
+        Directory.Delete(watchFolder, true);
     }
 
-    // Generates a simple DOCX file with a couple of pages.
-    private static void CreateSampleDocx(string filePath)
+    // Helper method that creates a simple three‑page DOCX document.
+    private static void CreateSampleDocument(string filePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("This is the first page.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is the second page.");
+        for (int i = 1; i <= 3; i++)
+        {
+            builder.Writeln($"This is page {i} of the sample document.");
+            if (i < 3)
+                builder.InsertBreak(BreakType.PageBreak);
+        }
 
         doc.Save(filePath);
     }

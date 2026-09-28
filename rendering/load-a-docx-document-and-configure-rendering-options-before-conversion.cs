@@ -3,41 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class RenderingExample
 {
     public static void Main()
     {
-        // Define a folder for output files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define file names.
+        const string sourcePath = "Sample.docx";
+        const string pdfPath = "RenderedOutput.pdf";
 
-        // Create a simple DOCX document in memory.
+        // -----------------------------------------------------------------
+        // Step 1: Create a simple DOCX document locally.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 24;
-        builder.Writeln("This is a sample document created for rendering demonstration.");
+        builder.Writeln("Hello, Aspose.Words rendering example!");
+        // Save the source DOCX.
+        doc.Save(sourcePath);
 
-        // Configure PDF rendering options.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // -----------------------------------------------------------------
+        // Step 2: Load the DOCX document.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
+
+        // -----------------------------------------------------------------
+        // Step 3: Configure rendering options for PDF conversion.
+        // -----------------------------------------------------------------
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            // Use high‑quality rendering algorithms.
-            UseHighQualityRendering = true,
-            // Do not embed full fonts (use subsetting to keep file size small).
-            EmbedFullFonts = false,
-            // Render colors normally.
-            ColorMode = ColorMode.Normal
+            // Example option: set PDF compliance level.
+            Compliance = PdfCompliance.PdfA1b,
+            // Example option: compress images using JPEG.
+            ImageCompression = PdfImageCompression.Jpeg,
+            // Example option: set JPEG quality (0-100).
+            JpegQuality = 90
         };
 
-        // Save the document as PDF using the configured options.
-        string pdfPath = Path.Combine(outputDir, "RenderedDocument.pdf");
-        doc.Save(pdfPath, pdfOptions);
+        // -----------------------------------------------------------------
+        // Step 4: Render the document to PDF using the configured options.
+        // -----------------------------------------------------------------
+        loadedDoc.Save(pdfPath, saveOptions);
 
-        // Verify that the PDF file was created.
+        // -----------------------------------------------------------------
+        // Step 5: Validate that the PDF file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the PDF output file.");
+        {
+            throw new InvalidOperationException($"Failed to create the PDF file at '{pdfPath}'.");
+        }
 
-        // Optionally, inform that the process completed successfully.
-        Console.WriteLine($"PDF successfully saved to: {pdfPath}");
+        // Optional: Output a simple confirmation.
+        Console.WriteLine($"Document rendered successfully to '{pdfPath}'.");
     }
 }

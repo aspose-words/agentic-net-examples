@@ -7,53 +7,52 @@ public class Program
 {
     public static void Main()
     {
-        // Define source and destination folders.
-        string sourceFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Tiffs");
+        // Define a working folder for the demo.
+        string workFolder = Path.Combine(Path.GetTempPath(), "DocxToTiffDemo");
+        Directory.CreateDirectory(workFolder);
 
-        // Ensure folders exist.
-        Directory.CreateDirectory(sourceFolder);
-        Directory.CreateDirectory(outputFolder);
-
-        // Create sample DOCX files if none exist.
-        if (Directory.GetFiles(sourceFolder, "*.docx").Length == 0)
+        // Create sample DOCX files in the folder.
+        for (int i = 1; i <= 3; i++)
         {
-            for (int i = 1; i <= 2; i++)
+            string docxPath = Path.Combine(workFolder, $"Sample{i}.docx");
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln($"This is sample document {i}.");
+            // Add a second page to demonstrate multi‑page TIFF.
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"Second page of sample document {i}.");
+            sampleDoc.Save(docxPath);
+        }
+
+        // Convert each DOCX file in the folder to a TIFF image with LZW compression.
+        foreach (string docxFile in Directory.GetFiles(workFolder, "*.docx"))
+        {
+            // Load the source document.
+            Document doc = new Document(docxFile);
+
+            // Configure TIFF save options.
+            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                Document sampleDoc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-                builder.Writeln($"Sample document {i}");
-                builder.Writeln("This is a test paragraph.");
-                string samplePath = Path.Combine(sourceFolder, $"Sample{i}.docx");
-                sampleDoc.Save(samplePath);
-            }
+                // Use LZW compression for the TIFF output.
+                TiffCompression = TiffCompression.Lzw
+            };
+
+            // Determine the output TIFF file path.
+            string tiffFile = Path.ChangeExtension(docxFile, ".tiff");
+
+            // Save the document as a TIFF image.
+            doc.Save(tiffFile, saveOptions);
+
+            // Validate that the TIFF file was created.
+            if (!File.Exists(tiffFile))
+                throw new InvalidOperationException($"Failed to create TIFF file: {tiffFile}");
+
+            // Optional: ensure the file is not empty.
+            if (new FileInfo(tiffFile).Length == 0)
+                throw new InvalidOperationException($"TIFF file is empty: {tiffFile}");
         }
 
-        // Prepare TIFF conversion options with predefined compression.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            TiffCompression = TiffCompression.Lzw // Use LZW compression.
-        };
-
-        // Process each DOCX file in the source folder.
-        foreach (string docxPath in Directory.GetFiles(sourceFolder, "*.docx"))
-        {
-            // Load the DOCX document.
-            Document doc = new Document(docxPath);
-
-            // Determine output TIFF file name.
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(docxPath);
-            string tiffPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.tiff");
-
-            // Save the document as a multi‑page TIFF using the options.
-            doc.Save(tiffPath, tiffOptions);
-
-            // Verify that the TIFF file was created.
-            if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
-        }
-
-        // Optional: indicate completion.
-        Console.WriteLine("Conversion completed successfully.");
+        // Indicate successful completion.
+        Console.WriteLine("All DOCX files have been converted to TIFF successfully.");
     }
 }

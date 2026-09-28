@@ -7,53 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders for artifacts.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Paths for temporary files
+        string xmlPath = "fontSubstitutions.xml";
+        string docPath = "sample.docx";
+        string pdfPath = "output.pdf";
 
-        // Path to the temporary XML file that will hold the substitution table.
-        string substitutionXmlPath = Path.Combine(artifactsDir, "FontSubstitutionTable.xml");
+        // 1. Create an XML file that defines font substitution rules.
+        //    Map a non‑existent font ("NonExistentFont") to a common system font ("Arial").
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<FontSubstitutes>
+    <Substitute>
+        <Original>NonExistentFont</Original>
+        <Substitute>Arial</Substitute>
+    </Substitute>
+</FontSubstitutes>";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a substitution rule and save it to an XML file.
-        // -----------------------------------------------------------------
-        FontSettings tempFontSettings = new FontSettings();
-        TableSubstitutionRule tempRule = tempFontSettings.SubstitutionSettings.TableSubstitution;
-
-        // Define a substitute: when the document uses "MissingFont", replace it with "Arial".
-        tempRule.AddSubstitutes("MissingFont", "Arial");
-
-        // Save the rule to XML.
-        tempRule.Save(substitutionXmlPath);
-
-        // -----------------------------------------------------------------
-        // Step 2: Create a document that uses a font which is not available.
-        // -----------------------------------------------------------------
+        // 2. Build a sample document that uses the missing font.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "MissingFont";
-        builder.Writeln("This line is written with a missing font and should be substituted.");
+        builder.Font.Name = "NonExistentFont";
+        builder.Writeln("This paragraph uses a font that does not exist on the system.");
+        doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // Step 3: Load the substitution rules from the XML file and apply them.
-        // -----------------------------------------------------------------
+        // 3. Load the font substitution rules from the XML file.
         FontSettings fontSettings = new FontSettings();
-        TableSubstitutionRule rule = fontSettings.SubstitutionSettings.TableSubstitution;
-        rule.Load(substitutionXmlPath);
+        fontSettings.SubstitutionSettings.TableSubstitution.Load(xmlPath);
+
+        // 4. Apply the FontSettings to the document.
         doc.FontSettings = fontSettings;
 
-        // -----------------------------------------------------------------
-        // Step 4: Render the document to PDF (substitution will be applied).
-        // -----------------------------------------------------------------
-        string outputPdfPath = Path.Combine(artifactsDir, "Result.pdf");
-        doc.Save(outputPdfPath, SaveFormat.Pdf);
+        // 5. Render the document to PDF (the missing font should be substituted with Arial).
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // Step 5: Verify that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputPdfPath))
-            throw new InvalidOperationException("The PDF output file was not created.");
+        // 6. Validate that the PDF file was created.
+        if (!File.Exists(pdfPath))
+            throw new Exception("PDF rendering failed – output file not found.");
 
-        // The program finishes here without requiring any user interaction.
+        // 7. Simple verification: check the PDF content for a font substitution marker.
+        //    Subset fonts are usually indicated by a six‑letter prefix followed by '+'.
+        string pdfText = File.ReadAllText(pdfPath);
+        bool containsSubsetMarker = pdfText.Contains("+");
+        if (!containsSubsetMarker)
+            throw new Exception("Font substitution may not have been applied – no subset font marker found.");
+
+        // Cleanup (optional): delete temporary files if desired.
+        // File.Delete(xmlPath);
+        // File.Delete(docPath);
+        // File.Delete(pdfPath);
     }
 }

@@ -2,60 +2,40 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directories.
-        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string outputPath = Path.Combine(artifactsDir, "Dithered.tiff");
-
-        // Create a simple document with a heading and an image.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample text to render as a binary TIFF image.");
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Sample Document");
-
-        // Generate a simple in‑memory image (100×100 blue square) using Aspose.Drawing.
-        using (Bitmap bitmap = new Bitmap(100, 100))
+        // Configure image save options for TIFF with black‑and‑white color mode.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.Blue);
-            }
-
-            using (MemoryStream imageStream = new MemoryStream())
-            {
-                // Save the bitmap to the stream as PNG.
-                bitmap.Save(imageStream, ImageFormat.Png);
-                imageStream.Position = 0;
-
-                // Insert the image into the document from the stream.
-                builder.InsertImage(imageStream);
-            }
-        }
-
-        // Configure TIFF save options to use Floyd‑Steinberg dithering with a high threshold.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            TiffCompression = TiffCompression.Ccitt3,
-            TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
-            ThresholdForFloydSteinbergDithering = (byte)150 // Darken the binary output.
+            // Render the pages as black‑and‑white (binary) images.
+            ImageColorMode = ImageColorMode.BlackAndWhite,
+            // Set the threshold for Floyd‑Steinberg dithering to 150 to darken the output.
+            ThresholdForFloydSteinbergDithering = 150,
+            // Save only the first page (single‑page example).
+            PageSet = new PageSet(0)
         };
 
-        // Save the document as a TIFF image.
-        doc.Save(outputPath, options);
+        // Define output file path.
+        string outputPath = "output.tiff";
 
-        // Verify that the output file was created.
+        // Save the document as a TIFF image using the configured options.
+        doc.Save(outputPath, saveOptions);
+
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+            throw new FileNotFoundException("The TIFF file was not created.", outputPath);
 
-        // Optionally, report success (no interactive prompts required).
-        Console.WriteLine("TIFF image saved successfully to: " + outputPath);
+        // Report the file size to indicate that rendering succeeded.
+        long fileSize = new FileInfo(outputPath).Length;
+        Console.WriteLine($"TIFF image saved successfully: {outputPath} ({fileSize} bytes)");
     }
 }

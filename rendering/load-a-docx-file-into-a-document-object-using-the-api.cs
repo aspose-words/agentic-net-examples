@@ -6,19 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the sample DOCX file.
-        string samplePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
+        string sourcePath = "Sample.docx";
 
-        // Create a simple document and save it.
-        Document createDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(createDoc);
-        builder.Writeln("Hello World!");
-        createDoc.Save(samplePath);
+        // Create a simple DOCX file if it does not already exist.
+        if (!File.Exists(sourcePath))
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello Aspose.Words!");
+            doc.Save(sourcePath);
+        }
 
-        // Load the DOCX file into a new Document object.
-        Document loadedDoc = new Document(samplePath);
+        // Load the DOCX file into a Document object.
+        Document loadedDoc = new Document(sourcePath);
 
-        // Verify loading by printing the document text.
-        Console.WriteLine(loadedDoc.GetText().Trim());
+        // Validate that the document was loaded correctly.
+        if (loadedDoc.PageCount < 1)
+        {
+            throw new InvalidOperationException("Loaded document contains no pages.");
+        }
+
+        // Save a copy to confirm that loading succeeded.
+        string copyPath = "LoadedCopy.docx";
+        loadedDoc.Save(copyPath);
+
+        // Verify the copy was created.
+        if (!File.Exists(copyPath))
+        {
+            throw new FileNotFoundException("Failed to save the loaded document copy.", copyPath);
+        }
+
+        // Indicate successful execution.
+        Console.WriteLine("Document loaded and saved successfully.");
     }
 }
