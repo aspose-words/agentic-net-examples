@@ -1,80 +1,72 @@
 using System;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Tables;
+using Aspose.Words.Markup;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add a paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Original paragraph with comment.");
 
-        // Add the first paragraph that will later contain a comment.
-        builder.Writeln("This is the original paragraph that will be commented.");
-
-        // Retrieve the paragraph we just added.
-        Paragraph originalParagraph = doc.FirstSection.Body.FirstParagraph;
-
-        // Create a comment and set its metadata.
+        // Create a comment and attach it to the first paragraph.
         Comment comment = new Comment(doc)
         {
-            Author = "Alice",
-            Initial = "A",
+            Author = "Tester",
+            Initial = "TS",
             DateTime = DateTime.Now
         };
-        // A comment must contain at least one paragraph with some text.
+        // A comment must contain at least one paragraph.
         comment.AppendChild(new Paragraph(doc));
-        comment.FirstParagraph.AppendChild(new Run(doc, "Original comment text."));
-
-        // Store the comment identifier before adding it to the document.
-        int originalCommentId = comment.Id;
-
-        // Anchor the comment to a range of text inside the original paragraph.
-        originalParagraph.AppendChild(new CommentRangeStart(doc, comment.Id));
-        originalParagraph.AppendChild(new Run(doc, "Commented text."));
-        originalParagraph.AppendChild(new CommentRangeEnd(doc, comment.Id));
-        originalParagraph.AppendChild(comment);
-
-        // Save the document before modification (optional, for inspection).
-        doc.Save("CommentBeforeInsertion.docx");
-
-        // Insert a new paragraph before the original paragraph.
-        Paragraph insertedParagraph = new Paragraph(doc);
-        insertedParagraph.AppendChild(new Run(doc, "This is a newly inserted paragraph."));
-
-        // Insert the new paragraph into the document tree.
-        // The parent of a paragraph is a Body, which derives from CompositeNode and supports InsertBefore.
-        CompositeNode? parent = originalParagraph.ParentNode as CompositeNode;
-        if (parent != null)
+        // Add visible text to the comment.
+        if (comment.FirstParagraph != null)
         {
-            parent.InsertBefore(insertedParagraph, originalParagraph);
+            comment.FirstParagraph.AppendChild(new Run(doc, "Please review this paragraph."));
         }
 
-        // After insertion, retrieve the comment again.
+        Paragraph? firstParagraph = doc.FirstSection?.Body?.FirstParagraph;
+        if (firstParagraph != null)
+        {
+            firstParagraph.AppendChild(comment);
+        }
+
+        // Record comment Id and the index of its parent paragraph before insertion.
+        int commentIdBefore = comment.Id;
+        int paragraphIndexBefore = firstParagraph != null
+            ? doc.FirstSection!.Body!.Paragraphs.IndexOf(firstParagraph)
+            : -1;
+
+        // Insert a new paragraph before the original paragraph.
+        DocumentBuilder insertBuilder = new DocumentBuilder(doc);
+        insertBuilder.MoveToDocumentStart();
+        insertBuilder.Writeln("Inserted new paragraph before the original.");
+
+        // Retrieve the comment after insertion.
         Comment? retrievedComment = doc.GetChildNodes(NodeType.Comment, true)
-                                        .OfType<Comment>()
-                                        .FirstOrDefault();
+            .OfType<Comment>()
+            .FirstOrDefault();
 
-        // Validate that the comment identifier has not changed.
-        bool idUnchanged = retrievedComment != null && retrievedComment.Id == originalCommentId;
+        // Determine the paragraph that now contains the comment.
+        Paragraph? commentParentParagraph = retrievedComment?.ParentNode as Paragraph;
+        int paragraphIndexAfter = commentParentParagraph != null
+            ? doc.FirstSection!.Body!.Paragraphs.IndexOf(commentParentParagraph)
+            : -1;
 
-        // Verify that the comment range start and end nodes still reference the same identifier.
-        bool rangeStartMatches = doc.GetChildNodes(NodeType.CommentRangeStart, true)
-                                    .OfType<CommentRangeStart>()
-                                    .Any(crs => crs.Id == originalCommentId);
-        bool rangeEndMatches = doc.GetChildNodes(NodeType.CommentRangeEnd, true)
-                                  .OfType<CommentRangeEnd>()
-                                  .Any(cre => cre.Id == originalCommentId);
+        // Validate that the comment Id is unchanged and its paragraph index shifted by one.
+        bool idUnchanged = retrievedComment != null && retrievedComment.Id == commentIdBefore;
+        bool indexShifted = paragraphIndexAfter == paragraphIndexBefore + 1;
 
         // Output validation results.
-        Console.WriteLine($"Original comment Id: {originalCommentId}");
-        Console.WriteLine($"Comment Id after insertion: {(retrievedComment?.Id.ToString() ?? "null")}");
         Console.WriteLine($"Comment Id unchanged: {idUnchanged}");
-        Console.WriteLine($"CommentRangeStart Id matches comment: {rangeStartMatches}");
-        Console.WriteLine($"CommentRangeEnd Id matches comment: {rangeEndMatches}");
+        Console.WriteLine($"Paragraph index before: {paragraphIndexBefore}, after: {paragraphIndexAfter}, shifted correctly: {indexShifted}");
 
-        // Save the final document.
-        doc.Save("CommentAfterInsertion.docx");
+        // Save the document for manual inspection if needed.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CommentReferenceUpdate.docx");
+        doc.Save(outputPath);
     }
 }

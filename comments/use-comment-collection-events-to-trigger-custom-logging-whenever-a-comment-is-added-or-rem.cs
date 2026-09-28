@@ -1,104 +1,52 @@
 using System;
-using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Words.Tables;
-using Aspose.Words.Replacing;
-using Aspose.Words.Fields;
-using Aspose.Words.Layout;
 
-public class Program
+public class CommentEventsDemo
 {
-    // Simple logger that writes messages to the console and to a log file.
-    private static void Log(string message)
-    {
-        Console.WriteLine(message);
-        File.AppendAllText("comment-events.log", $"{DateTime.Now:O} - {message}{Environment.NewLine}");
-    }
-
     public static void Main()
     {
-        // Ensure the log file starts fresh.
-        if (File.Exists("comment-events.log"))
-            File.Delete("comment-events.log");
-
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
-
-        // Attach a callback that logs comment insertions and removals.
-        doc.NodeChangingCallback = new CommentLogger(Log);
-
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will hold the comment.
-        builder.Writeln("This paragraph will have a comment attached.");
+        // Write a paragraph that will host a comment.
+        builder.Writeln("This is a paragraph that will have a comment.");
 
-        // Create a comment instance with author metadata.
-        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("Review this paragraph.");
+        // Get the paragraph we just added.
+        Paragraph? paragraph = builder.CurrentParagraph;
+        if (paragraph == null)
+        {
+            Console.WriteLine("Failed to obtain the paragraph.");
+            return;
+        }
 
-        // Append the comment to the current paragraph.
-        Paragraph paragraph = builder.CurrentParagraph;
+        // Create a comment node with metadata.
+        Comment comment = new Comment(doc)
+        {
+            Author = "John Doe",
+            Initial = "JD",
+            DateTime = DateTime.Now
+        };
+
+        // Add a paragraph and run inside the comment so it contains visible text.
+        comment.AppendChild(new Paragraph(doc));
+        Paragraph? commentParagraph = comment.FirstParagraph;
+        if (commentParagraph != null)
+        {
+            commentParagraph.AppendChild(new Run(doc, "Please review this paragraph."));
+        }
+
+        // Append the comment to the paragraph and log the addition.
         paragraph.AppendChild(comment);
+        Console.WriteLine($"[Log] Comment added by '{comment.Author}'.");
 
-        // Save the document after adding the comment.
-        doc.Save("CommentEvents.docx");
-
-        // Enumerate all comments to demonstrate retrieval (should be one).
-        var comments = doc.GetChildNodes(NodeType.Comment, true)
-                          .OfType<Comment>()
-                          .ToList();
-
-        foreach (Comment c in comments)
-        {
-            Log($"Enumerated comment. Author: {c.Author}, Text: \"{c.GetText().Trim()}\"");
-        }
-
-        // Remove the comment using its Remove method.
+        // Remove the comment and log the removal.
         comment.Remove();
+        Console.WriteLine($"[Log] Comment removed (original author: '{comment.Author}').");
 
-        // Save the document after removal.
-        doc.Save("CommentEventsRemoved.docx");
-
-        // Verify that no comments remain.
-        var remaining = doc.GetChildNodes(NodeType.Comment, true)
-                           .OfType<Comment>()
-                           .ToList();
-
-        Log($"Remaining comments count: {remaining.Count}");
-    }
-}
-
-// Callback that logs when comment nodes are inserted or removed.
-public class CommentLogger : INodeChangingCallback
-{
-    private readonly Action<string> _logAction;
-
-    public CommentLogger(Action<string> logAction)
-    {
-        _logAction = logAction;
-    }
-
-    void INodeChangingCallback.NodeInserting(NodeChangingArgs args) { }
-
-    void INodeChangingCallback.NodeInserted(NodeChangingArgs args)
-    {
-        if (args.Node.NodeType == NodeType.Comment && args.Node is Comment comment)
-        {
-            _logAction($"Comment added (callback). Author: {comment.Author}, Text: \"{comment.GetText().Trim()}\"");
-        }
-    }
-
-    void INodeChangingCallback.NodeRemoving(NodeChangingArgs args) { }
-
-    void INodeChangingCallback.NodeRemoved(NodeChangingArgs args)
-    {
-        if (args.Node.NodeType == NodeType.Comment && args.Node is Comment comment)
-        {
-            _logAction($"Comment removed (callback). Author: {comment.Author}");
-        }
+        // Save the document.
+        doc.Save("CommentEventsDemo.docx");
     }
 }

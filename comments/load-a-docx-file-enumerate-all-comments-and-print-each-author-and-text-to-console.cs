@@ -5,47 +5,48 @@ using Aspose.Words;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Prepare a temporary folder for the sample document.
-        string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "Temp");
-        Directory.CreateDirectory(tempFolder);
+        // Create a sample document with a comment.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-        // Path of the sample DOCX file.
-        string samplePath = Path.Combine(tempFolder, "SampleWithComments.docx");
+        // Add a paragraph that will contain the comment.
+        builder.Writeln("This is a paragraph that will have a comment.");
 
-        // Create a new document and a builder to add content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create the comment node.
+        Comment comment = new Comment(sampleDoc)
+        {
+            Author = "John Doe",
+            Initial = "JD",
+            DateTime = DateTime.Now
+        };
+        // Add visible text to the comment.
+        comment.AppendChild(new Paragraph(sampleDoc));
+        comment.FirstParagraph?.AppendChild(new Run(sampleDoc, "Please review this paragraph."));
 
-        // First paragraph with a comment.
-        builder.Writeln("First paragraph.");
-        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment1.SetText("Review this paragraph.");
-        builder.CurrentParagraph.AppendChild(comment1);
+        // Attach the comment to the first paragraph of the document.
+        Paragraph? firstParagraph = sampleDoc.FirstSection?.Body?.FirstParagraph;
+        if (firstParagraph != null)
+        {
+            firstParagraph.AppendChild(comment);
+        }
 
-        // Second paragraph with another comment.
-        builder.Writeln("Second paragraph.");
-        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
-        comment2.SetText("Consider rephrasing.");
-        builder.CurrentParagraph.AppendChild(comment2);
+        // Save the sample document to a local file.
+        const string samplePath = "sample.docx";
+        sampleDoc.Save(samplePath);
 
-        // Save the document to disk.
-        doc.Save(samplePath);
-
-        // Load the document from the file system.
+        // Load the document from the file.
         Document loadedDoc = new Document(samplePath);
 
         // Enumerate all comments in the document.
-        var comments = loadedDoc
-            .GetChildNodes(NodeType.Comment, true)
-            .OfType<Comment>()
-            .ToList();
+        var comments = loadedDoc.GetChildNodes(NodeType.Comment, true)
+                                .OfType<Comment>()
+                                .ToList();
 
-        // Print author and comment text for each comment.
+        // Print each comment's author and text to the console.
         foreach (Comment c in comments)
         {
-            // GetText() returns the comment text including any trailing line breaks.
             string text = c.GetText()?.Trim() ?? string.Empty;
             Console.WriteLine($"{c.Author}: {text}");
         }

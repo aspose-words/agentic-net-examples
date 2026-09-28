@@ -3,73 +3,79 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Layout;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with several paragraphs and comments.
+        // Create a sample document with paragraphs and comments.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
         // Add three paragraphs, each with a comment.
         for (int i = 1; i <= 3; i++)
         {
-            builder.Writeln($"Paragraph {i}: This is some sample text for paragraph {i}.");
+            builder.Writeln($"This is paragraph {i} containing some sample text.");
 
             // Create a comment anchored to the current paragraph.
-            Comment comment = new Comment(sourceDoc, $"Author{i}", $"A{i}", DateTime.Now);
-            comment.SetText($"Comment {i} on paragraph {i}.");
+            Comment comment = new Comment(sourceDoc)
+            {
+                Author = $"Author{i}",
+                Initial = $"A{i}",
+                DateTime = DateTime.Now.AddMinutes(-i * 5)
+            };
+            // Add visible text to the comment body.
+            comment.AppendChild(new Paragraph(sourceDoc));
+            comment.FirstParagraph?.AppendChild(new Run(sourceDoc, $"Comment for paragraph {i}."));
 
-            // Append the comment to the paragraph.
-            builder.CurrentParagraph.AppendChild(comment);
+            // Append the comment to the paragraph that was just written.
+            Paragraph? currentParagraph = builder.CurrentParagraph;
+            currentParagraph?.AppendChild(comment);
         }
 
-        // Save the source document (optional, just for inspection).
-        sourceDoc.Save("SourceDocument.docx");
+        // Save the source document (optional, for inspection).
+        sourceDoc.Save("sample.docx");
 
-        // Ensure layout is up‑to‑date so that page numbers are accurate.
+        // Ensure layout is up‑to‑date so we can retrieve page numbers.
         sourceDoc.UpdatePageLayout();
 
-        // Use LayoutCollector to retrieve page numbers for nodes.
+        // Collector to map nodes to page numbers.
         LayoutCollector collector = new LayoutCollector(sourceDoc);
 
-        // Prepare a new document that will hold the printable report.
+        // Gather all comments safely.
+        var comments = sourceDoc.GetChildNodes(NodeType.Comment, true)
+                                .OfType<Comment>()
+                                .ToList();
+
+        // Create a new document that will hold the printable report.
         Document reportDoc = new Document();
         DocumentBuilder reportBuilder = new DocumentBuilder(reportDoc);
 
-        // Write a header for the report.
-        reportBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         reportBuilder.Writeln("Comments Report");
-        reportBuilder.ParagraphFormat.ClearFormatting();
+        reportBuilder.Writeln(new string('-', 30));
+        reportBuilder.Writeln();
 
-        // Enumerate all top‑level comments (ignore replies) and collect required data.
-        var comments = sourceDoc.GetChildNodes(NodeType.Comment, true)
-                                .OfType<Comment>()
-                                .Where(c => c.Ancestor == null) // top‑level only
-                                .ToList();
-
-        foreach (Comment comment in comments)
+        foreach (Comment c in comments)
         {
-            // The paragraph that contains the comment anchor.
-            Paragraph? anchorParagraph = comment.ParentParagraph;
+            // The comment is usually a child of the paragraph it annotates.
+            Paragraph? anchorParagraph = c.ParentNode as Paragraph;
 
-            // Safely obtain the paragraph text.
+            // Retrieve paragraph text safely.
             string paragraphText = anchorParagraph?.GetText().Trim() ?? "(No paragraph)";
 
-            // Retrieve the page number where the comment is located using LayoutCollector.
-            int pageNumber = collector.GetStartPageIndex(comment);
+            // Determine the page number where the paragraph starts.
+            int pageNumber = anchorParagraph != null ? collector.GetStartPageIndex(anchorParagraph) : 0;
 
-            // Write the comment entry into the report.
-            reportBuilder.Writeln($"Comment by {comment.Author} on {comment.DateTime:yyyy-MM-dd HH:mm}");
+            // Write comment details to the report.
             reportBuilder.Writeln($"Page: {pageNumber}");
-            reportBuilder.Writeln($"Comment Text: {comment.GetText().Trim()}");
-            reportBuilder.Writeln($"Associated Paragraph: {paragraphText}");
-            reportBuilder.Writeln(); // blank line between entries
+            reportBuilder.Writeln($"Author: {c.Author}");
+            reportBuilder.Writeln($"Date: {c.DateTime:O}");
+            reportBuilder.Writeln($"Paragraph Text: {paragraphText}");
+            reportBuilder.Writeln($"Comment Text: {c.GetText().Trim()}");
+            reportBuilder.Writeln();
         }
 
         // Save the report document.
-        reportDoc.Save("CommentsReport.docx");
+        reportDoc.Save("comments-report.docx");
     }
 }

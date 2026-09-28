@@ -7,69 +7,76 @@ public class FilterCommentsExample
 {
     public static void Main()
     {
-        // Create a source document with sample comments from different authors.
+        // Create a source document with several comments.
         Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
 
-        // First paragraph with a comment from Alice.
-        builder.Writeln("First paragraph.");
-        AddComment(sourceDoc, builder.CurrentParagraph, "Alice", "AL", "First comment by Alice.");
+        // First paragraph with a comment by Alice.
+        srcBuilder.Writeln("First paragraph with a comment.");
+        Comment commentAlice = new Comment(sourceDoc)
+        {
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now
+        };
+        // Add visible text to the comment.
+        commentAlice.AppendChild(new Paragraph(sourceDoc));
+        commentAlice.FirstParagraph?.AppendChild(new Run(sourceDoc, "Please review this paragraph."));
+        // Attach the comment to the current paragraph.
+        srcBuilder.CurrentParagraph?.AppendChild(commentAlice);
 
-        // Second paragraph with a comment from Bob.
-        builder.Writeln("Second paragraph.");
-        AddComment(sourceDoc, builder.CurrentParagraph, "Bob", "BO", "Comment by Bob.");
+        // Second paragraph with a comment by Bob.
+        srcBuilder.Writeln("Second paragraph with a comment.");
+        Comment commentBob = new Comment(sourceDoc)
+        {
+            Author = "Bob",
+            Initial = "B",
+            DateTime = DateTime.Now.AddMinutes(-10)
+        };
+        commentBob.AppendChild(new Paragraph(sourceDoc));
+        commentBob.FirstParagraph?.AppendChild(new Run(sourceDoc, "Check the data accuracy."));
+        srcBuilder.CurrentParagraph?.AppendChild(commentBob);
 
-        // Third paragraph with another comment from Alice.
-        builder.Writeln("Third paragraph.");
-        AddComment(sourceDoc, builder.CurrentParagraph, "Alice", "AL", "Second comment by Alice.");
+        // Third paragraph with another comment by Alice.
+        srcBuilder.Writeln("Third paragraph with another comment.");
+        Comment commentAlice2 = new Comment(sourceDoc)
+        {
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now.AddHours(-1)
+        };
+        commentAlice2.AppendChild(new Paragraph(sourceDoc));
+        commentAlice2.FirstParagraph?.AppendChild(new Run(sourceDoc, "Add more examples here."));
+        srcBuilder.CurrentParagraph?.AppendChild(commentAlice2);
 
         // Save the source document (optional, for inspection).
-        sourceDoc.Save("SourceDocument.docx");
+        sourceDoc.Save("source.docx");
 
-        // Define the author whose comments we want to extract.
-        const string targetAuthor = "Alice";
+        // Filter comments authored by "Alice".
+        var filteredComments = sourceDoc.GetChildNodes(NodeType.Comment, true)
+            .OfType<Comment>()
+            .Where(c => string.Equals(c.Author, "Alice", StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
-        // Enumerate all comments in the source document.
-        var allComments = sourceDoc.GetChildNodes(NodeType.Comment, true)
-                                   .OfType<Comment>()
-                                   .ToList();
-
-        // Filter comments by the specified author (case‑insensitive).
-        var filteredComments = allComments
-                               .Where(c => string.Equals(c.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
-                               .ToList();
-
-        // Create a new document that will contain the filtered comments.
+        // Create a new document to export the filtered comments.
         Document reportDoc = new Document();
         DocumentBuilder reportBuilder = new DocumentBuilder(reportDoc);
 
-        reportBuilder.Writeln($"Comments authored by \"{targetAuthor}\":");
+        reportBuilder.Writeln("Comments authored by Alice:");
         reportBuilder.Writeln();
 
-        // Recreate each filtered comment as plain text in the report document.
-        foreach (Comment comment in filteredComments)
+        foreach (Comment c in filteredComments)
         {
-            // Ensure the comment text is not null before trimming.
-            string commentText = comment.GetText()?.Trim() ?? string.Empty;
+            // Get the comment text; GetText may return null, so guard against it.
+            string text = c.GetText()?.Trim() ?? string.Empty;
 
-            reportBuilder.Writeln($"Date: {comment.DateTime}");
-            reportBuilder.Writeln($"Text: {commentText}");
-            reportBuilder.Writeln(); // Add an empty line between comments.
+            reportBuilder.Writeln($"Author: {c.Author}");
+            reportBuilder.Writeln($"Date: {c.DateTime:O}");
+            reportBuilder.Writeln($"Text: {text}");
+            reportBuilder.Writeln();
         }
 
-        // Save the report document containing only the filtered comments.
-        reportDoc.Save("FilteredComments.docx");
-    }
-
-    // Helper method to add a simple comment to a paragraph.
-    private static void AddComment(Document doc, Paragraph paragraph, string author, string initial, string text)
-    {
-        // Create a new comment with the specified metadata.
-        Comment comment = new Comment(doc, author, initial, DateTime.Now);
-        // Set the comment text; this creates at least one paragraph and run inside the comment.
-        comment.SetText(text);
-
-        // Append the comment to the paragraph.
-        paragraph.AppendChild(comment);
+        // Save the report document.
+        reportDoc.Save("alice-comments-report.docx");
     }
 }

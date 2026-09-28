@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -7,39 +8,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create an output folder for the generated files.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+
+        // Initialize a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will contain a commented region.
-        builder.Writeln("Paragraph before the commented text.");
+        // Add a paragraph that will hold a comment.
+        builder.Writeln("This paragraph will have a comment attached to it.");
 
-        // Create a comment with author metadata.
-        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("This is a sample comment that will appear as an annotation in the XPS output.");
-
-        // Anchor the comment to a region of text.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
-        para.AppendChild(new CommentRangeStart(doc, comment.Id));
-        para.AppendChild(new Run(doc, "Commented text"));
-        para.AppendChild(new CommentRangeEnd(doc, comment.Id));
-        para.AppendChild(comment);
-
-        // Add another paragraph after the comment.
-        builder.Writeln("Paragraph after the commented text.");
-
-        // Enumerate comments and write basic info to the console.
-        var comments = doc.GetChildNodes(NodeType.Comment, true)
-                          .OfType<Comment>()
-                          .ToList();
-
-        foreach (Comment c in comments)
+        // Create a comment node with author information and comment text.
+        Comment comment = new Comment(doc)
         {
-            Console.WriteLine($"{c.Author}: {c.GetText().Trim()}");
+            Author = "John Doe",
+            Initial = "JD",
+            DateTime = DateTime.Now
+        };
+        // The comment must contain at least one paragraph and run to be visible.
+        comment.AppendChild(new Paragraph(doc));
+        comment.FirstParagraph?.AppendChild(new Run(doc, "Please review this paragraph."));
+
+        // Attach the comment to the first paragraph of the document.
+        Paragraph? firstParagraph = doc.FirstSection?.Body?.FirstParagraph;
+        if (firstParagraph != null)
+        {
+            firstParagraph.AppendChild(comment);
         }
 
-        // Save the document to XPS format. Comments are rendered as markup annotations.
-        XpsSaveOptions xpsOptions = new XpsSaveOptions();
-        doc.Save("DocumentWithComments.xps", xpsOptions);
+        // Save the document as DOCX (optional, for verification purposes).
+        string docxPath = Path.Combine(outputDir, "CommentedDocument.docx");
+        doc.Save(docxPath);
+
+        // Save the document as XPS. Comments are rendered as markup annotations.
+        string xpsPath = Path.Combine(outputDir, "CommentedDocument.xps");
+        XpsSaveOptions xpsOptions = new XpsSaveOptions(SaveFormat.Xps);
+        doc.Save(xpsPath, xpsOptions);
     }
 }

@@ -7,33 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some paragraphs to the document.
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph.");
+        // Add a paragraph that will have a comment.
+        builder.Writeln("Paragraph with a comment.");
 
-        // Create a comment for the first paragraph.
-        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment1.SetText("Review this paragraph.");
-        // Attach the comment to the first paragraph.
-        doc.FirstSection.Body.Paragraphs[0].AppendChild(comment1);
+        // Create a comment node with author metadata and visible text.
+        Comment comment = new Comment(doc)
+        {
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now
+        };
+        comment.AppendChild(new Paragraph(doc));
+        comment.FirstParagraph?.AppendChild(new Run(doc, "Please review this paragraph."));
 
-        // Create a second comment for the second paragraph.
-        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
-        comment2.SetText("Consider rephrasing.");
-        // Attach the second comment.
-        doc.FirstSection.Body.Paragraphs[1].AppendChild(comment2);
+        // Attach the comment to the first paragraph of the document.
+        doc.FirstSection?.Body?.FirstParagraph?.AppendChild(comment);
 
-        // Hide all comments in the document view without removing them.
+        // Hide all comments in the document view (they remain in the file).
         doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.Hide;
-        // Rebuild the layout after changing the display mode.
-        doc.UpdatePageLayout();
 
-        // Save the document; comments remain in the file but are hidden in the view.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HiddenComments.docx");
+        // Save the document to the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
         doc.Save(outputPath);
     }
 }

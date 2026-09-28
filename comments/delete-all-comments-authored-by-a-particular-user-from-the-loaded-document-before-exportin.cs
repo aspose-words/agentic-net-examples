@@ -3,49 +3,69 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 
-public class DeleteCommentsByAuthor
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a new document and add a paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is the first paragraph of the document.");
 
-        // Add first paragraph with a comment from Alice.
-        builder.Writeln("First paragraph.");
-        Comment aliceComment1 = new Comment(doc, "Alice", "A", DateTime.Now);
-        aliceComment1.SetText("Comment from Alice.");
-        builder.CurrentParagraph.AppendChild(aliceComment1);
+        // Helper to add a comment to the first paragraph.
+        void AddComment(string author, string initial, string text)
+        {
+            Comment comment = new Comment(doc)
+            {
+                Author = author,
+                Initial = initial,
+                DateTime = DateTime.Now
+            };
+            // Every comment must contain at least one paragraph.
+            comment.AppendChild(new Paragraph(doc));
+            // Add the comment text.
+            comment.FirstParagraph?.AppendChild(new Run(doc, text));
 
-        // Add second paragraph with a comment from Bob.
-        builder.Writeln("Second paragraph.");
-        Comment bobComment = new Comment(doc, "Bob", "B", DateTime.Now);
-        bobComment.SetText("Comment from Bob.");
-        builder.CurrentParagraph.AppendChild(bobComment);
+            // Attach the comment to the first paragraph if it exists.
+            Paragraph? firstPara = doc.FirstSection?.Body?.FirstParagraph;
+            if (firstPara != null)
+            {
+                firstPara.AppendChild(comment);
+            }
+        }
 
-        // Add third paragraph with another comment from Alice.
-        builder.Writeln("Third paragraph.");
-        Comment aliceComment2 = new Comment(doc, "Alice", "A", DateTime.Now);
-        aliceComment2.SetText("Another comment from Alice.");
-        builder.CurrentParagraph.AppendChild(aliceComment2);
+        // Add comments authored by John and Alice.
+        AddComment("John", "J", "John's comment on the paragraph.");
+        AddComment("Alice", "A", "Alice's comment on the paragraph.");
 
-        // Define the author whose comments should be removed.
-        const string targetAuthor = "Alice";
+        // Save the original document.
+        string originalPath = Path.Combine(outputDir, "original.docx");
+        doc.Save(originalPath);
 
-        // Find all comments authored by the target author.
-        var commentsToRemove = doc.GetChildNodes(NodeType.Comment, true)
+        // Load the document back.
+        Document loadedDoc = new Document(originalPath);
+
+        // Author whose comments should be removed.
+        string targetAuthor = "John";
+
+        // Find comments by the target author.
+        var commentsToRemove = loadedDoc.GetChildNodes(NodeType.Comment, true)
             .OfType<Comment>()
             .Where(c => string.Equals(c.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        // Remove each matching comment safely.
-        foreach (Comment comment in commentsToRemove)
+        // Remove the matching comments.
+        foreach (Comment c in commentsToRemove)
         {
-            comment.Remove();
+            c.Remove();
         }
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        string modifiedPath = Path.Combine(outputDir, "modified.docx");
+        loadedDoc.Save(modifiedPath);
     }
 }

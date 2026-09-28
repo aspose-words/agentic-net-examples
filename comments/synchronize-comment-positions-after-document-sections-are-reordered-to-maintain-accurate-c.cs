@@ -2,130 +2,107 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
-namespace CommentSyncExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document with two sections, each containing a paragraph and a comment.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Section 1
+        builder.Writeln("Paragraph in Section 1.");
+        Comment comment1 = new Comment(doc)
         {
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now
+        };
+        comment1.AppendChild(new Paragraph(doc));
+        comment1.FirstParagraph?.AppendChild(new Run(doc, "Comment for Section 1."));
+        // Anchor the comment to the current paragraph.
+        builder.CurrentParagraph?.AppendChild(comment1);
 
-            // Create a sample document with two sections, each containing a paragraph and a comment.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert a section break to start Section 2.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-            // ----- Section 1 -----
-            builder.Writeln("Section 1: This is the first section.");
-            Paragraph? para1 = doc.FirstSection?.Body?.FirstParagraph;
-            if (para1 != null)
-                AddCommentToParagraph(doc, para1, "Alice", "A", "Comment for Section 1.");
+        // Section 2
+        builder.Writeln("Paragraph in Section 2.");
+        Comment comment2 = new Comment(doc)
+        {
+            Author = "Bob",
+            Initial = "B",
+            DateTime = DateTime.Now.AddMinutes(-5)
+        };
+        comment2.AppendChild(new Paragraph(doc));
+        comment2.FirstParagraph?.AppendChild(new Run(doc, "Comment for Section 2."));
+        builder.CurrentParagraph?.AppendChild(comment2);
 
-            // Insert a new section break.
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Save the original document (optional, for verification).
+        doc.Save("OriginalDocument.docx");
 
-            // ----- Section 2 -----
-            builder.Writeln("Section 2: This is the second section.");
-            Paragraph? para2 = doc.LastSection?.Body?.LastParagraph;
-            if (para2 != null)
-                AddCommentToParagraph(doc, para2, "Bob", "B", "Comment for Section 2.");
+        // -----------------------------------------------------------------
+        // Reorder sections: move the second section to be the first one.
+        // -----------------------------------------------------------------
+        if (doc.Sections.Count >= 2)
+        {
+            Section secondSection = doc.Sections[1];
+            doc.Sections.RemoveAt(1);
+            doc.Sections.Insert(0, secondSection);
+        }
 
-            // Save the original document.
-            string originalPath = Path.Combine(outputDir, "Original.docx");
-            doc.Save(originalPath);
+        // -----------------------------------------------------------------
+        // Synchronize comment positions after reordering.
+        // Capture existing comment data, remove all comments,
+        // then re‑insert them anchored to the first paragraph of each section
+        // in the new order.
+        // -----------------------------------------------------------------
 
-            // ----- Reorder Sections -----
-            // Swap the two sections so that Section 2 becomes the first one.
-            if (doc.Sections.Count >= 2)
+        // Capture comment data.
+        var capturedComments = doc.GetChildNodes(NodeType.Comment, true)
+            .OfType<Comment>()
+            .Select(c => new
             {
-                Section first = doc.Sections[0];
-                Section second = doc.Sections[1];
+                Text = c.GetText().Trim(),
+                Author = c.Author,
+                Initial = c.Initial,
+                DateTime = c.DateTime
+            })
+            .ToList();
 
-                // Remove the second section first, then insert it at the beginning.
-                doc.Sections.RemoveAt(1);
-                doc.Sections.Insert(0, second);
-                // The original first section now follows the second section automatically.
-            }
-
-            // Synchronize comment positions after reordering.
-            SynchronizeComments(doc);
-
-            // Save the reordered document.
-            string reorderedPath = Path.Combine(outputDir, "Reordered.docx");
-            doc.Save(reorderedPath);
+        // Remove existing comments safely.
+        foreach (Comment c in doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>().ToList())
+        {
+            c.Remove();
         }
 
-        // Adds a comment to the specified paragraph.
-        private static void AddCommentToParagraph(Document doc, Paragraph paragraph, string author, string initials, string commentText)
+        // Re‑insert comments, one per section, anchored to the first paragraph.
+        int commentIndex = 0;
+        foreach (Section section in doc.Sections)
         {
-            // Create a comment with metadata.
-            Comment comment = new Comment(doc, author, initials, DateTime.Now);
-            comment.SetText(commentText); // This creates the comment's internal paragraphs.
+            Paragraph? firstParagraph = section.Body?.FirstParagraph;
+            if (firstParagraph == null || commentIndex >= capturedComments.Count)
+                continue;
 
-            // Insert the comment range start, the commented text, the range end, and finally the comment node.
-            CommentRangeStart rangeStart = new CommentRangeStart(doc, comment.Id);
-            CommentRangeEnd rangeEnd = new CommentRangeEnd(doc, comment.Id);
+            var data = capturedComments[commentIndex];
 
-            paragraph.AppendChild(rangeStart);
-            paragraph.AppendChild(new Run(doc, "Commented text."));
-            paragraph.AppendChild(rangeEnd);
-            paragraph.AppendChild(comment);
-        }
-
-        // Ensures that each comment's range start/end IDs match the comment's Id
-        // and that the comment node appears immediately after its range end.
-        private static void SynchronizeComments(Document doc)
-        {
-            var comments = doc.GetChildNodes(NodeType.Comment, true)
-                              .OfType<Comment>()
-                              .ToList();
-
-            foreach (Comment comment in comments)
+            Comment newComment = new Comment(doc)
             {
-                // Find the CommentRangeEnd node that should precede this comment.
-                CommentRangeEnd? rangeEnd = comment.PreviousSibling as CommentRangeEnd;
+                Author = data.Author,
+                Initial = data.Initial,
+                DateTime = data.DateTime
+            };
+            newComment.AppendChild(new Paragraph(doc));
+            newComment.FirstParagraph?.AppendChild(new Run(doc, data.Text));
 
-                // If the immediate previous sibling is not the range end, search backwards.
-                if (rangeEnd == null)
-                {
-                    Node? node = comment.PreviousSibling;
-                    while (node != null && !(node is CommentRangeEnd))
-                    {
-                        node = node.PreviousSibling;
-                    }
-                    rangeEnd = node as CommentRangeEnd;
-                }
+            // Anchor the comment to the first paragraph of the current section.
+            firstParagraph.AppendChild(newComment);
 
-                // Find the matching CommentRangeStart node by scanning backwards from the range end.
-                CommentRangeStart? rangeStart = null;
-                if (rangeEnd != null)
-                {
-                    Node? node = rangeEnd.PreviousSibling;
-                    while (node != null && !(node is CommentRangeStart))
-                    {
-                        node = node.PreviousSibling;
-                    }
-                    rangeStart = node as CommentRangeStart;
-                }
-
-                // Synchronize IDs if both range nodes are found.
-                if (rangeStart != null && rangeEnd != null)
-                {
-                    rangeStart.Id = comment.Id;
-                    rangeEnd.Id = comment.Id;
-                }
-
-                // Ensure the comment node is placed immediately after its range end.
-                if (rangeEnd != null && comment.ParentNode != null && comment.PreviousSibling != rangeEnd)
-                {
-                    comment.Remove();
-                    rangeEnd.ParentNode?.InsertAfter(comment, rangeEnd);
-                }
-            }
+            commentIndex++;
         }
+
+        // Save the final document with reordered sections and synchronized comments.
+        doc.Save("ReorderedComments.docx");
     }
 }

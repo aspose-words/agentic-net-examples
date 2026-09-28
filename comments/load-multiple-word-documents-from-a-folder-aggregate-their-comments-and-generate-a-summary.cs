@@ -1,98 +1,94 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
-public class Program
+class Program
 {
-    public static void Main()
+    static void Main()
     {
-        // Prepare folders for input documents and output report.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "Output");
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Prepare a temporary folder for sample documents.
+        string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "TempDocs");
+        Directory.CreateDirectory(tempFolder);
 
         // Create sample documents with comments.
-        CreateSampleDocument(Path.Combine(inputDir, "Doc1.docx"), "Alice", "First comment in Doc1.");
-        CreateSampleDocument(Path.Combine(inputDir, "Doc2.docx"), "Bob", "Second comment in Doc2.");
-        CreateSampleDocument(Path.Combine(inputDir, "Doc3.docx"), "Charlie", "Third comment in Doc3.");
+        CreateSampleDocument(Path.Combine(tempFolder, "Doc1.docx"), "First document", "Alice", "AL");
+        CreateSampleDocument(Path.Combine(tempFolder, "Doc2.docx"), "Second document", "Bob", "BO");
+        CreateSampleDocument(Path.Combine(tempFolder, "Doc3.docx"), "Third document", "Charlie", "CH");
 
         // Aggregate comments from all documents in the folder.
-        List<AggregatedComment> allComments = new List<AggregatedComment>();
-        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
+        var aggregatedComments = new List<(string SourceFile, Comment Comment)>();
+
+        foreach (string filePath in Directory.GetFiles(tempFolder, "*.docx"))
         {
             Document doc = new Document(filePath);
-            // Enumerate comments safely.
             var comments = doc.GetChildNodes(NodeType.Comment, true)
                               .OfType<Comment>()
                               .ToList();
 
             foreach (Comment c in comments)
             {
-                allComments.Add(new AggregatedComment
-                {
-                    SourceDocument = Path.GetFileName(filePath),
-                    Author = c.Author,
-                    Date = c.DateTime,
-                    Text = c.GetText().Trim()
-                });
+                aggregatedComments.Add((Path.GetFileName(filePath), c));
             }
         }
 
         // Create a summary report document.
-        Document report = new Document();
-        DocumentBuilder builder = new DocumentBuilder(report);
+        Document reportDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(reportDoc);
+
         builder.Writeln("Comments Summary Report");
-        builder.Writeln($"Generated on: {DateTime.Now}");
+        builder.Writeln($"Generated on: {DateTime.Now:O}");
         builder.Writeln();
 
-        foreach (AggregatedComment ac in allComments)
+        foreach (var entry in aggregatedComments)
         {
-            builder.Writeln($"Document: {ac.SourceDocument}");
-            builder.Writeln($"Author: {ac.Author}");
-            builder.Writeln($"Date: {ac.Date}");
-            builder.Writeln($"Comment: {ac.Text}");
-            builder.Writeln(); // Blank line between entries.
+            Comment c = entry.Comment;
+            builder.Writeln($"Source Document: {entry.SourceFile}");
+            builder.Writeln($"Author: {c.Author}");
+            builder.Writeln($"Date: {c.DateTime:O}");
+            builder.Writeln($"Text: {c.GetText().Trim()}");
+            builder.Writeln();
         }
 
         // Save the report.
-        string reportPath = Path.Combine(outputDir, "CommentsReport.docx");
-        report.Save(reportPath);
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "CommentsReport.docx");
+        reportDoc.Save(reportPath, SaveFormat.Docx);
     }
 
-    // Helper method to create a simple document with a single comment.
-    private static void CreateSampleDocument(string filePath, string author, string commentText)
+    // Helper method to create a document with a single comment.
+    private static void CreateSampleDocument(string filePath, string paragraphText, string author, string initials)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a paragraph that will be commented.
-        builder.Writeln($"This is a sample paragraph for {author}.");
+        // Write a paragraph that will hold the comment.
+        builder.Writeln(paragraphText);
 
-        // Create a comment anchored to the current paragraph.
-        Comment comment = new Comment(doc, author, author.Substring(0, 1), DateTime.Now);
-        // Append a paragraph inside the comment to hold its text.
-        comment.AppendChild(new Paragraph(doc));
-        comment.FirstParagraph.AppendChild(new Run(doc, commentText));
+        // Create a comment node.
+        Comment comment = new Comment(doc)
+        {
+            Author = author,
+            Initial = initials,
+            DateTime = DateTime.Now
+        };
 
-        // Attach the comment to the paragraph.
-        builder.CurrentParagraph.AppendChild(comment);
+        // Add visible content to the comment.
+        Paragraph commentParagraph = new Paragraph(doc);
+        commentParagraph.AppendChild(new Run(doc, $"Comment by {author} on {paragraphText}."));
+        comment.AppendChild(commentParagraph);
+
+        // Attach the comment to the last paragraph of the document.
+        Paragraph? targetParagraph = doc.FirstSection?.Body?.LastParagraph;
+        if (targetParagraph != null)
+        {
+            targetParagraph.AppendChild(comment);
+        }
 
         // Save the document.
-        doc.Save(filePath);
-    }
-
-    // Simple DTO to hold aggregated comment information.
-    private class AggregatedComment
-    {
-        public string SourceDocument { get; set; } = string.Empty;
-        public string Author { get; set; } = string.Empty;
-        public DateTime Date { get; set; }
-        public string Text { get; set; } = string.Empty;
+        doc.Save(filePath, SaveFormat.Docx);
     }
 }

@@ -1,9 +1,10 @@
 using System;
 using System.IO;
-using System.Drawing;
+using System.Linq;
+using System.Text;
 using Aspose.Words;
-using Aspose.Words.Layout;
-using Aspose.Words.Saving;
+using Aspose.Words.BuildingBlocks;
+using Aspose.Words.Fields;
 
 public class Program
 {
@@ -14,43 +15,47 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a paragraph that will hold the comment.
-        builder.Writeln("This paragraph will have a comment containing a hyperlink.");
+        builder.Writeln("This paragraph will have a comment with a hyperlink.");
 
-        // Create a comment and attach it to the paragraph.
-        Comment comment = new Comment(doc, "Jane Doe", "JD", DateTime.Now);
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
-        paragraph.AppendChild(comment);
+        // Create a comment node with metadata.
+        Comment comment = new Comment(doc)
+        {
+            Author = "John Doe",
+            Initial = "JD",
+            DateTime = DateTime.Now
+        };
 
-        // Inside the comment, add a paragraph and a hyperlink to an external URL.
-        Paragraph commentParagraph = (Paragraph)comment.AppendChild(new Paragraph(doc));
+        // The comment must contain at least one paragraph.
+        Paragraph commentParagraph = new Paragraph(doc);
+        comment.AppendChild(commentParagraph);
+
+        // Insert a hyperlink into the comment's paragraph.
         DocumentBuilder commentBuilder = new DocumentBuilder(doc);
         commentBuilder.MoveTo(commentParagraph);
-        commentBuilder.Font.Color = Color.Blue;
-        commentBuilder.Font.Underline = Underline.Single;
-        commentBuilder.InsertHyperlink("Aspose.Words", "https://www.aspose.com/words", false);
-        commentBuilder.Font.ClearFormatting();
+        commentBuilder.InsertHyperlink("https://www.example.com", "Visit Example", false);
 
-        // Configure the document to show comments as PDF annotations.
-        doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
-        doc.UpdatePageLayout();
-
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Attach the comment to the first paragraph of the document body.
+        Paragraph? targetParagraph = doc.FirstSection?.Body?.FirstParagraph;
+        if (targetParagraph != null)
+        {
+            targetParagraph.AppendChild(comment);
+        }
 
         // Save the document as PDF.
-        string pdfPath = Path.Combine(outputDir, "CommentWithHyperlink.pdf");
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, pdfOptions);
+        string pdfPath = "CommentWithHyperlink.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Simple verification that the PDF file was created and is not empty.
-        if (File.Exists(pdfPath) && new FileInfo(pdfPath).Length > 0)
+        // Verify that the hyperlink URL is present in the generated PDF.
+        bool hyperlinkFound = false;
+        if (File.Exists(pdfPath))
         {
-            Console.WriteLine("PDF saved successfully with a comment containing a hyperlink.");
+            byte[] pdfBytes = File.ReadAllBytes(pdfPath);
+            string pdfText = Encoding.ASCII.GetString(pdfBytes);
+            hyperlinkFound = pdfText.Contains("https://www.example.com");
         }
-        else
-        {
-            Console.WriteLine("Failed to create the PDF file.");
-        }
+
+        Console.WriteLine(hyperlinkFound
+            ? "Hyperlink verified in PDF."
+            : "Hyperlink not found in PDF.");
     }
 }

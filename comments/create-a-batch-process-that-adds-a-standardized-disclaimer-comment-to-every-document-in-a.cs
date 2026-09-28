@@ -3,10 +3,12 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 
-public class Program
+#nullable enable
+
+public class BatchCommentAdder
 {
-    // Standardized disclaimer text to be added as a comment.
-    private const string DisclaimerText = "Disclaimer: This document is confidential and intended for the designated recipient only.";
+    // Standardized disclaimer text to add as a comment.
+    private const string DisclaimerText = "Disclaimer: This document is confidential.";
 
     // Author metadata for the disclaimer comment.
     private const string DisclaimerAuthor = "Compliance Team";
@@ -14,71 +16,89 @@ public class Program
 
     public static void Main()
     {
-        // Define input and output folders relative to the current working directory.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        // Define input and output directories relative to the current working directory.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "input");
+        string outputDir = Path.Combine(baseDir, "output");
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure clean directories.
+        if (Directory.Exists(inputDir))
+            Directory.Delete(inputDir, true);
+        if (Directory.Exists(outputDir))
+            Directory.Delete(outputDir, true);
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // If the input folder is empty, create a few sample documents for demonstration.
-        if (!Directory.EnumerateFiles(inputFolder, "*.docx").Any())
-        {
-            CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docx"), "First sample document.");
-            CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docx"), "Second sample document with multiple paragraphs.\nSecond line.\nThird line.");
-        }
+        // Create sample documents to demonstrate the batch process.
+        CreateSampleDocuments(inputDir);
 
-        // Process each .docx file in the input folder.
-        foreach (string inputPath in Directory.EnumerateFiles(inputFolder, "*.docx"))
+        // Process each .docx file in the input directory.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
             // Load the document.
-            Document doc = new Document(inputPath);
+            Document doc = new Document(filePath);
 
-            // Ensure the document has at least one paragraph to attach the comment.
-            doc.EnsureMinimum();
-
-            // Add the disclaimer comment to the last paragraph of the document.
+            // Add the standardized disclaimer comment.
             AddDisclaimerComment(doc);
 
-            // Determine the output file path (same file name, different folder).
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(inputPath));
-
-            // Save the modified document.
+            // Determine output path and save the modified document.
+            string fileName = Path.GetFileName(filePath);
+            string outputPath = Path.Combine(outputDir, fileName);
             doc.Save(outputPath);
+        }
+
+        // The program finishes automatically; no user interaction required.
+    }
+
+    // Generates a few simple Word documents for the example.
+    private static void CreateSampleDocuments(string folder)
+    {
+        for (int i = 1; i <= 3; i++)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is sample document #{i}.");
+            builder.Writeln("It contains some placeholder text for testing.");
+
+            string filePath = Path.Combine(folder, $"Sample{i}.docx");
+            doc.Save(filePath);
         }
     }
 
-    // Creates a simple document with the specified text content.
-    private static void CreateSampleDocument(string filePath, string content)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(content);
-        doc.Save(filePath);
-    }
-
-    // Adds a standardized disclaimer comment to the last paragraph of the given document.
+    // Adds a disclaimer comment to the first paragraph of the document.
     private static void AddDisclaimerComment(Document doc)
     {
-        // Retrieve the last paragraph in the main body.
-        var lastParagraph = doc.FirstSection?.Body?.LastParagraph;
-        if (lastParagraph == null)
-            return; // Safety check; should not occur because EnsureMinimum was called.
+        // Ensure the document has at least one section, body, and paragraph.
+        Section? firstSection = doc.FirstSection;
+        if (firstSection == null) return;
 
-        // Create a new comment node.
-        Comment comment = new Comment(doc)
+        Body? body = firstSection.Body;
+        if (body == null) return;
+
+        Paragraph? targetParagraph = body.FirstParagraph;
+        if (targetParagraph == null)
+        {
+            // If no paragraph exists, create one.
+            targetParagraph = new Paragraph(doc);
+            body.AppendChild(targetParagraph);
+        }
+
+        // Create the comment node with metadata.
+        Comment disclaimerComment = new Comment(doc)
         {
             Author = DisclaimerAuthor,
             Initial = DisclaimerInitial,
             DateTime = DateTime.Now
         };
 
-        // Build the comment's visible content: a paragraph containing a run with the disclaimer text.
-        comment.AppendChild(new Paragraph(doc));
-        comment.FirstParagraph?.AppendChild(new Run(doc, DisclaimerText));
+        // Add a paragraph and run inside the comment to hold the disclaimer text.
+        Paragraph commentParagraph = new Paragraph(doc);
+        Run commentRun = new Run(doc, DisclaimerText);
+        commentParagraph.AppendChild(commentRun);
+        disclaimerComment.AppendChild(commentParagraph);
 
-        // Append the comment to the paragraph so it appears in the document.
-        lastParagraph.AppendChild(comment);
+        // Anchor the comment to the target paragraph.
+        // In Aspose.Words, a comment can be added as a child of the paragraph.
+        targetParagraph.AppendChild(disclaimerComment);
     }
 }
