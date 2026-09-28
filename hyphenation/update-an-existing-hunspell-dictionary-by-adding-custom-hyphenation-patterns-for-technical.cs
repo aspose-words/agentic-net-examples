@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.IO;
 using Aspose.Words;
 
@@ -7,55 +6,40 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names for the dictionary and the resulting PDF.
-        const string dictionaryFileName = "hyph_en_US.dic";
-        const string outputPdf = "hyphenated.pdf";
-
-        // Create a minimal Hunspell hyphenation dictionary.
-        // The first line is the encoding identifier (e.g., "UTF-8").
-        // Subsequent lines contain word=hyphenated-pattern entries.
-        // Include a custom technical term "microprocessor".
+        // Create a local Hunspell hyphenation dictionary file.
+        string dictPath = Path.Combine(Directory.GetCurrentDirectory(), "hyph_en_US.dic");
         string dictionaryContent =
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n" +
-            "microprocessor=mi-cro-pro-cess-or\n";
+            "microprocessor=mi-cro-pro-ces-sor\n" +
+            "quantumcomputing=quan-tum-com-put-ing\n";
 
-        // Write the dictionary to the local file system.
-        File.WriteAllText(dictionaryFileName, dictionaryContent);
+        File.WriteAllText(dictPath, dictionaryContent);
 
-        // Register the dictionary for the "en-US" locale.
-        // Use the static RegisterDictionary method of Aspose.Words.Hyphenation.
-        Hyphenation.RegisterDictionary("en-US", dictionaryFileName);
+        // Register the dictionary for the en-US locale.
+        Aspose.Words.Hyphenation.RegisterDictionary("en-US", dictPath);
 
-        // Create a new blank document.
+        // Build a document with narrow page width to force hyphenation.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set a narrow page width to force line wrapping and hyphenation.
         doc.FirstSection.PageSetup.PageWidth = 200; // points
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Set the font locale before writing text so that the runs inherit the correct locale.
-        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
-        builder.Font.Size = 12;
-
-        // Write a paragraph containing long words that can be hyphenated.
+        // Sample text containing the technical terms.
         builder.Writeln(
-            "The extraordinarycharacteristically internationalization communication " +
-            "process often involves complex microprocessor architectures that " +
-            "require careful analysis.");
+            "The microprocessor architecture and quantumcomputing algorithms are essential for modern technology. " +
+            "Extraordinarycharacteristically, internationalization, and communication also play vital roles.");
 
-        // Enable automatic hyphenation.
-        doc.HyphenationOptions.AutoHyphenation = true;
+        // Save the result as PDF.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "hyphenated_output.pdf");
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Save the document to PDF.
-        doc.Save(outputPdf, SaveFormat.Pdf);
-
-        // Verify that the output file was created.
-        if (!File.Exists(outputPdf))
-            throw new InvalidOperationException("The expected PDF output was not created.");
+        // Verify that the PDF was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Expected output PDF was not created.");
     }
 }

@@ -1,71 +1,54 @@
 using System;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the dictionary and the output PDF.
-        const string dictionaryPath = "hyph_en_US.dic";
-        const string outputPath = "Report.pdf";
-
         // Create a minimal hyphenation dictionary for English (US).
-        // The format: first line is the encoding, subsequent lines are word=hyphenation-points.
-        File.WriteAllText(dictionaryPath,
-@"UTF-8
-extraordinarycharacteristically=ex-tra-or-di-nary-char-ac-ter-is-ti-cal-ly
-internationalization=in-ter-na-tion-al-i-za-tion
-communication=com-mu-ni-ca-tion");
+        const string dictPath = "hyph_en_US.dic";
+        File.WriteAllText(dictPath,
+            "UTF-8\n" +
+            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
+            "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary so that Aspose.Words can hyphenate English text.
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
+        // Register the dictionary with Aspose.Words for the "en-US" language.
+        Hyphenation.RegisterDictionary("en-US", dictPath);
 
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new document and a builder.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
         // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
-        // Optional: tweak hyphenation settings.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
 
         // Narrow the page width to force line wrapping and hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.17 inches)
+        doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // ---------- Heading (hyphenation disabled) ----------
+        // ----- Heading (hyphenation disabled) -----
+        // Use a language for which no dictionary is registered (e.g., French).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        // Suppress hyphenation for this heading.
-        builder.ParagraphFormat.SuppressAutoHyphens = true;
-        builder.Font.Size = 24;
-        builder.Writeln("Heading: extraordinarycharacteristically internationalization communication");
+        builder.Font.LocaleId = (int)CultureInfo.GetCultureInfo("fr-FR").LCID;
+        builder.Writeln("Extraordinarycharacteristically Internationalization Communication");
 
-        // Add a blank line between heading and body.
-        builder.Writeln();
-
-        // ---------- Body paragraph (hyphenation enabled) ----------
+        // ----- Body paragraph (hyphenation enabled) -----
+        // Use the language that has the registered dictionary (English US).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        // Ensure hyphenation is allowed for body paragraphs.
-        builder.ParagraphFormat.SuppressAutoHyphens = false;
-        builder.Font.Size = 12;
-        builder.Writeln(
-            "Body: The quick brown fox jumps over the lazy dog. " +
-            "This paragraph contains the word extraordinarycharacteristically which is long enough to be hyphenated " +
-            "when it reaches the end of the line. The same applies to internationalization and communication.");
+        builder.Font.LocaleId = (int)CultureInfo.GetCultureInfo("en-US").LCID;
+        builder.Writeln("Extraordinarycharacteristically Internationalization Communication");
 
-        // Save the document to PDF.
+        // Save the document as PDF.
+        const string outputPath = "Report.pdf";
         doc.Save(outputPath, SaveFormat.Pdf);
 
         // Verify that the output file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Expected output file '{outputPath}' was not created.");
-
-        // Clean up the temporary dictionary file.
-        if (File.Exists(dictionaryPath))
-            File.Delete(dictionaryPath);
+            throw new InvalidOperationException("Expected output file was not created.");
     }
 }

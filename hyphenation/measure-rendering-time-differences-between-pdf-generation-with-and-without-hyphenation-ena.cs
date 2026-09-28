@@ -1,65 +1,88 @@
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
+using Aspose.Words.Saving;
 
-public class Program
+public class HyphenationTimingExample
 {
+    private const string DictionaryFileName = "hyph_en_US.dic";
+    private const string HyphenatedPdf = "hyphenated.pdf";
+    private const string NonHyphenatedPdf = "non_hyphenated.pdf";
+
     public static void Main()
     {
-        // Prepare a minimal hyphenation dictionary for English (US).
-        const string dictFileName = "hyph_en_US.dic";
-        File.WriteAllText(dictFileName,
-            "UTF-8\n" +
-            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n");
+        // Ensure Aspose.Words license is not required for this example.
+        CreateDictionaryFile();
 
-        // Register the dictionary so that hyphenation can be applied.
-        Hyphenation.RegisterDictionary("en-US", dictFileName);
+        // Create and render document with hyphenation enabled.
+        RegisterDictionary();
+        Document hyphenatedDoc = CreateSampleDocument();
+        double hyphenatedTimeMs = RenderPdf(hyphenatedDoc, HyphenatedPdf);
+        ValidateFileExists(HyphenatedPdf);
 
-        // Create a sample document with long words that can be hyphenated.
+        // Create and render document without hyphenation.
+        // Do not register dictionary for this run.
+        Document nonHyphenatedDoc = CreateSampleDocument();
+        double nonHyphenatedTimeMs = RenderPdf(nonHyphenatedDoc, NonHyphenatedPdf);
+        ValidateFileExists(NonHyphenatedPdf);
+
+        // Output timing results.
+        Console.WriteLine($"PDF generation with hyphenation: {hyphenatedTimeMs:F2} ms");
+        Console.WriteLine($"PDF generation without hyphenation: {nonHyphenatedTimeMs:F2} ms");
+    }
+
+    private static void CreateDictionaryFile()
+    {
+        string[] lines =
+        {
+            "UTF-8",
+            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly",
+            "internationalization=in-ter-na-tion-al-i-za-tion",
+            "communication=com-mu-ni-ca-tion"
+        };
+        File.WriteAllLines(DictionaryFileName, lines);
+        if (!File.Exists(DictionaryFileName))
+            throw new InvalidOperationException("Failed to create hyphenation dictionary file.");
+    }
+
+    private static void RegisterDictionary()
+    {
+        // Register the dictionary for en-US language.
+        Hyphenation.RegisterDictionary("en-US", DictionaryFileName);
+    }
+
+    private static Document CreateSampleDocument()
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Narrow page width to force line wrapping.
+        Section section = doc.FirstSection;
+        section.PageSetup.PageWidth = 200; // points
+        section.PageSetup.LeftMargin = 20;
+        section.PageSetup.RightMargin = 20;
+
+        // Add sample text containing long words.
         builder.Font.Size = 12;
-        builder.Writeln(
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication.");
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Narrow the page width to force line wrapping and thus hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 300;
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
+        return doc;
+    }
 
-        // Measure PDF generation with automatic hyphenation enabled.
-        doc.HyphenationOptions.AutoHyphenation = true;
-        string hyphenatedPdf = "Hyphenated.pdf";
+    private static double RenderPdf(Document doc, string outputPath)
+    {
         Stopwatch sw = Stopwatch.StartNew();
-        doc.Save(hyphenatedPdf, SaveFormat.Pdf);
+        doc.Save(outputPath, SaveFormat.Pdf);
         sw.Stop();
-        long timeWithHyphenation = sw.ElapsedMilliseconds;
+        return sw.Elapsed.TotalMilliseconds;
+    }
 
-        // Verify the PDF was created.
-        if (!File.Exists(hyphenatedPdf))
-            throw new InvalidOperationException("Hyphenated PDF was not created.");
-
-        // Measure PDF generation with automatic hyphenation disabled.
-        doc.HyphenationOptions.AutoHyphenation = false;
-        string nonHyphenatedPdf = "NonHyphenated.pdf";
-        sw.Restart();
-        doc.Save(nonHyphenatedPdf, SaveFormat.Pdf);
-        sw.Stop();
-        long timeWithoutHyphenation = sw.ElapsedMilliseconds;
-
-        // Verify the second PDF was created.
-        if (!File.Exists(nonHyphenatedPdf))
-            throw new InvalidOperationException("Non‑hyphenated PDF was not created.");
-
-        // Output the timing results.
-        Console.WriteLine($"PDF generation time with hyphenation: {timeWithHyphenation} ms");
-        Console.WriteLine($"PDF generation time without hyphenation: {timeWithoutHyphenation} ms");
+    private static void ValidateFileExists(string path)
+    {
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Expected output file '{path}' was not created.");
     }
 }

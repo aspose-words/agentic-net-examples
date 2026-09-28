@@ -1,42 +1,49 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using Aspose.Words;
+using System.Linq;
 
 public class Program
 {
     public static void Main()
     {
-        // Directory to hold hyphenation dictionary files.
-        string dictDir = "HyphenationDictionaries";
-        Directory.CreateDirectory(dictDir);
-
-        // Minimal valid dictionary contents for demonstration.
-        var sampleDictionaries = new Dictionary<string, string>
+        // Create sample hyphenation dictionaries locally.
+        var dictionaries = new[]
         {
-            { "en-US", "UTF-8\nextraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" },
-            { "de-CH", "UTF-8\ninternationalisierung=in-ter-na-tion-alisie-rung\n" }
+            new
+            {
+                LanguageCode = "en-US",
+                FileName = "hyph_en_US.dic",
+                Content = "UTF-8\nextraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n"
+            },
+            new
+            {
+                LanguageCode = "de-DE",
+                FileName = "hyph_de_DE.dic",
+                Content = "UTF-8\nBeispiel=Bei-spiel\n"
+            }
         };
 
-        // Create files and register each dictionary with Aspose.Words.
-        foreach (var kvp in sampleDictionaries)
+        foreach (var dict in dictionaries)
         {
-            string filePath = Path.Combine(dictDir, $"hyph_{kvp.Key}.dic");
-            File.WriteAllText(filePath, kvp.Value);
-            Hyphenation.RegisterDictionary(kvp.Key, filePath);
+            // Ensure the dictionary file exists before registration.
+            File.WriteAllText(dict.FileName, dict.Content);
+            Aspose.Words.Hyphenation.RegisterDictionary(dict.LanguageCode, dict.FileName);
         }
 
-        // List all dictionary files found in the directory and display their language codes.
-        Console.WriteLine("Available hyphenation dictionaries:");
-        foreach (string filePath in Directory.GetFiles(dictDir, "*.dic"))
-        {
-            string fileName = Path.GetFileName(filePath);
-            // Expected naming pattern: hyph_{languageCode}.dic
-            string languageCode = fileName.StartsWith("hyph_") && fileName.EndsWith(".dic")
-                ? fileName.Substring(5, fileName.Length - 5 - 4)
-                : "Unknown";
+        // List all hyphenation dictionaries present in the current directory.
+        var dicFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "hyph_*.dic");
 
-            Console.WriteLine($"- {languageCode}");
+        Console.WriteLine("Available hyphenation dictionaries (language codes):");
+        foreach (var filePath in dicFiles)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(filePath); // e.g., hyph_en_US
+            var parts = fileName.Split('_');
+            if (parts.Length >= 2)
+            {
+                // Combine remaining parts with hyphen to form language code (en-US, de-DE, etc.).
+                var languageCode = string.Join("-", parts.Skip(1));
+                Console.WriteLine(languageCode);
+            }
         }
     }
 }
