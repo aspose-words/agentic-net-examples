@@ -2,30 +2,35 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class PdfToTextExtractor
 {
     public static void Main()
     {
-        // Create a sample PDF document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample PDF content for text extraction.");
-        source.Save("input.pdf", SaveFormat.Pdf);
+        // Create a sample PDF file.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is a sample PDF document.");
+        builder.Writeln("It contains multiple lines of text.");
+        string pdfPath = "sample.pdf";
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
 
         // Load the PDF document.
-        Document pdfDoc = new Document("input.pdf");
+        Document pdfDocument = new Document(pdfPath);
 
-        // Extract the text content.
-        string extractedText = pdfDoc.GetText();
+        // Extract text from the PDF.
+        string extractedText = pdfDocument.GetText();
 
-        // Save the extracted text to a plain TXT file.
-        File.WriteAllText("output.txt", extractedText);
+        // Save the extracted text to a TXT file.
+        string txtPath = "output.txt";
+        File.WriteAllText(txtPath, extractedText);
 
         // Validate that the TXT file was created and contains data.
-        if (!File.Exists("output.txt"))
-            throw new InvalidOperationException("Expected output TXT was not created.");
+        if (!File.Exists(txtPath) || new FileInfo(txtPath).Length == 0)
+        {
+            throw new InvalidOperationException("The text extraction failed; output file was not created or is empty.");
+        }
 
-        if (new FileInfo("output.txt").Length == 0)
-            throw new InvalidOperationException("The extracted text file is empty.");
+        // Optionally, clean up the sample PDF (comment out if you want to keep it).
+        // File.Delete(pdfPath);
     }
 }

@@ -7,61 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string pdfPath = "sample.pdf";
-        const string outputFolder = "PngPages";
+        // Create a sample PDF document.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample PDF content for PNG export.");
+        sourceDoc.Save("input.pdf", SaveFormat.Pdf);
 
-        // Ensure the output folder exists.
-        if (Directory.Exists(outputFolder))
-            Directory.Delete(outputFolder, true);
-        Directory.CreateDirectory(outputFolder);
+        // Load the PDF document.
+        Document pdfDoc = new Document("input.pdf");
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample document and save it as PDF (input for conversion).
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 2.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 3.");
-        doc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the source PDF file.");
-
-        // -----------------------------------------------------------------
-        // 2. Load the PDF document.
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document(pdfPath);
-
-        // -----------------------------------------------------------------
-        // 3. Export each page of the PDF to a separate PNG image at 300 DPI.
-        // -----------------------------------------------------------------
+        // Export each page of the PDF to a PNG image with 300 DPI resolution.
         for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            // Configure image save options for PNG with 300 DPI.
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+            string outputPath = $"page_{pageIndex + 1}.png";
+
+            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
             {
-                Resolution = 300f,               // Set both horizontal and vertical DPI.
-                PageSet = new PageSet(pageIndex) // Render only the current page.
+                Resolution = 300,
+                PageSet = new PageSet(pageIndex) // Export only the current page.
             };
 
-            string pngPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
-            pdfDoc.Save(pngPath, options);
+            pdfDoc.Save(outputPath, pngOptions);
 
             // Validate that the PNG file was created.
-            if (!File.Exists(pngPath))
-                throw new InvalidOperationException($"Failed to create PNG for page {pageIndex + 1}.");
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Expected output PNG '{outputPath}' was not created.");
         }
 
-        // -----------------------------------------------------------------
-        // 4. Clean up temporary files (optional).
-        // -----------------------------------------------------------------
-        // File.Delete(pdfPath); // Uncomment if you want to remove the intermediate PDF.
-
-        Console.WriteLine("PDF successfully exported to PNG images at 300 DPI.");
+        // Optional: confirm that at least one PNG was generated.
+        if (pdfDoc.PageCount == 0)
+            throw new InvalidOperationException("The PDF document contains no pages to export.");
     }
 }

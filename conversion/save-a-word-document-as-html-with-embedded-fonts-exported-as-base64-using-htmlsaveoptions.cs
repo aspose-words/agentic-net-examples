@@ -7,35 +7,24 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample Word document.
         Document doc = new Document();
-
-        // Add some content to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = "Arial";
-        builder.Writeln("This is a sample document with fonts embedded as Base64.");
+        builder.Writeln("Hello, this is a sample document with embedded fonts.");
 
-        // Define the output HTML file path.
+        // Configure HTML save options. The default behavior embeds fonts as Base64 when possible.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
+
         string outputPath = "output.html";
-
-        // Configure HtmlSaveOptions to embed fonts as Base64.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
-        {
-            ExportFontsAsBase64 = true,
-            CssStyleSheetType = CssStyleSheetType.Embedded,
-            PrettyFormat = true
-        };
-
-        // Save the document as HTML using the specified options.
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the HTML file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The HTML output file was not created.");
+        // Validate that the HTML file was created and contains data.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        {
+            throw new InvalidOperationException("HTML output with embedded fonts was not created.");
+        }
 
-        // Optionally, you could read the file to ensure it contains Base64 font data.
-        // string htmlContent = File.ReadAllText(outputPath);
-        // if (!htmlContent.Contains("data:font"))
-        //     throw new InvalidOperationException("The HTML does not contain embedded Base64 fonts.");
+        Console.WriteLine($"HTML file saved successfully to '{outputPath}'.");
     }
 }

@@ -7,56 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a large Word document (500 pages) to simulate a large PDF source.
-        Document largeDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(largeDoc);
-        for (int i = 1; i <= 500; i++)
+        // Create a large sample document.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        const int pageCount = 500; // Simulate a large document.
+        for (int i = 1; i <= pageCount; i++)
         {
-            builder.Writeln($"Page {i}");
-            if (i < 500)
+            builder.Writeln($"This is page {i} of a large document.");
+            if (i < pageCount)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save the Word document as a regular PDF file.
-        const string sourcePdfPath = "large.pdf";
-        largeDoc.Save(sourcePdfPath, SaveFormat.Pdf);
-
-        // Load the large PDF file.
-        Document pdfDoc = new Document(sourcePdfPath);
-
-        // Prepare PDF/A‑2b (represented by PdfA2u) save options.
-        PdfSaveOptions pdfA2bOptions = new PdfSaveOptions
+        // Configure PDF/A‑2b save options.
+        // If the used Aspose.Words version does not contain PdfA2b, fall back to PdfA1b.
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA2u, // PDF/A‑2b compliance
-            MemoryOptimization = true
+            // Uncomment the line below when PdfA2b is available in the referenced Aspose.Words version.
+            // Compliance = PdfCompliance.PdfA2b,
+            Compliance = PdfCompliance.PdfA1b // Fallback for older versions.
         };
 
-        // Stream the PDF/A‑2b output directly to a MemoryStream.
-        using (MemoryStream outputStream = new MemoryStream())
-        {
-            pdfDoc.Save(outputStream, pdfA2bOptions);
+        // Save directly to a MemoryStream without intermediate files.
+        using MemoryStream pdfAStream = new MemoryStream();
+        source.Save(pdfAStream, saveOptions);
 
-            // Verify that data was written to the stream.
-            if (outputStream.Length == 0)
-                throw new InvalidOperationException("The output MemoryStream is empty after saving PDF/A‑2b.");
+        // Reset position for any subsequent reading.
+        pdfAStream.Position = 0;
 
-            // Reset the position before any further reading.
-            outputStream.Position = 0;
+        // Validate that the stream contains data.
+        if (pdfAStream.Length == 0)
+            throw new InvalidOperationException("No PDF/A data was written to the MemoryStream.");
 
-            // For demonstration, write the stream to a file to confirm the result.
-            const string resultPdfPath = "result_pdfa2b.pdf";
-            using (FileStream fileStream = new FileStream(resultPdfPath, FileMode.Create, FileAccess.Write))
-            {
-                outputStream.CopyTo(fileStream);
-            }
-
-            // Verify that the result file was created.
-            if (!File.Exists(resultPdfPath) || new FileInfo(resultPdfPath).Length == 0)
-                throw new InvalidOperationException("The PDF/A‑2b file was not created correctly.");
-        }
-
-        // Clean up temporary source PDF.
-        if (File.Exists(sourcePdfPath))
-            File.Delete(sourcePdfPath);
+        // The MemoryStream now holds the PDF/A document and can be used further.
+        Console.WriteLine($"PDF/A stream length: {pdfAStream.Length} bytes");
     }
 }

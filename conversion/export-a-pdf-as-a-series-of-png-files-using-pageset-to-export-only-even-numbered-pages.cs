@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -7,10 +8,11 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample multi‑page document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
+        // -----------------------------------------------------------------
+        // 1. Create a sample multi‑page Word document.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         for (int i = 1; i <= 5; i++)
         {
             builder.Writeln($"This is page {i}.");
@@ -18,37 +20,54 @@ public class Program
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save the document as PDF – this will be the source for image conversion.
+        // Save the document as PDF – this PDF will be the source for conversion.
         const string pdfPath = "sample.pdf";
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The PDF file was not created.");
 
-        // Load the PDF we just created.
+        // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Prepare output folder for PNG files.
-        const string outputFolder = "OutputImages";
-        Directory.CreateDirectory(outputFolder);
+        // -----------------------------------------------------------------
+        // 2. Export only even‑numbered pages (2, 4, …) as separate PNG files.
+        // -----------------------------------------------------------------
+        const string outputBaseName = "even_pages.png";
+        string baseFileNameWithoutExt = Path.GetFileNameWithoutExtension(outputBaseName);
+        string extension = Path.GetExtension(outputBaseName);
 
-        // Export only even‑numbered pages (pages 2,4,…) as separate PNG images.
-        // Page indices are zero‑based, so even‑numbered pages have odd indices.
-        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
-
-        for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
+        // Page indices are zero‑based; even‑numbered pages correspond to 1, 3, …
+        List<string> createdFiles = new List<string>();
+        for (int pageIndex = 1; pageIndex < pdfDoc.PageCount; pageIndex += 2)
         {
-            // Skip odd pages (index 0,2,4,… correspond to pages 1,3,5,…).
-            if (pageIndex % 2 == 0) continue;
+            // Prepare options for a single page.
+            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+            {
+                PageSet = new PageSet(pageIndex, 1) // Export only this page.
+            };
 
-            // Render the current even page.
-            pngOptions.PageSet = new PageSet(pageIndex);
-            string pngPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
-            pdfDoc.Save(pngPath, pngOptions);
+            // Determine the file name: first page uses the base name,
+            // subsequent pages get a numeric suffix.
+            string outputPath = createdFiles.Count == 0
+                ? outputBaseName
+                : $"{baseFileNameWithoutExt}_{createdFiles.Count}{extension}";
 
-            // Validate that the PNG file was created.
-            if (!File.Exists(pngPath))
-                throw new InvalidOperationException($"Failed to create PNG for page {pageIndex + 1}.");
+            pdfDoc.Save(outputPath, pngOptions);
+            createdFiles.Add(outputPath);
         }
 
-        // Optional: indicate completion.
-        Console.WriteLine("Export of even‑numbered pages to PNG completed successfully.");
+        // -----------------------------------------------------------------
+        // 3. Validate that the expected PNG files were created.
+        // -----------------------------------------------------------------
+        foreach (string filePath in createdFiles)
+        {
+            if (!File.Exists(filePath))
+                throw new InvalidOperationException($"Expected output file '{filePath}' was not created.");
+        }
+
+        // Optional: clean up generated files (comment out if you want to inspect them).
+        //foreach (string filePath in createdFiles)
+        //    File.Delete(filePath);
+        //File.Delete(pdfPath);
     }
 }

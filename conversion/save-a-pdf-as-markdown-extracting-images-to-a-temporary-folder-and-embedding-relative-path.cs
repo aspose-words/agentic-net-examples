@@ -4,58 +4,77 @@ using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directories.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string imagesDir = Path.Combine(outputDir, "images");
-        Directory.CreateDirectory(imagesDir);
+        // Prepare a temporary working directory.
+        string baseTemp = Path.Combine(Path.GetTempPath(), "AsposeExample_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(baseTemp);
 
-        // Create a simple PNG image using Aspose.Drawing.
-        string tempImagePath = Path.Combine(outputDir, "temp.png");
-        using (Bitmap bmp = new Bitmap(100, 100))
+        // Create a sample PNG image using Aspose.Drawing.
+        string imagePath = Path.Combine(baseTemp, "sample.png");
+        using (Bitmap bitmap = new Bitmap(200, 200, PixelFormat.Format32bppArgb))
         {
-            using (Graphics g = Graphics.FromImage(bmp))
+            // Obtain a Graphics object for drawing on the bitmap.
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.Blue);
+                // Fill background with a light color.
+                graphics.Clear(Color.FromArgb(255, 173, 216, 230));
+
+                // Draw a simple ellipse.
+                using (Pen pen = new Pen(Color.FromArgb(255, 0, 120, 215), 5))
+                {
+                    graphics.DrawEllipse(pen, new RectangleF(20, 20, 160, 160));
+                }
             }
-            bmp.Save(tempImagePath, ImageFormat.Png);
+
+            // Save the bitmap as PNG.
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // Build a sample document that contains the image and save it as PDF.
+        // Create a sample PDF document that contains the image.
+        string pdfPath = Path.Combine(baseTemp, "input.pdf");
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample document with an image.");
-        builder.InsertImage(tempImagePath);
-        string pdfPath = Path.Combine(outputDir, "sample.pdf");
+        builder.Writeln("Sample PDF content with an embedded image:");
+        builder.InsertImage(imagePath);
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF and convert it to Markdown, extracting images to a folder.
+        // Verify the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The input PDF was not created.");
+
+        // Load the PDF for conversion.
         Document pdfDoc = new Document(pdfPath);
+
+        // Prepare a folder for extracted images.
+        string imagesFolder = Path.Combine(baseTemp, "images");
+        Directory.CreateDirectory(imagesFolder);
+
+        // Configure Markdown save options to extract images to the folder.
         MarkdownSaveOptions mdOptions = new MarkdownSaveOptions
         {
-            ImagesFolder = imagesDir,          // Physical folder where images will be written.
-            ImagesFolderAlias = "images"       // Relative path used in the Markdown file.
+            ExportImagesAsBase64 = false,
+            ImagesFolder = imagesFolder,
+            ImagesFolderAlias = "images"
         };
-        string markdownPath = Path.Combine(outputDir, "sample.md");
+
+        // Save the PDF as Markdown.
+        string markdownPath = Path.Combine(baseTemp, "output.md");
         pdfDoc.Save(markdownPath, mdOptions);
 
-        // Validate that the Markdown file and extracted images exist.
+        // Validate that the Markdown file was created.
         if (!File.Exists(markdownPath))
-            throw new InvalidOperationException("Markdown file was not created.");
+            throw new InvalidOperationException("The Markdown output file was not created.");
 
-        string[] extractedImages = Directory.GetFiles(imagesDir);
+        // Validate that at least one image was extracted.
+        string[] extractedImages = Directory.GetFiles(imagesFolder);
         if (extractedImages.Length == 0)
-            throw new InvalidOperationException("No images were extracted to the images folder.");
+            throw new InvalidOperationException("No images were extracted to the image folder.");
 
-        // Output the locations of the generated files.
-        Console.WriteLine($"Markdown file saved to: {markdownPath}");
-        Console.WriteLine("Extracted image files:");
-        foreach (string img in extractedImages)
-            Console.WriteLine($"  {img}");
+        // Example completed successfully.
     }
 }

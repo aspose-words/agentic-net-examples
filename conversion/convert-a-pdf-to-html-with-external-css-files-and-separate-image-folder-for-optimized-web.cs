@@ -2,78 +2,73 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define directories for output artifacts.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        string imagesDir = Path.Combine(artifactsDir, "Images");
+        // Working directory
+        string workDir = Directory.GetCurrentDirectory();
 
-        // Ensure clean state.
-        if (Directory.Exists(artifactsDir))
-            Directory.Delete(artifactsDir, true);
-        Directory.CreateDirectory(artifactsDir);
-        Directory.CreateDirectory(imagesDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample document and save it as PDF (input for conversion).
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF document generated for conversion.");
-        // Save as PDF.
-        string pdfPath = Path.Combine(artifactsDir, "sample.pdf");
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Verify PDF creation.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the source PDF file.");
-
-        // -----------------------------------------------------------------
-        // 2. Load the PDF document.
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document(pdfPath);
-
-        // -----------------------------------------------------------------
-        // 3. Configure HTML save options:
-        //    - External CSS file.
-        //    - Separate folder for images.
-        // -----------------------------------------------------------------
-        string htmlPath = Path.Combine(artifactsDir, "sample.html");
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
+        // Create a simple PNG image using Aspose.Drawing
+        string imagePath = Path.Combine(workDir, "sample.png");
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
-            CssStyleSheetType = CssStyleSheetType.External, // External CSS.
-            ImagesFolder = imagesDir,                       // Folder for extracted images.
-            // Optional: specify a custom CSS filename.
-            // CssStyleSheetFileName = Path.Combine(artifactsDir, "sample.css")
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.LightBlue);
+            }
+            bitmap.Save(imagePath);
+        }
+
+        // Build a Word document that contains some text and the image
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document converted from PDF to HTML.");
+        builder.InsertImage(imagePath);
+
+        // Save the document as PDF (simulating the source PDF)
+        string pdfPath = Path.Combine(workDir, "sample.pdf");
+        doc.Save(pdfPath, SaveFormat.Pdf);
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("PDF file was not created.");
+
+        // Convert the document to HTML with an external CSS file and separate images folder
+        string htmlPath = Path.Combine(workDir, "output.html");
+        string cssPath = Path.Combine(workDir, "styles.css");
+        string imagesFolder = Path.Combine(workDir, Path.GetFileNameWithoutExtension(htmlPath) + "_files");
+
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
+        {
+            CssStyleSheetType = CssStyleSheetType.External,
+            CssStyleSheetFileName = Path.GetFileName(cssPath), // only file name is required
+            ExportImagesAsBase64 = false,                     // ensure images are saved to folder
+            ImagesFolder = imagesFolder,                      // explicit images folder
+            ImagesFolderAlias = Path.GetFileName(imagesFolder) // folder name used in HTML
         };
 
-        // -----------------------------------------------------------------
-        // 4. Convert PDF to HTML.
-        // -----------------------------------------------------------------
-        pdfDoc.Save(htmlPath, htmlOptions);
+        doc.Save(htmlPath, htmlOptions);
 
-        // -----------------------------------------------------------------
-        // 5. Validation of output files.
-        // -----------------------------------------------------------------
+        // Validation
         if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML output file was not created.");
+            throw new InvalidOperationException("HTML file was not created.");
 
-        // CSS file should be created alongside the HTML file.
-        string cssPath = Path.ChangeExtension(htmlPath, ".css");
         if (!File.Exists(cssPath))
             throw new InvalidOperationException("External CSS file was not created.");
 
-        // Images folder should exist (may be empty if no images were present).
-        if (!Directory.Exists(imagesDir))
+        if (!Directory.Exists(imagesFolder))
             throw new InvalidOperationException("Images folder was not created.");
 
-        // Example completed successfully.
-        Console.WriteLine("PDF successfully converted to HTML with external CSS and image folder.");
-        Console.WriteLine($"HTML file: {htmlPath}");
-        Console.WriteLine($"CSS file: {cssPath}");
-        Console.WriteLine($"Images folder: {imagesDir}");
+        string[] imageFiles = Directory.GetFiles(imagesFolder);
+        if (imageFiles.Length == 0)
+            throw new InvalidOperationException("No images were exported to the images folder.");
+
+        // Optional cleanup (commented out)
+        // File.Delete(imagePath);
+        // File.Delete(pdfPath);
+        // File.Delete(htmlPath);
+        // File.Delete(cssPath);
+        // Directory.Delete(imagesFolder, true);
     }
 }

@@ -4,91 +4,58 @@ using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // File names used in the example
-        const string imagePath = "sample.png";
-        const string htmlPath = "sample.html";
-        const string mhtmlPath = "sample.mht";
-        const string pdfPath = "output.pdf";
+        // Create a sample document with styled text and an embedded image.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple PNG image using Aspose.Drawing (no System.Drawing)
-        // -----------------------------------------------------------------
+        // Add a heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Sample Heading");
+
+        // Create a simple bitmap image using Aspose.Drawing.
         using (Bitmap bitmap = new Bitmap(100, 100))
         {
-            // Create a Graphics object from the bitmap (Aspose.Drawing API)
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.Blue);
-                using (Pen pen = new Pen(Color.Yellow, 5))
-                {
-                    graphics.DrawRectangle(pen, 10, 10, 80, 80);
-                }
+                // Fill the bitmap with blue using Aspose.Drawing.Color.
+                graphics.Clear(Aspose.Drawing.Color.Blue);
             }
 
-            // Save the bitmap as PNG
-            bitmap.Save(imagePath, ImageFormat.Png);
+            using (MemoryStream imageStream = new MemoryStream())
+            {
+                // Save the bitmap to a memory stream in PNG format.
+                bitmap.Save(imageStream, ImageFormat.Png);
+                imageStream.Position = 0;
+
+                // Insert the image into the document.
+                builder.InsertImage(imageStream);
+            }
         }
 
-        // -----------------------------------------------------------------
-        // 2. Build an HTML document that references the image and contains CSS
-        // -----------------------------------------------------------------
-        string htmlContent = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        .title {{ color: red; font-size: 24px; }}
-    </style>
-</head>
-<body>
-    <h1 class='title'>Sample MHTML Document</h1>
-    <p>This document contains an image and styled text.</p>
-    <img src='{imagePath}' alt='Sample Image' />
-</body>
-</html>";
-        File.WriteAllText(htmlPath, htmlContent);
+        // Add a styled paragraph (bold text). Font color is left as default to avoid System.Drawing usage.
+        builder.Font.Bold = true;
+        builder.Writeln("Styled text with bold.");
 
-        // -----------------------------------------------------------------
-        // 3. Load the HTML into an Aspose.Words Document
-        // -----------------------------------------------------------------
-        Document doc = new Document(htmlPath);
+        // Save the document as MHTML.
+        string mhtmlPath = "sample.mht";
+        sourceDoc.Save(mhtmlPath, SaveFormat.Mhtml);
 
-        // -----------------------------------------------------------------
-        // 4. Save the document as MHTML, embedding images and styles
-        // -----------------------------------------------------------------
-        HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        // Load the MHTML file.
+        Document loadedDoc = new Document(mhtmlPath);
+
+        // Convert the loaded document to PDF.
+        string pdfPath = "output.pdf";
+        loadedDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Validate that the PDF was created.
+        if (!File.Exists(pdfPath))
         {
-            // Ensure resources are embedded in the MHTML package
-            ExportCidUrlsForMhtmlResources = false,
-            ExportImagesAsBase64 = false,
-            ExportFontResources = false
-        };
-        doc.Save(mhtmlPath, mhtmlOptions);
-
-        // -----------------------------------------------------------------
-        // 5. Load the generated MHTML file
-        // -----------------------------------------------------------------
-        Document mhtmlDoc = new Document(mhtmlPath);
-
-        // -----------------------------------------------------------------
-        // 6. Convert the MHTML document to PDF while preserving content
-        // -----------------------------------------------------------------
-        mhtmlDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        // -----------------------------------------------------------------
-        // 7. Validate that the PDF was created successfully
-        // -----------------------------------------------------------------
-        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
-        {
-            throw new InvalidOperationException("PDF conversion failed: output file is missing or empty.");
+            throw new InvalidOperationException("Expected output PDF was not created.");
         }
-
-        Console.WriteLine("PDF conversion succeeded. Output file: " + pdfPath);
     }
 }

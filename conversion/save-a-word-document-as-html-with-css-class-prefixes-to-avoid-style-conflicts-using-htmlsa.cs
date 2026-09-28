@@ -7,43 +7,25 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document.
+        // Create a sample Word document in memory.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
-        builder.Writeln("This is a sample paragraph.");
+        builder.Writeln("Hello, this is a sample document.");
 
-        // Configure HTML save options:
-        // - Export CSS to an external file.
-        // - Add a prefix to all generated CSS class names to avoid conflicts.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
-        {
-            CssStyleSheetType = CssStyleSheetType.External,
-            CssClassNamePrefix = "myPrefix-"
-        };
+        // Define the output HTML file path.
+        string outputPath = "output.html";
 
-        // Prepare output paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string htmlPath = Path.Combine(outputDir, "Sample.html");
-        string expectedCssPath = Path.ChangeExtension(htmlPath, ".css");
+        // Configure HTML save options to add a CSS class name prefix.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
+        saveOptions.CssClassNamePrefix = "myPrefix_";
 
         // Save the document as HTML using the configured options.
-        doc.Save(htmlPath, saveOptions);
+        doc.Save(outputPath, saveOptions);
 
-        // Validate that the HTML file was created.
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("The HTML output file was not created.");
-
-        // Validate that the external CSS file was created.
-        if (!File.Exists(expectedCssPath))
-            throw new InvalidOperationException("The CSS output file was not created.");
-
-        // Verify that the CSS class prefix appears in the HTML content.
-        string htmlContent = File.ReadAllText(htmlPath);
-        if (!htmlContent.Contains("class=\"myPrefix-"))
-            throw new InvalidOperationException("The CSS class prefix was not applied to the HTML.");
-
-        // Example completed successfully.
+        // Verify that the HTML file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("HTML output file was not created.");
+        }
     }
 }

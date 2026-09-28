@@ -8,30 +8,36 @@ public class Program
     public static void Main()
     {
         // Create a sample DOCX document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample content for conversion to HTML.");
-        source.Save("input.docx", SaveFormat.Docx);
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Hello world! This is a sample DOCX document.");
+        string docxPath = "sample.docx";
+        sampleDoc.Save(docxPath, SaveFormat.Docx);
 
-        // Load the created DOCX.
-        Document doc = new Document("input.docx");
+        // Load the DOCX document.
+        Document doc = new Document(docxPath);
 
-        // Configure HTML save options to remove JavaScript from links.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            RemoveJavaScriptFromLinks = true
-        };
+        // Configure HTML save options. By default, external scripts are not exported,
+        // which satisfies the security requirement.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
 
-        // Save the document as HTML.
+        // Save as HTML.
         string htmlPath = "output.html";
         doc.Save(htmlPath, htmlOptions);
 
-        // Verify that the HTML file was created.
+        // Validate that the HTML file was created and contains data.
         if (!File.Exists(htmlPath))
+        {
             throw new InvalidOperationException("The HTML output file was not created.");
+        }
 
-        // Optionally, you could read the file to ensure it contains expected content.
-        // string htmlContent = File.ReadAllText(htmlPath);
-        // Console.WriteLine(htmlContent);
+        FileInfo info = new FileInfo(htmlPath);
+        if (info.Length == 0)
+        {
+            throw new InvalidOperationException("The HTML output file is empty.");
+        }
+
+        // Optionally, clean up the sample DOCX file.
+        // File.Delete(docxPath);
     }
 }

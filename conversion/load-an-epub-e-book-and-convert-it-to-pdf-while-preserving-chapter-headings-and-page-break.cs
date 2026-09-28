@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,58 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string epubPath = "sample.epub";
-        const string pdfPath = "output.pdf";
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample Word document with headings and page breaks.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample document with chapter headings and page breaks.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
         // Chapter 1
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1: Introduction");
+        builder.Writeln("Chapter 1");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the first chapter content.");
-
-        // Insert a page break to start a new chapter on a new page.
+        builder.Writeln("Content of the first chapter.");
         builder.InsertBreak(BreakType.PageBreak);
 
         // Chapter 2
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2: Details");
+        builder.Writeln("Chapter 2");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the second chapter content.");
+        builder.Writeln("Content of the second chapter.");
+        builder.InsertBreak(BreakType.PageBreak);
 
-        // -----------------------------------------------------------------
-        // 2. Save the document as EPUB, splitting at heading paragraphs.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions epubSaveOptions = new HtmlSaveOptions(SaveFormat.Epub)
-        {
-            Encoding = Encoding.UTF8,
-            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-            ExportDocumentProperties = true
-        };
-        sourceDoc.Save(epubPath, epubSaveOptions);
+        // Chapter 3
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 3");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Content of the third chapter.");
 
-        // Verify that the EPUB file was created.
-        if (!File.Exists(epubPath))
-            throw new InvalidOperationException("EPUB file was not created.");
+        // Save the document as EPUB.
+        string epubPath = "sample.epub";
+        sampleDoc.Save(epubPath, SaveFormat.Epub);
 
-        // -----------------------------------------------------------------
-        // 3. Load the generated EPUB file.
-        // -----------------------------------------------------------------
+        // Load the EPUB file.
         Document epubDoc = new Document(epubPath);
 
-        // -----------------------------------------------------------------
-        // 4. Convert the EPUB document to PDF.
-        // -----------------------------------------------------------------
+        // Convert the EPUB to PDF.
+        string pdfPath = "output.pdf";
         epubDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
+        // Validate that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+        {
+            throw new InvalidOperationException("Expected output PDF was not created.");
+        }
+
+        // Optional: clean up intermediate EPUB file.
+        if (File.Exists(epubPath))
+        {
+            File.Delete(epubPath);
+        }
     }
 }

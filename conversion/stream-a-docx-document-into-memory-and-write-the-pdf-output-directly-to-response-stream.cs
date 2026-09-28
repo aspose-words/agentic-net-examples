@@ -6,29 +6,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document and add some sample text.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOCX content for PDF conversion.");
+        // Create a sample DOCX document.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample DOCX content.");
+        sourceDoc.Save("input.docx", SaveFormat.Docx);
 
-        // Save the document as a DOCX file locally (bootstrap step).
-        const string inputPath = "input.docx";
-        source.Save(inputPath, SaveFormat.Docx);
+        // Load the DOCX document from the file.
+        Document doc = new Document("input.docx");
 
-        // Load the DOCX document from the file system.
-        Document doc = new Document(inputPath);
-
-        // Simulate an HTTP response stream using a MemoryStream.
+        // Simulate an HTTP response stream using MemoryStream.
         using MemoryStream responseStream = new MemoryStream();
 
-        // Save the document directly to the simulated response stream in PDF format.
+        // Save the document as PDF directly into the response stream.
         doc.Save(responseStream, SaveFormat.Pdf);
 
         // Verify that PDF data was written to the stream.
         if (responseStream.Length == 0)
+        {
             throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
+        }
 
-        // Optional: display the size of the generated PDF.
-        Console.WriteLine($"PDF stream length: {responseStream.Length} bytes.");
+        // (Optional) Reset position if further processing is needed.
+        responseStream.Position = 0;
+
+        // Example: write the PDF to a file to confirm the conversion succeeded.
+        // This step is not required for the streaming scenario but demonstrates the output.
+        using FileStream file = new FileStream("output.pdf", FileMode.Create, FileAccess.Write);
+        responseStream.CopyTo(file);
     }
 }

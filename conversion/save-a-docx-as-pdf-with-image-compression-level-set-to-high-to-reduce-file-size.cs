@@ -2,53 +2,60 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names
-        const string docxPath = "sample.docx";
-        const string pdfPath = "sample.pdf";
+        // Create a sample DOCX document with an image.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Sample DOCX with an image.");
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX document.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document created for PDF conversion.");
-        // Save the document as DOCX (bootstrap step for input file).
-        sourceDoc.Save(docxPath, SaveFormat.Docx);
+        // Generate a simple bitmap using Aspose.Drawing.
+        using (Bitmap bitmap = new Bitmap(100, 100))
+        {
+            // Fill the bitmap with a solid color.
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.Blue);
+            }
 
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX document.
-        // -----------------------------------------------------------------
-        Document doc = new Document(docxPath);
+            // Save the bitmap to a memory stream in PNG format.
+            using (MemoryStream imageStream = new MemoryStream())
+            {
+                bitmap.Save(imageStream, ImageFormat.Png);
+                imageStream.Position = 0; // Reset position before inserting.
 
-        // -----------------------------------------------------------------
-        // 3. Configure PDF save options with high image compression.
-        //    - Use JPEG compression for all images.
-        //    - Set JPEG quality to a low value (e.g., 10) to achieve strong compression.
-        // -----------------------------------------------------------------
+                // Insert the image into the document.
+                builder.InsertImage(imageStream);
+            }
+        }
+
+        // Save the source document as DOCX.
+        const string inputPath = "input.docx";
+        source.Save(inputPath, SaveFormat.Docx);
+
+        // Load the DOCX document.
+        Document doc = new Document(inputPath);
+
+        // Configure PDF save options with high image compression.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             ImageCompression = PdfImageCompression.Jpeg,
-            JpegQuality = 10 // 0 = worst quality, highest compression.
+            JpegQuality = 50 // Lower quality results in higher compression.
         };
 
-        // -----------------------------------------------------------------
-        // 4. Save the document as PDF using the configured options.
-        // -----------------------------------------------------------------
-        doc.Save(pdfPath, pdfOptions);
+        // Save the document as PDF using the configured options.
+        const string outputPath = "output.pdf";
+        doc.Save(outputPath, pdfOptions);
 
-        // -----------------------------------------------------------------
-        // 5. Validate that the PDF file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created as expected.");
-
-        // Optional: Output the size of the generated PDF for verification.
-        FileInfo info = new FileInfo(pdfPath);
-        Console.WriteLine($"PDF saved successfully. Size: {info.Length} bytes.");
+        // Validate that the PDF file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("Expected output PDF was not created.");
+        }
     }
 }

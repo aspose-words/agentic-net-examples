@@ -8,32 +8,32 @@ public class Program
     public static void Main()
     {
         // Create a sample DOCX document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Styled Heading");
-        string inputPath = "sample.docx";
-        doc.Save(inputPath, SaveFormat.Docx);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample document that will be converted to MHTML.");
+        sourceDoc.Save("input.docx", SaveFormat.Docx);
 
         // Load the DOCX document.
-        Document loaded = new Document(inputPath);
+        Document doc = new Document("input.docx");
 
-        // Configure save options to produce MHTML with embedded CSS.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        // Save the document as MHTML. The default behavior embeds linked CSS files.
+        string outputPath = "output.mhtml";
+        doc.Save(outputPath, SaveFormat.Mhtml);
+
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
         {
-            CssStyleSheetType = CssStyleSheetType.Inline,
-            ExportCidUrlsForMhtmlResources = false
-        };
-
-        // Save as MHTML.
-        string outputPath = "output.mht";
-        loaded.Save(outputPath, saveOptions);
-
-        // Verify that the output file was created and is not empty.
-        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
-        {
-            throw new InvalidOperationException("MHTML conversion failed: output file not created or empty.");
+            throw new InvalidOperationException("The MHTML output file was not created.");
         }
+
+        // Verify that the file is not empty.
+        FileInfo info = new FileInfo(outputPath);
+        if (info.Length == 0)
+        {
+            throw new InvalidOperationException("The MHTML output file is empty.");
+        }
+
+        // Indicate successful completion.
+        Console.WriteLine("Conversion completed successfully.");
     }
 }

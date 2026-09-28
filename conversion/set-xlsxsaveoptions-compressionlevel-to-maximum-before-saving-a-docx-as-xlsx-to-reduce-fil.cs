@@ -8,32 +8,33 @@ public class Program
     public static void Main()
     {
         // Create a sample DOCX document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample content for XLSX conversion.");
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Sample content for DOCX to XLSX conversion.");
+        string inputPath = "input.docx";
+        source.Save(inputPath, SaveFormat.Docx);
 
-        // Save the document as DOCX (bootstrap step).
-        string docxPath = "sample.docx";
-        doc.Save(docxPath, SaveFormat.Docx);
+        // Load the created DOCX document.
+        Document doc = new Document(inputPath);
 
-        // Load the DOCX file.
-        Document loadedDoc = new Document(docxPath);
-
-        // Configure XlsxSaveOptions with maximum compression.
-        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions();
-        xlsxOptions.CompressionLevel = CompressionLevel.Maximum;
-        xlsxOptions.SaveFormat = SaveFormat.Xlsx;
+        // Configure XLSX save options with maximum compression.
+        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
+        {
+            CompressionLevel = CompressionLevel.Maximum
+        };
 
         // Save the document as XLSX using the configured options.
-        string xlsxPath = "output.xlsx";
-        loadedDoc.Save(xlsxPath, xlsxOptions);
+        string outputPath = "output.xlsx";
+        doc.Save(outputPath, xlsxOptions);
 
-        // Verify that the XLSX file was created.
-        if (!File.Exists(xlsxPath))
-            throw new InvalidOperationException("Expected XLSX output file was not created.");
+        // Validate that the XLSX file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("Expected output XLSX was not created.");
+        }
 
-        // Output the size of the compressed file.
-        long fileSize = new FileInfo(xlsxPath).Length;
-        Console.WriteLine($"XLSX saved with maximum compression. Size: {fileSize} bytes.");
+        // Optional cleanup (comment out if you want to inspect the files).
+        // File.Delete(inputPath);
+        // File.Delete(outputPath);
     }
 }

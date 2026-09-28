@@ -3,44 +3,48 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample Word document with a vector shape.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        // Insert a rectangle shape (vector graphic).
-        builder.InsertShape(ShapeType.Rectangle, 300, 150);
-        // Save the document as PDF – this PDF will contain the vector graphic.
-        const string pdfPath = "input.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Step 1: Create a sample PDF that contains vector graphics.
+        const string pdfPath = "sample.pdf";
+        CreateSamplePdf(pdfPath);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the source PDF.");
+        // Step 2: Load the PDF document.
+        LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Pdf };
+        Document pdfDocument = new Document(pdfPath, loadOptions);
 
-        // Step 2: Load the PDF and render it to a high‑resolution PNG.
-        Document pdfDoc = new Document(pdfPath);
+        // Step 3: Convert the first page of the PDF to a high‑resolution PNG.
+        const string pngPath = "output.png";
         ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            // High DPI to retain visual fidelity.
-            Resolution = 300,
-            // Ensure high‑quality rendering algorithms are used.
-            UseHighQualityRendering = true,
-            // Render the first page (index 0). Adjust if multiple pages are needed.
-            PageSet = new PageSet(0)
+            Resolution = 300,                     // High DPI for visual fidelity.
+            PageSet = new PageSet(0)              // Convert only the first page.
         };
+        pdfDocument.Save(pngPath, pngOptions);
 
-        const string pngPath = "output.png";
-        pdfDoc.Save(pngPath, pngOptions);
-
-        // Step 3: Validate that the PNG was created and contains data.
+        // Step 4: Validate that the PNG file was created and contains data.
         if (!File.Exists(pngPath) || new FileInfo(pngPath).Length == 0)
-            throw new InvalidOperationException("The PNG conversion failed or produced an empty file.");
+            throw new InvalidOperationException("PNG conversion failed: output file is missing or empty.");
+    }
 
-        // Optional: Inform the user (no interactive input required).
-        Console.WriteLine($"PDF successfully converted to high‑resolution PNG: {pngPath}");
+    private static void CreateSamplePdf(string outputPath)
+    {
+        // Create a simple Word document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add some text.
+        builder.Writeln("Sample PDF with vector graphics.");
+
+        // Insert a vector shape (a star) to ensure vector content.
+        Shape star = builder.InsertShape(ShapeType.Star, 200, 200);
+        // No explicit color is set to avoid System.Drawing usage.
+
+        // Save the document as PDF.
+        doc.Save(outputPath, SaveFormat.Pdf);
     }
 }

@@ -1,75 +1,59 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class BatchPdfToEpubConverter
 {
     public static void Main()
     {
-        // Define folders for input PDFs and output EPUBs.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputEpubs");
-
-        // Ensure the folders exist.
+        // Prepare input folder and create sample PDF files with chapter headings.
+        string inputFolder = "InputPdfs";
         Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
 
-        // Create sample PDF files with heading structures.
-        for (int i = 1; i <= 2; i++)
+        for (int i = 1; i <= 3; i++)
         {
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-            // First chapter heading.
+            // Create a heading to represent a chapter.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Chapter {i} - Introduction");
+            builder.Writeln($"Chapter {i}");
 
-            // Some normal text.
+            // Add some content under the heading.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("This is some introductory content for the chapter.");
+            builder.Writeln($"This is the content of chapter {i}.");
 
-            // Second heading within the same chapter.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-            builder.Writeln($"Section {i}.1 - Details");
-
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("Detailed information goes here.");
-
-            // Save the document as PDF.
             string pdfPath = Path.Combine(inputFolder, $"Sample{i}.pdf");
             sampleDoc.Save(pdfPath, SaveFormat.Pdf);
         }
 
-        // Batch convert each PDF to EPUB, preserving chapter structure.
+        // Prepare output folder for EPUB files.
+        string outputFolder = "OutputEpubs";
+        Directory.CreateDirectory(outputFolder);
+
+        // Batch convert each PDF in the input folder to EPUB.
         string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
-        foreach (string pdfFile in pdfFiles)
+        foreach (string pdfFilePath in pdfFiles)
         {
             // Load the PDF document.
-            Document pdfDoc = new Document(pdfFile);
-
-            // Configure EPUB save options to split at heading paragraphs.
-            HtmlSaveOptions epubOptions = new HtmlSaveOptions
-            {
-                SaveFormat = SaveFormat.Epub,
-                Encoding = Encoding.UTF8,
-                DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-                ExportDocumentProperties = true
-            };
+            Document pdfDocument = new Document(pdfFilePath);
 
             // Determine output EPUB path.
-            string epubFileName = Path.GetFileNameWithoutExtension(pdfFile) + ".epub";
-            string epubPath = Path.Combine(outputFolder, epubFileName);
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(pdfFilePath);
+            string epubPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.epub");
 
-            // Save as EPUB.
-            pdfDoc.Save(epubPath, epubOptions);
+            // Save as EPUB, preserving the document structure.
+            pdfDocument.Save(epubPath, SaveFormat.Epub);
 
-            // Validate that the EPUB was created.
+            // Validate that the EPUB file was created.
             if (!File.Exists(epubPath))
-                throw new InvalidOperationException($"Failed to create EPUB file: {epubPath}");
+            {
+                throw new InvalidOperationException($"EPUB file was not created: {epubPath}");
+            }
         }
 
-        // All conversions completed successfully.
+        // Optional: indicate successful completion (no interactive input).
+        Console.WriteLine("Batch conversion completed successfully.");
     }
 }
