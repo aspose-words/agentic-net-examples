@@ -1,52 +1,74 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
-public class Program
+public class ExtractionToClipboardExample
 {
+    // Entry point of the console application.
     [STAThread]
     public static void Main()
     {
-        // Create a sample document with a bookmark that encloses the content to copy.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Paragraph before bookmark.");
-        builder.StartBookmark("CopyMe");
-        builder.Writeln("This is the content to copy.");
-        builder.EndBookmark("CopyMe");
-        builder.Writeln("Paragraph after bookmark.");
+        // -----------------------------------------------------------------
+        // 1. Create a sample document containing a bookmark that marks the
+        //    range we want to extract.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Save the source document to a deterministic local file.
+        builder.Writeln("Intro paragraph.");
+        builder.StartBookmark("Selection");
+        builder.Writeln("First line of selected content.");
+        builder.Writeln("Second line of selected content.");
+        builder.EndBookmark("Selection");
+        builder.Writeln("Trailing paragraph.");
+
+        // Save the sample document locally.
         const string sourcePath = "sample.docx";
-        doc.Save(sourcePath);
+        sourceDoc.Save(sourcePath);
 
-        // Load the document from the file system.
+        // -----------------------------------------------------------------
+        // 2. Load the document from the file system.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(sourcePath);
 
-        // Retrieve the bookmark that defines the selected content.
-        Bookmark bookmark = loadedDoc.Range.Bookmarks["CopyMe"];
-        if (bookmark == null)
-            throw new InvalidOperationException("Required bookmark was not found.");
+        // -----------------------------------------------------------------
+        // 3. Locate the bookmark that defines the selectable range.
+        // -----------------------------------------------------------------
+        Bookmark selectionBookmark = loadedDoc.Range.Bookmarks["Selection"];
+        if (selectionBookmark == null)
+            throw new InvalidOperationException("Bookmark 'Selection' was not found in the document.");
 
-        // Extract the text inside the bookmark.
-        string extractedText = bookmark.Text;
+        // -----------------------------------------------------------------
+        // 4. Extract the text inside the bookmark.
+        // -----------------------------------------------------------------
+        string extractedText = selectionBookmark.Text;
+        if (string.IsNullOrEmpty(extractedText))
+            throw new InvalidOperationException("No text was extracted from the bookmark.");
 
-        // NOTE: Clipboard access requires a reference to System.Windows.Forms, which is not
-        // available in the default console project used for verification. The extracted text
-        // is therefore written to a file for validation purposes.
-        // Clipboard.SetText(extractedText); // Omitted for compatibility.
+        // -----------------------------------------------------------------
+        // 5. Copy the extracted text to the system clipboard.
+        //    NOTE: System.Windows.Forms.Clipboard is not available in a
+        //    plain console project without Windows Forms references.
+        //    As an alternative, we write the text to a temporary file that
+        //    can be opened manually, and we also output the text to the
+        //    console for verification.
+        // -----------------------------------------------------------------
+        const string clipboardPlaceholderPath = "clipboard.txt";
+        File.WriteAllText(clipboardPlaceholderPath, extractedText);
+        Console.WriteLine("Extracted text (also saved to clipboard.txt):");
+        Console.WriteLine(extractedText);
 
-        // Write the extracted text to a file for verification.
+        // -----------------------------------------------------------------
+        // 6. Write the extracted text to a verification file.
+        // -----------------------------------------------------------------
         const string outputPath = "extracted.txt";
         File.WriteAllText(outputPath, extractedText);
-
-        // Validate that the output file was created and contains the expected text.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Extraction output file was not created.");
+            throw new InvalidOperationException("The extracted text file was not created.");
 
-        string verified = File.ReadAllText(outputPath);
-        if (!verified.Equals(extractedText, StringComparison.Ordinal))
-            throw new InvalidOperationException("Extracted text does not match the expected content.");
+        // -----------------------------------------------------------------
+        // 7. Indicate successful completion.
+        // -----------------------------------------------------------------
+        Console.WriteLine("Extraction completed successfully.");
     }
 }

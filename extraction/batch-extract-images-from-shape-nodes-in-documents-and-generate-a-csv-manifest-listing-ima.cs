@@ -4,84 +4,102 @@ using System.Collections.Generic;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
+using Newtonsoft.Json;
 
-public class Program
+public class BatchImageExtraction
 {
     public static void Main()
     {
-        // Prepare folders.
-        string baseDir = Directory.GetCurrentDirectory();
+        // Set up directories
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchExtractionDemo");
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string outputDir = Path.Combine(baseDir, "ExtractedImages");
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with two embedded images.
-        string sampleDocPath = Path.Combine(inputDir, "SampleDocument.docx");
-        CreateSampleDocumentWithImages(sampleDocPath);
+        // Create sample documents with images
+        CreateSampleDocument(Path.Combine(inputDir, "Doc1.docx"), 2);
+        CreateSampleDocument(Path.Combine(inputDir, "Doc2.docx"), 1);
 
-        // Prepare CSV manifest.
-        List<string> csvLines = new List<string>();
-        csvLines.Add("ImageFile,SourceDocument");
+        // Prepare manifest data
+        List<string[]> manifestRows = new List<string[]>();
+        manifestRows.Add(new[] { "DocumentName", "ImageFileName", "ImageSource" });
 
-        // Process each DOCX file in the input folder.
-        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
+        // Process each document
+        string[] docFiles = Directory.GetFiles(inputDir, "*.docx");
+        foreach (string docPath in docFiles)
         {
             Document doc = new Document(docPath);
-            var shapes = doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>();
-            int imageIndex = 0;
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            var imageShapes = shapeNodes.OfType<Shape>().Where(s => s.HasImage).ToList();
 
-            foreach (Shape shape in shapes)
+            if (imageShapes.Count == 0)
             {
-                if (!shape.HasImage)
-                    continue;
-
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_Image{imageIndex}{extension}";
-                string imageFullPath = Path.Combine(outputDir, imageFileName);
-
-                shape.ImageData.Save(imageFullPath);
-                csvLines.Add($"{imageFileName},{Path.GetFileName(docPath)}");
-                imageIndex++;
+                continue; // No images in this document
             }
 
-            if (imageIndex == 0)
-                throw new InvalidOperationException($"No images were found in document '{docPath}'.");
+            int imageIndex = 0;
+            foreach (Shape shape in imageShapes)
+            {
+                string docName = Path.GetFileName(docPath);
+                string imageFileName = $"{Path.GetFileNameWithoutExtension(docName)}_Image{imageIndex}.png";
+                string imagePath = Path.Combine(outputDir, imageFileName);
+
+                // Save the image
+                shape.ImageData.Save(imagePath);
+
+                // Record manifest entry
+                string imageSource = string.IsNullOrEmpty(shape.Name) ? "UnnamedShape" : shape.Name;
+                manifestRows.Add(new[] { docName, imageFileName, imageSource });
+
+                imageIndex++;
+            }
         }
 
-        // Write the CSV manifest.
-        string manifestPath = Path.Combine(baseDir, "ImageManifest.csv");
-        File.WriteAllLines(manifestPath, csvLines);
+        // Write CSV manifest
+        string manifestPath = Path.Combine(outputDir, "manifest.csv");
+        File.WriteAllLines(manifestPath, manifestRows.Select(row => string.Join(",", row)));
 
-        // Validate manifest creation.
+        // Validation
         if (!File.Exists(manifestPath))
+        {
             throw new InvalidOperationException("CSV manifest was not created.");
+        }
 
-        // Example completed without interactive prompts.
+        // Ensure at least one image was extracted
+        string[] extractedImages = Directory.GetFiles(outputDir, "*.png");
+        if (extractedImages.Length == 0)
+        {
+            throw new InvalidOperationException("No images were extracted.");
+        }
+
+        // Optional: Output a simple JSON summary (not required but demonstrates Newtonsoft.Json usage)
+        var summary = new
+        {
+            DocumentsProcessed = docFiles.Length,
+            ImagesExtracted = extractedImages.Length,
+            ManifestFile = manifestPath
+        };
+        string jsonPath = Path.Combine(outputDir, "summary.json");
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(summary, Formatting.Indented));
     }
 
-    private static void CreateSampleDocumentWithImages(string filePath)
+    private static void CreateSampleDocument(string filePath, int imageCount)
     {
-        // Simple 1x1 pixel PNG (transparent) encoded in base64.
-        const string pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(pngBase64);
-
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert first image.
-        using (MemoryStream ms = new MemoryStream(pngBytes))
-        {
-            builder.InsertImage(ms);
-        }
+        // Base64-encoded 1x1 pixel PNG (transparent)
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
 
-        builder.Writeln(); // Add a paragraph break.
-
-        // Insert second image.
-        using (MemoryStream ms = new MemoryStream(pngBytes))
+        for (int i = 0; i < imageCount; i++)
         {
-            builder.InsertImage(ms);
+            builder.Writeln($"Image {i + 1} in document.");
+            using (MemoryStream ms = new MemoryStream(pngBytes))
+            {
+                builder.InsertImage(ms);
+            }
         }
 
         doc.Save(filePath);

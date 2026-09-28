@@ -7,76 +7,90 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with two bookmarks.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a sample document with several paragraphs.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Paragraph 1");
-        builder.StartBookmark("Start");
         builder.Writeln("Paragraph 2");
-        builder.EndBookmark("Start");
-        builder.StartBookmark("End");
         builder.Writeln("Paragraph 3");
-        builder.EndBookmark("End");
-
-        string sourcePath = "sample.docx";
-        doc.Save(sourcePath);
+        builder.Writeln("Paragraph 4");
+        const string sourcePath = "sample.docx";
+        sourceDoc.Save(sourcePath);
 
         // Load the document for extraction.
-        Document loaded = new Document(sourcePath);
+        Document loadedDoc = new Document(sourcePath);
+        Body body = loadedDoc.FirstSection.Body;
 
-        // Retrieve the bookmarks that define the extraction boundaries.
-        Bookmark startBookmark = loaded.Range.Bookmarks["Start"];
-        Bookmark endBookmark = loaded.Range.Bookmarks["End"];
-        if (startBookmark == null || endBookmark == null)
-            throw new InvalidOperationException("Required bookmarks not found.");
+        // Intentionally select start node after end node to trigger error handling.
+        Paragraph startParagraph = body.Paragraphs[2]; // "Paragraph 3"
+        Paragraph endParagraph = body.Paragraphs[1];   // "Paragraph 2"
 
-        // Determine the paragraphs that contain the bookmark starts.
-        Paragraph startParagraph = startBookmark.BookmarkStart.ParentNode as Paragraph;
-        Paragraph endParagraph = endBookmark.BookmarkStart.ParentNode as Paragraph;
-        if (startParagraph == null || endParagraph == null)
-            throw new InvalidOperationException("Bookmarks are not located inside paragraphs.");
-
-        // Find the positions of the start and end paragraphs within the body.
-        Body body = loaded.FirstSection.Body;
-        NodeCollection paragraphs = body.GetChildNodes(NodeType.Paragraph, true);
-        int startIndex = paragraphs.IndexOf(startParagraph);
-        int endIndex = paragraphs.IndexOf(endParagraph);
-
-        // Validate ordering: start must precede end.
-        if (startIndex > endIndex)
+        try
         {
-            Console.WriteLine("Error: The start node appears after the end node. Extraction aborted.");
-            return;
+            // Attempt extraction with invalid node order.
+            ExtractRange(loadedDoc, startParagraph, endParagraph, "extracted-invalid.docx");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"Error during extraction: {ex.Message}");
         }
 
-        // Build a new document containing the extracted range.
+        // Now perform a valid extraction where start precedes end.
+        startParagraph = body.Paragraphs[1]; // "Paragraph 2"
+        endParagraph = body.Paragraphs[2];   // "Paragraph 3"
+
+        ExtractRange(loadedDoc, startParagraph, endParagraph, "extracted-valid.docx");
+
+        // Verify that the valid extraction output was created.
+        if (!File.Exists("extracted-valid.docx"))
+            throw new InvalidOperationException("Expected extraction output was not created.");
+    }
+
+    private static void ExtractRange(Document source, Paragraph start, Paragraph end, string outputPath)
+    {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        if (start == null) throw new ArgumentNullException(nameof(start));
+        if (end == null) throw new ArgumentNullException(nameof(end));
+        if (string.IsNullOrEmpty(outputPath)) throw new ArgumentException("Output path must be provided.", nameof(outputPath));
+
+        // Determine the parent Body that contains both paragraphs.
+        Body parentBody = start.ParentNode as Body ?? end.ParentNode as Body;
+        if (parentBody == null)
+            throw new InvalidOperationException("Start or end paragraph does not belong to a Body node.");
+
+        int startIndex = parentBody.Paragraphs.IndexOf(start);
+        int endIndex = parentBody.Paragraphs.IndexOf(end);
+
+        if (startIndex == -1 || endIndex == -1)
+            throw new InvalidOperationException("Start or end paragraph not found in the document body.");
+
+        // Validate ordering: start must come before or be the same as end.
+        if (startIndex > endIndex)
+            throw new InvalidOperationException("Start node appears after the end node. Extraction aborted.");
+
+        // Create a new empty document to hold the extracted content.
         Document result = new Document();
         result.RemoveAllChildren();
 
-        Section resultSection = new Section(result);
-        result.AppendChild(resultSection);
-
+        // Build the minimal required structure: Section -> Body.
+        Section section = new Section(result);
+        result.AppendChild(section);
         Body resultBody = new Body(result);
-        resultSection.AppendChild(resultBody);
+        section.AppendChild(resultBody);
 
         // Use NodeImporter to import nodes from the source document into the result document.
-        NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
+        NodeImporter importer = new NodeImporter(source, result, ImportFormatMode.KeepSourceFormatting);
 
+        // Clone and import each paragraph from start to end inclusive.
         for (int i = startIndex; i <= endIndex; i++)
         {
-            Paragraph srcParagraph = (Paragraph)paragraphs[i];
-            Node importedNode = importer.ImportNode(srcParagraph, true);
-            resultBody.AppendChild(importedNode);
+            Paragraph para = parentBody.Paragraphs[i];
+            Paragraph importedPara = importer.ImportNode(para, true) as Paragraph;
+            if (importedPara != null)
+                resultBody.AppendChild(importedPara);
         }
 
         // Save the extracted content.
-        string outputPath = "extracted.docx";
         result.Save(outputPath);
-
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Extraction output file was not created.");
-
-        Console.WriteLine("Extraction completed successfully.");
     }
 }

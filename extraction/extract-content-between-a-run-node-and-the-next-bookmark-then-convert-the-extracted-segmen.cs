@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,79 +8,122 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a run node followed by some text and a bookmark.
+        // ------------------------------------------------------------
+        // 1. Create a sample source document.
+        // ------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Paragraph before the run.");
-        builder.Write("RunStart");                     // The run we will locate.
-        builder.Write(" TextBetween ");                // Content that should be extracted.
-        builder.StartBookmark("TargetBookmark");       // Bookmark that follows the run.
-        builder.Writeln("Content inside the bookmark.");
-        builder.EndBookmark("TargetBookmark");
-        builder.Writeln("Paragraph after the bookmark.");
+        builder.Writeln("Paragraph before.");
+        builder.Write("Run before bookmark "); // This creates a Run node.
+        builder.Writeln(); // End the paragraph.
 
-        // Save the source document.
+        // Content that should be extracted (between the run and the bookmark).
+        builder.Writeln("Paragraph between run and bookmark.");
+
+        // Bookmark that follows the run.
+        builder.StartBookmark("MyBookmark");
+        builder.Writeln("Inside bookmark.");
+        builder.EndBookmark("MyBookmark");
+
+        builder.Writeln("Paragraph after bookmark.");
+
         const string sourcePath = "sample.docx";
         sourceDoc.Save(sourcePath);
 
-        // Load the document for extraction.
-        Document doc = new Document(sourcePath);
+        // ------------------------------------------------------------
+        // 2. Load the document for processing.
+        // ------------------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
 
-        // Locate the run node with the exact text "RunStart".
-        Run runNode = null;
-        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+        // Locate the specific Run node that precedes the bookmark.
+        Run targetRun = loadedDoc.GetChildNodes(NodeType.Run, true)
+                                 .OfType<Run>()
+                                 .FirstOrDefault(r => r.GetText().Contains("Run before bookmark"));
+        if (targetRun == null)
+            throw new InvalidOperationException("Target run not found.");
+
+        // Find the next BookmarkStart node after the run in document order.
+        NodeCollection allNodes = loadedDoc.GetChildNodes(NodeType.Any, true);
+        int runIndex = -1;
+        for (int i = 0; i < allNodes.Count; i++)
         {
-            if (run.Text == "RunStart")
+            if (allNodes[i] == targetRun)
             {
-                runNode = run;
+                runIndex = i;
                 break;
             }
         }
+        if (runIndex == -1)
+            throw new InvalidOperationException("Run position could not be determined.");
 
-        if (runNode == null)
-            throw new InvalidOperationException("Run node with text 'RunStart' was not found.");
-
-        // Locate the next bookmark after the run node.
         BookmarkStart nextBookmarkStart = null;
-        Node current = runNode.NextSibling;
-        while (current != null && nextBookmarkStart == null)
+        for (int i = runIndex + 1; i < allNodes.Count; i++)
         {
-            if (current.NodeType == NodeType.BookmarkStart)
-                nextBookmarkStart = (BookmarkStart)current;
-            else
-                current = current.NextSibling;
+            if (allNodes[i].NodeType == NodeType.BookmarkStart)
+            {
+                nextBookmarkStart = (BookmarkStart)allNodes[i];
+                break;
+            }
         }
-
         if (nextBookmarkStart == null)
-            throw new InvalidOperationException("No bookmark found after the specified run node.");
+            throw new InvalidOperationException("No bookmark found after the target run.");
 
-        // Extract the text between the run node and the bookmark start.
-        StringBuilder extractedText = new StringBuilder();
-        Node extractor = runNode.NextSibling;
-        while (extractor != null && extractor != nextBookmarkStart)
+        // ------------------------------------------------------------
+        // 3. Determine the paragraphs that bound the extraction range.
+        // ------------------------------------------------------------
+        Paragraph startParagraph = targetRun.ParentNode as Paragraph;
+        Paragraph endParagraph = nextBookmarkStart.ParentNode as Paragraph;
+        if (startParagraph == null || endParagraph == null)
+            throw new InvalidOperationException("Unable to locate bounding paragraphs.");
+
+        Body sourceBody = startParagraph.ParentNode as Body;
+        if (sourceBody == null)
+            throw new InvalidOperationException("Source body not found.");
+
+        // ------------------------------------------------------------
+        // 4. Create a new document and import the paragraphs that lie between the bounds.
+        // ------------------------------------------------------------
+        Document extractedDoc = new Document();
+        extractedDoc.RemoveAllChildren();
+
+        Section resultSection = new Section(extractedDoc);
+        extractedDoc.AppendChild(resultSection);
+        Body resultBody = new Body(extractedDoc);
+        resultSection.AppendChild(resultBody);
+
+        // Importer to copy nodes from sourceDoc to extractedDoc.
+        NodeImporter importer = new NodeImporter(loadedDoc, extractedDoc, ImportFormatMode.KeepSourceFormatting);
+
+        // Walk through the sibling paragraphs after startParagraph up to (but not including) endParagraph.
+        Node currentNode = startParagraph.NextSibling;
+        while (currentNode != null && currentNode != endParagraph)
         {
-            extractedText.Append(extractor.GetText());
-            extractor = extractor.NextSibling;
+            if (currentNode.NodeType == NodeType.Paragraph)
+            {
+                Paragraph para = (Paragraph)currentNode;
+                Paragraph importedPara = (Paragraph)importer.ImportNode(para, true);
+                resultBody.AppendChild(importedPara);
+            }
+            else if (currentNode.NodeType == NodeType.Table)
+            {
+                // If a table appears in the range, import it as well.
+                Aspose.Words.Tables.Table table = (Aspose.Words.Tables.Table)currentNode;
+                Aspose.Words.Tables.Table importedTable = (Aspose.Words.Tables.Table)importer.ImportNode(table, true);
+                resultBody.AppendChild(importedTable);
+            }
+            // Advance to the next sibling.
+            currentNode = currentNode.NextSibling;
         }
 
-        // Build a temporary document containing the extracted text.
-        Document tempDoc = new Document();
-        DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-        tempBuilder.Writeln(extractedText.ToString().Trim());
-
-        // Convert the extracted segment to HTML.
-        string html = tempDoc.FirstSection.Body.FirstParagraph.ToString(SaveFormat.Html);
-
-        // Save the HTML output.
+        // ------------------------------------------------------------
+        // 5. Save the extracted segment as HTML.
+        // ------------------------------------------------------------
         const string htmlPath = "extracted.html";
-        File.WriteAllText(htmlPath, html);
+        extractedDoc.Save(htmlPath, SaveFormat.Html);
 
         // Verify that the HTML file was created.
         if (!File.Exists(htmlPath))
             throw new InvalidOperationException("HTML extraction output was not created.");
-
-        // Optional: display a short confirmation (no interactive input required).
-        Console.WriteLine("Extraction completed successfully.");
     }
 }

@@ -1,95 +1,123 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
-public class Program
+public class BatchWordToPdfExtractor
 {
     public static void Main()
     {
-        // Prepare input and output folders.
+        // Prepare working directories
         string baseDir = Directory.GetCurrentDirectory();
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string outputDir = Path.Combine(baseDir, "OutputPdfs");
-
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create two sample Word documents with a bookmark named "Extract".
-        CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"));
-        CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"));
+        // Create sample Word documents
+        CreateSampleDocument(Path.Combine(inputDir, "doc1.docx"), "Document One");
+        CreateSampleDocument(Path.Combine(inputDir, "doc2.docx"), "Document Two");
+        CreateSampleDocument(Path.Combine(inputDir, "doc3.docx"), "Document Three");
 
-        // Process each document in the input folder.
+        // Process each document
+        var report = new List<object>();
         foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            // Load the source document.
-            Document sourceDoc = new Document(filePath);
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            string pdfPath = Path.Combine(outputDir, fileName + ".pdf");
 
-            // Locate the bookmark that defines the extraction range.
-            Bookmark extractBookmark = sourceDoc.Range.Bookmarks["Extract"];
-            if (extractBookmark == null)
-                throw new InvalidOperationException($"Bookmark 'Extract' not found in {filePath}.");
+            Document source = new Document(filePath);
 
-            // Create a new document that will hold the extracted content.
-            Document extractedDoc = new Document();
-            extractedDoc.RemoveAllChildren();
+            // Locate start and end bookmarks
+            Bookmark startBookmark = source.Range.Bookmarks["Start"];
+            Bookmark endBookmark = source.Range.Bookmarks["End"];
+            if (startBookmark == null || endBookmark == null)
+                throw new InvalidOperationException($"Bookmarks not found in {fileName}.");
 
-            // Build a minimal document structure: Section -> Body.
-            Section section = new Section(extractedDoc);
-            extractedDoc.AppendChild(section);
-            Body body = new Body(extractedDoc);
+            // Determine the paragraphs that contain the bookmarks
+            Paragraph startPara = startBookmark.BookmarkStart.ParentNode as Paragraph;
+            Paragraph endPara = endBookmark.BookmarkEnd.ParentNode as Paragraph;
+            if (startPara == null || endPara == null)
+                throw new InvalidOperationException($"Bookmark containers not found in {fileName}.");
+
+            // Build a new document with the extracted range
+            Document extracted = new Document();
+            extracted.RemoveAllChildren();
+            Section section = new Section(extracted);
+            extracted.AppendChild(section);
+            Body body = new Body(extracted);
             section.AppendChild(body);
 
-            // Preserve the original formatting by cloning the nodes inside the bookmark.
-            // The bookmark's Text property contains the plain text; to keep formatting we clone its child nodes.
-            Node startNode = extractBookmark.BookmarkStart;
-            Node endNode = extractBookmark.BookmarkEnd;
+            // Use NodeImporter to import nodes from source to extracted document
+            NodeImporter importer = new NodeImporter(source, extracted, ImportFormatMode.KeepSourceFormatting);
 
-            // Collect all nodes that are descendants of the bookmark.
-            Node currentNode = startNode;
-            while (currentNode != null && currentNode != endNode)
+            bool copying = false;
+            foreach (Node node in source.FirstSection.Body.GetChildNodes(NodeType.Any, false))
             {
-                // Move to the next node in document order.
-                Node nextNode = currentNode.NextPreOrder(sourceDoc);
-                // If the node is a block-level node (Paragraph or Table), clone and add it.
-                if (currentNode.NodeType == NodeType.Paragraph || currentNode.NodeType == NodeType.Table)
+                if (node == startPara)
+                    copying = true;
+
+                if (copying)
                 {
-                    Node imported = extractedDoc.ImportNode(currentNode, true);
-                    body.AppendChild(imported);
+                    Node importedNode = importer.ImportNode(node, true);
+                    body.AppendChild(importedNode);
                 }
-                currentNode = nextNode;
+
+                if (node == endPara)
+                    break;
             }
 
-            // Save the extracted content as a PDF.
-            string pdfFileName = Path.GetFileNameWithoutExtension(filePath) + ".pdf";
-            string pdfPath = Path.Combine(outputDir, pdfFileName);
-            extractedDoc.Save(pdfPath, SaveFormat.Pdf);
+            // Save the extracted content as PDF
+            extracted.Save(pdfPath, SaveFormat.Pdf);
 
-            // Verify that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
+                throw new InvalidOperationException($"Failed to create PDF for {fileName}.");
+
+            report.Add(new { Document = fileName, PdfPath = pdfPath });
         }
 
-        // All done.
-        Console.WriteLine("Batch extraction completed successfully.");
+        // Write a JSON report
+        string jsonReportPath = Path.Combine(baseDir, "extraction_report.json");
+        File.WriteAllText(jsonReportPath, JsonConvert.SerializeObject(report, Formatting.Indented));
+
+        // Ensure the report was written
+        if (!File.Exists(jsonReportPath))
+            throw new InvalidOperationException("JSON report was not created.");
     }
 
-    // Helper method to create a sample document with a bookmark named "Extract".
-    private static void CreateSampleDocument(string filePath)
+    private static void CreateSampleDocument(string path, string title)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Document header.");
+        builder.Writeln(title);
+        builder.Writeln("Intro paragraph before the extraction range.");
 
-        // Define the range to be extracted.
-        builder.StartBookmark("Extract");
-        builder.Writeln("First line of extractable content.");
-        builder.Writeln("Second line of extractable content.");
-        builder.EndBookmark("Extract");
+        // Start bookmark
+        builder.StartBookmark("Start");
+        builder.Writeln("This paragraph is inside the extraction range.");
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.EndTable();
+        builder.Writeln("Another paragraph inside the extraction range.");
+        builder.EndBookmark("Start");
 
-        builder.Writeln("Document footer.");
+        // End bookmark (separate to demonstrate range)
+        builder.StartBookmark("End");
+        builder.Writeln("Final paragraph inside the extraction range.");
+        builder.EndBookmark("End");
 
-        doc.Save(filePath);
+        builder.Writeln("Paragraph after the extraction range.");
+
+        doc.Save(path);
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Failed to create sample document at {path}.");
     }
 }

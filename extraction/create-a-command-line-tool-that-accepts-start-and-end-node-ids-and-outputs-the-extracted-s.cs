@@ -1,108 +1,157 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
-public class Program
+public class ExtractionTool
 {
-    // Entry point of the console application.
-    // Expects two integer arguments: startNodeId endNodeId
     public static void Main(string[] args)
     {
-        // Validate command‑line arguments.
-        if (args.Length < 2 ||
-            !int.TryParse(args[0], out int startNodeId) ||
-            !int.TryParse(args[1], out int endNodeId))
+        // Expect two arguments: startNodeId endNodeId
+        if (args.Length < 2)
         {
-            Console.WriteLine("Usage: dotnet run <startNodeId> <endNodeId>");
+            Console.WriteLine("Usage: ExtractionTool <startNodeId> <endNodeId>");
             return;
         }
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample source document with identifiable nodes.
-        // -----------------------------------------------------------------
-        const string sourcePath = "sample.docx";
+        string startId = args[0];
+        string endId = args[1];
 
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        // Create five paragraphs and assign a deterministic CustomNodeId to each.
-        for (int i = 1; i <= 5; i++)
+        // Create a sample document if it does not exist
+        const string samplePath = "sample.docx";
+        if (!File.Exists(samplePath))
         {
-            builder.Writeln($"Paragraph {i}");
-            // The paragraph just created is the last paragraph in the body.
-            Paragraph para = sourceDoc.FirstSection.Body.Paragraphs[sourceDoc.FirstSection.Body.Paragraphs.Count - 1];
-            para.CustomNodeId = i; // Use the loop index as the node identifier.
+            CreateSampleDocument(samplePath);
         }
 
-        // Persist the sample document to disk.
-        sourceDoc.Save(sourcePath);
+        // Load the document
+        Document sourceDoc = new Document(samplePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and locate the start and end nodes by ID.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
+        // Find start and end paragraphs by their text (used as IDs)
+        Paragraph startParagraph = FindParagraphByText(sourceDoc, startId);
+        Paragraph endParagraph = FindParagraphByText(sourceDoc, endId);
 
-        NodeCollection allNodes = loadedDoc.GetChildNodes(NodeType.Any, true);
-        int startIndex = -1;
-        int endIndex = -1;
+        if (startParagraph == null)
+            throw new InvalidOperationException($"Start node with Id '{startId}' not found.");
+        if (endParagraph == null)
+            throw new InvalidOperationException($"End node with Id '{endId}' not found.");
 
-        for (int i = 0; i < allNodes.Count; i++)
-        {
-            Node node = allNodes[i];
-            if (node.CustomNodeId == startNodeId)
-                startIndex = i;
-            if (node.CustomNodeId == endNodeId)
-                endIndex = i;
-        }
+        // Ensure start appears before end in document order
+        if (!IsNodeBefore(sourceDoc, startParagraph, endParagraph))
+            throw new InvalidOperationException("Start node must appear before end node.");
 
-        if (startIndex == -1)
-            throw new InvalidOperationException($"Start node with CustomNodeId {startNodeId} not found.");
-        if (endIndex == -1)
-            throw new InvalidOperationException($"End node with CustomNodeId {endNodeId} not found.");
-        if (startIndex > endIndex)
-            throw new InvalidOperationException("Start node appears after end node in the document order.");
+        // Collect nodes between start and end (inclusive)
+        List<Node> nodesInRange = CollectNodesInRange(sourceDoc, startParagraph, endParagraph);
 
-        // -----------------------------------------------------------------
-        // 3. Build a new document containing the extracted segment.
-        // -----------------------------------------------------------------
+        // Build a new document with the extracted nodes
         Document extractedDoc = new Document();
-        extractedDoc.RemoveAllChildren(); // Start with an empty document.
+        extractedDoc.RemoveAllChildren();
 
         Section section = new Section(extractedDoc);
         extractedDoc.AppendChild(section);
         Body body = new Body(extractedDoc);
         section.AppendChild(body);
 
-        for (int i = startIndex; i <= endIndex; i++)
+        foreach (Node node in nodesInRange)
         {
-            Node node = allNodes[i];
-
-            // Only block‑level nodes (Paragraph, Table, etc.) can be appended directly to Body.
-            // Inline nodes must be wrapped inside a Paragraph.
-            if (node.NodeType == NodeType.Paragraph || node.NodeType == NodeType.Table)
+            if (node is Paragraph para)
             {
-                body.AppendChild(node.Clone(true));
+                body.AppendChild((Paragraph)para.Clone(true));
             }
-            else
+            else if (node is Table tbl)
             {
-                Paragraph wrapper = new Paragraph(extractedDoc);
-                wrapper.AppendChild(node.Clone(true));
-                body.AppendChild(wrapper);
+                body.AppendChild((Table)tbl.Clone(true));
             }
         }
 
-        // -----------------------------------------------------------------
-        // 4. Save the extracted segment as PDF.
-        // -----------------------------------------------------------------
+        // Save the extracted segment as PDF
         const string outputPdf = "extracted.pdf";
         extractedDoc.Save(outputPdf, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // Validate output
         if (!File.Exists(outputPdf))
-            throw new InvalidOperationException("Failed to create the PDF output file.");
+            throw new InvalidOperationException("Failed to create the PDF output.");
 
-        Console.WriteLine($"Extraction complete. PDF saved to '{outputPdf}'.");
+        // Confirmation file
+        File.WriteAllText("extraction-success.txt", $"Extracted segment saved to {outputPdf}");
+    }
+
+    private static void CreateSampleDocument(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add several paragraphs with identifiable text
+        for (int i = 1; i <= 5; i++)
+        {
+            builder.Writeln($"Paragraph {i}");
+        }
+
+        // Insert a table to demonstrate mixed content
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell A1");
+        builder.InsertCell();
+        builder.Write("Cell B1");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell A2");
+        builder.InsertCell();
+        builder.Write("Cell B2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Add more paragraphs after the table
+        for (int i = 6; i <= 8; i++)
+        {
+            builder.Writeln($"Paragraph {i}");
+        }
+
+        doc.Save(path);
+    }
+
+    private static Paragraph FindParagraphByText(Document doc, string textId)
+    {
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            // Trim to ignore trailing paragraph marks
+            if (para.GetText().Trim() == textId)
+                return para;
+        }
+        return null;
+    }
+
+    private static bool IsNodeBefore(Document doc, Node first, Node second)
+    {
+        NodeCollection allNodes = doc.GetChildNodes(NodeType.Any, true);
+        bool firstSeen = false;
+        foreach (Node node in allNodes)
+        {
+            if (node == first)
+                firstSeen = true;
+            if (node == second)
+                return firstSeen;
+        }
+        return false;
+    }
+
+    private static List<Node> CollectNodesInRange(Document doc, Node startNode, Node endNode)
+    {
+        List<Node> rangeNodes = new List<Node>();
+        bool collecting = false;
+        foreach (Node node in doc.GetChildNodes(NodeType.Any, true))
+        {
+            if (node == startNode)
+                collecting = true;
+
+            if (collecting)
+                rangeNodes.Add(node);
+
+            if (node == endNode)
+                break;
+        }
+        return rangeNodes;
     }
 }

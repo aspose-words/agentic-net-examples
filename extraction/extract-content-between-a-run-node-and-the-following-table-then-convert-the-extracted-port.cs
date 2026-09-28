@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -9,83 +10,111 @@ public class Program
     public static void Main()
     {
         // ------------------------------------------------------------
-        // 1. Create a sample source document containing a run and a table.
+        // 1. Create a sample source document containing a run marker,
+        //    a paragraph between the marker and a table.
         // ------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Paragraph before the run (just for context).
-        builder.Writeln("Paragraph before the run.");
+        builder.Writeln("Intro paragraph.");
+        // This run will be the start marker.
+        builder.Write("RunStart");
+        builder.Writeln(); // End the paragraph containing the run.
 
-        // The run that we will later extract.
-        builder.Write("Extracted run text.");
+        builder.Writeln("Paragraph between.");
 
-        // End the paragraph that contains the run.
-        builder.Writeln();
-
-        // Insert a simple table after the run.
+        // Insert a table after the paragraphs.
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell A1");
-        builder.InsertCell();
-        builder.Write("Cell B1");
+        builder.Write("Cell1");
         builder.EndRow();
         builder.EndTable();
 
-        // Save the source document locally.
-        const string sourcePath = "source.docx";
-        sourceDoc.Save(sourcePath);
+        // Optional: save the source document for reference.
+        sourceDoc.Save("source.docx");
 
         // ------------------------------------------------------------
-        // 2. Load the document for extraction.
+        // 2. Locate the run node that marks the start of the extraction.
         // ------------------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
+        Run targetRun = null;
+        foreach (Run run in sourceDoc.GetChildNodes(NodeType.Run, true))
+        {
+            if (run.Text == "RunStart")
+            {
+                targetRun = run;
+                break;
+            }
+        }
 
-        // Locate the first Run node (the one we created above).
-        Run runNode = loadedDoc.GetChildNodes(NodeType.Run, true)[0] as Run;
-        if (runNode == null)
-            throw new InvalidOperationException("Run node not found.");
+        if (targetRun == null)
+            throw new InvalidOperationException("Target run not found.");
 
-        // Locate the first Table node that follows the run.
-        Table tableNode = loadedDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
-        if (tableNode == null)
-            throw new InvalidOperationException("Table node not found.");
+        // The paragraph that contains the run.
+        Paragraph startParagraph = targetRun.ParentNode as Paragraph;
+        if (startParagraph == null)
+            throw new InvalidOperationException("Run does not have a parent paragraph.");
 
         // ------------------------------------------------------------
-        // 3. Build a new document that will contain the extracted content.
+        // 3. Find the next table after the start paragraph.
+        // ------------------------------------------------------------
+        Node currentNode = startParagraph.NextSibling;
+        Table followingTable = null;
+        while (currentNode != null)
+        {
+            if (currentNode.NodeType == NodeType.Table)
+            {
+                followingTable = (Table)currentNode;
+                break;
+            }
+            currentNode = currentNode.NextSibling;
+        }
+
+        if (followingTable == null)
+            throw new InvalidOperationException("Following table not found.");
+
+        // ------------------------------------------------------------
+        // 4. Collect all block-level nodes from the start paragraph up
+        //    to (but not including) the table.
+        // ------------------------------------------------------------
+        List<Node> nodesToExtract = new List<Node>();
+        Node nodeIter = startParagraph;
+        while (nodeIter != null && nodeIter != followingTable)
+        {
+            // Only Paragraphs and Tables are valid children of Body.
+            if (nodeIter.NodeType == NodeType.Paragraph || nodeIter.NodeType == NodeType.Table)
+                nodesToExtract.Add(nodeIter);
+            nodeIter = nodeIter.NextSibling;
+        }
+
+        // ------------------------------------------------------------
+        // 5. Build a new document and import the collected nodes.
         // ------------------------------------------------------------
         Document resultDoc = new Document();
+        // Remove the default empty section/body.
         resultDoc.RemoveAllChildren();
 
-        // Create a new section and body for the result document.
         Section resultSection = new Section(resultDoc);
         resultDoc.AppendChild(resultSection);
+
         Body resultBody = new Body(resultDoc);
         resultSection.AppendChild(resultBody);
 
-        // ------------------------------------------------------------
-        // 4. Import the Run and Table nodes into the result document.
-        // ------------------------------------------------------------
-        // Use NodeImporter to copy nodes from the source document to the destination document.
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        // Use NodeImporter to bring nodes from sourceDoc into resultDoc.
+        NodeImporter importer = new NodeImporter(sourceDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Import the run (inline node) and place it inside a new paragraph.
-        Node importedRun = importer.ImportNode(runNode, true);
-        Paragraph runParagraph = new Paragraph(resultDoc);
-        runParagraph.AppendChild(importedRun);
-        resultBody.AppendChild(runParagraph);
-
-        // Import the table (block node) and append it directly to the body.
-        Node importedTable = importer.ImportNode(tableNode, true);
-        resultBody.AppendChild(importedTable);
+        foreach (Node node in nodesToExtract)
+        {
+            Node importedNode = importer.ImportNode(node, true);
+            resultBody.AppendChild(importedNode);
+        }
 
         // ------------------------------------------------------------
-        // 5. Save the extracted portion as XPS.
+        // 6. Save the extracted portion as XPS.
         // ------------------------------------------------------------
-        const string outputPath = "extracted.xps";
+        string outputPath = "extracted.xps";
         resultDoc.Save(outputPath, SaveFormat.Xps);
 
-        // Verify that the XPS file was created.
+        // Validate that the XPS file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The XPS output file was not created.");
     }
