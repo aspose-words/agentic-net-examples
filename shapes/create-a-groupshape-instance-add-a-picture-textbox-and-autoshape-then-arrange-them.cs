@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class GroupShapeExample
+public class Program
 {
     public static void Main()
     {
@@ -11,56 +11,69 @@ public class GroupShapeExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Create a picture shape ----------
-        // Use a 1x1 pixel PNG (light blue) encoded in Base64.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X6ZcAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        // Create a temporary PNG image (1x1 pixel) from a Base64 string.
+        string imagePath = Path.Combine(Path.GetTempPath(), "sample_image.png");
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+        File.WriteAllBytes(imagePath, pngBytes);
 
-        // Insert the image from a memory stream.
-        using (MemoryStream ms = new MemoryStream(imageBytes))
+        // Create a GroupShape.
+        GroupShape group = new GroupShape(doc)
         {
-            Shape pictureShape = builder.InsertImage(ms);
-            pictureShape.Name = "PictureShape";
-            pictureShape.Width = 100;   // Desired display size.
-            pictureShape.Height = 100;
-            pictureShape.Left = 0;
-            pictureShape.Top = 0;
-            pictureShape.WrapType = WrapType.None; // Floating for positioning.
-        }
+            Width = 300,
+            Height = 300,
+            Left = 100,
+            Top = 100,
+            WrapType = WrapType.None
+        };
 
-        // The picture shape is the last inserted node.
-        Shape picture = (Shape)doc.GetChild(NodeType.Shape, 0, true);
+        // ---- Picture shape ----
+        Shape picture = new Shape(doc, ShapeType.Image)
+        {
+            Width = 100,
+            Height = 100,
+            Left = 0,
+            Top = 0
+        };
+        picture.ImageData.SetImage(imagePath);
+        group.AppendChild(picture);
 
-        // ---------- Create a textbox shape ----------
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 150, 50);
-        textBox.Name = "TextBoxShape";
-        textBox.WrapType = WrapType.None;
-        textBox.Left = 120;
-        textBox.Top = 0;
-
+        // ---- TextBox shape ----
+        Shape textBox = new Shape(doc, ShapeType.TextBox)
+        {
+            Width = 150,
+            Height = 80,
+            Left = 110,
+            Top = 0,
+            FillColor = System.Drawing.Color.LightYellow,
+            StrokeColor = System.Drawing.Color.DarkGray
+        };
         // Add text to the textbox.
-        Paragraph tbParagraph = textBox.FirstParagraph;
-        tbParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        Run tbRun = new Run(doc, "Hello Group!");
+        Paragraph tbParagraph = new Paragraph(doc);
+        Run tbRun = new Run(doc, "Sample TextBox");
         tbParagraph.AppendChild(tbRun);
+        textBox.AppendChild(tbParagraph);
+        group.AppendChild(textBox);
 
-        // ---------- Create an AutoShape (rectangle) ----------
-        Shape autoShape = builder.InsertShape(ShapeType.Rectangle, 100, 100);
-        autoShape.Name = "AutoShape";
-        autoShape.WrapType = WrapType.None;
-        autoShape.Left = 0;
-        autoShape.Top = 120;
-        autoShape.FillColor = System.Drawing.Color.LightCoral; // Using System.Drawing.Color is allowed for color values.
+        // ---- AutoShape (Rectangle) ----
+        Shape autoShape = new Shape(doc, ShapeType.Rectangle)
+        {
+            Width = 120,
+            Height = 120,
+            Left = 0,
+            Top = 110,
+            FillColor = System.Drawing.Color.LightGreen,
+            StrokeColor = System.Drawing.Color.DarkGreen
+        };
+        // Add text to the auto shape.
+        Paragraph asParagraph = new Paragraph(doc);
+        Run asRun = new Run(doc, "AutoShape");
+        asParagraph.AppendChild(asRun);
+        autoShape.AppendChild(asParagraph);
+        group.AppendChild(autoShape);
 
-        // ---------- Group the three shapes ----------
-        // InsertGroupShape removes the original shapes and inserts a new GroupShape.
-        GroupShape group = builder.InsertGroupShape(picture, textBox, autoShape);
-        group.Name = "MyGroupShape";
-
-        // Optionally adjust the group's position.
-        group.Left = 50;
-        group.Top = 50;
-        group.WrapType = WrapType.None;
+        // Insert the group shape into the document.
+        builder.InsertNode(group);
 
         // Save the document.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GroupShapeExample.docx");
@@ -68,6 +81,10 @@ public class GroupShapeExample
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new Exception("Failed to create the output document.");
+
+        // Clean up temporary image.
+        if (File.Exists(imagePath))
+            File.Delete(imagePath);
     }
 }

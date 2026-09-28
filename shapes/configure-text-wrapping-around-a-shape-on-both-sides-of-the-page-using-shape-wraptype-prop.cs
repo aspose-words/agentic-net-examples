@@ -8,41 +8,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial text.
-        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                        "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+        // Add some text before the shape.
+        builder.Writeln("This is some text before the shape. It will wrap around the shape on both sides of the page.");
 
-        // Define shape size.
-        double shapeWidth = 100;
-        double shapeHeight = 100;
-
-        // Position the shape roughly in the center of the page.
-        double left = (builder.PageSetup.PageWidth - shapeWidth) / 2;
-        double top = (builder.PageSetup.PageHeight - shapeHeight) / 2;
-
-        // Insert a floating rectangle with Square wrap type (wraps on both sides).
-        Shape shape = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, left,
-            RelativeVerticalPosition.Page, top,
-            shapeWidth, shapeHeight,
-            WrapType.Square);
-
-        // Make the shape visible.
+        // Insert a floating rectangle shape.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 100);
+        // Configure wrapping: square wrapping on both sides.
+        shape.WrapType = WrapType.Square;
+        shape.WrapSide = WrapSide.Both; // Correct enum value
+        // Position the shape relative to the page.
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        shape.Left = ConvertUtil.MillimeterToPoint(20);
+        shape.Top = ConvertUtil.MillimeterToPoint(20);
+        // Optional visual styling.
+        shape.StrokeColor = Color.Black;
         shape.FillColor = Color.LightBlue;
-        shape.StrokeColor = Color.DarkBlue;
 
-        // Add more text that will wrap around the shape.
-        builder.Writeln("\nMore text that should wrap around the shape on both sides. " +
-                        "The quick brown fox jumps over the lazy dog. " +
-                        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        // Add more text after the shape.
+        builder.Writeln();
+        builder.Writeln("This is some text after the shape. It should also wrap around the shape on both sides, demonstrating the Both setting.");
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeWrapBothSides.docx");
+        string outputPath = "WrapShapeBothSides.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.

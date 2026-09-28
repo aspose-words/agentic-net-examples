@@ -1,46 +1,49 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class ShapeTitleExample
+public class Program
 {
     public static void Main()
     {
-        // Define file paths in the system's temporary directory.
-        string outputDir = Path.Combine(Path.GetTempPath(), "AsposeShapeDemo");
-        Directory.CreateDirectory(outputDir);
-        string docPath = Path.Combine(outputDir, "ShapeWithTitle.docx");
+        // Define output file path
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomShapeMetadata.docx");
 
-        // -------------------- Create document and shape --------------------
+        // Create a new blank document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        // Store custom metadata in the Title property.
-        string expectedTitle = "CustomMetadata-12345";
-        shape.Title = expectedTitle;
+        // Insert a rectangle shape and set its size
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 80);
+        // Store custom metadata in the Title property
+        shape.Title = "CustomMetadata:SampleValue";
 
-        // Save the document.
-        doc.Save(docPath);
+        // Save the document
+        doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException("Document was not saved correctly.");
+        // Validate that the file was created
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The document was not saved correctly.");
 
-        // -------------------- Load document and retrieve title --------------------
-        Document loadedDoc = new Document(docPath);
-        Shape loadedShape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
+        // Load the document for processing
+        Document loadedDoc = new Document(outputPath);
 
-        // Retrieve the Title property.
-        string actualTitle = loadedShape.Title;
+        // Traverse all shapes in the document
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                              .Cast<Shape>();
 
-        // Validate that the stored metadata matches the expected value.
-        if (actualTitle != expectedTitle)
-            throw new InvalidOperationException($"Title mismatch. Expected: '{expectedTitle}', Actual: '{actualTitle}'");
-
-        // Optional: output confirmation (no interactive input required).
-        Console.WriteLine("Shape title stored and retrieved successfully.");
+        // Retrieve the custom metadata from the Title property
+        foreach (var s in shapes)
+        {
+            if (!string.IsNullOrEmpty(s.Title) && s.Title.StartsWith("CustomMetadata:"))
+            {
+                string metadata = s.Title.Substring("CustomMetadata:".Length);
+                Console.WriteLine($"Retrieved metadata: {metadata}");
+                // Since we only expect one shape, we can break after finding it
+                break;
+            }
+        }
     }
 }

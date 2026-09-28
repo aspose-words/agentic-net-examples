@@ -3,38 +3,60 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class SetVerticalAnchorExample
 {
+    // Simple enum to represent the desired vertical anchor positions.
+    private enum AnchorPosition
+    {
+        Top,
+        Center,
+        Bottom
+    }
+
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text box with vertical anchor at the top.
-        Shape topBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        topBox.TextBox.VerticalAnchor = TextBoxAnchor.Top;
-        builder.MoveTo(topBox.FirstParagraph);
-        builder.Write("Top anchor");
+        // Helper method to insert a floating rectangle shape with a specific vertical anchor.
+        void InsertAnchoredShape(string label, AnchorPosition anchor)
+        {
+            // Insert a paragraph to hold the shape label.
+            builder.Writeln(label);
 
-        // Insert a text box with vertical anchor in the middle.
-        Shape middleBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        middleBox.TextBox.VerticalAnchor = TextBoxAnchor.Middle;
-        builder.MoveTo(middleBox.FirstParagraph);
-        builder.Write("Middle anchor");
+            // Insert a rectangle shape (inline by default) and then convert it to a floating shape.
+            Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+            shape.WrapType = WrapType.None;
+            shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+            shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
 
-        // Insert a text box with vertical anchor at the bottom.
-        Shape bottomBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        bottomBox.TextBox.VerticalAnchor = TextBoxAnchor.Bottom;
-        builder.MoveTo(bottomBox.FirstParagraph);
-        builder.Write("Bottom anchor");
+            // Determine the top position based on the requested anchor.
+            // Page height is obtained from the builder's page setup (in points).
+            double pageHeight = builder.PageSetup.PageHeight;
+            double topPosition = anchor switch
+            {
+                AnchorPosition.Top => 0,
+                AnchorPosition.Center => (pageHeight - shape.Height) / 2,
+                AnchorPosition.Bottom => pageHeight - shape.Height,
+                _ => 0
+            };
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "VerticalAnchor.docx");
+            shape.Top = topPosition;
+            shape.Left = 20; // A small left offset for visibility.
+        }
+
+        // Insert shapes with different vertical anchors.
+        InsertAnchoredShape("Shape anchored to the top of the page:", AnchorPosition.Top);
+        InsertAnchoredShape("Shape anchored to the middle of the page:", AnchorPosition.Center);
+        InsertAnchoredShape("Shape anchored to the bottom of the page:", AnchorPosition.Bottom);
+
+        // Save the document.
+        string outputPath = "VerticalAnchorShapes.docx";
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved successfully.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

@@ -1,11 +1,9 @@
 using System;
 using System.IO;
-using System.Linq;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class ShapeLayeringExample
 {
     public static void Main()
     {
@@ -13,46 +11,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three overlapping rectangles.
-        Shape shape1 = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.LeftMargin, 100,
-            RelativeVerticalPosition.TopMargin, 100,
-            200, 200,
-            WrapType.None);
-        shape1.FillColor = Color.Orange;
+        // Add some text that will be overlapped by the shape.
+        builder.Writeln("This is some sample text that will be overlapped by a shape.");
 
-        Shape shape2 = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.LeftMargin, 150,
-            RelativeVerticalPosition.TopMargin, 150,
-            200, 200,
-            WrapType.None);
-        shape2.FillColor = Color.LightBlue;
+        // Insert a rectangle shape.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 200, 100);
 
-        Shape shape3 = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.LeftMargin, 200,
-            RelativeVerticalPosition.TopMargin, 200,
-            200, 200,
-            WrapType.None);
-        shape3.FillColor = Color.LightGreen;
+        // Configure the shape to be floating so it can overlap the text.
+        shape.WrapType = WrapType.None;                     // No text wrapping.
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Margin;
+        shape.Left = 0;                                     // Position at the left margin.
+        shape.Top = 0;                                      // Position at the top margin.
 
-        // Retrieve all shapes in the document.
-        Shape[] shapes = doc.GetChildNodes(NodeType.Shape, true)
-                            .OfType<Shape>()
-                            .ToArray();
-
-        // Send the third shape to the back of the layering order.
-        // Lower ZOrder values are rendered behind higher values.
-        shapes[2].ZOrder = 0;
-
-        // Optional validation: ensure the ZOrder was set.
-        if (shapes[2].ZOrder != 0)
-            throw new InvalidOperationException("Failed to set shape ZOrder.");
+        // Send the shape to the back of the layering order.
+        shape.BehindText = true; // Places the shape behind the text and other shapes.
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeBackOrder.docx");
+        string outputPath = "ShapeBack.docx";
         doc.Save(outputPath);
+
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception($"Failed to create the output file: {outputPath}");
     }
 }

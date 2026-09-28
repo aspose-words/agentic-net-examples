@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -7,43 +8,29 @@ public class Program
 {
     public static void Main()
     {
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeRelativePosition.docx");
-
-        // Create a new empty document and a DocumentBuilder for editing.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write the first paragraph. The shape will be positioned relative to this paragraph.
-        builder.Writeln("This is the first paragraph. It will be followed by a shape.");
+        // Insert the preceding paragraph.
+        builder.Writeln("This is the first paragraph. The shape will be positioned relative to this paragraph.");
 
-        // Insert a floating rectangle shape.
-        // The shape is positioned relative to the preceding paragraph (RelativeVerticalPosition.Paragraph)
-        // and to the left margin (RelativeHorizontalPosition.Margin). No text wrapping (WrapType.None).
-        Shape shape = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.Margin,   // Horizontal reference: left margin.
-            0,                                   // Left offset (points) from the reference.
-            RelativeVerticalPosition.Paragraph, // Vertical reference: the paragraph we just wrote.
-            0,                                   // Top offset (points) from the reference.
-            100,                                 // Width (points).
-            50,                                  // Height (points).
-            WrapType.None);                      // No wrapping; shape floats.
+        // Insert a floating rectangle shape anchored to the preceding paragraph.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        shape.WrapType = WrapType.Square;
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
+        shape.Left = 0; // Position relative to the left margin of the paragraph.
+        shape.Top = 0;  // Position at the top of the paragraph.
+        shape.StrokeColor = Color.Blue;
+        shape.FillColor = Color.LightBlue;
 
-        // Apply a simple fill color to make the shape visible.
-        shape.FillColor = System.Drawing.Color.LightBlue;
-
-        // Write another paragraph after the shape to demonstrate flow continuation.
-        builder.Writeln("This paragraph appears after the shape, maintaining the document flow.");
-
-        // Save the document to the specified file.
+        // Save the document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created successfully.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
-
-        // Optional: inform the user that the operation completed.
-        Console.WriteLine($"Document saved to: {outputPath}");
+            throw new Exception("The output document was not created.");
     }
 }
