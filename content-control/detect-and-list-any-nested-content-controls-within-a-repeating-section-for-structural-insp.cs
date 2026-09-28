@@ -13,68 +13,67 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Build a repeating section content control.
+        // Create a repeating section content control (block level).
         StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
         {
             Title = "RepeatingSection",
             Tag = "rep-section"
         };
 
-        // Add a simple paragraph inside the repeating section.
-        Paragraph startParagraph = new Paragraph(doc);
-        startParagraph.AppendChild(new Run(doc, "Repeating item start"));
-        repeatingSection.AppendChild(startParagraph);
-
-        // Add a nested block-level rich text content control.
+        // Create a nested block-level rich text content control.
         StructuredDocumentTag nestedBlock = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
             Title = "NestedBlock",
             Tag = "nested-block"
         };
         Paragraph blockParagraph = new Paragraph(doc);
-        blockParagraph.AppendChild(new Run(doc, "Nested block content"));
+        blockParagraph.AppendChild(new Run(doc, "Content inside nested block-level SDT."));
         nestedBlock.AppendChild(blockParagraph);
-        repeatingSection.AppendChild(nestedBlock);
 
-        // Add a nested inline plain text content control inside a paragraph.
-        Paragraph inlineParagraph = new Paragraph(doc);
+        // Create a nested inline plain text content control.
         StructuredDocumentTag nestedInline = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
             Title = "NestedInline",
             Tag = "nested-inline"
         };
         nestedInline.RemoveAllChildren();
-        nestedInline.AppendChild(new Run(doc, "Inline content"));
+        nestedInline.AppendChild(new Run(doc, "Inline SDT text."));
+
+        // Add the inline SDT inside a paragraph.
+        Paragraph inlineParagraph = new Paragraph(doc);
         inlineParagraph.AppendChild(nestedInline);
+
+        // Assemble the repeating section: add both nested controls.
+        repeatingSection.AppendChild(nestedBlock);
         repeatingSection.AppendChild(inlineParagraph);
 
         // Insert the repeating section into the document body.
         doc.FirstSection.Body.AppendChild(repeatingSection);
 
         // Save the sample document.
-        const string docPath = "NestedRepeatingSection.docx";
+        const string docPath = "sample.docx";
         doc.Save(docPath);
 
         // Detect nested content controls within each repeating section.
-        var report = new List<NestedControlInfo>();
+        List<NestedSdtInfo> report = new List<NestedSdtInfo>();
 
-        IEnumerable<StructuredDocumentTag> repeatingControls = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+        // Find all repeating section SDTs in the document.
+        IEnumerable<StructuredDocumentTag> repeatingSdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
             .Where(sdt => sdt.SdtType == SdtType.RepeatingSection);
 
-        foreach (StructuredDocumentTag repeating in repeatingControls)
+        foreach (StructuredDocumentTag repeating in repeatingSdtNodes)
         {
-            // Find all descendant StructuredDocumentTag nodes that are not the repeating section itself.
-            IEnumerable<StructuredDocumentTag> nestedControls = repeating.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                .OfType<StructuredDocumentTag>()
-                .Where(sdt => sdt != repeating);
+            // Find all descendant SDTs inside the repeating section.
+            IEnumerable<StructuredDocumentTag> nestedSdts = repeating.GetChildNodes(NodeType.StructuredDocumentTag, true)
+                .OfType<StructuredDocumentTag>();
 
-            foreach (StructuredDocumentTag nested in nestedControls)
+            foreach (StructuredDocumentTag nested in nestedSdts)
             {
-                report.Add(new NestedControlInfo
+                report.Add(new NestedSdtInfo
                 {
-                    ParentRepeatingTitle = repeating.Title,
-                    ParentRepeatingTag = repeating.Tag,
+                    RepeatingSectionTitle = repeating.Title,
+                    RepeatingSectionTag = repeating.Tag,
                     NestedTitle = nested.Title,
                     NestedTag = nested.Tag,
                     NestedType = nested.SdtType.ToString()
@@ -82,21 +81,24 @@ public class Program
             }
         }
 
-        // Serialize the inspection result to JSON.
+        // Serialize the report to JSON.
         string json = JsonConvert.SerializeObject(report, Formatting.Indented);
-        const string jsonPath = "NestedControls.json";
+        const string jsonPath = "nested-content-controls.json";
         File.WriteAllText(jsonPath, json);
 
-        // Output the result to the console.
-        Console.WriteLine("Nested content controls detected within repeating sections:");
+        // Output result to console.
+        Console.WriteLine("Nested content controls detection completed.");
+        Console.WriteLine($"Document saved as: {Path.GetFullPath(docPath)}");
+        Console.WriteLine($"Report saved as: {Path.GetFullPath(jsonPath)}");
+        Console.WriteLine("Report content:");
         Console.WriteLine(json);
     }
 
-    // Helper class for JSON serialization.
-    private class NestedControlInfo
+    // Helper class to hold information about nested SDTs.
+    private class NestedSdtInfo
     {
-        public string ParentRepeatingTitle { get; set; } = string.Empty;
-        public string ParentRepeatingTag { get; set; } = string.Empty;
+        public string RepeatingSectionTitle { get; set; } = string.Empty;
+        public string RepeatingSectionTag { get; set; } = string.Empty;
         public string NestedTitle { get; set; } = string.Empty;
         public string NestedTag { get; set; } = string.Empty;
         public string NestedType { get; set; } = string.Empty;

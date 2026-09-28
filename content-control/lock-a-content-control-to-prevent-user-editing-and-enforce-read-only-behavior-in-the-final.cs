@@ -8,28 +8,22 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph describing the content control.
-        builder.Writeln("Document with a locked content control:");
+        // Create a block‑level rich‑text content control.
+        StructuredDocumentTag contentControl = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
+        contentControl.Title = "ReadOnlySection";
 
-        // Create an inline plain‑text content control.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "ReadOnlyControl",
-            Tag = "readonly",
-            // Prevent the user from editing the contents.
-            LockContents = true,
-            // Prevent the user from deleting the content control.
-            LockContentControl = true
-        };
+        // Lock the content control so the user cannot edit its contents or its properties.
+        contentControl.LockContents = true;
+        contentControl.LockContentControl = true;
 
-        // Set the displayed text inside the control.
-        sdt.RemoveAllChildren();
-        sdt.AppendChild(new Run(doc, "This text cannot be edited or the control deleted."));
+        // Add some sample text inside the locked content control.
+        Paragraph paragraph = new Paragraph(doc);
+        paragraph.AppendChild(new Run(doc, "This content is read‑only."));
+        contentControl.AppendChild(paragraph);
 
-        // Insert the locked content control into the document.
-        builder.InsertNode(sdt);
+        // Insert the content control into the document body.
+        doc.FirstSection.Body.AppendChild(contentControl);
 
         // Save the resulting document.
         doc.Save("LockedContentControl.docx");

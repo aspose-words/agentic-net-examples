@@ -1,7 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Drawing;
+using Newtonsoft.Json;
 
 public class Program
 {
@@ -10,32 +11,32 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a custom character style named "MyCustomStyle".
-        Style customStyle = doc.Styles.Add(StyleType.Character, "MyCustomStyle");
-        customStyle.Font.Name = "Calibri";
+        // Define a custom paragraph style.
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+        customStyle.Font.Name = "Arial";
         customStyle.Font.Size = 14;
-        customStyle.Font.Color = System.Drawing.Color.DarkBlue;
-        customStyle.Font.Bold = true;
 
-        // Create a rich text content control (block level).
-        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-        {
-            Title = "RichTextControl",
-            Tag = "RichTextTag",
-            // Apply the custom style to the content control.
-            Style = customStyle
-        };
+        // Create a block‑level rich‑text content control.
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
+        richTextSdt.Title = "RichTextControl";
 
-        // Add a paragraph with some text inside the content control.
-        Paragraph innerParagraph = new Paragraph(doc);
-        Run run = new Run(doc, "This text is inside a rich text content control with a custom style.");
-        innerParagraph.AppendChild(run);
-        richTextSdt.AppendChild(innerParagraph);
+        // Create a paragraph inside the content control and apply the custom style.
+        Paragraph paragraph = new Paragraph(doc);
+        // Apply the custom style to the paragraph via ParagraphFormat.
+        paragraph.ParagraphFormat.Style = customStyle;
+        paragraph.AppendChild(new Run(doc, "This text is inside a rich text content control with a custom style."));
+
+        // Add the paragraph to the content control.
+        richTextSdt.AppendChild(paragraph);
 
         // Insert the content control into the document body.
         doc.FirstSection.Body.AppendChild(richTextSdt);
 
-        // Save the document to the working directory.
-        doc.Save("RichTextContentControlWithCustomStyle.docx");
+        // Save the resulting document.
+        doc.Save("styled-richtext-sdt.docx");
+
+        // Optional: write style information to a JSON file using Newtonsoft.Json.
+        var styleInfo = new { StyleName = customStyle.Name, Font = customStyle.Font.Name, Size = customStyle.Font.Size };
+        File.WriteAllText("style-info.json", JsonConvert.SerializeObject(styleInfo, Formatting.Indented));
     }
 }

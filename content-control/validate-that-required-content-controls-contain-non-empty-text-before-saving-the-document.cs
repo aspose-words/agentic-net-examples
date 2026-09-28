@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
@@ -9,62 +11,66 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Prepare a DocumentBuilder for inserting nodes.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Get the first paragraph of the document body.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
 
-        // ----- Required content control #1 -----
-        StructuredDocumentTag nameSdt = new StructuredDocumentTag(
-            doc,
-            SdtType.PlainText,
-            MarkupLevel.Inline);
-        nameSdt.Title = "CustomerName";
-        nameSdt.Tag = "customer-name";
-        nameSdt.RemoveAllChildren();
-        nameSdt.AppendChild(new Run(doc, "John Doe"));
-        builder.InsertNode(nameSdt);
+        // ----- Required content control with non‑empty text -----
+        StructuredDocumentTag requiredSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        requiredSdt.Title = "CustomerName";
+        requiredSdt.Tag = "required";
+        requiredSdt.RemoveAllChildren();
+        requiredSdt.AppendChild(new Run(doc, "Contoso Ltd."));
+        firstParagraph.AppendChild(requiredSdt);
 
-        // ----- Required content control #2 (intentionally left empty) -----
-        StructuredDocumentTag emailSdt = new StructuredDocumentTag(
-            doc,
-            SdtType.PlainText,
-            MarkupLevel.Inline);
-        emailSdt.Title = "Email";
-        emailSdt.Tag = "email";
-        emailSdt.RemoveAllChildren();
-        // No text added here to simulate an empty required field.
-        builder.InsertNode(emailSdt);
+        // ----- Optional content control (can be empty) -----
+        StructuredDocumentTag optionalSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        optionalSdt.Title = "OptionalNote";
+        optionalSdt.Tag = "optional";
+        optionalSdt.RemoveAllChildren();
+        // No text added – this control is intentionally left empty.
+        firstParagraph.AppendChild(optionalSdt);
 
-        // Validate that all required content controls contain non‑empty text.
-        // If validation fails, the document will not be saved.
+        // ----- Required content control that is empty (to demonstrate validation failure) -----
+        StructuredDocumentTag emptyRequiredSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        emptyRequiredSdt.Title = "EmptyRequired";
+        emptyRequiredSdt.Tag = "required";
+        emptyRequiredSdt.RemoveAllChildren();
+        // No text added – this will cause validation to fail.
+        firstParagraph.AppendChild(emptyRequiredSdt);
+
+        // Validate required content controls before saving.
         try
         {
-            ValidateRequiredContentControls(doc, new[] { "CustomerName", "Email" });
-            // Save the validated document only when validation succeeds.
-            doc.Save("validated.docx");
-            Console.WriteLine("Document saved successfully.");
+            ValidateRequiredContentControls(doc);
+            // If validation passes, save the document.
+            string outputPath = "validated.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
         }
         catch (InvalidOperationException ex)
         {
-            // Report validation error without crashing the program.
+            // Validation failed – report the issue.
             Console.WriteLine($"Validation error: {ex.Message}");
         }
     }
 
-    private static void ValidateRequiredContentControls(Document doc, string[] requiredTitles)
+    private static void ValidateRequiredContentControls(Document document)
     {
-        NodeCollection sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
-        foreach (Node node in sdtNodes)
+        // Find all StructuredDocumentTag nodes that are marked as required via the Tag property.
+        var requiredControls = document.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .Where(sdt => string.Equals(sdt.Tag, "required", StringComparison.OrdinalIgnoreCase));
+
+        foreach (var sdt in requiredControls)
         {
-            StructuredDocumentTag sdt = (StructuredDocumentTag)node;
-            // Check only the content controls whose Title is in the required list.
-            if (Array.Exists(requiredTitles, title => title == sdt.Title))
+            // Get the visible text inside the content control.
+            string text = sdt.GetText()?.Trim() ?? string.Empty;
+
+            // If the text is empty, throw an exception indicating which control failed.
+            if (string.IsNullOrEmpty(text))
             {
-                string text = sdt.GetText().Trim();
-                if (string.IsNullOrEmpty(text))
-                {
-                    throw new InvalidOperationException(
-                        $"Content control '{sdt.Title}' must not be empty.");
-                }
+                string title = string.IsNullOrEmpty(sdt.Title) ? "(no title)" : sdt.Title;
+                throw new InvalidOperationException($"Content control '{title}' (Tag='{sdt.Tag}') is required but contains no text.");
             }
         }
     }

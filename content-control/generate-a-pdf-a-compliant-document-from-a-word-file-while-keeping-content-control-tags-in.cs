@@ -1,65 +1,85 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names in the working directory.
-        const string wordFile = "sample.docx";
-        const string pdfFile = "sample-pdfa.pdf";
-
         // -----------------------------------------------------------------
-        // Step 1: Create a Word document with a plain‑text content control.
+        // 1. Create a sample DOCX containing two content controls.
         // -----------------------------------------------------------------
         Document doc = new Document();
-        // The first paragraph is created automatically in a new document.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create an inline plain‑text StructuredDocumentTag (content control).
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Introductory paragraph.
+        builder.Writeln("Document with content controls:");
+
+        // ----- Inline plain‑text content control -----
+        StructuredDocumentTag plainSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
             Title = "CustomerName",
             Tag = "customer-name"
         };
-        // Set the initial text inside the content control.
-        sdt.RemoveAllChildren();
-        sdt.AppendChild(new Run(doc, "Contoso Ltd."));
+        plainSdt.RemoveAllChildren();
+        plainSdt.AppendChild(new Run(doc, "Contoso"));
+        Paragraph currentParagraph = builder.CurrentParagraph;
+        if (currentParagraph != null)
+        {
+            currentParagraph.AppendChild(plainSdt);
+        }
+        builder.Writeln(); // Move to a new paragraph.
 
-        // Insert the content control into the paragraph.
-        paragraph.AppendChild(sdt);
+        // ----- Block‑level rich‑text content control -----
+        StructuredDocumentTag richSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
+        Paragraph richParagraph = new Paragraph(doc);
+        richParagraph.AppendChild(new Run(doc, "Rich text block content control."));
+        richSdt.AppendChild(richParagraph);
+        doc.FirstSection.Body.AppendChild(richSdt);
 
-        // Save the Word document to disk.
-        doc.Save(wordFile);
+        // Save the source DOCX locally.
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
         // -----------------------------------------------------------------
-        // Step 2: Load the Word document and convert it to PDF/A.
+        // 2. Load the DOCX for further processing.
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(wordFile);
+        Document loadedDoc = new Document(inputPath);
 
-        // Configure PDF save options for PDF/A‑1a compliance.
+        // Export information about the content controls to JSON.
+        var sdtInfo = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .Select(s => new
+            {
+                Title = s.Title,
+                Tag = s.Tag,
+                Type = s.SdtType.ToString(),
+                Text = s.GetText().Trim()
+            })
+            .ToList();
+
+        File.WriteAllText("content-controls.json",
+            JsonConvert.SerializeObject(sdtInfo, Formatting.Indented));
+
+        // -----------------------------------------------------------------
+        // 3. Configure PDF/A‑1b save options.
+        //    Use the 'Compliance' property (available in all supported versions)
+        //    to request PDF/A conformance.
+        // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // PDF/A‑1a includes visual fidelity and document structure.
-            Compliance = PdfCompliance.PdfA1a,
-            // Preserve content controls as interactive form fields in the PDF.
-            PreserveFormFields = true,
-            // Use the Tag property of the content control as the form field name.
-            UseSdtTagAsFormFieldName = true,
-            // Export the document structure (required for PDF/A‑1a, but set explicitly).
+            // Request PDF/A‑1b compliance.
+            Compliance = PdfCompliance.PdfA1b,
+            // Preserve the document structure so that content controls become PDF tags.
             ExportDocumentStructure = true
         };
 
-        // Save the document as a PDF/A compliant file.
-        loadedDoc.Save(pdfFile, pdfOptions);
-
-        // -----------------------------------------------------------------
-        // Optional: Inform the user via console (no input required).
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Word file created: {Path.GetFullPath(wordFile)}");
-        Console.WriteLine($"PDF/A file created: {Path.GetFullPath(pdfFile)}");
+        // Save the document as PDF/A.
+        const string outputPdf = "output.pdf";
+        loadedDoc.Save(outputPdf, pdfOptions);
     }
 }
