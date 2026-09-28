@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class Program
 {
@@ -9,30 +8,28 @@ public class Program
         // Create the original document.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world!");
-        builderOriginal.Writeln("This is the original document.");
+        builderOriginal.Writeln("This is the original text.");
 
-        // Create the revised document with some differences.
+        // Create the revised document with a difference.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello world!");
-        builderRevised.Writeln("This is the revised document with changes.");
+        builderRevised.Writeln("This is the revised text with a change.");
 
-        // Compare the documents – revisions will be added to the original document.
-        original.Compare(revised, "John Doe", DateTime.Now);
+        // Compare the documents to generate revisions.
+        original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Ensure that revisions were created.
+        // Verify that revisions were created.
         if (original.Revisions.Count == 0)
             throw new InvalidOperationException("Expected revisions after comparison.");
 
-        // Accept all revisions.
+        // Accept all revisions, which removes revision marks and clears the collection.
         original.AcceptAllRevisions();
 
-        // After accepting, the revisions collection should be empty.
+        // Verify that the revisions collection is now empty.
         if (original.Revisions.Count != 0)
-            throw new InvalidOperationException("Revisions were not cleared after acceptance.");
+            throw new InvalidOperationException("Revisions collection should be empty after accepting all revisions.");
 
-        // Save the final document without any revision marks.
-        original.Save("Result.docx");
+        // Save the final document.
+        original.Save("final.docx");
     }
 }

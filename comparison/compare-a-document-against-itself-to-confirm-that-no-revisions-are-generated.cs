@@ -1,29 +1,25 @@
 using System;
 using Aspose.Words;
 
-public class Program
+public class SelfComparisonExample
 {
     public static void Main()
     {
-        // Create a simple document with deterministic content.
-        Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
-        builder.Writeln("This is a sample paragraph for comparison.");
+        // Create a new document and add some content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample paragraph for self‑comparison.");
 
-        // Clone the document to obtain a separate instance with identical content.
-        Document clone = (Document)original.Clone(true);
+        // Compare the document with itself. No revisions should be generated.
+        doc.Compare(doc, "SelfCompareAuthor", DateTime.Now);
 
-        // Perform the comparison. No revisions should be generated because the contents are identical.
-        original.Compare(clone, "Tester", DateTime.Now);
-
-        // Verify that the comparison produced zero revisions.
-        if (original.Revisions.Count != 0)
+        // Verify that the revisions collection is empty.
+        if (doc.Revisions.Count != 0)
         {
-            throw new InvalidOperationException(
-                $"Expected zero revisions, but found {original.Revisions.Count}.");
+            throw new InvalidOperationException("Expected zero revisions after comparing the document with itself.");
         }
 
-        // Save the (unchanged) document to demonstrate that the operation completed successfully.
-        original.Save("ComparisonResult.docx");
+        // Save the resulting document (it will be identical to the original).
+        doc.Save("SelfComparisonResult.docx");
     }
 }

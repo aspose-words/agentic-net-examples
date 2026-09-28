@@ -1,68 +1,47 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
-namespace AsposeWordsComparison
+public class Program
 {
-    // Simple wrapper that implements IDisposable for a Document.
-    // Aspose.Words.Document does not implement IDisposable, so we provide a wrapper
-    // to follow the disposable pattern without altering the original API.
-    public sealed class DisposableDocument : IDisposable
+    public static void Main()
     {
-        public Document Document { get; }
+        // Create the original document.
+        Document original = new Document();
+        DocumentBuilder builder1 = new DocumentBuilder(original);
+        builder1.Writeln("Hello world.");
 
-        public DisposableDocument()
+        // Create the revised document.
+        Document revised = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(revised);
+        builder2.Writeln("Hello revised world.");
+
+        // Compare the documents. Provide author name and current date/time.
+        original.Compare(revised, "Comparer", DateTime.Now);
+
+        // Verify that at least one revision was created.
+        if (original.Revisions.Count == 0)
         {
-            Document = new Document();
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
         }
 
-        // No unmanaged resources to release; setting the reference to null helps GC.
-        public void Dispose()
+        // Accept all revisions.
+        original.AcceptAllRevisions();
+
+        // Verify that all revisions have been accepted.
+        if (original.Revisions.Count != 0)
         {
-            // Explicitly release the reference.
-            // The Document will be collected by the garbage collector when no longer used.
-            // This pattern satisfies the requirement to use a disposable scope.
+            throw new InvalidOperationException("All revisions should be accepted.");
         }
-    }
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Create the original document inside a disposable scope.
-            using (var originalWrapper = new DisposableDocument())
-            {
-                Document original = originalWrapper.Document;
-                var builderOriginal = new DocumentBuilder(original);
-                builderOriginal.Writeln("Hello world.");
+        // Save the resulting document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "compared.docx");
+        original.Save(outputPath);
 
-                // Create the revised document inside its own disposable scope.
-                using (var revisedWrapper = new DisposableDocument())
-                {
-                    Document revised = revisedWrapper.Document;
-                    var builderRevised = new DocumentBuilder(revised);
-                    builderRevised.Writeln("Hello revised world.");
-
-                    // Compare the documents. The original document will contain revisions.
-                    original.Compare(revised, "Author", DateTime.Now);
-
-                    // Verify that revisions were created.
-                    if (original.Revisions.Count == 0)
-                        throw new InvalidOperationException("Expected at least one revision after comparison.");
-
-                    Console.WriteLine($"Revisions after compare: {original.Revisions.Count}");
-
-                    // Accept all revisions so the original becomes identical to the revised version.
-                    original.AcceptAllRevisions();
-
-                    // Verify that all revisions have been accepted.
-                    if (original.Revisions.Count != 0)
-                        throw new InvalidOperationException("All revisions should be accepted.");
-
-                    // Save the resulting document.
-                    original.Save("Compared.docx");
-                } // revisedWrapper disposed here
-            } // originalWrapper disposed here
-        }
+        // Explicitly release references (optional, helps GC).
+        builder1 = null;
+        builder2 = null;
+        original = null;
+        revised = null;
     }
 }

@@ -1,18 +1,19 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class TableCellFormattingComparison
 {
     public static void Main()
     {
-        // Create the original document with a simple 2x3 table.
-        Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
+        // Create the original document with a simple 2x2 table.
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
         builder.StartTable();
         for (int row = 0; row < 2; row++)
         {
-            for (int col = 0; col < 3; col++)
+            for (int col = 0; col < 2; col++)
             {
                 builder.InsertCell();
                 builder.Writeln($"R{row}C{col}");
@@ -21,37 +22,56 @@ public class Program
         }
         builder.EndTable();
 
-        // Clone the original to create a revised version and change cell formatting.
-        Document revised = (Document)original.Clone(true);
-        Table table = (Table)revised.GetChild(NodeType.Table, 0, true);
-
-        // Change formatting of two cells to generate format-change revisions.
-        Cell cell01 = table.Rows[0].Cells[1]; // Row 0, Column 1
-        cell01.CellFormat.Shading.BackgroundPatternColor = System.Drawing.Color.Yellow;
-
-        Cell cell12 = table.Rows[1].Cells[2]; // Row 1, Column 2
-        cell12.CellFormat.Shading.BackgroundPatternColor = System.Drawing.Color.LightBlue;
-
-        // Compare the documents. The original will receive revisions.
-        original.Compare(revised, "Comparer", DateTime.Now);
-
-        // Log coordinates of each format-change revision that affects a table cell.
-        foreach (Revision rev in original.Revisions)
+        // Create the revised document with the same content.
+        Document revisedDoc = new Document();
+        DocumentBuilder revBuilder = new DocumentBuilder(revisedDoc);
+        revBuilder.StartTable();
+        for (int row = 0; row < 2; row++)
         {
-            if (rev.RevisionType == RevisionType.FormatChange && rev.ParentNode?.NodeType == NodeType.Cell)
+            for (int col = 0; col < 2; col++)
             {
-                Cell changedCell = (Cell)rev.ParentNode;
+                revBuilder.InsertCell();
+                revBuilder.Writeln($"R{row}C{col}");
+            }
+            revBuilder.EndRow();
+        }
+        revBuilder.EndTable();
+
+        // Apply formatting changes to specific cells in the revised document.
+        Table revisedTable = revisedDoc.FirstSection.Body.Tables[0];
+
+        // Change background color of cell at (0,1).
+        Cell cell01 = revisedTable.Rows[0].Cells[1];
+        cell01.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+
+        // Change text alignment of cell at (1,0) by aligning its paragraph.
+        Cell cell10 = revisedTable.Rows[1].Cells[0];
+        if (cell10.Paragraphs.Count > 0)
+        {
+            cell10.Paragraphs[0].ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        }
+
+        // Compare the documents.
+        originalDoc.Compare(revisedDoc, "Comparer", DateTime.Now);
+
+        // Log cell formatting revisions with their coordinates.
+        foreach (Revision revision in originalDoc.Revisions)
+        {
+            if (revision.RevisionType == RevisionType.FormatChange &&
+                revision.ParentNode?.NodeType == NodeType.Cell)
+            {
+                Cell changedCell = (Cell)revision.ParentNode!;
                 Row parentRow = changedCell.ParentRow;
                 Table parentTable = parentRow.ParentTable;
 
                 int rowIndex = parentTable.Rows.IndexOf(parentRow);
                 int columnIndex = parentRow.Cells.IndexOf(changedCell);
 
-                Console.WriteLine($"Format change detected at row {rowIndex}, column {columnIndex}.");
+                Console.WriteLine($"Cell formatting revision at Row {rowIndex}, Column {columnIndex}");
             }
         }
 
-        // Save the compared document for inspection.
-        original.Save("ComparisonResult.docx");
+        // Save the compared document.
+        originalDoc.Save("comparison_result.docx");
     }
 }

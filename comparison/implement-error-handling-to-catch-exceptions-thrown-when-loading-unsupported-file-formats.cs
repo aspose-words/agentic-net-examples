@@ -7,57 +7,54 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document with some content.
-        Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");
+        // Create first sample document.
+        Document doc1 = new Document();
+        DocumentBuilder builder1 = new DocumentBuilder(doc1);
+        builder1.Writeln("First version of the document.");
 
-        // Create the revised document with a slight change.
-        Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello revised world.");
+        // Create second sample document with a difference.
+        Document doc2 = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(doc2);
+        builder2.Writeln("Second version with a change.");
 
-        // Save both documents to the local file system.
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "original.docx");
-        string revisedPath = Path.Combine(Directory.GetCurrentDirectory(), "revised.docx");
-        original.Save(originalPath);
-        revised.Save(revisedPath);
+        // Save the sample documents to the current directory.
+        string currentDir = Directory.GetCurrentDirectory();
+        string path1 = Path.Combine(currentDir, "doc1.docx");
+        string path2 = Path.Combine(currentDir, "doc2.docx");
+        doc1.Save(path1);
+        doc2.Save(path2);
 
-        // Create a dummy file with an unsupported format (plain text).
-        string unsupportedPath = Path.Combine(Directory.GetCurrentDirectory(), "unsupported.txt");
+        // Create an unsupported file (plain text) to trigger an exception.
+        string unsupportedPath = Path.Combine(currentDir, "unsupported.txt");
         File.WriteAllText(unsupportedPath, "Just some plain text.");
 
-        // Attempt to load the unsupported file as a Word document.
+        // Attempt to load the unsupported file and handle the exception.
         try
         {
-            // This line is expected to throw UnsupportedFileFormatException.
             Document unsupportedDoc = new Document(unsupportedPath);
+            // The line above is expected to throw; if it doesn't, we simply ignore the document.
         }
-        catch (UnsupportedFileFormatException ex)
+        catch (Exception ex)
         {
-            // Handle the exception gracefully and report it.
-            Console.WriteLine($"Caught UnsupportedFileFormatException: {ex.Message}");
+            Console.WriteLine($"Caught exception while loading unsupported file: {ex.Message}");
         }
 
-        // Load the previously saved valid documents.
-        Document loadedOriginal = new Document(originalPath);
-        Document loadedRevised = new Document(revisedPath);
+        // Load the supported documents for comparison.
+        Document baseDoc = new Document(path1);
+        Document revisedDoc = new Document(path2);
 
-        // Perform the comparison. Revisions will be added to the original document.
-        loadedOriginal.Compare(loadedRevised, "Author", DateTime.Now);
+        // Perform the comparison.
+        baseDoc.Compare(revisedDoc, "Comparer", DateTime.Now);
 
-        // Verify that revisions were created.
-        if (loadedOriginal.Revisions.Count > 0)
+        // Verify that revisions were generated.
+        if (baseDoc.Revisions.Count == 0)
         {
-            Console.WriteLine($"Comparison produced {loadedOriginal.Revisions.Count} revision(s).");
-        }
-        else
-        {
-            Console.WriteLine("No revisions were detected after comparison.");
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
         }
 
-        // Save the comparison result to a new file.
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "comparisonResult.docx");
-        loadedOriginal.Save(resultPath);
+        // Save the comparison result.
+        string resultPath = Path.Combine(currentDir, "comparisonResult.docx");
+        baseDoc.Save(resultPath);
+        Console.WriteLine($"Comparison completed. Result saved to: {resultPath}");
     }
 }

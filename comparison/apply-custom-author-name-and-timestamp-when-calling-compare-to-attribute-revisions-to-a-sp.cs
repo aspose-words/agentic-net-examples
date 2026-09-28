@@ -1,7 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
-public class CompareWithCustomAuthor
+public class Program
 {
     public static void Main()
     {
@@ -9,38 +10,41 @@ public class CompareWithCustomAuthor
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
         builderOriginal.Writeln("This is the original paragraph.");
+        builderOriginal.Writeln("It will be compared against the revised version.");
 
-        // Create the revised document with a modification.
+        // Create the revised document with modifications.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the edited paragraph with a change.");
+        builderRevised.Writeln("This is the revised paragraph."); // changed text
+        builderRevised.Writeln("It will be compared against the original version."); // changed text
 
         // Define custom author name and timestamp for the comparison.
-        string customAuthor = "CustomUser";
-        DateTime customDate = new DateTime(2023, 12, 31, 23, 59, 59, DateTimeKind.Utc);
+        string customAuthor = "John Doe";
+        DateTime customDate = new DateTime(2023, 1, 1, 12, 0, 0);
 
-        // Perform the comparison. Revisions will be attributed to the custom author and timestamp.
+        // Perform the comparison. Revisions will be attributed to the custom author and date.
         original.Compare(revised, customAuthor, customDate);
 
-        // Verify that revisions were created.
-        if (original.Revisions.Count == 0)
+        // Verify that revisions have the expected author and date.
+        int revisionCount = original.Revisions.Count;
+        Console.WriteLine($"Total revisions detected: {revisionCount}");
+
+        foreach (Revision revision in original.Revisions)
         {
-            throw new InvalidOperationException("Expected at least one revision after comparison.");
+            // Output revision details.
+            Console.WriteLine($"Revision Type: {revision.RevisionType}");
+            Console.WriteLine($"Author: {revision.Author}");
+            Console.WriteLine($"Date: {revision.DateTime}");
+
+            // Get the text associated with the revision via its parent node.
+            string revisionText = revision.ParentNode?.GetText() ?? string.Empty;
+            Console.WriteLine($"Text: {revisionText}");
+            Console.WriteLine(new string('-', 40));
         }
 
-        // Output revision details to the console.
-        foreach (Revision rev in original.Revisions)
-        {
-            Console.WriteLine($"Revision Type: {rev.RevisionType}");
-            Console.WriteLine($"Author: {rev.Author}");
-            Console.WriteLine($"Date: {rev.DateTime:u}");
-            Console.WriteLine($"Changed Text: \"{rev.ParentNode.GetText().Trim()}\"");
-            Console.WriteLine();
-        }
-
-        // Save the compared document (contains revisions) to the local folder.
-        string outputPath = "Compared.docx";
+        // Save the compared document with revisions.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
         original.Save(outputPath);
-        Console.WriteLine($"Comparison document saved to: {outputPath}");
+        Console.WriteLine($"Compared document saved to: {outputPath}");
     }
 }

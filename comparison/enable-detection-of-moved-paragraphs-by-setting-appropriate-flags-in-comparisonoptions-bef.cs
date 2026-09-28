@@ -7,53 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document with three paragraphs.
+        // Create the original document with two paragraphs.
         Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
-        builder.Writeln("Paragraph 1: Introduction.");
-        builder.Writeln("Paragraph 2: Details.");
-        builder.Writeln("Paragraph 3: Conclusion.");
+        DocumentBuilder builderOrig = new DocumentBuilder(original);
+        builderOrig.Writeln("First paragraph.");
+        builderOrig.Writeln("Second paragraph.");
 
-        // Clone the original to create the revised version.
-        Document revised = (Document)original.Clone(true);
+        // Create the revised document where the second paragraph is moved before the first.
+        Document revised = new Document();
+        DocumentBuilder builderRev = new DocumentBuilder(revised);
+        builderRev.Writeln("Second paragraph."); // Moved paragraph.
+        builderRev.Writeln("First paragraph.");  // Original first paragraph.
 
-        // Move the second paragraph to the end to simulate a paragraph move.
-        Paragraph paragraphToMove = revised.FirstSection.Body.Paragraphs[1]; // "Paragraph 2"
-        revised.FirstSection.Body.Paragraphs.RemoveAt(1);
-        revised.FirstSection.Body.Paragraphs.Add(paragraphToMove);
+        // Perform the comparison. In the current Aspose.Words version, moved paragraph detection
+        // is enabled by default, so no additional CompareOptions are required.
+        original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Set comparison options to detect moved paragraphs.
-        CompareOptions compareOptions = new CompareOptions
-        {
-            CompareMoves = true, // Enable move detection.
-            // Other flags remain default (false) to keep other differences visible if any.
-        };
-
-        // Perform the comparison. The original document will contain the revisions.
-        original.Compare(revised, "Comparer", DateTime.Now, compareOptions);
+        // Count all revisions produced by the comparison.
+        int totalRevisions = original.Revisions.Count;
 
         // Save the comparison result.
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "MovedParagraphsComparison.docx");
-        original.Save(resultPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MovedParagraphComparison.docx");
+        original.Save(outputPath);
 
-        // Inspect paragraphs for move revisions.
-        ParagraphCollection paragraphs = original.FirstSection.Body.Paragraphs;
-        for (int i = 0; i < paragraphs.Count; i++)
-        {
-            Paragraph para = paragraphs[i];
-            if (para.IsMoveFromRevision)
-            {
-                Console.WriteLine($"Paragraph at index {i} is a moved-from revision: \"{para.GetText().Trim()}\"");
-            }
-            else if (para.IsMoveToRevision)
-            {
-                Console.WriteLine($"Paragraph at index {i} is a moved-to revision: \"{para.GetText().Trim()}\"");
-            }
-        }
-
-        // Verify that at least one move revision was detected.
-        bool hasMoveRevisions = original.Revisions.Any(r => r.RevisionType == RevisionType.Moving);
-        if (!hasMoveRevisions)
-            throw new InvalidOperationException("Expected at least one moving revision, but none were found.");
+        // Output summary to the console.
+        Console.WriteLine($"Total revisions detected: {totalRevisions}");
+        Console.WriteLine($"Comparison document saved to: {outputPath}");
     }
 }

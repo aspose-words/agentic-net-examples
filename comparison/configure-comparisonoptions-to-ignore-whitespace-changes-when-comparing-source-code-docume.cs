@@ -7,57 +7,45 @@ public class ComparisonExample
 {
     public static void Main()
     {
-        // Prepare a temporary folder for the example files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonExample");
-        Directory.CreateDirectory(workDir);
-
-        // Create the original documentation file with extra whitespace.
-        Document originalDoc = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(originalDoc);
-        builderOriginal.Writeln("public class Sample");
+        // Create the first documentation file with specific whitespace.
+        Document docOriginal = new Document();
+        DocumentBuilder builderOriginal = new DocumentBuilder(docOriginal);
+        builderOriginal.Writeln("/// <summary>");
+        builderOriginal.Writeln("/// This method does something.");
+        builderOriginal.Writeln("/// </summary>");
+        builderOriginal.Writeln("public void DoWork()");
         builderOriginal.Writeln("{");
-        builderOriginal.Writeln("    // This method does something");
-        builderOriginal.Writeln("    public void DoWork( )   ");
-        builderOriginal.Writeln("    {");
-        builderOriginal.Writeln("        // TODO: implement");
-        builderOriginal.Writeln("    }");
+        builderOriginal.Writeln("    // Implementation");
         builderOriginal.Writeln("}");
-        string originalPath = Path.Combine(workDir, "Original.docx");
-        originalDoc.Save(originalPath);
 
-        // Create the revised documentation file with trimmed whitespace.
-        Document revisedDoc = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revisedDoc);
-        builderRevised.Writeln("public class Sample");
-        builderRevised.Writeln("{");
-        builderRevised.Writeln("// This method does something");
+        // Create the second documentation file that differs only by whitespace.
+        Document docRevised = new Document();
+        DocumentBuilder builderRevised = new DocumentBuilder(docRevised);
+        // Add extra spaces and blank lines.
+        builderRevised.Writeln("/// <summary>");
+        builderRevised.Writeln("");
+        builderRevised.Writeln("///   This method does something.   ");
+        builderRevised.Writeln("/// </summary>");
         builderRevised.Writeln("public void DoWork()");
         builderRevised.Writeln("{");
-        builderRevised.Writeln("// TODO: implement");
+        builderRevised.Writeln("        // Implementation");
         builderRevised.Writeln("}");
-        builderRevised.Writeln("}");
-        string revisedPath = Path.Combine(workDir, "Revised.docx");
-        revisedDoc.Save(revisedPath);
 
-        // Load the documents back (simulating real file usage).
-        Document doc1 = new Document(originalPath);
-        Document doc2 = new Document(revisedPath);
-
-        // Configure compare options to ignore whitespace/formatting changes.
-        CompareOptions options = new CompareOptions
+        // Configure compare options to ignore formatting (including whitespace) changes.
+        CompareOptions compareOptions = new CompareOptions
         {
             IgnoreFormatting = true
         };
 
         // Perform the comparison.
-        doc1.Compare(doc2, "Comparer", DateTime.Now, options);
+        docOriginal.Compare(docRevised, "Comparer", DateTime.Now, compareOptions);
 
-        // Verify that whitespace changes were ignored (no revisions expected).
-        int revisionCount = doc1.Revisions.Count;
-        Console.WriteLine($"Revisions count after comparison (ignoring whitespace): {revisionCount}");
+        // Output the number of revisions detected.
+        Console.WriteLine($"Revisions detected: {docOriginal.Revisions.Count}");
 
         // Save the comparison result.
-        string resultPath = Path.Combine(workDir, "ComparisonResult.docx");
-        doc1.Save(resultPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
+        docOriginal.Save(outputPath);
+        Console.WriteLine($"Comparison document saved to: {outputPath}");
     }
 }

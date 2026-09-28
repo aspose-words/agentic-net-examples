@@ -2,78 +2,69 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
-using Aspose.Words.Tables;
 
-public class Program
+public class ComparisonExample
 {
     public static void Main()
     {
-        // Create the original document with two sections.
+        // Create the original document with three sections.
         Document original = new Document();
         DocumentBuilder builder = new DocumentBuilder(original);
 
-        // Section 1
         builder.Writeln("Section 1 - Original content.");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Section 2
         builder.Writeln("Section 2 - Original content.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Section 3 - Original content.");
 
-        // Save the original for reference (optional).
+        // Save the original document (optional, for inspection).
         string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
         original.Save(originalPath);
 
-        // Clone the original to create the revised version.
-        Document revised = (Document)original.Clone(true);
+        // Create the revised document where only Section 2 is changed.
+        Document revised = new Document();
         DocumentBuilder revBuilder = new DocumentBuilder(revised);
 
-        // Modify text in Section 1.
-        revBuilder.MoveToSection(0);
-        revBuilder.Writeln("Section 1 - Revised content.");
+        revBuilder.Writeln("Section 1 - Original content.");
+        revBuilder.InsertBreak(BreakType.SectionBreakNewPage);
+        revBuilder.Writeln("Section 2 - Revised content with modification.");
+        revBuilder.InsertBreak(BreakType.SectionBreakNewPage);
+        revBuilder.Writeln("Section 3 - Original content.");
 
-        // Modify text in Section 2.
-        revBuilder.MoveToSection(1);
-        revBuilder.Writeln("Section 2 - Revised content.");
-
-        // Save the revised document (optional).
-        string revisedPath = Path.Combine(Directory.GetCurrentDirectory(), "Revised.docx");
-        revised.Save(revisedPath);
-
-        // Set up compare options – we will use the default options but specify the target document.
-        CompareOptions compareOptions = new CompareOptions
+        // Set compare options to ignore formatting changes.
+        CompareOptions options = new CompareOptions
         {
-            Target = ComparisonTargetType.New // Use the revised document as the target during comparison.
+            IgnoreFormatting = true
         };
 
-        // Perform the comparison. Revisions will be added to the original document.
-        original.Compare(revised, "Comparer", DateTime.Now, compareOptions);
+        // Perform the comparison; revisions are stored in the original document.
+        original.Compare(revised, "Comparer", DateTime.Now, options);
 
-        // Save the comparison result.
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.docx");
-        original.Save(resultPath);
-
-        // Analyze revisions only in Section 2 (index 1).
-        int sectionIndexToInspect = 1;
-        int revisionsInSection = 0;
+        // Target section index (zero‑based). We want revisions only from Section 2.
+        int targetSectionIndex = 1;
+        int revisionsInTargetSection = 0;
 
         foreach (Revision rev in original.Revisions)
         {
-            // Get the section that contains the revision's parent node.
-            Node? parent = rev.ParentNode;
-            if (parent == null) continue;
-
-            Section? section = parent.GetAncestor(NodeType.Section) as Section;
-            if (section == null) continue;
-
-            // Sections are stored in the document's Sections collection.
-            int currentIndex = original.Sections.IndexOf(section);
-            if (currentIndex == sectionIndexToInspect)
+            // Walk up the node hierarchy to find the containing Section.
+            Node? node = rev.ParentNode;
+            while (node != null && !(node is Section))
             {
-                revisionsInSection++;
-                Console.WriteLine($"Revision in Section {sectionIndexToInspect + 1}: Type={rev.RevisionType}, Text=\"{parent.GetText().Trim()}\"");
+                node = node.ParentNode;
+            }
+
+            if (node is Section section && original.Sections.IndexOf(section) == targetSectionIndex)
+            {
+                revisionsInTargetSection++;
             }
         }
 
-        Console.WriteLine($"Total revisions found in Section {sectionIndexToInspect + 1}: {revisionsInSection}");
+        // Report the findings.
+        Console.WriteLine($"Total revisions detected: {original.Revisions.Count}");
+        Console.WriteLine($"Revisions in Section {targetSectionIndex + 1}: {revisionsInTargetSection}");
+
+        // Save the document that now contains the revisions.
+        string comparedPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.docx");
+        original.Save(comparedPath);
     }
 }
