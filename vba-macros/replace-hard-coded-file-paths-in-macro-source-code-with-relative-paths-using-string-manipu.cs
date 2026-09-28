@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -7,62 +6,54 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = "Artifacts";
-        Directory.CreateDirectory(artifactsDir);
-
-        // Paths for the original and updated documents.
-        string originalPath = Path.Combine(artifactsDir, "MacroWithAbsolutePath.docm");
-        string updatedPath = Path.Combine(artifactsDir, "MacroWithRelativePath.docm");
-
-        // -------------------------------------------------
-        // Create a new macro‑enabled document with a VBA module that contains a hard‑coded absolute path.
-        // -------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
 
-        VbaProject project = new VbaProject();
-        project.Name = "SampleProject";
-        doc.VbaProject = project;
+        // Ensure the document has a VBA project.
+        doc.VbaProject = new VbaProject();
 
+        // Sample VBA macro source containing a hard‑coded absolute file path.
+        string originalVba =
+@"Sub Test()
+    Dim path As String
+    path = ""C:\Data\file.txt""
+    MsgBox path
+End Sub";
+
+        // Create a new VBA module, set its name and source code, then add it to the project.
         VbaModule module = new VbaModule();
-        module.Name = "PathModule";
-        module.Type = VbaModuleType.ProceduralModule;
-        module.SourceCode = @"
-Sub OpenFile()
-    Dim filePath As String
-    filePath = ""C:\Data\myfile.txt""
-    MsgBox ""Opening "" & filePath
-End Sub
-";
+        module.Name = "Module1";
+        module.SourceCode = originalVba;
         doc.VbaProject.Modules.Add(module);
 
-        // Save the document containing the absolute path.
-        doc.Save(originalPath);
+        // Retrieve the module (guard against null source code).
+        VbaModule targetModule = doc.VbaProject.Modules["Module1"];
+        string sourceCode = targetModule?.SourceCode ?? string.Empty;
 
-        // -------------------------------------------------
-        // Load the document and replace the absolute path with a relative one.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(originalPath);
+        // Replace the absolute path with a relative path (just the file name).
+        string absolutePath = @"C:\Data\file.txt";
+        string relativePath = "file.txt";
+        string updatedSource = sourceCode.Replace(absolutePath, relativePath);
 
-        if (loadedDoc.HasMacros && loadedDoc.VbaProject != null)
+        // Update the module's source code.
+        if (targetModule != null)
         {
-            foreach (VbaModule mod in loadedDoc.VbaProject.Modules)
-            {
-                // Guard against null source code.
-                string source = mod.SourceCode ?? string.Empty;
-
-                // Replace the hard‑coded part of the path.
-                string updatedSource = source.Replace(@"C:\Data\", @".\Data\");
-
-                mod.SourceCode = updatedSource;
-            }
+            targetModule.SourceCode = updatedSource;
         }
 
-        // Save the modified document.
-        loadedDoc.Save(updatedPath);
+        // Save the document in macro‑enabled format.
+        string outputPath = "output.docm";
+        doc.Save(outputPath);
 
-        // Simple console output to indicate completion.
-        Console.WriteLine("Original macro saved to: " + originalPath);
-        Console.WriteLine("Updated macro saved to: " + updatedPath);
+        // Reload the document to verify the change.
+        Document loadedDoc = new Document(outputPath);
+        VbaModule loadedModule = loadedDoc.VbaProject?.Modules["Module1"];
+        string loadedSource = loadedModule?.SourceCode ?? string.Empty;
+
+        // Simple validation output.
+        bool containsRelative = loadedSource.Contains(relativePath);
+        bool containsAbsolute = loadedSource.Contains(absolutePath);
+        Console.WriteLine($"Relative path present: {containsRelative}");
+        Console.WriteLine($"Absolute path present: {containsAbsolute}");
     }
 }
