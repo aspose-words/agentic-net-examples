@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class Program
 {
@@ -16,25 +15,25 @@ public class Program
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
         builderRevised.Writeln("Hello revised world.");
 
-        // Set up compare options. Use the default target (Current) so revisions are added to the
-        // document on which Compare is called (the original document).
-        CompareOptions compareOptions = new CompareOptions
+        // Perform the comparison so that revisions appear in the revised (new) document.
+        // By calling Compare on the revised document and passing the original as the source,
+        // the revisions are stored in the revised document.
+        revised.Compare(original, "Comparer", DateTime.Now);
+
+        // Verify that revisions are present in the revised document.
+        int revisionCount = revised.Revisions.Count;
+        if (revisionCount == 0)
         {
-            // No need to set Target; the default is ComparisonTargetType.Current.
-        };
+            throw new InvalidOperationException(
+                "Expected revisions in the revised document, but none were found.");
+        }
 
-        // Perform the comparison. Revisions will be added to the 'original' document.
-        original.Compare(revised, "John Doe", DateTime.Now, compareOptions);
+        // Save both documents.
+        string outputDir = Environment.CurrentDirectory;
+        original.Save(System.IO.Path.Combine(outputDir, "Original.docx"));
+        revised.Save(System.IO.Path.Combine(outputDir, "Revised_With_Revisions.docx"));
 
-        // Verify that revisions exist in the original document.
-        if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions in the original document, but none were found.");
-
-        // Save both documents for inspection.
-        original.Save("original_with_revisions.docx");
-        revised.Save("revised.docx");
-
-        // Output the number of revisions found in the original document.
-        Console.WriteLine($"Revisions in original document: {original.Revisions.Count}");
+        // Output revision count to console (non‑interactive).
+        Console.WriteLine($"Revisions in revised document: {revisionCount}");
     }
 }

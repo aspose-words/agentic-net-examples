@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class Program
 {
@@ -10,44 +7,50 @@ public class Program
     {
         // Create the original document.
         Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world."); // baseline content.
+        DocumentBuilder builder1 = new DocumentBuilder(original);
+        builder1.Writeln("Hello world.");
 
-        // Create the revised document with both formatting and content changes.
+        // Create the revised document with a formatting change (bold) and a content change.
         Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        // Same text but apply a formatting change (make it bold).
-        builderRevised.Writeln("Hello world.");
-        Paragraph para = revised.FirstSection.Body.FirstParagraph;
-        if (para?.Runs.Count > 0)
-        {
-            para.Runs[0].Font.Bold = true; // formatting revision.
-        }
-        // Add a new paragraph – this is a content insertion revision.
-        builderRevised.Writeln("Additional paragraph.");
+        DocumentBuilder builder2 = new DocumentBuilder(revised);
+        builder2.Font.Bold = true;
+        builder2.Write("Hello");
+        builder2.Font.Bold = false;
+        builder2.Write(" Aspose.");
+        builder2.Writeln();
 
-        // Perform the comparison. The original document will receive revisions.
+        // Compare the documents.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Ensure that revisions were generated.
-        if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("No revisions were created during comparison.");
+        // Count revisions before processing.
+        int totalRevisions = original.Revisions.Count;
+        int formattingRevisions = 0;
+        int contentRevisions = 0;
 
-        // Accept only formatting revisions, reject all other types.
-        List<Revision> revisions = original.Revisions.Cast<Revision>().ToList();
-        foreach (Revision rev in revisions)
+        foreach (Revision rev in original.Revisions)
         {
             if (rev.RevisionType == RevisionType.FormatChange)
-                rev.Accept();   // Keep the formatting change.
+                formattingRevisions++;
             else
-                rev.Reject();   // Discard content insertions/deletions.
+                contentRevisions++;
         }
 
-        // After processing, there should be no remaining revisions.
-        if (original.Revisions.Count != 0)
-            throw new InvalidOperationException("Some revisions were not processed correctly.");
+        // Accept only formatting revisions, reject all others.
+        // Iterate over a copy of the collection to avoid modifying it during enumeration.
+        while (original.Revisions.Count > 0)
+        {
+            Revision rev = original.Revisions[0];
+            if (rev.RevisionType == RevisionType.FormatChange)
+                rev.Accept();
+            else
+                rev.Reject();
+        }
 
-        // Save the final document.
+        // Verify that all revisions have been processed.
+        if (original.Revisions.Count != 0)
+            throw new InvalidOperationException("All revisions should be processed.");
+
+        // Save the resulting document.
         original.Save("Result.docx");
     }
 }

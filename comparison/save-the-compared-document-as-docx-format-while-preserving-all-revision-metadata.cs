@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -6,33 +7,29 @@ public class Program
     public static void Main()
     {
         // Create the original document with some content.
-        var original = new Document();
-        var builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");
-        builderOriginal.Writeln("This line will be deleted.");
+        Document original = new Document();
+        DocumentBuilder builderOriginal = new DocumentBuilder(original);
+        builderOriginal.Writeln("This is the original document.");
+        builderOriginal.Writeln("It contains a few lines of text.");
 
-        // Create the revised document that has intentional differences.
-        var revised = new Document();
-        var builderRevised = new DocumentBuilder(revised);
-        // Modify the first line.
-        builderRevised.Writeln("Hello world! Modified.");
-        // Omit the line that existed in the original (deletion).
-        // Add a new line (insertion).
-        builderRevised.Writeln("This line is new.");
+        // Create the revised document with differences.
+        Document revised = new Document();
+        DocumentBuilder builderRevised = new DocumentBuilder(revised);
+        builderRevised.Writeln("This is the revised document."); // Modified line.
+        builderRevised.Writeln("It contains a few lines of text."); // Same line.
+        builderRevised.Writeln("An additional line is added."); // New line.
 
-        // Ensure both documents are free of revisions before comparison.
-        if (original.Revisions.Count != 0 || revised.Revisions.Count != 0)
-            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
-
-        // Perform the comparison. Revisions are added to the original document.
+        // Perform comparison. Revisions will be added to the original document.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Verify that at least one revision was created.
+        // Verify that revisions were created.
         if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after comparison.");
+        {
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
+        }
 
         // Save the compared document preserving all revision metadata.
-        const string outputFile = "ComparedWithRevisions.docx";
-        original.Save(outputFile);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparedDocument.docx");
+        original.Save(outputPath, SaveFormat.Docx);
     }
 }

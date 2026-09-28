@@ -1,22 +1,27 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class RevisionLogger
 {
-    private readonly StringBuilder _logBuilder = new StringBuilder();
+    private readonly string _logPath;
 
-    public void Log(Revision revision)
+    public RevisionLogger(string logPath)
     {
-        // Record revision type, author and timestamp in ISO 8601 format.
-        _logBuilder.AppendLine($"{revision.RevisionType}\t{revision.Author}\t{revision.DateTime:O}");
+        _logPath = logPath ?? throw new ArgumentNullException(nameof(logPath));
+
+        // Ensure the directory for the log file exists.
+        string? directory = Path.GetDirectoryName(_logPath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
     }
 
-    public void Save(string filePath)
+    public void Log(string message)
     {
-        File.WriteAllText(filePath, _logBuilder.ToString());
+        if (message == null) throw new ArgumentNullException(nameof(message));
+        File.AppendAllText(_logPath, message + Environment.NewLine);
     }
 }
 
@@ -24,42 +29,54 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document.
+        // Paths for the compared document and the revision log.
+        string outputDocPath = Path.Combine(Directory.GetCurrentDirectory(), "compared.docx");
+        string logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "revision_log.txt");
+
+        // ----- Create the original document -----
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world!");
-        builderOriginal.Writeln("This line will stay unchanged.");
+        builderOriginal.Writeln("This is the first paragraph.");
+        builderOriginal.Writeln("This paragraph will be deleted in the revised version.");
+        builderOriginal.Writeln("This paragraph will stay unchanged.");
 
-        // Create the revised document with some modifications.
+        // ----- Create the revised document with intentional differences -----
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello Aspose.Words!"); // Modified text.
-        builderRevised.Writeln("This line will stay unchanged.");
-        builderRevised.Writeln("An extra line added."); // Insertion.
+        builderRevised.Writeln("This is the first paragraph."); // unchanged
+        // Deleted paragraph omitted.
+        builderRevised.Writeln("This paragraph has been inserted in the revised version."); // insertion
+        builderRevised.Writeln("This paragraph will stay unchanged."); // unchanged
 
-        // Perform comparison. Author and timestamp are required.
-        string author = "Comparer";
-        DateTime compareTime = DateTime.Now;
-        original.Compare(revised, author, compareTime);
+        // Change formatting of a paragraph.
+        builderRevised.Writeln("Formatted paragraph.");
+        builderRevised.Font.Bold = true;
+        builderRevised.Writeln("Bold text added.");
 
-        // Verify that revisions were detected.
-        if (original.Revisions.Count == 0)
+        // ----- Perform comparison -----
+        string author = "RevisionLogger";
+        DateTime compareDate = DateTime.Now;
+        original.Compare(revised, author, compareDate);
+
+        // ----- Initialize logger and write header -----
+        RevisionLogger logger = new RevisionLogger(logFilePath);
+        logger.Log($"Revision Log - Generated on {DateTime.Now:O}");
+        logger.Log(new string('-', 50));
+
+        // ----- Inspect revisions and log details -----
+        foreach (Revision revision in original.Revisions)
         {
-            throw new InvalidOperationException("No revisions were detected after comparison.");
+            string type = revision.RevisionType.ToString();
+            string revAuthor = revision.Author ?? "Unknown";
+
+            // Aspose.Words versions prior to 22.5 do not expose a RevisionDate property.
+            // Use the current time as a timestamp for logging purposes.
+            DateTime timestamp = DateTime.Now;
+
+            logger.Log($"Type: {type}, Author: {revAuthor}, Timestamp: {timestamp:O}");
         }
 
-        // Log each revision's details.
-        RevisionLogger logger = new RevisionLogger();
-        foreach (Revision rev in original.Revisions)
-        {
-            logger.Log(rev);
-        }
-
-        // Save the compared document and the revision log.
-        string outputDocPath = Path.Combine(Directory.GetCurrentDirectory(), "compared.docx");
+        // ----- Save the document that contains the revisions -----
         original.Save(outputDocPath);
-
-        string logPath = Path.Combine(Directory.GetCurrentDirectory(), "revision_log.txt");
-        logger.Save(logPath);
     }
 }

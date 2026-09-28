@@ -1,47 +1,58 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
-public class Program
+public class OrientationComparisonExample
 {
     public static void Main()
     {
-        // Create the original document with default (portrait) orientation.
-        Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("This document is in portrait orientation.");
-        // Ensure the orientation is explicitly set to Portrait for clarity.
-        builderOriginal.PageSetup.Orientation = Orientation.Portrait;
+        // Create the first document with portrait orientation.
+        Document portraitDoc = new Document();
+        DocumentBuilder portraitBuilder = new DocumentBuilder(portraitDoc);
+        portraitBuilder.PageSetup.Orientation = Orientation.Portrait;
+        portraitBuilder.Writeln("This document is in portrait orientation.");
 
-        // Create the revised document and change its orientation to Landscape.
-        Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.PageSetup.Orientation = Orientation.Landscape;
-        builderRevised.Writeln("This document is in landscape orientation.");
+        // Create the second document with landscape orientation.
+        Document landscapeDoc = new Document();
+        DocumentBuilder landscapeBuilder = new DocumentBuilder(landscapeDoc);
+        landscapeBuilder.PageSetup.Orientation = Orientation.Landscape;
+        landscapeBuilder.Writeln("This document is in landscape orientation.");
 
-        // Compare the two documents. Revisions will be added to the original document.
-        original.Compare(revised, "Comparer", DateTime.Now);
+        // Compare the two documents.
+        string author = "OrientationComparer";
+        DateTime compareDate = DateTime.Now;
+        portraitDoc.Compare(landscapeDoc, author, compareDate);
 
         // Verify that at least one revision exists.
-        if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
-
-        // Check that a format change revision (orientation change) is present.
-        bool hasFormatChange = false;
-        foreach (Revision rev in original.Revisions)
+        int totalRevisions = portraitDoc.Revisions.Count;
+        if (totalRevisions == 0)
         {
-            if (rev.RevisionType == RevisionType.FormatChange)
+            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
+        }
+
+        // Check whether any revision corresponds to a section (orientation) change.
+        bool orientationRevisionFound = false;
+        foreach (Revision rev in portraitDoc.Revisions)
+        {
+            if (rev.RevisionType == RevisionType.FormatChange && rev.ParentNode != null && rev.ParentNode.NodeType == NodeType.Section)
             {
-                hasFormatChange = true;
+                // The format change on a Section node indicates an orientation change.
+                orientationRevisionFound = true;
                 break;
             }
         }
 
-        if (!hasFormatChange)
-            throw new InvalidOperationException("Expected a format change revision for orientation, but none was found.");
+        if (!orientationRevisionFound)
+        {
+            throw new InvalidOperationException("Orientation change was not detected as a revision.");
+        }
 
-        // Save the compared document with revisions.
+        // Save the comparison result.
         string outputPath = "OrientationComparison.docx";
-        original.Save(outputPath);
+        portraitDoc.Save(outputPath);
+
+        // Output a simple summary.
+        Console.WriteLine($"Comparison completed. Total revisions: {totalRevisions}");
+        Console.WriteLine($"Orientation change detected as revision: {orientationRevisionFound}");
+        Console.WriteLine($"Result saved to: {outputPath}");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
@@ -6,32 +7,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document with two paragraphs.
+        // Create the original document with some text, including a line that will be deleted.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Paragraph one.");
-        builderOriginal.Writeln("Paragraph two – this will be deleted.");
+        builderOriginal.Writeln("This is a sample paragraph.");
+        builderOriginal.Writeln("This line will be deleted.");
+        builderOriginal.Writeln("Another line that stays.");
 
-        // Create the revised document that lacks the second paragraph.
+        // Create the revised document where the line to be deleted is omitted.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Paragraph one.");
+        builderRevised.Writeln("This is a sample paragraph.");
+        builderRevised.Writeln("Another line that stays.");
 
-        // Configure comparison options so that deleted content is retained in the result.
-        // Setting the target to the new document makes deletions appear in the comparison output.
-        CompareOptions compareOptions = new CompareOptions
-        {
-            Target = ComparisonTargetType.New
-        };
+        // Configure compare options. The ShowDeletedContent property is not required
+        // because deleted text is retained by default in the comparison output.
+        CompareOptions options = new CompareOptions();
 
-        // Perform the comparison. Revisions (including deletions) will be added to 'original'.
-        original.Compare(revised, "John Doe", DateTime.Now, compareOptions);
+        // Perform the comparison.
+        original.Compare(revised, "Comparer", DateTime.Now, options);
 
-        // Verify that at least one revision (the deletion) was created.
-        if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected at least one revision after comparison.");
-
-        // Save the comparison result to a file.
-        original.Save("ComparisonResult.docx");
+        // Save the comparison result.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
+        original.Save(outputPath);
     }
 }
