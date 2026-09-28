@@ -1,71 +1,90 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
 using System.Drawing;
 
-public class Program
+namespace WatermarkTableCellExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a 4x4 table.
-        Table table = builder.StartTable();
-        for (int row = 0; row < 4; row++)
+        public static void Main()
         {
-            for (int col = 0; col < 4; col++)
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build a 4x4 table.
+            Table table = new Table(doc);
+            table.SetBorders(LineStyle.Single, 1.0, Color.Black);
+
+            for (int i = 0; i < 4; i++)
             {
-                builder.InsertCell();
-                builder.Write($"R{row}C{col}");
+                Row row = new Row(doc);
+                for (int j = 0; j < 4; j++)
+                {
+                    Cell cell = new Cell(doc);
+                    cell.AppendChild(new Paragraph(doc));
+                    cell.FirstParagraph.AppendChild(new Run(doc, $"R{i + 1}C{j + 1}"));
+                    row.Cells.Add(cell);
+                }
+                table.Rows.Add(row);
             }
-            builder.EndRow();
+
+            // Insert the table into the document body.
+            doc.FirstSection.Body.AppendChild(table);
+
+            // Define the top‑left cell of the spanning area (row 2, column 2 in 1‑based indexing).
+            Cell spanningCell = table.Rows[1].Cells[1];
+
+            // Merge cells to span rows 2‑3 and columns 2‑3.
+            spanningCell.CellFormat.HorizontalMerge = CellMerge.First;
+            spanningCell.CellFormat.VerticalMerge = CellMerge.First;
+
+            Cell topRight = table.Rows[1].Cells[2];
+            topRight.CellFormat.HorizontalMerge = CellMerge.Previous;
+            topRight.CellFormat.VerticalMerge = CellMerge.First;
+
+            Cell bottomLeft = table.Rows[2].Cells[1];
+            bottomLeft.CellFormat.HorizontalMerge = CellMerge.First;
+            bottomLeft.CellFormat.VerticalMerge = CellMerge.Previous;
+
+            Cell bottomRight = table.Rows[2].Cells[2];
+            bottomRight.CellFormat.HorizontalMerge = CellMerge.Previous;
+            bottomRight.CellFormat.VerticalMerge = CellMerge.Previous;
+
+            // Create a rectangle shape to act as a watermark inside the merged cell.
+            Shape watermarkShape = new Shape(doc, ShapeType.Rectangle);
+            watermarkShape.Width = 200;
+            watermarkShape.Height = 100;
+            watermarkShape.WrapType = WrapType.None;
+            watermarkShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Column;
+            watermarkShape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
+            watermarkShape.FillColor = Color.FromArgb(128, Color.LightGray); // Semi‑transparent.
+            watermarkShape.StrokeColor = Color.Gray;
+
+            // Add centered text to the shape.
+            Paragraph shapeParagraph = new Paragraph(doc);
+            Run run = new Run(doc, "CONFIDENTIAL");
+            run.Font.Size = 24;
+            run.Font.Color = Color.Red;
+            shapeParagraph.AppendChild(run);
+            shapeParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            watermarkShape.AppendChild(shapeParagraph);
+
+            // Insert the shape into the merged cell.
+            spanningCell.FirstParagraph.AppendChild(watermarkShape);
+
+            // Save the document.
+            string outputPath = "WatermarkTableCell.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (File.Exists(outputPath))
+            {
+                Console.WriteLine($"Document saved successfully to {outputPath}");
+            }
         }
-        builder.EndTable();
-
-        // Merge the top‑left four cells to create a cell that spans two rows and two columns.
-        Cell startCell = table.Rows[0].Cells[0];
-        startCell.CellFormat.HorizontalMerge = CellMerge.First;
-        startCell.CellFormat.VerticalMerge = CellMerge.First;
-
-        table.Rows[0].Cells[1].CellFormat.HorizontalMerge = CellMerge.Previous;
-        table.Rows[1].Cells[0].CellFormat.VerticalMerge = CellMerge.Previous;
-
-        Cell bottomRightCell = table.Rows[1].Cells[1];
-        bottomRightCell.CellFormat.HorizontalMerge = CellMerge.Previous;
-        bottomRightCell.CellFormat.VerticalMerge = CellMerge.Previous;
-
-        // Move the cursor to the merged cell.
-        builder.MoveToCell(0, 0, 0, 0); // tableIndex, rowIndex, columnIndex, cellIndex
-
-        // Insert a rectangle shape that will act as a watermark inside the cell.
-        Shape watermark = builder.InsertShape(ShapeType.Rectangle, 200, 50);
-        watermark.WrapType = WrapType.None;               // No text wrapping.
-        watermark.BehindText = true;                      // Appear behind cell content.
-        watermark.RelativeHorizontalPosition = RelativeHorizontalPosition.Column;
-        watermark.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
-        watermark.FillColor = Color.LightGray;            // Light background.
-        watermark.StrokeColor = Color.Gray;               // Border color.
-
-        // Add visible text inside the shape.
-        Paragraph para = new Paragraph(doc);
-        para.AppendChild(new Run(doc, "CONFIDENTIAL"));
-        watermark.AppendChild(para);
-
-        // Position the shape to fill the merged cell.
-        watermark.Left = 0;
-        watermark.Top = 0;
-
-        // Save the document.
-        string outputPath = "WatermarkedTableCell.docx";
-        doc.Save(outputPath);
-
-        // Simple validation that the file was created.
-        Console.WriteLine(File.Exists(outputPath)
-            ? $"Document saved successfully to '{outputPath}'."
-            : "Failed to save the document.");
     }
 }

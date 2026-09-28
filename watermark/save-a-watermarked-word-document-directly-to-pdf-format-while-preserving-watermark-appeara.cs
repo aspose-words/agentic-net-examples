@@ -1,40 +1,36 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder and file name.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputFolder);
-        string pdfFile = Path.Combine(outputFolder, "WatermarkedDocument.pdf");
-
-        // Create a new blank Word document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Add some content so the document has visible pages.
+        // Add a paragraph with sample text so the PDF is not empty.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document with a watermark.");
-        builder.Writeln("The watermark should be visible in the resulting PDF.");
-
-        // Define watermark appearance.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
-        {
-            FontFamily = "Arial",
-            FontSize = 48,
-            Color = Color.Gray,
-            Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = false
-        };
+        builder.Writeln("This is a sample document with a text watermark.");
 
         // Apply a text watermark to the document.
-        doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
+        doc.Watermark.SetText("CONFIDENTIAL");
 
-        // Save the document directly as PDF, preserving the watermark.
-        doc.Save(pdfFile, SaveFormat.Pdf);
+        // Define the output PDF file path.
+        string outputPath = "Watermarked.pdf";
+
+        // Save the document directly to PDF format.
+        doc.Save(outputPath, SaveFormat.Pdf);
+
+        // Validate that the PDF file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"PDF saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the PDF file.");
+        }
     }
 }

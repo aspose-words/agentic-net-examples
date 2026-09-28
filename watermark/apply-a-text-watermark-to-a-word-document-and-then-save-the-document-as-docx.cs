@@ -6,14 +6,18 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank Word document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Apply a text watermark to the document.
-        doc.Watermark.SetText("Confidential");
+        // Add some sample content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document.");
+
+        // Apply a text watermark to the entire document.
+        doc.Watermark.SetText("CONFIDENTIAL");
 
         // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Watermarked.docx");
+        string outputPath = "WatermarkedDocument.docx";
 
         // Save the document as DOCX.
         doc.Save(outputPath);
@@ -21,7 +25,7 @@ public class Program
         // Validate that the file was created.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine("Watermark applied and document saved successfully.");
+            Console.WriteLine($"Document saved successfully: {outputPath}");
         }
     }
 }

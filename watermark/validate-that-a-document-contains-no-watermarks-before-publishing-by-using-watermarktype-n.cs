@@ -6,30 +6,23 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string sourcePath = Path.Combine(artifactsDir, "Sample.docx");
-
-        // Create a blank document (no watermark).
+        // Create a sample document without any watermark.
+        string docPath = "NoWatermark.docx";
         Document doc = new Document();
-        doc.EnsureMinimum();
-        doc.Save(sourcePath);
+        doc.Save(docPath);
 
-        // Load the document to validate.
-        Document loadedDoc = new Document(sourcePath);
+        // Load the document for validation.
+        Document loadedDoc = new Document(docPath);
 
         // Check that the document has no watermark.
-        bool hasNoWatermark = loadedDoc.Watermark.Type == WatermarkType.None;
-        Console.WriteLine(hasNoWatermark
-            ? "Validation passed: No watermark present."
-            : "Validation failed: Watermark detected.");
+        // The WatermarkType enum is defined in the Aspose.Words namespace.
+        bool hasNoWatermark = loadedDoc.Watermark.Type == Aspose.Words.WatermarkType.None;
 
-        // If validation succeeds, simulate publishing by saving a copy.
-        if (hasNoWatermark)
-        {
-            string publishedPath = Path.Combine(artifactsDir, "Published.docx");
-            loadedDoc.Save(publishedPath);
-        }
+        // Output the validation result.
+        Console.WriteLine(hasNoWatermark ? "No watermark detected." : "Watermark detected.");
+
+        // Write a simple validation report to a file.
+        string reportPath = "validation.txt";
+        File.WriteAllText(reportPath, hasNoWatermark ? "Document has no watermarks." : "Document contains watermarks.");
     }
 }

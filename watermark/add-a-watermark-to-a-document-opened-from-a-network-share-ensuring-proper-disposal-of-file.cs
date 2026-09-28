@@ -1,62 +1,47 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define a folder that simulates a network share.
-        string networkShareFolder = Path.Combine(Path.GetTempPath(), "NetworkShare");
-        Directory.CreateDirectory(networkShareFolder);
+        // Simulate a network share by using a temporary folder.
+        string networkSharePath = Path.Combine(Path.GetTempPath(), "NetworkShare");
+        Directory.CreateDirectory(networkSharePath);
 
-        // Paths for the source and output documents on the simulated network share.
-        string sourceDocPath = Path.Combine(networkShareFolder, "Source.docx");
-        string outputDocPath = Path.Combine(networkShareFolder, "Watermarked.docx");
+        // Path for the source document on the "network share".
+        string sourceDocPath = Path.Combine(networkSharePath, "source.docx");
+        // Path for the output document with the watermark.
+        string outputDocPath = Path.Combine(networkSharePath, "output.docx");
 
-        // -----------------------------------------------------------------
-        // 1. Create a blank document and save it to the network share.
-        // -----------------------------------------------------------------
-        var blankDoc = new Document();
-        // Use a FileStream inside a using block to ensure the file handle is released.
-        using (FileStream createStream = File.Create(sourceDocPath))
+        // Create a simple sample document and save it to the network share location.
+        var sampleDoc = new Document();
+        var builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Hello World!");
+        sampleDoc.Save(sourceDocPath);
+
+        // Open the document from the network share using a FileStream to ensure proper handle disposal.
+        using (FileStream stream = new FileStream(sourceDocPath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read))
         {
-            blankDoc.Save(createStream, SaveFormat.Docx);
+            // Load the document from the stream.
+            var doc = new Document(stream);
+
+            // Add a text watermark.
+            doc.Watermark.SetText("CONFIDENTIAL");
+
+            // Save the watermarked document back to the network share.
+            doc.Save(outputDocPath);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Load the document from the network share.
-        // -----------------------------------------------------------------
-        Document loadedDoc;
-        using (FileStream readStream = File.OpenRead(sourceDocPath))
-        {
-            loadedDoc = new Document(readStream);
-        }
-
-        // -----------------------------------------------------------------
-        // 3. Add a text watermark to the loaded document.
-        // -----------------------------------------------------------------
-        loadedDoc.Watermark.SetText("Confidential");
-
-        // -----------------------------------------------------------------
-        // 4. Save the watermarked document back to the network share.
-        // -----------------------------------------------------------------
-        using (FileStream writeStream = File.Create(outputDocPath))
-        {
-            loadedDoc.Save(writeStream, SaveFormat.Docx);
-        }
-
-        // -----------------------------------------------------------------
-        // 5. Simple validation that the output file exists.
-        // -----------------------------------------------------------------
+        // Simple validation that the output file was created.
         if (File.Exists(outputDocPath))
         {
-            Console.WriteLine("Watermark applied successfully. Output file: " + outputDocPath);
+            Console.WriteLine("Watermark applied successfully. Output saved to: " + outputDocPath);
         }
         else
         {
-            Console.WriteLine("Failed to create the watermarked document.");
+            Console.WriteLine("Failed to create the output document.");
         }
     }
 }

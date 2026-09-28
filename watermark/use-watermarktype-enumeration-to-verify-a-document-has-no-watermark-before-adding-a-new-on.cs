@@ -1,21 +1,29 @@
 using System;
 using Aspose.Words;
 
-public class Program
+namespace WatermarkDemo
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Check if the document currently has no watermark.
-        if (doc.Watermark.Type == WatermarkType.None)
+        public static void Main()
         {
-            // Since there is no watermark, add a text watermark.
-            doc.Watermark.SetText("Confidential");
-        }
+            // Create a new empty document.
+            Document doc = new Document();
 
-        // Save the resulting document to the local file system.
-        doc.Save("Result.docx");
+            // Verify that the document does not contain any watermark.
+            // WatermarkType.None indicates the absence of a watermark.
+            if (doc.Watermark.Type == WatermarkType.None)
+            {
+                // Add a text watermark because none exists.
+                doc.Watermark.SetText("CONFIDENTIAL");
+            }
+
+            // Save the resulting document.
+            const string outputPath = "Result.docx";
+            doc.Save(outputPath);
+
+            // Simple verification that the file was created.
+            Console.WriteLine($"Document saved to '{outputPath}'. Watermark added: {doc.Watermark.Type != WatermarkType.None}");
+        }
     }
 }
