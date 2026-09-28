@@ -6,35 +6,46 @@ public class Program
 {
     public static void Main()
     {
-        // Define folder and file names.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string inputPath = Path.Combine(artifactsDir, "DocumentWithWatermark.docx");
-        string outputPath = Path.Combine(artifactsDir, "DocumentWithoutWatermark.docx");
+        // Paths for the sample input and output documents.
+        string inputPath = "SampleWithWatermark.docx";
+        string outputPath = "SampleWithoutWatermark.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document and add a text watermark.
+        // Step 1: Create a sample document and add a text watermark.
         // -----------------------------------------------------------------
-        Document docWithWatermark = new Document();
-        docWithWatermark.Watermark.SetText("Sample Watermark");
-        docWithWatermark.Save(inputPath);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document with a watermark.");
+
+        // Add a text watermark using the Document.Watermark API.
+        doc.Watermark.SetText("CONFIDENTIAL");
+
+        // Save the document that contains the watermark.
+        doc.Save(inputPath);
 
         // -----------------------------------------------------------------
-        // 2. Load the document that contains the watermark.
+        // Step 2: Load the document that contains the watermark.
         // -----------------------------------------------------------------
         Document loadedDoc = new Document(inputPath);
 
         // -----------------------------------------------------------------
-        // 3. Remove the watermark if it exists.
+        // Step 3: Remove all existing watermarks.
         // -----------------------------------------------------------------
-        if (loadedDoc.Watermark.Type != WatermarkType.None)
-        {
-            loadedDoc.Watermark.Remove();
-        }
+        loadedDoc.Watermark.Remove();
 
         // -----------------------------------------------------------------
-        // 4. Save the document without the watermark.
+        // Step 4: Save the document after watermark removal.
         // -----------------------------------------------------------------
         loadedDoc.Save(outputPath);
+
+        // Simple validation that the output file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Watermark removed successfully. Output saved to '{outputPath}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the output document.");
+        }
     }
 }

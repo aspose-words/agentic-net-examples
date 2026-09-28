@@ -1,52 +1,36 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
-public class BatchWatermark
+public class Program
 {
     public static void Main()
     {
-        // Define folders for input and output documents.
-        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        // Define a folder for sample input documents.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        Directory.CreateDirectory(inputFolder);
 
-        // Ensure the directories exist.
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
-
-        // Create sample source documents if the input folder is empty.
-        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
+        // Create a few sample Word documents.
+        for (int i = 1; i <= 3; i++)
         {
-            for (int i = 1; i <= 3; i++)
-            {
-                Document sampleDoc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-                builder.Writeln($"This is sample document {i}.");
-                string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
-                sampleDoc.Save(samplePath);
-            }
+            string samplePath = Path.Combine(inputFolder, $"Sample{i}.docx");
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is sample document {i}.");
+            doc.Save(samplePath);
         }
 
-        // Process each .docx file in the input directory.
-        string[] docFiles = Directory.GetFiles(inputDir, "*.docx");
-        foreach (string filePath in docFiles)
+        // Batch process each .docx file in the folder and add a text watermark.
+        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            // Load the document.
-            Document doc = new Document(filePath);
-
-            // Add a text watermark.
-            doc.Watermark.SetText("Confidential");
-
-            // Save the watermarked document to the output directory.
-            string fileName = Path.GetFileName(filePath);
-            string outputPath = Path.Combine(outputDir, fileName);
-            doc.Save(outputPath);
-
-            Console.WriteLine($"Watermarked '{fileName}' and saved to OutputDocs.");
+            var doc = new Document(filePath);
+            // Apply a simple text watermark.
+            doc.Watermark.SetText("CONFIDENTIAL");
+            // Overwrite the original file with the watermarked version.
+            doc.Save(filePath);
         }
 
-        Console.WriteLine("Batch processing completed.");
+        // Indicate completion.
+        Console.WriteLine("Text watermark applied to all documents.");
     }
 }

@@ -1,55 +1,37 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using SkiaSharp;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank Word document.
+        // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document with barcode watermark.");
 
-        // A minimal PNG image (1x1 pixel, black) represented as a byte array.
-        // This serves as a placeholder for a dynamically generated barcode image.
-        byte[] pngBytes = new byte[]
+        // Base64‑encoded PNG image (1×1 pixel) to simulate a barcode image.
+        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X6WcAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+
+        // Decode the image bytes into an SKBitmap (required by Aspose.Words Watermark API).
+        using SKBitmap bitmap = SKBitmap.Decode(imageBytes);
+        if (bitmap == null)
         {
-            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A, // PNG signature
-            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52, // IHDR chunk
-            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01, // width=1, height=1
-            0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,
-            0x00,0x00,0x00,0x0A,0x49,0x44,0x41,0x54,
-            0x08,0xD7,0x63,0xF8,0xCF,0xC0,0x00,0x00,
-            0x04,0x00,0x01,0xE2,0x26,0x05,0x9B,
-            0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,
-            0xAE,0x42,0x60,0x82
-        };
-
-        // Load the image bytes into a memory stream.
-        using (MemoryStream imageStream = new MemoryStream(pngBytes))
-        {
-            // Ensure the stream is positioned at the beginning.
-            imageStream.Position = 0;
-
-            // Configure watermark options (optional).
-            ImageWatermarkOptions options = new ImageWatermarkOptions
-            {
-                // Example: make the watermark more visible.
-                IsWashout = false,
-                Scale = 5
-            };
-
-            // Apply the image watermark using the stream.
-            doc.Watermark.SetImage(imageStream, options);
+            Console.WriteLine("Failed to decode the barcode image.");
+            return;
         }
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BarcodeWatermark.docx");
+        // Apply the image as a watermark.
+        doc.Watermark.SetImage(bitmap);
 
         // Save the document.
+        string outputPath = "WatermarkedDoc.docx";
         doc.Save(outputPath);
 
-        // Simple validation: ensure the file was created.
+        // Simple validation that the file was created.
         if (File.Exists(outputPath))
         {
             Console.WriteLine($"Document saved successfully: {outputPath}");
