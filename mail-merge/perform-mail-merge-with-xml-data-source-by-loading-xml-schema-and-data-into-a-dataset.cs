@@ -2,77 +2,81 @@ using System;
 using System.Data;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.MailMerging;
 
-public class MailMergeXmlExample
+public class Program
 {
     public static void Main()
     {
-        // Create a simple mail merge template document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Write("Dear ");
-        builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
-        builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName", "<LastName>");
-        builder.Writeln(":");
-        builder.InsertField("MERGEFIELD Message", "<Message>");
-        builder.Writeln();
+        // Create a simple template document with mail merge fields.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Customer List:");
+        builder.Writeln("Name: <<Name>>");
+        builder.Writeln("Address: <<Address>>");
+        builder.Writeln("--------------------");
+        // Save the template to a file.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // Prepare temporary folder for XML files.
-        string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "MailMergeData");
-        Directory.CreateDirectory(dataFolder);
-
-        // XML schema defining the structure of the data.
-        string schemaPath = Path.Combine(dataFolder, "persons.xsd");
-        File.WriteAllText(schemaPath,
-@"<?xml version=""1.0"" encoding=""utf-8""?>
+        // XML schema defining the data structure.
+        string xmlSchema = @"<?xml version=""1.0""?>
 <xs:schema xmlns:xs=""http://www.w3.org/2001/XMLSchema"">
-  <xs:element name=""persons"">
+  <xs:element name=""Customers"">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name=""person"" maxOccurs=""unbounded"">
+        <xs:element name=""Customer"" maxOccurs=""unbounded"">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name=""FirstName"" type=""xs:string"" />
-              <xs:element name=""LastName"" type=""xs:string"" />
-              <xs:element name=""Message"" type=""xs:string"" />
+              <xs:element name=""Name"" type=""xs:string""/>
+              <xs:element name=""Address"" type=""xs:string""/>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-</xs:schema>");
+</xs:schema>";
 
         // XML data matching the schema.
-        string dataPath = Path.Combine(dataFolder, "persons.xml");
-        File.WriteAllText(dataPath,
-@"<?xml version=""1.0"" encoding=""utf-8""?>
-<persons>
-  <person>
-    <FirstName>John</FirstName>
-    <LastName>Doe</LastName>
-    <Message>Hello, this is a merged message.</Message>
-  </person>
-  <person>
-    <FirstName>Jane</FirstName>
-    <LastName>Smith</LastName>
-    <Message>Welcome to the mail merge example.</Message>
-  </person>
-</persons>");
+        string xmlData = @"<?xml version=""1.0""?>
+<Customers>
+  <Customer>
+    <Name>John Doe</Name>
+    <Address>123 Main St</Address>
+  </Customer>
+  <Customer>
+    <Name>Jane Smith</Name>
+    <Address>456 Oak Ave</Address>
+  </Customer>
+</Customers>";
 
-        // Load XML schema and data into a DataSet.
+        // Load schema and data into a DataSet.
         DataSet dataSet = new DataSet();
-        dataSet.ReadXmlSchema(schemaPath);
-        dataSet.ReadXml(dataPath);
+        using (StringReader schemaReader = new StringReader(xmlSchema))
+        {
+            dataSet.ReadXmlSchema(schemaReader);
+        }
+        using (StringReader dataReader = new StringReader(xmlData))
+        {
+            dataSet.ReadXml(dataReader);
+        }
 
-        // Perform mail merge using the first table in the DataSet.
-        // The table name will be the root element name ("persons") or the first generated table.
-        // Using ExecuteWithRegions allows merging multiple records automatically.
-        doc.MailMerge.ExecuteWithRegions(dataSet);
+        // Load the template document.
+        Document doc = new Document(templatePath);
+
+        // Perform mail merge using the DataTable named "Customer".
+        DataTable customerTable = dataSet.Tables["Customer"];
+        if (customerTable != null)
+        {
+            doc.MailMerge.Execute(customerTable);
+        }
 
         // Save the merged document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedResult.docx");
+        const string outputPath = "MergedDocument.docx";
         doc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine("Mail merge completed. Output saved to " + outputPath);
     }
 }

@@ -1,58 +1,66 @@
 using System;
-using System.Data;
-using Aspose.Words;
-using Aspose.Words.MailMerging;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+
+public class MailMergeEngine
+{
+    public delegate void MissingFieldEventHandler(string fieldName);
+    public event MissingFieldEventHandler MissingField;
+
+    public string Process(string template, Dictionary<string, string> data)
+    {
+        if (template == null) throw new ArgumentNullException(nameof(template));
+        if (data == null) throw new ArgumentNullException(nameof(data));
+
+        // Pattern matches {{FieldName}}
+        var pattern = new Regex(@"{{\s*(\w+)\s*}}", RegexOptions.Compiled);
+        var result = pattern.Replace(template, match =>
+        {
+            var fieldName = match.Groups[1].Value;
+            if (data.TryGetValue(fieldName, out var value))
+            {
+                return value;
+            }
+            else
+            {
+                // Raise event for missing field
+                MissingField?.Invoke(fieldName);
+                // After event, try again
+                if (data.TryGetValue(fieldName, out var newValue))
+                {
+                    return newValue;
+                }
+                // If still missing, keep placeholder unchanged
+                return match.Value;
+            }
+        });
+
+        return result;
+    }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert three merge fields: FirstName, LastName and Email.
-        builder.InsertField("MERGEFIELD FirstName");
-        builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName");
-        builder.Write(" - ");
-        builder.InsertField("MERGEFIELD Email");
-
-        // Register a callback that supplies a default value for missing fields.
-        doc.MailMerge.FieldMergingCallback = new MissingFieldHandler();
-
-        // Build a data table that deliberately omits the "Email" column.
-        DataTable table = new DataTable("Employees");
-        table.Columns.Add("FirstName");
-        table.Columns.Add("LastName");
-        table.Rows.Add("John", "Doe");
-        table.Rows.Add("Jane", "Smith");
-
-        // Execute the mail merge. The callback will be invoked for the Email field.
-        doc.MailMerge.Execute(table);
-
-        // Save the merged document.
-        doc.Save("MergedOutput.docx");
-    }
-
-    // Callback that handles missing fields during mail merge.
-    private class MissingFieldHandler : IFieldMergingCallback
-    {
-        // Called for each merge field encountered.
-        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
+        var template = "Dear {{FirstName}} {{LastName}},\nYour order {{OrderId}} is shipped.";
+        var data = new Dictionary<string, string>
         {
-            // If the data source does not contain a value for this field, provide a placeholder.
-            if (args.FieldValue == null || args.FieldValue == DBNull.Value)
-            {
-                // Setting Text replaces the field content with the specified string.
-                args.Text = "[Missing]";
-            }
-        }
+            { "FirstName", "John" },
+            { "OrderId", "12345" }
+            // Note: LastName is intentionally missing
+        };
 
-        // No image handling needed for this example.
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
+        var engine = new MailMergeEngine();
+
+        // Subscribe to MissingField event to provide a default value
+        engine.MissingField += fieldName =>
         {
-            // Intentionally left blank.
-        }
+            // Provide a default placeholder for any missing field
+            data[fieldName] = "[Missing]";
+        };
+
+        var result = engine.Process(template, data);
+        Console.WriteLine(result);
     }
 }

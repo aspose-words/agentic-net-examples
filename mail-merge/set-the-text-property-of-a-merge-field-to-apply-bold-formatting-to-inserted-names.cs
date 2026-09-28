@@ -1,5 +1,5 @@
 using System;
-using System.Data;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
@@ -7,47 +7,24 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to insert a MERGEFIELD.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertField(" MERGEFIELD Name ");
 
-        // Prepare a data source with names to merge.
-        DataTable table = new DataTable("Employees");
-        table.Columns.Add("Name");
-        table.Rows.Add("John Doe");
-        table.Rows.Add("Jane Smith");
+        // Set the formatting for the merge field to bold.
+        builder.Font.Bold = true;
 
-        // Assign a custom callback that formats the merged name in bold.
-        doc.MailMerge.FieldMergingCallback = new BoldNameCallback();
+        // Insert a merge field named "Name".
+        builder.InsertField("MERGEFIELD Name");
 
-        // Execute the mail merge.
-        doc.MailMerge.Execute(table);
+        // Prepare the data for the mail merge.
+        var fieldNames = new[] { "Name" };
+        var fieldValues = new object[] { "John Doe" };
 
-        // Save the result.
-        doc.Save("BoldNames.docx");
-    }
+        // Execute the mail merge. The inserted text will inherit the bold formatting.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
 
-    // Callback that writes the field value in bold and suppresses the default insertion.
-    private class BoldNameCallback : IFieldMergingCallback
-    {
-        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
-        {
-            // Move the builder to the current merge field.
-            DocumentBuilder builder = new DocumentBuilder(args.Document);
-            builder.MoveToMergeField(args.DocumentFieldName);
-
-            // Apply bold formatting and write the field value.
-            builder.Font.Bold = true;
-            builder.Write(args.FieldValue?.ToString() ?? string.Empty);
-
-            // Prevent the default insertion of the field value.
-            args.Text = string.Empty;
-        }
-
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
-        {
-            // No image handling required for this example.
-        }
+        // Save the resulting document to a file.
+        doc.Save("Output.docx");
     }
 }

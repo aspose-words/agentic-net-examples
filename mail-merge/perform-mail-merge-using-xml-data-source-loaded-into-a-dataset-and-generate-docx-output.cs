@@ -2,67 +2,64 @@ using System;
 using System.Data;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
 
-public class MailMergeFromXml
+public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string xmlPath = Path.Combine(Environment.CurrentDirectory, "Data.xml");
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "MergedOutput.docx");
-
-        // Create a simple XML data source.
-        string xmlContent = @"
-<Root>
-    <Person>
-        <FirstName>John</FirstName>
-        <LastName>Doe</LastName>
-        <Message>Hello! This is a merged message.</Message>
-    </Person>
-    <Person>
-        <FirstName>Jane</FirstName>
-        <LastName>Smith</LastName>
-        <Message>Welcome to Aspose.Words mail merge.</Message>
-    </Person>
-</Root>";
-        File.WriteAllText(xmlPath, xmlContent);
-
-        // Build a mail‑merge template document with a region named "Person".
+        // Create a template document with merge fields.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Begin the region.
-        builder.InsertField(" MERGEFIELD TableStart:Person");
-        // Insert the fields that will be filled from the XML.
-        builder.Write("First Name: ");
-        builder.InsertField(" MERGEFIELD FirstName");
-        builder.Writeln();
-        builder.Write("Last Name: ");
-        builder.InsertField(" MERGEFIELD LastName");
-        builder.Writeln();
-        builder.Write("Message: ");
-        builder.InsertField(" MERGEFIELD Message");
-        builder.Writeln();
-        // End the region.
-        builder.InsertField(" MERGEFIELD TableEnd:Person");
+        // First line: Dear <<FirstName>> <<LastName>>,
+        builder.Write("Dear ");
+        builder.InsertField("MERGEFIELD FirstName", "«FirstName»");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName", "«LastName»");
+        builder.Writeln(",");
 
-        // Save the template to disk (required by the rule to use a save operation).
-        template.Save(templatePath);
+        // Second line: Your order <<OrderID>> has been shipped on <<ShipDate>>.
+        builder.Write("Your order ");
+        builder.InsertField("MERGEFIELD OrderID", "«OrderID»");
+        builder.Write(" has been shipped on ");
+        builder.InsertField("MERGEFIELD ShipDate", "«ShipDate»");
+        builder.Writeln(".");
 
-        // Load the XML into a DataSet.
+        // Third line: Thank you for shopping with us.
+        builder.Writeln("Thank you for shopping with us.");
+
+        // XML data source as a string.
+        string xml = @"<?xml version='1.0' encoding='utf-8'?>
+<Customers>
+  <Customer>
+    <FirstName>John</FirstName>
+    <LastName>Doe</LastName>
+    <OrderID>12345</OrderID>
+    <ShipDate>2023-08-01</ShipDate>
+  </Customer>
+  <Customer>
+    <FirstName>Jane</FirstName>
+    <LastName>Smith</LastName>
+    <OrderID>67890</OrderID>
+    <ShipDate>2023-08-02</ShipDate>
+  </Customer>
+</Customers>";
+
+        // Load XML into a DataSet.
         DataSet dataSet = new DataSet();
-        dataSet.ReadXml(xmlPath);
+        using (StringReader sr = new StringReader(xml))
+        {
+            dataSet.ReadXml(sr);
+        }
 
-        // Load the template document (required by the rule to use a load operation).
-        Document doc = new Document(templatePath);
+        // Get the DataTable that contains the customer records.
+        DataTable customerTable = dataSet.Tables["Customer"];
 
-        // Perform mail merge using the DataSet. The DataSet contains a table named "Person"
-        // which matches the region name in the template.
-        doc.MailMerge.ExecuteWithRegions(dataSet);
+        // Perform mail merge for each record in the DataTable.
+        // The Execute method will repeat the document for each row.
+        template.MailMerge.Execute(customerTable);
 
         // Save the merged document.
-        doc.Save(outputPath);
+        template.Save("MergedOutput.docx");
     }
 }

@@ -7,39 +7,45 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare data for the mail merge.
-        DataTable data = new DataTable("Data");
-        data.Columns.Add("Title");
-        data.Columns.Add("Content");
-        data.Rows.Add("Chapter 1", "This is the content of the first chapter.");
-        data.Rows.Add("Chapter 2", "This is the content of the second chapter.");
-
-        // Create a blank document and a builder to construct its contents.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a static Table of Contents field.
-        // Switches: include heading levels 1‑3, make entries hyperlinks, hide page numbers for hidden text, and use outline levels.
+        // Insert a static Table of Contents at the beginning of the document.
+        // The TOC will include headings of levels 1 to 3.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+
+        // Add a page break after the TOC so the main content starts on a new page.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Insert a heading that will be filled by the mail merge.
+        // Add headings that will be captured by the TOC.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.InsertField(" MERGEFIELD Title ");
-        builder.Writeln();
+        builder.Writeln("Report Title");
 
-        // Insert a normal paragraph with a merge field for the body content.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section 1");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section 2");
+
+        // Insert a merge field that will be populated by mail merge.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.InsertField(" MERGEFIELD Content ");
+        builder.InsertField("MERGEFIELD CustomerName \\* MERGEFORMAT");
         builder.Writeln();
 
-        // Execute the mail merge using the prepared data.
+        // Prepare mail merge data.
+        DataTable data = new DataTable("Customers");
+        data.Columns.Add("CustomerName");
+        data.Rows.Add("John Doe");
+        data.Rows.Add("Jane Smith");
+
+        // Execute mail merge.
         doc.MailMerge.Execute(data);
 
-        // Update all fields in the document, which refreshes the TOC to reflect the merged headings.
+        // Update all fields (including the TOC) after mail merge.
         doc.UpdateFields();
 
-        // Save the final document.
-        doc.Save("MergedWithToc.docx");
+        // Save the resulting document.
+        doc.Save("Output.docx");
     }
 }
