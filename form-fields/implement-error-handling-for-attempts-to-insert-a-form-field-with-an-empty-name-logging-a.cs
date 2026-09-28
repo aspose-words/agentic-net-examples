@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -11,39 +10,37 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Helper method that validates the field name before insertion.
-        void InsertFormField(Action insertAction, string fieldName)
+        // Attempt to insert a text input form field with an empty name.
+        try
         {
-            if (string.IsNullOrEmpty(fieldName))
-            {
-                // Log a warning and skip the insertion.
-                Console.WriteLine("Warning: Attempted to insert a form field with an empty name. Skipping insertion.");
-                return;
-            }
-
-            // Name is valid – perform the insertion.
-            insertAction();
+            // This will throw an ArgumentException because the name is empty.
+            builder.InsertTextInput(string.Empty, TextFormFieldType.Regular, "", "Default", 0);
+        }
+        catch (ArgumentException ex)
+        {
+            // Log a warning instead of terminating the program.
+            Console.WriteLine($"Warning: Attempted to insert a form field with an empty name. Details: {ex.Message}");
         }
 
-        // Insert a text input form field with a proper name.
-        InsertFormField(
-            () => builder.InsertTextInput("ValidText", TextFormFieldType.Regular, "", "Enter text here", 50),
-            "ValidText");
+        // Insert a valid text input form field.
+        string fieldName = "CustomerName";
+        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "John Doe", 0);
+        builder.Writeln(); // Add a line break after the field.
 
-        // Attempt to insert a checkbox with an empty name – should trigger the warning.
-        InsertFormField(
-            () => builder.InsertCheckBox("", false, 20),
-            "");
+        // Verify that the field exists and output its default result.
+        FormField field = doc.Range.FormFields[fieldName];
+        if (field != null)
+        {
+            Console.WriteLine($"Form field '{fieldName}' inserted with default value: '{field.Result}'.");
+        }
+        else
+        {
+            Console.WriteLine($"Error: Form field '{fieldName}' was not found after insertion.");
+        }
 
-        // Attempt to insert a combo box with a null name – also triggers the warning.
-        string nullName = null;
-        InsertFormField(
-            () => builder.InsertComboBox(nullName, new[] { "Option1", "Option2" }, 0),
-            nullName);
-
-        // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FormFieldsExample.docx");
+        // Save the document.
+        string outputPath = "FormFields.docx";
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

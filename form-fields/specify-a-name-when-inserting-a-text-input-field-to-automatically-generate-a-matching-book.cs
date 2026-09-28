@@ -10,26 +10,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some prompt text.
-        builder.Write("Please enter your name: ");
-
         // Insert a text input form field with a specific name.
-        // The name "UserName" will also create a bookmark with the same name.
-        FormField textField = builder.InsertTextInput(
-            "UserName",                     // name of the form field (and bookmark)
-            TextFormFieldType.Regular,      // type of the text field
-            "",                             // format string (none)
-            "John Doe",                     // default placeholder text
-            0);                             // max length (0 = unlimited)
+        // This automatically creates a bookmark with the same name.
+        string fieldName = "CustomerName";
+        string defaultText = "Enter name";
+        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", defaultText, 0);
 
-        // Verify that the bookmark was automatically created.
-        if (doc.Range.Bookmarks["UserName"] == null)
-            throw new InvalidOperationException("Bookmark 'UserName' was not created.");
+        // Verify that the bookmark was created.
+        if (doc.Range.Bookmarks[fieldName] == null)
+        {
+            throw new InvalidOperationException($"Bookmark '{fieldName}' was not created.");
+        }
 
-        // Optionally, set a value for the form field.
-        textField.Result = "Alice";
+        // Access the form field by name and set a value.
+        FormField? textField = doc.Range.FormFields[fieldName];
+        if (textField != null)
+        {
+            textField.Result = "John Doe";
+        }
+        else
+        {
+            throw new InvalidOperationException($"Form field '{fieldName}' was not found.");
+        }
 
         // Save the document to disk.
-        doc.Save("FormFieldWithBookmark.docx");
+        doc.Save("FormFieldExample.docx");
     }
 }

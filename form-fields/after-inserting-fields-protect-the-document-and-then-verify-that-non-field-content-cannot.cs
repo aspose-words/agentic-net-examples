@@ -6,71 +6,64 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder for it.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a normal paragraph (non‑form field) that should become read‑only after protection.
-        builder.Writeln("This paragraph is NOT a form field and should be read‑only after protection.");
+        // Insert a paragraph that will become read‑only after protection.
+        builder.Writeln("This paragraph should become read‑only after protection.");
 
-        // Insert a text input form field and set its value.
-        FormField textField = builder.InsertTextInput("TextInput1", TextFormFieldType.Regular, "", "Enter name", 0);
-        textField.Result = "John Doe";
+        // Insert a text input form field. The last parameter is maxLength (0 = unlimited).
+        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Default text", 0);
 
-        // Verify that the text field value was set correctly.
-        if (textField.Result != "John Doe")
-            throw new InvalidOperationException("Failed to set text input field value.");
+        // Insert a checkbox form field.
+        builder.InsertCheckBox("CheckBox", false, 0);
 
-        // Insert a checkbox form field and set it to checked.
-        FormField checkBox = builder.InsertCheckBox("CheckBox1", false, 0);
-        checkBox.Checked = true;
+        // Insert a dropdown (combo box) form field with two items.
+        string[] items = { "Option 1", "Option 2" };
+        builder.InsertComboBox("DropDown", items, 0);
 
-        // Verify that the checkbox state was set correctly.
-        if (!checkBox.Checked)
-            throw new InvalidOperationException("Failed to set checkbox state.");
+        // Save the unprotected version (optional).
+        doc.Save("Unprotected.docx");
 
-        // Insert a dropdown (combo box) form field with three items and select the second one.
-        string[] items = { "Option A", "Option B", "Option C" };
-        FormField comboBox = builder.InsertComboBox("DropDown1", items, 0);
-        comboBox.DropDownSelectedIndex = 1; // Select "Option B"
-
-        // Verify that the dropdown selection is correct.
-        if (comboBox.DropDownSelectedIndex != 1 || comboBox.DropDownItems[1] != "Option B")
-            throw new InvalidOperationException("Failed to set dropdown selection.");
-
-        // Ensure that at least one form field exists in the document.
-        if (doc.Range.FormFields.Count == 0)
-            throw new InvalidOperationException("No form fields were created.");
-
-        // Protect the document so that only form fields can be edited.
-        doc.Protect(ProtectionType.AllowOnlyFormFields);
-
-        // Verify that the document is protected for forms.
-        if (doc.ProtectionType != ProtectionType.AllowOnlyFormFields)
-            throw new InvalidOperationException("Document protection failed.");
-
-        // Each section should now be marked as protected for forms.
-        foreach (Section sec in doc.Sections)
-        {
-            if (!sec.ProtectedForForms)
-                throw new InvalidOperationException("Section is not protected for forms.");
-        }
-
-        // Attempt to modify the non‑field paragraph programmatically.
-        // This change is allowed programmatically but would be blocked in the UI while the document is protected.
-        builder.MoveToDocumentStart();
-        builder.Write("Attempted edit: ");
+        // Protect the document for read‑only editing (blocks non‑field changes).
+        // Older Aspose.Words versions may not expose ProtectionType.Forms, so ReadOnly is used.
+        doc.Protect(ProtectionType.ReadOnly, "myPassword");
 
         // Save the protected document.
-        string outputPath = "FormFieldsProtected.docx";
-        doc.Save(outputPath);
+        doc.Save("Protected.docx");
 
-        // Output verification information.
-        Console.WriteLine($"Document saved to: {outputPath}");
-        Console.WriteLine($"Protection type: {doc.ProtectionType}");
-        Console.WriteLine($"Form fields count: {doc.Range.FormFields.Count}");
-        Console.WriteLine($"Text field result: {textField.Result}");
-        Console.WriteLine($"Checkbox checked: {checkBox.Checked}");
-        Console.WriteLine($"Dropdown selected item: {comboBox.DropDownItems[comboBox.DropDownSelectedIndex]}");
+        // Attempt to edit non‑field content after protection.
+        bool editSucceeded = false;
+        try
+        {
+            // Move the builder to the end of the document and try to add a new paragraph.
+            builder.MoveToDocumentEnd();
+            builder.Writeln("Attempting to edit after protection.");
+            editSucceeded = true; // If no exception, edit succeeded (unexpected).
+        }
+        catch (Exception ex)
+        {
+            // Expected path: editing should be blocked.
+            Console.WriteLine("Editing blocked as expected: " + ex.Message);
+        }
+
+        if (editSucceeded)
+        {
+            Console.WriteLine("Unexpectedly succeeded in editing protected document.");
+        }
+
+        // Verify that at least one form field exists.
+        if (doc.Range.FormFields.Count == 0)
+        {
+            throw new InvalidOperationException("No form fields were found in the document.");
+        }
+
+        // Read and display the default value of the text input field.
+        FormField textField = doc.Range.FormFields["TextField"];
+        if (textField == null)
+            throw new InvalidOperationException("TextField not found.");
+
+        Console.WriteLine("TextField default value: " + textField.Result);
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -7,40 +6,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to insert form fields.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a combo box (drop‑down) form field.
-        builder.Write("Choose a fruit: ");
-        builder.InsertComboBox("FruitDropDown", new[] { "Apple", "Banana", "Cherry" }, 0);
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
-        // Insert a check box form field.
-        builder.Write("Accept terms: ");
-        builder.InsertCheckBox("AcceptCheckBox", false, 50);
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
         // Insert a text input form field.
-        builder.Write("Enter name: ");
-        builder.InsertTextInput("NameTextInput", TextFormFieldType.Regular, "", "Your name", 30);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "Default text", 0);
+        builder.Writeln();
 
-        // Save the document (required by the rules).
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FormFields_Count.docx");
+        // Insert a checkbox form field.
+        builder.InsertCheckBox("CheckBox1", false, 0);
+        builder.Writeln();
+
+        // Insert a dropdown (combo box) form field.
+        string[] items = { "Option1", "Option2", "Option3" };
+        builder.InsertComboBox("DropDown1", items, 0);
+        builder.Writeln();
+
+        // Save the document with the created form fields.
+        string outputPath = "FormFields.docx";
         doc.Save(outputPath);
 
-        // Counters for each form field type.
+        // Ensure that at least one form field exists.
+        if (doc.Range.FormFields.Count == 0)
+        {
+            throw new InvalidOperationException("The document does not contain any form fields.");
+        }
+
+        // Count each type of form field.
         int textInputCount = 0;
         int checkBoxCount = 0;
         int dropDownCount = 0;
 
-        // Iterate through the FormFields collection and count each type.
-        FormFieldCollection formFields = doc.Range.FormFields;
-        foreach (FormField field in formFields)
+        foreach (FormField field in doc.Range.FormFields)
         {
-            if (field == null) continue;
-
             switch (field.Type)
             {
                 case FieldType.FieldFormTextInput:
@@ -52,12 +51,15 @@ public class Program
                 case FieldType.FieldFormDropDown:
                     dropDownCount++;
                     break;
+                default:
+                    // Other field types are ignored for this example.
+                    break;
             }
         }
 
         // Output the counts.
-        Console.WriteLine($"Text input fields: {textInputCount}");
-        Console.WriteLine($"Check box fields: {checkBoxCount}");
-        Console.WriteLine($"Drop‑down fields: {dropDownCount}");
+        Console.WriteLine($"Text Input Fields: {textInputCount}");
+        Console.WriteLine($"Check Box Fields: {checkBoxCount}");
+        Console.WriteLine($"Drop Down Fields: {dropDownCount}");
     }
 }
