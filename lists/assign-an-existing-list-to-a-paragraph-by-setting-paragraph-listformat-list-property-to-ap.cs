@@ -8,32 +8,30 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder for convenient text insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Paragraph before the list-assigned paragraph.");
 
-        // Create a list (bulleted by default) that will be assigned to a paragraph later.
-        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+        // Add a numbered list to the document's list collection.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Create a paragraph manually (without using the builder) so we can set its ListFormat.
-        Paragraph listParagraph = new Paragraph(doc);
-        // Add some text to the paragraph.
-        Run run = new Run(doc, "This paragraph is part of the existing list.");
-        listParagraph.AppendChild(run);
+        // First paragraph – assign the list to this paragraph.
+        builder.Writeln("First item");
+        Paragraph para1 = builder.CurrentParagraph; // Get the paragraph just created.
+        para1.ListFormat.List = list;               // Apply the list style.
+        para1.ListFormat.ListLevelNumber = 0;       // Use the first level of the list.
 
-        // Assign the previously created list to the paragraph.
-        listParagraph.ListFormat.List = bulletList;
-        // Optionally set the list level (0 = first level).
-        listParagraph.ListFormat.ListLevelNumber = 0;
+        // Second paragraph – also part of the same list.
+        builder.Writeln("Second item");
+        Paragraph para2 = builder.CurrentParagraph;
+        para2.ListFormat.List = list;
+        para2.ListFormat.ListLevelNumber = 0;
 
-        // Append the paragraph to the document body.
-        doc.FirstSection.Body.AppendChild(listParagraph);
+        // Third paragraph – a sub‑item (level 1).
+        builder.Writeln("Sub‑item");
+        Paragraph para3 = builder.CurrentParagraph;
+        para3.ListFormat.List = list;
+        para3.ListFormat.ListLevelNumber = 1;
 
-        // Add another paragraph after the list-assigned one.
-        builder.Writeln("Paragraph after the list-assigned paragraph.");
-
-        // Save the document to a file.
-        doc.Save("AssignListToParagraph.docx");
+        // Save the document to disk.
+        doc.Save("ListExample.docx");
     }
 }

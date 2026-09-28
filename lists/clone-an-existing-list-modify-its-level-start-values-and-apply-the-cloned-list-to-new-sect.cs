@@ -1,52 +1,75 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace AsposeWordsListCloneExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // 1. Create the original list and apply it to the first section.
-        // -------------------------------------------------
-        List originalList = doc.Lists.Add(ListTemplate.NumberArabicParenthesis);
-        // Example formatting for the first level.
-        originalList.ListLevels[0].Font.Color = Color.Red;
-        originalList.ListLevels[0].Alignment = ListLevelAlignment.Right;
+            // -------------------------------------------------
+            // Create the original list and add some items.
+            // -------------------------------------------------
+            builder.Writeln("Original List:");
+            // Add a numbered list (default template).
+            List originalList = doc.Lists.Add(ListTemplate.NumberDefault);
+            // Apply the list to subsequent paragraphs.
+            builder.ListFormat.List = originalList;
+            builder.Writeln("Item 1");
+            builder.Writeln("Item 2");
+            builder.Writeln("Item 3");
+            // Stop using the list for further paragraphs.
+            builder.ListFormat.RemoveNumbers();
 
-        builder.Writeln("Original List starts below:");
-        builder.ListFormat.List = originalList;
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.ListFormat.RemoveNumbers();
+            // -------------------------------------------------
+            // Create a new list that will act as a clone.
+            // -------------------------------------------------
+            List clonedList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // -------------------------------------------------
-        // 2. Insert a new section break.
-        // -------------------------------------------------
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+            // Copy formatting from the original list (keeps appearance identical).
+            for (int i = 0; i < originalList.ListLevels.Count; i++)
+            {
+                clonedList.ListLevels[i].NumberStyle = originalList.ListLevels[i].NumberStyle;
+                clonedList.ListLevels[i].NumberFormat = originalList.ListLevels[i].NumberFormat;
+                clonedList.ListLevels[i].Alignment = originalList.ListLevels[i].Alignment;
+                // Font property is read‑only; individual font attributes can be copied if needed.
+                // Example: clonedList.ListLevels[i].Font.Name = originalList.ListLevels[i].Font.Name;
+            }
 
-        // -------------------------------------------------
-        // 3. Clone the original list, modify its start value, and apply it to the new section.
-        // -------------------------------------------------
-        List clonedList = doc.Lists.AddCopy(originalList);
-        // Change the starting number for the first level and its color to differentiate.
-        clonedList.ListLevels[0].StartAt = 10;
-        clonedList.ListLevels[0].Font.Color = Color.Blue;
+            // Modify the start values for each level of the cloned list.
+            // For demonstration, set level 0 start at 10, level 1 at 20, etc.
+            for (int i = 0; i < clonedList.ListLevels.Count; i++)
+            {
+                clonedList.ListLevels[i].StartAt = (i + 1) * 10;
+            }
 
-        builder.Writeln("Cloned List starts below:");
-        builder.ListFormat.List = clonedList;
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.ListFormat.RemoveNumbers();
+            // -------------------------------------------------
+            // Add a new section and apply the cloned list there.
+            // -------------------------------------------------
+            Section newSection = new Section(doc);
+            doc.Sections.Add(newSection);
 
-        // -------------------------------------------------
-        // 4. Save the document.
-        // -------------------------------------------------
-        doc.Save("ListsCloneExample.docx");
+            // Move a builder to the newly added section.
+            DocumentBuilder sectionBuilder = new DocumentBuilder(doc);
+            sectionBuilder.MoveToSection(doc.Sections.Count - 1);
+
+            sectionBuilder.Writeln("Cloned List with Modified Start Values:");
+            // Apply the cloned list to subsequent paragraphs.
+            sectionBuilder.ListFormat.List = clonedList;
+            sectionBuilder.Writeln("Cloned Item 1");
+            sectionBuilder.Writeln("Cloned Item 2");
+            sectionBuilder.Writeln("Cloned Item 3");
+            sectionBuilder.ListFormat.RemoveNumbers();
+
+            // -------------------------------------------------
+            // Save the document to a file.
+            // -------------------------------------------------
+            doc.Save("ClonedListExample.docx");
+        }
     }
 }

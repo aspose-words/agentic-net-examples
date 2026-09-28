@@ -1,7 +1,5 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Lists;
 
 public class Program
 {
@@ -11,31 +9,23 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a default numbered list.
+        // Start a numbered list.
         builder.ListFormat.ApplyNumberDefault();
-        builder.Writeln("Item 1 (level 0)");
+        builder.Writeln("Item 1");
 
-        // Increase the list level (indent) to create a sub‑list.
-        builder.ListFormat.ListIndent();
-        builder.Writeln("Item 2 (level 1)");
+        // Add a second top‑level item.
+        builder.Writeln("Item 2");
 
-        // Increase again to a deeper level.
-        builder.ListFormat.ListIndent();
-        builder.Writeln("Item 3 (level 2)");
+        // Increase indent to create a sub‑list by setting the list level number.
+        builder.ListFormat.ListLevelNumber = 1; // level 2 (zero‑based)
+        builder.Writeln("Item 2.1");
+        builder.Writeln("Item 2.2");
 
-        // Decrease the list level (outdent) to promote the paragraph.
-        builder.ListFormat.ListOutdent();
-        builder.Writeln("Item 4 (back to level 1)");
+        // Decrease indent to promote back to the higher level.
+        builder.ListFormat.ListLevelNumber = 0; // back to top level
+        builder.Writeln("Item 3");
 
-        // Decrease once more to return to the top level.
-        builder.ListFormat.ListOutdent();
-        builder.Writeln("Item 5 (back to level 0)");
-
-        // End the list formatting.
-        builder.ListFormat.RemoveNumbers();
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ListOutdentExample.docx");
-        doc.Save(outputPath);
+        // Save the document to disk.
+        doc.Save("ListIndent.docx");
     }
 }

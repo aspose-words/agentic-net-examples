@@ -1,43 +1,38 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Create a DocumentBuilder which will be used to insert content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a new list based on the built‑in NumberDefault template.
+        // Add a new numbered list to the document's list collection.
+        // Use a built‑in list template (NumberDefault) as the base.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Set the starting number of the first list level to 5.
-        // This means the first item will be numbered "5.", then "6.", etc.
-        list.ListLevels[0].StartAt = 5;
+        // Configure the first level of the list to start numbering at five.
+        ListLevel level = list.ListLevels[0];
+        level.NumberStyle = NumberStyle.Arabic; // Arabic numerals.
+        level.StartAt = 5;                     // Start numbering at five.
 
-        // Apply the list to subsequent paragraphs.
-        builder.ListFormat.List = list;
+        // Add first list item.
+        Paragraph para1 = new Paragraph(doc);
+        para1.ListFormat.List = list;
+        para1.ListFormat.ListLevelNumber = 0;
+        para1.AppendChild(new Run(doc, "First item"));
+        doc.FirstSection.Body.AppendChild(para1);
 
-        // Insert a few list items to demonstrate the custom start number.
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
+        // Add second list item.
+        Paragraph para2 = new Paragraph(doc);
+        para2.ListFormat.List = list;
+        para2.ListFormat.ListLevelNumber = 0;
+        para2.AppendChild(new Run(doc, "Second item"));
+        doc.FirstSection.Body.AppendChild(para2);
 
-        // Remove list formatting from the builder.
-        builder.ListFormat.RemoveNumbers();
-
-        // Define an output folder and ensure it exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "ListStartAtFive.docx");
-        doc.Save(outputPath);
+        // Save the document to disk.
+        doc.Save("ListStartingNumber.docx");
     }
 }

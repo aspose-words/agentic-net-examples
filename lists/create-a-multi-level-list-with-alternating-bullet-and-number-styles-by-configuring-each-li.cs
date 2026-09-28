@@ -1,58 +1,67 @@
 using System;
-using Aspose.Words;
-using Aspose.Words.Lists;
+using System.Collections.Generic;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create a multilevel list based on the default numbered template.
-        // All lists created this way contain 9 levels.
-        List multiLevelList = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Configure each level: even levels will use bullets, odd levels will use numbers.
-        for (int i = 0; i < multiLevelList.ListLevels.Count; i++)
+        var items = new List<ListItem>
         {
-            ListLevel level = multiLevelList.ListLevels[i];
+            new ListItem(0, "First top‑level item"),
+            new ListItem(1, "First sub‑item"),
+            new ListItem(2, "First sub‑sub‑item"),
+            new ListItem(1, "Second sub‑item"),
+            new ListItem(0, "Second top‑level item"),
+            new ListItem(1, "Another sub‑item")
+        };
 
-            if (i % 2 == 0) // Bullet level
-            {
-                level.NumberStyle = NumberStyle.Bullet;
-                // Use a standard bullet character. You can also use a Wingdings character if desired.
-                level.NumberFormat = "\u2022"; // •
-                level.Font.Name = "Symbol";
-            }
-            else // Numbered level
-            {
-                level.NumberStyle = NumberStyle.Arabic;
-                // Use the placeholder for the current level number.
-                level.NumberFormat = "\x0000";
-                level.Font.Name = "Times New Roman";
-            }
+        PrintMultiLevelList(items);
+    }
 
-            // Optional: adjust indent positions for better readability.
-            level.NumberPosition = -18; // Position of the bullet/number.
-            level.TextPosition = 18;    // Position where the text starts.
-            level.TabPosition = 36;     // Tab stop after the label.
-        }
+    private static void PrintMultiLevelList(List<ListItem> items)
+    {
+        // Determine the deepest level to size helper arrays.
+        int maxLevel = 0;
+        foreach (var item in items)
+            if (item.Level > maxLevel) maxLevel = item.Level;
 
-        // Apply the list to the builder and write sample items for each level.
-        builder.ListFormat.List = multiLevelList;
+        // Counters for numbered levels.
+        int[] counters = new int[maxLevel + 1];
 
-        for (int level = 0; level < multiLevelList.ListLevels.Count; level++)
+        // Define style per level: true = numbered, false = bullet.
+        // Alternating: even levels numbered, odd levels bullet.
+        bool[] isNumbered = new bool[maxLevel + 1];
+        for (int i = 0; i <= maxLevel; i++)
+            isNumbered[i] = i % 2 == 0;
+
+        foreach (var item in items)
         {
-            builder.ListFormat.ListLevelNumber = level;
-            builder.Writeln($"Item at level {level + 1}");
+            // Reset deeper level counters when moving up the hierarchy.
+            for (int lvl = item.Level + 1; lvl <= maxLevel; lvl++)
+                counters[lvl] = 0;
+
+            string indent = new string(' ', item.Level * 4);
+            if (isNumbered[item.Level])
+            {
+                counters[item.Level]++;
+                Console.WriteLine($"{indent}{counters[item.Level]}. {item.Text}");
+            }
+            else
+            {
+                Console.WriteLine($"{indent}- {item.Text}");
+            }
         }
+    }
 
-        // End the list.
-        builder.ListFormat.RemoveNumbers();
+    private class ListItem
+    {
+        public int Level { get; }
+        public string Text { get; }
 
-        // Save the document to the current directory.
-        doc.Save("MultiLevelList.docx");
+        public ListItem(int level, string text)
+        {
+            Level = level;
+            Text = text;
+        }
     }
 }

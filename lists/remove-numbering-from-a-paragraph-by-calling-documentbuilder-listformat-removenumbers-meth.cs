@@ -1,36 +1,24 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Lists;
 
-namespace AsposeWordsExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new empty document.
-            Document doc = new Document();
+        // Create a new empty document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Use DocumentBuilder to add content to the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Apply default numbering to start a list.
+        builder.ListFormat.ApplyNumberDefault();
+        builder.Writeln("First item in the list");
+        builder.Writeln("Second item in the list");
 
-            // Start a default numbered list.
-            builder.ListFormat.ApplyNumberDefault();
+        // Remove numbering to stop list formatting for subsequent paragraphs.
+        builder.ListFormat.RemoveNumbers();
+        builder.Writeln("This paragraph is not part of the list.");
 
-            // Add a few list items – these paragraphs will be numbered.
-            builder.Writeln("Numbered item 1");
-            builder.Writeln("Numbered item 2");
-            builder.Writeln("Numbered item 3");
-
-            // Stop list formatting for subsequent paragraphs.
-            // This call removes numbers/bullets from the current paragraph and resets the list level.
-            builder.ListFormat.RemoveNumbers();
-
-            // Add a normal paragraph that is not part of the list.
-            builder.Writeln("This paragraph is not numbered.");
-
-            // Save the document to a file in the current directory.
-            doc.Save("Lists.RemoveNumbers.docx");
-        }
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }

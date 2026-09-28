@@ -8,48 +8,37 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Get a DocumentBuilder to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a numbered list based on the default template.
+        // Create a new list based on the default numbered template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Configure the first list level.
-        ListLevel level0 = list.ListLevels[0];
-        level0.Font.Color = System.Drawing.Color.DarkBlue;
-        level0.Font.Size = 12;
-        level0.NumberStyle = NumberStyle.Arabic;
-        level0.NumberFormat = "%1.";
-        level0.StartAt = 1;
+        // Access the first level of the list (level 0).
+        ListLevel level = list.ListLevels[0];
 
-        // Position of the number (negative moves it left of the left indent).
-        level0.NumberPosition = -18;   // points
-        // Position where the text of the paragraph starts.
-        level0.TextPosition = 36;      // points
-        // Set a tab stop after the number so that the text aligns after the tab.
-        level0.TabPosition = 36;       // points
-        // Use a tab character as the separator between number and text.
-        level0.TrailingCharacter = ListTrailingCharacter.Tab;
+        // Position the number at the left margin.
+        level.NumberPosition = 0;
 
-        // Apply the list to subsequent paragraphs.
-        builder.ListFormat.List = list;
+        // Set a custom tab stop after the number to align the text.
+        // Here we set it to 72 points (1 inch) from the left margin.
+        level.TabPosition = 72;
 
-        // First level items.
-        builder.Writeln("First level item 1");
-        builder.Writeln("First level item 2");
-
-        // Increase list level (second level).
-        builder.ListFormat.ListIndent();
-        builder.Writeln("Second level item 1");
-        builder.Writeln("Second level item 2");
-
-        // Decrease back to first level.
-        builder.ListFormat.ListOutdent();
-        builder.Writeln("First level item 3");
-
-        // Remove list formatting.
-        builder.ListFormat.RemoveNumbers();
+        // Apply the list to several paragraphs.
+        for (int i = 1; i <= 5; i++)
+        {
+            // Start a new list item.
+            builder.ListFormat.List = list;
+            builder.Writeln($"Item {i} with custom tab stop");
+            // End the list formatting for the next paragraph.
+            builder.ListFormat.RemoveNumbers();
+        }
 
         // Save the document to disk.
-        doc.Save("CustomTabList.docx");
+        doc.Save("ListTabStop.docx");
+
+        // Indicate completion.
+        Console.WriteLine("Document created: ListTabStop.docx");
     }
 }
