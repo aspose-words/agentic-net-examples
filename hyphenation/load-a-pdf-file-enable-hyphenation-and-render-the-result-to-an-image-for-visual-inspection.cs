@@ -3,61 +3,49 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class HyphenationPdfToImage
+public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        const string pdfPath = "sample.pdf";
-        const string imagePath = "sample_page1.jpg";
-        const string dictPath = "hyph_en_US.dic";
+        // Create a sample document with long words that can be hyphenated.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Create a minimal hyphenation dictionary for English (US)
-        // The dictionary format: first line is "UTF-8", subsequent lines are word=hyphenation-points
-        File.WriteAllText(dictPath,
+        // Narrow the page width to force line wrapping.
+        Section section = doc.FirstSection;
+        section.PageSetup.PageWidth = 200;
+        section.PageSetup.LeftMargin = 20;
+        section.PageSetup.RightMargin = 20;
+
+        // Create a minimal hyphenation dictionary file.
+        string dictionaryPath = "hyph_en_US.dic";
+        File.WriteAllText(dictionaryPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary so that hyphenation can be applied
-        Hyphenation.RegisterDictionary("en-US", dictPath);
+        // Register the dictionary for English (United States).
+        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
-        // Create a new document with narrow page width to force line wrapping
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Size = 24;
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-        // Narrow the page to make hyphenation visible
-        doc.FirstSection.PageSetup.PageWidth = 200; // points
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
-
-        // Enable automatic hyphenation
+        // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Save the document as PDF
+        // Save the document as PDF.
+        string pdfPath = "sample.pdf";
         doc.Save(pdfPath, SaveFormat.Pdf);
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+            throw new InvalidOperationException("PDF output was not created.");
 
-        // Load the PDF back into a Document object
-        Document pdfDoc = new Document(pdfPath);
-
-        // Render the first page of the PDF to an image (JPEG)
-        ImageSaveOptions imgOptions = new ImageSaveOptions(SaveFormat.Jpeg)
+        // Render the document (with hyphenation) to an image.
+        string imagePath = "rendered.png";
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
         {
-            PageSet = new PageSet(0), // first page (zero‑based)
-            Resolution = 300
+            PageSet = new PageSet(0) // Render the first page.
         };
-        pdfDoc.Save(imagePath, imgOptions);
+        doc.Save(imagePath, options);
         if (!File.Exists(imagePath))
-            throw new InvalidOperationException("Image file was not created.");
-
-        // Clean up temporary files (optional)
-        // File.Delete(dictPath);
-        // File.Delete(pdfPath);
-        // File.Delete(imagePath);
+            throw new InvalidOperationException("Image output was not created.");
     }
 }

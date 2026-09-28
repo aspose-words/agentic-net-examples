@@ -1,90 +1,69 @@
 using System;
-using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
-public class HyphenationPageCountDemo
+public class Program
 {
-    private const string DictionaryFileName = "hyph_en_US.dic";
-    private const string OutputWithoutHyphenation = "report_without_hyphenation.pdf";
-    private const string OutputWithHyphenation = "report_with_hyphenation.pdf";
-
     public static void Main()
     {
-        // Ensure the hyphenation dictionary exists.
-        CreateDictionaryFile();
-
-        // Generate report without hyphenation.
-        int pagesWithout = GenerateReport(enableHyphenation: false, OutputWithoutHyphenation);
-        // Generate report with hyphenation.
-        int pagesWith = GenerateReport(enableHyphenation: true, OutputWithHyphenation);
-
-        // Validate that the PDF files were created.
-        if (!File.Exists(OutputWithoutHyphenation))
-            throw new InvalidOperationException($"File '{OutputWithoutHyphenation}' was not created.");
-        if (!File.Exists(OutputWithHyphenation))
-            throw new InvalidOperationException($"File '{OutputWithHyphenation}' was not created.");
-
-        // Output the page counts.
-        Console.WriteLine($"Pages without hyphenation: {pagesWithout}");
-        Console.WriteLine($"Pages with hyphenation:    {pagesWith}");
-
-        // Simple verification: hyphenation should not increase page count.
-        if (pagesWith > pagesWithout)
-            throw new InvalidOperationException("Hyphenation increased the page count, which is unexpected for this test.");
-    }
-
-    private static void CreateDictionaryFile()
-    {
-        // Minimal dictionary content for English (US) hyphenation.
-        // The first line must be the encoding identifier.
-        string content =
+        // Create a minimal hyphenation dictionary for English (en-US).
+        const string dictionaryFileName = "hyph_en_US.dic";
+        File.WriteAllText(dictionaryFileName,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n";
+            "communication=com-mu-ni-ca-tion\n");
 
-        File.WriteAllText(DictionaryFileName, content);
-        // Register the dictionary for the "en-US" locale.
-        Hyphenation.RegisterDictionary("en-US", DictionaryFileName);
+        // Create a long report without hyphenation.
+        Document docWithoutHyphenation = CreateReport();
+        const string noHyphenPdf = "Report_NoHyphenation.pdf";
+        docWithoutHyphenation.Save(noHyphenPdf, SaveFormat.Pdf);
+        ValidateFileExists(noHyphenPdf);
+        docWithoutHyphenation.UpdatePageLayout();
+        int pagesWithout = docWithoutHyphenation.PageCount;
+
+        // Register the dictionary and create the same report with hyphenation enabled.
+        Hyphenation.RegisterDictionary("en-US", dictionaryFileName);
+        Document docWithHyphenation = CreateReport();
+        const string withHyphenPdf = "Report_WithHyphenation.pdf";
+        docWithHyphenation.Save(withHyphenPdf, SaveFormat.Pdf);
+        ValidateFileExists(withHyphenPdf);
+        docWithHyphenation.UpdatePageLayout();
+        int pagesWith = docWithHyphenation.PageCount;
+
+        // Output the page counts for comparison.
+        Console.WriteLine($"Pages without hyphenation: {pagesWithout}");
+        Console.WriteLine($"Pages with hyphenation: {pagesWith}");
     }
 
-    private static int GenerateReport(bool enableHyphenation, string outputPath)
+    // Creates a document containing repeated sample text.
+    private static Document CreateReport()
     {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set a narrow page width to force many line wraps.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.17 inches)
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
+        // Narrow page width forces many line breaks.
+        Section section = doc.FirstSection;
+        section.PageSetup.PageWidth = 200; // points
+        section.PageSetup.LeftMargin = 20;
+        section.PageSetup.RightMargin = 20;
 
-        // Use English (US) locale for hyphenation.
-        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
-        builder.Font.Size = 12;
+        // Sample text that matches entries in the dictionary.
+        string sampleSentence = "extraordinarycharacteristically internationalization communication ";
 
-        // Add a large amount of text that contains hyphenatable words.
+        // Repeat the sentence enough times to span several pages.
         for (int i = 0; i < 200; i++)
         {
-            builder.Writeln(
-                "extraordinarycharacteristically internationalization communication " +
-                "extraordinarycharacteristically internationalization communication");
+            builder.Writeln(sampleSentence);
         }
 
-        if (enableHyphenation)
-        {
-            // Enable automatic hyphenation for the document.
-            doc.HyphenationOptions.AutoHyphenation = true;
-            doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-            doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
-            doc.HyphenationOptions.HyphenateCaps = true;
-        }
+        return doc;
+    }
 
-        // Save the document; this also triggers layout calculation.
-        doc.Save(outputPath, SaveFormat.Pdf);
-
-        // Return the calculated page count.
-        return doc.PageCount;
+    // Throws if the expected file was not created.
+    private static void ValidateFileExists(string path)
+    {
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Expected output file '{path}' was not created.");
     }
 }

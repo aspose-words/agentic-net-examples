@@ -1,50 +1,50 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
-public class HyphenationExample
+public class Program
 {
     public static void Main()
     {
-        // Create a sample document with long words that can be hyphenated.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // Create a sample DOCX document with words that can be hyphenated.
+        var sourceDoc = new Document();
+        var builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("extraordinarycharacteristically internationalization communication");
-        // Narrow the page to force line wrapping.
-        sampleDoc.FirstSection.PageSetup.PageWidth = 200;
-        sampleDoc.FirstSection.PageSetup.LeftMargin = 20;
-        sampleDoc.FirstSection.PageSetup.RightMargin = 20;
-        const string inputPath = "input.docx";
-        sampleDoc.Save(inputPath);
 
-        // Create a minimal Hunspell dictionary file for English (US).
+        // Narrow the page width to force line wrapping and hyphenation.
+        sourceDoc.FirstSection.PageSetup.PageWidth = 200;
+        sourceDoc.FirstSection.PageSetup.LeftMargin = 20;
+        sourceDoc.FirstSection.PageSetup.RightMargin = 20;
+
+        const string sourcePath = "sample.docx";
+        sourceDoc.Save(sourcePath);
+        if (!File.Exists(sourcePath))
+            throw new InvalidOperationException("Source DOCX file was not created.");
+
+        // Create a minimal Hunspell hyphenation dictionary.
         const string dictPath = "hyph_en_US.dic";
-        string dictContent = @"UTF-8
+        var dictContent = @"UTF-8
 extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly
 internationalization=in-ter-na-tion-al-i-za-tion
 communication=com-mu-ni-ca-tion
 ";
         File.WriteAllText(dictPath, dictContent);
+        if (!File.Exists(dictPath))
+            throw new InvalidOperationException("Hyphenation dictionary file was not created.");
 
-        // Register the dictionary with Aspose.Words.
+        // Register the dictionary for the "en-US" locale.
         Hyphenation.RegisterDictionary("en-US", dictPath);
 
         // Load the previously saved document.
-        Document doc = new Document(inputPath);
+        var doc = new Document(sourcePath);
 
-        // Enable automatic hyphenation.
+        // Enable automatic hyphenation for the loaded document.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenateCaps = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 720;
 
-        // Save the hyphenated document to PDF.
+        // Save the hyphenated document as PDF.
         const string outputPath = "hyphenated.pdf";
         doc.Save(outputPath);
-
-        // Validate that the output file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The hyphenated PDF was not created.");
+            throw new InvalidOperationException("Hyphenated PDF file was not created.");
     }
 }

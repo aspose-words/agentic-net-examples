@@ -1,28 +1,25 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a paragraph with long words to make hyphenation observable.
-        builder.Font.Size = 24;
-        builder.Writeln(
-            "extraordinarycharacteristically internationalization communication " +
-            "hyperresponsibility uncharacteristically");
 
         // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
-        // Optional: configure additional hyphenation settings.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
-        doc.HyphenationOptions.HyphenateCaps = true;
+
+        // Set a narrow page width to force line wrapping where hyphenation can occur.
+        doc.FirstSection.PageSetup.PageWidth = 200;
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
+
+        // Add sample text containing long words that can be hyphenated.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
         // Save the document as DOCX.
         const string outputPath = "HyphenatedDocument.docx";
@@ -30,6 +27,6 @@ public class Program
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"The file '{outputPath}' was not created.");
+            throw new InvalidOperationException("The expected DOCX file was not created.");
     }
 }
