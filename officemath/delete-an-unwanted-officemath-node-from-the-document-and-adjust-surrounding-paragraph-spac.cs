@@ -8,96 +8,122 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph.
+        // Helper to insert a simple equation using the EQ-field bootstrap workflow.
+        void InsertEquation(string eqSwitch)
+        {
+            // Insert an empty EQ field.
+            Field field = builder.InsertField(FieldType.FieldEquation, true);
+            // Cast to FieldEQ to access the separator.
+            FieldEQ fieldEq = field as FieldEQ;
+            if (fieldEq == null)
+                throw new InvalidOperationException("Failed to create FieldEQ.");
+
+            // Write the equation switch into the field separator.
+            builder.MoveTo(fieldEq.Separator);
+            builder.Write(eqSwitch);
+
+            // Update the field so that Aspose.Words can convert it.
+            field.Update();
+
+            // Convert the field to a real OfficeMath node.
+            OfficeMath officeMath = fieldEq.AsOfficeMath();
+            if (officeMath == null)
+                throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
+
+            // Insert the OfficeMath node before the field start.
+            fieldEq.Start.ParentNode.InsertBefore(officeMath, fieldEq.Start);
+            // Remove the original field.
+            fieldEq.Remove();
+
+            // Move the builder to the inserted OfficeMath node and add a new paragraph after it.
+            builder.MoveTo(officeMath);
+            builder.Writeln();
+        }
+
+        // Insert first paragraph with some text.
         builder.Writeln("Paragraph before the first equation.");
 
-        // Insert the first (wanted) equation.
-        InsertEquation(builder, @"\f(1,2)");
+        // Insert first equation.
+        InsertEquation(@"\f(1,2)"); // Simple fraction 1/2.
 
-        // Paragraph between equations.
+        // Insert second paragraph with some text.
         builder.Writeln("Paragraph between equations.");
 
-        // Insert the second equation which we will delete later.
-        InsertEquation(builder, @"\r(2,x)");
+        // Insert second equation.
+        InsertEquation(@"\r(3,x)"); // Simple root expression.
 
-        // Paragraph after equations.
-        builder.Writeln("Paragraph after equations.");
+        // Insert a final paragraph.
+        builder.Writeln("Paragraph after the second equation.");
 
-        // -----------------------------------------------------------------
-        // Delete the unwanted OfficeMath node (the second equation).
-        // -----------------------------------------------------------------
-        NodeCollection officeMaths = doc.GetChildNodes(NodeType.OfficeMath, true);
-        if (officeMaths.Count > 1)
+        // Save the original document.
+        string originalPath = "Original.docx";
+        doc.Save(originalPath);
+
+        // Load the document again (optional, we can continue with the same instance).
+        Document loadedDoc = new Document(originalPath);
+
+        // Get all top‑level OfficeMath nodes (MathObjectType == OMathPara).
+        NodeCollection allMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        var topLevelMathNodes = new System.Collections.Generic.List<OfficeMath>();
+        foreach (OfficeMath om in allMathNodes)
         {
-            // The second equation is at index 1.
-            OfficeMath unwantedMath = (OfficeMath)officeMaths[1];
+            if (om.MathObjectType == MathObjectType.OMathPara)
+                topLevelMathNodes.Add(om);
+        }
 
-            // Keep a reference to its parent paragraph before removal.
-            Paragraph parentParagraph = unwantedMath.ParentParagraph;
+        int originalMathCount = topLevelMathNodes.Count;
+        if (originalMathCount == 0)
+            throw new InvalidOperationException("No top‑level OfficeMath nodes found to delete.");
 
-            // Remove the OfficeMath node.
-            unwantedMath.Remove();
+        // Target the first top‑level OfficeMath node for deletion.
+        OfficeMath firstMathNode = topLevelMathNodes[0];
+        Paragraph containingParagraph = firstMathNode.GetAncestor(NodeType.Paragraph) as Paragraph;
 
-            // If the paragraph became empty, remove it; otherwise adjust its spacing.
-            if (!parentParagraph.HasChildNodes)
-            {
-                parentParagraph.Remove();
-            }
-            else
-            {
-                // Add some space after the paragraph that contained the deleted equation.
-                parentParagraph.ParagraphFormat.SpaceAfter = 12; // points
-            }
+        // Remove the OfficeMath node.
+        firstMathNode.Remove();
 
-            // Optionally adjust spacing of the preceding paragraph.
-            Paragraph previousParagraph = parentParagraph.PreviousSibling as Paragraph;
+        // Adjust spacing of surrounding paragraphs.
+        if (containingParagraph != null)
+        {
+            // Add space after the paragraph that contained the deleted equation.
+            containingParagraph.ParagraphFormat.SpaceAfter = 12.0; // points
+
+            // Adjust the previous paragraph, if any.
+            Paragraph previousParagraph = containingParagraph.PreviousSibling as Paragraph;
             if (previousParagraph != null)
-            {
-                previousParagraph.ParagraphFormat.SpaceAfter = 6; // points
-            }
+                previousParagraph.ParagraphFormat.SpaceAfter = 6.0; // points
+
+            // Adjust the next paragraph, if any.
+            Paragraph nextParagraph = containingParagraph.NextSibling as Paragraph;
+            if (nextParagraph != null)
+                nextParagraph.ParagraphFormat.SpaceBefore = 6.0; // points
         }
 
-        // Save the resulting document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
+        // Save the modified document.
+        string modifiedPath = "Modified.docx";
+        loadedDoc.Save(modifiedPath);
 
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
-    }
+        // Validation.
+        if (!File.Exists(modifiedPath))
+            throw new FileNotFoundException("Modified document was not saved.", modifiedPath);
 
-    // Helper method that creates a real OfficeMath node using the deterministic EQ-field bootstrap workflow.
-    private static OfficeMath InsertEquation(DocumentBuilder builder, string eqArguments)
-    {
-        // Insert an EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the EQ arguments into the field separator.
-        builder.MoveTo(field.Separator);
-        builder.Write(eqArguments);
-
-        // Return to the paragraph that contains the field.
-        builder.MoveTo(field.Start.ParentNode);
-
-        // Convert the field to an OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-
-        // Replace the field with the real OfficeMath node if conversion succeeded.
-        if (officeMath != null)
+        Document validationDoc = new Document(modifiedPath);
+        NodeCollection remainingAllMath = validationDoc.GetChildNodes(NodeType.OfficeMath, true);
+        int remainingTopLevel = 0;
+        foreach (OfficeMath om in remainingAllMath)
         {
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            field.Remove();
-        }
-        else
-        {
-            // If conversion failed, just remove the field to keep the document clean.
-            field.Remove();
+            if (om.MathObjectType == MathObjectType.OMathPara)
+                remainingTopLevel++;
         }
 
-        return officeMath;
+        if (remainingTopLevel != originalMathCount - 1)
+            throw new InvalidOperationException("The OfficeMath node was not correctly deleted.");
+
+        // Indicate successful completion (no interactive output required).
+        Console.WriteLine("OfficeMath node deleted and paragraph spacing adjusted successfully.");
     }
 }
