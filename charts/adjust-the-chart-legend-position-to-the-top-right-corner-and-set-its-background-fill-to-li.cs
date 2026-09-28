@@ -1,5 +1,7 @@
 using System;
 using System.Drawing;
+using System.Linq;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -8,22 +10,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
+        // Insert a column chart.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        if (!chartShape.HasChart)
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+
         Chart chart = chartShape.Chart;
 
-        // Move the legend to the top‑right corner.
+        // Ensure the chart has at least one series.
+        chart.Series.Clear();
+        chart.Series.Add("Series 1", new double[] { 10, 20, 30 });
+
+        // Adjust the legend: position to top right.
         ChartLegend legend = chart.Legend;
         legend.Position = LegendPosition.TopRight;
 
-        // Set the legend's background fill to light gray.
-        legend.Format.Fill.Solid(Color.LightGray);
+        // Set legend background fill to light gray, using reflection to stay compatible with
+        // Aspose.Words versions that may not expose FillFormat directly.
+        PropertyInfo fillProp = typeof(ChartLegend).GetProperty("FillFormat");
+        if (fillProp != null)
+        {
+            object fillObj = fillProp.GetValue(legend);
+            if (fillObj != null)
+            {
+                PropertyInfo foreColorProp = fillObj.GetType().GetProperty("ForeColor");
+                if (foreColorProp != null && foreColorProp.CanWrite)
+                {
+                    foreColorProp.SetValue(fillObj, Color.LightGray);
+                }
+            }
+        }
 
         // Save the document.
-        doc.Save("ChartLegendTopRight.docx");
+        doc.Save("ChartLegendModified.docx");
     }
 }

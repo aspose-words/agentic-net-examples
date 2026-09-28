@@ -1,49 +1,43 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
-using Aspose.Words.Tables;
+using Aspose.Words.Drawing.Charts; // Required for Chart, ChartType, etc.
 
-public class Program
+public class ChartAutoResizeExample
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart with an initial size (width: 432 points, height: 252 points).
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        // Insert a column chart with an initial size.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
         Chart chart = chartShape.Chart;
 
-        // Add a simple title to the chart.
-        chart.Title.Text = "Sales Chart";
-        chart.Title.Show = true;
+        // Populate the chart with sample data.
+        chart.Series.Clear();
+        chart.Series.Add("Quarterly Sales", new double[] { 15000, 21000, 18000, 24000 });
 
-        // Save the document with the original chart size (optional step to see the before state).
-        doc.Save("chart_initial.docx");
+        // Save the document before changing the page size (optional step to show original layout).
+        doc.Save("chart-original.docx");
 
-        // Change the page size of the document to A4.
-        builder.PageSetup.PaperSize = PaperSize.A4;
+        // Change the page size of the first section to A5.
+        PageSetup pageSetup = doc.FirstSection.PageSetup;
+        pageSetup.PaperSize = PaperSize.A5;
 
-        // Rebuild the page layout after changing the page setup.
-        doc.UpdatePageLayout();
+        // Calculate new dimensions for the chart based on the new page size.
+        // Here we set the chart width to 80% of the page width and height to 50% of the page height.
+        double newChartWidth = pageSetup.PageWidth * 0.8;
+        double newChartHeight = pageSetup.PageHeight * 0.5;
 
-        // Calculate new dimensions for the chart to keep it proportional to the new page size.
-        // Here we use 80% of the page width and preserve the original aspect ratio.
-        double pageWidth = builder.PageSetup.PageWidth;
-        double originalAspectRatio = chartShape.Height / chartShape.Width;
-        double newChartWidth = pageWidth * 0.8;
-        double newChartHeight = newChartWidth * originalAspectRatio;
+        // Apply the new dimensions to the chart shape.
+        chartShape.Width = newChartWidth;
+        chartShape.Height = newChartHeight;
 
-        // Ensure the shape actually contains a chart before resizing.
-        if (chartShape.HasChart)
-        {
-            chartShape.Width = newChartWidth;
-            chartShape.Height = newChartHeight;
-        }
-
-        // Save the document with the resized chart.
-        doc.Save("chart_resized.docx");
+        // Save the updated document where the chart has been resized automatically.
+        doc.Save("chart-resized.docx");
     }
 }
