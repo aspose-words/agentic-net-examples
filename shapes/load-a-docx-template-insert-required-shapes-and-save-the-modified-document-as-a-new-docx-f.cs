@@ -2,84 +2,70 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
-public class ShapeInsertionExample
+public class Program
 {
     public static void Main()
     {
-        // Define directories and file paths.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define temporary folder for files
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsShapesExample");
+        Directory.CreateDirectory(tempFolder);
 
-        string templatePath = Path.Combine(artifactsDir, "Template.docx");
-        string resultPath = Path.Combine(artifactsDir, "Result.docx");
-        string imagePath = Path.Combine(artifactsDir, "SampleImage.png");
-
-        // -------------------------------------------------
-        // 1. Create a simple placeholder PNG image.
-        // -------------------------------------------------
-        // This is a 1x1 pixel transparent PNG encoded in Base64.
-        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=";
-        File.WriteAllBytes(imagePath, Convert.FromBase64String(base64Png));
+        // Paths for template and output documents
+        string templatePath = Path.Combine(tempFolder, "Template.docx");
+        string outputPath = Path.Combine(tempFolder, "Modified.docx");
 
         // -------------------------------------------------
-        // 2. Create a DOCX template and save it to disk.
+        // Step 1: Create a simple DOCX template document
         // -------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
-        templateBuilder.Writeln("This is a template document.");
+        templateBuilder.Writeln("This is the template document.");
         templateDoc.Save(templatePath);
 
         // -------------------------------------------------
-        // 3. Load the template document.
+        // Step 2: Load the DOCX template
         // -------------------------------------------------
         Document doc = new Document(templatePath);
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // -------------------------------------------------
-        // 4. Insert a rectangle shape.
+        // Step 3: Insert required shapes
         // -------------------------------------------------
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 150, 100);
-        rectangle.FillColor = System.Drawing.Color.Yellow;
-        rectangle.Stroke.Color = System.Drawing.Color.Black;
+        // Insert a rectangle shape
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        rectangle.FillColor = Color.LightBlue;
+        rectangle.StrokeColor = Color.DarkBlue;
+        rectangle.StrokeWeight = 2.0; // Set line width
+
+        // Insert a text box shape
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 150, 60);
+        textBox.FillColor = Color.LightYellow;
+        textBox.StrokeColor = Color.Orange;
+        textBox.StrokeWeight = 1.5; // Set line width
+
+        // Add text inside the text box
+        textBox.AppendChild(new Paragraph(doc));
+        Paragraph para = (Paragraph)textBox.LastChild;
+        Run run = new Run(doc, "Sample text inside a text box.");
+        para.AppendChild(run);
 
         // -------------------------------------------------
-        // 5. Insert an ellipse shape.
+        // Step 4: Save the modified document
         // -------------------------------------------------
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 100, 100);
-        ellipse.FillColor = System.Drawing.Color.LightGreen;
-        ellipse.Stroke.Color = System.Drawing.Color.Blue;
+        doc.Save(outputPath);
 
         // -------------------------------------------------
-        // 6. Insert a text box shape with some text.
+        // Step 5: Validate that the output file exists
         // -------------------------------------------------
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 80);
-        textBox.FillColor = System.Drawing.Color.LightGray;
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the output document at '{outputPath}'.");
+        }
 
-        // Ensure the text box contains a paragraph, then add a run.
-        Paragraph tbParagraph = textBox.FirstParagraph ?? new Paragraph(doc);
-        if (textBox.FirstParagraph == null)
-            textBox.AppendChild(tbParagraph);
-
-        Run tbRun = new Run(doc, "Hello from TextBox!");
-        tbParagraph.AppendChild(tbRun);
-
-        // -------------------------------------------------
-        // 7. Insert an image shape using the generated image.
-        // -------------------------------------------------
-        Shape imageShape = builder.InsertImage(imagePath);
-        imageShape.Width = 100;
-        imageShape.Height = 100;
-
-        // -------------------------------------------------
-        // 8. Save the modified document.
-        // -------------------------------------------------
-        doc.Save(resultPath);
-
-        // -------------------------------------------------
-        // 9. Validate that the output file exists.
-        // -------------------------------------------------
-        if (!File.Exists(resultPath))
-            throw new Exception("The result document was not created.");
+        // Cleanup: (optional) delete temporary files if desired
+        // File.Delete(templatePath);
+        // File.Delete(outputPath);
     }
 }

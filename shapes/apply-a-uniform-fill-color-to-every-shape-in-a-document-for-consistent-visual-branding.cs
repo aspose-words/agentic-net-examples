@@ -1,11 +1,10 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class ApplyUniformFillColor
 {
     public static void Main()
     {
@@ -14,30 +13,30 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a few sample shapes.
-        // Inline rectangle.
-        builder.InsertShape(ShapeType.Rectangle, 120, 60);
-        // Inline ellipse.
+        builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        builder.Writeln(); // separate shapes with a paragraph break
         builder.InsertShape(ShapeType.Ellipse, 80, 80);
-        // Floating shape with explicit positioning.
-        Shape floatingShape = builder.InsertShape(
-            ShapeType.Star, RelativeHorizontalPosition.Page, 100,
-            RelativeVerticalPosition.Page, 150, 100, 100, WrapType.None);
-        floatingShape.StrokeColor = Color.DarkGray; // Optional styling.
+        builder.Writeln();
+        builder.InsertShape(ShapeType.Triangle, 120, 70);
 
-        // Apply a uniform fill color to every shape in the document.
-        var shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // Define the uniform fill color.
+        Color uniformColor = Color.FromArgb(0, 112, 192); // Example branding blue.
+
+        // Traverse all shapes in the document and apply the fill color.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
         {
-            // Set the fill to a solid LightBlue color.
-            shape.FillColor = Color.LightBlue;
+            shape.FillColor = uniformColor;
         }
 
         // Save the document.
         string outputPath = "UniformFillShapes.docx";
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to save the document to '{outputPath}'.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

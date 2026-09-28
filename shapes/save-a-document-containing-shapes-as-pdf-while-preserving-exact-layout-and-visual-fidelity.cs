@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 public class Program
 {
@@ -12,49 +11,57 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Insert a paragraph to hold the shapes.
+        builder.Writeln("Document with shapes saved as PDF:");
+        builder.Writeln();
+
         // Insert a floating rectangle shape.
-        Shape rect = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, 100,   // 100 points from the left of the page
-            RelativeVerticalPosition.Page, 100,     // 100 points from the top of the page
-            200,                                     // width
-            100,                                     // height
-            WrapType.None);                         // no text wrapping
+        Shape rectangle = new Shape(doc, ShapeType.Rectangle);
+        rectangle.Width = 150;
+        rectangle.Height = 100;
+        rectangle.Left = 100; // points from the left edge of the page
+        rectangle.Top = 100;  // points from the top edge of the page
+        rectangle.WrapType = WrapType.None; // No text wrapping
+        rectangle.StrokeColor = System.Drawing.Color.Blue;
+        rectangle.FillColor = System.Drawing.Color.LightBlue;
+        rectangle.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        rectangle.RelativeVerticalPosition = RelativeVerticalPosition.Page;
 
-        // Set visual properties of the rectangle.
-        rect.FillColor = System.Drawing.Color.LightBlue;
-        rect.StrokeColor = System.Drawing.Color.DarkBlue;
-        rect.StrokeWeight = 2.0;
+        // Append the rectangle to the document body.
+        builder.CurrentParagraph.AppendChild(rectangle);
+        builder.Writeln(); // Add space after the shape.
 
-        // Insert an inline text box shape.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 150, 50);
-        textBox.FillColor = System.Drawing.Color.LightYellow;
-        textBox.StrokeColor = System.Drawing.Color.Orange;
-        textBox.StrokeWeight = 1.5;
+        // Insert a floating ellipse shape.
+        Shape ellipse = new Shape(doc, ShapeType.Ellipse);
+        ellipse.Width = 120;
+        ellipse.Height = 80;
+        ellipse.Left = 300;
+        ellipse.Top = 150;
+        ellipse.WrapType = WrapType.None;
+        ellipse.StrokeColor = System.Drawing.Color.Green;
+        ellipse.FillColor = System.Drawing.Color.LightGreen;
+        ellipse.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        ellipse.RelativeVerticalPosition = RelativeVerticalPosition.Page;
 
-        // Add text to the text box.
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Font.Size = 12;
-        builder.Font.Name = "Arial";
-        builder.Writeln("Hello Shapes!");
+        // Append the ellipse to the document body.
+        builder.CurrentParagraph.AppendChild(ellipse);
+        builder.Writeln(); // Add space after the shape.
 
-        // Prepare PDF save options to render DrawingML shapes directly.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            DmlRenderingMode = DmlRenderingMode.DrawingML
-        };
-
-        // Define output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapesOutput.pdf");
+        // Define output paths.
+        string outputDir = Path.Combine(Path.GetTempPath(), "AsposeShapesExample");
+        Directory.CreateDirectory(outputDir);
+        string pdfPath = Path.Combine(outputDir, "ShapesDocument.pdf");
 
         // Save the document as PDF.
-        doc.Save(outputPath, pdfOptions);
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Validate that the PDF file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the PDF file.");
+        if (!File.Exists(pdfPath))
+        {
+            throw new InvalidOperationException($"Failed to create PDF file at '{pdfPath}'.");
+        }
 
-        // Optionally, inform that the process completed (no interactive I/O required).
-        Console.WriteLine("PDF saved successfully to: " + outputPath);
+        // Optionally, clean up (comment out if you want to inspect the file).
+        // File.Delete(pdfPath);
     }
 }

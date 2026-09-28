@@ -1,8 +1,8 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
@@ -12,36 +12,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a floating text box with specific dimensions (width: 200 pt, height: 100 pt).
+        // Insert a textbox shape with specific dimensions.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        // Make the shape floating so that we can set its position and wrapping.
-        textBox.WrapType = WrapType.None;
 
         // Apply border (stroke) formatting.
-        textBox.StrokeColor = Color.DarkBlue;               // Border color.
-        textBox.StrokeWeight = 2.0;                         // Border thickness (points).
-        textBox.Stroke.DashStyle = DashStyle.Dash;          // Dashed border.
+        textBox.StrokeColor = Color.Blue;          // Border color.
+        textBox.StrokeWeight = 2.0;                // Border thickness (points).
+        textBox.Stroke.DashStyle = DashStyle.Solid; // Border style.
 
         // Apply interior (fill) formatting.
-        textBox.FillColor = Color.LightYellow;              // Background color of the text box.
+        textBox.FillColor = Color.LightYellow;     // Background color.
 
-        // Optional: adjust internal margins of the text box (in points).
-        textBox.TextBox.InternalMarginTop = 5;
-        textBox.TextBox.InternalMarginBottom = 5;
-        textBox.TextBox.InternalMarginLeft = 5;
-        textBox.TextBox.InternalMarginRight = 5;
+        // Optionally add some text inside the textbox.
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Sample textbox content");
+        para.AppendChild(run);
+        textBox.AppendChild(para);
 
-        // Add some text inside the text box.
-        builder.MoveTo(textBox.LastParagraph);
-        builder.Font.Size = 12;
-        builder.Write("This is a sample text inside the formatted text box.");
-
-        // Save the document to the local file system.
+        // Save the document to disk.
         string outputPath = "TextboxShape.docx";
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
+        {
             throw new Exception($"Failed to create the output file: {outputPath}");
+        }
     }
 }

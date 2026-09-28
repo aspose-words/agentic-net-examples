@@ -10,26 +10,25 @@ namespace ShapeExample
     {
         public static void Main()
         {
-            // Create a new blank document.
+            // Create a new document.
             Document doc = new Document();
-
-            // Initialize DocumentBuilder for the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a rectangle AutoShape with specified width and height (in points).
+            // Insert a rectangle AutoShape with specific size.
             Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 100);
 
-            // Set the fill color of the rectangle to blue.
+            // Set the fill color to blue.
             rectangle.FillColor = Color.Blue;
 
-            // Define the line (stroke) weight of the rectangle.
-            rectangle.StrokeWeight = 2.0; // Weight in points.
+            // Define the line (stroke) weight.
+            rectangle.StrokeWeight = 2.0; // points
+            rectangle.StrokeColor = Color.Black; // optional: set stroke color
 
-            // Save the document to the local file system.
+            // Save the document.
             string outputPath = "RectangleShape.docx";
             doc.Save(outputPath);
 
-            // Validate that the file was created successfully.
+            // Verify that the file was created.
             if (!File.Exists(outputPath))
                 throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }

@@ -3,50 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-namespace ImageShapeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a folder for the generated files.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-            Directory.CreateDirectory(outputDir);
+        // Create a temporary image file (a tiny PNG).
+        string imagePath = Path.Combine(Path.GetTempPath(), "sample_image.png");
+        CreateSampleImage(imagePath);
 
-            // Create a simple 1x1 PNG image from a base‑64 string (no System.Drawing dependency).
-            string imagePath = Path.Combine(outputDir, "sample.png");
-            byte[] pngBytes = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
-            File.WriteAllBytes(imagePath, pngBytes);
+        // Create a new document and a builder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert the image with explicit size (in points).
+        // 1 point = 1/72 inch. Convert pixels to points assuming 96 DPI.
+        double widthInPoints = 200 * 72.0 / 96.0;
+        double heightInPoints = 100 * 72.0 / 96.0;
+        Shape imageShape = builder.InsertImage(imagePath, widthInPoints, heightInPoints);
 
-            // Insert the image as a floating shape with custom size, position and wrap type.
-            // Parameters: file name, horizontal position reference, left, vertical position reference, top,
-            // width, height, wrap type.
-            Shape imageShape = builder.InsertImage(
-                imagePath,
-                RelativeHorizontalPosition.Margin, 100,   // 100 points from left margin
-                RelativeVerticalPosition.Margin, 100,     // 100 points from top margin
-                200,                                      // width in points
-                200,                                      // height in points
-                WrapType.Square);                         // text will wrap around the image
+        // Configure wrapping, positioning and relative references.
+        imageShape.WrapType = WrapType.Square;
+        imageShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        imageShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        imageShape.Left = ConvertUtil.MillimeterToPoint(20);   // 20 mm from the left of the page
+        imageShape.Top = ConvertUtil.MillimeterToPoint(30);    // 30 mm from the top of the page
 
-            // Ensure the image appears in front of the text.
-            imageShape.BehindText = false;
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ImageShapeExample.docx");
+        doc.Save(outputPath);
 
-            // Save the document.
-            string docPath = Path.Combine(outputDir, "ImageShape.docx");
-            doc.Save(docPath);
+        // Validate that the document was saved.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not created.");
 
-            // Validate that the output file was created.
-            if (!File.Exists(docPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
+        // Validate that the inserted shape has the expected wrap type.
+        if (imageShape.WrapType != WrapType.Square)
+            throw new InvalidOperationException("Wrap type was not set correctly.");
 
-            // Optional clean‑up of the temporary image file.
-            // File.Delete(imagePath);
-        }
+        // Clean up temporary image file.
+        if (File.Exists(imagePath))
+            File.Delete(imagePath);
+    }
+
+    // Writes a minimal PNG image (1x1 pixel) to the specified path.
+    private static void CreateSampleImage(string path)
+    {
+        // Base64-encoded PNG (transparent 1x1 pixel).
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(path, pngBytes);
     }
 }

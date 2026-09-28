@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -13,58 +11,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three overlapping rectangles.
-        // The newer shape is placed on top by default.
-        Shape shape1 = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.LeftMargin, 100,
-            RelativeVerticalPosition.TopMargin, 100,
-            200, 200,
-            WrapType.None);
-        shape1.FillColor = Color.Orange;
+        // Insert two overlapping floating shapes.
+        // First shape – rectangle.
+        builder.InsertShape(ShapeType.Rectangle, 150, 100);
+        Shape rectShape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[0];
+        rectShape.WrapType = WrapType.None; // Make it floating.
 
-        Shape shape2 = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.LeftMargin, 150,
-            RelativeVerticalPosition.TopMargin, 150,
-            200, 200,
-            WrapType.None);
-        shape2.FillColor = Color.LightBlue;
+        // Second shape – ellipse (will be on top initially).
+        builder.InsertShape(ShapeType.Ellipse, 150, 100);
+        Shape ellipseShape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[1];
+        ellipseShape.WrapType = WrapType.None; // Make it floating.
 
-        Shape shape3 = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.LeftMargin, 200,
-            RelativeVerticalPosition.TopMargin, 200,
-            200, 200,
-            WrapType.None);
-        shape3.FillColor = Color.LightGreen;
+        // Retrieve all shapes in the document.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        if (shapeNodes.Count < 2)
+            throw new Exception("Expected at least two shapes in the document.");
 
-        // Retrieve all top‑level shapes in the document.
-        Shape[] shapes = doc.GetChildNodes(NodeType.Shape, true)
-                            .OfType<Shape>()
-                            .ToArray();
+        // Cast the first shape (rectangle).
+        Shape firstShape = (Shape)shapeNodes[0];
 
-        // Display the current Z‑order values.
-        Console.WriteLine("Current Z‑order values:");
-        for (int i = 0; i < shapes.Length; i++)
-        {
-            Console.WriteLine($"Shape {i + 1}: ZOrder = {shapes[i].ZOrder}");
-        }
+        // Get its initial Z‑order index.
+        int initialZOrder = firstShape.ZOrder;
 
-        // Bring the first shape (orange rectangle) to the front.
-        int maxZ = shapes.Max(s => s.ZOrder);
-        shapes[0].ZOrder = maxZ + 1;
+        // Bring the first shape to the front by moving it to the end of its parent's child collection.
+        CompositeNode parent = (CompositeNode)firstShape.ParentNode;
+        parent.RemoveChild(firstShape);
+        parent.AppendChild(firstShape);
 
-        // Verify the new Z‑order.
-        Console.WriteLine("\nAfter bringing the first shape to front:");
-        for (int i = 0; i < shapes.Length; i++)
-        {
-            Console.WriteLine($"Shape {i + 1}: ZOrder = {shapes[i].ZOrder}");
-        }
+        // Get its new Z‑order index.
+        int newZOrder = firstShape.ZOrder;
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeZOrder.docx");
+        // Save the document.
+        string outputPath = "ZOrderExample.docx";
         doc.Save(outputPath);
-        Console.WriteLine($"\nDocument saved to: {outputPath}");
+
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception($"Failed to create the output file: {outputPath}");
+
+        // Output the Z‑order values (optional verification).
+        Console.WriteLine($"Initial Z‑order: {initialZOrder}");
+        Console.WriteLine($"New Z‑order after bringing to front: {newZOrder}");
     }
 }

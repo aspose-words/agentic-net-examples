@@ -7,36 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a few sample shapes.
+        // Insert several shapes of different types.
         builder.InsertShape(ShapeType.Rectangle, 100, 50);
         builder.InsertShape(ShapeType.Ellipse, 80, 80);
-        builder.InsertShape(ShapeType.Star, 60, 60);
+        builder.InsertShape(ShapeType.Triangle, 60, 60);
 
         // Save the document to disk.
         string outputPath = "ShapesOutput.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was saved.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-
-        // Load the saved document (optional, demonstrates load workflow).
-        Document loadedDoc = new Document(outputPath);
-
-        // Retrieve all shape nodes in the document.
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-
-        // Iterate through each shape and output its ShapeType.
-        foreach (Node node in shapeNodes)
+        // Iterate through all shapes in the document and output their ShapeType.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapeNodes)
         {
-            if (node is Shape shape)
-            {
-                Console.WriteLine(shape.ShapeType);
-            }
+            Console.WriteLine($"Shape Type: {shape.ShapeType}");
+        }
+
+        // Validate that the output document was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception("The output document was not created.");
         }
     }
 }

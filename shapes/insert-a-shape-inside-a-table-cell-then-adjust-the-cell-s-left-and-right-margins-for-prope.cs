@@ -3,42 +3,46 @@ using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Begin a table.
+        // Start a table with a single cell.
         builder.StartTable();
-
-        // Insert the first cell of the table.
         builder.InsertCell();
 
-        // Insert a rectangle shape into the current cell.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 50, 50);
+        // Insert a rectangle shape inside the current cell.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
         shape.FillColor = Color.LightBlue;
+        shape.StrokeColor = Color.DarkBlue;
 
-        // Adjust the cell's left and right margins (padding) to give the shape space.
-        builder.CellFormat.LeftPadding = 10;   // points
-        builder.CellFormat.RightPadding = 10; // points
+        // Retrieve the cell that contains the shape.
+        Cell cell = builder.CurrentParagraph.ParentNode as Cell;
+        if (cell == null)
+            throw new Exception("Current node is not a table cell.");
 
-        // Optional text to illustrate the padding effect.
-        builder.Writeln("Shape inside cell");
+        // Adjust left and right padding (margins) of the cell.
+        cell.CellFormat.LeftPadding = 10;   // points
+        cell.CellFormat.RightPadding = 10; // points
 
-        // Finish the row and the table.
+        // Complete the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeInTableCell.docx");
+        // Save the document.
+        string outputPath = "ShapeInTableCell.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Document was not saved successfully.");
+            throw new Exception("Document was not saved successfully.");
+
+        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
     }
 }

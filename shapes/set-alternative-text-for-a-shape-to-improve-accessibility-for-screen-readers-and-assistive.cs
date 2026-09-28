@@ -3,34 +3,30 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class ShapeAlternativeTextExample
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an inline cube shape with a size of 150x150 points.
-        Shape shape = builder.InsertShape(ShapeType.Cube, 150, 150);
-        shape.Name = "MyCube";
-
-        // Set the alternative text for accessibility (screen readers, etc.).
-        shape.AlternativeText = "Alt text for MyCube.";
-
-        // Define the output file path in the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Shape_AltText.docx");
+        // Insert a rectangle shape.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 100);
+        // Set alternative text for accessibility.
+        shape.AlternativeText = "Blue rectangle used as a decorative element";
 
         // Save the document.
+        string outputPath = "ShapeAltText.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created successfully.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-        {
             throw new Exception($"Failed to create the output file: {outputPath}");
-        }
 
-        // Optionally, inform the user (no interactive prompts required).
-        Console.WriteLine($"Document saved successfully to: {outputPath}");
+        // Optional: Verify that the shape's alternative text was set correctly.
+        Shape savedShape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[0];
+        if (savedShape.AlternativeText != "Blue rectangle used as a decorative element")
+            throw new Exception("Alternative text was not set correctly on the shape.");
     }
 }

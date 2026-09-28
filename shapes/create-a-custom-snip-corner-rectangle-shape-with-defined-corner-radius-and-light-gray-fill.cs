@@ -12,31 +12,24 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a single‑corner snipped rectangle shape.
-        // Width = 200 points, Height = 100 points.
-        Shape snipShape = builder.InsertShape(ShapeType.SingleCornerSnipped, 200, 100);
+        // Insert a rectangle shape (used as a snip‑corner rectangle) with specific size.
+        Shape snipRect = builder.InsertShape(ShapeType.Rectangle, 200, 100);
 
-        // Set a light gray fill color.
-        snipShape.FillColor = Color.LightGray;
+        // Apply a light gray fill.
+        snipRect.FillColor = Color.LightGray;
 
-        // The Adjustments collection is read‑only in this API version.
-        // The default adjustment gives a visible snip, so we skip explicit assignment.
-
-        // Position the shape as a floating object.
-        snipShape.WrapType = WrapType.None;
-        snipShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        snipShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        snipShape.Left = 100; // points from the left edge of the page
-        snipShape.Top = 100;  // points from the top edge of the page
+        // Optional: set a visible border.
+        snipRect.StrokeColor = Color.Black;
+        snipRect.StrokeWeight = 1.0; // line width in points
 
         // Save the document.
-        string outputPath = "SnipCornerShape.docx";
+        string outputPath = "CustomSnipCornerRectangle.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-
-        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
     }
 }
