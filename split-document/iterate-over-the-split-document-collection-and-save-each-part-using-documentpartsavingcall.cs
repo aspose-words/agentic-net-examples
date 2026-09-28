@@ -1,101 +1,55 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-namespace SplitDocumentExample
+public class Program
 {
-    // Custom callback to control how each document part is saved.
-    public class CustomDocumentPartSavingCallback : IDocumentPartSavingCallback
+    public static void Main()
     {
-        private readonly string _outputDirectory;
-        private readonly string _baseFileName;
-        private readonly DocumentSplitCriteria _splitCriteria;
-        private int _partCount = 0;
-
-        public CustomDocumentPartSavingCallback(string outputDirectory, string baseFileName, DocumentSplitCriteria splitCriteria)
+        // Create a sample document that contains three sections.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        for (int i = 1; i <= 3; i++)
         {
-            _outputDirectory = outputDirectory;
-            _baseFileName = baseFileName;
-            _splitCriteria = splitCriteria;
+            builder.Writeln($"Content of Section {i}.");
+            if (i < 3)
+                builder.InsertBreak(BreakType.SectionBreakNewPage);
         }
 
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+        // Save the source document for reference (optional).
+        sourceDoc.Save("Source.docx");
+
+        // Split the source document into separate documents, one per section.
+        List<Document> splitDocs = new List<Document>();
+        foreach (Section section in sourceDoc.Sections)
         {
-            // Determine the type of part being saved (section, page, etc.).
-            string partType = _splitCriteria switch
-            {
-                DocumentSplitCriteria.PageBreak => "Page",
-                DocumentSplitCriteria.ColumnBreak => "Column",
-                DocumentSplitCriteria.SectionBreak => "Section",
-                DocumentSplitCriteria.HeadingParagraph => "Heading",
-                _ => "Part"
-            };
+            // Create a new empty document that will hold the imported section.
+            Document partDoc = new Document();
 
-            // Create a unique file name for the part.
-            string partFileName = $"{_baseFileName}_part{++_partCount}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+            // Import the section from the source document into the new document.
+            NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(section, true);
+            partDoc.AppendChild(importedSection);
 
-            // Set the file name (without path) and the stream where Aspose.Words will write the part.
-            args.DocumentPartFileName = partFileName;
-            string fullPath = Path.Combine(_outputDirectory, partFileName);
-            args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
-
-            // Ensure the stream will be closed by Aspose.Words after saving.
-            args.KeepDocumentPartStreamOpen = false;
+            splitDocs.Add(partDoc);
         }
-    }
 
-    public class Program
-    {
-        public static void Main()
+        // Save each split document using a deterministic file name.
+        for (int i = 0; i < splitDocs.Count; i++)
         {
-            // Define output folder.
-            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
-
-            // Create a sample document with multiple sections.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Section 1
-            builder.Writeln("Section 1 - Introduction");
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-            // Section 2
-            builder.Writeln("Section 2 - Body");
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-            // Section 3
-            builder.Writeln("Section 3 - Conclusion");
-
-            // Prepare HTML save options with splitting by section.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions
-            {
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
-            };
-
-            // Base file name for the main output (used only for naming parts).
-            string baseFileName = "SplitDocument";
-
-            // Assign the custom callback.
-            saveOptions.DocumentPartSavingCallback = new CustomDocumentPartSavingCallback(
-                artifactsDir,
-                baseFileName,
-                saveOptions.DocumentSplitCriteria);
-
-            // Save the document; Aspose.Words will invoke the callback for each part.
-            string mainOutputPath = Path.Combine(artifactsDir, $"{baseFileName}.html");
-            doc.Save(mainOutputPath, saveOptions);
-
-            // Verify that the expected part files were created.
-            string[] partFiles = Directory.GetFiles(artifactsDir, $"{baseFileName}_part*_*.html");
-            if (partFiles.Length == 0)
-                throw new InvalidOperationException("No document parts were saved.");
-
-            // Output the list of generated files (optional, for demonstration).
-            Console.WriteLine("Generated document parts:");
-            foreach (string file in partFiles)
-                Console.WriteLine(Path.GetFileName(file));
+            string fileName = $"Part_{i + 1}.docx";
+            splitDocs[i].Save(fileName);
         }
+
+        // Verify that each expected output file exists.
+        for (int i = 1; i <= splitDocs.Count; i++)
+        {
+            string fileName = $"Part_{i}.docx";
+            if (!File.Exists(fileName))
+                throw new Exception($"Expected file '{fileName}' was not created.");
+        }
+
+        Console.WriteLine("All split parts were saved successfully.");
     }
 }

@@ -1,100 +1,90 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace SplitAndMergeSections
+public class SplitAndMergeBySection
 {
-    // Callback that saves each document part (section) as a separate HTML file.
-    class SectionPartSaver : IDocumentPartSavingCallback
+    public static void Main()
     {
-        private readonly string _outputFolder;
-        private int _count = 0;
+        // Paths for the documents.
+        const string sourcePath = "Source.docx";
+        const string mergedPath = "Merged.docx";
 
-        public SectionPartSaver(string outputFolder)
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with three sections.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        for (int i = 1; i <= 3; i++)
         {
-            _outputFolder = outputFolder;
-            Directory.CreateDirectory(_outputFolder);
+            builder.Writeln($"This is the content of Section {i}.");
+            // Insert a section break after each section except the last one.
+            if (i < 3)
+                builder.InsertBreak(BreakType.SectionBreakNewPage);
         }
 
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+        // Save the source document.
+        sourceDoc.Save(sourcePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the document and split it by sections manually.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
+        List<Document> splitParts = new List<Document>();
+
+        foreach (Section sec in loadedDoc.Sections)
         {
-            // Name files Section_1.html, Section_2.html, …
-            string fileName = $"Section_{++_count}.html";
-            args.DocumentPartFileName = fileName;
-            args.DocumentPartStream = new FileStream(Path.Combine(_outputFolder, fileName), FileMode.Create);
+            // Create a new empty document for the current section.
+            Document part = new Document();
+            part.RemoveAllChildren(); // Ensure the document is empty.
+
+            // Import the section from the source document into the new document.
+            NodeImporter importer = new NodeImporter(loadedDoc, part, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(sec, true);
+            part.AppendChild(importedSection);
+
+            splitParts.Add(part);
         }
-    }
 
-    public class Program
-    {
-        public static void Main()
+        // Validate that we have the expected number of sections.
+        if (splitParts.Count != 3)
+            throw new InvalidOperationException($"Expected 3 split parts, but got {splitParts.Count}.");
+
+        // -----------------------------------------------------------------
+        // 3. Merge selected parts (e.g., first and third sections) into a new document.
+        // -----------------------------------------------------------------
+        Document mergedDoc = new Document();
+        mergedDoc.RemoveAllChildren(); // Remove the default empty section.
+
+        // Indices of parts to merge.
+        int[] indicesToMerge = { 0, 2 }; // first and third sections.
+
+        foreach (int index in indicesToMerge)
         {
-            // Prepare output directory.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // -----------------------------------------------------------------
-            // 1. Create a sample document with three sections.
-            // -----------------------------------------------------------------
-            string sourcePath = Path.Combine(outputDir, "source.docx");
-            Document sourceDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-            builder.Writeln("Content of Section 1");
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-            builder.Writeln("Content of Section 2");
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-            builder.Writeln("Content of Section 3");
-
-            sourceDoc.Save(sourcePath);
-
-            // -----------------------------------------------------------------
-            // 2. Split the document into separate HTML files, one per section.
-            // -----------------------------------------------------------------
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            Document part = splitParts[index];
+            // Import each section from the part into the merged document.
+            NodeImporter importer = new NodeImporter(part, mergedDoc, ImportFormatMode.KeepSourceFormatting);
+            foreach (Section sec in part.Sections)
             {
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-                DocumentPartSavingCallback = new SectionPartSaver(outputDir)
-            };
-
-            // The main file name is irrelevant; parts are saved via the callback.
-            sourceDoc.Save(Path.Combine(outputDir, "split.html"), saveOptions);
-
-            // -----------------------------------------------------------------
-            // 3. Load the split parts and merge selected sections (1st and 3rd).
-            // -----------------------------------------------------------------
-            string[] partFiles = Directory.GetFiles(outputDir, "Section_*.html");
-
-            Document mergedDoc = new Document();
-            // Remove the automatically created empty section.
-            mergedDoc.Sections.Clear();
-
-            foreach (string partFile in partFiles)
-            {
-                // Include only sections 1 and 3 for this example.
-                string fileName = Path.GetFileNameWithoutExtension(partFile); // e.g., Section_1
-                if (fileName.EndsWith("_1") || fileName.EndsWith("_3"))
-                {
-                    Document partDoc = new Document(partFile);
-                    Section srcSection = partDoc.Sections[0];
-
-                    // Import the section into the merged document.
-                    Section imported = (Section)mergedDoc.ImportNode(srcSection, true);
-                    mergedDoc.Sections.Add(imported);
-                }
+                Section importedSection = (Section)importer.ImportNode(sec, true);
+                mergedDoc.AppendChild(importedSection);
             }
-
-            string mergedPath = Path.Combine(outputDir, "merged.docx");
-            mergedDoc.Save(mergedPath);
-
-            // Simple validation to ensure the merged file exists.
-            if (!File.Exists(mergedPath))
-                throw new Exception("Merged document was not created.");
-
-            // Output result (no user interaction required).
-            Console.WriteLine($"Merged document created at: {mergedPath}");
-            Console.WriteLine($"Number of sections in merged document: {mergedDoc.Sections.Count}");
         }
+
+        // Save the merged document.
+        mergedDoc.Save(mergedPath);
+
+        // -----------------------------------------------------------------
+        // 4. Validate that the output files exist.
+        // -----------------------------------------------------------------
+        if (!File.Exists(sourcePath))
+            throw new FileNotFoundException($"Source document not found: {sourcePath}");
+        if (!File.Exists(mergedPath))
+            throw new FileNotFoundException($"Merged document not found: {mergedPath}");
+
+        Console.WriteLine("Document split and merge completed successfully.");
     }
 }

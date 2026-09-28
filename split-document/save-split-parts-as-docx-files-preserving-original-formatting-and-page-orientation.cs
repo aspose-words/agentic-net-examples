@@ -6,85 +6,81 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for all generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
         // -----------------------------------------------------------------
-        // 1. Create a sample source document with multiple sections.
-        //    Each section has its own orientation, header and footer.
+        // 1. Create a sample source document with two sections that have
+        //    different page orientations (portrait and landscape).
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Section 1 – Portrait orientation.
-        builder.PageSetup.Orientation = Orientation.Portrait;
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header – Section 1");
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Footer – Section 1");
-        builder.MoveToDocumentStart(); // Return to body.
-        builder.Writeln("Content of Section 1 (Portrait).");
+        // First section – default portrait orientation.
+        builder.Writeln("First section – portrait orientation.");
+        for (int i = 0; i < 30; i++)
+            builder.Writeln($"Portrait line {i + 1}");
 
-        // Insert a section break.
+        // Insert a new section and set its orientation to landscape.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
+        sourceDoc.Sections[1].PageSetup.Orientation = Orientation.Landscape;
+        builder.Writeln("Second section – landscape orientation.");
+        for (int i = 0; i < 30; i++)
+            builder.Writeln($"Landscape line {i + 1}");
 
-        // Section 2 – Landscape orientation.
-        builder.PageSetup.Orientation = Orientation.Landscape;
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header – Section 2");
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Footer – Section 2");
-        builder.MoveToDocumentStart();
-        builder.Writeln("Content of Section 2 (Landscape).");
-
-        // Insert another section break.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Section 3 – Portrait orientation again.
-        builder.PageSetup.Orientation = Orientation.Portrait;
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header – Section 3");
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Footer – Section 3");
-        builder.MoveToDocumentStart();
-        builder.Writeln("Content of Section 3 (Portrait).");
-
-        // Save the source document (optional, for inspection).
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        // Save the source document (optional, just for reference).
+        string sourcePath = "SourceDocument.docx";
         sourceDoc.Save(sourcePath);
 
         // -----------------------------------------------------------------
-        // 2. Split the document by sections and save each part as a DOCX.
-        //    Use ImportNode to correctly transfer sections between documents.
+        // 2. Split the document by sections, preserving formatting and
+        //    page orientation of each section.
         // -----------------------------------------------------------------
-        int sectionCount = sourceDoc.Sections.Count;
-
-        for (int i = 0; i < sectionCount; i++)
+        for (int i = 0; i < sourceDoc.Sections.Count; i++)
         {
-            // Create a new empty document and remove its default empty section.
-            Document partDoc = new Document();
-            partDoc.RemoveAllChildren();
+            Section originalSection = sourceDoc.Sections[i];
 
-            // Import the i‑th section from the source document into the new document.
-            // ImportNode performs a deep copy and re‑parents the nodes to the destination document.
-            Section importedSection = (Section)partDoc.ImportNode(sourceDoc.Sections[i], true);
+            // Create a new empty document.
+            Document splitDoc = new Document();
+            // Remove the default empty section that a new Document contains.
+            splitDoc.RemoveAllChildren();
 
-            // Append the imported section to the new document.
-            partDoc.AppendChild(importedSection);
+            // Import the section from the source document into the new document,
+            // keeping source formatting (including orientation, headers/footers, etc.).
+            Section importedSection = (Section)splitDoc.ImportNode(
+                originalSection, true, ImportFormatMode.KeepSourceFormatting);
 
-            // Save the split part.
-            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
-            partDoc.Save(partPath);
+            // Append the imported section as the sole section of the split document.
+            splitDoc.AppendChild(importedSection);
 
-            // Verify that the file was created.
-            if (!File.Exists(partPath))
-                throw new InvalidOperationException($"Failed to create split part: {partPath}");
+            // Save each split part as a separate DOCX file.
+            string outPath = $"Section_{i + 1}.docx";
+            splitDoc.Save(outPath);
         }
 
         // -----------------------------------------------------------------
-        // 3. Simple confirmation output (no user interaction required).
+        // 3. Validate that each expected split file was created.
         // -----------------------------------------------------------------
-        Console.WriteLine($"Source document and {sectionCount} split parts have been saved to: {outputDir}");
+        for (int i = 0; i < sourceDoc.Sections.Count; i++)
+        {
+            string outPath = $"Section_{i + 1}.docx";
+            if (!File.Exists(outPath))
+                throw new Exception($"Expected split file not found: {outPath}");
+        }
+
+        // -----------------------------------------------------------------
+        // 4. Verify that the page orientation of each split document matches
+        //    the original section's orientation.
+        // -----------------------------------------------------------------
+        for (int i = 0; i < sourceDoc.Sections.Count; i++)
+        {
+            string outPath = $"Section_{i + 1}.docx";
+            Document splitDoc = new Document(outPath);
+
+            Orientation originalOrientation = sourceDoc.Sections[i].PageSetup.Orientation;
+            Orientation splitOrientation = splitDoc.Sections[0].PageSetup.Orientation;
+
+            if (originalOrientation != splitOrientation)
+                throw new Exception($"Orientation mismatch in {outPath}");
+        }
+
+        Console.WriteLine("Document split completed successfully.");
     }
 }

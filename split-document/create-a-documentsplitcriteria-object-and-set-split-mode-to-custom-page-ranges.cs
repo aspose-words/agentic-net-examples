@@ -3,65 +3,66 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class SplitDocumentExample
+public class Program
 {
     public static void Main()
     {
-        // Define directories for input and output.
-        string baseDir = Directory.GetCurrentDirectory();
-        string outputDir = Path.Combine(baseDir, "Output");
+        // Create a sample document with enough content to span multiple pages.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Size = 12;
+
+        // Insert many lines; Aspose.Words will paginate automatically.
+        for (int i = 0; i < 200; i++)
+        {
+            builder.Writeln($"Line {i + 1}");
+        }
+
+        // Ensure layout information is up‑to‑date before extracting pages.
+        doc.UpdatePageLayout();
+
+        // Define the custom page ranges we want to split: 1‑2 and 3‑4.
+        int[][] pageRanges = new int[][]
+        {
+            new int[] { 1, 2 },
+            new int[] { 3, 4 }
+        };
+
+        // Prepare the output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with multiple pages.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        for (int i = 1; i <= 5; i++)
+        // Save each page range as a separate HTML file.
+        for (int i = 0; i < pageRanges.Length; i++)
         {
-            builder.Writeln($"This is page {i}.");
-            if (i < 5)
-                builder.InsertBreak(BreakType.PageBreak);
+            int startPage = pageRanges[i][0];
+            int endPage = pageRanges[i][1];
+            int pageCount = endPage - startPage + 1;
+
+            // Extract the required pages into a new document.
+            Document splitDoc = doc.ExtractPages(startPage, pageCount);
+
+            // Configure HTML save options (default options are sufficient here).
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions();
+
+            // Build the output file name.
+            string fileName = i == 0 ? "SplitDocument.html" : $"SplitDocument_{i}.html";
+            string outputPath = Path.Combine(outputDir, fileName);
+
+            // Save the split document.
+            splitDoc.Save(outputPath, saveOptions);
         }
 
-        // Save the source document (optional, for reference).
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        sourceDoc.Save(sourcePath);
+        // Validate that the primary output file was created.
+        string primaryFile = Path.Combine(outputDir, "SplitDocument.html");
+        if (!File.Exists(primaryFile))
+            throw new Exception("The primary split HTML file was not created.");
 
-        // Create a DocumentSplitCriteria instance and set a split mode.
-        // Here we use PageBreak as an example; custom page‑range splitting will be performed manually.
-        DocumentSplitCriteria splitCriteria = DocumentSplitCriteria.PageBreak;
+        // Validate that at least one additional split file exists.
+        string additionalFile = Path.Combine(outputDir, "SplitDocument_1.html");
+        if (!File.Exists(additionalFile))
+            throw new Exception("Expected additional split HTML file was not created.");
 
-        // Define custom page ranges (zero‑based indices). Example: pages 1‑2 and 4‑5.
-        var customRanges = new (int start, int count)[]
-        {
-            (0, 2), // pages 1 and 2
-            (3, 2)  // pages 4 and 5
-        };
-
-        // Extract each range and save as a separate document.
-        for (int i = 0; i < customRanges.Length; i++)
-        {
-            var (start, count) = customRanges[i];
-            Document part = sourceDoc.ExtractPages(start, count);
-            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
-            part.Save(partPath);
-        }
-
-        // Verify that the expected split files were created.
-        for (int i = 1; i <= customRanges.Length; i++)
-        {
-            string partPath = Path.Combine(outputDir, $"Part_{i}.docx");
-            if (!File.Exists(partPath))
-                throw new FileNotFoundException($"Expected split document not found: {partPath}");
-        }
-
-        // Optional: demonstrate saving the source document to HTML using the split criteria.
-        // This will split the HTML output at each page break.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
-        {
-            DocumentSplitCriteria = splitCriteria
-        };
-        string htmlPath = Path.Combine(outputDir, "Source.html");
-        sourceDoc.Save(htmlPath, htmlOptions);
+        Console.WriteLine("Document split completed successfully.");
     }
 }

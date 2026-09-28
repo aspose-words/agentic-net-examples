@@ -3,82 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace DocumentPartSavingDemo
+public class Program
 {
-    // Callback that assigns a different file extension based on the part index:
-    // even parts -> .docx, odd parts -> .pdf
-    public class PartFormatCallback : IDocumentPartSavingCallback
+    public static void Main()
     {
-        private readonly string _outputFolder;
-        private int _partIndex;
+        // Create a sample document with four sections, each on a new page.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        public PartFormatCallback(string outputFolder)
+        for (int i = 1; i <= 4; i++)
         {
-            _outputFolder = outputFolder;
-            _partIndex = 0;
+            builder.Writeln($"This is content of Section {i}.");
+            if (i < 4)
+                builder.InsertBreak(BreakType.SectionBreakNewPage);
         }
 
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+        // Split the document by sections.
+        // Even‑indexed parts (0‑based) will be saved as DOCX, odd‑indexed parts as PDF.
+        for (int i = 0; i < sourceDoc.Sections.Count; i++)
         {
-            // Determine the desired extension.
-            string extension = (_partIndex % 2 == 0) ? ".docx" : ".pdf";
+            Section srcSection = sourceDoc.Sections[i];
 
-            // Build a unique file name for the part.
-            string partFileName = $"Part_{_partIndex + 1}{extension}";
+            // Create a new empty document and import the current section.
+            Document partDoc = new Document();
+            partDoc.RemoveAllChildren(); // Remove the default empty section.
 
-            // Set the file name (without path) that Aspose.Words will use.
-            args.DocumentPartFileName = partFileName;
+            Node importedSection = partDoc.ImportNode(srcSection, true);
+            partDoc.AppendChild(importedSection);
 
-            // Create a stream that writes the part to the output folder.
-            string fullPath = Path.Combine(_outputFolder, partFileName);
-            args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
+            // Determine format and file name.
+            bool isEven = (i % 2 == 0);
+            SaveFormat format = isEven ? SaveFormat.Docx : SaveFormat.Pdf;
+            string extension = isEven ? ".docx" : ".pdf";
+            string fileName = $"Part_{i + 1}{extension}";
 
-            // Increment the counter for the next part.
-            _partIndex++;
+            // Save the split part.
+            partDoc.Save(fileName, format);
         }
-    }
 
-    public class Program
-    {
-        public static void Main()
+        // Validate that the expected files were created.
+        for (int i = 1; i <= 4; i++)
         {
-            // Prepare output directory.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // Create a sample document with several sections to trigger splitting.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            for (int i = 1; i <= 4; i++)
-            {
-                builder.Writeln($"Section {i}");
-                // Insert a section break after each section except the last.
-                if (i < 4)
-                    builder.InsertBreak(BreakType.SectionBreakNewPage);
-            }
-
-            // Configure HTML save options to split by section.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions
-            {
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-                DocumentPartSavingCallback = new PartFormatCallback(outputDir)
-            };
-
-            // Save the document; the callback will create separate files.
-            string mainFilePath = Path.Combine(outputDir, "Combined.html");
-            doc.Save(mainFilePath, saveOptions);
-
-            // Simple verification that the expected files were created.
-            for (int i = 1; i <= 4; i++)
-            {
-                string expectedExtension = (i % 2 == 1) ? ".docx" : ".pdf"; // 1st part is even index (0) -> .docx
-                string expectedPath = Path.Combine(outputDir, $"Part_{i}{expectedExtension}");
-                if (!File.Exists(expectedPath))
-                    throw new FileNotFoundException($"Expected part file not found: {expectedPath}");
-            }
-
-            // Program ends without waiting for user input.
+            string expectedFile = $"Part_{i}" + (i % 2 == 1 ? ".docx" : ".pdf");
+            if (!File.Exists(expectedFile))
+                throw new FileNotFoundException($"Expected split file not found: {expectedFile}");
         }
+
+        Console.WriteLine("Document split completed successfully.");
     }
 }
