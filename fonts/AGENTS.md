@@ -245,6 +245,7 @@ Use the simplest workflow that satisfies the task.
 - Target framework: `net8.0`
 - Package: `Aspose.Words` `26.9.0`
 - Package: `Aspose.Drawing.Common` `26.8.0`
+- Package: `Newtonsoft.Json`
 
 ## Command reference
 
@@ -260,6 +261,7 @@ cd ExampleProject
 ```bash
 dotnet add package Aspose.Words --version 26.9.0
 dotnet add package Aspose.Drawing.Common --version 26.8.0
+dotnet add package Newtonsoft.Json
 ```
 
 ### Copy a category example into the temp project

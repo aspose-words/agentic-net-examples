@@ -31,6 +31,7 @@ This folder contains the live, publish-ready C# examples for the Fonts category.
 - .NET SDK 8.0 or later
 - Aspose.Words 26.9.0
 - Aspose.Drawing.Common 26.8.0
+- Newtonsoft.Json
 
 ## Running Examples
 
@@ -41,6 +42,7 @@ dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
 dotnet add package Aspose.Words --version 26.9.0
 dotnet add package Aspose.Drawing.Common --version 26.8.0
+dotnet add package Newtonsoft.Json
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -63,6 +65,7 @@ dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
 dotnet add package Aspose.Words --version 26.9.0
 dotnet add package Aspose.Drawing.Common --version 26.8.0
+dotnet add package Newtonsoft.Json
 
 # PowerShell example
 Copy-Item ..\fonts\retrieve-the-font-object-from-a-paragraph-s-first-run-using-paragraph-runs-0-font.cs .\Program.cs
@@ -145,7 +148,7 @@ dotnet run --configuration Release --no-build
 - [`../README.md`](../README.md) -- full category index and project overview
 - [Aspose.Words for .NET docs](https://docs.aspose.com/words/net/)
 
-> Each `.cs` file is a standalone, build-validated console example. Drop into a fresh `dotnet new console` project, add the `Aspose.Words` NuGet version listed above, and run.
+> Each `.cs` file is a standalone, build-validated console example. Drop into a fresh `dotnet new console` project, add the NuGet packages listed above, and run.
 
 ## Notes for maintainers
 

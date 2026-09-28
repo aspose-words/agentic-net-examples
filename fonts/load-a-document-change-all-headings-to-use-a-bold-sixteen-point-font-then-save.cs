@@ -3,8 +3,6 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Required package, not used directly but included per requirements
-using Newtonsoft.Json; // Required package, not used directly but included per requirements
 
 public class Program
 {

@@ -7,7 +7,8 @@
     "preferred_workflow": "Use Aspose.Words font APIs with correct type usage and explicit namespace disambiguation.",
     "required_packages": [
       "Aspose.Words",
-      "Aspose.Drawing.Common"
+      "Aspose.Drawing.Common",
+      "Newtonsoft.Json"
     ],
     "package_versions": {
       "Aspose.Words": "26.9.0",

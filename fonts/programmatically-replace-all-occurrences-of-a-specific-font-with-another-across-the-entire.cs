@@ -7,8 +7,6 @@ using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 using Aspose.Words.Replacing;
 using Aspose.Words.Fonts;
-using Aspose.Drawing; // Required package, not used directly but included per requirements
-using Newtonsoft.Json; // Required package, not used directly but included per requirements
 
 namespace FontReplacementExample
 {
