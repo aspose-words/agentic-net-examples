@@ -1,84 +1,69 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 using Aspose.Words.Fields;
+using Aspose.Words.Replacing;
 
-namespace AsposeWordsFindReplaceDemo
+public class Program
 {
-    // Callback that replaces heading text and inserts a PAGE field after each replaced heading.
-    public class HeadingReplaceCallback : IReplacingCallback
+    public static void Main()
     {
+        // Create a sample document with two headings.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Heading One");
+        builder.Writeln("Content under first heading.");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Heading Two");
+        builder.Writeln("Content under second heading.");
+
+        // Set up the replacement callback.
+        var callback = new HeadingReplaceCallback();
+
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = callback
+        };
+
+        // Perform the replacement.
+        int replacedCount = doc.Range.Replace("Heading", "Section", options);
+
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement.");
+
+        // Save the modified document.
+        doc.Save("output.docx");
+    }
+
+    private class HeadingReplaceCallback : IReplacingCallback
+    {
+        // Track paragraphs that have already received a page number field.
+        private readonly HashSet<Paragraph> _processedParagraphs = new HashSet<Paragraph>();
+
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Replace the matched heading text with the new text.
+            // Replace the matched text.
             args.Replacement = "Section";
 
-            // Insert a PAGE field after the paragraph that contains the match.
-            if (args.MatchNode?.ParentNode is Paragraph paragraph)
+            // Get the paragraph that contains the match.
+            Node matchNode = args.MatchNode;
+            if (matchNode?.ParentNode is Paragraph paragraph && !_processedParagraphs.Contains(paragraph))
             {
-                // The Document property of a Paragraph is of type DocumentBase,
-                // so we need to cast it to Document before creating a DocumentBuilder.
-                var doc = (Document)paragraph.Document;
-                var builder = new DocumentBuilder(doc);
-
-                // Move the builder to the paragraph that contains the match.
+                // Insert a new paragraph after the heading.
+                DocumentBuilder builder = new DocumentBuilder((Document)paragraph.Document, new DocumentBuilderOptions());
                 builder.MoveTo(paragraph);
-
-                // Insert a new empty paragraph after the current one.
                 builder.InsertParagraph();
 
-                // Insert a PAGE field that will display the current page number.
+                // Insert a PAGE field for automatic numbering.
                 builder.InsertField(FieldType.FieldPage, true);
+
+                _processedParagraphs.Add(paragraph);
             }
 
             return ReplaceAction.Replace;
-        }
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // -----------------------------------------------------------------
-            // 1. Create a sample document with a few headings.
-            // -----------------------------------------------------------------
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            // Add three headings.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Heading One");
-            builder.Writeln("Heading Two");
-            builder.Writeln("Heading Three");
-
-            // Save the source document.
-            const string inputPath = "input.docx";
-            doc.Save(inputPath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the document and perform find-and-replace with a callback.
-            // -----------------------------------------------------------------
-            var loadedDoc = new Document(inputPath);
-
-            var replaceCallback = new HeadingReplaceCallback();
-            var options = new FindReplaceOptions
-            {
-                ReplacingCallback = replaceCallback
-            };
-
-            // Replace the word "Heading" with "Section" and trigger the callback.
-            int replacedCount = loadedDoc.Range.Replace("Heading", "Section", options);
-            if (replacedCount == 0)
-                throw new InvalidOperationException("Expected at least one replacement.");
-
-            // Update fields so that PAGE fields show correct numbers.
-            loadedDoc.UpdateFields();
-
-            // -----------------------------------------------------------------
-            // 3. Save the modified document.
-            // -----------------------------------------------------------------
-            const string outputPath = "output.docx";
-            loadedDoc.Save(outputPath);
         }
     }
 }

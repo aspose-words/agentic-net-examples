@@ -1,28 +1,39 @@
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with headings.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample headings that we will replace.
+        // First heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter One");
-        builder.Writeln("Chapter Two");
-        builder.Writeln("Chapter Three");
+        builder.Writeln("Chapter 1");
+        // Some body text.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the first chapter.");
 
-        // Replace each heading text with the same text followed by a page break.
-        // The form‑feed character (\f) is interpreted by Aspose.Words as a page break.
+        // Second heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 2");
+        // Some body text.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the second chapter.");
+
+        // Perform find-and-replace: insert a page break after each heading.
+        // The metacharacter \f inserts a page break. $0 keeps the original matched text.
+        Regex headingRegex = new Regex(@"Chapter \d+");
         FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = doc.Range.Replace("Chapter", "Chapter\f", options);
+        int replacedCount = doc.Range.Replace(headingRegex, "$0\\f", options);
 
-        // Ensure that at least one replacement occurred.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("No headings were replaced.");
 

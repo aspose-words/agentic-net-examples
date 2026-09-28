@@ -1,65 +1,93 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class Program
+namespace MarkdownHeadingConverter
 {
-    public static void Main()
-    {
-        // Create a blank document and add some markdown‑style headings.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("# Document Title");
-        builder.Writeln("Some introductory text.");
-        builder.Writeln("## Chapter 1");
-        builder.Writeln("Content of chapter 1.");
-        builder.Writeln("### Section 1.1");
-        builder.Writeln("Details of section 1.1.");
-        builder.Writeln("## Chapter 2");
-        builder.Writeln("Content of chapter 2.");
-        builder.Writeln("Normal paragraph without heading.");
-
-        // Regular expression that matches markdown headings (levels 1‑6).
-        Regex headingRegex = new Regex(@"^(#{1,6})\s+(.*)$", RegexOptions.Multiline);
-
-        // Set up replace options with a callback that removes the markdown symbols
-        // and applies the corresponding Word heading style.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new MarkdownHeadingReplacer()
-        };
-
-        int replacedCount = doc.Range.Replace(headingRegex, "$2", options);
-        if (replacedCount == 0)
-            throw new InvalidOperationException("No markdown headings were found for replacement.");
-
-        // Save the modified document.
-        doc.Save("output.docx");
-    }
-
-    // Callback that formats each matched heading.
-    private class MarkdownHeadingReplacer : IReplacingCallback
+    // Callback that replaces markdown headings with plain text and applies Word heading styles.
+    public class HeadingReplacer : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Determine heading level from the number of leading '#'.
-            int level = args.Match.Groups[1].Value.Length; // 1‑6
+            // The match contains the whole markdown heading line.
+            Match match = args.Match;
+            // Group 1 = sequence of '#' characters, Group 2 = heading text.
+            string hashes = match.Groups[1].Value;
+            string headingText = match.Groups[2].Value;
 
-            // Extract the plain heading text (without markdown symbols).
-            string headingText = args.Match.Groups[2].Value;
-            args.Replacement = headingText; // Replace the whole match with plain text.
+            // Determine heading level (1‑6) based on number of '#'.
+            int level = hashes.Length;
+            if (level < 1 || level > 6)
+                level = 1; // Fallback to Heading1 if unexpected.
 
-            // The match node is usually a Run; its parent is the Paragraph that holds the heading.
-            if (args.MatchNode?.ParentNode is Paragraph paragraph)
+            // Replace the markdown markup with just the heading text.
+            args.Replacement = headingText;
+
+            // Find the paragraph that contains the match and set its style.
+            Node? matchNode = args.MatchNode;
+            if (matchNode != null)
             {
-                // Apply the appropriate built‑in heading style.
-                // StyleIdentifier.Heading1, Heading2, … are sequential enum values.
-                paragraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1 + (level - 1);
+                Paragraph? paragraph = matchNode.GetAncestor(NodeType.Paragraph) as Paragraph;
+                if (paragraph != null)
+                {
+                    // Map level to the corresponding built‑in heading style.
+                    paragraph.ParagraphFormat.StyleIdentifier = level switch
+                    {
+                        1 => StyleIdentifier.Heading1,
+                        2 => StyleIdentifier.Heading2,
+                        3 => StyleIdentifier.Heading3,
+                        4 => StyleIdentifier.Heading4,
+                        5 => StyleIdentifier.Heading5,
+                        6 => StyleIdentifier.Heading6,
+                        _ => StyleIdentifier.Heading1
+                    };
+                }
             }
 
             return ReplaceAction.Replace;
+        }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a sample document containing markdown style headings.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            builder.Writeln("# First Level Heading");
+            builder.Writeln("Paragraph under first level heading.");
+            builder.Writeln("## Second Level Heading");
+            builder.Writeln("Paragraph under second level heading.");
+            builder.Writeln("### Third Level Heading");
+            builder.Writeln("Another paragraph.");
+
+            // Save the original sample (optional, just for demonstration).
+            string inputPath = "markdown_input.docx";
+            doc.Save(inputPath);
+
+            // Regular expression to match markdown headings (lines starting with 1‑6 '#').
+            Regex headingRegex = new Regex(@"^(#{1,6})\s+(.*)$", RegexOptions.Multiline);
+
+            // Set up find‑replace options with the custom callback.
+            FindReplaceOptions options = new FindReplaceOptions
+            {
+                ReplacingCallback = new HeadingReplacer()
+            };
+
+            // Perform the replacement. The replacement string is ignored because the callback supplies it.
+            int replacedCount = doc.Range.Replace(headingRegex, string.Empty, options);
+
+            // Validate that at least one heading was processed.
+            if (replacedCount == 0)
+                throw new InvalidOperationException("No markdown headings were found for replacement.");
+
+            // Save the transformed document.
+            string outputPath = "converted_headings.docx";
+            doc.Save(outputPath);
         }
     }
 }

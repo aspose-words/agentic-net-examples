@@ -8,31 +8,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing version numbers "1.0.0".
-        Document sample = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sample);
-        builder.Writeln("Product release notes:");
-        builder.Writeln("Current version: 1.0.0");
-        builder.Writeln("Previous version was 1.0.0, now updated.");
-        // Save the sample document to a local file.
-        const string inputPath = "input.docx";
-        sample.Save(inputPath);
+        // Create a sample document containing version numbers.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Product A version 1.0.0 released.");
+        builder.Writeln("Product B version 1.0.0 is now deprecated.");
+        builder.Writeln("No version here.");
+        builder.Writeln("Another reference: 1.0.0.");
 
-        // Load the document we just created.
-        Document doc = new Document(inputPath);
+        // Save the sample input (optional, just for demonstration).
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
+
+        // Load the document to simulate a typical workflow.
+        Document loaded = new Document(inputPath);
 
         // Define a regular expression that matches the exact version string "1.0.0".
-        Regex versionPattern = new Regex(@"\b1\.0\.0\b", RegexOptions.Compiled);
+        Regex versionRegex = new Regex(@"\b1\.0\.0\b", RegexOptions.Compiled);
 
-        // Perform the replacement using Aspose.Words Range.Replace with a regex.
-        int replaceCount = doc.Range.Replace(versionPattern, "2.0.0", new FindReplaceOptions());
+        // Perform the replacement using Aspose.Words Range.Replace with regex.
+        FindReplaceOptions options = new FindReplaceOptions();
+        int replacedCount = loaded.Range.Replace(versionRegex, "2.0.0", options);
 
         // Validate that at least one replacement occurred.
-        if (replaceCount == 0)
-            throw new InvalidOperationException("Expected at least one version number replacement, but none were found.");
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one version number replacement, but none were made.");
 
-        // Save the modified document.
+        // Save the updated document.
         const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        loaded.Save(outputPath);
     }
 }

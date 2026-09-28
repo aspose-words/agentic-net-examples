@@ -2,52 +2,33 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required package, not used directly
-using Newtonsoft.Json; // Required package, not used directly
 
 public class Program
 {
     public static void Main()
     {
         // Define file names in the current directory.
-        string inputPath = Path.Combine(Environment.CurrentDirectory, "input.docx");
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "output.docx");
+        const string inputFile = "input.docx";
+        const string outputFile = "output.docx";
 
-        // -----------------------------------------------------------------
-        // Create a sample DOCX file with known text to be replaced.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
-        builder.Writeln("Replace the word TARGET wherever it appears.");
-        builder.Writeln("TARGET appears multiple times: TARGET, TARGET.");
-        doc.Save(inputPath);
+        // Create a sample DOCX file with text that contains the target string.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is the old value.");
+        builder.Writeln("Another line with old text to replace.");
+        sampleDoc.Save(inputFile);
 
-        // -----------------------------------------------------------------
-        // Load the document from the file system.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
+        // Load the created document.
+        Document doc = new Document(inputFile);
 
-        // -----------------------------------------------------------------
-        // Perform a literal string find-and-replace.
-        // -----------------------------------------------------------------
-        string findText = "TARGET";
-        string replaceText = "REPLACED";
-        FindReplaceOptions options = new FindReplaceOptions(); // default options
-        int replacedCount = loadedDoc.Range.Replace(findText, replaceText, options);
+        // Replace all literal occurrences of "old" with "new".
+        int replacedCount = doc.Range.Replace("old", "new", new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-        {
-            throw new InvalidOperationException($"No occurrences of \"{findText}\" were found to replace.");
-        }
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // -----------------------------------------------------------------
         // Save the modified document.
-        // -----------------------------------------------------------------
-        loadedDoc.Save(outputPath);
-
-        // Optional: indicate success (no interactive input required).
-        Console.WriteLine($"Replaced {replacedCount} occurrence(s). Output saved to: {outputPath}");
+        doc.Save(outputFile);
     }
 }

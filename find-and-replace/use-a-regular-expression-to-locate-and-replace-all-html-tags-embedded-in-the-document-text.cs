@@ -8,50 +8,30 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary folder for the example files.
-        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsFindReplaceExample");
-        Directory.CreateDirectory(workFolder);
-
-        // Define input and output file paths.
-        string inputPath = Path.Combine(workFolder, "input.docx");
-        string outputPath = Path.Combine(workFolder, "output.docx");
-
-        // -------------------------------------------------
         // Create a sample document containing HTML tags.
-        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(
-            "This is a sample text with HTML tags: " +
-            "<b>Bold</b>, <i>Italic</i>, and a link " +
-            "<a href='https://example.com'>Example</a>.");
+        builder.Writeln("This is a <b>bold</b> word and a <a href=\"https://example.com\">link</a>.");
+        builder.Writeln("Another line with <i>italic</i> text.");
+        // Save the initial document.
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // -------------------------------------------------
-        // Load the document we just created.
-        // -------------------------------------------------
+        // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        // -------------------------------------------------
-        // Define a regular expression that matches any HTML tag.
-        // -------------------------------------------------
+        // Define a regular expression that matches HTML tags.
         Regex htmlTagRegex = new Regex(@"<[^>]+>", RegexOptions.Compiled);
 
-        // Perform the replacement: remove all HTML tags.
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = loaded.Range.Replace(htmlTagRegex, string.Empty, options);
+        // Replace all HTML tags with an empty string.
+        int replacedCount = loaded.Range.Replace(htmlTagRegex, string.Empty, new FindReplaceOptions());
 
-        // Validate that at least one replacement occurred.
+        // Ensure that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("No HTML tags were found to replace.");
 
-        // -------------------------------------------------
         // Save the modified document.
-        // -------------------------------------------------
+        const string outputPath = "output.docx";
         loaded.Save(outputPath);
-
-        // Inform the user (no interactive input required).
-        Console.WriteLine($"Replaced {replacedCount} HTML tag(s).");
-        Console.WriteLine($"Modified document saved to: {outputPath}");
     }
 }

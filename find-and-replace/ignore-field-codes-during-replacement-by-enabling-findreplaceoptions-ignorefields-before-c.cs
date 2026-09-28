@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,38 +6,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with normal text and a field that contains the word "Hello".
+        // Create a sample document with normal text and a field containing the target word.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world!");                     // Normal text.
-        builder.InsertField("MERGEFIELD", "Hello");          // Field containing the same word.
+        builder.Writeln("This is a PLACEHOLDER in normal text.");
+        // Insert a MERGEFIELD whose field code includes the word PLACEHOLDER.
+        builder.InsertField("MERGEFIELD PLACEHOLDER \\* MERGEFORMAT");
+        builder.Writeln(); // Add a line break.
 
-        // Save the document to a local file.
+        // Save the input document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for processing.
+        // Load the document for find-and-replace.
         Document loaded = new Document(inputPath);
 
-        // Configure find/replace to ignore whole fields.
+        // Configure find-replace options to ignore field codes.
         FindReplaceOptions options = new FindReplaceOptions
         {
             IgnoreFields = true
         };
 
-        // Replace "Hello" with "Hi". The occurrence inside the field will be ignored.
-        int replacedCount = loaded.Range.Replace("Hello", "Hi", options);
+        // Perform the replacement.
+        int replacedCount = loaded.Range.Replace("PLACEHOLDER", "REPLACED", options);
 
-        // Ensure that at least one replacement occurred outside the field.
+        // Validate that at least one replacement occurred (the normal text only).
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement outside fields.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
         loaded.Save(outputPath);
-
-        // Output simple verification information.
-        Console.WriteLine($"Replacements performed (ignoring fields): {replacedCount}");
-        Console.WriteLine($"Output document saved to: {Path.GetFullPath(outputPath)}");
     }
 }

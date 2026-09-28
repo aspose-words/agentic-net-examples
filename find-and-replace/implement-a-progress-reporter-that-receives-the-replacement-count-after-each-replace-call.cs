@@ -1,100 +1,44 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Use Aspose.Drawing namespace for drawing-related types
-using Newtonsoft.Json;
+using Aspose.Drawing;          // Required package reference
+using Newtonsoft.Json;        // Required package reference
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample files.
-        var inputPath = "input.docx";
-        var outputPath = "output.docx";
-        var reportPath = "replacementReport.json";
+        // Create a sample document with placeholders.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello {Name}, your order {OrderId} is ready.");
+        builder.Writeln("Dear {Name}, please confirm your order {OrderId}.");
+        doc.Save("input.docx");
 
-        // Create a sample document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("alpha beta gamma");
-        builder.Writeln("alpha appears twice: alpha.");
-        builder.Writeln("beta will become delta.");
-        doc.Save(inputPath);
-
-        // Load the document for processing.
-        var loadedDoc = new Document(inputPath);
-
-        // Prepare the progress reporter.
-        var reporter = new ReplacementProgressReporter();
-
-        // Define the replacements to perform.
-        var replacements = new[]
+        // Define the find/replace pairs.
+        var replacements = new List<(string Find, string Replace)>
         {
-            new ReplacementPair("alpha", "omega"),
-            new ReplacementPair("beta", "delta"),
-            new ReplacementPair("gamma", "theta")
+            ("{Name}", "John Doe"),
+            ("{OrderId}", "12345")
         };
 
-        int totalReplacements = 0;
-
-        // Perform each replacement and report the count.
-        foreach (var pair in replacements)
+        // Perform each replacement and report progress.
+        foreach (var (find, replace) in replacements)
         {
-            var options = new FindReplaceOptions(); // Default options.
-            int count = loadedDoc.Range.Replace(pair.Find, pair.Replace, options);
-            totalReplacements += count;
-            reporter.Report(pair.Find, pair.Replace, count);
+            int replacedCount = doc.Range.Replace(find, replace, new FindReplaceOptions());
+            ReportProgress(find, replace, replacedCount);
+
+            if (replacedCount == 0)
+                throw new InvalidOperationException($"Expected at least one replacement for '{find}'.");
         }
 
-        // Validate that at least one replacement occurred.
-        if (totalReplacements == 0)
-            throw new InvalidOperationException("No replacements were performed.");
-
         // Save the modified document.
-        loadedDoc.Save(outputPath);
-
-        // Write the replacement report to a JSON file.
-        reporter.SaveReport(reportPath);
-    }
-}
-
-// Simple data holder for a find/replace pair.
-public class ReplacementPair
-{
-    public string Find { get; }
-    public string Replace { get; }
-
-    public ReplacementPair(string find, string replace)
-    {
-        Find = find ?? throw new ArgumentNullException(nameof(find));
-        Replace = replace ?? throw new ArgumentNullException(nameof(replace));
-    }
-}
-
-// Holds information about a single replacement operation.
-public class ReplacementInfo
-{
-    public string Find { get; set; } = string.Empty;
-    public string Replace { get; set; } = string.Empty;
-    public int Count { get; set; }
-}
-
-// Collects replacement results and writes a JSON report.
-public class ReplacementProgressReporter
-{
-    private readonly List<ReplacementInfo> _records = new List<ReplacementInfo>();
-
-    public void Report(string find, string replace, int count)
-    {
-        _records.Add(new ReplacementInfo { Find = find, Replace = replace, Count = count });
-        Console.WriteLine($"Replaced \"{find}\" with \"{replace}\" {count} time(s).");
+        doc.Save("output.docx");
     }
 
-    public void SaveReport(string filePath)
+    private static void ReportProgress(string find, string replace, int count)
     {
-        var json = JsonConvert.SerializeObject(_records, Formatting.Indented);
-        File.WriteAllText(filePath, json);
+        Console.WriteLine($"Replaced '{find}' with '{replace}' {count} time(s).");
     }
 }

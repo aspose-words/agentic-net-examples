@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -11,48 +12,55 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Contact us at support@example.com or sales@example.org.");
-        builder.Writeln("Personal email: john.doe123@mail.example.co.uk");
+        builder.Writeln("Personal email: john.doe@mydomain.com.");
+        doc.Save("input.docx");
 
-        // Define a regular expression that matches email addresses.
-        Regex emailRegex = new Regex(@"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b");
+        // Load the document for processing.
+        Document loaded = new Document("input.docx");
 
-        // Set up find‑replace options with a custom callback that masks the email.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new EmailMaskingCallback();
+        // Regular expression to find email addresses.
+        Regex emailRegex = new Regex(@"\b[\w\.-]+@[\w\.-]+\.\w{2,}\b", RegexOptions.Compiled);
 
-        // Perform the replacement. The replacement string is ignored because the callback sets it.
-        int replacedCount = doc.Range.Replace(emailRegex, string.Empty, options);
+        // Set up find‑replace options with a custom callback to mask the local part.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new EmailMaskCallback()
+        };
+
+        // Perform the replacement. The replacement string is ignored when a callback is used.
+        int replacedCount = loaded.Range.Replace(emailRegex, string.Empty, options);
 
         // Validate that at least one email was masked.
         if (replacedCount == 0)
             throw new InvalidOperationException("No email addresses were found to mask.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        loaded.Save("output.docx");
+
+        // Optional: indicate completion (no interactive input).
+        Console.WriteLine($"Masked {replacedCount} email address(es). Output saved to 'output.docx'.");
     }
+}
 
-    // Callback that replaces each matched email with a masked version.
-    private class EmailMaskingCallback : IReplacingCallback
+// Callback that replaces each email with a masked version (e.g., *****@domain.com).
+public class EmailMaskCallback : IReplacingCallback
+{
+    public ReplaceAction Replacing(ReplacingArgs args)
     {
-        public ReplaceAction Replacing(ReplacingArgs args)
+        string email = args.Match.Value;
+        int atPos = email.IndexOf('@');
+        if (atPos > 0)
         {
-            string email = args.Match.Value;
-            int atIndex = email.IndexOf('@');
-            if (atIndex > 0)
-            {
-                // Mask the local part of the email, keep the domain unchanged.
-                string maskedLocal = new string('*', atIndex);
-                string maskedEmail = maskedLocal + email.Substring(atIndex);
-                args.Replacement = maskedEmail;
-            }
-            else
-            {
-                // Fallback: replace the whole match with asterisks if the format is unexpected.
-                args.Replacement = new string('*', email.Length);
-            }
-
-            return ReplaceAction.Replace;
+            string domain = email.Substring(atPos);
+            string maskedLocal = new string('*', atPos);
+            args.Replacement = maskedLocal + domain;
         }
+        else
+        {
+            // Fallback: no '@' found, leave the original text unchanged.
+            args.Replacement = email;
+        }
+
+        return ReplaceAction.Replace;
     }
 }

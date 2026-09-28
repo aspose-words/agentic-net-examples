@@ -1,57 +1,44 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required by the rule set
-using Newtonsoft.Json; // Required by the rule set
+using Aspose.Drawing; // Required by the package list, not used directly
+using Newtonsoft.Json; // Required by the package list, not used directly
 
-public class Program
+public class ReplaceCustomTagAttribute
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with custom tag attributes.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("<mytag attr=\"value1\">First content</mytag>");
+        builder.Writeln("<mytag attr=\"value2\">Second content</mytag>");
+        builder.Writeln("<mytag attr=\"value3\">Third content</mytag>");
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Insert sample content that contains the custom tag with varying attribute values.
-        builder.Writeln(@"Here is a custom tag: <custom attr=""value1"">Some text</custom>");
-        builder.Writeln(@"Another occurrence: <custom attr=""oldValue"">More text</custom>");
-        builder.Writeln(@"And one more: <custom attr=""value2""/>");
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
-        // Define a regular expression that captures the attribute value of the <custom> tag.
-        // Group 1: the opening part up to the attribute value quote.
-        // Group 2: the attribute value itself (to be replaced).
-        // Group 3: the closing quote and the rest of the tag.
-        Regex regex = new Regex(@"(<custom\s+attr="")([^""]+)(""[^>]*>)", RegexOptions.Compiled);
+        // Define a regular expression that matches the attribute value.
+        Regex regex = new Regex(@"attr=""[^""]*""", RegexOptions.Compiled);
 
-        // Set up find/replace options to enable substitution groups in the replacement pattern.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            UseSubstitutions = true,
-            LegacyMode = false
-        };
-
-        // Replacement string uses the captured groups, inserting the new attribute value.
-        string replacement = "$1newValue$3";
-
-        // Perform the replacement across the whole document.
-        int replacedCount = doc.Range.Replace(regex, replacement, options);
+        // Replace all attribute values with a new value.
+        const string replacement = @"attr=""newvalue""";
+        int replacedCount = loaded.Range.Replace(regex, replacement, new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one attribute value replacement.");
+            throw new InvalidOperationException("Expected at least one attribute replacement, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        loaded.Save(outputPath);
 
-        // Optional: write a simple JSON report about the operation (demonstrates required package usage).
-        var report = new
-        {
-            ReplacementsMade = replacedCount,
-            OutputFile = outputPath
-        };
-        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
-        System.IO.File.WriteAllText("report.json", jsonReport);
+        // Optionally, report the result.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine($"Modified document saved to: {Path.GetFullPath(outputPath)}");
     }
 }

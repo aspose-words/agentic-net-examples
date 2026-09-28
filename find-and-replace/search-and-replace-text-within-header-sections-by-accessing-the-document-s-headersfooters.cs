@@ -1,53 +1,49 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using System.IO;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        string inputPath = "sample.docx";
-        string outputPath = "output.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample document with a primary header containing text.
-        // -----------------------------------------------------------------
+        // Create a sample document with a header that contains the text to be replaced.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the primary header of the first section.
+        // Add a primary header and write placeholder text.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Company: _CompanyName_");
+        builder.Write("Header placeholder: OldValue");
 
-        // Save the document so it can be re‑loaded for the replace operation.
+        // Return to the main body and add some body text (should remain unchanged).
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Body text with OldValue that should not be changed.");
+
+        // Save the initial document.
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // ---------------------------------------------------------------
-        // 2. Load the document and replace text inside the header section.
-        // ---------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
-        // Retrieve the primary header from the first section.
-        HeaderFooter header = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
-        if (header == null)
-            throw new InvalidOperationException("The document does not contain a primary header.");
-
-        // Perform a find‑and‑replace on the header's range.
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = header.Range.Replace("_CompanyName_", "Aspose Ltd.", options);
+        // Perform replacement only within header sections.
+        int totalReplacements = 0;
+        foreach (Section section in loaded.Sections)
+        {
+            HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
+            if (header != null)
+            {
+                int replaced = header.Range.Replace("OldValue", "NewValue", new FindReplaceOptions());
+                totalReplacements += replaced;
+            }
+        }
 
         // Validate that at least one replacement occurred.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement in the header.");
+        if (totalReplacements == 0)
+            throw new InvalidOperationException("Expected at least one replacement in header.");
 
-        // ---------------------------------------------------------------
-        // 3. Save the modified document.
-        // ---------------------------------------------------------------
-        loadedDoc.Save(outputPath);
-
-        // Optional: output the result count to the console.
-        Console.WriteLine($"Replacements performed in header: {replacedCount}");
+        // Save the modified document.
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 }

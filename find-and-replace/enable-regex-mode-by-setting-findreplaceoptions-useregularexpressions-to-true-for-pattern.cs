@@ -8,31 +8,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with text that matches a regular expression pattern.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a sample document with text that matches a pattern.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
         builder.Writeln("Order 123 has been shipped.");
         builder.Writeln("Order 456 is pending.");
 
-        // Save the source document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document we just created.
-        Document loaded = new Document(inputPath);
+        // Load the document for find‑and‑replace.
+        var loadedDoc = new Document(inputPath);
 
-        // Configure FindReplaceOptions (no special settings needed for regex).
-        FindReplaceOptions options = new FindReplaceOptions();
+        // Pattern to find: "Order " followed by one or more digits.
+        var regex = new Regex(@"Order \d+");
+        // Replacement text.
+        const string replacement = "Order ###";
 
-        // Replace any occurrence of "Order <number>" with "Order ###" using a regex pattern.
-        int replacedCount = loaded.Range.Replace(new Regex(@"Order \d+"), "Order ###", options);
+        // Perform the replacement using a regular expression.
+        int replacedCount = loadedDoc.Range.Replace(regex, replacement, new FindReplaceOptions());
 
-        // Verify that at least one replacement was performed.
+        // Ensure that at least one replacement was made.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        loadedDoc.Save(outputPath);
     }
 }

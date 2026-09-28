@@ -1,64 +1,51 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required package reference
 
-namespace UppercaseToTitleCaseExample
+public class Program
 {
-    // Callback that converts each matched uppercase word to title case.
-    public class UppercaseToTitleCaseReplacer : IReplacingCallback
+    public static void Main()
+    {
+        // Create a new document and add sample text containing uppercase words.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("THIS is a TEST document.");
+        builder.Writeln("IT contains SOME UPPERCASE WORDS like EXAMPLE and SAMPLE.");
+
+        // Define a regex that matches whole words composed only of uppercase letters.
+        Regex uppercaseWordRegex = new Regex(@"\b[A-Z]+\b");
+
+        // Set up find‑replace options with a custom callback that converts each match to title case.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new UppercaseToTitleCaseCallback();
+
+        // Perform the replacement using the overload that accepts a regex, a dummy replacement string,
+        // and the FindReplaceOptions containing the callback.
+        int replacedCount = doc.Range.Replace(uppercaseWordRegex, string.Empty, options);
+
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No uppercase words were replaced.");
+
+        // Save the modified document.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
+    }
+
+    // Callback that receives each regex match and replaces it with its title‑cased version.
+    private class UppercaseToTitleCaseCallback : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Original matched text (e.g., "EXAMPLE")
-            string original = args.Match.Value;
-
-            // Convert to title case: first letter upper, the rest lower.
-            string titleCase = char.ToUpper(original[0]) + original.Substring(1).ToLower();
-
-            // Set the replacement text.
-            args.Replacement = titleCase;
-
-            return ReplaceAction.Replace;
-        }
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // Create a sample document with uppercase words.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("THIS is a TEST document. ASP.NET CORE and C# are mentioned.");
-            builder.Writeln("ANOTHER LINE WITH UPPERCASE WORDS LIKE EXAMPLE AND SAMPLE.");
-
-            // Define a regex that matches whole words consisting of two or more uppercase letters.
-            Regex uppercaseWordPattern = new Regex(@"\b[A-Z]{2,}\b");
-
-            // Set up find-and-replace options with the custom callback.
-            FindReplaceOptions options = new FindReplaceOptions
+            string word = args.Match.Value;
+            if (!string.IsNullOrEmpty(word))
             {
-                ReplacingCallback = new UppercaseToTitleCaseReplacer()
-            };
-
-            // Perform the replace operation. The replacement string is ignored because the callback sets it.
-            int replacedCount = doc.Range.Replace(uppercaseWordPattern, string.Empty, options);
-
-            // Ensure that at least one replacement occurred.
-            if (replacedCount == 0)
-                throw new InvalidOperationException("Expected at least one uppercase word to be replaced.");
-
-            // Save the modified document.
-            const string outputPath = "UppercaseToTitleCaseOutput.docx";
-            doc.Save(outputPath);
-
-            // Optional: write a simple confirmation to the console.
-            Console.WriteLine($"Replacements performed: {replacedCount}");
-            Console.WriteLine($"Modified document saved to: {Path.GetFullPath(outputPath)}");
+                // Convert first character to upper case and the rest to lower case.
+                string titleCase = char.ToUpper(word[0]) + word.Substring(1).ToLower();
+                args.Replacement = titleCase;
+            }
+            return ReplaceAction.Replace;
         }
     }
 }

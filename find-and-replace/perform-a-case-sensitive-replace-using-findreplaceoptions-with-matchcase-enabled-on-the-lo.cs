@@ -1,41 +1,39 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing;      // Required package, not used directly in this example
-using Newtonsoft.Json;    // Required package, not used directly in this example
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-
-        // -----------------------------------------------------------------
-        // Create a sample document with mixed‑case occurrences of the word.
-        // -----------------------------------------------------------------
+        // Create a sample document with mixed‑case text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Apple apple APPLE");
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
+        builder.Writeln("the quick brown fox jumps over the lazy dog.");
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // ---------------------------------------------------------------
-        // Load the document and perform a case‑sensitive replacement.
-        // ---------------------------------------------------------------
+        // Load the document from the file system.
         Document loaded = new Document(inputPath);
+
+        // Configure case‑sensitive find‑replace options.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            MatchCase = true   // Enable case‑sensitive matching.
+            MatchCase = true
         };
 
-        int replacedCount = loaded.Range.Replace("Apple", "Orange", options);
+        // Replace only the lower‑case occurrence of "the" with "a".
+        int replacedCount = loaded.Range.Replace("the", "a", options);
 
-        // Validate that at least one replacement occurred.
+        // Ensure that at least one replacement was performed.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+        {
+            throw new InvalidOperationException("Expected at least one case‑sensitive replacement, but none were made.");
+        }
 
         // Save the modified document.
+        const string outputPath = "output.docx";
         loaded.Save(outputPath);
     }
 }

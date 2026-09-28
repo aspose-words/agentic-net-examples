@@ -1,44 +1,38 @@
 using System;
+using System.IO;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
 
-public class WholeWordReplaceExample
+public class Program
 {
     public static void Main()
     {
-        // Create a sample document with text that contains the target word both as a whole word and as part of a longer word.
+        // Create a sample document containing a whole word ("catalog") and a longer word ("catalogue").
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The catalog is ready.");
-        builder.Writeln("The catalogue is complete.");
-        builder.Writeln("Please review the catalog.");
+        builder.Writeln("The catalog is updated. The catalogue includes many items.");
 
-        // Save the source document (optional, just to demonstrate file I/O).
-        const string inputPath = "input.docx";
+        // Save the document locally so it can be re‑loaded later.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
         doc.Save(inputPath);
 
-        // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
+        // Load the document from the file.
+        Document loaded = new Document(inputPath);
 
-        // Configure find-and-replace options to match whole words only.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            FindWholeWordsOnly = true
-        };
+        // Configure find‑replace to match whole words only using a regular expression with word boundaries.
+        Regex wholeWordPattern = new Regex(@"\bcatalog\b", RegexOptions.None);
+        FindReplaceOptions options = new FindReplaceOptions();
 
-        // Replace the whole word "catalog" with "list".
-        int replacedCount = loadedDoc.Range.Replace("catalog", "list", options);
+        // Replace the whole word "catalog" with "directory".
+        int replacedCount = loaded.Range.Replace(wholeWordPattern, "directory", options);
 
-        // Validate that at least one replacement occurred.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one whole-word replacement, but none were made.");
+        // Verify that exactly one replacement occurred (the whole word, not the part of "catalogue").
+        if (replacedCount != 1)
+            throw new InvalidOperationException($"Expected 1 replacement, but got {replacedCount}.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
-
-        // Output the result count (no interactive prompts).
-        Console.WriteLine($"Replacements performed: {replacedCount}");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        loaded.Save(outputPath);
     }
 }
