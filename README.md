@@ -9,8 +9,8 @@
 | Total Examples | 1795 |
 | Categories | 29 |
 | Overall Pass Rate | 100.0% |
-| Source Run | 20260830_195242_46e1a9 |
-| Last Updated | 2026-09-02 |
+| Source Run | 20260925_194858_2eeab9 |
+| Last Updated | 2026-09-27 |
 
 ## Repository Structure
 
@@ -91,7 +91,7 @@ Each `.cs` file is a standalone console example. To run one example, create a te
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.8.0
+dotnet add package Aspose.Words --version 26.9.0
 ```
 
 ```powershell
@@ -103,7 +103,7 @@ dotnet run --configuration Release --no-build
 ## Prerequisites
 
 - .NET SDK (`net8.0`)
-- Aspose.Words for .NET `26.8.0`
+- Aspose.Words for .NET `26.9.0`
 - Additional packages only when required by a specific example, such as Aspose.BarCode, Aspose.Drawing.Common, Newtonsoft.Json, SkiaSharp, or System.Text.Encoding.CodePages
 - Any input files required by a specific example should be created or bootstrapped by the example itself
 
@@ -151,4 +151,4 @@ All examples use [Aspose.Words for .NET](https://products.aspose.com/words/net/)
 
 ---
 
-*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For AI-friendly guidance, see [AGENTS.md](./AGENTS.md) | Last updated: 2026-09-02*
+*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For AI-friendly guidance, see [AGENTS.md](./AGENTS.md) | Last updated: 2026-09-27*
