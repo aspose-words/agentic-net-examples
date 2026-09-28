@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,62 +7,79 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with headings and body text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a first section with a primary header that contains the keyword "Confidential".
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Report - Confidential");
-        builder.MoveToDocumentEnd();
+        // Heading containing the keyword.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Special Report Overview");
 
-        // Add a second section with a primary header that does NOT contain the keyword.
-        Section secondSection = new Section(doc);
-        doc.Sections.Add(secondSection);
-        // Move the builder to the newly added section (index 1, zero‑based).
-        builder.MoveToSection(1);
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Report - Public");
-        builder.MoveToDocumentEnd();
+        // Heading without the keyword.
+        builder.Writeln("General Summary");
 
-        // Save the sample document.
+        // Normal paragraph containing the keyword (should not be replaced).
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This paragraph mentions Special but is not a heading.");
+
+        // Another heading containing the keyword.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Special Findings");
+
+        // Save the input document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
         // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
+        Document loaded = new Document(inputPath);
 
-        // Define the keyword that determines which headers should be processed.
-        const string keyword = "Confidential";
+        // Set up find-and-replace options with a callback that limits replacements to headings.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new HeadingReplaceCallback();
 
-        // Define the text to find and its replacement.
-        const string findText = "Report";
-        const string replaceText = "Summary";
-
-        int totalReplacements = 0;
-
-        // Iterate through all sections and their headers.
-        foreach (Section section in loadedDoc.Sections)
-        {
-            foreach (HeaderFooter header in section.HeadersFooters)
-            {
-                if (header == null) continue;
-
-                // Process only headers that contain the keyword (case‑insensitive).
-                if (header.Range.Text.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                {
-                    int replaced = header.Range.Replace(findText, replaceText, new FindReplaceOptions());
-                    totalReplacements += replaced;
-                }
-            }
-        }
+        // Perform the replacement: replace the word "Special" with "Replaced" only in headings.
+        int replacedCount = loaded.Range.Replace("Special", "Replaced", options);
 
         // Validate that at least one replacement occurred.
-        if (totalReplacements == 0)
-            throw new InvalidOperationException("Expected at least one replacement in headers containing the keyword.");
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement in headings, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        loaded.Save(outputPath);
+    }
+
+    // Callback that allows replacement only when the match is inside a heading paragraph.
+    private class HeadingReplaceCallback : IReplacingCallback
+    {
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // The match node is typically a Run.
+            if (args.MatchNode is Run run)
+            {
+                Paragraph paragraph = run.ParentParagraph;
+                if (paragraph != null)
+                {
+                    // Check if the paragraph style is a heading style.
+                    StyleIdentifier styleId = paragraph.ParagraphFormat.StyleIdentifier;
+                    if (styleId == StyleIdentifier.Heading1 ||
+                        styleId == StyleIdentifier.Heading2 ||
+                        styleId == StyleIdentifier.Heading3 ||
+                        styleId == StyleIdentifier.Heading4 ||
+                        styleId == StyleIdentifier.Heading5 ||
+                        styleId == StyleIdentifier.Heading6 ||
+                        styleId == StyleIdentifier.Heading7 ||
+                        styleId == StyleIdentifier.Heading8 ||
+                        styleId == StyleIdentifier.Heading9)
+                    {
+                        // Allow the replacement.
+                        return ReplaceAction.Replace;
+                    }
+                }
+            }
+
+            // Skip replacement for all other cases.
+            return ReplaceAction.Skip;
+        }
     }
 }

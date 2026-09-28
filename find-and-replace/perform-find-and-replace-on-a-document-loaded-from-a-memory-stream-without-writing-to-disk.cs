@@ -1,44 +1,40 @@
 using System;
 using System.IO;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Words.Saving;
-using Aspose.Drawing; // Required package, not used directly
-using Newtonsoft.Json; // Required package, not used directly
 
 public class Program
 {
     public static void Main()
     {
         // Create a sample document in memory.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello ReplaceMe world.");
-        builder.Writeln("ReplaceMe appears twice: ReplaceMe.");
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is the old value that will be replaced.");
+        builder.Writeln("Another line with old text.");
 
-        // Save the document to a memory stream (no disk I/O).
-        using MemoryStream inputStream = new MemoryStream();
-        doc.Save(inputStream, SaveFormat.Docx);
-        inputStream.Position = 0; // Reset for reading.
+        // Save the document to a MemoryStream (no disk I/O).
+        using MemoryStream sourceStream = new MemoryStream();
+        sourceDoc.Save(sourceStream, SaveFormat.Docx);
+        sourceStream.Position = 0; // Reset for reading.
 
-        // Load the document from the memory stream.
-        Document loadedDoc = new Document(inputStream);
+        // Load the document from the MemoryStream.
+        Document loadedDoc = new Document(sourceStream);
 
         // Perform a find-and-replace operation.
         FindReplaceOptions options = new FindReplaceOptions();
-        int replaceCount = loadedDoc.Range.Replace("ReplaceMe", "Updated", options);
+        int replacedCount = loadedDoc.Range.Replace("old", "new", options);
 
         // Validate that at least one replacement occurred.
-        if (replaceCount == 0)
+        if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the modified document to another memory stream.
-        using MemoryStream outputStream = new MemoryStream();
-        loadedDoc.Save(outputStream, SaveFormat.Docx);
+        // Save the modified document to another MemoryStream (still no disk I/O).
+        using MemoryStream resultStream = new MemoryStream();
+        loadedDoc.Save(resultStream, SaveFormat.Docx);
 
         // Output simple verification information.
-        Console.WriteLine($"Replacements made: {replaceCount}");
-        Console.WriteLine($"Resulting document size: {outputStream.Length} bytes");
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine($"Modified document size (bytes): {resultStream.Length}");
     }
 }

@@ -1,70 +1,82 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Words.Tables;
 
-public class InsertTableOfFiguresExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with figure captions.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Introduction paragraph.");
+        builder.Writeln("Figure 1: Old caption for first figure.");
+        builder.Writeln("Some text between figures.");
+        builder.Writeln("Figure 2: Old caption for second figure.");
+        builder.Writeln("Conclusion paragraph.");
 
-        // Insert sample figure captions and some regular text.
-        builder.Writeln("Figure 1: First sample figure.");
-        builder.Writeln("This is some introductory text.");
-        builder.Writeln("Figure 2: Second sample figure.");
-        builder.Writeln("More content follows.");
-        builder.Writeln("Figure 3: Third sample figure.");
+        // Save the initial document (optional, just for reference).
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Save the original document (optional, just for reference).
-        doc.Save("Original.docx");
+        // Load the document for processing.
+        Document loadedDoc = new Document(inputPath);
 
-        // Set up find-and-replace options with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new CaptionReplaceCallback()
-        };
+        // Define a regex to find figure captions like "Figure 1: ..."
+        Regex figureCaptionRegex = new Regex(@"Figure (\d+): .+", RegexOptions.IgnoreCase);
 
-        // Replace the word "Figure" with "Fig." and trigger the callback for each match.
-        int replacedCount = doc.Range.Replace("Figure", "Fig.", options);
+        // Set up find‑replace options with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new CaptionReplacer();
 
-        // Ensure that at least one replacement occurred.
+        // Perform the replacement.
+        int replacedCount = loadedDoc.Range.Replace(figureCaptionRegex, "", options);
         if (replacedCount == 0)
-            throw new InvalidOperationException("No figure captions were replaced.");
-
-        // Update fields (e.g., the inserted Table of Figures) before saving.
-        doc.UpdateFields();
+        {
+            throw new InvalidOperationException("Expected at least one figure caption replacement.");
+        }
 
         // Save the modified document.
-        doc.Save("Modified.docx");
+        const string outputPath = "output.docx";
+        loadedDoc.Save(outputPath);
     }
 
-    // Callback that inserts a Table of Figures after each replaced caption.
-    private class CaptionReplaceCallback : IReplacingCallback
+    private class CaptionReplacer : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // The match is inside a Run node; its parent is the Paragraph containing the caption.
-            Paragraph captionParagraph = args.MatchNode.ParentNode as Paragraph;
-            if (captionParagraph == null)
-                return ReplaceAction.Skip;
+            // args.Match is a System.Text.RegularExpressions.Match.
+            Match match = args.Match;
+            string figureNumber = match.Groups[1].Value;
 
-            // Create a builder attached to the same document.
-            DocumentBuilder cb = new DocumentBuilder((Document)args.MatchNode.Document);
+            // Define the new caption text.
+            string newCaption = $"Figure {figureNumber}: Updated caption.";
 
-            // Insert a new empty paragraph after the caption paragraph.
-            Paragraph tocParagraph = new Paragraph(cb.Document);
-            captionParagraph.ParentNode.InsertAfter(tocParagraph, captionParagraph);
+            // Set the replacement text.
+            args.Replacement = newCaption;
 
-            // Move the builder to the new paragraph and insert the Table of Figures field.
-            cb.MoveTo(tocParagraph);
-            // The field code "\c \"Caption\" \h \z \u" creates a Table of Figures for entries with the style "Caption".
-            cb.InsertTableOfContents("\\c \"Caption\" \\h \\z \\u");
+            // Insert a Table of Figures after the paragraph containing the match.
+            Node matchNode = args.MatchNode;
+            Paragraph paragraph = (Paragraph)matchNode.GetAncestor(NodeType.Paragraph);
+            if (paragraph != null)
+            {
+                // The document associated with the node is a Document (not just DocumentBase).
+                Document doc = (Document)matchNode.Document;
+                DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Continue with the normal replacement of the matched text.
+                // Move the builder to the paragraph that contains the match.
+                builder.MoveTo(paragraph);
+                // Write a new empty paragraph to separate the caption from the table.
+                builder.Writeln();
+
+                // Insert a Table of Figures field.
+                // The field code "TOC \\h \\z \\c \"Figure\"" creates a table of figures.
+                builder.InsertField("TOC \\h \\z \\c \"Figure\"");
+                builder.Writeln();
+            }
+
             return ReplaceAction.Replace;
         }
     }

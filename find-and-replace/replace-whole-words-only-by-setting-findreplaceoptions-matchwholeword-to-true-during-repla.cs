@@ -6,38 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Jackson will meet you in Jacksonville.");
+        // Create a sample document containing both whole‑word and partial matches.
+        Document inputDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(inputDoc);
+        builder.Writeln("The quick brown fox jumps over the lazy dog. The foxes are clever.");
 
-        // Save the sample document to the local file system.
+        // Save the sample document locally.
         const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        inputDoc.Save(inputPath);
 
-        // Load the document we just saved.
-        Document loadedDoc = new Document(inputPath);
+        // Load the document from the file we just created.
+        Document doc = new Document(inputPath);
 
-        // Configure find-and-replace to match whole words only.
+        // Configure find‑and‑replace options to match whole words only.
         FindReplaceOptions options = new FindReplaceOptions
         {
+            // In Aspose.Words the property is FindWholeWordsOnly, not MatchWholeWord.
             FindWholeWordsOnly = true
         };
 
-        // Perform the replacement.
-        int replacedCount = loadedDoc.Range.Replace("Jackson", "Louis", options);
+        // Replace the whole‑word occurrence of "fox" with "cat".
+        int replacedCount = doc.Range.Replace("fox", "cat", options);
 
-        // Ensure that at least one replacement occurred.
+        // Ensure that at least one replacement was performed.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+            throw new InvalidOperationException("Expected at least one whole‑word replacement, but none occurred.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        doc.Save(outputPath);
 
-        // Output the resulting text to the console (optional verification).
-        Console.WriteLine("Replacement count: " + replacedCount);
-        Console.WriteLine("Resulting text:");
-        Console.WriteLine(loadedDoc.GetText().Trim());
+        // Output the number of replacements performed.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
     }
 }

@@ -1,76 +1,111 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required for Aspose.Words font/color types.
+using Newtonsoft.Json;
 
-public class Program
+public class FindAndReplaceDemo
 {
     public static void Main()
     {
-        // Create a sample document with placeholder merge fields.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Dear <<FirstName>> <<LastName>>,");
-        builder.Writeln("Your order <<OrderId>> has been shipped from <<Company>>.");
-        builder.Writeln("Thank you!");
+        // Prepare a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeFindReplaceDemo");
+        Directory.CreateDirectory(workFolder);
+
+        // Paths for the sample input, output and report files.
+        string inputPath = Path.Combine(workFolder, "input.docx");
+        string outputPath = Path.Combine(workFolder, "output.docx");
+        string reportPath = Path.Combine(workFolder, "report.json");
+
+        // Create a sample document containing placeholder merge fields.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Dear {{FirstName}} {{LastName}},");
+        builder.Writeln("Your order {{OrderId}} is confirmed.");
+        builder.Writeln("Thank you for shopping with us.");
+        sampleDoc.Save(inputPath);
+
+        // Load the document to be processed.
+        Document doc = new Document(inputPath);
 
         // Data that will replace the placeholders.
-        var data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        var placeholderValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "FirstName", "John" },
             { "LastName", "Doe" },
-            { "OrderId", "12345" },
-            { "Company", "Acme Corp" }
+            { "OrderId", "12345" }
         };
 
-        // Set up the find‑replace options with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new PlaceholderReplacer(data);
+        // Keep track of which placeholders were actually replaced.
+        var replacedPlaceholders = new List<string>();
 
-        // Regex that matches placeholders of the form <<Placeholder>>.
-        Regex placeholderPattern = new Regex(@"<<(\w+)>>", RegexOptions.Compiled);
+        // Define a regex that matches {{Placeholder}} patterns.
+        Regex placeholderRegex = new Regex(@"{{(\w+)}}", RegexOptions.Compiled);
 
-        // Perform the replace operation. The replacement string is ignored because the callback
-        // supplies the actual replacement text.
-        int replacedCount = doc.Range.Replace(placeholderPattern, string.Empty, options);
-
-        if (replacedCount == 0)
-            throw new InvalidOperationException("No placeholders were replaced.");
-
-        // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
-
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
-    }
-
-    // Implements IReplacingCallback to supply replacement text based on the captured placeholder name.
-    private class PlaceholderReplacer : IReplacingCallback
-    {
-        private readonly IDictionary<string, string> _data;
-
-        public PlaceholderReplacer(IDictionary<string, string> data)
+        // Set up the callback that performs the replacement.
+        var callback = new PlaceholderReplacer(placeholderValues, replacedPlaceholders);
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            _data = data ?? throw new ArgumentNullException(nameof(data));
+            ReplacingCallback = callback
+        };
+
+        // Perform the replacement. The replacement string argument is ignored when a callback is used.
+        int replaceCount = doc.Range.Replace(placeholderRegex, string.Empty, options);
+
+        // Validate that at least one replacement occurred.
+        if (replaceCount == 0 || replacedPlaceholders.Count == 0)
+        {
+            throw new InvalidOperationException("No placeholders were replaced. Expected at least one replacement.");
         }
 
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        // Save the modified document.
+        doc.Save(outputPath);
+
+        // Create a simple JSON report of the performed replacements.
+        var report = new
         {
-            // Group 1 contains the placeholder name without the surrounding << >>.
+            ReplacedPlaceholders = replacedPlaceholders,
+            ReplacementCount = replaceCount,
+            OutputDocument = outputPath
+        };
+        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText(reportPath, jsonReport);
+
+        // Verify that the report file was created.
+        if (!File.Exists(reportPath))
+        {
+            throw new InvalidOperationException("Failed to create the replacement report.");
+        }
+
+        // The example runs to completion without requiring any user interaction.
+    }
+
+    private class PlaceholderReplacer : IReplacingCallback
+    {
+        private readonly IDictionary<string, string> _values;
+        private readonly IList<string> _replaced;
+
+        public PlaceholderReplacer(IDictionary<string, string> values, IList<string> replaced)
+        {
+            _values = values ?? throw new ArgumentNullException(nameof(values));
+            _replaced = replaced ?? throw new ArgumentNullException(nameof(replaced));
+        }
+
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Extract the placeholder name without the braces.
             string key = args.Match.Groups[1].Value;
+            if (_values.TryGetValue(key, out string replacement))
+            {
+                args.Replacement = replacement;
+                _replaced.Add(key);
+                return ReplaceAction.Replace;
+            }
 
-            if (_data.TryGetValue(key, out string value))
-                args.Replacement = value; // Replace with the value from the dictionary.
-            else
-                args.Replacement = args.Match.Value; // Keep the original placeholder if not found.
-
-            return ReplaceAction.Replace;
+            // No replacement found – keep the original text.
+            return ReplaceAction.Skip;
         }
     }
 }

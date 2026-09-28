@@ -3,8 +3,6 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required by Aspose.Words for drawing types
-using Newtonsoft.Json; // Included as per required packages
 
 public class Program
 {
@@ -13,15 +11,15 @@ public class Program
         // Create a sample document containing tab characters.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Item1\tItem2\tItem3");
-        builder.Writeln("ValueA\tValueB\tValueC");
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        builder.Writeln("Column1\tColumn2\tColumn3");
+        builder.Writeln("Value1\tValue2\tValue3");
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
         // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        // Define a regex that matches a tab character.
+        // Define a regular expression that matches a tab character.
         Regex tabRegex = new Regex(@"\t");
 
         // Replace each tab with four spaces.
@@ -30,10 +28,10 @@ public class Program
 
         // Ensure that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one tab character to be replaced.");
+            throw new InvalidOperationException("Expected at least one tab replacement.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        const string outputPath = "output.docx";
         loaded.Save(outputPath);
     }
 }

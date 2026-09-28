@@ -3,55 +3,56 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
+public class PrefixReplacingCallback : IReplacingCallback
+{
+    // This callback adds the prefix "PRE_" to each matched word.
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // Build the replacement text.
+        string prefixed = "PRE_" + args.Match.Value;
+        // Assign the replacement text.
+        args.Replacement = prefixed;
+        // Indicate that the replacement should be performed.
+        return ReplaceAction.Replace;
+    }
+}
+
 public class Program
 {
-    // Callback that adds a prefix to each matched word.
-    private class PrefixCallback : IReplacingCallback
-    {
-        private readonly string _prefix;
-
-        public PrefixCallback(string prefix) => _prefix = prefix;
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Build the replacement text: prefix + original matched word.
-            args.Replacement = _prefix + args.Match.Value;
-            return ReplaceAction.Replace;
-        }
-    }
-
     public static void Main()
     {
-        // Create a new blank document and add sample text.
+        // Create a sample document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Apple banana apple Banana APPLE.");
+        builder.Writeln("This is a sample document.");
+        builder.Writeln("It contains several words to be prefixed.");
+        builder.Writeln("Aspose.Words makes text processing easy.");
 
-        const string prefix = "PRE_";
+        // Save the original document (optional, just for demonstration).
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Configure find‑replace options: case‑insensitive, whole‑word matches.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            MatchCase = false,
-            FindWholeWordsOnly = true,
-            ReplacingCallback = new PrefixCallback(prefix)
-        };
+        // Load the document to perform find-and-replace.
+        Document loaded = new Document(inputPath);
 
-        // Perform the replacement for the word "apple".
-        // The replacement string is ignored because the callback supplies the actual text.
-        int replacedCount = doc.Range.Replace("apple", string.Empty, options);
+        // Define a regex that matches each word (sequence of letters).
+        Regex wordRegex = new Regex(@"\b\w+\b", RegexOptions.Compiled);
+
+        // Set up find-and-replace options with the custom callback.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new PrefixReplacingCallback();
+
+        // Perform the replacement using the regex and callback.
+        // The second argument is a dummy replacement string because the actual
+        // replacement text is supplied by the callback.
+        int replacedCount = loaded.Range.Replace(wordRegex, string.Empty, options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No occurrences of the target word were replaced.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        doc.Save(outputPath);
-
-        // Output the result to the console for verification.
-        Console.WriteLine($"Replacements performed: {replacedCount}");
-        Console.WriteLine("Resulting document text:");
-        Console.WriteLine(doc.GetText().Trim());
+        loaded.Save(outputPath);
     }
 }

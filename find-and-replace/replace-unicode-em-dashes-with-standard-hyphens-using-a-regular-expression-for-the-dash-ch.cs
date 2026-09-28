@@ -1,49 +1,38 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing;          // Required package reference
-using Newtonsoft.Json;        // Required package reference
+using Aspose.Drawing;          // Required package, not used directly
+using Newtonsoft.Json;        // Required package, not used directly
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-
-        // -------------------------------------------------
-        // Create a sample document containing Unicode em dashes.
-        // -------------------------------------------------
+        // Create a sample document containing Unicode em dashes (U+2014).
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is an example—text with an em dash.");
-        builder.Writeln("Another line—another dash.");
+        builder.Writeln("Sample text with em dash—here and another—there.");
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // -------------------------------------------------
-        // Load the document we just created.
-        // -------------------------------------------------
+        // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        // -------------------------------------------------
-        // Define a regular expression that matches the Unicode em dash (U+2014).
-        // -------------------------------------------------
+        // Define a regular expression that matches the em dash character.
         Regex emDashRegex = new Regex("\u2014");
 
-        // -------------------------------------------------
         // Replace each em dash with a standard hyphen.
-        // -------------------------------------------------
-        int replacedCount = loaded.Range.Replace(emDashRegex, "-", new FindReplaceOptions());
+        FindReplaceOptions options = new FindReplaceOptions();
+        int replacedCount = loaded.Range.Replace(emDashRegex, "-", options);
 
-        // Ensure that at least one replacement occurred.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one em dash replacement.");
+            throw new InvalidOperationException("No em dash characters were replaced.");
 
-        // -------------------------------------------------
         // Save the modified document.
-        // -------------------------------------------------
+        const string outputPath = "output.docx";
         loaded.Save(outputPath);
     }
 }

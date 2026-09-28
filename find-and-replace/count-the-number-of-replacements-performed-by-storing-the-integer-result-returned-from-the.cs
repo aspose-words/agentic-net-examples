@@ -1,42 +1,31 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class Program
+public class FindAndReplaceCountExample
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with text that will be replaced.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is the old value that will be replaced. Another old occurrence.");
+        doc.Save("input.docx");
 
-        // Add sample text containing the word to be replaced.
-        builder.Writeln("The quick brown fox jumps over the lazy dog.");
-        builder.Writeln("The quick brown fox is quick and clever.");
-        builder.Writeln("Quickness is a virtue.");
+        // Load the document from the file.
+        Document loaded = new Document("input.docx");
 
-        // Save the source document.
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
-
-        // Load the document from the file system.
-        Document loaded = new Document(inputPath);
-
-        // Perform a find-and-replace operation and capture the number of replacements.
-        const string findText = "quick";
-        const string replaceText = "swift";
-        int replacementCount = loaded.Range.Replace(findText, replaceText, new FindReplaceOptions());
+        // Perform the replacement and capture the number of replacements made.
+        int replacedCount = loaded.Range.Replace("old", "new", new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
-        if (replacementCount == 0)
+        if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        loaded.Save("output.docx");
 
-        // Output the count of replacements performed.
-        Console.WriteLine($"Number of replacements performed: {replacementCount}");
+        // Output the replacement count.
+        Console.WriteLine($"Number of replacements performed: {replacedCount}");
     }
 }

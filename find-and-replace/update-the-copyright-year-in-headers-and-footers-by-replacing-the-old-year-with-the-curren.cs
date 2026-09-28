@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -6,52 +8,43 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a header and a footer containing the old year.
+        // Define the old year to replace and obtain the current year.
+        int oldYear = 2022;
+        int newYear = DateTime.Now.Year;
+
+        // Create a sample document with header and footer containing the old year.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Header with old year.
+        // Header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("(C) 2022 My Company");
+        builder.Writeln($"© {oldYear} My Company");
 
-        // Footer with old year.
+        // Footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("(C) 2022 My Company");
+        builder.Writeln($"© {oldYear} My Company");
 
-        // Body content (optional).
+        // Main body content.
         builder.MoveToDocumentEnd();
-        builder.Writeln("Sample body text.");
+        builder.Writeln("This is a sample document.");
+        builder.Writeln($"All rights reserved © {oldYear}.");
 
-        // Save the sample document.
+        // Save the input document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for processing.
+        // Load the document for replacement.
         Document loadedDoc = new Document(inputPath);
 
-        // Prepare find-and-replace options.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            MatchCase = false,
-            FindWholeWordsOnly = false
-        };
+        // Prepare a regex that matches the old year as a whole word.
+        Regex yearRegex = new Regex(@"\b" + oldYear + @"\b");
 
-        // Define the old and new text.
-        int currentYear = DateTime.Now.Year;
-        string oldText = "(C) 2022 My Company";
-        string newText = $"(C) {currentYear} My Company";
-
-        // Replace in the header.
-        HeaderFooter header = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
-        int headerReplacements = header.Range.Replace(oldText, newText, options);
-
-        // Replace in the footer.
-        HeaderFooter footer = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary];
-        int footerReplacements = footer.Range.Replace(oldText, newText, options);
+        // Perform the replacement across the whole document (including headers/footers).
+        int replacedCount = loadedDoc.Range.Replace(yearRegex, newYear.ToString(), new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
-        if (headerReplacements == 0 && footerReplacements == 0)
-            throw new InvalidOperationException("Expected at least one replacement in header or footer.");
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No year replacements were made.");
 
         // Save the updated document.
         const string outputPath = "output.docx";

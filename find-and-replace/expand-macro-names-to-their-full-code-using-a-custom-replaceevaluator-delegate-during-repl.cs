@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -7,51 +9,75 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing macro placeholders.
+        // Create a sample document with macro placeholders.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
-        builder.Writeln("Current date macro: [DATE]");
-        builder.Writeln("User name macro: [USERNAME]");
+        builder.Writeln("Hello {{NAME}},");
+        builder.Writeln("Your appointment is on {{DATE}}.");
+        builder.Writeln("Please review the code: {{CODE_SNIPPET}}.");
+
+        // Save the sample input document locally.
         string inputPath = "input.docx";
         doc.Save(inputPath);
 
         // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        // Set up a callback that expands macros to their full values.
-        var macroCallback = new MacroExpander();
-        FindReplaceOptions options = new FindReplaceOptions(macroCallback);
+        // Define macro expansions.
+        var macroMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "NAME", "John Doe" },
+            { "DATE", DateTime.Today.ToString("D") },
+            { "CODE_SNIPPET", "Console.WriteLine(\"Hello World\");" }
+        };
 
-        // Find macros of the form [MACRO_NAME] using a regular expression.
-        Regex macroPattern = new Regex(@"\[([A-Z]+)\]");
+        // Regular expression to locate macros like {{MACRO}}.
+        Regex macroRegex = new Regex(@"\{\{(\w+)\}\}");
 
-        // Perform the replacement.
-        int replacedCount = loaded.Range.Replace(macroPattern, string.Empty, options);
+        // Set up FindReplaceOptions with a custom callback that expands macros.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new MacroReplacingCallback(macroMap, macroRegex);
+
+        // Perform the replacement. The replacement string argument is ignored because the callback supplies the actual text.
+        int replacedCount = loaded.Range.Replace(macroRegex, string.Empty, options);
+
         if (replacedCount == 0)
-            throw new InvalidOperationException("No macro placeholders were found for replacement.");
+            throw new InvalidOperationException("No macros were replaced.");
 
         // Save the modified document.
         string outputPath = "output.docx";
         loaded.Save(outputPath);
     }
 
-    // Callback that replaces each macro with its expanded value.
-    private class MacroExpander : IReplacingCallback
+    // Custom callback that replaces each macro with its corresponding value from the dictionary.
+    private class MacroReplacingCallback : IReplacingCallback
     {
-        public ReplaceAction Replacing(ReplacingArgs args)
+        private readonly Dictionary<string, string> _macroMap;
+        private readonly Regex _regex;
+
+        public MacroReplacingCallback(Dictionary<string, string> macroMap, Regex regex)
         {
-            // Extract the macro name without brackets (captured group 1).
-            string macroName = args.Match.Groups[1].Value;
-            args.Replacement = ExpandMacro(macroName);
-            return ReplaceAction.Replace;
+            _macroMap = macroMap;
+            _regex = regex;
         }
 
-        private string ExpandMacro(string name) => name switch
+        public ReplaceAction Replacing(ReplacingArgs args)
         {
-            "DATE" => DateTime.Now.ToString("yyyy-MM-dd"),
-            "USERNAME" => Environment.UserName,
-            _ => $"[UNKNOWN:{name}]"
-        };
+            // The match found by the regex.
+            Match match = args.Match;
+            string key = match.Groups[1].Value;
+
+            // Look up the macro value; if not found, keep the original placeholder.
+            if (_macroMap.TryGetValue(key, out string replacement))
+            {
+                args.Replacement = replacement;
+            }
+            else
+            {
+                args.Replacement = match.Value;
+            }
+
+            return ReplaceAction.Replace;
+        }
     }
 }
