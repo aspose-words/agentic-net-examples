@@ -1,36 +1,70 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Layout;
+using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Paths for the sample DOC and resulting PDF.
+        string docPath = Path.Combine(outputDir, "sample.doc");
+        string pdfPath = Path.Combine(outputDir, "sample.pdf");
+
+        // -----------------------------------------------------------------
+        // 1. Create a DOC file with a comment.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text to the document.
-        builder.Writeln("Paragraph before comment.");
+        // Write a paragraph that will hold the comment.
+        builder.Writeln("This is a paragraph that contains a comment.");
 
-        // Create a comment with author metadata.
-        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("This comment will be visible in the PDF output.");
+        // Create a comment node.
+        Comment comment = new Comment(doc)
+        {
+            Author = "John Doe",
+            Initial = "JD",
+            DateTime = DateTime.Now
+        };
 
-        // Insert the comment into the first paragraph.
-        // The comment is anchored to a range of text using CommentRangeStart and CommentRangeEnd.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        firstParagraph.AppendChild(new CommentRangeStart(doc, comment.Id));
-        firstParagraph.AppendChild(new Run(doc, "Commented text"));
-        firstParagraph.AppendChild(new CommentRangeEnd(doc, comment.Id));
-        firstParagraph.AppendChild(comment);
+        // The comment must contain at least one paragraph and run with visible text.
+        Paragraph commentParagraph = new Paragraph(doc);
+        commentParagraph.AppendChild(new Run(doc, "Please review this paragraph."));
+        comment.AppendChild(commentParagraph);
 
-        // Configure the layout to render comments as PDF annotations.
-        doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
-        doc.UpdatePageLayout(); // Rebuild layout after changing options.
+        // Attach the comment to the last paragraph of the document.
+        Paragraph? targetParagraph = doc.FirstSection?.Body?.LastParagraph;
+        if (targetParagraph != null)
+        {
+            targetParagraph.AppendChild(comment);
+        }
 
-        // Save the document as PDF; comments will appear as visible annotations.
-        doc.Save("DocumentWithComments.pdf", SaveFormat.Pdf);
+        // Save the DOC file.
+        doc.Save(docPath, SaveFormat.Doc);
+
+        // -----------------------------------------------------------------
+        // 2. Load the DOC file and convert it to PDF while preserving comments.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+
+        // Optional: enumerate comments to demonstrate they are present.
+        var comments = loadedDoc.GetChildNodes(NodeType.Comment, true)
+                                .OfType<Comment>()
+                                .ToList();
+
+        foreach (Comment c in comments)
+        {
+            Console.WriteLine($"{c.Author}: {c.GetText().Trim()}");
+        }
+
+        // Save as PDF. Comments are rendered as PDF annotations by default.
+        loadedDoc.Save(pdfPath, SaveFormat.Pdf);
     }
 }

@@ -7,50 +7,56 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
+        // Prepare output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a sample document with a comment and save it.
-        // -----------------------------------------------------------------
+        // Create a sample document with a comment
         Document sampleDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-
-        // Add a paragraph of text.
         builder.Writeln("This is a sample paragraph with a comment.");
 
-        // Create a comment with a mixed‑case author name.
-        Comment comment = new Comment(sampleDoc, "John Doe", "JD", DateTime.Now);
-        comment.SetText("Initial comment text.");
-        // Append the comment to the current paragraph.
-        builder.CurrentParagraph.AppendChild(comment);
+        // Create a comment node
+        Comment comment = new Comment(sampleDoc)
+        {
+            Author = "John Doe",
+            Initial = "JD",
+            DateTime = DateTime.Now
+        };
+        // Add visible text to the comment
+        comment.AppendChild(new Paragraph(sampleDoc));
+        comment.FirstParagraph?.AppendChild(new Run(sampleDoc, "Please review this paragraph."));
 
-        // Save the document that will be loaded later.
+        // Attach the comment to the first paragraph
+        Paragraph? firstParagraph = sampleDoc.FirstSection?.Body?.FirstParagraph;
+        if (firstParagraph != null)
+        {
+            firstParagraph.AppendChild(comment);
+        }
+
+        // Save the sample document
+        string inputPath = Path.Combine(outputDir, "input.docx");
         sampleDoc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the document, convert comment authors to uppercase.
-        // -----------------------------------------------------------------
-        Document doc = new Document(inputPath);
+        // Load the document from file
+        Document loadedDoc = new Document(inputPath);
 
-        // Enumerate all comment nodes safely.
-        var comments = doc.GetChildNodes(NodeType.Comment, true)
-                          .OfType<Comment>()
-                          .ToList();
+        // Enumerate all comments in the document
+        var comments = loadedDoc.GetChildNodes(NodeType.Comment, true)
+                                .OfType<Comment>()
+                                .ToList();
 
+        // Convert each comment author name to uppercase
         foreach (Comment c in comments)
         {
-            // Transform the author name to uppercase while preserving other metadata.
             if (!string.IsNullOrEmpty(c.Author))
             {
                 c.Author = c.Author.ToUpperInvariant();
             }
         }
 
-        // -----------------------------------------------------------------
-        // Step 3: Save the modified document.
-        // -----------------------------------------------------------------
-        doc.Save(outputPath);
+        // Save the updated document
+        string outputPath = Path.Combine(outputDir, "output.docx");
+        loadedDoc.Save(outputPath);
     }
 }

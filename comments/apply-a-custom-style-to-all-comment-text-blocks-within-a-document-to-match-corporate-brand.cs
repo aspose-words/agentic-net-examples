@@ -3,65 +3,75 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add some content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample paragraphs.
         builder.Writeln("First paragraph of the document.");
-        builder.Writeln("Second paragraph of the document.");
+        builder.Writeln("Second paragraph where a comment will be added.");
 
-        // Insert a comment on the first paragraph.
-        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment1.SetText("Initial review comment.");
-        // Append the comment to the first paragraph.
-        builder.MoveToDocumentStart();
-        builder.CurrentParagraph.AppendChild(comment1);
+        // Create a comment and attach it to the second paragraph.
+        Comment comment = new Comment(doc)
+        {
+            Author = "Jane Doe",
+            Initial = "JD",
+            DateTime = DateTime.Now
+        };
+        // Add a paragraph and run inside the comment to hold visible text.
+        Paragraph commentParagraph = new Paragraph(doc);
+        commentParagraph.AppendChild(new Run(doc, "Please review this paragraph for accuracy."));
+        comment.AppendChild(commentParagraph);
 
-        // Insert a second comment on the second paragraph.
-        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
-        comment2.SetText("Additional feedback needed.");
-        // Append the comment to the last paragraph.
-        builder.MoveToDocumentEnd();
-        builder.CurrentParagraph.AppendChild(comment2);
+        // Append the comment to the paragraph.
+        Paragraph targetParagraph = doc.FirstSection.Body.Paragraphs[1];
+        targetParagraph.AppendChild(comment);
 
-        // Define a custom style that matches corporate branding for comment text.
-        Style corporateCommentStyle = doc.Styles.Add(StyleType.Paragraph, "CorporateComment");
-        corporateCommentStyle.Font.Name = "Arial";
-        corporateCommentStyle.Font.Size = 10;
-        corporateCommentStyle.Font.Color = Color.DarkBlue;
-        corporateCommentStyle.Font.Bold = true;
+        // Create another comment for demonstration.
+        Comment secondComment = new Comment(doc)
+        {
+            Author = "John Smith",
+            Initial = "JS",
+            DateTime = DateTime.Now
+        };
+        Paragraph secondCommentParagraph = new Paragraph(doc);
+        secondCommentParagraph.AppendChild(new Run(doc, "Consider rephrasing this sentence."));
+        secondComment.AppendChild(secondCommentParagraph);
+        doc.FirstSection.Body.Paragraphs[0].AppendChild(secondComment);
 
-        // Enumerate all comments in the document safely.
+        // Save the original document (optional, for reference).
+        string originalPath = "OriginalDocument.docx";
+        doc.Save(originalPath);
+
+        // Define a custom style that matches corporate branding.
+        Style corporateStyle = doc.Styles.Add(StyleType.Paragraph, "CorporateComment");
+        corporateStyle.Font.Name = "Arial";
+        corporateStyle.Font.Size = 10;
+        corporateStyle.Font.Color = System.Drawing.Color.DarkBlue;
+        corporateStyle.Font.Italic = true;
+
+        // Enumerate all comments in the document.
         var comments = doc.GetChildNodes(NodeType.Comment, true)
                           .OfType<Comment>()
                           .ToList();
 
-        // Apply the custom style to every paragraph inside each comment.
+        // Apply the custom style to each paragraph inside each comment.
         foreach (Comment c in comments)
         {
-            // Ensure the comment contains at least one paragraph.
-            if (c.Paragraphs.Count == 0)
-                c.EnsureMinimum();
-
-            foreach (Paragraph p in c.Paragraphs)
+            // Ensure the comment has at least one paragraph.
+            foreach (Paragraph p in c.GetChildNodes(NodeType.Paragraph, true).OfType<Paragraph>())
             {
-                p.ParagraphFormat.Style = corporateCommentStyle;
+                // Apply the custom style by name.
+                p.ParagraphFormat.StyleName = corporateStyle.Name;
             }
         }
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
         // Save the modified document.
-        string outputPath = Path.Combine(outputDir, "DocumentWithStyledComments.docx");
+        string outputPath = "DocumentWithStyledComments.docx";
         doc.Save(outputPath);
     }
 }

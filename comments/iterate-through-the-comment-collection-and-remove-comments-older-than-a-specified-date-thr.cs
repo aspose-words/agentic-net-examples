@@ -2,52 +2,67 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-public class Program
+public class CommentRemovalExample
 {
     public static void Main()
     {
-        // Create a new document and add some paragraphs with comments.
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph with an old comment (2 months ago).
-        builder.Writeln("First paragraph.");
-        Comment oldComment = new Comment(doc, "Alice", "A", DateTime.Now.AddMonths(-2));
-        oldComment.SetText("This is an old comment.");
-        builder.CurrentParagraph.AppendChild(oldComment);
+        // First paragraph with an old comment (10 days ago).
+        builder.Writeln("Paragraph with an old comment.");
+        Paragraph paraOld = doc.FirstSection.Body.LastParagraph;
+        Comment oldComment = new Comment(doc)
+        {
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now.AddDays(-10) // older than threshold
+        };
+        // Add visible text to the comment.
+        oldComment.AppendChild(new Paragraph(doc));
+        oldComment.FirstParagraph?.AppendChild(new Run(doc, "This comment is older than the threshold."));
+        // Attach the comment to the paragraph.
+        paraOld?.AppendChild(oldComment);
 
-        // Second paragraph with a recent comment (today).
-        builder.Writeln("Second paragraph.");
-        Comment recentComment = new Comment(doc, "Bob", "B", DateTime.Now);
-        recentComment.SetText("This is a recent comment.");
-        builder.CurrentParagraph.AppendChild(recentComment);
+        // Second paragraph with a recent comment (1 day ago).
+        builder.Writeln("Paragraph with a recent comment.");
+        Paragraph paraRecent = doc.FirstSection.Body.LastParagraph;
+        Comment recentComment = new Comment(doc)
+        {
+            Author = "Bob",
+            Initial = "B",
+            DateTime = DateTime.Now.AddDays(-1) // newer than threshold
+        };
+        recentComment.AppendChild(new Paragraph(doc));
+        recentComment.FirstParagraph?.AppendChild(new Run(doc, "This comment is recent."));
+        paraRecent?.AppendChild(recentComment);
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Save the original document.
+        string originalPath = "original.docx";
+        doc.Save(originalPath);
 
-        // Save the document before removal for reference.
-        string beforePath = Path.Combine(outputDir, "CommentsBefore.docx");
-        doc.Save(beforePath);
+        // Define the date threshold: comments older than this will be removed.
+        DateTime threshold = DateTime.Now.AddDays(-5);
 
-        // Define the date threshold: comments older than this date will be removed.
-        DateTime threshold = DateTime.Now.AddMonths(-1); // 1 month ago
-
-        // Enumerate all comment nodes safely and collect those older than the threshold.
-        var oldComments = doc.GetChildNodes(NodeType.Comment, true)
+        // Collect all comments in a safe list.
+        var allComments = doc.GetChildNodes(NodeType.Comment, true)
                              .OfType<Comment>()
-                             .Where(c => c.DateTime < threshold)
                              .ToList();
 
-        // Remove each old comment from the document.
-        foreach (Comment comment in oldComments)
+        // Remove comments older than the threshold.
+        foreach (Comment comment in allComments)
         {
-            comment.Remove();
+            if (comment.DateTime < threshold)
+            {
+                comment.Remove();
+            }
         }
 
-        // Save the document after removal.
-        string afterPath = Path.Combine(outputDir, "CommentsAfter.docx");
-        doc.Save(afterPath);
+        // Save the filtered document.
+        string filteredPath = "filtered.docx";
+        doc.Save(filteredPath);
     }
 }

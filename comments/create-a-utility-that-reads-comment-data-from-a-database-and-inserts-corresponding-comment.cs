@@ -3,127 +3,140 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Drawing;
+using Aspose.Words.Notes;
 
 namespace CommentInsertionExample
 {
-    // Simple POCO representing a comment record that might come from a database.
-    public class CommentData
+    // Simple record representing a comment retrieved from a database.
+    public class CommentRecord
     {
         public string Author { get; set; } = "";
         public string Initial { get; set; } = "";
         public DateTime DateTime { get; set; }
         public string Text { get; set; } = "";
+        // Zero‑based index of the paragraph where the comment should be attached.
+        public int ParagraphIndex { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Simulate retrieving comment data from a database.
-            List<CommentData> commentRecords = GetSampleCommentData();
+            // Ensure output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+            Directory.CreateDirectory(outputDir);
 
-            // Create a template document with a few paragraphs.
-            Document template = CreateTemplateDocument();
+            // 1. Create a template document with a few paragraphs.
+            string templatePath = Path.Combine(outputDir, "template.docx");
+            CreateTemplateDocument(templatePath);
 
-            // Insert comments from the simulated database into the template.
-            InsertCommentsIntoDocument(template, commentRecords);
+            // 2. Simulate reading comment data from a database.
+            List<CommentRecord> commentData = GetSampleCommentData();
 
-            // Save the resulting document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DocumentWithComments.docx");
-            template.Save(outputPath);
+            // 3. Load the template document.
+            Document doc = new Document(templatePath);
 
-            // Load the saved document and enumerate the comments to verify insertion.
-            Document loadedDoc = new Document(outputPath);
-            EnumerateComments(loadedDoc);
+            // 4. Insert comments into the document according to the simulated data.
+            InsertCommentsIntoDocument(doc, commentData);
+
+            // 5. Save the resulting document.
+            string resultPath = Path.Combine(outputDir, "document-with-comments.docx");
+            doc.Save(resultPath);
+
+            // 6. Enumerate and display inserted comments (optional verification).
+            EnumerateComments(doc);
         }
 
-        // Returns a list of sample comment data.
-        private static List<CommentData> GetSampleCommentData()
+        private static void CreateTemplateDocument(string path)
         {
-            return new List<CommentData>
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            builder.Writeln("Paragraph 1: Introduction.");
+            builder.Writeln("Paragraph 2: Details.");
+            builder.Writeln("Paragraph 3: Conclusion.");
+
+            template.Save(path);
+        }
+
+        private static List<CommentRecord> GetSampleCommentData()
+        {
+            // In a real scenario this data would come from a database query.
+            return new List<CommentRecord>
             {
-                new CommentData
+                new CommentRecord
                 {
-                    Author = "Alice Johnson",
-                    Initial = "AJ",
-                    DateTime = DateTime.Now.AddDays(-2),
-                    Text = "Review the introduction."
+                    Author = "Alice",
+                    Initial = "AL",
+                    DateTime = DateTime.Now.AddMinutes(-30),
+                    Text = "Please review the introduction.",
+                    ParagraphIndex = 0 // First paragraph
                 },
-                new CommentData
+                new CommentRecord
                 {
-                    Author = "Bob Smith",
-                    Initial = "BS",
-                    DateTime = DateTime.Now.AddDays(-1),
-                    Text = "Consider adding more examples here."
+                    Author = "Bob",
+                    Initial = "BO",
+                    DateTime = DateTime.Now.AddMinutes(-20),
+                    Text = "Add more technical details here.",
+                    ParagraphIndex = 1 // Second paragraph
                 },
-                new CommentData
+                new CommentRecord
                 {
-                    Author = "Carol Lee",
-                    Initial = "CL",
-                    DateTime = DateTime.Now,
-                    Text = "Check the formatting of this section."
+                    Author = "Carol",
+                    Initial = "CA",
+                    DateTime = DateTime.Now.AddMinutes(-10),
+                    Text = "Conclusion looks good.",
+                    ParagraphIndex = 2 // Third paragraph
                 }
             };
         }
 
-        // Creates a simple template document with three paragraphs.
-        private static Document CreateTemplateDocument()
+        private static void InsertCommentsIntoDocument(Document doc, List<CommentRecord> records)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Retrieve all paragraphs in the main story.
+            List<Paragraph> paragraphs = doc.GetChildNodes(NodeType.Paragraph, true)
+                                            .OfType<Paragraph>()
+                                            .ToList();
 
-            builder.Writeln("Paragraph 1: This is the first paragraph of the template.");
-            builder.Writeln("Paragraph 2: This is the second paragraph of the template.");
-            builder.Writeln("Paragraph 3: This is the third paragraph of the template.");
-
-            return doc;
-        }
-
-        // Inserts each comment into a corresponding paragraph of the document.
-        private static void InsertCommentsIntoDocument(Document doc, List<CommentData> comments)
-        {
-            // Ensure the document has at least as many paragraphs as comments.
-            int paragraphCount = doc.FirstSection?.Body?.Paragraphs?.Count ?? 0;
-            int requiredCount = comments.Count;
-            if (paragraphCount < requiredCount)
+            foreach (CommentRecord record in records)
             {
-                DocumentBuilder extraBuilder = new DocumentBuilder(doc);
-                for (int i = paragraphCount; i < requiredCount; i++)
-                {
-                    extraBuilder.Writeln($"Additional paragraph {i + 1}.");
-                }
-            }
+                // Guard against an invalid paragraph index.
+                if (record.ParagraphIndex < 0 || record.ParagraphIndex >= paragraphs.Count)
+                    continue;
 
-            // Attach each comment to the paragraph with the same index.
-            for (int i = 0; i < comments.Count; i++)
-            {
-                CommentData data = comments[i];
-                Paragraph? paragraph = doc.FirstSection?.Body?.Paragraphs[i];
-                if (paragraph == null)
-                    continue; // Safety check; should not happen.
+                Paragraph targetParagraph = paragraphs[record.ParagraphIndex];
 
                 // Create a new comment node.
-                Comment comment = new Comment(doc, data.Author, data.Initial, data.DateTime);
-                comment.SetText(data.Text);
+                Comment comment = new Comment(doc)
+                {
+                    Author = record.Author,
+                    Initial = record.Initial,
+                    DateTime = record.DateTime
+                };
 
-                // Append the comment to the paragraph.
-                paragraph.AppendChild(comment);
+                // Add visible text to the comment body.
+                Paragraph commentParagraph = new Paragraph(doc);
+                Run commentRun = new Run(doc, record.Text);
+                commentParagraph.AppendChild(commentRun);
+                comment.AppendChild(commentParagraph);
+
+                // Attach the comment to the target paragraph.
+                // The comment is added as a child of the paragraph node.
+                targetParagraph.AppendChild(comment);
             }
         }
 
-        // Enumerates all comments in the document and writes their details to the console.
         private static void EnumerateComments(Document doc)
         {
-            var commentNodes = doc.GetChildNodes(NodeType.Comment, true)
-                                  .OfType<Comment>()
-                                  .ToList();
+            List<Comment> comments = doc.GetChildNodes(NodeType.Comment, true)
+                                        .OfType<Comment>()
+                                        .ToList();
 
-            foreach (Comment c in commentNodes)
+            foreach (Comment c in comments)
             {
-                string author = c.Author ?? "Unknown";
                 string text = c.GetText().Trim();
-                DateTime date = c.DateTime;
-                Console.WriteLine($"Comment by {author} on {date:G}: \"{text}\"");
+                Console.WriteLine($"{c.Author} ({c.Initial}) at {c.DateTime:u}: {text}");
             }
         }
     }
