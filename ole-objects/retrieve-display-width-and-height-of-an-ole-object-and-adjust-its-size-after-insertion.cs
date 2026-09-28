@@ -1,39 +1,76 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Runtime.InteropServices;
 
-public class Program
+public class OleObjectExample
 {
     public static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create temporary text file to embed as OLE object
+        string tempTextPath = Path.Combine(Path.GetTempPath(), "OleSample.txt");
+        File.WriteAllText(tempTextPath, "This is sample text for an OLE object.");
 
-        // Prepare some dummy data to embed as an OLE package.
-        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Hello, Aspose.Words OLE object!");
-        using (MemoryStream oleStream = new MemoryStream(dummyData))
+        // Path for the generated Word document
+        string docPath = Path.Combine(Path.GetTempPath(), "OleExample.docx");
+
+        dynamic wordApp = null;
+        dynamic doc = null;
+        dynamic inlineShape = null;
+
+        try
         {
-            // Insert the OLE object into the document.
-            // Parameters: stream, progId ("Package" for generic OLE package), asIcon = false, presentation = null.
-            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
+            // Start Word application (invisible)
+            Type wordType = Type.GetTypeFromProgID("Word.Application");
+            wordApp = Activator.CreateInstance(wordType);
+            wordApp.Visible = false;
 
-            // Retrieve the current display size of the OLE object (in points).
-            double originalWidth = oleShape.Width;
-            double originalHeight = oleShape.Height;
+            // Add a new document
+            doc = wordApp.Documents.Add();
 
-            Console.WriteLine($"Original OLE size: Width = {originalWidth} pt, Height = {originalHeight} pt");
+            // Insert the OLE object (the text file) into the document
+            // Parameters: ClassType, FileName, LinkToFile, DisplayAsIcon, IconFileName, IconIndex, IconLabel, Range
+            inlineShape = doc.InlineShapes.AddOLEObject(
+                "Package",                 // ClassType
+                tempTextPath,              // FileName
+                false,                     // LinkToFile
+                false,                     // DisplayAsIcon
+                Type.Missing,              // IconFileName
+                Type.Missing,              // IconIndex
+                Type.Missing,              // IconLabel
+                Type.Missing               // Range
+            );
 
-            // Adjust the size of the OLE object – for example, increase both dimensions by 50%.
-            oleShape.Width = originalWidth * 1.5;
-            oleShape.Height = originalHeight * 1.5;
+            // Retrieve original dimensions (points)
+            double originalWidth = inlineShape.Width;
+            double originalHeight = inlineShape.Height;
+            Console.WriteLine($"Original Width: {originalWidth} pt, Height: {originalHeight} pt");
 
-            Console.WriteLine($"Adjusted OLE size: Width = {oleShape.Width} pt, Height = {oleShape.Height} pt");
+            // Adjust size (double the dimensions)
+            inlineShape.Width = originalWidth * 2;
+            inlineShape.Height = originalHeight * 2;
+            Console.WriteLine($"Adjusted Width: {inlineShape.Width} pt, Height: {inlineShape.Height} pt");
+
+            // Save the document
+            doc.SaveAs2(docPath);
+        }
+        finally
+        {
+            // Clean up COM objects
+            if (inlineShape != null) Marshal.ReleaseComObject(inlineShape);
+            if (doc != null) Marshal.ReleaseComObject(doc);
+            if (wordApp != null)
+            {
+                wordApp.Quit();
+                Marshal.ReleaseComObject(wordApp);
+            }
+
+            // Delete temporary files
+            if (File.Exists(tempTextPath))
+                File.Delete(tempTextPath);
         }
 
-        // Save the document to the file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectAdjusted.docx");
-        doc.Save(outputPath);
+        // Optionally, delete the generated document (uncomment if desired)
+        // if (File.Exists(docPath))
+        //     File.Delete(docPath);
     }
 }

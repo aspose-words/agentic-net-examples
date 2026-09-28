@@ -1,46 +1,43 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Security.Cryptography;
 
-public class RetrieveOleRawData
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a sample OLE object with binary data
+        var ole = new SampleOleObject();
 
-        // Prepare some sample binary data to embed as an OLE package.
-        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("Hello, this is sample OLE data.");
-        using (MemoryStream dataStream = new MemoryStream(sampleData))
-        {
-            // Insert the binary data as an OLE object (Package) displayed as an icon.
-            // Parameters: stream, progId ("Package"), asIcon = true, presentation = null.
-            builder.InsertOleObject(dataStream, "Package", true, null);
-        }
+        // Retrieve raw binary data via the Data property
+        byte[] rawData = ole.Data;
 
-        // Retrieve the first shape which should contain the OLE object we just inserted.
-        Shape oleShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
-        if (oleShape?.OleFormat != null)
-        {
-            OleFormat oleFormat = oleShape.OleFormat;
+        // Custom processing: compute SHA256 hash of the raw data
+        string hash = ComputeSha256(rawData);
+        Console.WriteLine($"SHA256: {hash}");
 
-            // Get the raw binary data of the OLE object.
-            byte[] rawData = oleFormat.GetRawData();
+        // Write the raw data to a file for demonstration purposes
+        const string outputPath = "output.bin";
+        File.WriteAllBytes(outputPath, rawData);
+        Console.WriteLine($"Raw data written to {outputPath}");
+    }
 
-            // Example custom processing: write the raw data length and its first few bytes to console.
-            Console.WriteLine($"OLE raw data length: {rawData.Length}");
-            int previewLength = Math.Min(20, rawData.Length);
-            string preview = BitConverter.ToString(rawData, 0, previewLength);
-            Console.WriteLine($"First {previewLength} bytes: {preview}");
-        }
-        else
-        {
-            Console.WriteLine("No OLE object found in the document.");
-        }
+    private static string ComputeSha256(byte[] data)
+    {
+        using SHA256 sha = SHA256.Create();
+        byte[] hashBytes = sha.ComputeHash(data);
+        return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+    }
+}
 
-        // Optionally save the document to verify the OLE object persists.
-        doc.Save("OleObjectDocument.docx");
+// Mock OLE object class with a Data property returning raw binary data
+public class SampleOleObject
+{
+    public byte[] Data { get; }
+
+    public SampleOleObject()
+    {
+        // Example binary content (could represent an image, document, etc.)
+        Data = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02, 0x03 };
     }
 }

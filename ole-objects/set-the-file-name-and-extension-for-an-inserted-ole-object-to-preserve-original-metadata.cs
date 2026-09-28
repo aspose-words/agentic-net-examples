@@ -1,34 +1,77 @@
 using System;
 using System.IO;
-using System.Text;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Runtime.InteropServices;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a temporary text file that will be embedded as an OLE object
+        string tempFolder = Path.Combine(Path.GetTempPath(), "OleDemo");
+        Directory.CreateDirectory(tempFolder);
+        string sourceFilePath = Path.Combine(tempFolder, "SampleDocument.txt");
+        File.WriteAllText(sourceFilePath, "This is the original content of the OLE object.");
 
-        // Dummy data to simulate a file (e.g., a ZIP archive) that will be embedded as an OLE package.
-        byte[] dummyData = Encoding.UTF8.GetBytes("Dummy content for OLE package");
-        using (MemoryStream stream = new MemoryStream(dummyData))
+        // Prepare paths for the Word document
+        string wordFilePath = Path.Combine(tempFolder, "OleDemoDocument.docx");
+
+        // Start Word via COM automation
+        Type wordType = Type.GetTypeFromProgID("Word.Application");
+        if (wordType == null)
         {
-            // Insert the OLE object as a package and display it as an icon.
-            Shape shape = builder.InsertOleObject(stream, "Package", true, null);
-
-            // Preserve original metadata by setting the file name and display name.
-            shape.OleFormat.OlePackage.FileName = "OriginalFileName.zip";
-            shape.OleFormat.OlePackage.DisplayName = "OriginalFileName.zip";
+            Console.WriteLine("Microsoft Word is not installed on this machine.");
+            return;
         }
 
-        // Ensure the output directory exists.
-        string outputDir = "Artifacts";
-        Directory.CreateDirectory(outputDir);
+        dynamic wordApp = null;
+        dynamic document = null;
+        try
+        {
+            wordApp = Activator.CreateInstance(wordType);
+            wordApp.Visible = false;
 
-        // Save the document to a file.
-        doc.Save(Path.Combine(outputDir, "OlePackageExample.docx"));
+            // Add a new document
+            document = wordApp.Documents.Add();
+
+            // Insert a paragraph before the OLE object
+            dynamic range = document.Range(0, 0);
+            range.Text = "Below is an embedded OLE object preserving its original file name and extension:\n";
+
+            // Insert the OLE object (as a package) and set its display label to the original file name
+            dynamic oleObject = document.InlineShapes.AddOLEObject(
+                ClassType: "Package",
+                FileName: sourceFilePath,
+                LinkToFile: false,
+                DisplayAsIcon: true,
+                IconFileName: "",          // Use default icon
+                IconIndex: 0,
+                IconLabel: Path.GetFileName(sourceFilePath), // Preserve original name
+                Range: range
+            );
+
+            // Save the document
+            document.SaveAs2(wordFilePath);
+        }
+        finally
+        {
+            // Clean up COM objects
+            if (document != null)
+            {
+                document.Close(false);
+                Marshal.ReleaseComObject(document);
+            }
+            if (wordApp != null)
+            {
+                wordApp.Quit();
+                Marshal.ReleaseComObject(wordApp);
+            }
+        }
+
+        // Output the location of the generated files
+        Console.WriteLine($"Embedded OLE object created from: {sourceFilePath}");
+        Console.WriteLine($"Word document with OLE object saved to: {wordFilePath}");
+
+        // Optional cleanup (comment out if you want to inspect the files)
+        //Directory.Delete(tempFolder, true);
     }
 }

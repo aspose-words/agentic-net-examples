@@ -1,40 +1,55 @@
 using System;
-using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
 
-public class AdjustOleIconAspectRatio
+public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Original OLE icon dimensions (e.g., pixels)
+        double originalWidth = 200;
+        double originalHeight = 100;
 
-        // Prepare a temporary text file to embed as an OLE object.
-        string tempDir = Path.Combine(Directory.GetCurrentDirectory(), "TempFiles");
-        Directory.CreateDirectory(tempDir);
-        string oleFilePath = Path.Combine(tempDir, "Sample.txt");
-        File.WriteAllText(oleFilePath, "This is a sample text file for OLE embedding.");
+        // Resize based on a new width while preserving aspect ratio
+        double targetWidth = 150;
+        var resizedByWidth = OLEIconResizer.ResizeByWidth(originalWidth, originalHeight, targetWidth);
+        Console.WriteLine($"Original size: {originalWidth} x {originalHeight}");
+        Console.WriteLine($"Resized to width {targetWidth}: {resizedByWidth.Width:F2} x {resizedByWidth.Height:F2}");
 
-        // Insert the OLE object as an icon. No custom icon file is provided (null), so Aspose.Words uses a default one.
-        // The returned Shape represents the OLE object icon.
-        Shape oleShape = builder.InsertOleObjectAsIcon(oleFilePath, false, null, "Sample Text File");
+        // Resize based on a new height while preserving aspect ratio
+        double targetHeight = 80;
+        var resizedByHeight = OLEIconResizer.ResizeByHeight(originalWidth, originalHeight, targetHeight);
+        Console.WriteLine($"Resized to height {targetHeight}: {resizedByHeight.Width:F2} x {resizedByHeight.Height:F2}");
+    }
+}
 
-        // Lock the aspect ratio to keep the icon proportions consistent when resizing.
-        oleShape.AspectRatioLocked = true;
+public static class OLEIconResizer
+{
+    public struct Size
+    {
+        public double Width;
+        public double Height;
 
-        // Desired new width for the icon (in points). Height will be adjusted to preserve the aspect ratio.
-        double desiredWidth = 150.0;
-        double originalWidth = oleShape.Width;
-        double scaleFactor = desiredWidth / originalWidth;
+        public Size(double width, double height)
+        {
+            Width = width;
+            Height = height;
+        }
+    }
 
-        // Apply the new dimensions while maintaining the original aspect ratio.
-        oleShape.Width = desiredWidth;
-        oleShape.Height = oleShape.Height * scaleFactor;
+    // Adjust dimensions based on a new width, maintaining aspect ratio
+    public static Size ResizeByWidth(double originalWidth, double originalHeight, double newWidth)
+    {
+        if (originalWidth == 0) return new Size(0, 0);
+        double scale = newWidth / originalWidth;
+        double newHeight = originalHeight * scale;
+        return new Size(newWidth, newHeight);
+    }
 
-        // Save the document to the output file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleIconAdjusted.docx");
-        doc.Save(outputPath);
+    // Adjust dimensions based on a new height, maintaining aspect ratio
+    public static Size ResizeByHeight(double originalWidth, double originalHeight, double newHeight)
+    {
+        if (originalHeight == 0) return new Size(0, 0);
+        double scale = newHeight / originalHeight;
+        double newWidth = originalWidth * scale;
+        return new Size(newWidth, newHeight);
     }
 }

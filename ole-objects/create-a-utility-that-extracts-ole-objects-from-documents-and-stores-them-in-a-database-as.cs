@@ -1,65 +1,138 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.IO.Compression;
+using System.Text;
 
 public class OleExtractor
 {
-    // Path to the source Word document. Adjust as needed.
-    private const string InputDocumentPath = "input.docx";
-
-    // Folder where extracted OLE objects will be saved (simulating storage).
-    private const string OutputFolder = "ExtractedOleObjects";
-
     public static void Main()
     {
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(OutputFolder);
+        string docxPath = "sample.docx";
+        CreateSampleDocx(docxPath);
 
-        // Load the Word document. If the file does not exist, create an empty document instead.
-        Document doc;
-        if (File.Exists(InputDocumentPath))
+        string dbPath = "OleObjects.db";
+        var db = new SimpleBlobDatabase(dbPath);
+
+        using (var archive = ZipFile.OpenRead(docxPath))
         {
-            doc = new Document(InputDocumentPath); // Load existing document
-        }
-        else
-        {
-            Console.WriteLine($"Input file \"{InputDocumentPath}\" not found. Creating an empty document.");
-            doc = new Document(); // Create a blank document
-        }
+            foreach (var entry in archive.Entries)
+            {
+                if (entry.FullName.StartsWith("word/embeddings/", StringComparison.OrdinalIgnoreCase))
+                {
+                    using (var stream = entry.Open())
+                    using (var ms = new MemoryStream())
+                    {
+                        stream.CopyTo(ms);
+                        byte[] data = ms.ToArray();
 
-        // List to hold extracted OLE objects (file name + raw data).
-        var extractedOleObjects = new List<(string FileName, byte[] Data)>();
-
-        // Iterate over all shapes in the document.
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
-        {
-            OleFormat ole = shape.OleFormat;
-            if (ole == null)
-                continue; // Not an OLE object.
-
-            // Skip linked objects – they have no embedded data.
-            if (ole.IsLink)
-                continue;
-
-            // Retrieve raw OLE data.
-            byte[] rawData = ole.GetRawData();
-
-            // Determine a file name for storage (use suggested name if available).
-            string fileName = ole.SuggestedFileName;
-            if (string.IsNullOrEmpty(fileName))
-                fileName = $"OleObject_{Guid.NewGuid():N}.bin";
-
-            // Save the raw data to a file (simulating a BLOB storage).
-            string outputPath = Path.Combine(OutputFolder, fileName);
-            File.WriteAllBytes(outputPath, rawData);
-
-            // Keep the record in the in‑memory list.
-            extractedOleObjects.Add((fileName, rawData));
+                        db.Insert(entry.Name, data);
+                        Console.WriteLine($"Extracted and stored OLE object: {entry.Name} ({data.Length} bytes)");
+                    }
+                }
+            }
         }
 
-        // Simple console report.
-        Console.WriteLine($"Extracted {extractedOleObjects.Count} OLE object(s) to folder \"{OutputFolder}\".");
+        long count = db.CountRecords();
+        Console.WriteLine($"Total OLE objects stored in database: {count}");
+    }
+
+    private static void CreateSampleDocx(string path)
+    {
+        if (File.Exists(path))
+            return;
+
+        using (var zip = ZipFile.Open(path, ZipArchiveMode.Create))
+        {
+            var contentTypes = zip.CreateEntry("[Content_Types].xml");
+            using (var writer = new StreamWriter(contentTypes.Open()))
+            {
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Types xmlns=""http://schemas.openxmlformats.org/package/2006/content-types"">
+    <Default Extension=""rels"" ContentType=""application/vnd.openxmlformats-package.relationships+xml""/>
+    <Default Extension=""xml"" ContentType=""application/xml""/>
+    <Override PartName=""/word/document.xml"" ContentType=""application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml""/>
+</Types>");
+            }
+
+            var rels = zip.CreateEntry("_rels/.rels");
+            using (var writer = new StreamWriter(rels.Open()))
+            {
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">
+</Relationships>");
+            }
+
+            var document = zip.CreateEntry("word/document.xml");
+            using (var writer = new StreamWriter(document.Open()))
+            {
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<w:document xmlns:w=""http://schemas.openxmlformats.org/wordprocessingml/2006/main"">
+    <w:body>
+        <w:p><w:r><w:t>Sample document with OLE object.</w:t></w:r></w:p>
+    </w:body>
+</w:document>");
+            }
+
+            var oleEntry = zip.CreateEntry("word/embeddings/object1.bin");
+            using (var stream = oleEntry.Open())
+            {
+                byte[] dummyData = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
+                stream.Write(dummyData, 0, dummyData.Length);
+            }
+        }
+    }
+}
+
+public class SimpleBlobDatabase
+{
+    private readonly string _filePath;
+    private readonly object _lock = new object();
+
+    public SimpleBlobDatabase(string filePath)
+    {
+        _filePath = filePath;
+        // Ensure the file exists
+        if (!File.Exists(_filePath))
+        {
+            using (File.Create(_filePath)) { }
+        }
+    }
+
+    public void Insert(string name, byte[] data)
+    {
+        byte[] nameBytes = Encoding.UTF8.GetBytes(name);
+        using (var fs = new FileStream(_filePath, FileMode.Append, FileAccess.Write, FileShare.None))
+        using (var bw = new BinaryWriter(fs))
+        {
+            bw.Write(nameBytes.Length);
+            bw.Write(nameBytes);
+            bw.Write(data.Length);
+            bw.Write(data);
+        }
+    }
+
+    public long CountRecords()
+    {
+        long count = 0;
+        lock (_lock)
+        {
+            using (var fs = new FileStream(_filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var br = new BinaryReader(fs))
+            {
+                while (fs.Position < fs.Length)
+                {
+                    // Read name length
+                    int nameLen = br.ReadInt32();
+                    // Skip name bytes
+                    br.BaseStream.Seek(nameLen, SeekOrigin.Current);
+                    // Read data length
+                    int dataLen = br.ReadInt32();
+                    // Skip data bytes
+                    br.BaseStream.Seek(dataLen, SeekOrigin.Current);
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 }

@@ -1,66 +1,49 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Linq;
-using Aspose.Words;
-using Aspose.Words.Drawing;
 
-public class Program
+public class OleMetadataExtractor
 {
     public static void Main()
     {
-        // Prepare a temporary file to be embedded as an OLE object.
-        string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "Temp");
-        Directory.CreateDirectory(tempFolder);
-        string sampleFilePath = Path.Combine(tempFolder, "sample.txt");
-        File.WriteAllText(sampleFilePath, "This is a sample text file for OLE embedding.");
+        // Create a temporary directory for demo OLE objects
+        string tempDir = Path.Combine(Path.GetTempPath(), "OleObjectsDemo");
+        Directory.CreateDirectory(tempDir);
 
-        // Create a new Word document and insert the OLE object.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert the file as an embedded OLE object (not a link, not an icon).
-        builder.InsertOleObject(sampleFilePath, false, false, null);
+        // Create some dummy OLE object files
+        CreateDummyOleFile(Path.Combine(tempDir, "image1.ole"), 1024);
+        CreateDummyOleFile(Path.Combine(tempDir, "document2.ole"), 2048);
+        CreateDummyOleFile(Path.Combine(tempDir, "presentation3.ole"), 3072);
 
-        // Collect OLE metadata.
-        var csvBuilder = new StringBuilder();
-        csvBuilder.AppendLine("ShapeIndex,SourceFullName,SizeBytes");
+        // Prepare CSV report
+        string csvPath = Path.Combine(tempDir, "OleMetadataReport.csv");
+        var sb = new StringBuilder();
+        sb.AppendLine("FileName,SizeBytes");
 
-        var shapes = doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>().ToArray();
-        for (int i = 0; i < shapes.Length; i++)
+        foreach (string filePath in Directory.EnumerateFiles(tempDir, "*.ole"))
         {
-            Shape shape = shapes[i];
-            OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat == null)
-                continue; // Not an OLE object.
-
-            // SourceFullName may be empty for embedded objects.
-            string sourceName = oleFormat.SourceFullName ?? string.Empty;
-
-            // Get raw data size. For linked objects this may throw; handle gracefully.
-            long size = 0;
-            try
-            {
-                byte[] rawData = oleFormat.GetRawData();
-                size = rawData?.LongLength ?? 0;
-            }
-            catch (InvalidOperationException)
-            {
-                // Linked objects cannot provide raw data.
-                size = 0;
-            }
-
-            csvBuilder.AppendLine($"{i},\"{sourceName}\",{size}");
+            FileInfo info = new FileInfo(filePath);
+            string fileName = info.Name;
+            long size = info.Length;
+            sb.AppendLine($"{EscapeCsv(fileName)},{size}");
         }
 
-        // Write CSV report to file.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "OleMetadataReport.csv");
-        File.WriteAllText(reportPath, csvBuilder.ToString(), Encoding.UTF8);
+        File.WriteAllText(csvPath, sb.ToString(), Encoding.UTF8);
+    }
 
-        // Clean up temporary files.
-        try { File.Delete(sampleFilePath); } catch { }
-        try { Directory.Delete(tempFolder, true); } catch { }
+    private static void CreateDummyOleFile(string path, int sizeInBytes)
+    {
+        byte[] data = new byte[sizeInBytes];
+        new Random().NextBytes(data);
+        File.WriteAllBytes(path, data);
+    }
 
-        // Indicate completion (no interactive prompts).
-        Console.WriteLine($"OLE metadata report generated at: {reportPath}");
+    private static string EscapeCsv(string field)
+    {
+        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
+        {
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        }
+        return field;
     }
 }

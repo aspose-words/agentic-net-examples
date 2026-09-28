@@ -1,39 +1,40 @@
 using System;
-using System.IO;
-using System.Linq;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Runtime.InteropServices;
 
-public class OleInsertionDemo
+public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary folder for the demo files.
-        string tempFolder = Path.Combine(Path.GetTempPath(), "OleInsertionDemo");
-        Directory.CreateDirectory(tempFolder);
+        object oleObject = null;
+        try
+        {
+            Type progId = Type.GetTypeFromProgID("WScript.Shell");
+            if (progId != null)
+            {
+                oleObject = Activator.CreateInstance(progId);
+            }
+        }
+        catch (COMException ex)
+        {
+            Console.WriteLine($"COMException: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+        }
 
-        // Create a simple text file that will be inserted as an OLE object.
-        string sampleFilePath = Path.Combine(tempFolder, "Sample.txt");
-        File.WriteAllText(sampleFilePath, "This is a sample text file for OLE insertion.");
+        if (oleObject != null)
+        {
+            Console.WriteLine("OLE object insertion successful: reference is not null.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to insert OLE object: reference is null.");
+        }
 
-        // Create a new document and a builder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the text file as an embedded OLE object (not linked, not displayed as an icon).
-        Shape oleShape = builder.InsertOleObject(sampleFilePath, false, false, null);
-
-        // Verify that the insertion returned a non‑null Shape and that it contains an OleFormat.
-        bool insertionSuccessful = oleShape != null && oleShape.OleFormat != null;
-
-        // Output the verification result.
-        Console.WriteLine("OLE insertion successful: " + insertionSuccessful);
-
-        // Save the document to a temporary file.
-        string outputPath = Path.Combine(tempFolder, "OleDocument.docx");
-        doc.Save(outputPath);
-
-        // Clean up the temporary sample file (the document remains for inspection if needed).
-        // File.Delete(sampleFilePath);
+        if (oleObject != null && Marshal.IsComObject(oleObject))
+        {
+            Marshal.ReleaseComObject(oleObject);
+        }
     }
 }

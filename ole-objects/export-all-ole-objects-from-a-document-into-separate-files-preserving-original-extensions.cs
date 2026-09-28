@@ -1,63 +1,92 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.IO.Compression;
+using System.Xml.Linq;
+using System.Collections.Generic;
+using System.Linq;
 
 public class Program
 {
     public static void Main()
     {
-        // Path to the source Word document containing OLE objects.
-        // The file must exist in the working directory; otherwise the program will exit gracefully.
-        string inputPath = "InputDocument.docx";
+        // Path to the .docx file (adjust as needed)
+        string docxPath = "sample.docx";
 
-        // Directory where extracted OLE files will be saved.
-        string outputDir = "ExtractedOleObjects";
-
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputDir);
-
-        // Verify that the input document exists before attempting to load it.
-        if (!File.Exists(inputPath))
+        if (!File.Exists(docxPath))
         {
-            Console.WriteLine($"Input file '{inputPath}' not found. No OLE objects were extracted.");
+            // No input file; nothing to do.
             return;
         }
 
-        // Load the Word document.
-        Document doc = new Document(inputPath);
+        // Output directory
+        string outputDir = Path.Combine(Path.GetDirectoryName(docxPath) ?? "", "ExportedOleObjects");
+        Directory.CreateDirectory(outputDir);
 
-        // Get all shapes in the document (including those inside headers/footers).
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-
-        int oleIndex = 0;
-        foreach (Shape shape in shapes)
+        // Mapping of ProgID to file extension
+        var progIdToExt = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            // Only process shapes that contain OLE data.
-            OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat == null)
-                continue;
+            { "Excel.Sheet.8", ".xls" },
+            { "Excel.Sheet.12", ".xlsx" },
+            { "Word.Document.8", ".doc" },
+            { "Word.Document.12", ".docx" },
+            { "PowerPoint.Show.8", ".ppt" },
+            { "PowerPoint.Show.12", ".pptx" },
+            { "Package", ".bin" } // generic package
+        };
 
-            // Skip linked OLE objects because they cannot be saved directly.
-            if (oleFormat.IsLink)
-                continue;
-
-            // Determine a file name for the extracted object.
-            // Use the suggested extension if available; otherwise default to ".bin".
-            string extension = oleFormat.SuggestedExtension ?? ".bin";
-            string fileName = $"OleObject_{oleIndex}{extension}";
-            string fullPath = Path.Combine(outputDir, fileName);
-
-            // Save the OLE object to the file system.
-            oleFormat.Save(fullPath);
-            Console.WriteLine($"Saved OLE object to: {fullPath}");
-
-            oleIndex++;
-        }
-
-        if (oleIndex == 0)
+        // Load document.xml to extract ProgIDs
+        List<string> progIds = new List<string>();
+        using (var zip = ZipFile.OpenRead(docxPath))
         {
-            Console.WriteLine("No embedded OLE objects were found in the document.");
+            var docEntry = zip.GetEntry("word/document.xml");
+            if (docEntry != null)
+            {
+                using (var stream = docEntry.Open())
+                {
+                    XDocument doc = XDocument.Load(stream);
+                    XNamespace oNs = "urn:schemas-microsoft-com:office:office";
+                    foreach (var oleObj in doc.Descendants(oNs + "OLEObject"))
+                    {
+                        var progIdAttr = oleObj.Attribute("ProgID");
+                        if (progIdAttr != null)
+                        {
+                            progIds.Add(progIdAttr.Value);
+                        }
+                        else
+                        {
+                            progIds.Add(string.Empty);
+                        }
+                    }
+                }
+            }
+
+            // Get all embedding entries (usually .bin files)
+            var embeddingEntries = zip.Entries
+                .Where(e => e.FullName.StartsWith("word/embeddings/", StringComparison.OrdinalIgnoreCase) && e.Name.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(e => e.Name)
+                .ToList();
+
+            int count = Math.Min(embeddingEntries.Count, progIds.Count);
+            for (int i = 0; i < embeddingEntries.Count; i++)
+            {
+                var entry = embeddingEntries[i];
+                string progId = i < progIds.Count ? progIds[i] : string.Empty;
+                string ext = ".bin";
+
+                if (!string.IsNullOrEmpty(progId) && progIdToExt.TryGetValue(progId, out string mappedExt))
+                {
+                    ext = mappedExt;
+                }
+
+                string outputFileName = $"OleObject{i + 1}{ext}";
+                string outputPath = Path.Combine(outputDir, outputFileName);
+
+                using (var entryStream = entry.Open())
+                using (var outStream = File.Create(outputPath))
+                {
+                    entryStream.CopyTo(outStream);
+                }
+            }
         }
     }
 }

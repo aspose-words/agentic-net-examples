@@ -1,47 +1,31 @@
 using System;
-using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Runtime.InteropServices;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        string[] progIds = { "Excel.Application", "Word.Application", "Invalid.ProgID" };
 
-        // Dummy OLE data – in a real scenario this would be the actual file bytes.
-        byte[] dummyData = new byte[] { 0x00 };
-        using (MemoryStream oleStream = new MemoryStream(dummyData))
+        foreach (var progId in progIds)
         {
-            // The ProgID we intend to use for the OLE object.
-            string progId = "Package";
-
-            // Validate the ProgID before attempting insertion.
-            if (IsProgIdValid(progId))
+            Type comType = Type.GetTypeFromProgID(progId);
+            if (comType == null)
             {
-                // Insert the OLE object using the validated ProgID.
-                Shape oleShape = builder.InsertOleObject(oleStream, progId, false, null);
-
-                // Retrieve and display the ProgID of the inserted object.
-                string insertedProgId = oleShape.OleFormat.ProgId;
-                Console.WriteLine($"Inserted OLE object with ProgId: {insertedProgId}");
+                Console.WriteLine($"ProgID '{progId}' is not registered.");
+                continue;
             }
-            else
+
+            try
             {
-                Console.WriteLine($"ProgId '{progId}' is not valid. Insertion skipped.");
+                object comObject = Activator.CreateInstance(comType);
+                Console.WriteLine($"ProgID '{progId}' is valid and instance created.");
+                Marshal.ReleaseComObject(comObject);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ProgID '{progId}' is registered but failed to instantiate: {ex.Message}");
             }
         }
-
-        // Save the document to the file system.
-        doc.Save("ValidatedOleObject.docx");
-    }
-
-    // Simple validation logic for a ProgID.
-    private static bool IsProgIdValid(string progId)
-    {
-        // ProgId must be non‑null, non‑empty and must not contain whitespace.
-        return !string.IsNullOrEmpty(progId) && !progId.Contains(" ");
     }
 }
