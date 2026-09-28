@@ -1,32 +1,25 @@
 using System;
 using Aspose.Words;
 
-namespace ParagraphPageBreakExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new empty document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Initialize a DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Add an initial paragraph.
+        builder.Writeln("First paragraph.");
 
-            // Write the first paragraph (no page break before).
-            builder.Writeln("First paragraph.");
+        // Insert a new empty paragraph and set a page break before it.
+        builder.InsertParagraph();
+        builder.CurrentParagraph.ParagraphFormat.PageBreakBefore = true;
 
-            // Enable PageBreakBefore for the next paragraph.
-            builder.ParagraphFormat.PageBreakBefore = true;
+        // Add text to the paragraph that has the page break before it.
+        builder.Writeln("Paragraph with a page break before.");
 
-            // Write the second paragraph; it will start on a new page.
-            builder.Writeln("Second paragraph with a page break before it.");
-
-            // Optionally reset the flag for subsequent paragraphs.
-            builder.ParagraphFormat.PageBreakBefore = false;
-
-            // Save the document to a file.
-            doc.Save("ParagraphWithPageBreak.docx");
-        }
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }

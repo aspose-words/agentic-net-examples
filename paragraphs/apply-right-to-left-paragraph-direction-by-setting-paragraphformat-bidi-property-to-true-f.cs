@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -8,25 +7,16 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Arabic sample text.
-        string arabicText = "مرحبا بالعالم!";
+        // Insert a paragraph with Arabic text.
+        builder.Writeln("مرحبا بالعالم");
 
-        // Set the paragraph direction to right‑to‑left.
-        builder.ParagraphFormat.Bidi = true;
-
-        // Write the Arabic text; it will be laid out RTL.
-        builder.Writeln(arabicText);
-
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
+        // Enable right‑to‑left direction for the paragraph.
+        Paragraph para = builder.CurrentParagraph;
+        para.ParagraphFormat.Bidi = true;
 
         // Save the document.
-        string outputPath = Path.Combine(outputDir, "BidiParagraph.docx");
-        doc.Save(outputPath);
+        doc.Save("Output.docx");
     }
 }

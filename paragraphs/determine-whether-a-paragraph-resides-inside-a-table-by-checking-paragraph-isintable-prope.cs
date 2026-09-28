@@ -10,29 +10,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x1 table with two paragraphs inside its cells.
+        // Insert a paragraph outside any table.
+        builder.Writeln("Paragraph outside a table.");
+
+        // Start a table.
         Table table = builder.StartTable();
+
+        // Insert first cell with a paragraph.
         builder.InsertCell();
         builder.Writeln("Paragraph inside first cell.");
+
+        // Insert second cell with a paragraph.
         builder.InsertCell();
         builder.Writeln("Paragraph inside second cell.");
+
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Add a paragraph that is not inside a table.
-        builder.Writeln("Paragraph outside any table.");
+        // Save the document.
+        doc.Save("Output.docx");
 
-        // Iterate through all paragraphs in the document and report whether they are inside a table cell.
+        // Iterate through all paragraphs and report whether they are inside a table.
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
-            // The IsInCell property is true when the paragraph is an immediate child of a Cell.
-            bool isInTable = para.IsInCell;
-            string text = para.GetText().TrimEnd('\r', '\a'); // Remove paragraph break characters.
-            Console.WriteLine($"Text: \"{text}\" | IsInCell: {isInTable}");
+            // A paragraph is inside a table if it has a Table ancestor.
+            bool isInTable = para.GetAncestor(NodeType.Table) != null;
+            Console.WriteLine($"Paragraph text: \"{para.GetText().TrimEnd()}\" - IsInTable: {isInTable}");
         }
-
-        // Save the document to verify the structure.
-        doc.Save("ParagraphIsInCell.docx");
     }
 }

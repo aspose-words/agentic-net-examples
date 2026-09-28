@@ -1,6 +1,6 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,27 +10,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents that will include headings up to level 3.
+        // Insert a Table of Contents field. It will include headings with outline levels 1‑3.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln(); // Add a blank line after TOC.
 
         // Insert a main heading (outline level 1).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Main Heading");
+        builder.Writeln("Chapter 1");
 
         // Insert a subheading and explicitly set its outline level to 2.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2; // Level 2 = outline level 2
-        builder.Writeln("Subheading Level 2");
+        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
+        builder.Writeln("Section 1.1");
 
-        // Add a normal paragraph of body text.
+        // Add some body text.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is some body text under the subheading.");
+        builder.Writeln("This is some sample content under the subheading.");
 
         // Update fields so the TOC reflects the headings.
         doc.UpdateFields();
 
-        // Save the resulting document.
-        doc.Save("ParagraphOutlineLevelExample.docx");
+        // Save the document.
+        doc.Save("Output.docx");
     }
 }

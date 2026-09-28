@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -8,18 +7,19 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to insert a paragraph with some text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph will have custom spacing before and after.");
 
-        // Set custom spacing before and after each paragraph (in points).
-        builder.ParagraphFormat.SpaceBefore = 12; // 12 points before the paragraph.
-        builder.ParagraphFormat.SpaceAfter = 12;  // 12 points after the paragraph.
+        // Retrieve the paragraph that was just added.
+        Paragraph paragraph = builder.CurrentParagraph;
 
-        // Add paragraphs that will inherit the spacing settings.
-        builder.Writeln("First paragraph with custom spacing.");
-        builder.Writeln("Second paragraph with the same custom spacing.");
+        // Set spacing before and after (values are in points).
+        paragraph.ParagraphFormat.SpaceBefore = 12f; // 12 points before the paragraph
+        paragraph.ParagraphFormat.SpaceAfter = 6f;   // 6 points after the paragraph
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ParagraphSpacing.docx");
-        doc.Save(outputPath);
+        // Save the document to a file.
+        doc.Save("ParagraphSpacing.docx");
     }
 }

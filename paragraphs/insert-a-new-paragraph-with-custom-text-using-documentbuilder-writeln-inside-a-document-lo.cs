@@ -1,32 +1,39 @@
 using System;
 using Aspose.Words;
 
-public class ParagraphInsertionExample
+namespace ParagraphInsertionExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Create a DocumentBuilder attached to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Sample data to be inserted as separate paragraphs.
-        string[] paragraphs = new string[]
+        static void Main()
         {
-            "First custom paragraph.",
-            "Second custom paragraph.",
-            "Third custom paragraph."
-        };
+            // Create a new empty document.
+            Document doc = new Document();
 
-        // Loop through the data and write each string as a new paragraph.
-        foreach (string text in paragraphs)
-        {
-            // Writeln inserts the text and ends the paragraph.
-            builder.Writeln(text);
+            // Use DocumentBuilder to add some initial paragraphs.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Original Paragraph 1");
+            builder.Writeln("Original Paragraph 2");
+            builder.Writeln("Original Paragraph 3");
+
+            // Loop through the existing paragraphs and insert a new paragraph after each one.
+            // Note: The collection changes as we insert, so we increment the index manually.
+            for (int i = 0; i < doc.FirstSection.Body.Paragraphs.Count; i++)
+            {
+                Paragraph currentParagraph = doc.FirstSection.Body.Paragraphs[i];
+
+                // Move the builder to the end of the current paragraph.
+                builder.MoveTo(currentParagraph);
+                
+                // Insert a new paragraph with custom text.
+                builder.Writeln($"Inserted after paragraph {i + 1}");
+
+                // Skip the newly inserted paragraph to avoid processing it again.
+                i++;
+            }
+
+            // Save the resulting document.
+            doc.Save("Result.docx");
         }
-
-        // Save the document to the file system.
-        doc.Save("InsertedParagraphs.docx");
     }
 }

@@ -1,6 +1,6 @@
 using System;
-using Aspose.Words;
 using System.Drawing;
+using Aspose.Words;
 
 public class Program
 {
@@ -9,14 +9,15 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for inserting content.
+        // Use DocumentBuilder to add a paragraph with some text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph has a light gray background shading.");
+
+        // Retrieve the paragraph that was just added.
+        Paragraph paragraph = doc.FirstSection.Body.LastParagraph;
 
         // Set the paragraph shading background color to light gray.
-        builder.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightGray;
-
-        // Add a paragraph; the shading will be applied to this paragraph.
-        builder.Writeln("This paragraph has a light gray background shading.");
+        paragraph.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightGray;
 
         // Save the document to a file.
         doc.Save("ParagraphShading.docx");
