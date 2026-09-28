@@ -1,39 +1,52 @@
 using System;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // Sample DateTime property; initialized to current time.
-    public DateTime CreatedDate { get; set; } = DateTime.Now;
-
-    // Returns the date formatted as ISO 8601.
-    public string CreatedDateIso => CreatedDate.ToString("yyyy-MM-ddTHH:mm:ss");
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required on .NET Core).
+        // Register code page provider (required for some Aspose.Words features)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Prepare output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Insert a LINQ Reporting tag that uses the pre‑formatted property.
-        builder.Writeln("Report generated at: <<[model.CreatedDateIso]>>");
+        // Paths for template and result
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string resultPath = Path.Combine(outputDir, "report.docx");
 
-        // Prepare the data source.
-        ReportModel model = new ReportModel();
+        // Create a simple template with a LINQ Reporting tag that formats a DateTime as ISO‑8601
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report generated at: {=model.CreatedDate:yyyy-MM-ddTHH:mm:ss}");
+        templateDoc.Save(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
+        // Load the template
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model
+        ReportModel model = new()
+        {
+            CreatedDate = DateTime.Now
+        };
+
+        // Build the report
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the resulting document.
-        doc.Save("ReportOutput.docx");
+        // Save the generated report
+        doc.Save(resultPath);
+
+        // Indicate completion
+        Console.WriteLine($"Report generated: {resultPath}");
+    }
+
+    public class ReportModel
+    {
+        public DateTime CreatedDate { get; set; }
     }
 }

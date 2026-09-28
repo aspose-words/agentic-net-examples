@@ -1,72 +1,106 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-public static class MyUtilities
+namespace LinqReportingCurrencyExample
 {
-    // Formats a numeric value as a currency string using the current culture.
-    public static string FormatCurrency(double value)
+    // Utility class for formatting currency.
+    public static class MyUtilities
     {
-        return value.ToString("C");
-    }
-}
-
-// Data model for a product.
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
-}
-
-// Wrapper model that contains a collection of products.
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
-    {
-        // Prepare sample data.
-        var model = new ReportModel
+        public static string FormatCurrency(decimal value)
         {
-            Products = new List<Product>
+            // Format using the current culture's currency format.
+            return value.ToString("C", CultureInfo.CurrentCulture);
+        }
+    }
+
+    // Data model for a product.
+    public class Product
+    {
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
+
+        // Returns the price formatted as currency using MyUtilities.
+        public string FormattedPrice => MyUtilities.FormatCurrency(Price);
+    }
+
+    // Root model passed to the reporting engine.
+    public class ReportModel
+    {
+        public List<Product> Products { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare sample data.
+            var model = new ReportModel
             {
-                new Product { Name = "Apple",  Price = 1.23 },
-                new Product { Name = "Banana", Price = 0.99 },
-                new Product { Name = "Cherry", Price = 2.50 }
-            }
-        };
+                Products = new List<Product>
+                {
+                    new Product { Name = "Apple", Price = 1.25m },
+                    new Product { Name = "Banana", Price = 0.75m },
+                    new Product { Name = "Cherry", Price = 2.50m }
+                }
+            };
 
-        // Create a new blank document and a builder to construct the template.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+            // Create a temporary folder for files.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+            Directory.CreateDirectory(outputDir);
 
-        // Insert a title.
-        builder.Writeln("Product Report");
-        builder.Writeln();
+            // Create the template document programmatically.
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach loop over the Products collection.
-        builder.Writeln("<<foreach [p in Products]>>");
-        // Output product name.
-        builder.Writeln("Name : <<[p.Name]>>");
-        // Output formatted price using the custom utility method.
-        builder.Writeln("Price: <<[MyUtilities.FormatCurrency(p.Price)]>>");
-        builder.Writeln(); // Add an empty line between items.
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
+            // Write a title.
+            builder.Writeln("Product Price Report");
+            builder.Writeln();
 
-        // Configure the reporting engine.
-        var engine = new ReportingEngine();
-        // Register the utility class so its static members can be used in the template.
-        engine.KnownTypes.Add(typeof(MyUtilities));
+            // Begin foreach tag for products.
+            builder.Writeln("<<foreach [p in Products]>>");
 
-        // Build the report using the model as the root data source.
-        engine.BuildReport(doc, model, "model");
+            // Create a table with two columns: Name and Formatted Price.
+            Table table = builder.StartTable();
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+            // Header row.
+            builder.InsertCell();
+            builder.Writeln("Product");
+            builder.InsertCell();
+            builder.Writeln("Price");
+            builder.EndRow();
+
+            // Data row.
+            builder.InsertCell();
+            builder.Writeln("<<[p.Name]>>");
+            builder.InsertCell();
+            // Use the formatted price property.
+            builder.Writeln("<<[p.FormattedPrice]>>");
+            builder.EndRow();
+
+            builder.EndTable();
+
+            // End foreach tag.
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            templateDoc.Save(templatePath);
+
+            // Load the template for reporting.
+            var doc = new Document(templatePath);
+
+            // Build the report.
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report.
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+            doc.Save(reportPath);
+        }
     }
 }

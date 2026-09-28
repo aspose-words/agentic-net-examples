@@ -1,36 +1,61 @@
 using System;
-using System.Data;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+    // Note: No Address property – it will be missing in the data model.
+}
+
+public class Model
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a template document with LINQ Reporting tags.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Insert a LINQ Reporting tag that references a member which does not exist.
-        // The engine will treat this missing member as null because we enable AllowMissingMembers.
-        builder.Writeln("<<[MissingObject.First().Id]>>");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Address: <<[p.Address]>>"); // Address does not exist in Person.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "template.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+
+        // Prepare sample data.
+        var model = new Model
+        {
+            Persons = new List<Person>
+            {
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 }
+            }
+        };
 
         // Configure the reporting engine to allow missing members.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.AllowMissingMembers
-        };
-        // Optional: customize the message shown for a plain missing member reference.
-        engine.MissingMemberMessage = "Missing";
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
 
-        // Use an empty DataSet as the data source – it does not contain "MissingObject".
-        DataSet dataSource = new DataSet();
+        // Build the report.
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report. The third argument is the name of the data source object in the template.
-        // An empty string means the template does not need to reference the data source object itself.
-        engine.BuildReport(doc, dataSource, "");
+        // Save the generated report.
+        const string outputPath = "report.docx";
+        doc.Save(outputPath);
 
-        // Save the generated document.
-        doc.Save("ReportAllowMissingMembers.docx");
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

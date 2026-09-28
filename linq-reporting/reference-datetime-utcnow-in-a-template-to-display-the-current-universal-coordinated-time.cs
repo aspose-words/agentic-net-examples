@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,40 +8,38 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
+        // Register code page provider (required by Aspose.Words in some environments)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // -----------------------------------------------------------------
+        // Create a template document that contains a LINQ Reporting tag.
+        // The tag references a property on the root model (CurrentUtc).
+        // -----------------------------------------------------------------
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("Current UTC time: <<[model.CurrentUtc]>>");
+
         const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        template.Save(templatePath);
 
-        // -------------------------------------------------
-        // 1. Create a template document with a LINQ Reporting tag.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // The tag <<[DateTime.UtcNow]>> will be replaced by the current UTC time.
-        builder.Writeln("Current UTC time: <<[DateTime.UtcNow]>>");
+        // Build the report using an empty model that provides the CurrentUtc property.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        var model = new Model(); // root object
+        engine.BuildReport(doc, model, "model");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+    }
 
-        // -------------------------------------------------
-        // 2. Load the template and build the report.
-        // -------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // Configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-
-        // Register the DateTime type so that static members can be accessed in the template.
-        engine.KnownTypes.Add(typeof(DateTime));
-
-        // Build the report. No data source is required because we only use a static member.
-        // Passing a dummy object satisfies the method signature.
-        engine.BuildReport(loadedTemplate, new object());
-
-        // -------------------------------------------------
-        // 3. Save the generated report.
-        // -------------------------------------------------
-        loadedTemplate.Save(reportPath);
+    // Model class exposed to the reporting engine.
+    public class Model
+    {
+        // Returns the current UTC time when the report is generated.
+        public DateTime CurrentUtc => DateTime.UtcNow;
     }
 }

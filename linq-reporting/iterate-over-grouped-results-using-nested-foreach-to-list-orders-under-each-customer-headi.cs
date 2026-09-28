@@ -1,84 +1,93 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-namespace AsposeWordsLinqReportingExample
+namespace LinqReportingNestedForeach
 {
-    // Root data model for the report.
-    public class ReportModel
+    // Data model classes
+    public class Order
     {
-        public List<Customer> Customers { get; set; } = new();
-
-        // Sample data bootstrap.
-        public static ReportModel CreateSample()
-        {
-            var model = new ReportModel();
-
-            var customer1 = new Customer { Name = "Alice Johnson" };
-            customer1.Orders.Add(new Order { Product = "Laptop", Quantity = 1 });
-            customer1.Orders.Add(new Order { Product = "Mouse", Quantity = 2 });
-
-            var customer2 = new Customer { Name = "Bob Smith" };
-            customer2.Orders.Add(new Order { Product = "Desk Chair", Quantity = 1 });
-
-            model.Customers.Add(customer1);
-            model.Customers.Add(customer2);
-
-            return model;
-        }
+        public int Id { get; set; }
+        public string Product { get; set; } = "";
+        public decimal Amount { get; set; }
     }
 
     public class Customer
     {
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = "";
         public List<Order> Orders { get; set; } = new();
     }
 
-    public class Order
+    public class ReportModel
     {
-        public string Product { get; set; } = string.Empty;
-        public int Quantity { get; set; }
+        public List<Customer> Customers { get; set; } = new();
     }
 
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            // 1. Create the template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Register code page provider for Aspose.Words if needed
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Outer foreach over customers.
+            // Prepare sample data
+            var model = new ReportModel
+            {
+                Customers = new List<Customer>
+                {
+                    new Customer
+                    {
+                        Name = "Alice",
+                        Orders = new List<Order>
+                        {
+                            new Order { Id = 1, Product = "Book", Amount = 12.5m },
+                            new Order { Id = 2, Product = "Pen", Amount = 1.20m }
+                        }
+                    },
+                    new Customer
+                    {
+                        Name = "Bob",
+                        Orders = new List<Order>
+                        {
+                            new Order { Id = 3, Product = "Notebook", Amount = 5.00m }
+                        }
+                    }
+                }
+            };
+
+            // Create template document programmatically
+            var templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Outer foreach: customers
             builder.Writeln("<<foreach [customer in Customers]>>");
             builder.Writeln("Customer: <<[customer.Name]>>");
-            builder.Writeln("Orders:");
-            // Inner foreach over orders of the current customer.
+            builder.Writeln("");
+
+            // Inner foreach: orders for each customer
             builder.Writeln("<<foreach [order in customer.Orders]>>");
-            builder.Writeln("- <<[order.Product]>> (Qty: <<[order.Quantity]>>)"); 
-            builder.Writeln("<</foreach>>"); // End inner foreach
-            builder.Writeln("<</foreach>>"); // End outer foreach
+            builder.Writeln("Order ID: <<[order.Id]>>, Product: <<[order.Product]>>, Amount: <<[order.Amount]>>");
+            builder.Writeln("<</foreach>>"); // end inner foreach
 
-            // 2. Save the template to a temporary file (required by the workflow).
-            const string templatePath = "ReportTemplate.docx";
-            template.Save(templatePath);
+            builder.Writeln("<</foreach>>"); // end outer foreach
 
-            // 3. Load the template (simulating a real‑world scenario where the template might be stored).
-            Document doc = new Document(templatePath);
+            // Save the template
+            templateDoc.Save(templatePath);
 
-            // 4. Prepare the data source.
-            ReportModel model = ReportModel.CreateSample();
+            // Load the template for reporting
+            var doc = new Document(templatePath);
 
-            // 5. Build the report using Aspose.Words LINQ Reporting Engine.
-            ReportingEngine engine = new ReportingEngine();
-            // No special options are needed for this simple example.
+            // Build the report
+            var engine = new ReportingEngine();
             engine.BuildReport(doc, model, "model");
 
-            // 6. Save the generated report.
-            const string outputPath = "ReportResult.docx";
+            // Save the generated report
+            var outputPath = "Report.docx";
             doc.Save(outputPath);
-
-            Console.WriteLine($"Report generated successfully: {outputPath}");
         }
     }
 }

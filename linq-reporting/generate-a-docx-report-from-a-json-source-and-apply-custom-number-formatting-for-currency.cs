@@ -11,66 +11,67 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words
+        // Register code page provider for any required encodings.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data
+        // Create sample JSON data file.
         string jsonPath = "data.json";
-        var sampleData = new ReportData
-        {
-            Orders = new List<Order>
-            {
-                new Order { CustomerName = "Alice Johnson", Total = 1234.56m },
-                new Order { CustomerName = "Bob Smith", Total = 7890.12m },
-                new Order { CustomerName = "Carol Davis", Total = 345.67m }
-            }
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+        string sampleJson = @"{
+  ""Products"": [
+    { ""Name"": ""Apple"",  ""Price"": 1.23 },
+    { ""Name"": ""Banana"", ""Price"": 0.99 },
+    { ""Name"": ""Cherry"", ""Price"": 2.50 }
+  ]
+}";
+        File.WriteAllText(jsonPath, sampleJson);
 
-        // Load data from JSON
-        var jsonContent = File.ReadAllText(jsonPath);
-        var data = JsonConvert.DeserializeObject<ReportData>(jsonContent) ?? new ReportData();
+        // Deserialize JSON into the data model.
+        string jsonContent = File.ReadAllText(jsonPath);
+        ReportModel model = JsonConvert.DeserializeObject<ReportModel>(jsonContent) ?? new ReportModel();
 
-        // Create template document
+        // Create the LINQ Reporting template document.
         string templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Order Report");
-        builder.Writeln("Generated on: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        builder.Writeln("Product Report");
         builder.Writeln();
 
-        // Begin foreach loop over Orders
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Total: <<[order.TotalFormatted]>>");
+        // Begin foreach loop over Products collection.
+        builder.Writeln("<<foreach [p in Products]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        // Use a pre‑formatted property for currency output.
+        builder.Writeln("Price: <<[p.FormattedPrice]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template
-        doc.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // Load the template (optional, can reuse the same doc)
-        var templateDoc = new Document(templatePath);
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
-        // Build the report
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, data, "data");
+        // Build the report using the data model.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the final report
-        string reportPath = "report.docx";
-        templateDoc.Save(reportPath);
+        // Save the generated report.
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
-public class ReportData
+// Root data model.
+public class ReportModel
 {
-    public List<Order> Orders { get; set; } = new();
+    public List<Product> Products { get; set; } = new();
 }
 
-public class Order
+// Product item model.
+public class Product
 {
-    public string CustomerName { get; set; } = "";
-    public decimal Total { get; set; }
+    public string Name { get; set; } = "";
+    public decimal Price { get; set; }
 
-    public string TotalFormatted => Total.ToString("C", CultureInfo.CurrentCulture);
+    // Returns the price formatted as currency using the current culture.
+    public string FormattedPrice => Price.ToString("C", CultureInfo.CurrentCulture);
 }

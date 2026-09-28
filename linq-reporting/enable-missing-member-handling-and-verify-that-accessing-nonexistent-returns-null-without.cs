@@ -3,35 +3,48 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class MissingMemberExample
+public class Program
 {
     public static void Main()
     {
-        // Create a template document with a tag that references a missing member.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("<<[nonexistent]>>"); // This member does not exist in the data source.
+        // Register code page provider (required by Aspose.Words in some environments)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Sample data model
+        var model = new Model { Name = "John Doe" };
+
+        // Create a template document with a valid and a nonexistent member
+        const string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Name: <<[model.Name]>>");
+        builder.Writeln("Missing: <<[model.Nonexistent]>>");
         templateDoc.Save(templatePath);
 
-        // Load the template back from disk.
-        Document doc = new Document(templatePath);
+        // Load the template for reporting
+        var template = new Document(templatePath);
 
-        // Configure the reporting engine to treat missing members as null.
-        ReportingEngine engine = new ReportingEngine
+        // Create the reporting engine and enable missing‑member handling
+        var engine = new ReportingEngine
         {
-            Options = ReportBuildOptions.AllowMissingMembers
+            Options = ReportBuildOptions.InlineErrorMessages
         };
-        // Optional: customize the message printed for missing members (not required for null handling).
-        engine.MissingMemberMessage = "null";
 
-        // Build the report using an empty data source (object with no members).
-        bool success = engine.BuildReport(doc, new object(), "data");
+        // Build the report
+        engine.BuildReport(template, model, "model");
 
-        // Verify that the missing member was treated as null (empty string in the output).
-        string resultText = doc.GetText().Trim();
-        Console.WriteLine($"Build succeeded: {success}");
-        Console.WriteLine($"Resulting document text: '{resultText}'");
-        // Expected output: an empty string between the quotes.
+        // Save the generated report
+        const string outputPath = "output.docx";
+        template.Save(outputPath);
+
+        // Output the resulting text to verify that the missing member produced an empty value
+        string result = template.GetText();
+        Console.WriteLine("Report generated successfully. Extracted text:");
+        Console.WriteLine(result);
     }
+}
+
+public class Model
+{
+    public string Name { get; set; } = string.Empty;
 }

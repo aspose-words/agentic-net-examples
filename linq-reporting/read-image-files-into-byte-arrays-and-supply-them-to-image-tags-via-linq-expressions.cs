@@ -1,76 +1,92 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
+
+public class Product
+{
+    public string Name { get; set; } = "";
+    public byte[] ImageData { get; set; } = Array.Empty<byte>();
+}
+
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary folder for the files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Ensure output directory exists
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample image file (a tiny red dot PNG) and read it.
-        // -----------------------------------------------------------------
-        string imagePath = Path.Combine(workDir, "sample.png");
-        // Base64 for a 1x1 red PNG.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9WcVhVQAAAAASUVORK5CYII=";
-        File.WriteAllBytes(imagePath, Convert.FromBase64String(base64Png));
+        // Create a simple PNG image from a Base64 string and save it
+        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        string imagePath = Path.Combine(outputDir, "sample.png");
+        File.WriteAllBytes(imagePath, pngBytes);
 
-        // Load the image bytes into the data model.
-        ReportModel model = new ReportModel
+        // Prepare data model
+        ReportModel model = new();
+        model.Products.Add(new Product
         {
-            ImageData = File.ReadAllBytes(imagePath),
-            Title = "Sample Image"
-        };
+            Name = "Sample Product",
+            ImageData = File.ReadAllBytes(imagePath)
+        });
 
-        // ---------------------------------------------------------------
-        // 2. Build the LINQ Reporting template programmatically.
-        // ---------------------------------------------------------------
-        string templatePath = Path.Combine(workDir, "template.docx");
+        // Create template document programmatically
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Write a title.
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln();
+        // Begin foreach over Products
+        builder.Writeln("<<foreach [p in Products]>>");
 
-        // Insert a textbox that will host the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        // Create a table with two columns: Name and Image
+        Table table = builder.StartTable();
+
+        // Header row
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Image");
+        builder.EndRow();
+
+        // Data row
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
+
+        // Insert a textbox shape to host the image tag
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 150, 100);
         builder.MoveTo(textBox.FirstParagraph);
-        // Image tag must be inside the textbox. Use -fitSize switch to fit the image.
-        builder.Write("<<image [model.ImageData] -fitSize>>");
+        builder.Write("<<image [p.ImageData] -fitSize>>");
 
-        // Save the template.
+        // End the data row
+        builder.EndRow();
+        builder.EndTable();
+
+        // End foreach
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk
+        string templatePath = Path.Combine(outputDir, "template.docx");
         templateDoc.Save(templatePath);
 
-        // ---------------------------------------------------------------
-        // 3. Load the template and build the report.
-        // ---------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
+
+        // Build the report
         ReportingEngine engine = new ReportingEngine();
-        // BuildReport with root name "model" to match the tags.
-        engine.BuildReport(reportDoc, model, "model");
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(doc, model, "model");
 
-        // ---------------------------------------------------------------
-        // 4. Save the final document.
-        // ---------------------------------------------------------------
-        string outputPath = Path.Combine(workDir, "Report.docx");
-        reportDoc.Save(outputPath);
-
-        // The example finishes without waiting for user input.
+        // Save the final report
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(reportPath);
     }
-}
-
-// Public data model used by the LINQ Reporting engine.
-public class ReportModel
-{
-    // Image data supplied as a byte array.
-    public byte[] ImageData { get; set; } = Array.Empty<byte>();
-
-    // Simple text to demonstrate a regular expression tag.
-    public string Title { get; set; } = string.Empty;
 }

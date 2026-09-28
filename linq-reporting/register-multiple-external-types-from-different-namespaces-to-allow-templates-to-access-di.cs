@@ -1,47 +1,96 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace AsposeWordsLinqReportingExample
 {
-    // Custom helper class placed in a separate namespace.
-    // The static method will be accessed from the template via ReportingEngine.KnownTypes.
-    namespace MyNamespace
+    // External namespace A
+    namespace ExternalModels
     {
-        public static class CustomHelper
+        public class Person
         {
-            public static string GetMessage()
-            {
-                return "Hello from CustomHelper!";
-            }
+            public string FirstName { get; set; } = "";
+            public string LastName { get; set; } = "";
+
+            // Computed full name used directly in the template.
+            public string FullName => $"{FirstName} {LastName}";
         }
+    }
+
+    // External namespace B
+    namespace ExternalData
+    {
+        public class Company
+        {
+            public string Name { get; set; } = "";
+
+            // Upper‑cased name used directly in the template.
+            public string UpperName => Name.ToUpperInvariant();
+        }
+    }
+
+    // Root model used for the report
+    public class ReportModel
+    {
+        public List<ExternalModels.Person> Persons { get; set; } = new();
+        public ExternalData.Company Company { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Insert LINQ Reporting tags that reference static members from different namespaces.
-            builder.Writeln("Value of Math.PI: <<[Math.PI]>>");
-            builder.Writeln("Custom message: <<[MyNamespace.CustomHelper.GetMessage()]>>");
+            // Insert a tag that uses the computed UpperName property.
+            builder.Writeln("Company: <<[Company.UpperName]>>");
 
-            // Initialize the reporting engine.
+            // Begin a foreach loop over the Persons collection.
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("- <<[p.FullName]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            const string templatePath = "template.docx";
+            template.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template back (simulating a separate load step).
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare sample data.
+            // -----------------------------------------------------------------
+            ReportModel model = new()
+            {
+                Company = new ExternalData.Company { Name = "Acme Corp" },
+                Persons = new()
+                {
+                    new ExternalModels.Person { FirstName = "John", LastName = "Doe" },
+                    new ExternalModels.Person { FirstName = "Jane", LastName = "Smith" }
+                }
+            };
+
+            // -----------------------------------------------------------------
+            // 4. Build the report.
+            // -----------------------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
 
-            // Register external types so that the template can access their static members.
-            engine.KnownTypes.Add(typeof(System.Math));
-            engine.KnownTypes.Add(typeof(MyNamespace.CustomHelper));
+            // No external type registration is required because the template
+            // accesses instance properties (FullName, UpperName) directly.
+            engine.BuildReport(doc, model, "model");
 
-            // Build the report. No root data object is required for this example,
-            // so we pass an empty object and an empty data source name.
-            engine.BuildReport(doc, new object(), string.Empty);
-
-            // Save the generated document.
-            doc.Save("Report.docx");
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "output.docx";
+            doc.Save(outputPath);
         }
     }
 }

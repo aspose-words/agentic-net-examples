@@ -7,13 +7,12 @@ using Aspose.Words.Reporting;
 
 public class Item
 {
-    // Name of the item.
-    public string Name { get; set; } = string.Empty;
+    public int Index { get; set; }
+    public string Name { get; set; } = "";
 }
 
 public class ReportModel
 {
-    // Collection of items to be used in the template.
     public List<Item> Items { get; set; } = new();
 }
 
@@ -26,43 +25,32 @@ public class Program
         {
             Items = new List<Item>
             {
-                new Item { Name = "Alpha" },
-                new Item { Name = "Beta" },
-                new Item { Name = "Gamma" }   // This is the last item.
+                new Item { Index = 1, Name = "Alpha" },
+                new Item { Index = 2, Name = "Beta" },
+                new Item { Index = 3, Name = "Gamma" }
             }
         };
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
+        // Create a template document programmatically.
         var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("Items list:");
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        builder.Writeln("- <<[item.Index]>>: <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+        builder.Writeln("Last item (using ElementAt): <<[model.Items.ElementAt(model.Items.Count - 1).Name]>>");
+        builder.Document.Save(templatePath);
 
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // Show total count.
-        builder.Writeln("Total items: <<[model.Items.Count]>>");
-
-        // Use ElementAt with calculated index to display the last item's name.
-        // The expression is evaluated by the LINQ Reporting Engine.
-        builder.Writeln("Last item: <<[model.Items.ElementAt(model.Items.Count - 1).Name]>>");
-
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-
+        // Build the report.
         var engine = new ReportingEngine();
-        // BuildReport must be called after the template is fully prepared.
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
         var outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        doc.Save(outputPath);
     }
 }

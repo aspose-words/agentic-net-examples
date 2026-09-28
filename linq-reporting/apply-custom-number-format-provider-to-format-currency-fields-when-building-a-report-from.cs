@@ -1,92 +1,118 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Fields;
+
+#nullable enable
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for additional encodings.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-        // 1. Create sample XML data source.
-        const string xmlPath = "orders.xml";
-        File.WriteAllText(xmlPath,
-@"<Orders>
+        // Create sample XML data.
+        const string xmlFileName = "orders.xml";
+        var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Orders>
     <Order>
         <CustomerName>John Doe</CustomerName>
-        <Amount>1234.56</Amount>
+        <Total>1234.56</Total>
     </Order>
     <Order>
         <CustomerName>Jane Smith</CustomerName>
-        <Amount>7890.12</Amount>
+        <Total>7890.12</Total>
     </Order>
-</Orders>");
+</Orders>";
+        File.WriteAllText(xmlFileName, xmlContent);
 
-        // 2. Create a template document with LINQ Reporting tags.
-        const string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Load XML and map to objects.
+        var xDoc = XDocument.Load(xmlFileName);
+        var model = new ReportModel
+        {
+            Orders = new List<Order>()
+        };
+        foreach (var elem in xDoc.Root!.Elements("Order"))
+        {
+            var order = new Order
+            {
+                CustomerName = (string)elem.Element("CustomerName")!,
+                Total = (decimal)elem.Element("Total")!
+            };
+            model.Orders.Add(order);
+        }
 
-        builder.Writeln("Customer Orders Report");
-        builder.Writeln("----------------------");
-        builder.Writeln("<<foreach [order in orders]>>");
+        // Create template document programmatically.
+        const string templateFileName = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Order Report");
+        builder.Writeln("==============");
+        builder.Writeln("<<foreach [order in Orders]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Amount: <<[order.Amount]>>");
+        builder.Writeln("Total: <<[order.FormattedTotal]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        doc.Save(templateFileName);
 
-        // 3. Load the template document.
-        var doc = new Document(templatePath);
-
-        // 4. Load XML data source.
-        var xmlDataSource = new XmlDataSource(xmlPath);
-
-        // 5. Build the report using ReportingEngine.
+        // Load the template and build the report.
+        var template = new Document(templateFileName);
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, xmlDataSource, "orders");
+        engine.BuildReport(template, model, "model");
 
-        // 6. Apply custom number format provider for currency fields.
-        doc.FieldOptions.ResultFormatter = new CurrencyResultFormatter();
-
-        // 7. Update fields to apply the custom formatting.
-        doc.UpdateFields();
-
-        // 8. Save the final report.
-        const string outputPath = "report.docx";
-        doc.Save(outputPath);
+        const string outputFileName = "report.docx";
+        template.Save(outputFileName);
     }
 }
 
-// Custom formatter that formats numeric values as currency.
-public class CurrencyResultFormatter : IFieldResultFormatter
+// Wrapper model for the report.
+public class ReportModel
 {
-    public string FormatNumeric(double value, string format)
-    {
-        // Format all numeric values as currency with two decimal places.
-        return string.Format(CultureInfo.InvariantCulture, "${0:N2}", value);
-    }
+    public List<Order> Orders { get; set; } = new();
+}
 
-    public string FormatDateTime(DateTime value, string format, CalendarType calendarType)
-    {
-        // No custom date formatting required.
-        return null;
-    }
+// Data model representing an order.
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal Total { get; set; }
 
-    public string Format(string value, GeneralFormat format)
-    {
-        // No custom general formatting required.
-        return null;
-    }
+    // Returns the total formatted with a custom currency format provider.
+    public string FormattedTotal => Total.ToString("C", new MyCurrencyFormatProvider());
+}
 
-    public string Format(double value, GeneralFormat format)
+// Custom format provider that uses a custom currency symbol.
+public class MyCurrencyFormatProvider : IFormatProvider, ICustomFormatter
+{
+    public object? GetFormat(Type? formatType) =>
+        formatType == typeof(ICustomFormatter) ? this : null;
+
+    public string Format(string? format, object? arg, IFormatProvider? provider)
     {
-        // No custom general formatting required.
-        return null;
+        if (arg is null)
+            return string.Empty;
+
+        // Use custom formatting only for currency ("C") or when format is null/empty.
+        if (string.IsNullOrEmpty(format) || format.Equals("C", StringComparison.OrdinalIgnoreCase))
+        {
+            const string customSymbol = "¤";
+
+            if (arg is IFormattable formattable)
+            {
+                // Format number with two decimal places and invariant culture.
+                var number = formattable.ToString("N2", CultureInfo.InvariantCulture);
+                return $"{customSymbol}{number}";
+            }
+
+            return $"{customSymbol}{arg}";
+        }
+
+        // Fallback to default formatting.
+        if (arg is IFormattable defaultFormattable)
+            return defaultFormattable.ToString(format, provider);
+
+        return arg.ToString() ?? string.Empty;
     }
 }

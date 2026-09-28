@@ -1,89 +1,116 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
+
+public class Department
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+public class Employee
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public int DeptId { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Department> Departments { get; set; } = new();
+    public List<Employee> Employees { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Enable code pages for any required encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // File paths.
+        // ---------- Create sample XML ----------
         string xmlPath = "departments.xml";
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Departments>
+  <Department>
+    <Id>1</Id>
+    <Name>Human Resources</Name>
+  </Department>
+  <Department>
+    <Id>2</Id>
+    <Name>Engineering</Name>
+  </Department>
+</Departments>";
+        File.WriteAllText(xmlPath, xmlContent);
+
+        // ---------- Create sample JSON ----------
         string jsonPath = "employees.json";
-        string templatePath = "template.docx";
-        string outputPath = "report.docx";
+        string jsonContent = @"[
+  { ""Id"": 1, ""Name"": ""Alice"", ""DeptId"": 1 },
+  { ""Id"": 2, ""Name"": ""Bob"",   ""DeptId"": 2 },
+  { ""Id"": 3, ""Name"": ""Carol"", ""DeptId"": 2 },
+  { ""Id"": 4, ""Name"": ""David"", ""DeptId"": 1 }
+]";
+        File.WriteAllText(jsonPath, jsonContent);
 
-        // Create sample XML data source.
-        File.WriteAllText(xmlPath,
-@"<Departments>
-    <Department>
-        <Id>1</Id>
-        <Name>Human Resources</Name>
-    </Department>
-    <Department>
-        <Id>2</Id>
-        <Name>Information Technology</Name>
-    </Department>
-    <Department>
-        <Id>3</Id>
-        <Name>Finance</Name>
-    </Department>
-</Departments>");
+        // ---------- Load data into model ----------
+        var departments = XDocument.Load(xmlPath)
+            .Descendants("Department")
+            .Select(d => new Department
+            {
+                Id = (int)d.Element("Id")!,
+                Name = (string)d.Element("Name")!
+            })
+            .ToList();
 
-        // Create sample JSON data source.
-        File.WriteAllText(jsonPath,
-@"[
-    { ""Id"": 1, ""Name"": ""Alice"", ""Title"": ""HR Manager"", ""DepartmentId"": 1 },
-    { ""Id"": 2, ""Name"": ""Bob"", ""Title"": ""Recruiter"", ""DepartmentId"": 1 },
-    { ""Id"": 3, ""Name"": ""Charlie"", ""Title"": ""Developer"", ""DepartmentId"": 2 },
-    { ""Id"": 4, ""Name"": ""Diana"", ""Title"": ""System Analyst"", ""DepartmentId"": 2 },
-    { ""Id"": 5, ""Name"": ""Eve"", ""Title"": ""Accountant"", ""DepartmentId"": 3 }
-]");
+        var employees = JsonConvert.DeserializeObject<List<Employee>>(jsonContent) ?? new List<Employee>();
 
-        // Build the template document with nested foreach tags.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        var model = new ReportModel
+        {
+            Departments = departments,
+            Employees = employees
+        };
 
+        // ---------- Build template document ----------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Title
         builder.Writeln("Company Report");
-        builder.Writeln("----------------");
         builder.Writeln();
 
-        // Outer loop over XML departments (named "xml").
-        builder.Writeln("<<foreach [dept in xml]>>");
+        // Outer foreach over departments
+        builder.Writeln("<<foreach [dept in model.Departments]>>");
         builder.Writeln("Department: <<[dept.Name]>>");
         builder.Writeln();
 
-        // Inner loop over JSON employees (named "json").
-        builder.Writeln("<<foreach [emp in json]>>");
-        builder.Writeln(" - <<[emp.Name]>> (<<[emp.Title]>>), DeptId: <<[emp.DepartmentId]>>");
+        // Inner foreach over employees with filter
+        builder.Writeln("Employees:");
+        builder.Writeln("<<foreach [emp in model.Employees]>>");
+        builder.Writeln("<<if [emp.DeptId == dept.Id]>>- <<[emp.Name]>> <</if>>");
         builder.Writeln("<</foreach>>");
         builder.Writeln();
+
+        // Insert a section break after each department
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Close outer foreach
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
+        // Save the template
+        string templatePath = "template.docx";
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // ---------- Generate report ----------
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(doc, model, "model");
 
-        // Create data source objects.
-        var xmlData = new XmlDataSource(xmlPath);
-        var jsonData = new JsonDataSource(jsonPath);
-
-        // Configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-
-        // Build the report using both data sources.
-        engine.BuildReport(reportDoc,
-            new object[] { xmlData, jsonData },
-            new string[] { "xml", "json" });
-
-        // Save the final report.
-        reportDoc.Save(outputPath);
+        // Save final document
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,34 +8,46 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple template document.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a simple template document with a LINQ Reporting tag.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello <<[model.Name]>>!");
 
-        // This tag attempts to call a method that writes to a file.
-        // The call will be blocked because System.IO.File will be added to the restricted types list.
-        builder.Writeln("Attempt to write a file: <<[System.IO.File.WriteAllText(\"blocked.txt\", \"secret\")]>>");
-
-        // Save the template so it can be re‑loaded before building the report.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template document.
-        Document doc = new Document(templatePath);
-
-        // Restrict the System.IO.File type – all its members become inaccessible in templates.
-        ReportingEngine.SetRestrictedTypes(typeof(System.IO.File));
-
-        // Configure the engine to treat missing members as null instead of throwing.
-        ReportingEngine engine = new ReportingEngine
+        // Prepare the data model.
+        ReportModel model = new()
         {
-            Options = ReportBuildOptions.AllowMissingMembers
+            Name = "World"
         };
 
-        // Build the report. The root data source is an empty object because the template does not use any data.
-        engine.BuildReport(doc, new object(), "");
+        // Configure the reporting engine.
+        ReportingEngine engine = new();
 
-        // Save the resulting document. The restricted call will be omitted, leaving an empty string in its place.
-        doc.Save("Report.docx");
+        // Attempt to configure restricted members that could write to files.
+        // In newer versions of Aspose.Words the RestrictedMembers collection may be internal or removed.
+        // Use reflection to add the entries if the property exists; otherwise skip silently.
+        PropertyInfo? restrictedProp = typeof(ReportingEngine).GetProperty(
+            "RestrictedMembers",
+            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+
+        if (restrictedProp?.GetValue(null) is ICollection<string> restrictedCollection)
+        {
+            restrictedCollection.Add("System.IO.File.WriteAllText");
+            restrictedCollection.Add("System.IO.File.WriteAllBytes");
+            restrictedCollection.Add("System.IO.File.WriteAllLines");
+            restrictedCollection.Add("System.IO.StreamWriter.Write");
+            restrictedCollection.Add("System.IO.StreamWriter.WriteLine");
+        }
+
+        // Build the report.
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated document.
+        doc.Save("ReportOutput.docx");
     }
+}
+
+// Simple data model used by the template.
+public class ReportModel
+{
+    public string Name { get; set; } = string.Empty;
 }

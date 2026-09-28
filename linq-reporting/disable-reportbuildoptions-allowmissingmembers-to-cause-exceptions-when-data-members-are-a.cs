@@ -1,51 +1,65 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Model
+{
+    // Existing property – the template will reference a missing one to trigger an exception.
+    public string ExistingProperty { get; set; } = "ExistingValue";
+}
+
 public class Program
 {
-    // Simple data model with only Name property.
-    public class Person
-    {
-        public string Name { get; set; } = "John Doe";
-    }
-
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Prepare working directories.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "output.docx");
 
-        // Insert a LINQ Reporting tag that references a missing member (Age).
-        // The template expects a property called Age, which does not exist in Person.
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>"); // <-- missing member
+        // -----------------------------------------------------------------
+        // 1. Create a LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Save the template (optional, just to see the generated document).
-        const string templatePath = "ReportTemplate.docx";
-        doc.Save(templatePath);
+        // The template references a non‑existent member "MissingProperty".
+        builder.Writeln("Report start");
+        builder.Writeln("<<[model.MissingProperty]>>"); // This member does not exist in Model.
+        builder.Writeln("Report end");
 
-        // Prepare the data source.
-        var person = new Person();
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Create the reporting engine without AllowMissingMembers flag.
+        // -----------------------------------------------------------------
+        // 2. Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Configure ReportingEngine without AllowMissingMembers.
+        // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        // Ensure no special options are set (default is ReportBuildOptions.None).
-        engine.Options = ReportBuildOptions.None;
+        engine.Options = ReportBuildOptions.None; // Disables AllowMissingMembers.
+
+        // -----------------------------------------------------------------
+        // 4. Build the report and handle the expected exception.
+        // -----------------------------------------------------------------
+        Model model = new Model();
 
         try
         {
-            // Build the report. This should throw an exception because Age is missing.
-            engine.BuildReport(doc, person, "person");
-            // If no exception, save the resulting document.
-            doc.Save("ReportResult.docx");
-            Console.WriteLine("Report built successfully (unexpected).");
+            // This call should throw because "MissingProperty" is not present.
+            engine.BuildReport(reportDoc, model, "model");
+            // If no exception, save the generated report.
+            reportDoc.Save(outputPath);
+            Console.WriteLine($"Report generated successfully: {outputPath}");
         }
         catch (Exception ex)
         {
-            // Expected path: an exception is thrown for the missing member.
-            Console.WriteLine("Exception caught as expected:");
-            Console.WriteLine(ex.Message);
+            // Expected path: report generation fails due to missing member.
+            Console.WriteLine($"Exception during report generation: {ex.Message}");
         }
     }
 }

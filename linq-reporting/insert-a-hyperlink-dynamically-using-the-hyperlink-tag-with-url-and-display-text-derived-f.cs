@@ -1,65 +1,46 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Data model used by the LINQ Reporting engine.
-    public class ReportModel
+    public static void Main()
     {
-        // URL for the hyperlink.
-        public string Url { get; set; } = string.Empty;
+        // Register code page provider for Aspose.Words compatibility.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Text that will be displayed as the hyperlink.
-        public string Text { get; set; } = string.Empty;
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare a simple data model with URL and display text.
+        var model = new ReportModel
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document with a LINQ Reporting link tag.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            Url = "https://example.com",
+            LinkText = "Visit Example"
+        };
 
-            // The <<link>> tag will be replaced with a hyperlink whose URL and
-            // display text are taken from the data source fields Url and Text.
-            builder.Writeln("<<link [Url] [Text]>>");
+        // Create the template document programmatically.
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        // Insert a LINQ Reporting link tag that uses the model fields.
+        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+        builder.Document.Save(templatePath);
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data source.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            var model = new ReportModel
-            {
-                Url = "https://www.example.com",
-                Text = "Visit Example"
-            };
-
-            // -----------------------------------------------------------------
-            // 3. Build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine
-            {
-                // No special options are required for this simple scenario.
-                Options = ReportBuildOptions.None
-            };
-
-            // The root object name in the template is "model".
-            engine.BuildReport(doc, model, "model");
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Public data model class required by the template.
+public class ReportModel
+{
+    public string Url { get; set; } = string.Empty;
+    public string LinkText { get; set; } = string.Empty;
 }

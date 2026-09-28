@@ -1,76 +1,117 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
+
+public class Product
+{
+    public string Name { get; set; } = string.Empty;
+    public MemoryStream ImageStream { get; set; } = new();
+}
+
+public class ReportModel : IDisposable
+{
+    public List<Product> Products { get; set; } = new();
+
+    public void Dispose()
+    {
+        foreach (var p in Products)
+        {
+            p.ImageStream?.Dispose();
+        }
+    }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple template with a textbox that contains an image tag.
-        var templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // Ensure output directory exists.
+        Directory.CreateDirectory("output");
 
-        // Prepare the data model that supplies an image stream.
-        var model = new ReportModel();
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Load the template and build the report.
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // No special options required.
-        engine.BuildReport(doc, model, "model");
+        // Begin the foreach block for products.
+        builder.Writeln("<<foreach [p in Products]>>");
 
-        // Save the generated report.
-        var reportPath = "Report.docx";
-        doc.Save(reportPath);
-        Console.WriteLine($"Report saved to '{reportPath}'.");
+        // Create a table for each product row.
+        Table table = builder.StartTable();
 
-        // Verify that the image stream has been closed automatically.
-        try
-        {
-            // Accessing a closed stream throws ObjectDisposedException.
-            var _ = model.ImageStream.Position;
-            Console.WriteLine("Stream is still open (unexpected).");
-        }
-        catch (ObjectDisposedException)
-        {
-            Console.WriteLine("Image stream has been automatically closed after report building.");
-        }
-    }
+        // Header row (only once, before the loop repeats).
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Image");
+        builder.EndRow();
 
-    // Creates a Word document containing a textbox with an image tag.
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Data row: product name.
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
 
-        // Insert a textbox that will host the image.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        // Data row: image inside a textbox.
+        builder.InsertCell();
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 100, 100);
         builder.MoveTo(textBox.FirstParagraph);
+        builder.Write("<<image [p.ImageStream] -fitSize>>");
 
-        // LINQ Reporting tag that inserts the image from the stream.
-        builder.Write("<<image [model.ImageStream] -fitSize>>");
+        // End of the data row.
+        builder.EndRow();
 
-        // Save the template.
-        doc.Save(filePath);
-    }
-}
+        // End the table for this iteration.
+        builder.EndTable();
 
-// Data model used by the LINQ Reporting engine.
-public class ReportModel
-{
-    // The image stream is initialized with a tiny PNG image.
-    public Stream ImageStream { get; set; }
+        // End of the foreach block.
+        builder.Writeln("<</foreach>>");
 
-    public ReportModel()
-    {
-        // A 1x1 pixel transparent PNG (base64 encoded).
+        // Save the template to disk.
+        templateDoc.Save("template.docx");
+
+        // -----------------------------------------------------------------
+        // 2. Load the template back (as required by the workflow).
+        // -----------------------------------------------------------------
+        var doc = new Document("template.docx");
+
+        // -----------------------------------------------------------------
+        // 3. Prepare sample image data (a tiny red dot PNG).
+        // -----------------------------------------------------------------
         const string base64Png =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YVh" +
-            "XwAAAABJRU5ErkJggg==";
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9WcKXKcAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
 
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        ImageStream = new MemoryStream(pngBytes);
+        // -----------------------------------------------------------------
+        // 4. Create sample products with image streams.
+        // -----------------------------------------------------------------
+        var products = new List<Product>
+        {
+            new Product { Name = "Product A", ImageStream = new MemoryStream(imageBytes, writable: false) },
+            new Product { Name = "Product B", ImageStream = new MemoryStream(imageBytes, writable: false) },
+            new Product { Name = "Product C", ImageStream = new MemoryStream(imageBytes, writable: false) }
+        };
+
+        // Reset each stream position before the report engine reads them.
+        foreach (var p in products)
+        {
+            if (p.ImageStream != null)
+                p.ImageStream.Position = 0;
+        }
+
+        // -----------------------------------------------------------------
+        // 5. Build the report. Streams will be disposed automatically when the model is disposed.
+        // -----------------------------------------------------------------
+        using (var model = new ReportModel { Products = products })
+        {
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+            doc.Save("output/report.docx");
+        }
+
+        // At this point all image streams have been closed automatically.
     }
 }

@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class TagReportModel
+public class Model
 {
-    // Collection of tags to be displayed.
     public List<string> Tags { get; set; } = new();
 }
 
@@ -14,47 +12,33 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a simple template document programmatically.
+        // Create the template document with LINQ Reporting tags.
         const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
-
-        // Load the template.
-        Document doc = new Document(templatePath);
-
-        // Prepare the data model with some tags.
-        TagReportModel model = new TagReportModel
-        {
-            Tags = new List<string> { "aspnet", "csharp", "linq", "reporting" }
-        };
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
-    }
-
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Title
-        builder.Writeln("Tag List Report");
-        builder.Writeln();
-
-        // Conditional block: display tags only if the collection is not empty.
-        builder.Writeln("<<if [model.Tags.Any()]>>");
-        builder.Writeln("Tags:");
-        builder.Writeln("<<foreach [tag in model.Tags]>>");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Tag List:");
+        builder.Writeln("<<if [Tags.Any()]>>");
+        builder.Writeln("<<foreach [tag in Tags]>>");
         builder.Writeln("- <<[tag]>>");
         builder.Writeln("<</foreach>>");
         builder.Writeln("<</if>>");
+        templateDoc.Save(templatePath);
 
-        // Save the template.
-        doc.Save(filePath);
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
+
+        // Prepare sample data.
+        var model = new Model
+        {
+            Tags = new() { "alpha", "beta", "gamma" }
+        };
+
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

@@ -1,104 +1,80 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
 
 public class Program
 {
-    // Data model for the report
-    public class ReportModel
-    {
-        public List<Chapter> Chapters { get; set; } = new();
-    }
-
-    public class Chapter
-    {
-        public string Title { get; set; } = string.Empty;
-        public List<Section> Sections { get; set; } = new();
-    }
-
-    public class Section
-    {
-        public string Title { get; set; } = string.Empty;
-    }
-
     public static void Main()
     {
-        // Prepare sample data
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Sample data model.
         var model = new ReportModel
         {
-            Chapters =
+            Sections = new List<Section>
             {
-                new Chapter
-                {
-                    Title = "Introduction",
-                    Sections =
-                    {
-                        new Section { Title = "Purpose" },
-                        new Section { Title = "Scope" }
-                    }
-                },
-                new Chapter
-                {
-                    Title = "Usage",
-                    Sections =
-                    {
-                        new Section { Title = "Installation" },
-                        new Section { Title = "Configuration" }
-                    }
-                }
+                new Section { Title = "Introduction", Content = "This is the introduction section." },
+                new Section { Title = "Chapter 1", Content = "Details of chapter 1 go here." },
+                new Section { Title = "Conclusion", Content = "Final thoughts and summary." }
             }
         };
 
-        // Paths for template and output
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(workDir);
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string resultPath = Path.Combine(workDir, "Report.docx");
+        // Create template document.
+        const string templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
 
-        // ---------- Create template ----------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Insert Table of Contents field.
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+        builder.Writeln(); // Add a blank line after TOC.
 
-        // Insert TOC field (will be updated after report generation)
-        builder.InsertTableOfContents("\\o \"1-2\" \\h \\z \\u");
-        builder.InsertBreak(BreakType.PageBreak);
+        // Begin foreach loop over sections.
+        builder.Writeln("<<foreach [sec in Sections]>>");
 
-        // Begin foreach over chapters
-        builder.Writeln("<<foreach [chapter in Chapters]>>");
-
-        // Chapter heading (Heading 1)
+        // Heading paragraph (Heading 1 style) for each section title.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("<<[chapter.Title]>>");
+        builder.Writeln("<<[sec.Title]>>");
 
-        // Begin foreach over sections within the current chapter
-        builder.Writeln("<<foreach [section in chapter.Sections]>>");
+        // Reset style to Normal for content.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("<<[sec.Content]>>");
 
-        // Section heading (Heading 2)
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("<<[section.Title]>>");
-
-        // End inner foreach
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // End outer foreach
-        builder.Writeln("<</foreach>>");
+        // Save the template.
+        builder.Document.Save(templatePath);
 
-        // Save the template
-        doc.Save(templatePath);
-
-        // ---------- Load template and build report ----------
-        var loadedDoc = new Document(templatePath);
+        // Load the template and build the report.
+        var doc = new Document(templatePath);
         var engine = new ReportingEngine();
-        // Build the report using the model; root name is "model"
-        engine.BuildReport(loadedDoc, model, "model");
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // Update fields (TOC) so that entries are generated
-        loadedDoc.UpdateFields();
+        // Update fields (e.g., TOC) after report generation.
+        if (success)
+        {
+            doc.UpdateFields();
+        }
 
-        // Save final document
-        loadedDoc.Save(resultPath);
+        // Save the final report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Section> Sections { get; set; } = new();
+}
+
+public class Section
+{
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
 }

@@ -1,76 +1,76 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ReportItem
-{
-    // URL of the hyperlink.
-    public string Url { get; set; } = "";
-    // Display text for the hyperlink.
-    public string Text { get; set; } = "";
-}
-
-public class ReportModel
-{
-    // Collection that will be iterated in the template.
-    public List<ReportItem> Items { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample data.
-        var model = new ReportModel();
-        model.Items.Add(new ReportItem { Url = "https://www.example.com", Text = "Example Site" });
-        model.Items.Add(new ReportItem { Url = "https://www.github.com", Text = "GitHub" });
+        // Prepare sample data
+        ReportModel model = new()
+        {
+            Items = new()
+            {
+                new Item { Url = "https://example.com", LinkText = "Example Site" },
+                new Item { Url = "https://dotnet.microsoft.com", LinkText = ".NET Home" },
+                new Item { Url = "https://github.com", LinkText = "GitHub" }
+            }
+        };
 
-        // -----------------------------------------------------------------
-        // Step 1: Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Create a template document programmatically
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
 
-        // Begin a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
+        // Title
+        builder.Writeln("Link Table Report");
+        builder.Writeln();
 
-        // Create a table inside the foreach block.
-        var table = builder.StartTable();
-
-        // First cell: place a link tag that will become a functional hyperlink.
+        // Header table (single row)
+        builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("<<link [item.Url] [item.Text]>>");
-
-        // End the single row and the table.
+        builder.Writeln("Link");
         builder.EndRow();
         builder.EndTable();
 
-        // Close the foreach block.
+        // Begin foreach block for items – each iteration creates its own row table
+        builder.Writeln("<<foreach [item in Model.Items]>>");
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("<<link [item.Url] [item.LinkText]>>");
+        builder.EndRow();
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Build the report using LINQ Reporting Engine
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "Model");
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the template and build the report.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
+        // Ensure output directory exists
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Build the report using the model; the root name in the template is "model".
-        engine.BuildReport(reportDoc, model, "model");
+        // Save the generated report
+        string outputPath = Path.Combine(outputDir, "LinkReport.docx");
+        doc.Save(outputPath);
 
-        // Save the final document.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        Console.WriteLine($"Report generated: {outputPath}");
     }
+}
+
+// Data model classes
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Url { get; set; } = "";
+    public string LinkText { get; set; } = "";
 }

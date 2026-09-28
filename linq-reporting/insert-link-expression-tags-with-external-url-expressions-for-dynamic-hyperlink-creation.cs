@@ -3,43 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class LinkModel
+public class ReportModel
 {
-    public string Url { get; set; } = "";
-    public string LinkText { get; set; } = "";
+    // URL to link to
+    public string Url { get; set; } = string.Empty;
+    // Text displayed for the hyperlink
+    public string LinkText { get; set; } = string.Empty;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare file paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string reportPath = Path.Combine(outputDir, "Report.docx");
+        // Paths for the template and the generated report
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
 
-        // 1. Create the template document with a LINQ Reporting link tag.
+        // -------------------------------------------------
+        // Create the template document with a LINQ Reporting link tag
+        // -------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Visit our site: <<link [model.Url] [model.LinkText]>>");
+
+        builder.Writeln("Dynamic hyperlink example:");
+        // The link tag uses expressions that will be replaced at runtime
+        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+
+        // Save the template to disk
         templateDoc.Save(templatePath);
 
-        // 2. Load the template for reporting.
-        Document loadedTemplate = new Document(templatePath);
+        // -------------------------------------------------
+        // Load the template and build the report
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-        // 3. Prepare the data model.
-        LinkModel model = new LinkModel
+        // Sample data model
+        ReportModel model = new ReportModel
         {
             Url = "https://www.example.com",
-            LinkText = "Example Website"
+            LinkText = "Visit Example"
         };
 
-        // 4. Build the report using the ReportingEngine.
+        // Create the reporting engine and generate the report
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-        // 5. Save the generated report.
-        loadedTemplate.Save(reportPath);
+        // Save the generated report
+        reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive prompts)
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
     }
 }

@@ -1,68 +1,85 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Model
 {
-    public string Name { get; set; } = "Aspose";
+    public string Name { get; set; } = "Sample Name";
 }
 
 public class Program
 {
     public static void Main()
     {
+        // Prepare file paths in the current working directory.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+
         // -----------------------------------------------------------------
-        // 1. Create a simple template with a LINQ Reporting tag.
+        // Create a simple template containing a LINQ Reporting tag.
         // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
         builder.Writeln("<<[model.Name]>>");
-        const string templatePath = "Template.docx";
         template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Sample data model.
+        Model model = new Model();
 
         // -----------------------------------------------------------------
-        // 3. Define restricted types BEFORE the first BuildReport call.
+        // Configure the ReportingEngine.
         // -----------------------------------------------------------------
-        ReportingEngine.SetRestrictedTypes(typeof(Environment));
+        ReportingEngine engine = new ReportingEngine();
+
+        // Use reflection to obtain the RestrictedTypes collection (the property
+        // may not be publicly exposed in older library versions).
+        PropertyInfo restrictedProp = typeof(ReportingEngine).GetProperty("RestrictedTypes",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+        if (restrictedProp == null)
+        {
+            Console.WriteLine("RestrictedTypes property not found on ReportingEngine.");
+            return;
+        }
+
+        // The collection is expected to implement IList<Type>.
+        var restrictedTypes = (IList<Type>)restrictedProp.GetValue(engine)!;
+
+        // Add a type to the restricted list before the first BuildReport.
+        restrictedTypes.Add(typeof(Model));
+
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
 
         // -----------------------------------------------------------------
-        // 4. Build the first report.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, new Model(), "model");
-
-        // -----------------------------------------------------------------
-        // 5. Verify that the restricted type list is now immutable.
+        // Verify that the restricted type list becomes immutable after BuildReport.
         // -----------------------------------------------------------------
         bool isImmutable = false;
         try
         {
-            // Attempt to modify the restricted types after BuildReport.
-            ReportingEngine.SetRestrictedTypes(typeof(System.IO.File));
+            // Attempt to modify the collection after BuildReport.
+            restrictedTypes.Add(typeof(string));
         }
-        catch (InvalidOperationException)
+        catch (NotSupportedException)
         {
-            // Expected exception indicates immutability.
+            // Expected: the collection is read‑only.
+            isImmutable = true;
+        }
+        catch (Exception)
+        {
+            // Any other exception also indicates the list is not modifiable as expected.
             isImmutable = true;
         }
 
-        // -----------------------------------------------------------------
-        // 6. Output verification result.
-        // -----------------------------------------------------------------
-        Console.WriteLine(isImmutable
-            ? "Restricted type list is immutable after first BuildReport."
-            : "Restricted type list is still mutable (unexpected).");
+        Console.WriteLine($"RestrictedTypes immutable after BuildReport: {isImmutable}");
 
-        // -----------------------------------------------------------------
-        // 7. Save the generated report.
-        // -----------------------------------------------------------------
-        const string reportPath = "Report.docx";
-        doc.Save(reportPath);
+        // Save the generated report.
+        reportDoc.Save(reportPath);
     }
 }

@@ -1,73 +1,68 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    public string Title { get; set; } = string.Empty;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Ensure the output folder exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create template document.
+        // Create a template document with empty paragraphs.
         string templatePath = Path.Combine(outputDir, "template.docx");
-        CreateTemplate(templatePath);
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Load the template.
-        Document doc = new Document(templatePath);
+        // Insert a data tag.
+        builder.Writeln("<<[model.Title]>>");
+        // Empty paragraph (should be removed).
+        builder.Writeln("");
+        // Paragraph with content.
+        builder.Writeln("This is a content paragraph.");
+        // Another empty paragraph.
+        builder.Writeln("");
 
-        // Prepare data model with an empty value.
-        var model = new ReportModel
-        {
-            EmptyValue = string.Empty,
-            Name = "John Doe"
-        };
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // Configure reporting engine to remove empty paragraphs.
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Prepare the data model.
+        ReportModel model = new ReportModel { Title = "Sample Report" };
+
+        // Configure the reporting engine to remove empty paragraphs.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
         // Build the report.
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated document.
-        string outputPath = Path.Combine(outputDir, "output.docx");
-        doc.Save(outputPath);
+        // Verify that there are no empty paragraphs.
+        bool hasEmptyParagraph = false;
+        foreach (Paragraph para in reportDoc.FirstSection.Body.Paragraphs)
+        {
+            // GetText includes the paragraph break; trim to check for content.
+            if (string.IsNullOrWhiteSpace(para.GetText()))
+            {
+                hasEmptyParagraph = true;
+                break;
+            }
+        }
 
-        // Verify that no empty paragraphs remain.
-        bool hasEmptyParagraphs = doc.GetChildNodes(NodeType.Paragraph, true)
-            .Cast<Paragraph>()
-            .Any(p => string.IsNullOrWhiteSpace(p.GetText()));
+        // Output the test result.
+        Console.WriteLine(hasEmptyParagraph ? "Test failed: Empty paragraphs remain." : "Test passed: Empty paragraphs removed.");
 
-        Console.WriteLine(hasEmptyParagraphs
-            ? "Test failed: Empty paragraphs were not removed."
-            : "Test passed: Empty paragraphs were successfully removed.");
-    }
-
-    private static void CreateTemplate(string filePath)
-    {
-        // Build a simple template with a tag that will be empty after processing.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Paragraph that will contain an empty value.
-        builder.Writeln("<<[model.EmptyValue]>>");
-
-        // Paragraph with actual content to ensure document is not empty.
-        builder.Writeln("Hello <<[model.Name]>>!");
-
-        template.Save(filePath);
-    }
-
-    // Data model used by the LINQ Reporting engine.
-    public class ReportModel
-    {
-        public string EmptyValue { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
+        // Save the resulting document (optional).
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        reportDoc.Save(resultPath);
     }
 }

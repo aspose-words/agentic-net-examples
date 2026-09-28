@@ -3,45 +3,57 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class HyperlinkModel
+public class ReportModel
 {
-    // Original target object (Uri)
-    public Uri Url { get; set; } = new Uri("https://example.com");
+    // The actual hyperlink target object (e.g., a Uri instance).
+    public object HyperlinkTarget { get; set; }
 
-    // Text that will be displayed for the hyperlink
-    public string DisplayText { get; set; } = "Example Site";
+    // Text that will be displayed for the hyperlink.
+    public string LinkText { get; set; } = string.Empty;
 
-    // Convert the Uri to string before the engine processes it
-    public string UrlString => Url.ToString();
+    // Returns the string representation of the hyperlink target.
+    public string HyperlinkTargetString => HyperlinkTarget?.ToString() ?? string.Empty;
+
+    public ReportModel()
+    {
+        // Sample data: a Uri object as the hyperlink target.
+        HyperlinkTarget = new Uri("https://example.com");
+        LinkText = "Visit Example.com";
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Prepare folders.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // ---------- Create the template ----------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // 1. Create the template document programmatically.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a link tag that uses the string representation of the Uri
-        builder.Writeln("<<link [model.UrlString] [model.DisplayText]>>");
+        // Insert a hyperlink using LINQ Reporting tags.
+        // The URI expression uses the string-converted property.
+        builder.Writeln("<<link [model.HyperlinkTargetString] [model.LinkText]>>");
 
-        // Save the template locally
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        template.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // ---------- Load the template and build the report ----------
-        var doc = new Document(templatePath);
-        var model = new HyperlinkModel();
+        // 2. Load the template for reporting.
+        Document loadedTemplate = new Document(templatePath);
 
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // 3. Prepare the data model.
+        ReportModel model = new ReportModel();
 
-        // Save the generated report
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        doc.Save(outputPath);
+        // 4. Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
+
+        // 5. Save the generated report.
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        loadedTemplate.Save(resultPath);
     }
 }

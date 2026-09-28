@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,52 +9,75 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a working directory.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Enable reflection optimization globally.
+        ReportingEngine.UseReflectionOptimization = true;
 
-        // 1. Create a small CSV file.
-        string csvPath = Path.Combine(workDir, "people.csv");
-        string[] csvLines =
-        {
-            "Name,Age",
-            "Alice,30",
-            "Bob,25",
-            "Charlie,35"
-        };
-        File.WriteAllLines(csvPath, csvLines);
+        // Register code page provider for CSV encoding support.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 2. Create a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("<<foreach [person in persons]>>");
+        // Prepare a small CSV file.
+        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.csv");
+        File.WriteAllText(csvPath, "Name,Age\nAlice,30\nBob,25");
+
+        // Load CSV data into a strongly‑typed model.
+        var people = LoadCsv(csvPath);
+        var model = new ReportModel { Data = people };
+
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Customer Report");
+        builder.Writeln("<<foreach [person in Data]>>");
         builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
         templateDoc.Save(templatePath);
 
-        // 3. Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
 
-        // 4. Enable reflection optimization globally.
-        ReportingEngine.UseReflectionOptimization = true;
-
-        // 5. Disable the optimization for this small CSV import to avoid overhead.
+        // Disable reflection optimization for this small CSV import to reduce overhead.
         ReportingEngine.UseReflectionOptimization = false;
 
-        // 6. Prepare CSV data source with header handling.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // 7. Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, csvDataSource, "persons");
-
-        // 8. Save the generated report.
-        string outputPath = Path.Combine(workDir, "Report.docx");
+        // Save the generated report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "report.docx");
         reportDoc.Save(outputPath);
+    }
 
-        // Inform that the process completed.
-        Console.WriteLine($"Report generated at: {outputPath}");
+    private static List<Person> LoadCsv(string path)
+    {
+        var list = new List<Person>();
+        foreach (var line in File.ReadAllLines(path))
+        {
+            // Skip header line.
+            if (line.StartsWith("Name", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var parts = line.Split(',');
+            if (parts.Length >= 2)
+            {
+                list.Add(new Person
+                {
+                    Name = parts[0],
+                    Age = int.TryParse(parts[1], out var age) ? age : 0
+                });
+            }
+        }
+        return list;
+    }
+
+    public class Person
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+    }
+
+    public class ReportModel
+    {
+        public List<Person> Data { get; set; } = new();
     }
 }

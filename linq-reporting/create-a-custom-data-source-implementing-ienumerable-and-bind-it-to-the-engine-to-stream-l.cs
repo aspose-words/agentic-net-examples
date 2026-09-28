@@ -1,83 +1,73 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Item
 {
-    // Simple data entity used in the report.
-    public class Item
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public class LargeDataSource : IEnumerable<Item>
+{
+    private readonly int _count;
+
+    public LargeDataSource(int count = 10000)
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        _count = count;
     }
 
-    // Custom data source that streams a large number of items lazily.
-    public class LargeDataSource : IEnumerable<Item>
+    public IEnumerator<Item> GetEnumerator()
     {
-        private readonly int _count;
-
-        public LargeDataSource(int count = 10000)
+        for (int i = 1; i <= _count; i++)
         {
-            _count = count;
+            yield return new Item { Id = i, Name = $"Item {i}" };
         }
-
-        public IEnumerator<Item> GetEnumerator()
-        {
-            for (int i = 1; i <= _count; i++)
-            {
-                // Simulate expensive data retrieval or computation.
-                yield return new Item { Id = i, Name = $"Item #{i}" };
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    // Wrapper model that the template will reference.
-    public class ReportModel
-    {
-        public IEnumerable<Item> Items { get; set; } = new List<Item>();
-    }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
 
-    public class Program
+public class ReportModel
+{
+    public IEnumerable<Item> Items { get; set; } = new List<Item>();
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        builder.Writeln("Report of Large Data Set");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
+
+        // Prepare the model with the custom data source.
+        ReportModel model = new()
         {
-            // 1. Create the template document with LINQ Reporting tags.
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            Items = new LargeDataSource()
+        };
 
-            builder.Writeln("=== Large Data Report ===");
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
-
-            // 2. Load the template for report generation.
-            var doc = new Document(templatePath);
-
-            // 3. Prepare the data model with the custom enumerable data source.
-            var model = new ReportModel
-            {
-                Items = new LargeDataSource() // streams 10,000 items lazily.
-            };
-
-            // 4. Build the report using the ReportingEngine.
-            var engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.None
-            };
-            engine.BuildReport(doc, model, "model");
-
-            // 5. Save the generated report.
-            const string outputPath = "ReportOutput.docx";
-            doc.Save(outputPath);
-
-            Console.WriteLine($"Report generated and saved to '{outputPath}'.");
-        }
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

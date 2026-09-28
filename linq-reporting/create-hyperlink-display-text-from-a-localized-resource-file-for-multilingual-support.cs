@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,65 +9,56 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a simple resource dictionary for two languages.
-        var resources = new Dictionary<string, Dictionary<string, string>>
+        // Ensure the output directory exists.
+        Directory.CreateDirectory("output");
+
+        // Simulate a .resx resource file with localized strings using a dictionary.
+        var resources = new Dictionary<string, string>
         {
-            ["en"] = new Dictionary<string, string>
-            {
-                ["LinkText"] = "Visit Aspose",
-                ["Url"] = "https://www.aspose.com"
-            },
-            ["fr"] = new Dictionary<string, string>
-            {
-                ["LinkText"] = "Visitez Aspose",
-                ["Url"] = "https://www.aspose.com/fr"
-            }
+            ["LinkUrl"] = "https://example.com",
+            ["LinkText_en"] = "Visit Example",
+            ["LinkText_es"] = "Visitar Ejemplo"
         };
 
-        // Choose a language (in a real scenario this could come from user settings).
-        string language = "fr";
+        // Set the UI culture to Spanish to demonstrate localization.
+        CultureInfo.CurrentUICulture = new CultureInfo("es");
 
-        // Build the data model that the LINQ Reporting engine will use.
+        // Determine the appropriate link text based on the current UI culture.
+        string cultureKey = $"LinkText_{CultureInfo.CurrentUICulture.TwoLetterISOLanguageName}";
+        string linkText = resources.TryGetValue(cultureKey, out var localizedText)
+            ? localizedText
+            : resources["LinkText_en"];
+
+        // Prepare the data model for the report.
         var model = new ReportModel
         {
-            Url = resources[language]["Url"],
-            LinkText = resources[language]["LinkText"]
+            Url = resources["LinkUrl"],
+            LinkText = linkText
         };
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        // Insert a link tag where the first expression is the URL and the second
-        // expression is the display text taken from the data model.
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = "output/template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Please click the link below:");
+        // Insert the link tag using the model properties.
         builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+        templateDoc.Save(templatePath);
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template (simulating a separate load step).
-        // -----------------------------------------------------------------
-        var loadedTemplate = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Build the report using the ReportingEngine.
-        // -----------------------------------------------------------------
+        // Build the report using the ReportingEngine.
         var engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the final document.
-        const string outputPath = "Report.docx";
-        loadedTemplate.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {outputPath}");
+        string outputPath = "output/ReportWithLocalizedLink.docx";
+        doc.Save(outputPath);
     }
 }
 
-// Data model exposed to the template. All properties are non‑nullable to avoid warnings.
+// Data model used by the LINQ Reporting engine.
 public class ReportModel
 {
     public string Url { get; set; } = string.Empty;

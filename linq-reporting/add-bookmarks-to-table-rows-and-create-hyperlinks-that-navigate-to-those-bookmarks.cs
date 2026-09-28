@@ -8,88 +8,77 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the final report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
-
-        // 1. Create the template document.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Title.
-        builder.Writeln("Table with Bookmarks and Hyperlinks");
-
-        // Begin foreach over the collection Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Create a table for each iteration.
-        Table table = builder.StartTable();
-
-        // Header row (only once, but placed inside foreach for simplicity).
-        builder.InsertCell();
-        builder.Writeln("ID");
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Link");
-        builder.EndRow();
-
-        // Data row.
-        // Cell 1 – bookmark around the ID.
-        builder.InsertCell();
-        builder.Writeln("<<bookmark [item.Bookmark]>>");
-        builder.Writeln("<<[item.Id]>>");
-        builder.Writeln("<</bookmark>>");
-
-        // Cell 2 – plain name.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-
-        // Cell 3 – hyperlink that navigates to the bookmark defined above.
-        builder.InsertCell();
-        builder.Writeln("<<link [item.Bookmark] [item.Name]>>");
-
-        // End the data row.
-        builder.EndRow();
-
-        // End the table and the foreach block.
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        template.Save(templatePath);
-
-        // 2. Prepare the data model.
-        ReportModel model = new ReportModel
+        // Sample data model.
+        var model = new ReportModel
         {
-            Items = new List<RowItem>
+            Items = new()
             {
-                new RowItem { Id = 1, Name = "Alpha",   Bookmark = "bm1" },
-                new RowItem { Id = 2, Name = "Beta",    Bookmark = "bm2" },
-                new RowItem { Id = 3, Name = "Gamma",   Bookmark = "bm3" }
+                new Item { Name = "Item 1", BookmarkName = "bm1" },
+                new Item { Name = "Item 2", BookmarkName = "bm2" },
+                new Item { Name = "Item 3", BookmarkName = "bm3" }
             }
         };
 
-        // 3. Load the template and build the report.
-        Document report = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, model, "model");
+        // Paths for the template and final report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
 
-        // 4. Save the final document.
-        report.Save(reportPath);
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template.
+        // -----------------------------------------------------------------
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Hyperlink list that points to the bookmarks.
+        builder.Writeln("Links:");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("<<link [item.BookmarkName] [item.Name]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln(string.Empty);
+
+        // Header table (single header row).
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Item");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Data rows – each row is a separate table containing a bookmark.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("<<bookmark [item.BookmarkName]>>");
+        builder.Writeln("<<[item.Name]>>");
+        builder.Writeln("<</bookmark>>");
+        builder.EndRow();
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        doc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report.
+        reportDoc.Save(outputPath);
     }
 }
 
-// Root data model.
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public List<RowItem> Items { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
 }
 
-// Individual row data.
-public class RowItem
+public class Item
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public string Bookmark { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
+    public string BookmarkName { get; set; } = string.Empty;
 }

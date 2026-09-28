@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,69 +8,79 @@ public class Program
 {
     public static void Main()
     {
+        // Register code page provider for potential encoding needs.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
         // Prepare sample data.
-        var model = new ReportModel
+        ReportModel model = new()
         {
-            Customers = new List<Customer>
+            Customers = new()
             {
                 new Customer
                 {
                     Name = "Acme Corp",
-                    Invoices = new List<Invoice>
+                    Invoices = new()
                     {
-                        new Invoice { Id = 1001, Amount = 1234.56m },
-                        new Invoice { Id = 1002, Amount = 789.00m }
+                        new Invoice { Number = "INV-001", Date = new DateTime(2023, 1, 15), Amount = 1234.56m },
+                        new Invoice { Number = "INV-002", Date = new DateTime(2023, 2, 20), Amount = 789.00m }
                     }
                 },
                 new Customer
                 {
-                    Name = "Globex Ltd",
-                    Invoices = new List<Invoice>
+                    Name = "Globex Inc",
+                    Invoices = new()
                     {
-                        new Invoice { Id = 2001, Amount = 456.78m }
+                        new Invoice { Number = "INV-101", Date = new DateTime(2023, 3, 5), Amount = 2500.00m }
                     }
                 }
             }
         };
 
-        // Create a template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Customers Report");
+        builder.Writeln("Customer Report");
         builder.Writeln("<<foreach [customer in Customers]>>");
         builder.Writeln("Customer: <<[customer.Name]>>");
         builder.Writeln("Invoices:");
         builder.Writeln("<<foreach [invoice in customer.Invoices]>>");
-        builder.Writeln("- Invoice ID: <<[invoice.Id]>>  Amount: <<[invoice.Amount]>>");
-        builder.Writeln("<</foreach>>"); // end inner foreach (invoices)
-        builder.Writeln("<</foreach>>"); // end outer foreach (customers)
+        builder.Writeln("- Invoice #: <<[invoice.Number]>>, Date: <<[invoice.Date]>>, Amount: <<[invoice.Amount]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
         // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
-// Root wrapper class for the report data.
+// Data model classes.
 public class ReportModel
 {
     public List<Customer> Customers { get; set; } = new();
 }
 
-// Customer (master) class.
 public class Customer
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public List<Invoice> Invoices { get; set; } = new();
 }
 
-// Invoice (detail) class.
 public class Invoice
 {
-    public int Id { get; set; }
+    public string Number { get; set; } = "";
+    public DateTime Date { get; set; }
     public decimal Amount { get; set; }
 }

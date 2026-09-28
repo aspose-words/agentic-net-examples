@@ -1,59 +1,75 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingCaching
+public class Program
 {
-    // Simple data model used by the template.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = "John Doe";
-    }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document with a LINQ Reporting tag.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Hello <<[person.Name]>>!"); // LINQ Reporting tag.
+            Persons = new()
+            {
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
+            }
+        };
 
-            // Save the template to disk (required before building a report).
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
+        // Create a template document programmatically.
+        const string templatePath = "template.docx";
+        CreateTemplate(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template document.
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+        // Load the template.
+        var templateDoc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Create the ReportingEngine instance.
-            //    The engine automatically caches compiled templates internally,
-            //    so no explicit UseCache property is required.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
+        // Create a ReportingEngine. Caching of compiled templates is enabled by default.
+        var engine = new ReportingEngine();
 
-            // -----------------------------------------------------------------
-            // 4. Build the report the first time.
-            // -----------------------------------------------------------------
-            Person firstModel = new Person { Name = "Alice" };
-            engine.BuildReport(loadedTemplate, firstModel, "person");
-            const string firstReportPath = "Report1.docx";
-            loadedTemplate.Save(firstReportPath);
+        // First report generation (template will be compiled and cached).
+        const string outputPath1 = "output1.docx";
+        engine.BuildReport(templateDoc, model, "model");
+        templateDoc.Save(outputPath1);
 
-            // -----------------------------------------------------------------
-            // 5. Build the report a second time with different data.
-            //    The engine reuses the compiled template from its internal cache.
-            // -----------------------------------------------------------------
-            Document secondRunTemplate = new Document(templatePath);
-            Person secondModel = new Person { Name = "Bob" };
-            engine.BuildReport(secondRunTemplate, secondModel, "person");
-            const string secondReportPath = "Report2.docx";
-            secondRunTemplate.Save(secondReportPath);
-        }
+        // Load the template again for a second run.
+        var templateDoc2 = new Document(templatePath);
+
+        // Second report generation (should use cached compiled template).
+        const string outputPath2 = "output2.docx";
+        engine.BuildReport(templateDoc2, model, "model");
+        templateDoc2.Save(outputPath2);
     }
+
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Person Report");
+        builder.Writeln("==============");
+        builder.Writeln();
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(path);
+    }
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

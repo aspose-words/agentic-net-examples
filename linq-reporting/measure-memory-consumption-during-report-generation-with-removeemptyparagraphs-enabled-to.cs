@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,85 +10,77 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Register code page provider (required for some Aspose.Words features).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data model.
+        ReportModel model = new()
         {
-            Persons = new List<Person>
-            {
-                new Person { Name = "John Doe", Age = 30, MiddleName = "A." },
-                new Person { Name = "Jane Smith", Age = 25, MiddleName = "" },
-                new Person { Name = "Bob Johnson", Age = 40, MiddleName = null! } // Will be treated as empty.
-            }
+            Items = new()
         };
+        for (int i = 1; i <= 1000; i++)
+        {
+            model.Items.Add(new Item
+            {
+                Index = i,
+                Name = $"Item #{i}"
+            });
+        }
 
-        // Create a template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // Create a template document programmatically.
+        string templatePath = "template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        // Load the template.
-        var doc = new Document(templatePath);
+        builder.Writeln("=== Report Start ===");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("=== Report End ===");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        Document reportDoc = new(templatePath);
 
         // Measure memory before report generation.
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
         long memoryBefore = GC.GetTotalMemory(true);
 
-        // Build the report with RemoveEmptyParagraphs option enabled.
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
-        engine.BuildReport(doc, model, "model");
+        // Configure and run the reporting engine with RemoveEmptyParagraphs enabled.
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
         // Measure memory after report generation.
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
         long memoryAfter = GC.GetTotalMemory(true);
 
-        // Output memory consumption information.
-        Console.WriteLine($"Memory before report: {memoryBefore:N0} bytes");
-        Console.WriteLine($"Memory after report : {memoryAfter:N0} bytes");
-        Console.WriteLine($"Memory increase      : {memoryAfter - memoryBefore:N0} bytes");
+        // Output results.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Memory before: {memoryBefore:N0} bytes");
+        Console.WriteLine($"Memory after : {memoryAfter:N0} bytes");
+        Console.WriteLine($"Memory delta : {memoryAfter - memoryBefore:N0} bytes");
 
         // Save the generated report.
-        doc.Save("Report.docx");
-    }
-
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Header paragraph.
-        builder.Writeln("People Report");
-        builder.Writeln();
-
-        // Begin foreach loop over Persons collection.
-        builder.Writeln("<<foreach [p in Persons]>>");
-
-        // Output name.
-        builder.Writeln("Name: <<[p.Name]>>");
-
-        // Conditional output of middle name; paragraph may become empty.
-        builder.Writeln("<<if [p.MiddleName != \"\"]>>Middle: <<[p.MiddleName]>> <</if>>");
-
-        // Output age.
-        builder.Writeln("Age: <<[p.Age]>>");
-
-        // End foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(filePath);
+        string outputPath = Path.Combine("output", "ReportWithRemoveEmptyParagraphs.docx");
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        reportDoc.Save(outputPath);
+        Console.WriteLine($"Report saved to: {outputPath}");
     }
 }
 
-// Wrapper class for the data source.
+// Data model classes.
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
 }
 
-// Data model class.
-public class Person
+public class Item
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-    public string MiddleName { get; set; } = "";
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

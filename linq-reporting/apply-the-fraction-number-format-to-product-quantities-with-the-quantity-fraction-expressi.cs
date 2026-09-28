@@ -3,57 +3,90 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Product
+public class Program
 {
-    public string Name { get; set; } = "";
-    public double Quantity { get; set; }
+    public static void Main()
+    {
+        // Prepare sample data.
+        var model = new ReportModel
+        {
+            Products = new List<Product>
+            {
+                new Product { Name = "Apple", Quantity = 1.5 },
+                new Product { Name = "Banana", Quantity = 2.25 },
+                new Product { Name = "Cherry", Quantity = 0.75 }
+            }
+        };
 
-    // Returns the quantity formatted as a simple fraction-like string (e.g., 1.5 -> "1/5").
-    public string QuantityFormatted => Quantity.ToString("0/##");
+        // Create a template document with LINQ Reporting tags.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        builder.Writeln("Product Report");
+        builder.Writeln("----------------");
+        builder.Writeln("<<foreach [p in Products]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Quantity (fraction): <<[p.QuantityFraction]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Build the report.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(template, model, "model");
+
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        template.Save(outputPath);
+        Console.WriteLine($"Report generated: {outputPath}");
+    }
 }
 
+// Data model classes.
 public class ReportModel
 {
     public List<Product> Products { get; set; } = new();
 }
 
-public class Program
+public class Product
 {
-    public static void Main()
+    public string Name { get; set; } = string.Empty;
+    public double Quantity { get; set; }
+
+    // Returns the quantity formatted as a simple fraction (e.g., 1 1/2).
+    public string QuantityFraction => ConvertToFraction(Quantity);
+
+    private static string ConvertToFraction(double value)
     {
-        // Sample data.
-        var model = new ReportModel
+        // Simple conversion using a denominator of 4 (quarters). Adjust as needed.
+        const int denominator = 4;
+        int whole = (int)Math.Floor(value);
+        double fractionalPart = value - whole;
+        int numerator = (int)Math.Round(fractionalPart * denominator);
+
+        // Reduce fraction if possible.
+        int gcd = Gcd(numerator, denominator);
+        numerator /= gcd;
+        int reducedDenominator = denominator / gcd;
+
+        if (numerator == 0)
+            return whole.ToString();
+
+        if (whole == 0)
+            return $"{numerator}/{reducedDenominator}";
+
+        return $"{whole} {numerator}/{reducedDenominator}";
+    }
+
+    private static int Gcd(int a, int b)
+    {
+        while (b != 0)
         {
-            Products = new List<Product>
-            {
-                new Product { Name = "Apples", Quantity = 1.5 },
-                new Product { Name = "Bananas", Quantity = 2.25 },
-                new Product { Name = "Cherries", Quantity = 0.75 }
-            }
-        };
-
-        // Build the template document.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        builder.Writeln("Products Report");
-        builder.Writeln("<<foreach [p in Products]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        // Use the pre‑formatted quantity string.
-        builder.Writeln("Qty: <<[p.QuantityFormatted]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template (optional, for inspection).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template and generate the report.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the final report.
-        const string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return Math.Abs(a);
     }
 }

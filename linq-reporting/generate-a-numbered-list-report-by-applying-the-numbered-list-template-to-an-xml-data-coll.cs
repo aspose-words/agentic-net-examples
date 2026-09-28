@@ -1,63 +1,58 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Lists;          // Needed for ListTemplate
 using Aspose.Words.Reporting;
 
-public class Program
+public class NumberedListReport
 {
     public static void Main()
     {
-        // Working directory.
-        string workDir = Directory.GetCurrentDirectory();
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // 1. Create sample XML data.
-        string xmlPath = Path.Combine(workDir, "Data.xml");
-        string xmlContent =
-            @"<Items>
-                <Item>
-                    <Index>1</Index>
-                    <Name>Apple</Name>
-                </Item>
-                <Item>
-                    <Index>2</Index>
-                    <Name>Banana</Name>
-                </Item>
-                <Item>
-                    <Index>3</Index>
-                    <Name>Cherry</Name>
-                </Item>
-              </Items>";
-        File.WriteAllText(xmlPath, xmlContent);
+        // Define file paths.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string dataPath = Path.Combine(outputDir, "data.xml");
+        string reportPath = Path.Combine(outputDir, "report.docx");
 
-        // 2. Build the LINQ Reporting template programmatically.
-        string templatePath = Path.Combine(workDir, "Template.docx");
+        // Create sample XML data.
+        File.WriteAllText(dataPath,
+@"<?xml version=""1.0"" encoding=""utf-8""?>
+<Items>
+    <Item><Name>Item One</Name></Item>
+    <Item><Name>Item Two</Name></Item>
+    <Item><Name>Item Three</Name></Item>
+</Items>");
+
+        // Build the template document.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Apply a numbered list style to the paragraph that will contain the tags.
-        builder.ListFormat.List = templateDoc.Lists.Add(ListTemplate.NumberDefault);
+        // Start a numbered list.
+        builder.ListFormat.ApplyNumberDefault();
 
-        // Insert the restartNum tag followed by a foreach loop over the XML collection.
-        // The foreach iterates over "items" (the root name we will use when building the report).
-        builder.Writeln("<<restartNum>><<foreach [item in items]>> <<[item.Name]>> <</foreach>>");
+        // Insert the restartNum tag followed by a foreach loop that outputs each item name.
+        // The restartNum tag must be placed in the same numbered paragraph as the foreach tag.
+        builder.Writeln("<<restartNum>><<foreach [item in Items]>> <<[item.Name]>> <</foreach>>");
+
+        // End the numbered list.
+        builder.ListFormat.RemoveNumbers();
 
         // Save the template.
         templateDoc.Save(templatePath);
 
-        // 3. Load the template for report generation.
+        // Load the template for report generation.
         Document reportDoc = new Document(templatePath);
 
-        // 4. Create an XmlDataSource from the XML file.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
+        // Load XML data source.
+        XmlDataSource xmlData = new XmlDataSource(dataPath);
 
-        // 5. Build the report using the ReportingEngine.
+        // Build the report. The data source name must match the root element used in the template tags.
         ReportingEngine engine = new ReportingEngine();
-        // The data source name must match the collection name used in the template ("items").
-        engine.BuildReport(reportDoc, dataSource, "items");
+        engine.BuildReport(reportDoc, xmlData, "Items");
 
-        // 6. Save the generated report.
-        string reportPath = Path.Combine(workDir, "NumberedListReport.docx");
+        // Save the generated report.
         reportDoc.Save(reportPath);
     }
 }

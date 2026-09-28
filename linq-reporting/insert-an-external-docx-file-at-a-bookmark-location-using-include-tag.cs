@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,66 +7,70 @@ public class Program
 {
     public static void Main()
     {
-        // File names used in the example.
-        const string externalDocPath = "External.docx";
-        const string templatePath = "Template.docx";
-        const string outputPath = "Result.docx";
+        // Register code page provider for Aspose.Words.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Create the external document that will be inserted later.
-        // -----------------------------------------------------------------
-        Document externalDoc = new Document();
-        DocumentBuilder extBuilder = new DocumentBuilder(externalDoc);
-        extBuilder.Writeln("This is the content of the external document.");
-        externalDoc.Save(externalDocPath);
+        // Prepare file paths in the current working directory.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string externalDocPath = Path.Combine(workDir, "external.docx");
+        string outputPath = Path.Combine(workDir, "result.docx");
 
-        // -----------------------------------------------------------------
-        // 2. Create the template document with a bookmark and a <<doc>> tag.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
+        // Create the external document that will be inserted.
+        CreateExternalDocument(externalDocPath);
 
-        tmplBuilder.Writeln("Start of the main document.");
+        // Create the LINQ Reporting template containing a bookmark and a doc tag.
+        CreateTemplateDocument(templatePath);
 
-        // Bookmark where the external document will be inserted.
-        tmplBuilder.StartBookmark("InsertHere");
-        // The <<doc>> tag tells the LINQ Reporting engine to insert the document.
-        tmplBuilder.Writeln("<<doc [src.Document]>>");
-        tmplBuilder.EndBookmark("InsertHere");
+        // Load the template.
+        Document template = new Document(templatePath);
 
-        tmplBuilder.Writeln("End of the main document.");
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Load the template for reporting.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 4. Prepare the data model for the report.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // Prepare the model.
+        ReportModel model = new()
         {
-            Document = new Document(externalDocPath) // Load the external document.
+            BookmarkName = "InsertHere",
+            IncludePath = externalDocPath
         };
 
-        // -----------------------------------------------------------------
-        // 5. Build the report using the ReportingEngine.
-        // -----------------------------------------------------------------
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        // The data source name "src" must match the prefix used in the <<doc>> tag.
-        engine.BuildReport(loadedTemplate, model, "src");
+        engine.BuildReport(template, model, "model");
 
-        // -----------------------------------------------------------------
-        // 6. Save the final document.
-        // -----------------------------------------------------------------
-        loadedTemplate.Save(outputPath);
+        // Save the generated document.
+        template.Save(outputPath);
     }
-}
 
-// Data model used by the LINQ Reporting engine.
-// The property name must match the expression used in the <<doc>> tag.
-public class ReportModel
-{
-    public Document Document { get; set; } = null!;
+    private static void CreateExternalDocument(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is the content of the external document.");
+        doc.Save(path);
+    }
+
+    private static void CreateTemplateDocument(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Introductory text.
+        builder.Writeln("Report generated with Aspose.Words LINQ Reporting.");
+        builder.Writeln();
+
+        // Bookmark start.
+        builder.Writeln("<<bookmark [model.BookmarkName]>>");
+        // Insert external document at the bookmark location using the supported <<doc>> tag.
+        builder.Writeln("<<doc [model.IncludePath]>>");
+        // Bookmark end.
+        builder.Writeln("<</bookmark>>");
+
+        doc.Save(path);
+    }
+
+    // Model class used by the LINQ Reporting engine.
+    public class ReportModel
+    {
+        public string BookmarkName { get; set; } = string.Empty;
+        public string IncludePath { get; set; } = string.Empty;
+    }
 }

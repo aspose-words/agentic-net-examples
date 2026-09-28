@@ -1,65 +1,71 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string FirstName { get; set; } = "";
+    public string LastName { get; set; } = "";
+}
+
+public class PersonBookmark
+{
+    public string FullName { get; set; } = "";
+    public string BookmarkName { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<PersonBookmark> Bookmarks { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create the template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Start a foreach loop over the collection "Persons".
-        builder.Writeln("<<foreach [p in Persons]>>");
-
-        // Create a bookmark whose name is the concatenation of FirstName and LastName.
-        // The expression inside the bookmark tag evaluates for each item.
-        builder.Writeln("<<bookmark [p.FirstName + \"_\" + p.LastName]>>");
-        // Content inside the bookmark (optional, just for demonstration).
-        builder.Writeln("<<[p.FirstName]>> <<[p.LastName]>>");
-        builder.Writeln("<</bookmark>>");
-
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // 2. Load the template document for report generation.
-        var reportDoc = new Document(templatePath);
-
-        // 3. Prepare the data source.
-        var model = new ReportModel
+        // Sample data
+        List<Person> persons = new()
         {
-            Persons = new()
-            {
-                new Person { FirstName = "John", LastName = "Doe" },
-                new Person { FirstName = "Jane", LastName = "Smith" },
-                new Person { FirstName = "Alice", LastName = "Johnson" }
-            }
+            new Person { FirstName = "John", LastName = "Doe" },
+            new Person { FirstName = "Jane", LastName = "Smith" },
+            new Person { FirstName = "Bob", LastName = "Johnson" }
         };
 
-        // 4. Build the report using the ReportingEngine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Use LINQ to create a collection with concatenated bookmark names
+        List<PersonBookmark> bookmarks = persons
+            .Select(p => new PersonBookmark
+            {
+                FullName = $"{p.FirstName} {p.LastName}",
+                BookmarkName = $"{p.FirstName}{p.LastName}"
+            })
+            .ToList();
 
-        // 5. Save the generated report.
-        reportDoc.Save("Report.docx");
+        ReportModel model = new() { Bookmarks = bookmarks };
+
+        // Create template document programmatically
+        string templatePath = "template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+
+        builder.Writeln("People List:");
+        builder.Writeln("<<foreach [b in Bookmarks]>>");
+        builder.Writeln("<<bookmark [b.BookmarkName]>>");
+        builder.Writeln("<<[b.FullName]>>");
+        builder.Writeln("<</bookmark>>");
+        builder.Writeln("<</foreach>>");
+
+        templateDoc.Save(templatePath);
+
+        // Load template and build report
+        Document doc = new(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
-}
-
-// Root data model referenced in the template as "model".
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-// Simple data entity with two fields to be concatenated.
-public class Person
-{
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
 }

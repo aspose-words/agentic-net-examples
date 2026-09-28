@@ -8,47 +8,45 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
+        // Register code page provider for CSV encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare file paths.
-        string workDir = Directory.GetCurrentDirectory();
-        string csvPath = Path.Combine(workDir, "data.csv");
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "report.docx");
+        // Prepare sample CSV data.
+        string csvPath = "sample.csv";
+        File.WriteAllText(csvPath, "Name,Age\r\nAlice,30\r\nBob,25\r\nCharlie,35", Encoding.UTF8);
 
-        // Create a small CSV file with headers.
-        File.WriteAllLines(csvPath, new[]
-        {
-            "Name,Age",
-            "Alice,30",
-            "Bob,25"
-        });
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Build a template document containing LINQ Reporting tags.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("People List:");
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("Customer List:");
+        builder.Writeln("<<foreach [row in Data]>>");
+        builder.Writeln("Name: <<[row.Name]>>, Age: <<[row.Age]>>");
         builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template.
-        var doc = new Document(templatePath);
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
-        // Configure CSV data source options (first line has headers).
-        var loadOptions = new CsvDataLoadOptions(true);
-        var csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // Load CSV data source.
+        CsvDataLoadOptions csvOptions = new CsvDataLoadOptions
+        {
+            HasHeaders = true
+        };
+        CsvDataSource csvData = new CsvDataSource(csvPath, csvOptions);
 
-        // Disable reflection optimization for this small data set.
+        // Disable reflection optimization for this small CSV processing.
         ReportingEngine.UseReflectionOptimization = false;
 
         // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, csvDataSource, "persons");
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, csvData, "Data");
 
         // Save the generated report.
-        doc.Save(outputPath);
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }

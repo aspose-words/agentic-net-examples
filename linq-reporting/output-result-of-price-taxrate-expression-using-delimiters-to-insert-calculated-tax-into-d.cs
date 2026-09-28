@@ -1,37 +1,59 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class TaxReportModel
+public class Invoice
 {
-    // Sample data – initialize to avoid nullable warnings.
-    public decimal Price { get; set; } = 100m;
-    public decimal TaxRate { get; set; } = 0.07m; // 7 %
+    public decimal Price { get; set; } = 0m;
+    public decimal TaxRate { get; set; } = 0m;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Prepare the data source.
-        var model = new TaxReportModel();
+        // Create a temporary folder for files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
-        // 2. Create a blank Word document and insert LINQ Reporting tags.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Paths for template and result documents.
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string resultPath = Path.Combine(workDir, "Result.docx");
 
-        // Write a simple report layout.
-        builder.Writeln("Price: <<[model.Price]>>");
-        builder.Writeln("Tax Rate: <<[model.TaxRate]>>");
-        // The expression below calculates the tax amount (price * taxRate).
-        builder.Writeln("Calculated Tax: <<[model.Price * model.TaxRate]>>");
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // 3. Build the report using the ReportingEngine.
-        var engine = new ReportingEngine();
-        // The root object name must match the name used in the tags ("model").
+        builder.Writeln("Price: <<[Price]>>");
+        builder.Writeln("Tax Rate: <<[TaxRate]>>");
+        builder.Writeln("Tax Amount: <<[Price * TaxRate]>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template for reporting.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Prepare sample data.
+        Invoice model = new Invoice
+        {
+            Price = 123.45m,
+            TaxRate = 0.07m // 7% tax
+        };
+
+        // Build the report using LINQ Reporting Engine.
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // 4. Save the generated document.
-        doc.Save("TaxReport.docx");
+        // Save the generated report.
+        doc.Save(resultPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated at: {resultPath}");
     }
 }

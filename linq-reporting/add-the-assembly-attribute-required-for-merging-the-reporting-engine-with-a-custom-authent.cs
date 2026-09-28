@@ -1,53 +1,56 @@
 using System;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class AuthHelper
+[assembly: ReportingEngineAuthenticationAttribute(typeof(MyAuthModule))]
+
+[AttributeUsage(AttributeTargets.Assembly)]
+public sealed class ReportingEngineAuthenticationAttribute : Attribute
 {
-    // Example static method that could represent a custom authentication lookup.
-    public static string GetUserName()
-    {
-        return "JohnDoe";
-    }
+    public Type AuthModuleType { get; }
+
+    public ReportingEngineAuthenticationAttribute(Type authModuleType) => AuthModuleType = authModuleType;
+}
+
+public class MyAuthModule
+{
+    // Dummy authentication logic for illustration.
+    public bool Authenticate(string user) => user == "admin";
+}
+
+public class Model
+{
+    public string Name { get; set; } = "World";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a temporary folder for the example files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code pages provider required by Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Build the template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a simple template document with a LINQ Reporting tag.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Hello, <<[model.Name]>>!");
 
-        // Insert a LINQ Reporting tag that calls the static method defined above.
-        builder.Writeln("Authenticated user: <<[AuthHelper.GetUserName()]>>");
+        // Save the template to disk (optional, demonstrates file handling).
+        const string templatePath = "template.docx";
+        templateDoc.Save(templatePath);
 
-        // Save the template to disk.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
-        // -----------------------------------------------------------------
-        // 2. Load the template and generate the report.
-        // -----------------------------------------------------------------
-        Document report = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
+        var model = new Model();
 
-        // Register the custom type with the reporting engine (instead of using the missing attribute).
-        engine.KnownTypes.Add(typeof(AuthHelper));
-
-        // No data source is required because the template only uses a static call.
-        // An empty anonymous object is supplied as the root data source.
-        engine.BuildReport(report, new object(), "");
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        report.Save(reportPath);
+        const string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
 }

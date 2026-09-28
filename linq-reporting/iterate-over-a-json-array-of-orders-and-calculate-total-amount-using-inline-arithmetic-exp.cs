@@ -1,66 +1,67 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the working directory exists.
-        string workDir = Directory.GetCurrentDirectory();
+        // Register code page provider for Aspose.Words (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample JSON data representing an array of orders.
-        // Each order has an Id, CustomerName, Quantity and UnitPrice.
-        string jsonContent = @"
+        // Sample JSON data: an array of orders, each with a list of items.
+        string json = @"
 [
-  { ""OrderId"": 1, ""CustomerName"": ""Alice"", ""Quantity"": 3, ""UnitPrice"": 19.99 },
-  { ""OrderId"": 2, ""CustomerName"": ""Bob"",   ""Quantity"": 5, ""UnitPrice"": 9.50 },
-  { ""OrderId"": 3, ""CustomerName"": ""Carol"", ""Quantity"": 2, ""UnitPrice"": 45.00 }
+  {
+    ""Id"": 1,
+    ""CustomerName"": ""Alice"",
+    ""Items"": [
+      { ""ProductName"": ""Widget"", ""Quantity"": 2, ""UnitPrice"": 10.5 },
+      { ""ProductName"": ""Gadget"", ""Quantity"": 1, ""UnitPrice"": 20.0 }
+    ]
+  },
+  {
+    ""Id"": 2,
+    ""CustomerName"": ""Bob"",
+    ""Items"": [
+      { ""ProductName"": ""Thing"", ""Quantity"": 5, ""UnitPrice"": 3.0 }
+    ]
+  }
 ]";
-        string jsonPath = Path.Combine(workDir, "orders.json");
-        File.WriteAllText(jsonPath, jsonContent);
 
-        // 2. Build the template document programmatically.
-        // The template will iterate over the JSON array and calculate total amount per order.
-        string templatePath = Path.Combine(workDir, "Template.docx");
+        // Create a template document programmatically.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Header
-        builder.Writeln("Order Report");
-        builder.Writeln("------------------------------");
-
-        // Begin foreach over the JSON data source named \"orders\".
+        // Insert a foreach loop over the orders array.
         builder.Writeln("<<foreach [order in orders]>>");
-        // Output order details and calculate total = Quantity * UnitPrice using an inline expression.
-        builder.Writeln("Order ID: <<[order.OrderId]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Quantity: <<[order.Quantity]>>");
-        builder.Writeln("Unit Price: $<<[order.UnitPrice]>>");
-        builder.Writeln("Total Amount: $<<[order.Quantity * order.UnitPrice]>>");
-        builder.Writeln(""); // Blank line between orders
+        // Inline arithmetic expression calculates total amount for each order.
+        builder.Writeln("Total Amount: <<[order.Items.Sum(i => i.Quantity * i.UnitPrice)]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
+        string templatePath = "template.docx";
         templateDoc.Save(templatePath);
 
-        // 3. Load the template document for report generation.
+        // Load the template back for reporting.
         Document reportDoc = new Document(templatePath);
 
-        // 4. Create a JsonDataSource from the JSON file.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+        // Create a JSON data source from the JSON string using a memory stream.
+        using MemoryStream jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
 
-        // 5. Build the report using ReportingEngine.
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        // The data source name used in the template is \"orders\".
+        // The root name "orders" matches the array name used in the template tags.
         engine.BuildReport(reportDoc, jsonDataSource, "orders");
 
-        // 6. Save the generated report.
-        string reportPath = Path.Combine(workDir, "Report.docx");
-        reportDoc.Save(reportPath);
-
-        // Indicate completion (no interactive prompts as required).
-        Console.WriteLine("Report generated successfully at: " + reportPath);
+        // Save the generated report.
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }

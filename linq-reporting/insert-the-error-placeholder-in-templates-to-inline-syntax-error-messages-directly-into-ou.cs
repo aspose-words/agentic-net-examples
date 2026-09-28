@@ -1,62 +1,52 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-public class Model
+namespace LinqReportingInlineErrorExample
 {
-    // Sample property used in the template.
-    public string Name { get; set; } = string.Empty;
-}
-
-public class Program
-{
-    public static void Main()
+    public class Model
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        public string Name { get; set; } = "John Doe";
+    }
 
-        // -------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code pages provider required by Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Correct tag – will be replaced with the actual value.
-        builder.Writeln("Customer: <<[model.Name]>>");
+            // Create a template document with a correct tag, an incorrect tag, and the <<error>> placeholder.
+            var templatePath = "template.docx";
+            var builder = new DocumentBuilder();
+            builder.Writeln("Customer: <<[model.Name]>>");
+            builder.Writeln("Invalid expression: <<[model.NonExistent]>>");
+            builder.Writeln("<<error>>");
+            builder.Document.Save(templatePath);
 
-        // Incorrect tag – references a non‑existent member.
-        // The <<error>> placeholder will be replaced with the inline error message.
-        builder.Writeln("Invalid reference: <<[model.Unknown]>> <<error>>");
+            // Load the template for reporting.
+            var doc = new Document(templatePath);
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+            // Prepare the data model.
+            var model = new Model();
 
-        // -------------------------------------------------
-        // 2. Load the template for report generation.
-        // -------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+            // Configure the reporting engine to inline error messages.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Sample data model.
-        Model data = new Model { Name = "John Doe" };
+            // Build the report.
+            bool success = engine.BuildReport(doc, model, "model");
 
-        // -------------------------------------------------
-        // 3. Build the report with inline error messages enabled.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+            // Save the generated report.
+            var outputPath = "report.docx";
+            doc.Save(outputPath);
 
-        // BuildReport returns a bool indicating success when InlineErrorMessages is set.
-        bool success = engine.BuildReport(reportDoc, data, "model");
-
-        // -------------------------------------------------
-        // 4. Save the generated report.
-        // -------------------------------------------------
-        reportDoc.Save(reportPath);
-
-        // Output the result status to the console (no user interaction required).
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
-        Console.WriteLine($"Template: {templatePath}");
-        Console.WriteLine($"Report:   {reportPath}");
+            // Output the result.
+            Console.WriteLine($"Report generation success: {success}");
+            Console.WriteLine($"Report saved to: {Path.GetFullPath(outputPath)}");
+        }
     }
 }

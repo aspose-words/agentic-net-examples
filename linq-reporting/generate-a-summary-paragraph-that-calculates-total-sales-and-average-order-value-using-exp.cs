@@ -5,54 +5,54 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Order
+{
+    public string Id { get; set; } = "";
+    public decimal Amount { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
+        // Register code page provider (required for some encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
+
+        // Create the template document with LINQ Reporting tags
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Sales Summary:");
+        builder.Writeln("Total Sales: <<[Orders.Sum(o => o.Amount)]>>");
+        builder.Writeln("Average Order Value: <<[Orders.Average(o => o.Amount)]>>");
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting
+        var doc = new Document(templatePath);
+
+        // Sample data
         var model = new ReportModel
         {
             Orders = new List<Order>
             {
-                new Order { Amount = 120.50m },
-                new Order { Amount = 75.00m },
-                new Order { Amount = 200.25m }
+                new Order { Id = "001", Amount = 120.50m },
+                new Order { Id = "002", Amount = 75.00m },
+                new Order { Id = "003", Amount = 200.00m }
             }
         };
-        // Compute aggregates.
-        model.TotalSales = model.Orders.Sum(o => o.Amount);
-        model.AverageOrderValue = model.Orders.Average(o => o.Amount);
 
-        // Create the template document programmatically.
-        string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Summary Report");
-        builder.Writeln("Total Sales: <<[model.TotalSales]>>");
-        builder.Writeln("Average Order Value: <<[model.AverageOrderValue]>>");
-        templateDoc.Save(templatePath);
-
-        // Load the template and build the report.
-        var doc = new Document(templatePath);
+        // Build the report
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
+        // Save the generated report
         doc.Save(outputPath);
     }
-}
-
-// Data model exposed to the template.
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-    public decimal TotalSales { get; set; }
-    public decimal AverageOrderValue { get; set; }
-}
-
-// Simple order entity.
-public class Order
-{
-    public decimal Amount { get; set; }
 }

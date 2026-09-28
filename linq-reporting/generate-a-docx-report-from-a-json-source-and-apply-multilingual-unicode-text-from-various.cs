@@ -1,88 +1,81 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for proper Unicode handling.
+        // Register code page provider for full Unicode support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for the JSON source, template, and final report.
-        const string jsonPath = "report.json";
-        const string templatePath = "template.docx";
-        const string outputPath = "report_output.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample JSON file containing multilingual text.
-        // -----------------------------------------------------------------
-        var jsonContent = new
+        // Prepare sample JSON data.
+        string jsonPath = "data.json";
+        var sampleData = new ReportModel
         {
             Title = "Multilingual Report",
-            Items = new[]
+            Description = "This report contains text in several languages.",
+            Items = new List<LocalizedItem>
             {
-                new
-                {
-                    Name = "Apple",
-                    Description_en = "Fresh apple",
-                    Description_es = "Manzana fresca",
-                    Description_zh = "新鲜的苹果",
-                    Description_ar = "تفاحة طازجة"
-                },
-                new
-                {
-                    Name = "Banana",
-                    Description_en = "Ripe banana",
-                    Description_es = "Plátano maduro",
-                    Description_zh = "成熟的香蕉",
-                    Description_ar = "موز ناضج"
-                }
+                new() { Language = "English", Text = "Hello, world!" },
+                new() { Language = "Русский", Text = "Привет, мир!" },
+                new() { Language = "中文", Text = "你好，世界！" },
+                new() { Language = "العربية", Text = "مرحبًا بالعالم!" },
+                new() { Language = "हिन्दी", Text = "नमस्ते, दुनिया!" }
             }
         };
-        // Serialize the object to JSON and write it to a file.
-        string jsonString = System.Text.Json.JsonSerializer.Serialize(
-            jsonContent,
-            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(jsonPath, jsonString, Encoding.UTF8);
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // -----------------------------------------------------------------
-        // 2. Build a Word template programmatically with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Report title.
+        // Title and description.
         builder.Writeln("<<[model.Title]>>");
+        builder.Writeln("<<[model.Description]>>");
         builder.Writeln();
 
-        // Begin a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        builder.Writeln("Name: <<[item.Name]>>");
-        builder.Writeln("English: <<[item.Description_en]>>");
-        builder.Writeln("Spanish: <<[item.Description_es]>>");
-        builder.Writeln("Chinese: <<[item.Description_zh]>>");
-        builder.Writeln("Arabic: <<[item.Description_ar]>>");
+        // Table header.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Language: <<[item.Language]>>");
+        builder.Writeln("Text: <<[item.Text]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and generate the report using the JSON data source.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        JsonDataSource dataSource = new JsonDataSource(jsonPath);
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
 
-        ReportingEngine engine = new ReportingEngine();
-        // The root object name used in the template tags is "model".
-        engine.BuildReport(reportDoc, dataSource, "model");
+        // Load JSON data into the model.
+        string json = File.ReadAllText(jsonPath);
+        var model = JsonConvert.DeserializeObject<ReportModel>(json)!;
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(outputPath);
+        // Build the report using LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Data model matching the JSON structure.
+public class ReportModel
+{
+    public string Title { get; set; } = "";
+    public string Description { get; set; } = "";
+    public List<LocalizedItem> Items { get; set; } = new();
+}
+
+public class LocalizedItem
+{
+    public string Language { get; set; } = "";
+    public string Text { get; set; } = "";
 }

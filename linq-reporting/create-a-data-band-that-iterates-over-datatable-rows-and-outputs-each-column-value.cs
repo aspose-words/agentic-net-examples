@@ -1,42 +1,56 @@
 using System;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data in a DataTable.
-        DataTable dataTable = new DataTable("People");
+        // Register code page provider (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data in a DataTable
+        DataTable dataTable = new()
+        {
+            TableName = "Data"
+        };
+        dataTable.Columns.Add("Id", typeof(int));
         dataTable.Columns.Add("Name", typeof(string));
-        dataTable.Columns.Add("Age", typeof(int));
-        dataTable.Rows.Add("Alice", 30);
-        dataTable.Rows.Add("Bob", 25);
-        dataTable.Rows.Add("Charlie", 35);
+        dataTable.Columns.Add("Value", typeof(double));
 
-        // Create a Word template programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        dataTable.Rows.Add(1, "Alpha", 12.34);
+        dataTable.Rows.Add(2, "Beta", 56.78);
+        dataTable.Rows.Add(3, "Gamma", 90.12);
 
-        // Insert a LINQ Reporting data band that iterates over the rows of the DataTable.
-        builder.Writeln("<<foreach [row in dt]>>");
-        builder.Writeln("Name: <<[row.Name]>>, Age: <<[row.Age]>>");
+        // Create the LINQ Reporting template programmatically
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+
+        // Begin a data band that iterates over DataTable rows
+        builder.Writeln("<<foreach [row in Data]>>");
+        // Output each column value for the current row
+        builder.Writeln("Id: <<[row.Id]>>\tName: <<[row.Name]>>\tValue: <<[row.Value]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk (required before building the report).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template to disk
+        const string templatePath = "template.docx";
+        templateDoc.Save(templatePath);
 
-        // Load the saved template.
-        Document report = new Document(templatePath);
+        // Load the template for report generation
+        Document reportDoc = new(templatePath);
 
-        // Build the report using the DataTable as the data source.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, dataTable, "dt");
+        // Build the report using the DataTable as the root data source
+        ReportingEngine engine = new();
+        bool success = engine.BuildReport(reportDoc, dataTable, "Data");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        report.Save(outputPath);
+        // Save the generated report
+        const string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
+
+        // Optionally indicate success (no interactive prompts)
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
 }

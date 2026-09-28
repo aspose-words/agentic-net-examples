@@ -1,66 +1,60 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingForeachExample
+public class Invoice
 {
-    // Simple data model representing an invoice.
-    public class Invoice
-    {
-        public int Id { get; set; }
-        public decimal Amount { get; set; }
-        public string Customer { get; set; } = string.Empty;
-    }
+    public int Id { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime Date { get; set; }
+}
 
-    // Wrapper model that will be passed to the reporting engine.
-    public class ReportModel
-    {
-        public List<Invoice> Invoices { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Invoice> Invoices { get; set; } = new();
+}
 
-    class Program
+public class Program
+{
+    public static void Main()
     {
-        static void Main()
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Insert a foreach tag to iterate over the Invoices collection.
+        builder.Writeln("<<foreach [invoice in Invoices]>>");
+        builder.Writeln("Invoice ID: <<[invoice.Id]>>");
+        builder.Writeln("Amount: $<<[invoice.Amount]>>");
+        builder.Writeln("Date: <<[invoice.Date.ToString(\"yyyy-MM-dd\")]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "InvoiceTemplate.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
+
+        // Prepare sample data.
+        ReportModel model = new()
         {
-            // 1. Create a template document programmatically.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert a heading.
-            builder.Writeln("Invoice Report");
-            builder.Writeln();
-
-            // Insert a foreach tag that iterates over the Invoices collection.
-            // The tag follows the exact syntax required by Aspose.Words LINQ Reporting Engine.
-            builder.Writeln("<<foreach [invoice in Invoices]>>");
-
-            // Inside the loop write invoice fields.
-            builder.Writeln("Id: <<[invoice.Id]>>");
-            builder.Writeln("Customer: <<[invoice.Customer]>>");
-            builder.Writeln("Amount: $<<[invoice.Amount]>>");
-            builder.Writeln(); // Blank line between records.
-
-            // Close the foreach block.
-            builder.Writeln("<</foreach>>");
-
-            // 2. Prepare sample data.
-            ReportModel model = new ReportModel
+            Invoices = new()
             {
-                Invoices = new List<Invoice>
-                {
-                    new Invoice { Id = 101, Customer = "Acme Corp", Amount = 1234.56m },
-                    new Invoice { Id = 102, Customer = "Globex Inc", Amount = 7890.12m },
-                    new Invoice { Id = 103, Customer = "Soylent Co", Amount = 345.67m }
-                }
-            };
+                new Invoice { Id = 1, Amount = 199.99m, Date = DateTime.Today.AddDays(-2) },
+                new Invoice { Id = 2, Amount = 349.50m, Date = DateTime.Today.AddDays(-1) },
+                new Invoice { Id = 3, Amount = 89.75m, Date = DateTime.Today }
+            }
+        };
 
-            // 3. Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // 4. Save the generated document.
-            doc.Save("InvoiceReport.docx");
-        }
+        // Save the generated report.
+        const string outputPath = "InvoiceReport.docx";
+        doc.Save(outputPath);
     }
 }

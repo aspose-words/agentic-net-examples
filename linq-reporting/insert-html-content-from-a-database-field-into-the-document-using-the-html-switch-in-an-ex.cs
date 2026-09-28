@@ -1,66 +1,48 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class HtmlLinqReportingExample
 {
-    // Model class representing data that would normally come from a database.
-    public class ReportModel
+    // Simple data model representing a database record with an HTML field.
+    public class Record
     {
-        // HTML content stored in a database field.
+        // HTML content that will be inserted into the document.
         public string HtmlContent { get; set; } = string.Empty;
     }
 
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data (simulating a database field).
+        var record = new Record
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document with a LINQ Reporting tag that
-            //    inserts HTML using the "-html" switch.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            HtmlContent = "<b>Hello</b> <i>World</i>!<br/><span style=\"color:blue;\">Blue text</span>"
+        };
 
-            builder.Writeln("=== LINQ Reporting HTML Insertion Example ===");
-            // The tag below will be replaced with the HTML from the data source.
-            builder.Writeln("<<[model.HtmlContent] -html>>");
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Insert the LINQ Reporting tag that will render the HTML content.
+        builder.Writeln("<<[model.HtmlContent] -html>>");
 
-            // -----------------------------------------------------------------
-            // 2. Load the template document (simulating a separate load step).
-            // -----------------------------------------------------------------
-            var document = new Document(templatePath);
+        // Save the template to disk.
+        doc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source. In a real scenario this would be read
-            //    from a database; here we use a hard‑coded HTML snippet.
-            // -----------------------------------------------------------------
-            var model = new ReportModel
-            {
-                HtmlContent = "<p style='color:blue; font-size:14pt;'>" +
-                              "This is <b>HTML</b> content inserted from a data source." +
-                              "</p>"
-            };
+        // Load the template for report generation.
+        var template = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 4. Build the report using Aspose.Words LINQ ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-            // The root object name in the template is "model".
-            engine.BuildReport(document, model, "model");
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, record, "model");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            document.Save(outputPath);
+        // Save the generated document.
+        var outputPath = "Report_Output.docx";
+        template.Save(outputPath);
 
-            // Indicate successful completion (no interactive prompts).
-            Console.WriteLine("Report generated successfully.");
-        }
+        // Optionally, indicate completion (no interactive prompts).
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

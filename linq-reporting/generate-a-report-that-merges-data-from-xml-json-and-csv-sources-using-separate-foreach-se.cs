@@ -1,136 +1,176 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
+using Newtonsoft.Json;
+
+#nullable enable
+
+public class Customer
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class Product
+{
+    public string Name { get; set; } = "";
+    public double Price { get; set; }
+}
+
+public class Order
+{
+    public int OrderId { get; set; }
+    public string Product { get; set; } = "";
+    public int Quantity { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Customer> Customers { get; set; } = new();
+    public List<Product> Products { get; set; } = new();
+    public List<Order> Orders { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing (required for older code pages).
+        // Register code page provider for any encoding needs.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Create sample data files (XML, JSON, CSV) in the working directory.
-        // -----------------------------------------------------------------
-        string xmlPath = "people.xml";
-        File.WriteAllText(xmlPath,
-@"<People>
-    <Person>
-        <Name>John Doe</Name>
-        <Age>30</Age>
-    </Person>
-    <Person>
-        <Name>Jane Smith</Name>
-        <Age>25</Age>
-    </Person>
-</People>");
+        // Create a folder for sample data.
+        string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        Directory.CreateDirectory(dataFolder);
 
-        string jsonPath = "people.json";
-        File.WriteAllText(jsonPath,
-@"[
-    { ""Name"": ""Alice Brown"", ""Age"": 28 },
-    { ""Name"": ""Bob Johnson"", ""Age"": 35 }
-]");
+        // ---------- Create sample XML ----------
+        string xmlPath = Path.Combine(dataFolder, "customers.xml");
+        string xmlContent = @"<Customers>
+  <Customer>
+    <Name>John Doe</Name>
+    <Age>30</Age>
+  </Customer>
+  <Customer>
+    <Name>Jane Smith</Name>
+    <Age>25</Age>
+  </Customer>
+</Customers>";
+        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
 
-        string csvPath = "people.csv";
-        File.WriteAllText(csvPath,
-@"Name,Age
-Charlie Davis,40
-Diana Evans,22");
+        // ---------- Create sample JSON ----------
+        string jsonPath = Path.Combine(dataFolder, "products.json");
+        string jsonContent = @"[
+  { ""Name"": ""Laptop"", ""Price"": 1200.50 },
+  { ""Name"": ""Mouse"", ""Price"": 25.99 }
+]";
+        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
 
-        // --------------------------------------------------------------
-        // Build the template document programmatically (required by the rules).
-        // --------------------------------------------------------------
+        // ---------- Create sample CSV ----------
+        string csvPath = Path.Combine(dataFolder, "orders.csv");
+        string csvContent = @"OrderId,Product,Quantity
+1,Laptop,2
+2,Mouse,5";
+        File.WriteAllText(csvPath, csvContent, Encoding.UTF8);
+
+        // ---------- Load data into model ----------
+        ReportModel model = new ReportModel();
+
+        // Load XML
+        XDocument xDoc = XDocument.Load(xmlPath);
+        model.Customers = xDoc.Root!
+            .Elements("Customer")
+            .Select(x => new Customer
+            {
+                Name = (string?)x.Element("Name") ?? "",
+                Age = (int?)x.Element("Age") ?? 0
+            })
+            .ToList();
+
+        // Load JSON
+        string jsonString = File.ReadAllText(jsonPath, Encoding.UTF8);
+        model.Products = JsonConvert.DeserializeObject<List<Product>>(jsonString) ?? new List<Product>();
+
+        // Load CSV
+        string[] csvLines = File.ReadAllLines(csvPath, Encoding.UTF8);
+        if (csvLines.Length > 1)
+        {
+            model.Orders = csvLines
+                .Skip(1) // skip header
+                .Select(line => line.Split(','))
+                .Where(parts => parts.Length == 3)
+                .Select(parts => new Order
+                {
+                    OrderId = int.TryParse(parts[0], out int id) ? id : 0,
+                    Product = parts[1],
+                    Quantity = int.TryParse(parts[2], out int qty) ? qty : 0
+                })
+                .ToList();
+        }
+
+        // ---------- Create template document ----------
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // XML data section.
-        builder.Writeln("XML Data:");
-        builder.Writeln("<<foreach [p in xml]>>");
-        builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
+        // Customers section
+        builder.Writeln("Customers:");
+        builder.Writeln("<<foreach [c in Customers]>>");
+        Table custTable = builder.StartTable();
+        builder.InsertCell(); builder.Writeln("Name");
+        builder.InsertCell(); builder.Writeln("Age");
+        builder.EndRow();
 
-        // JSON data section.
-        builder.Writeln("JSON Data:");
-        builder.Writeln("<<foreach [j in json]>>");
-        builder.Writeln("- <<[j.Name]>> (Age: <<[j.Age]>>)");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
-
-        // CSV data section.
-        builder.Writeln("CSV Data:");
-        builder.Writeln("<<foreach [c in csv]>>");
-        builder.Writeln("- <<[c.Name]>> (Age: <<[c.Age]>>)");
+        builder.InsertCell(); builder.Writeln("<<[c.Name]>>");
+        builder.InsertCell(); builder.Writeln("<<[c.Age]>>");
+        builder.EndRow();
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template and reload it to satisfy the lifecycle rule.
-        string templatePath = "template.docx";
+        // Products section
+        builder.Writeln("\nProducts:");
+        builder.Writeln("<<foreach [p in Products]>>");
+        Table prodTable = builder.StartTable();
+        builder.InsertCell(); builder.Writeln("Name");
+        builder.InsertCell(); builder.Writeln("Price");
+        builder.EndRow();
+
+        builder.InsertCell(); builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell(); builder.Writeln("<<[p.Price]>>");
+        builder.EndRow();
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        // Orders section
+        builder.Writeln("\nOrders:");
+        builder.Writeln("<<foreach [o in Orders]>>");
+        Table orderTable = builder.StartTable();
+        builder.InsertCell(); builder.Writeln("Order ID");
+        builder.InsertCell(); builder.Writeln("Product");
+        builder.InsertCell(); builder.Writeln("Quantity");
+        builder.EndRow();
+
+        builder.InsertCell(); builder.Writeln("<<[o.OrderId]>>");
+        builder.InsertCell(); builder.Writeln("<<[o.Product]>>");
+        builder.InsertCell(); builder.Writeln("<<[o.Quantity]>>");
+        builder.EndRow();
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, for inspection)
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "report_template.docx");
         template.Save(templatePath);
-        Document doc = new Document(templatePath);
 
-        // --------------------------------------------------------------
-        // Create data source objects.
-        // --------------------------------------------------------------
-        var xmlData = new XmlDataSource(xmlPath);
-        var jsonData = new JsonDataSource(jsonPath);
-
-        // Parse CSV into a strongly‑typed list so that LINQ Reporting can access
-        // members via property names (avoids DataRow member errors).
-        List<Person> csvData = LoadCsv(csvPath);
-
-        // --------------------------------------------------------------
-        // Build the report using multiple data sources.
-        // --------------------------------------------------------------
+        // ---------- Build the report ----------
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc,
-            new object[] { xmlData, jsonData, csvData },
-            new string[] { "xml", "json", "csv" });
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(template, model, "model");
 
-        // Save the final report.
-        doc.Save("Report.docx");
-    }
-
-    // Simple model class used for CSV data.
-    public class Person
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
-
-    // Reads a CSV file with a header line and returns a list of Person objects.
-    private static List<Person> LoadCsv(string path)
-    {
-        var people = new List<Person>();
-        using (var reader = new StreamReader(path))
-        {
-            // Read header line.
-            string? headerLine = reader.ReadLine();
-            if (headerLine == null)
-                return people; // Empty file.
-
-            // Expecting "Name,Age" – split on commas.
-            while (!reader.EndOfStream)
-            {
-                string? line = reader.ReadLine();
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
-
-                string[] parts = line.Split(',');
-                if (parts.Length < 2)
-                    continue;
-
-                var person = new Person
-                {
-                    Name = parts[0].Trim(),
-                    Age = int.TryParse(parts[1].Trim(), out int age) ? age : 0
-                };
-                people.Add(person);
-            }
-        }
-        return people;
+        // Save the final report
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "report_output.docx");
+        template.Save(outputPath);
     }
 }

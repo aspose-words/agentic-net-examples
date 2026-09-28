@@ -3,64 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class LinqReportingExample
+public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data.
-        const string xmlFileName = "People.xml";
-        const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<People>
+        // Create sample XML data.
+        string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Persons>
     <Person>
-        <Name>John Doe</Name>
+        <Name>Alice</Name>
         <Age>30</Age>
     </Person>
     <Person>
-        <Name>Jane Smith</Name>
+        <Name>Bob</Name>
         <Age>25</Age>
     </Person>
     <Person>
-        <Name>Bob Johnson</Name>
-        <Age>40</Age>
+        <Name>Charlie</Name>
+        <Age>35</Age>
     </Person>
-</People>";
-        File.WriteAllText(xmlFileName, xmlContent);
+</Persons>";
+        string xmlPath = "data.xml";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // Create a template document with LINQ Reporting tags.
-        const string templateFileName = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Load XML data source.
+        XmlDataSource xmlData = new XmlDataSource(xmlPath);
+
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
         builder.Writeln("People Report");
-        builder.Writeln("----------------");
-        // Begin foreach loop over the XML data source named "xmlData".
-        builder.Writeln("<<foreach [in xmlData]>>");
-        // Inside the loop output the fields of each Person element.
-        builder.Writeln("Name: <<[Name]>>");
-        builder.Writeln("Age: <<[Age]>>");
-        builder.Writeln(""); // Blank line between records.
-        // End foreach loop.
+        // Iterate over the rows of the Persons table.
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templateFileName);
-
-        // Load the template document for reporting.
-        Document reportDoc = new Document(templateFileName);
-
-        // Create an XML data source from the XML file.
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlFileName);
-
-        // Build the report using the data source. The data source name must match the tag ("xmlData").
+        // Build the report using the XML data source.
         ReportingEngine engine = new ReportingEngine();
-        bool success = engine.BuildReport(reportDoc, xmlDataSource, "xmlData");
+        bool success = engine.BuildReport(template, xmlData, "Persons");
 
         // Save the generated report.
-        const string outputFileName = "Report.docx";
-        reportDoc.Save(outputFileName);
+        string outputPath = "report.docx";
+        template.Save(outputPath);
 
-        Console.WriteLine(success
-            ? $"Report generated successfully: {outputFileName}"
-            : "Report generation failed.");
+        // Indicate completion (no interactive input).
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
 }

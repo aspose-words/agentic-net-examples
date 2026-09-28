@@ -1,112 +1,87 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Needed for the Table class
 
-namespace AsposeWordsLinqReportingExample
+public class ReportModel
 {
-    // Root data model that will be passed to the reporting engine.
-    public class ReportModel
-    {
-        public List<Order> Orders { get; set; } = new();
+    public List<Order> Orders { get; set; } = new();
+}
 
-        public ReportModel()
+public class Order
+{
+    public int OrderId { get; set; }
+    public string CustomerName { get; set; } = "";
+    public List<LineItem> LineItems { get; set; } = new();
+}
+
+public class LineItem
+{
+    public string ProductName { get; set; } = "";
+    public int Quantity { get; set; }
+    public decimal Price { get; set; }
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        // Register code page provider for Aspose.Words (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Sample data.
+        var model = new ReportModel
         {
-            // Sample data for demonstration.
-            Orders.Add(new Order
+            Orders = new()
             {
-                CustomerName = "John Doe",
-                Items = new List<LineItem>
+                new Order
                 {
-                    new LineItem { Product = "Laptop", Quantity = 1 },
-                    new LineItem { Product = "Mouse", Quantity = 2 }
-                }
-            });
-
-            Orders.Add(new Order
-            {
-                CustomerName = "Jane Smith",
-                Items = new List<LineItem>
+                    OrderId = 1,
+                    CustomerName = "Alice",
+                    LineItems = new()
+                    {
+                        new LineItem { ProductName = "Widget", Quantity = 2, Price = 9.99m },
+                        new LineItem { ProductName = "Gadget", Quantity = 1, Price = 19.99m }
+                    }
+                },
+                new Order
                 {
-                    new LineItem { Product = "Desk", Quantity = 1 },
-                    new LineItem { Product = "Chair", Quantity = 4 },
-                    new LineItem { Product = "Lamp", Quantity = 2 }
+                    OrderId = 2,
+                    CustomerName = "Bob",
+                    LineItems = new()
+                    {
+                        new LineItem { ProductName = "Thingamajig", Quantity = 5, Price = 4.99m }
+                    }
                 }
-            });
-        }
-    }
+            }
+        };
 
-    public class Order
-    {
-        public string CustomerName { get; set; } = string.Empty;
-        public List<LineItem> Items { get; set; } = new();
-    }
+        // Create template with nested data band tags.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-    public class LineItem
-    {
-        public string Product { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-    }
+        builder.Writeln("Orders Report");
+        builder.Writeln("<<foreach [order in model.Orders]>>");
+        builder.Writeln("Order ID: <<[order.OrderId]>>   Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Line Items:");
+        builder.Writeln("<<foreach [item in order.LineItems]>>");
+        builder.Writeln("- <<[item.ProductName]>>   Qty: <<[item.Quantity]>>   Price: $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
 
-    class Program
-    {
-        static void Main()
-        {
-            // -----------------------------------------------------------------
-            // 1. Create the template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-            // Outer foreach iterates over orders.
-            builder.Writeln("<<foreach [order in model.Orders]>>");
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln();
+        // Load template for report generation.
+        var reportDoc = new Document(templatePath);
 
-            // Inner foreach iterates over line items of the current order.
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            Table table = builder.StartTable(); // Table comes from Aspose.Words.Tables
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-            // Header row (once per order).
-            builder.InsertCell();
-            builder.Writeln("Product");
-            builder.InsertCell();
-            builder.Writeln("Quantity");
-            builder.EndRow();
-
-            // Data row for each line item.
-            builder.InsertCell();
-            builder.Writeln("<<[item.Product]>>");
-            builder.InsertCell();
-            builder.Writeln("<<[item.Quantity]>>");
-            builder.EndRow();
-
-            builder.EndTable();
-            builder.Writeln("<</foreach>>"); // End inner foreach (line items).
-
-            builder.Writeln("<</foreach>>"); // End outer foreach (orders).
-
-            // Save the template to disk.
-            const string templatePath = "OrderReportTemplate.docx";
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report using the data model.
-            // -----------------------------------------------------------------
-            Document report = new Document(templatePath);
-            ReportModel model = new ReportModel();
-
-            ReportingEngine engine = new ReportingEngine();
-            // No special options required for this simple example.
-            engine.BuildReport(report, model, "model");
-
-            // Save the generated report.
-            const string reportPath = "OrderReport.docx";
-            report.Save(reportPath);
-
-            // Inform the user (no interactive input required).
-            Console.WriteLine($"Report generated successfully: {reportPath}");
-        }
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

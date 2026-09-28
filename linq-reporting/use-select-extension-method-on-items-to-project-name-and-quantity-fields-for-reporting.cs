@@ -1,71 +1,74 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Item
+namespace LinqReportingSelectExample
 {
-    public string Name { get; set; } = "";
-    public int Quantity { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Sample data class with extra fields.
+    public class Item
     {
-        // Register code page provider required by Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+    }
 
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+    // Projection class containing only the fields needed for the report.
+    public class ItemProjection
+    {
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+    }
 
-        // -----------------------------------------------------------------
-        // Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+    // Root model passed to the reporting engine.
+    public class ReportModel
+    {
+        public List<ItemProjection> ProjectedItems { get; set; } = new();
+    }
 
-        builder.Writeln("Product Report");
-        builder.Writeln();
-
-        // Use Select to project only Name and Quantity fields.
-        builder.Writeln("<<foreach [item in Items.Select(i => new { i.Name, i.Quantity })]>>");
-        builder.Writeln("Name: <<[item.Name]>>, Quantity: <<[item.Quantity]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template and prepare the data source.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        ReportModel model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Items = new List<Item>
+            // Prepare sample data.
+            List<Item> items = new()
             {
-                new Item { Name = "Apple", Quantity = 10 },
-                new Item { Name = "Banana", Quantity = 20 },
-                new Item { Name = "Cherry", Quantity = 15 }
-            }
-        };
+                new Item { Name = "Apple", Quantity = 10, Price = 0.5m },
+                new Item { Name = "Banana", Quantity = 20, Price = 0.3m },
+                new Item { Name = "Cherry", Quantity = 15, Price = 1.2m }
+            };
 
-        // -----------------------------------------------------------------
-        // Build the report using the ReportingEngine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Project Name and Quantity using LINQ Select.
+            ReportModel model = new()
+            {
+                ProjectedItems = items
+                    .Select(i => new ItemProjection { Name = i.Name, Quantity = i.Quantity })
+                    .ToList()
+            };
 
-        // Save the generated report.
-        doc.Save(reportPath);
+            // Create the template document.
+            string templatePath = "Template.docx";
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
+
+            builder.Writeln("Items Report");
+            builder.Writeln("==============");
+            builder.Writeln("<<foreach [p in ProjectedItems]>>");
+            builder.Writeln("- <<[p.Name]>>: <<[p.Quantity]>>");
+            builder.Writeln("<</foreach>>");
+
+            templateDoc.Save(templatePath);
+
+            // Load the template and build the report.
+            Document reportDoc = new(templatePath);
+            ReportingEngine engine = new();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the final report.
+            string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+        }
     }
 }

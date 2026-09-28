@@ -5,77 +5,57 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
+        // Paths for template and output documents.
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
+
+        // Create the template document with LINQ Reporting tags.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Filtered and Sorted Persons:");
+        builder.Writeln("<<foreach [person in Persons.Where(p => p.Age > 30).Select(p => p).OrderBy(p => p.Name)]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        Document doc = new Document(templatePath);
+
         // Prepare sample data.
-        List<Item> sourceItems = new()
+        var model = new ReportModel
         {
-            new Item { Id = 1, Name = "Apple",  Value = 5 },
-            new Item { Id = 2, Name = "Banana", Value = 12 },
-            new Item { Id = 3, Name = "Cherry", Value = 8 },
-            new Item { Id = 4, Name = "Date",   Value = 15 },
-            new Item { Id = 5, Name = "Elderberry", Value = 20 }
+            Persons = new List<Person>
+            {
+                new Person { Name = "Alice", Age = 28 },
+                new Person { Name = "Bob", Age = 35 },
+                new Person { Name = "Charlie", Age = 40 },
+                new Person { Name = "David", Age = 25 }
+            }
         };
 
-        // LINQ: filter Value > 10, project required fields, order by Name.
-        List<ItemDto> filtered = sourceItems
-            .Where(i => i.Value > 10)
-            .Select(i => new ItemDto { Id = i.Id, Name = i.Name, Value = i.Value })
-            .OrderBy(i => i.Name)
-            .ToList();
-
-        // Wrap the result for the reporting engine.
-        ReportModel model = new() { Items = filtered };
-
-        // Create a template document programmatically.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-        CreateTemplate(templatePath);
-
-        // Load the template and build the report.
-        Document doc = new(templatePath);
-        ReportingEngine engine = new();
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-        doc.Save(reportPath);
+        doc.Save(outputPath);
     }
-
-    // Generates a simple Word template with a foreach tag.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
-
-        builder.Writeln("Filtered and Sorted Items:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>, Value: <<[item.Value]>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(filePath);
-    }
-}
-
-// Simple data entity.
-public class Item
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int Value { get; set; }
-}
-
-// DTO used in the report.
-public class ItemDto
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int Value { get; set; }
-}
-
-// Wrapper class for the reporting engine.
-public class ReportModel
-{
-    public List<ItemDto> Items { get; set; } = new();
 }

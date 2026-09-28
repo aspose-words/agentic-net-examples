@@ -1,56 +1,72 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingConversionExample
 {
-    public static void Main()
+    // Custom type with an explicit conversion operator to string.
+    public class MyValue
     {
-        // Prepare folders.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        public int Number { get; set; }
 
-        // 1. Create a template document with a LINQ Reporting tag that casts a custom type.
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Custom value: <<[(string)model.Custom]>>");
-        templateDoc.Save(templatePath);
-
-        // 2. Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // 3. Prepare the data model.
-        ReportModel model = new ReportModel
-        {
-            Custom = new MyNumber(42) // The custom type will be cast to string in the template.
-        };
-
-        // 4. Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // 5. Save the generated report.
-        string outputPath = Path.Combine(workDir, "Result.docx");
-        reportDoc.Save(outputPath);
+        // Explicit conversion to string.
+        public static explicit operator string(MyValue value) => value.Number.ToString();
     }
-}
 
-// Public data model required by the template.
-public class ReportModel
-{
-    // Initialized to avoid nullable warnings.
-    public MyNumber Custom { get; set; } = null!;
-}
+    // Model class used in the report.
+    public class Item
+    {
+        public MyValue Value { get; set; } = new MyValue();
+    }
 
-// Custom type with an explicit conversion operator to string.
-public class MyNumber
-{
-    public int Value { get; }
+    // Public wrapper for the data source required by the ReportingEngine.
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
 
-    public MyNumber(int value) => Value = value;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    // Explicit cast to string – used in the template expression.
-    public static explicit operator string(MyNumber number) => number.Value.ToString();
+            // Prepare sample data.
+            var items = new List<Item>
+            {
+                new() { Value = new MyValue { Number = 10 } },
+                new() { Value = new MyValue { Number = 20 } },
+                new() { Value = new MyValue { Number = 30 } }
+            };
+
+            // Create the template document programmatically.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Sample Report");
+            builder.Writeln("<<foreach [item in Items]>>");
+            // Explicitly cast MyValue to string using the user‑defined conversion operator.
+            builder.Writeln("Value: <<[(string)item.Value]>>");
+            builder.Writeln("<</foreach>>");
+
+            doc.Save(templatePath);
+
+            // Load the template for reporting.
+            var template = new Document(templatePath);
+
+            // Build the report using the LINQ Reporting engine.
+            var engine = new ReportingEngine();
+
+            var model = new ReportModel { Items = items };
+            engine.BuildReport(template, model, "model");
+
+            // Save the generated report.
+            var outputPath = "Report.docx";
+            template.Save(outputPath);
+        }
+    }
 }

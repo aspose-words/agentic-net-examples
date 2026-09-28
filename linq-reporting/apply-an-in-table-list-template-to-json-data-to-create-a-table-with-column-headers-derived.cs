@@ -1,76 +1,97 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample JSON data
-        string json = @"[
-            { ""Name"": ""Alice"", ""Age"": 30 },
-            { ""Name"": ""Bob"",   ""Age"": 25 },
-            { ""Name"": ""Charlie"", ""Age"": 28 }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Sample JSON data.
+        string json = @"
+        [
+            { ""Name"": ""Alice"", ""Age"": 30, ""Country"": ""USA"" },
+            { ""Name"": ""Bob"",   ""Age"": 25, ""Country"": ""Canada"" },
+            { ""Name"": ""Charlie"", ""Age"": 35, ""Country"": ""UK"" }
         ]";
-        File.WriteAllText("data.json", json, Encoding.UTF8);
 
-        // Load JSON into model
-        string jsonData = File.ReadAllText("data.json", Encoding.UTF8);
-        List<Person> persons = JsonConvert.DeserializeObject<List<Person>>(jsonData) ?? new();
-        ReportModel model = new() { Persons = persons };
+        // Deserialize JSON into a list of Person objects.
+        List<Person> persons = JsonConvert.DeserializeObject<List<Person>>(json) ?? new();
 
-        // Create template document
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Wrapper model for the report.
+        ReportModel model = new()
+        {
+            Persons = persons
+        };
 
-        // Begin foreach loop for data rows
-        builder.Writeln("<<foreach [person in Persons]>>");
+        // Create a Word template programmatically.
+        Document template = new();
+        DocumentBuilder builder = new(template);
 
-        // Build table (header + data row)
-        Table table = builder.StartTable();
+        // -----------------------------------------------------------------
+        // Header table (static, appears once)
+        // -----------------------------------------------------------------
+        builder.StartTable();
 
-        // Header row
         builder.InsertCell();
-        builder.Writeln("Name");
+        builder.Writeln(nameof(Person.Name));
         builder.InsertCell();
-        builder.Writeln("Age");
-        builder.EndRow();
-
-        // Data row (repeated for each person)
+        builder.Writeln(nameof(Person.Age));
         builder.InsertCell();
-        builder.Writeln("<<[person.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[person.Age]>>");
+        builder.Writeln(nameof(Person.Country));
         builder.EndRow();
 
         builder.EndTable();
 
-        // End foreach loop
+        // -----------------------------------------------------------------
+        // Data rows – generated inside a foreach block
+        // -----------------------------------------------------------------
+        builder.Writeln("<<foreach [person in Persons]>>");
+
+        // Table that will be repeated for each person.
+        builder.StartTable();
+
+        builder.InsertCell();
+        builder.Writeln("<<[person.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[person.Age]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[person.Country]>>");
+        builder.EndRow();
+
+        builder.EndTable();
+
         builder.Writeln("<</foreach>>");
 
-        // Generate report
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Save the template (optional, for inspection).
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
 
-        // Save the result
-        doc.Save("report.docx");
+        // Build the report using the template and the model.
+        ReportingEngine engine = new();
+        engine.BuildReport(template, model, "model");
 
-        Console.WriteLine("Report generated: report.docx");
+        // Save the generated report.
+        const string outputPath = "report.docx";
+        template.Save(outputPath);
     }
 }
 
+// Data model representing a person.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
+    public string Country { get; set; } = string.Empty;
+}
+
+// Wrapper model for the report.
 public class ReportModel
 {
     public List<Person> Persons { get; set; } = new();
-}
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
 }

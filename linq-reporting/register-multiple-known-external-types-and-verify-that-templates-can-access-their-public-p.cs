@@ -1,67 +1,81 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+namespace LinqReportingKnownTypesDemo
 {
-    // External types whose static members will be accessed from the template.
-    public static class ExternalA
+    // Sample external type 1
+    public class Person
     {
-        public static string ValueA => "Hello from ExternalA";
+        public string Name { get; set; } = "John Doe";
+        public int Age { get; set; } = 30;
     }
 
-    public static class ExternalB
+    // Sample external type 2
+    public class Product
     {
-        public static int ValueB => 42;
+        public string Title { get; set; } = "Sample Product";
+        public decimal Price { get; set; } = 99.99m;
+    }
+
+    // Root model that holds the external objects
+    public class ReportModel
+    {
+        public Person Person { get; set; } = new();
+        public Product Product { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            // Ensure the output directory exists
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
             // -----------------------------------------------------------------
-            // 1. Create a template document with LINQ Reporting tags that refer
-            //    to static members of the external types.
+            // 1. Create the template document with LINQ Reporting tags
             // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
 
-            builder.Writeln("Static values accessed via KnownTypes:");
-            builder.Writeln("ExternalA.ValueA = <<[ExternalA.ValueA]>>");
-            builder.Writeln("ExternalB.ValueB = <<[ExternalB.ValueB]>>");
+            builder.Writeln("Person Name: <<[model.Person.Name]>>");
+            builder.Writeln("Person Age: <<[model.Person.Age]>>");
+            builder.Writeln("Product Title: <<[model.Product.Title]>>");
+            builder.Writeln("Product Price: <<[model.Product.Price]>>");
 
-            // Save the template to disk.
             templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template back for report generation.
+            // 2. Enable reflection optimization (allows known types without reflection)
             // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
+            ReportingEngine.UseReflectionOptimization = true;
 
             // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            //    Register the external types so the template can use them without
-            //    reflection.
+            // 3. Load the template and build the report
             // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-            engine.KnownTypes.Add(typeof(ExternalA));
-            engine.KnownTypes.Add(typeof(ExternalB));
+            Document reportDoc = new(templatePath);
+            ReportModel model = new()
+            {
+                Person = new Person { Name = "Alice Smith", Age = 28 },
+                Product = new Product { Title = "Aspose.Words Book", Price = 49.95m }
+            };
 
-            // Build the report. No root data object is required because the template
-            // only uses static members.
-            engine.BuildReport(reportDoc, new object(), "data");
+            ReportingEngine engine = new();
+            engine.BuildReport(reportDoc, model, "model");
 
             // -----------------------------------------------------------------
-            // 4. Save the generated report.
+            // 4. Save the generated report
             // -----------------------------------------------------------------
+            string reportPath = Path.Combine(outputDir, "Report.docx");
             reportDoc.Save(reportPath);
 
-            // Output the resulting text to the console for verification.
-            Console.WriteLine("Report generated successfully. Content:");
+            // -----------------------------------------------------------------
+            // 5. Verify the output by printing the document text to console
+            // -----------------------------------------------------------------
+            Console.WriteLine("=== Generated Report Text ===");
             Console.WriteLine(reportDoc.GetText());
         }
     }

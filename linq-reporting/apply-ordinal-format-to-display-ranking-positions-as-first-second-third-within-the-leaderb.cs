@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,60 +9,93 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any legacy encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare file paths.
+        string templatePath = "LeaderboardTemplate.docx";
+        string outputPath = "LeaderboardReport.docx";
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // -----------------------------------------------------------------
+        // Step 1: Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Title.
         builder.Writeln("Leaderboard");
-
-        // Begin foreach loop over Players collection.
-        builder.Writeln("<<foreach [player in Players]>>");
-        // Use ordinal text format for the Position property (First, Second, Third, ...).
-        builder.Writeln("<<[player.Position]:ordinalText>>. <<[player.Name]>>");
-        // End foreach.
+        builder.Writeln("<<foreach [player in model.Leaderboard.Players]>>");
+        builder.Writeln(
+            "<<if [player.Rank == 1]>>First<</if>>" +
+            "<<if [player.Rank == 2]>>Second<</if>>" +
+            "<<if [player.Rank == 3]>>Third<</if>>" +
+            "<<if [player.Rank > 3]>> <<[player.Rank]>> <</if>>. " +
+            "<<[player.Name]>> - <<[player.Score]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to a temporary file.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "LeaderboardTemplate.docx");
-        template.Save(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // Step 2: Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-        // Prepare sample data.
-        Leaderboard model = new()
+        // -----------------------------------------------------------------
+        // Step 3: Prepare sample data.
+        // -----------------------------------------------------------------
+        var model = new Model
         {
-            Players = new()
+            Leaderboard = new Leaderboard
             {
-                new Player { Position = 1, Name = "Alice" },
-                new Player { Position = 2, Name = "Bob" },
-                new Player { Position = 3, Name = "Charlie" }
+                Players = new List<Player>
+                {
+                    new Player { Name = "Alice", Score = 95 },
+                    new Player { Name = "Bob", Score = 87 },
+                    new Player { Name = "Charlie", Score = 78 },
+                    new Player { Name = "Diana", Score = 65 },
+                    new Player { Name = "Ethan", Score = 60 }
+                }
             }
         };
 
-        // Build the report using LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Compute ranking based on descending scores.
+        var ordered = model.Leaderboard.Players
+            .OrderByDescending(p => p.Score)
+            .Select((p, index) =>
+            {
+                p.Rank = index + 1;
+                return p;
+            })
+            .ToList();
 
-        // Save the generated report.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "LeaderboardReport.docx");
-        doc.Save(outputPath);
+        model.Leaderboard.Players = ordered;
+
+        // -----------------------------------------------------------------
+        // Step 4: Build the report using LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // -----------------------------------------------------------------
+        // Step 5: Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(outputPath);
     }
 }
 
-// Root data model for the report.
+// ---------------------------------------------------------------------
+// Data model definitions.
+// ---------------------------------------------------------------------
+public class Model
+{
+    public Leaderboard Leaderboard { get; set; } = new();
+}
+
 public class Leaderboard
 {
     public List<Player> Players { get; set; } = new();
 }
 
-// Individual player entry.
 public class Player
 {
-    public int Position { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public int Score { get; set; }
+    public int Rank { get; set; }
 }

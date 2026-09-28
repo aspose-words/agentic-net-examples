@@ -1,63 +1,39 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Order
 {
-    // Simple data model with a Total property.
-    public class Order
+    public double Total { get; set; } = 0;
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public decimal Total { get; set; } = 0m;
-    }
+        // Prepare sample data.
+        var order = new Order { Total = 620.0 };
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a template document.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Write a line showing the order total.
-            builder.Writeln("Order total: <<[order.Total]>>");
+        builder.Writeln("Order Report");
+        builder.Writeln("Total: <<[order.Total]>>");
+        builder.Writeln("Discount: <<[order.Total > 500 ? order.Total * 0.1 : 0]>>");
+        doc.Save(templatePath);
 
-            // Write a line showing the discount.
-            // If Total > 500, display Total * 0.1m, otherwise display 0.
-            // Note the use of the decimal literal (0.1m) to avoid type mismatch.
-            builder.Writeln("Discount: " +
-                "<<if [order.Total > 500]>>" +
-                "<<[order.Total * 0.1m]>>" +
-                "<</if>>" +
-                "<<if [order.Total <= 500]>>0<</if>>");
+        // Load the template.
+        var template = new Document(templatePath);
 
-            // Save the template to disk (required before building the report).
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, order, "order");
 
-            // -----------------------------------------------------------------
-            // 2. Load the template document.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            Order order = new Order { Total = 620m }; // Example total > 500
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using Aspose.Words LINQ Reporting Engine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            // The root object name in the template is "order".
-            engine.BuildReport(doc, order, "order");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string reportPath = "Report.docx";
-            doc.Save(reportPath);
-        }
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        template.Save(outputPath);
     }
 }

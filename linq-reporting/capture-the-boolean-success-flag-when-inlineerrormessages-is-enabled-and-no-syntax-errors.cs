@@ -1,48 +1,50 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Model
 {
-    // Simple data model used as the root object for the report.
-    public class Person
+    public string Name { get; set; } = "John Doe";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Initialize non‑nullable reference types to avoid warnings.
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Create a blank document and add LINQ Reporting tags.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Prepare directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-            // Template tags reference the root object named "model".
-            builder.Writeln("Name: <<[model.Name]>>");
-            builder.Writeln("Age: <<[model.Age]>>");
+        // Create template document with a simple LINQ Reporting tag.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Customer Name: <<[model.Name]>>");
+        templateDoc.Save(templatePath);
 
-            // Prepare sample data.
-            Person model = new Person
-            {
-                Name = "John Doe",
-                Age = 30
-            };
+        // Load the template.
+        var doc = new Document(templatePath);
 
-            // Configure the reporting engine to inline error messages.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
+        // Prepare the data model.
+        var model = new Model();
 
-            // Build the report and capture the success flag.
-            bool success = engine.BuildReport(doc, model, "model");
+        // Configure the reporting engine with InlineErrorMessages.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Output the result flag.
-            Console.WriteLine($"Report build success: {success}");
+        // Build the report and capture the success flag.
+        bool success = engine.BuildReport(doc, model, "model");
 
-            // Save the generated report.
-            doc.Save("ReportOutput.docx");
-        }
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(reportPath);
+
+        // Output the success flag.
+        Console.WriteLine($"Report build success: {success}");
     }
 }

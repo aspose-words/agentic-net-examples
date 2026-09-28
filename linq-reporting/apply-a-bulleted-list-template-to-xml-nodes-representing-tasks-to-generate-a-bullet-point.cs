@@ -1,76 +1,67 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the final report.
-        const string templatePath = "TaskTemplate.docx";
-        const string reportPath = "TaskReport.docx";
+        // Create sample XML data representing tasks.
+        const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Tasks>
+    <Task>
+        <Title>Prepare project proposal</Title>
+    </Task>
+    <Task>
+        <Title>Review design specifications</Title>
+    </Task>
+    <Task>
+        <Title>Implement core modules</Title>
+    </Task>
+    <Task>
+        <Title>Test and validate features</Title>
+    </Task>
+</Tasks>";
+        const string xmlPath = "tasks.xml";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create the LINQ Reporting template programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Create a bulleted list that will be used for each task.
-        List bulletList = templateDoc.Lists.Add(ListTemplate.BulletDefault);
-        builder.ListFormat.List = bulletList;
+        // Optional title.
+        builder.Writeln("Task List:");
+        builder.Writeln();
 
-        // Insert LINQ Reporting tags.
-        // The XML data source will expose a collection named "tasks".
-        builder.Writeln("<<foreach [task in tasks]>>");
-        // Each iteration writes the task title as a list item.
+        // Begin foreach loop over XML nodes.
+        builder.Writeln("<<foreach [task in Tasks]>>");
+
+        // Apply bullet list formatting for each task.
+        builder.ListFormat.ApplyBulletDefault();
         builder.Writeln("<<[task.Title]>>");
-        builder.Writeln("<</foreach>>");
-
-        // End the list formatting.
+        // Clear list formatting so it does not affect following paragraphs.
         builder.ListFormat.RemoveNumbers();
 
+        // End foreach loop.
+        builder.Writeln("<</foreach>>");
+
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the template for report generation.
-        // -------------------------------------------------
-        var reportDoc = new Document(templatePath);
+        // Load the template for report generation.
+        Document report = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 3. Prepare sample XML data representing tasks.
-        // -------------------------------------------------
-        const string xmlContent = @"
-<tasks>
-    <task>
-        <Title>Buy groceries</Title>
-    </task>
-    <task>
-        <Title>Call Alice</Title>
-    </task>
-    <task>
-        <Title>Finish project report</Title>
-    </task>
-</tasks>";
-        using var xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlContent));
+        // Load XML data source.
+        XmlDataSource xmlData = new XmlDataSource(xmlPath);
 
-        // Create an XmlDataSource from the XML stream.
-        var xmlDataSource = new XmlDataSource(xmlStream);
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, xmlData, "Tasks");
 
-        // -------------------------------------------------
-        // 4. Build the report using the ReportingEngine.
-        // -------------------------------------------------
-        var engine = new ReportingEngine();
-        // The root object name in the template is "tasks".
-        engine.BuildReport(reportDoc, xmlDataSource, "tasks");
-
-        // -------------------------------------------------
-        // 5. Save the generated report.
-        // -------------------------------------------------
-        reportDoc.Save(reportPath);
+        // Save the generated report.
+        const string outputPath = "output.docx";
+        report.Save(outputPath);
     }
 }

@@ -1,73 +1,62 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace LinqReportingRestrictedTypesExample
 {
     // Simple data model used as the root object for the report.
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
+
     public class Person
     {
-        // Initialize properties to avoid nullable warnings.
-        public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Define the types that should be restricted in LINQ Reporting.
-            //    This must be done before any ReportingEngine instance is used.
-            // -----------------------------------------------------------------
-            ReportingEngine.SetRestrictedTypes(
-                typeof(System.Environment),   // Example of a prohibited type.
-                typeof(System.IO.FileInfo)   // Another prohibited type.
-            );
+            // Prepare sample data.
+            var model = new ReportModel
+            {
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 25 },
+                    new Person { Name = "Charlie", Age = 35 }
+                }
+            };
 
-            // -----------------------------------------------------------------
-            // 2. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            const string templatePath = "Template.docx";
+            // Create a template document programmatically.
+            var templatePath = "Template.docx";
+            var builder = new DocumentBuilder();
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+            builder.Document.Save(templatePath);
 
-            // Create a new blank document.
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Load the template document.
+            var doc = new Document(templatePath);
 
-            // Insert LINQ Reporting tags that reference the data model.
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
+            // Restrict prohibited .NET types before building the report.
+            ReportingEngine.SetRestrictedTypes(new[]
+            {
+                typeof(System.IO.FileInfo),
+                typeof(System.Diagnostics.Process)
+            });
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+            // Build the report.
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 3. Load the template document back from disk (required by the workflow).
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 4. Prepare the data source.
-            // -----------------------------------------------------------------
-            Person person = new Person();
-
-            // -----------------------------------------------------------------
-            // 5. Build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-
-            // BuildReport overload that allows referencing the root object name ("person").
-            engine.BuildReport(loadedTemplate, person, "person");
-
-            // -----------------------------------------------------------------
-            // 6. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            loadedTemplate.Save(outputPath);
-
-            // Indicate successful completion (no interactive prompts).
-            Console.WriteLine($"Report generated and saved to '{Path.GetFullPath(outputPath)}'.");
+            // Save the generated report.
+            var outputPath = "Report.docx";
+            doc.Save(outputPath);
         }
     }
 }

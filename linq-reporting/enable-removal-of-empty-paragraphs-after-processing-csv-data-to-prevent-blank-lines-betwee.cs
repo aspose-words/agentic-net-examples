@@ -8,51 +8,51 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
+        // Register code page provider for CSV encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Define file paths in the current directory.
-        string templatePath = "Template.docx";
-        string csvPath = "People.csv";
-        string outputPath = "Report.docx";
+        // Prepare sample CSV data.
+        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.csv");
+        File.WriteAllText(csvPath, "Name,Age\nAlice,30\nBob,25\nCharlie,35");
 
-        // Create a simple CSV file with a header and three rows.
-        // The second row contains empty fields to demonstrate removal of empty paragraphs.
-        File.WriteAllText(csvPath,
-            "Name,Age\r\n" +
-            "John Doe,30\r\n" +
-            ",\r\n" +               // Empty row – will produce an empty paragraph.
-            "Jane Smith,25\r\n",
-            Encoding.UTF8);
-
-        // Build the template document programmatically.
+        // Create a template document programmatically.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Insert a foreach tag that iterates over the CSV rows (exposed as 'persons').
-        builder.Writeln("<<foreach [person in persons]>>");
-        // Write the fields; each iteration creates its own paragraph.
-        builder.Writeln("<<[person.Name]>> <<[person.Age]>>");
+        // Begin foreach over CSV rows.
+        builder.Writeln("<<foreach [row in data]>>");
+        // Output each row in its own paragraph.
+        builder.Writeln("Name: <<[row.Name]>>, Age: <<[row.Age]>>");
+        // End foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template (optional, for inspection).
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
         template.Save(templatePath);
 
-        // Load the template document.
-        Document doc = new Document(templatePath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Configure CSV data source options (CSV has headers).
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        CsvDataSource dataSource = new CsvDataSource(csvPath, loadOptions);
+        // Create CSV data source.
+        CsvDataSource csvData = new CsvDataSource(csvPath, new CsvDataLoadOptions
+        {
+            // Use first row as header.
+            HasHeaders = true
+            // Default separator is a comma, so no explicit Separator property is needed.
+        });
 
-        // Initialize the reporting engine and enable removal of empty paragraphs.
+        // Configure the reporting engine to remove empty paragraphs.
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // Build the report. The root object name must match the tag reference ('persons').
-        engine.BuildReport(doc, dataSource, "persons");
+        // Build the report using the CSV data source.
+        engine.BuildReport(reportDoc, csvData, "data");
 
         // Save the generated report.
-        doc.Save(outputPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

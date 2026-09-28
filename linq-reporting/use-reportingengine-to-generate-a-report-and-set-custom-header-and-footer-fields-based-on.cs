@@ -1,87 +1,77 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-namespace AsposeWordsLinqReportingExample
+public class ReportModel
 {
-    public class Program
+    public string Header { get; set; } = "";
+    public string Footer { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public string Value { get; set; } = "";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Register code page provider for possible encoding needs.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample JSON data.
+        string jsonContent = @"{
+            ""Header"": ""My Report Header"",
+            ""Footer"": ""Page Footer - Confidential"",
+            ""Items"": [
+                { ""Name"": ""Item1"", ""Value"": ""100"" },
+                { ""Name"": ""Item2"", ""Value"": ""200"" },
+                { ""Name"": ""Item3"", ""Value"": ""300"" }
+            ]
+        }";
 
-            // Prepare output folder.
-            string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputFolder);
+        string jsonPath = "data.json";
+        File.WriteAllText(jsonPath, jsonContent);
 
-            // Paths for the template, JSON data and final report.
-            string templatePath = Path.Combine(outputFolder, "Template.docx");
-            string jsonPath = Path.Combine(outputFolder, "data.json");
-            string reportPath = Path.Combine(outputFolder, "Report.docx");
+        // Deserialize JSON into the model.
+        string jsonData = File.ReadAllText(jsonPath);
+        ReportModel model = JsonConvert.DeserializeObject<ReportModel>(jsonData)!;
 
-            // -----------------------------------------------------------------
-            // 1. Create a simple template document with header, footer and body.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create the template document with header, footer, and body tags.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Header with a custom field from JSON.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            builder.Writeln("<<[model.Header]>>");
+        // Header with custom field.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("<<[model.Header]>>");
 
-            // Footer with page information from JSON.
-            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-            builder.Writeln("Page <<[model.PageNumber]>> of <<[model.TotalPages]>>");
+        // Footer with custom field.
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("<<[model.Footer]>>");
 
-            // Body content.
-            builder.MoveToDocumentEnd();
-            builder.Writeln("Report for <<[model.CustomerName]>>");
-            builder.Writeln("Generated on <<[model.GeneratedDate]>>");
+        // Body content.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Report Items:");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Value]>>");
+        builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-            // ---------------------------------------------------------------
-            // 2. Create a JSON file that contains the data for the report.
-            // ---------------------------------------------------------------
-            var jsonData = new
-            {
-                Header = "Monthly Sales Report",
-                PageNumber = "1",
-                TotalPages = "5",
-                CustomerName = "Acme Corp",
-                GeneratedDate = DateTime.Now.ToString("yyyy-MM-dd")
-            };
-            string jsonString = JsonConvert.SerializeObject(jsonData, Formatting.Indented);
-            File.WriteAllText(jsonPath, jsonString, Encoding.UTF8);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-            // ---------------------------------------------------------------
-            // 3. Load the template and bind it to the JSON data source.
-            // ---------------------------------------------------------------
-            Document doc = new Document(templatePath);
-            JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+        // Build the report using the LINQ Reporting Engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-            ReportingEngine engine = new ReportingEngine
-            {
-                // Remove empty paragraphs that may appear after tag removal.
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
-            };
-
-            // Build the report. The root name used in the template tags is "model".
-            bool success = engine.BuildReport(doc, jsonDataSource, "model");
-
-            // ---------------------------------------------------------------
-            // 4. Save the generated report.
-            // ---------------------------------------------------------------
-            doc.Save(reportPath);
-
-            // Optional: indicate success (no console interaction required).
-            // The application will exit automatically.
-        }
+        // Save the generated report.
+        string outputPath = "output.docx";
+        reportDoc.Save(outputPath);
     }
 }

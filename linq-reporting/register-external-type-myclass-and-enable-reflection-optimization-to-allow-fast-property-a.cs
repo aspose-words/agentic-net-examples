@@ -1,65 +1,51 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class MyClass
 {
-    // External type that will be accessed from the template.
-    public class MyClass
-    {
-        // Static property accessed via the template.
-        public static string Greeting => "Hello from MyClass";
+    public string Name { get; set; } = "";
+    public int Value { get; set; }
+}
 
-        // Static method accessed via the template.
-        public static int GetNumber()
+public class Program
+{
+    public static void Main()
+    {
+        // Create output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Build template document with LINQ Reporting tags
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Hello, <<[my.Name]>>!");
+        builder.Writeln("Value: <<[my.Value]>>");
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
+
+        // Load template for report generation
+        Document report = new Document(templatePath);
+
+        // Sample data
+        MyClass data = new MyClass
         {
-            return 42;
-        }
-    }
+            Name = "World",
+            Value = 42
+        };
 
-    // Root data model for the report.
-    public class Model
-    {
-        // Instance property accessed via the template.
-        public string PersonName { get; set; } = "John Doe";
-    }
+        // Enable reflection optimization
+        ReportingEngine.UseReflectionOptimization = true;
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Create a new blank document and a builder to insert content.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Build report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, data, "my");
 
-            // Insert LINQ Reporting tags that reference the external type and the model.
-            builder.Writeln("Greeting: <<[MyClass.Greeting]>>");
-            builder.Writeln("Number: <<[MyClass.GetNumber()]>>");
-            builder.Writeln("Name: <<[model.PersonName]>>");
+        // Save the generated report
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        report.Save(reportPath);
 
-            // Save the template to a local file (optional, demonstrates load/save lifecycle).
-            const string templatePath = "Template.docx";
-            doc.Save(templatePath);
-
-            // Load the template back (simulating a separate load step).
-            Document template = new Document(templatePath);
-
-            // Enable reflection optimization for faster property access.
-            ReportingEngine.UseReflectionOptimization = true;
-
-            // Create the reporting engine and register the external type.
-            ReportingEngine engine = new ReportingEngine();
-            engine.KnownTypes.Add(typeof(MyClass));
-
-            // Prepare the root data object.
-            Model model = new Model();
-
-            // Build the report using the template, the model, and the root name "model".
-            engine.BuildReport(template, model, "model");
-
-            // Save the generated report.
-            const string outputPath = "Report.docx";
-            template.Save(outputPath);
-        }
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }

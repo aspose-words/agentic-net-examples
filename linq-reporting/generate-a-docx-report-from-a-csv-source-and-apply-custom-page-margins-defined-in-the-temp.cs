@@ -1,93 +1,100 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-    public string City { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<Person> People { get; set; } = new();
-}
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV encoding support (kept for completeness)
+        // Register code page provider for CSV encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        string workingDir = Directory.GetCurrentDirectory();
-        string csvPath = Path.Combine(workingDir, "data.csv");
-        string templatePath = Path.Combine(workingDir, "Template.docx");
-        string reportPath = Path.Combine(workingDir, "Report.docx");
+        // Working directory.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string csvPath = Path.Combine(workDir, "data.csv");
+        string outputPath = Path.Combine(workDir, "report.docx");
 
-        // Create sample CSV file
+        // -----------------------------------------------------------------
+        // 1. Create a CSV source file with sample data.
+        // -----------------------------------------------------------------
         File.WriteAllText(csvPath,
-            "Name,Age,City\r\n" +
-            "Alice,30,New York\r\n" +
-            "Bob,25,Los Angeles\r\n" +
-            "Charlie,35,Chicago");
+@"Name,Age,City
+Alice,30,New York
+Bob,25,Los Angeles
+Charlie,35,Chicago");
 
-        // Load CSV data into strongly‑typed model
-        ReportModel model = new ReportModel();
-        foreach (var line in File.ReadAllLines(csvPath))
-        {
-            // Skip header
-            if (line.StartsWith("Name,"))
-                continue;
+        // -----------------------------------------------------------------
+        // 2. Build the Word template programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            var parts = line.Split(',');
-            if (parts.Length != 3)
-                continue;
+        // Set custom page margins (1.5 cm ≈ 42.52 points).
+        builder.PageSetup.TopMargin = 42.52f;
+        builder.PageSetup.BottomMargin = 42.52f;
+        builder.PageSetup.LeftMargin = 42.52f;
+        builder.PageSetup.RightMargin = 42.52f;
 
-            model.People.Add(new Person
-            {
-                Name = parts[0],
-                Age = int.TryParse(parts[1], out var age) ? age : 0,
-                City = parts[2]
-            });
-        }
+        // Title.
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Font.Size = 16;
+        builder.Font.Bold = true;
+        builder.Writeln("CSV Report");
+        builder.Writeln(); // blank line
 
-        // Create a DOCX template with custom margins
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Begin foreach over CSV rows.
+        builder.Writeln("<<foreach [row in Data]>>");
 
-        // Set custom margins (2 cm on each side)
-        const double cmToPoints = 28.3465;
-        float margin = (float)(2 * cmToPoints);
-        builder.PageSetup.TopMargin = margin;
-        builder.PageSetup.BottomMargin = margin;
-        builder.PageSetup.LeftMargin = margin;
-        builder.PageSetup.RightMargin = margin;
+        // Table header.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Font.Bold = true;
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Age");
+        builder.InsertCell();
+        builder.Writeln("City");
+        builder.EndRow();
 
-        // Add a title
-        builder.Writeln("People Report");
-        builder.Writeln();
+        // Data row (repeated for each CSV record).
+        builder.InsertCell();
+        builder.Font.Bold = false;
+        builder.Writeln("<<[row.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[row.Age]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[row.City]>>");
+        builder.EndRow();
 
-        // Insert LINQ Reporting tags to iterate over the People collection
-        builder.Writeln("<<foreach [person in People]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>, City: <<[person.City]>>");
+        // End table and foreach.
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation
-        Document reportDoc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 3. Load the template and generate the report using CSV data source.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
 
-        // Build the report using the strongly‑typed model
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Configure CSV data source (has headers, default comma separator).
+        var loadOptions = new CsvDataLoadOptions
+        {
+            HasHeaders = true
+            // The default separator is a comma, so no explicit Separator property is needed.
+        };
+        var csvData = new CsvDataSource(csvPath, loadOptions);
 
-        // Save the final report
-        reportDoc.Save(reportPath);
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, csvData, "Data");
+
+        // Save the final report.
+        reportDoc.Save(outputPath);
     }
 }

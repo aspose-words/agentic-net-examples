@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,66 +9,62 @@ public class Program
 {
     public static void Main()
     {
-        // Enable reflection optimization for maximum performance.
-        ReportingEngine.UseReflectionOptimization = true;
+        // Register code page provider (required by Aspose.Words for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a simple data model.
-        Order order = new Order
+        // Create sample data
+        ReportModel model = new()
         {
-            CustomerName = "John Doe",
-            Items = new List<Item>
-            {
-                new Item { Name = "Apple",  Price = 1.20 },
-                new Item { Name = "Banana", Price = 0.80 },
-                new Item { Name = "Cherry", Price = 2.50 }
-            }
+            Orders = new()
         };
+        for (int i = 1; i <= 10000; i++)
+        {
+            model.Orders.Add(new Order
+            {
+                Id = i,
+                CustomerName = $"Customer {i}",
+                Amount = Math.Round(1000 * new Random(i).NextDouble(), 2)
+            });
+        }
 
-        // Build the template document programmatically.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Build template document programmatically
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        // Header.
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln();
-
-        // Begin a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        // Each row shows the item name and a formatted price using a static helper method.
-        builder.Writeln("Item: <<[item.Name]>>  Price: <<[MyHelper.Format(item.Price)]>>");
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Id: <<[order.Id]>>, Customer: <<[order.CustomerName]>>, Amount: <<[order.Amount]>>");
         builder.Writeln("<</foreach>>");
 
-        // Register the external type so its static members can be used in the template.
-        ReportingEngine engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(MyHelper));
+        templateDoc.Save(templatePath);
 
-        // Build the report using the root object name "order".
-        engine.BuildReport(doc, order, "order");
+        // Load template for reporting
+        Document reportDoc = new(templatePath);
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        // Enable reflection optimization and register known external type
+        ReportingEngine.UseReflectionOptimization = true;
+        ReportingEngine engine = new();
+        engine.KnownTypes.Add(typeof(Order));
+
+        // Build the report
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(reportPath);
     }
 }
 
-// Simple data model classes.
+// Wrapper model for the report
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
+
+// Sample data class
 public class Order
 {
+    public int Id { get; set; }
     public string CustomerName { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
-}
-
-// External type with a static method used in the template.
-public static class MyHelper
-{
-    // Formats a double value as a currency string.
-    public static string Format(double value)
-    {
-        return value.ToString("C2");
-    }
+    public double Amount { get; set; }
 }

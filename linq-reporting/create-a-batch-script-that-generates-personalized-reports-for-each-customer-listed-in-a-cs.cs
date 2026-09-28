@@ -5,104 +5,111 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Customer
+namespace BatchReportGenerator
 {
-    public string Name { get; set; } = "";
-    public string Address { get; set; } = "";
-    public string Email { get; set; } = "";
-}
-
-public class Program
-{
-    public static void Main()
+    // Model representing a customer.
+    public class Customer
     {
-        // Register code page provider for CSV parsing (required on .NET Core).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public string CustomerId { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public decimal TotalPurchase { get; set; }
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample CSV file with customer data.
-        // -----------------------------------------------------------------
-        string csvPath = "customers.csv";
-        string[] csvLines =
+    public class Program
+    {
+        public static void Main()
         {
-            "Name,Address,Email",
-            "Alice Johnson,123 Maple St.,alice@example.com",
-            "Bob Smith,456 Oak Ave.,bob@example.com",
-            "Carol Lee,789 Pine Rd.,carol@example.com"
-        };
-        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
+            // Register code page provider for possible CSV encoding needs.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 2. Load CSV data into a list of Customer objects.
-        // -----------------------------------------------------------------
-        var customers = new List<Customer>();
-        using (var reader = new StreamReader(csvPath))
-        {
-            // Skip header.
-            string? header = reader.ReadLine();
-            while (!reader.EndOfStream)
+            // Prepare folders.
+            string dataFolder = "Data";
+            string outputFolder = "Reports";
+            Directory.CreateDirectory(dataFolder);
+            Directory.CreateDirectory(outputFolder);
+
+            // Create a sample CSV file with customer data.
+            string csvPath = Path.Combine(dataFolder, "customers.csv");
+            File.WriteAllText(csvPath, "CustomerId,Name,Email,TotalPurchase\r\n" +
+                                         "C001,John Doe,john.doe@example.com,1234.56\r\n" +
+                                         "C002,Jane Smith,jane.smith@example.com,7890.12\r\n" +
+                                         "C003,Bob Johnson,bob.johnson@example.com,345.67");
+
+            // Load customers from CSV into a list.
+            List<Customer> customers = LoadCustomersFromCsv(csvPath);
+
+            // Create the template document programmatically.
+            string templatePath = Path.Combine(dataFolder, "CustomerReportTemplate.docx");
+            CreateTemplateDocument(templatePath);
+
+            // Generate a personalized report for each customer.
+            foreach (Customer customer in customers)
             {
-                string? line = reader.ReadLine();
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                // Load the template.
+                Document doc = new Document(templatePath);
 
-                // Simple CSV split (no quoted commas handling needed for this sample).
-                string[] parts = line.Split(',');
-                if (parts.Length >= 3)
-                {
-                    customers.Add(new Customer
-                    {
-                        Name = parts[0].Trim(),
-                        Address = parts[1].Trim(),
-                        Email = parts[2].Trim()
-                    });
-                }
+                // Build the report using the customer as the root object.
+                ReportingEngine engine = new ReportingEngine();
+                engine.BuildReport(doc, customer, "customer");
+
+                // Save the generated report.
+                string reportFileName = $"Report_{customer.CustomerId}.docx";
+                string reportPath = Path.Combine(outputFolder, reportFileName);
+                doc.Save(reportPath);
             }
         }
 
-        // -----------------------------------------------------------------
-        // 3. Create a Word template with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        string templatePath = "CustomerTemplate.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Personalized Report");
-        builder.Writeln("--------------------");
-        builder.Writeln("Name   : <<[Customer.Name]>>");
-        builder.Writeln("Address: <<[Customer.Address]>>");
-        builder.Writeln("Email  : <<[Customer.Email]>>");
-        builder.Writeln(); // blank line between reports
-
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 4. Generate a separate report file for each customer.
-        // -----------------------------------------------------------------
-        foreach (var customer in customers)
+        // Reads the CSV file and returns a list of Customer objects.
+        private static List<Customer> LoadCustomersFromCsv(string csvFilePath)
         {
-            // Load the template for each iteration to start from a clean document.
-            var reportDoc = new Document(templatePath);
+            var customers = new List<Customer>();
+            using (var reader = new StreamReader(csvFilePath))
+            {
+                // Read header line.
+                string? headerLine = reader.ReadLine();
+                if (headerLine == null)
+                    return customers; // Empty file.
 
-            // Build the report using the current customer as the data source.
-            var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, customer, "Customer");
+                // Read data lines.
+                while (!reader.EndOfStream)
+                {
+                    string? line = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
 
-            // Create a safe file name.
-            string safeName = MakeFileNameSafe(customer.Name);
-            string outputPath = $"Report_{safeName}.docx";
+                    string[] parts = line.Split(',');
+                    if (parts.Length < 4)
+                        continue; // Skip malformed lines.
 
-            reportDoc.Save(outputPath);
-            Console.WriteLine($"Generated report: {outputPath}");
+                    var customer = new Customer
+                    {
+                        CustomerId = parts[0].Trim(),
+                        Name = parts[1].Trim(),
+                        Email = parts[2].Trim(),
+                        TotalPurchase = decimal.TryParse(parts[3].Trim(), out decimal value) ? value : 0m
+                    };
+                    customers.Add(customer);
+                }
+            }
+            return customers;
         }
-    }
 
-    // Helper to replace invalid filename characters.
-    private static string MakeFileNameSafe(string name)
-    {
-        foreach (char c in Path.GetInvalidFileNameChars())
+        // Creates a Word template with LINQ Reporting tags.
+        private static void CreateTemplateDocument(string templatePath)
         {
-            name = name.Replace(c, '_');
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Personalized Customer Report");
+            builder.Writeln("--------------------------------------------------");
+            builder.Writeln("Customer ID: <<[customer.CustomerId]>>");
+            builder.Writeln("Name: <<[customer.Name]>>");
+            builder.Writeln("Email: <<[customer.Email]>>");
+            builder.Writeln("Total Purchase: $<<[customer.TotalPurchase]>>");
+            builder.Writeln("--------------------------------------------------");
+
+            doc.Save(templatePath);
         }
-        return name;
     }
 }

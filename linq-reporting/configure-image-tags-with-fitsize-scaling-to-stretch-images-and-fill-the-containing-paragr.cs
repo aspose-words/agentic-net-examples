@@ -6,64 +6,61 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Path to the image that will be inserted by the LINQ Reporting engine.
-    public string ImagePath { get; set; } = "";
+    // Path to the image file that will be inserted into the report.
+    public string ImagePath { get; set; } = string.Empty;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Working directory for all temporary files.
-        string workDir = Directory.GetCurrentDirectory();
+        // Ensure the output directory exists.
+        Directory.CreateDirectory("output");
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample image file (a tiny red PNG) that will be used
-        //    by the report. The image data is stored as a Base64 string.
-        // -----------------------------------------------------------------
-        string imagePath = Path.Combine(workDir, "sample.png");
-        const string base64Png =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/6V4AAAAASUVORK5CYII=";
-        File.WriteAllBytes(imagePath, Convert.FromBase64String(base64Png));
+        // Create a simple PNG image (a red square) and save it locally.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJ" +
+                                 "bWFnZVJlYWR5ccllPAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0Q3JlYXRpb24gVGltZQAw" +
+                                 "OC8wOS8xM6V6LwAAABl0RVh0U291cmNlAEFkb2JlIEltYWdlUmVhZHlxyWUAAAAZdEVYdFNvZnR3" +
+                                 "YXJlAHd3dy5pbWFnZW1hZ2UuY29t7eJ0NwAAABh0RVh0Q3JlYXRpb24gVGltZQAyMDIzLTA5LTI2" +
+                                 "VDE2OjM0OjU5KzAwOjAwcZ6XWQAAABV0RVh0U291cmNlIFRpbWUAMjAyMy0wOS0yNlQxNjozNDo1" +
+                                 "OSswMDowMHR6K6UAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        string imagePath = Path.GetFullPath("sample.png");
+        File.WriteAllBytes(imagePath, imageBytes);
 
-        // -----------------------------------------------------------------
-        // 2. Build the LINQ Reporting template programmatically.
-        //    The image tag must be placed inside a TextBox shape and use
-        //    the -fitSize switch to stretch the image to fill the paragraph.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(workDir, "template.docx");
+        // Create the template document programmatically.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a TextBox that will act as the image container.
+        // Add a heading.
+        builder.Writeln("Image Report with fitSize scaling:");
+
+        // Insert a textbox that will contain the image.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-        // Move the cursor inside the TextBox.
         builder.MoveTo(textBox.FirstParagraph);
-        // Write the image tag. The expression refers to the model's ImagePath property.
+
+        // Insert the LINQ Reporting image tag with -fitSize switch.
         builder.Write("<<image [model.ImagePath] -fitSize>>");
 
         // Save the template to disk.
+        string templatePath = Path.GetFullPath("template.docx");
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and prepare the data model.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-        ReportModel model = new ReportModel { ImagePath = imagePath };
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using the ReportingEngine.
-        // -----------------------------------------------------------------
+        // Prepare the data model.
+        ReportModel model = new ReportModel
+        {
+            ImagePath = imagePath
+        };
+
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated document.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(workDir, "output.docx");
-        doc.Save(outputPath);
-
-        // Inform the user (optional, no interactive input required).
-        Console.WriteLine($"Report generated: {outputPath}");
+        // Save the generated report.
+        string outputPath = Path.Combine("output", "report.docx");
+        reportDoc.Save(outputPath);
     }
 }

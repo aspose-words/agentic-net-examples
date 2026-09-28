@@ -18,41 +18,29 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
+        // Create a Word document template programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Create the template document ----------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert a tag that counts items with Quantity > 0.
-        // The tag uses the built‑in Count method with a predicate.
+        // Insert a line that uses the built‑in Count method to count items with Quantity > 0.
         builder.Writeln("Available items count: <<[model.Items.Count(i => i.Quantity > 0)]>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // ---------- Prepare the data ----------
+        // Prepare sample data.
         ReportModel model = new()
         {
             Items = new()
             {
                 new Item { Name = "Apple",  Quantity = 5 },
                 new Item { Name = "Banana", Quantity = 0 },
-                new Item { Name = "Cherry", Quantity = 12 },
-                new Item { Name = "Date",   Quantity = -3 } // Negative quantity is treated as unavailable.
+                new Item { Name = "Orange", Quantity = 3 }
             }
         };
 
-        // ---------- Load the template and build the report ----------
-        Document reportDoc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report using the model; the root name in the template is "model".
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the final report.
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }

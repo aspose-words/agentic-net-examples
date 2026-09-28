@@ -1,66 +1,65 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingConditionalRemoval
+public class ReportModel
 {
-    // Data model used by the template.
-    public class ReportModel
-    {
-        public bool ShowA { get; set; } = false;
-        public bool ShowB { get; set; } = false;
-        public string Message { get; set; } = "No sections displayed.";
-    }
+    public bool ShowSection1 { get; set; } = false;
+    public bool ShowSection2 { get; set; } = false;
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider (required for Aspose.Words).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Paths for the template and the generated report.
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Report Start");
+
+        // Conditional block: will be removed entirely if both conditions are false.
+        builder.Writeln("<<if [model.ShowSection1 || model.ShowSection2]>>");
+        builder.Writeln("This section appears only if at least one condition is true.");
+        builder.Writeln("<</if>>");
+
+        builder.Writeln("Report End");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Data model where both booleans are false.
+        ReportModel model = new()
         {
-            // 1. Create a template document with two conditional blocks.
-            var templatePath = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            ShowSection1 = false,
+            ShowSection2 = false
+        };
 
-            // Conditional block A
-            builder.Writeln("<<if [model.ShowA]>>");
-            builder.Writeln("Section A is visible.");
-            builder.Writeln("<</if>>");
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        bool success = engine.BuildReport(doc, model, "model");
 
-            // Conditional block B
-            builder.Writeln("<<if [model.ShowB]>>");
-            builder.Writeln("Section B is visible.");
-            builder.Writeln("<</if>>");
+        // Save the generated report.
+        doc.Save(outputPath);
 
-            // Fallback message when no blocks are rendered.
-            builder.Writeln("<<[model.Message]>>");
-
-            templateDoc.Save(templatePath);
-
-            // 2. Load the template for reporting.
-            var doc = new Document(templatePath);
-
-            // 3. Prepare the data source where both conditions are false.
-            var model = new ReportModel
-            {
-                ShowA = false,
-                ShowB = false,
-                Message = "All conditional sections were removed."
-            };
-
-            // 4. Build the report with the RemoveEmptyParagraphs option.
-            var engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
-            };
-            engine.BuildReport(doc, model, "model");
-
-            // 5. Save the final document.
-            var outputPath = "Output.docx";
-            doc.Save(outputPath);
-
-            // Optional: display the resulting text in the console.
-            Console.WriteLine("Report generated. Content:");
-            Console.WriteLine(doc.GetText());
-        }
+        // Indicate completion.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Output saved to: {Path.GetFullPath(outputPath)}");
     }
 }

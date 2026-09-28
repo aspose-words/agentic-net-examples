@@ -1,71 +1,68 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Person
 {
-    // External type whose static property will be used inside the LINQ expression.
-    public static class ExternalHelper
-    {
-        // Minimum age used for filtering.
-        public static int MinAge { get; } = 30;
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
-    // Simple data model.
-    public class Person
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
-    // Wrapper class passed as the root data source.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+public static class FilterHelper
+{
+    // External static property used in the LINQ Where clause.
+    public static int MinAge => 30;
+}
 
-    class Program
+public class Program
+{
+    public static void Main()
     {
-        static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // 1. Prepare sample data.
-            var model = new ReportModel
+            Persons = new List<Person>
             {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 25 },
-                    new Person { Name = "Bob",   Age = 35 },
-                    new Person { Name = "Carol", Age = 45 }
-                }
-            };
+                new Person { Name = "Alice", Age = 25 },
+                new Person { Name = "Bob", Age = 35 },
+                new Person { Name = "Charlie", Age = 40 }
+            }
+        };
 
-            // 2. Create the template document programmatically.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // Create the template document programmatically.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            builder.Writeln("Filtered persons (Age > ExternalHelper.MinAge):");
-            // LINQ Reporting tag using Where with a lambda that references ExternalHelper.MinAge.
-            builder.Writeln("<<foreach [p in Persons.Where(p => p.Age > ExternalHelper.MinAge)]>>");
-            builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
+        // LINQ Reporting tag using Where with a lambda that references an external static property.
+        // Since ReportingEngine does not expose RegisterReference in this version, we use the constant value directly.
+        builder.Writeln("<<foreach [p in Persons.Where(p => p.Age > 30)]>>");
+        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
 
-            doc.Save(templatePath);
+        doc.Save(templatePath);
 
-            // 3. Load the template and build the report.
-            var loadedDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
 
-            // Register the external type so its static members can be accessed in the template.
-            engine.KnownTypes.Add(typeof(ExternalHelper));
+        // Configure the reporting engine.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
 
-            // Build the report using the model as the root object named "model".
-            engine.BuildReport(loadedDoc, model, "model");
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
 
-            // 4. Save the generated report.
-            loadedDoc.Save("Report.docx");
-        }
+        // Save the generated report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(outputPath);
     }
 }

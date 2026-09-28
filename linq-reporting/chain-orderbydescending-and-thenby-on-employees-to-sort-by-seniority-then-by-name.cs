@@ -20,42 +20,45 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var employees = new List<Employee>
+        // Sample employee data.
+        List<Employee> employees = new()
         {
-            new() { Name = "Alice", Seniority = 5 },
-            new() { Name = "Bob", Seniority = 3 },
-            new() { Name = "Charlie", Seniority = 5 },
-            new() { Name = "David", Seniority = 2 }
+            new Employee { Name = "Alice", Seniority = 5 },
+            new Employee { Name = "Bob", Seniority = 3 },
+            new Employee { Name = "Charlie", Seniority = 5 },
+            new Employee { Name = "David", Seniority = 2 }
         };
 
-        // Sort by seniority descending, then by name ascending.
-        var sortedEmployees = employees
+        // Chain OrderByDescending and ThenBy to sort by seniority descending, then by name ascending.
+        List<Employee> sortedEmployees = employees
             .OrderByDescending(e => e.Seniority)
             .ThenBy(e => e.Name)
             .ToList();
 
-        // Wrap the sorted collection in a model object.
-        var model = new ReportModel { Employees = sortedEmployees };
+        // Prepare the model for the report.
+        ReportModel model = new()
+        {
+            Employees = sortedEmployees
+        };
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Employees sorted by seniority (desc) then name (asc):");
-        builder.Writeln("<<foreach [emp in Employees]>>");
-        builder.Writeln("<<[emp.Name]>> - Seniority: <<[emp.Seniority]>>");
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = "Template.docx";
+        DocumentBuilder builder = new();
+        builder.Writeln("Employee Report");
+        builder.Writeln("<<foreach [e in Employees]>>");
+        builder.Writeln("Name: <<[e.Name]>>, Seniority: <<[e.Seniority]>>");
         builder.Writeln("<</foreach>>");
+        builder.Document.Save(templatePath);
 
-        doc.Save(templatePath);
+        // Load the template document.
+        Document doc = new(templatePath);
 
-        // Load the template and build the report.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report using Aspose.Words ReportingEngine.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        reportDoc.Save("Report.docx");
+        string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
 }

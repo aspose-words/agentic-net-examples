@@ -2,68 +2,51 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class ReportModel
+{
+    public bool IncludeAppendix { get; set; }
+    public string AppendixPath { get; set; } = string.Empty;
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
+        // File paths
         const string templatePath = "Template.docx";
         const string appendixPath = "Appendix.docx";
-        const string resultPath = "Result.docx";
+        const string outputPath = "Result.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create the appendix document that may be merged later.
-        // -----------------------------------------------------------------
-        Document appendixDoc = new Document();
-        DocumentBuilder appendixBuilder = new DocumentBuilder(appendixDoc);
+        // Create the main template document with a conditional include for the appendix.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Main Report Content");
+        builder.Writeln("<<if [IncludeAppendix]>>");
+        builder.Writeln("<<doc [AppendixPath]>>");
+        builder.Writeln("<</if>>");
+        templateDoc.Save(templatePath);
+
+        // Create a simple appendix document.
+        var appendixDoc = new Document();
+        var appendixBuilder = new DocumentBuilder(appendixDoc);
         appendixBuilder.Writeln("Appendix Content");
         appendixDoc.Save(appendixPath);
 
-        // -----------------------------------------------------------------
-        // 2. Create the main template with a conditional <<doc>> tag.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
-        templateBuilder.Writeln("Main Report Content");
-        // Conditional block: include appendix only when the flag is true.
-        templateBuilder.Writeln("<<if [model.IncludeAppendix]>>");
-        templateBuilder.Writeln("<<doc [model.Appendix]>>");
-        templateBuilder.Writeln("<</if>>");
-        templateDoc.Save(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template (as required by the lifecycle rules).
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 4. Prepare the data model.
-        // -----------------------------------------------------------------
-        ReportModel model = new()
+        // Prepare the data model.
+        var model = new ReportModel
         {
-            IncludeAppendix = true,               // Flag that controls inclusion.
-            Appendix = new Document(appendixPath) // Document to be merged.
+            IncludeAppendix = true,          // Set to true to include the appendix.
+            AppendixPath = appendixPath      // Path to the appendix document.
         };
 
-        // -----------------------------------------------------------------
-        // 5. Build the report using Aspose.Words LINQ Reporting Engine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report using LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 6. Save the final document.
-        // -----------------------------------------------------------------
-        reportDoc.Save(resultPath);
+        // Save the final document.
+        doc.Save(outputPath);
     }
-}
-
-// Data model aligned with the template tags.
-public class ReportModel
-{
-    // Determines whether the appendix should be inserted.
-    public bool IncludeAppendix { get; set; } = false;
-
-    // The document to be merged when IncludeAppendix is true.
-    public Document Appendix { get; set; } = null!;
 }

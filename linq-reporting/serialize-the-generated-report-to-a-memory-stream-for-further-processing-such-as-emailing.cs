@@ -1,58 +1,87 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document that will serve as the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Insert LINQ Reporting tags into the template.
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        // Create a template document programmatically.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Order Report");
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Table header.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Index");
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.EndRow();
+
+        // Table row for each item.
+        builder.InsertCell();
+        builder.Writeln("<<[item.Index]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+        builder.EndRow();
+
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+        // Save the template to a file.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
+
+        // Sample data model.
+        ReportModel model = new()
         {
-            Persons = new List<Person>
+            Items = new()
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob",   Age = 45 }
+                new Item { Index = 1, Name = "Apple" },
+                new Item { Index = 2, Name = "Banana" },
+                new Item { Index = 3, Name = "Cherry" }
             }
         };
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Serialize the generated report to a memory stream (e.g., for emailing).
-        using (MemoryStream reportStream = new MemoryStream())
-        {
-            doc.Save(reportStream, SaveFormat.Docx);
-            reportStream.Position = 0; // Reset position for downstream consumers.
+        // Serialize the generated report to a memory stream.
+        using MemoryStream reportStream = new();
+        reportDoc.Save(reportStream, SaveFormat.Docx);
+        reportStream.Position = 0;
 
-            // Example usage: display the size of the generated report.
-            Console.WriteLine($"Report generated. Stream length: {reportStream.Length} bytes.");
-        }
+        // Example usage of the memory stream (e.g., write length to console).
+        Console.WriteLine($"Report generated. Stream length: {reportStream.Length} bytes.");
+
+        // Optionally, save the report to a file for verification.
+        File.WriteAllBytes("Report.docx", reportStream.ToArray());
     }
 }
 
-// Wrapper class that matches the root object name used in BuildReport.
+// Data model classes.
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
 }
 
-// Simple data model referenced by the template tags.
-public class Person
+public class Item
 {
+    public int Index { get; set; }
     public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

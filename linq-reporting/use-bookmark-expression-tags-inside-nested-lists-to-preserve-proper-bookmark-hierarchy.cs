@@ -1,91 +1,123 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingBookmarkExample
 {
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+        public List<Category> Categories { get; set; } = new();
+    }
+
+    public class Category
+    {
+        public string Name { get; set; } = "";
+        public string BookmarkName { get; set; } = "";
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public string BookmarkName { get; set; } = "";
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Categories = new List<Category>
+            // Register code page provider for Aspose.Words if needed
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for template and output
+            string templatePath = "template.docx";
+            string outputPath = "report.docx";
+
+            // -------------------------------------------------
+            // Create the template document programmatically
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Title
+            builder.Writeln("Report with Nested Bookmarks");
+            builder.Writeln();
+
+            // Begin outer foreach for categories
+            builder.Writeln("<<foreach [cat in Model.Categories]>>");
+
+            // Apply numbered list for categories
+            builder.ListFormat.ApplyNumberDefault();
+            builder.Writeln("<<bookmark [cat.BookmarkName]>><<[cat.Name]>> <</bookmark>>");
+
+            // Indent for inner list (items)
+            builder.ListFormat.ListIndent();
+
+            // Begin inner foreach for items
+            builder.Writeln("<<foreach [item in cat.Items]>>");
+            builder.ListFormat.ApplyBulletDefault();
+            builder.Writeln("<<bookmark [item.BookmarkName]>><<[item.Name]>> <</bookmark>>");
+            builder.Writeln("<</foreach>>");
+
+            // Outdent back to outer level
+            builder.ListFormat.ListOutdent();
+
+            // End outer foreach
+            builder.Writeln("<</foreach>>");
+
+            // Remove any list formatting
+            builder.ListFormat.RemoveNumbers();
+
+            // Save the template to disk
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // Load the template for report generation
+            // -------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // -------------------------------------------------
+            // Prepare sample data
+            // -------------------------------------------------
+            ReportModel model = new ReportModel
             {
-                new Category
+                Categories = new List<Category>
                 {
-                    Name = "Fruits",
-                    Items = new List<Item>
+                    new Category
                     {
-                        new Item { Name = "Apple" },
-                        new Item { Name = "Banana" }
-                    }
-                },
-                new Category
-                {
-                    Name = "Vegetables",
-                    Items = new List<Item>
+                        Name = "Fruits",
+                        BookmarkName = "Bookmark_Fruits",
+                        Items = new List<Item>
+                        {
+                            new Item { Name = "Apple", BookmarkName = "Bookmark_Apple" },
+                            new Item { Name = "Banana", BookmarkName = "Bookmark_Banana" }
+                        }
+                    },
+                    new Category
                     {
-                        new Item { Name = "Carrot" },
-                        new Item { Name = "Tomato" }
+                        Name = "Vegetables",
+                        BookmarkName = "Bookmark_Vegetables",
+                        Items = new List<Item>
+                        {
+                            new Item { Name = "Carrot", BookmarkName = "Bookmark_Carrot" },
+                            new Item { Name = "Lettuce", BookmarkName = "Bookmark_Lettuce" }
+                        }
                     }
                 }
-            }
-        };
+            };
 
-        // Create a template document with nested lists and bookmark tags.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // -------------------------------------------------
+            // Build the report using LINQ Reporting Engine
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "Model");
 
-        builder.Writeln("Report with nested lists and bookmarks:");
-        builder.Writeln();
-
-        // Outer list: categories.
-        builder.Writeln("<<foreach [category in Categories]>>");
-        builder.Writeln("- <<bookmark [category.Name]>><<[category.Name]>> <</bookmark>>");
-        // Inner list: items within each category.
-        builder.Writeln("  <<foreach [item in category.Items]>>");
-        builder.Writeln("  * <<bookmark [item.Name]>><<[item.Name]>> <</bookmark>>");
-        builder.Writeln("  <</foreach>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
-
-        // Indicate completion.
-        Console.WriteLine("Report generated successfully at: " + reportPath);
+            // Save the generated report
+            reportDoc.Save(outputPath);
+        }
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Category> Categories { get; set; } = new();
-}
-
-// Category with a collection of items.
-public class Category
-{
-    public string Name { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-// Simple item model.
-public class Item
-{
-    public string Name { get; set; } = "";
 }

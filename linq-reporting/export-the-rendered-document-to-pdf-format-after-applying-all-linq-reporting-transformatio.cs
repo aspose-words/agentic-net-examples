@@ -3,54 +3,69 @@ using System.Collections.Generic;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
-using Aspose.Words.Tables; // Required for the Table class
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
+        // Register code page provider for Aspose.Words (required for some encodings)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create a template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        const string templatePath = "Template.docx";
+        const string pdfPath = "Report.pdf";
 
-        // Add a title.
-        builder.Writeln("Order Report");
-        builder.Writeln();
+        // -------------------------------------------------
+        // 1. Create the Word template with LINQ Reporting tags
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a placeholder for the customer name.
+        // Header showing a property from the root model
         builder.Writeln("Customer: <<[model.CustomerName]>>");
         builder.Writeln();
 
-        // Build a table that will be repeated for each item in the Items collection.
-        builder.Writeln("<<foreach [item in model.Items]>>");
+        // Begin foreach loop over Items collection
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Start table inside the foreach block
         Table table = builder.StartTable();
 
-        // Header row.
+        // Header row
         builder.InsertCell();
         builder.Writeln("Index");
         builder.InsertCell();
         builder.Writeln("Name");
         builder.EndRow();
 
-        // Data row.
+        // Data row for each item
         builder.InsertCell();
         builder.Writeln("<<[item.Index]>>");
         builder.InsertCell();
         builder.Writeln("<<[item.Name]>>");
         builder.EndRow();
 
+        // End the table
         builder.EndTable();
+
+        // End foreach loop
         builder.Writeln("<</foreach>>");
 
-        // 2. Prepare the data model.
-        ReportModel model = new ReportModel
+        // Save the template to disk
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // 2. Load the template (ensures it is fully persisted)
+        // -------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // -------------------------------------------------
+        // 3. Prepare sample data model
+        // -------------------------------------------------
+        ReportModel model = new()
         {
             CustomerName = "Acme Corp",
-            Items = new List<Item>
+            Items = new()
             {
                 new Item { Index = 1, Name = "Widget" },
                 new Item { Index = 2, Name = "Gadget" },
@@ -58,17 +73,22 @@ public class Program
             }
         };
 
-        // 3. Build the report using the LINQ Reporting engine.
+        // -------------------------------------------------
+        // 4. Build the report using LINQ Reporting engine
+        // -------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(template, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // 4. Export the rendered document to PDF.
-        template.Save("Report.pdf", SaveFormat.Pdf);
+        // -------------------------------------------------
+        // 5. Export the rendered document to PDF
+        // -------------------------------------------------
+        doc.Save(pdfPath, SaveFormat.Pdf);
     }
 }
 
-// Data model classes (public with initialized properties to avoid nullable warnings).
+// -----------------------------------------------------------------
+// Public data model classes (must be public with public properties)
+// -----------------------------------------------------------------
 public class ReportModel
 {
     public string CustomerName { get; set; } = string.Empty;

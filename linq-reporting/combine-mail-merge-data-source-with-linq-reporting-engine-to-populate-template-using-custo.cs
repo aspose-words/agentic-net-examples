@@ -1,76 +1,69 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-public class Program
+namespace LinqReportingMailMergeExample
 {
-    public static void Main()
+    // Public data model classes
+    public class Customer
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+    }
+
+    public class ReportModel
+    {
+        public List<Customer> Customers { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Customers = new List<Customer>
+            // Register code page provider (required for some encodings)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Create a template document programmatically
+            var templatePath = "template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Customer Report");
+            builder.Writeln("<<foreach [c in Customers]>>");
+            builder.Writeln("Name: <<[c.Name]>>");
+            builder.Writeln("Email: <<[c.Email]>>");
+            builder.Writeln("Address: <<[c.Address]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            doc.Save(templatePath);
+
+            // Load the template for reporting
+            var reportDoc = new Document(templatePath);
+
+            // Prepare sample data
+            var model = new ReportModel
             {
-                new Customer { Name = "John Doe", Address = "123 Main St, Anytown" },
-                new Customer { Name = "Jane Smith", Address = "456 Oak Ave, Othertown" }
-            }
-        };
+                Customers = new List<Customer>
+                {
+                    new() { Name = "John Doe", Email = "john@example.com", Address = "123 Main St" },
+                    new() { Name = "Jane Smith", Email = "jane@example.com", Address = "456 Oak Ave" }
+                }
+            };
 
-        // Create a template document programmatically.
-        string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+            // Build the report using LINQ Reporting engine
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None;
+            engine.BuildReport(reportDoc, model, "model");
 
-        // Load the template.
-        Document doc = new Document(templatePath);
-
-        // Build the report using LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        // No special options required for this simple example.
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+            // Save the generated report
+            var outputPath = "output.docx";
+            reportDoc.Save(outputPath);
+        }
     }
-
-    // Creates a simple Word template containing LINQ Reporting tags.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a title.
-        builder.Writeln("Customer Report");
-        builder.Writeln("----------------");
-
-        // Begin a foreach loop over the Customers collection.
-        builder.Writeln("<<foreach [c in Customers]>>");
-
-        // Insert fields for each customer's data.
-        builder.Writeln("Name   : <<[c.Name]>>");
-        builder.Writeln("Address: <<[c.Address]>>");
-        builder.Writeln(""); // Empty line between records.
-
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(filePath);
-    }
-}
-
-// Wrapper class that will be passed as the root data source.
-public class ReportModel
-{
-    public List<Customer> Customers { get; set; } = new();
-}
-
-// Simple data model representing a customer.
-public class Customer
-{
-    public string Name { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
 }

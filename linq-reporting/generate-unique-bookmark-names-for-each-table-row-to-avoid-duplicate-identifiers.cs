@@ -1,46 +1,51 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Required for Table class
-
-public class RowData
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = "";
-    public string BookmarkName { get; set; } = "";
-
-    public RowData() { }
-
-    public RowData(int index, string name)
-    {
-        Index = index;
-        Name = name;
-        // Generate a unique bookmark name for each row.
-        BookmarkName = $"Row_{Guid.NewGuid():N}";
-    }
-}
-
-public class ReportModel
-{
-    public List<RowData> Items { get; set; } = new();
-}
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // -------------------------
-        // Create the template document
-        // -------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Register code page provider for any encoding needs.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        builder.Writeln("Table with unique bookmarks per row:");
-        // Start the foreach block.
+        // Prepare sample data.
+        ReportModel model = new()
+        {
+            Items = new()
+            {
+                new RowItem { Index = 1, Name = "Alpha" },
+                new RowItem { Index = 2, Name = "Beta" },
+                new RowItem { Index = 3, Name = "Gamma" }
+            }
+        };
+
+        // Create the LINQ Reporting template.
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // Load the template and build the report.
+        Document doc = new(templatePath);
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        // Begin foreach over Items collection.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Build a table inside the foreach.
+        // Start a table.
         Table table = builder.StartTable();
 
         // Header row.
@@ -48,47 +53,40 @@ public class Program
         builder.Writeln("Index");
         builder.InsertCell();
         builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Bookmark");
         builder.EndRow();
 
-        // Data row.
+        // Data row with a unique bookmark per row.
         builder.InsertCell();
+        builder.Writeln("<<bookmark [item.BookmarkName]>>");
         builder.Writeln("<<[item.Index]>>");
+        builder.Writeln("<</bookmark>>");
+
         builder.InsertCell();
         builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell();
-        // Bookmark tag with a unique name per row.
-        builder.Writeln("<<bookmark [item.BookmarkName]>>Bookmark Content<</bookmark>>");
         builder.EndRow();
 
+        // End table.
         builder.EndTable();
 
-        // End the foreach block.
+        // End foreach block.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // -------------------------
-        // Load the template for reporting
-        // -------------------------
-        var reportDoc = new Document(templatePath);
-
-        // Prepare sample data.
-        var model = new ReportModel();
-        for (int i = 1; i <= 5; i++)
-        {
-            model.Items.Add(new RowData(i, $"Item {i}"));
-        }
-
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Save the template.
+        doc.Save(filePath);
     }
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<RowItem> Items { get; set; } = new();
+}
+
+// Individual row item.
+public class RowItem
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = "";
+    // Unique bookmark name based on the row index.
+    public string BookmarkName => $"Row_{Index}";
 }

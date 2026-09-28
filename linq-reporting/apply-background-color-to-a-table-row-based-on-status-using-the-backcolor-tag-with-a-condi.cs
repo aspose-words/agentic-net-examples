@@ -1,74 +1,87 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
+
+public class ReportItem
+{
+    public int Id { get; set; } = 0;
+    public string Name { get; set; } = "";
+    public string Status { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<ReportItem> Items { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
+        // Register code page provider (required for Aspose.Words).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create the data model
+        // Sample data.
         var model = new ReportModel
         {
-            Items = new List<Item>
+            Items = new List<ReportItem>
             {
-                new Item { Name = "Task A", Status = "Completed" },
-                new Item { Name = "Task B", Status = "InProgress" },
-                new Item { Name = "Task C", Status = "Pending" }
+                new ReportItem { Id = 1, Name = "Task A", Status = "Completed" },
+                new ReportItem { Id = 2, Name = "Task B", Status = "Pending" },
+                new ReportItem { Id = 3, Name = "Task C", Status = "Failed" }
             }
         };
 
-        // Build the template document with LINQ Reporting tags
+        // Create template.
+        var templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Task Report");
+        // Begin foreach loop.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Table header
-        var table = builder.StartTable();
+        // Table for each iteration.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Id");
         builder.InsertCell();
         builder.Writeln("Name");
         builder.InsertCell();
         builder.Writeln("Status");
         builder.EndRow();
 
-        // Table row with conditional background color
+        // Data row with conditional background color.
+        string backColorExpr = "<<backColor [item.Status == \"Completed\" ? \"LightGreen\" : item.Status == \"Pending\" ? \"LightYellow\" : \"LightCoral\"]>>";
+
         builder.InsertCell();
-        builder.Writeln(
-            "<<if [item.Status == \"Completed\"]>><<backColor [\"LightGreen\"]>><<[item.Name]>> <</backColor>><</if>>" +
-            "<<if [item.Status != \"Completed\"]>><<[item.Name]>> <</if>>");
+        builder.Writeln($"{backColorExpr}<<[item.Id]>> <</backColor>>");
         builder.InsertCell();
-        builder.Writeln("<<[item.Status]>>");
+        builder.Writeln($"{backColorExpr}<<[item.Name]>> <</backColor>>");
+        builder.InsertCell();
+        builder.Writeln($"{backColorExpr}<<[item.Status]>> <</backColor>>");
         builder.EndRow();
 
+        // End table.
         builder.EndTable();
+
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Generate the report
+        // Save template.
+        doc.Save(templatePath);
+
+        // Load template and build report.
+        var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the result
-        const string outputPath = "ReportWithConditionalBackColor.docx";
-        doc.Save(outputPath);
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Save final report.
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Data model classes
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
 }

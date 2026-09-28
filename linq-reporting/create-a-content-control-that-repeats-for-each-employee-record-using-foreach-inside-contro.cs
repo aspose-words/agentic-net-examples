@@ -3,69 +3,65 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class Employee
 {
-    public static void Main()
-    {
-        // Paths for the template and the generated report.
-        const string templatePath = "EmployeeTemplate.docx";
-        const string outputPath = "EmployeeReport.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        var builder = new DocumentBuilder();
-
-        // Insert a paragraph that will repeat for each employee.
-        builder.Writeln("<<foreach [emp in Employees]>>");
-        builder.Writeln("Name: <<[emp.Name]>>");
-        builder.Writeln("Position: <<[emp.Position]>>");
-        builder.Writeln("Salary: $<<[emp.Salary]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        builder.Document.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and prepare the data model.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-
-        var model = new ReportModel
-        {
-            Employees = new List<Employee>
-            {
-                new Employee { Name = "Alice Johnson", Position = "Software Engineer", Salary = 95000m },
-                new Employee { Name = "Bob Smith", Position = "Project Manager", Salary = 105000m },
-                new Employee { Name = "Carol Lee", Position = "QA Analyst", Salary = 72000m }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 3. Build the report.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        bool success = engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        doc.Save(outputPath);
-
-        Console.WriteLine(success
-            ? $"Report generated successfully: {outputPath}"
-            : "Report generation failed.");
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
 }
 
-// Root data model.
 public class ReportModel
 {
     public List<Employee> Employees { get; set; } = new();
 }
 
-// Employee data class.
-public class Employee
+public class Program
 {
-    public string Name { get; set; } = string.Empty;
-    public string Position { get; set; } = string.Empty;
-    public decimal Salary { get; set; }
+    public static void Main()
+    {
+        // Paths for the template and the generated report.
+        const string templatePath = "template.docx";
+        const string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        var builder = new DocumentBuilder();
+
+        // Title paragraph.
+        builder.Writeln("Employee List:");
+
+        // LINQ Reporting tags placed directly after the title.
+        builder.Writeln("<<foreach [emp in Employees]>>");
+        builder.Writeln("Name: <<[emp.Name]>>");
+        builder.Writeln("Age: <<[emp.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        builder.Document.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Prepare sample data.
+        // -----------------------------------------------------------------
+        var model = new ReportModel
+        {
+            Employees = new()
+            {
+                new Employee { Name = "Alice Johnson", Age = 30 },
+                new Employee { Name = "Bob Smith", Age = 45 },
+                new Employee { Name = "Carol Davis", Age = 28 }
+            }
+        };
+
+        // -----------------------------------------------------------------
+        // 3. Load the template and build the report.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // Build the report using the model as the root data source named "model".
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        doc.Save(outputPath);
+    }
 }

@@ -1,64 +1,68 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the working directory exists.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Ensure code page provider for possible CSV encoding.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // 1. Create a sample CSV file with headers and three records.
-        string csvPath = Path.Combine(workDir, "people.csv");
+        // 1. Create sample CSV file.
+        string csvPath = "people.csv";
         File.WriteAllText(csvPath,
-            "Id,Name,Age\r\n" +
-            "1,John Doe,30\r\n" +
-            "2,Jane Smith,25\r\n" +
-            "3,Bob Johnson,40\r\n");
+@"Id,Name,Age
+1,John Doe,30
+2,Jane Smith,25
+3,Bob Johnson,40
+4,Alice Brown,22");
 
-        // 2. Build a Word template programmatically.
-        string templatePath = Path.Combine(workDir, "template.docx");
+        // 2. Load CSV data into a list of Person objects.
+        List<Person> people = new List<Person>();
+        foreach (var line in File.ReadAllLines(csvPath).Skip(1)) // Skip header
+        {
+            var parts = line.Split(',');
+            if (parts.Length != 3) continue;
+            if (!int.TryParse(parts[0], out int id)) continue;
+            var name = parts[1];
+            if (!int.TryParse(parts[2], out int age)) continue;
+            people.Add(new Person { Id = id, Name = name, Age = age });
+        }
+
+        // 3. Use ElementAt to fetch the third record (index 2).
+        Person selectedPerson = people.ElementAt(2); // Bob Johnson
+
+        // 4. Create a Word template with LINQ Reporting tags.
+        string templatePath = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Title.
-        builder.Writeln("=== CSV LINQ Reporting Example ===");
-        builder.Writeln();
-
-        // Display the third record (index 2) using ElementAt.
-        builder.Writeln("Detailed view of the third record (ElementAt):");
-        builder.Writeln("Name: <<[persons.ElementAt(2).Name]>>");
-        builder.Writeln("Age:  <<[persons.ElementAt(2).Age]>>");
-        builder.Writeln();
-
-        // Optional: list all records using a foreach loop.
-        builder.Writeln("All records:");
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("- Id: <<[p.Id]>>, Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
+        builder.Writeln("Detailed Person Report");
+        builder.Writeln("<<[person.Id]>>");
+        builder.Writeln("<<[person.Name]>>");
+        builder.Writeln("<<[person.Age]>>");
         templateDoc.Save(templatePath);
 
-        // 3. Load the template for reporting.
+        // 5. Load the template and build the report.
         Document reportDoc = new Document(templatePath);
-
-        // 4. Prepare CSV data source with header support.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
-
-        // 5. Build the report using the data source named "persons".
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, csvDataSource, "persons");
+        engine.BuildReport(reportDoc, selectedPerson, "person");
 
         // 6. Save the generated report.
-        string reportPath = Path.Combine(workDir, "Report.docx");
-        reportDoc.Save(reportPath);
+        string outputPath = "PersonReport.docx";
+        reportDoc.Save(outputPath);
 
-        // Indicate completion (no interactive input).
-        Console.WriteLine("Report generated at: " + reportPath);
+        // Optional: indicate completion (no interactive wait).
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

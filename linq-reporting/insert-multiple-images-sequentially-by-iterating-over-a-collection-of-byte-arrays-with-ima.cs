@@ -2,71 +2,70 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
-
-public class ImageItem
-{
-    public byte[] Data { get; set; } = Array.Empty<byte>();
-}
-
-public class ReportModel
-{
-    public List<ImageItem> Images { get; set; } = new();
-}
+using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample images as byte arrays (1x1 PNG pixels).
-        var redPixelBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        var bluePixelBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/lcKcAAAAAElFTkSuQmCC";
+        // Sample image data (two tiny PNG images).
+        var model = new ReportModel
+        {
+            Images = new List<byte[]>
+            {
+                Convert.FromBase64String(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII="), // transparent 1x1
+                Convert.FromBase64String(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==") // black 1x1
+            }
+        };
 
-        var model = new ReportModel();
-        model.Images.Add(new ImageItem { Data = Convert.FromBase64String(redPixelBase64) });
-        model.Images.Add(new ImageItem { Data = Convert.FromBase64String(bluePixelBase64) });
-
-        // -----------------------------------------------------------------
-        // Create the LINQ Reporting template.
-        // -----------------------------------------------------------------
-        var templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a template document with LINQ Reporting tags.
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
         // Begin foreach over the Images collection.
         builder.Writeln("<<foreach [img in Images]>>");
 
-        // Table that will hold each image in its own row.
-        var table = builder.StartTable();
+        // Create a table row for each image.
+        Table table = builder.StartTable();
         builder.InsertCell();
 
-        // TextBox acts as a container for the image tag (required by the rules).
-        var textBox = builder.InsertShape(ShapeType.TextBox, 200, 200);
+        // Insert a textbox that will hold the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-        builder.Writeln("<<image [img.Data]>>");
+        builder.Write("<<image [img] -fitSize>>");
 
-        // Close the row and table for this iteration.
         builder.EndRow();
         builder.EndTable();
 
         // End foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
+        // Load the template for report generation.
         var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the final document.
-        reportDoc.Save("Report.docx");
+        // Save the generated report.
+        const string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Data model for the report.
+public class ReportModel
+{
+    public List<byte[]> Images { get; set; } = new();
 }

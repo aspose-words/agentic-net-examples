@@ -1,50 +1,90 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Saving;
 
-namespace AsposeWordsLinqReportingDemo
+namespace LinqReportingBookmarkWarning
 {
-    // Simple data model used by the LINQ Reporting engine.
+    // Model class used by the LINQ Reporting template.
     public class ReportModel
     {
-        // Bookmark name that will be evaluated in the template.
-        // Initialized to an empty string to demonstrate the warning scenario.
+        // Bookmark name may be empty; initialize to empty string.
         public string BookmarkName { get; set; } = string.Empty;
+
+        // Sample title to appear inside the bookmark.
+        public string Title { get; set; } = "Default Title";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Step 1: Create a template document with a bookmark tag.
-            const string templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
+            // Register code page provider for possible data sources.
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            // -----------------------------------------------------------------
+            // Step 1: Create the template document with a bookmark tag.
+            // -----------------------------------------------------------------
+            const string templatePath = "template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Insert a bookmark tag that uses the model's BookmarkName expression.
             builder.Writeln("<<bookmark [model.BookmarkName]>>");
-            builder.Writeln("This is bookmarked content.");
+            builder.Writeln("<<[model.Title]>>");
             builder.Writeln("<</bookmark>>");
-            builder.Document.Save(templatePath);
 
-            // Step 2: Load the template document.
-            var doc = new Document(templatePath);
+            // Save the template to disk.
+            doc.Save(templatePath, SaveFormat.Docx);
 
+            // -----------------------------------------------------------------
+            // Step 2: Load the template back for reporting.
+            // -----------------------------------------------------------------
+            var loadedDoc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
             // Step 3: Prepare the data model.
-            var model = new ReportModel(); // BookmarkName is empty.
-
-            // Step 4: Log a warning and provide a fallback bookmark name if the expression evaluates to an empty string.
-            if (string.IsNullOrEmpty(model.BookmarkName))
+            // -----------------------------------------------------------------
+            var model = new ReportModel
             {
+                // Intentionally leave BookmarkName empty to trigger the warning.
+                BookmarkName = string.Empty,
+                Title = "Hello from LINQ Reporting"
+            };
+
+            // -----------------------------------------------------------------
+            // Step 4: Build the report using the LINQ Reporting engine.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine
+            {
+                // Enable inline error messages so the engine does not throw on most errors.
+                Options = ReportBuildOptions.InlineErrorMessages
+            };
+
+            bool success;
+            try
+            {
+                // BuildReport returns true if the report was generated without errors.
+                success = engine.BuildReport(loadedDoc, model, "model");
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("bookmark's name"))
+            {
+                // The bookmark name evaluated to an empty string – log a warning and continue.
                 Console.WriteLine("Warning: Bookmark name expression evaluated to an empty string.");
-                // Provide a non‑empty placeholder name so the reporting engine does not throw.
-                model.BookmarkName = "DefaultBookmark";
+                success = false;
             }
 
-            // Step 5: Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            // If the engine reported failure (e.g., other errors), you could handle it here.
+            if (!success && !engine.Options.HasFlag(ReportBuildOptions.InlineErrorMessages))
+            {
+                Console.WriteLine("Report generation completed with errors.");
+            }
 
-            // Step 6: Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
+            // -----------------------------------------------------------------
+            // Step 5: Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "output.docx";
+            loadedDoc.Save(outputPath, SaveFormat.Docx);
         }
     }
 }

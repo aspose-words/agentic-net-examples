@@ -1,63 +1,71 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    // Public properties referenced by the template.
-    public string Name { get; set; } = string.Empty;
-    public string Secret { get; set; } = string.Empty;
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
-
-        // -------------------------------------------------
-        // Create the template document programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert LINQ Reporting tags that reference the model's members.
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Secret: <<[model.Secret]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // Load the template for report generation.
-        // -------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // Sample data model.
-        Person model = new Person
+        // Prepare sample data model.
+        Person person = new()
         {
             Name = "John Doe",
-            Secret = "TopSecretInformation"
+            Age = 30,
+            Salary = 75000m
         };
 
-        // -------------------------------------------------
-        // Configure the ReportingEngine with custom security restrictions.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // -----------------------------------------------------------------
+        // Create a Word template with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document template = new();
+        DocumentBuilder builder = new(template);
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
+        builder.Writeln("Salary: <<[person.Salary]>>");
 
-        // Restrict access to the Person type (all its members). This is the
-        // available API for setting restricted types. To avoid runtime errors
-        // when a restricted member is referenced in the template, enable the
-        // AllowMissingMembers option so missing members are treated as null.
-        ReportingEngine.SetRestrictedTypes(typeof(Person));
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // Build the report using the loaded template and the data model.
-        engine.BuildReport(loadedTemplate, model, "model");
+        // -----------------------------------------------------------------
+        // Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document doc = new(templatePath);
 
-        // Save the final report.
-        loadedTemplate.Save(outputPath);
+        // -----------------------------------------------------------------
+        // Configure the reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new();
+
+        // Populate RestrictedMembers (if the property exists in the current
+        // Aspose.Words version) using reflection to avoid compile‑time errors.
+        PropertyInfo restrictedProp = typeof(ReportingEngine).GetProperty("RestrictedMembers");
+        if (restrictedProp != null)
+        {
+            if (restrictedProp.GetValue(engine) is IList<string> restrictedList)
+            {
+                restrictedList.Add("Salary");
+            }
+        }
+
+        // Build the report using the person object as the root named "person".
+        engine.BuildReport(doc, person, "person");
+
+        // Save the generated report.
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {reportPath}");
     }
+}
+
+// Public data model class.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
+    public decimal Salary { get; set; }
 }

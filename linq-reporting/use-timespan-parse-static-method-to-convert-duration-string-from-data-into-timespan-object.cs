@@ -2,60 +2,58 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace LinqReportingTimeSpanExample
 {
-    // Data model used by the LINQ Reporting engine.
-    public class ReportModel
+    // Data model with a duration string and a parsed TimeSpan property.
+    public class Order
     {
-        // Duration expressed as a string, e.g. "02:30:45".
-        public string DurationString { get; set; } = "00:00:00";
+        // Sample duration string in the format "hh:mm:ss".
+        public string DurationString { get; set; } = "02:30:45";
+
+        // Parses the string into a TimeSpan using TimeSpan.Parse.
+        public TimeSpan Duration => TimeSpan.Parse(DurationString);
+
+        public string Description { get; set; } = "Sample order description";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the temporary template and the final report.
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
             // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
+            // Create the template document programmatically.
             // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Insert a LINQ Reporting tag that parses the duration string using TimeSpan.Parse.
-            // The ReportingEngine must know the TimeSpan type to allow static method calls.
-            builder.Writeln("Parsed duration: <<[TimeSpan.Parse(model.DurationString)]>>");
+            // Insert a title.
+            builder.Writeln("Order Report");
+            builder.Writeln();
+
+            // Insert LINQ Reporting tags that reference the model.
+            builder.Writeln("Description: <<[order.Description]>>");
+            builder.Writeln("Duration string: <<[order.DurationString]>>");
+            builder.Writeln("Parsed TimeSpan: <<[order.Duration]>>");
 
             // Save the template to disk.
-            template.Save(templatePath);
+            templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Prepare the data source.
+            // Load the template and build the report.
             // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
-            {
-                DurationString = "02:30:45" // 2 hours, 30 minutes, 45 seconds.
-            };
+            Document doc = new Document(templatePath);
+            Order order = new Order(); // Sample data.
 
-            // -----------------------------------------------------------------
-            // 3. Build the report.
-            // -----------------------------------------------------------------
-            // Load the template document.
-            Document reportDoc = new Document(templatePath);
-
-            // Configure the ReportingEngine.
             ReportingEngine engine = new ReportingEngine();
-            // Register TimeSpan so its static members can be used in the template.
-            engine.KnownTypes.Add(typeof(TimeSpan));
-
-            // Build the report using the model as the root data source named "model".
-            engine.BuildReport(reportDoc, model, "model");
+            // Build the report using the root object name "order".
+            engine.BuildReport(doc, order, "order");
 
             // Save the generated report.
-            reportDoc.Save(reportPath);
+            doc.Save(reportPath);
         }
     }
 }

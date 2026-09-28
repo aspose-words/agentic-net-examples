@@ -1,62 +1,83 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings)
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // ---------- Create sample JSON data ----------
-        const string jsonPath = "people.json";
-        const string jsonContent = @"[
-  {
-    ""Name"": ""John Doe"",
-    ""Street"": ""123 Main St"",
-    ""City"": ""Springfield"",
-    ""State"": ""IL"",
-    ""Zip"": ""62704""
-  },
-  {
-    ""Name"": ""Jane Smith"",
-    ""Street"": ""456 Oak Ave"",
-    ""City"": ""Metropolis"",
-    ""State"": ""NY"",
-    ""Zip"": ""10001""
-  }
-]";
-        File.WriteAllText(jsonPath, jsonContent);
+        // Prepare sample JSON data.
+        string json = @"{
+  ""Persons"": [
+    {
+      ""Name"": ""John Doe"",
+      ""Street"": ""123 Main St"",
+      ""City"": ""Springfield"",
+      ""State"": ""IL"",
+      ""Zip"": ""62704""
+    },
+    {
+      ""Name"": ""Jane Smith"",
+      ""Street"": ""456 Oak Ave"",
+      ""City"": ""Metropolis"",
+      ""State"": ""NY"",
+      ""Zip"": ""10001""
+    }
+  ]
+}";
+        // Write JSON to a local file.
+        string dataPath = Path.Combine(Environment.CurrentDirectory, "data.json");
+        File.WriteAllText(dataPath, json, Encoding.UTF8);
 
-        // ---------- Build the template document ----------
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Deserialize JSON into the model.
+        ReportModel model = JsonConvert.DeserializeObject<ReportModel>(json) ?? new();
 
-        builder.Writeln("Customer Addresses:");
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        // Inline concatenation builds the full address line.
-        builder.Writeln("Address: <<[person.Street + \", \" + person.City + \", \" + person.State + \" \" + person.Zip]>>");
+        // Create the template document programmatically.
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "template.docx");
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+
+        // Insert LINQ Reporting tags.
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Address: <<[p.Street + \", \" + p.City + \", \" + p.State + \" \" + p.Zip]>>");
         builder.Writeln("<</foreach>>");
 
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // ---------- Load the template ----------
-        var reportDoc = new Document(templatePath);
+        // Load the template for report generation.
+        Document reportDoc = new(templatePath);
 
-        // ---------- Load JSON data source ----------
-        using var jsonStream = File.OpenRead(jsonPath);
-        var jsonDataSource = new JsonDataSource(jsonStream);
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // ---------- Generate the report ----------
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, jsonDataSource, "persons");
-
-        // ---------- Save the final report ----------
-        reportDoc.Save("Report.docx");
+        // Save the final report.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "report.docx");
+        reportDoc.Save(outputPath);
     }
+}
+
+// Root wrapper class for the JSON data.
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+// Person data class.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public string Street { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public string Zip { get; set; } = string.Empty;
 }

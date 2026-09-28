@@ -1,52 +1,60 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class MissingXmlElementsExample
+public class LinqReportingMissingElementsExample
 {
     public static void Main()
     {
-        // Create a simple template document with LINQ Reporting tags.
+        // Create a folder for output files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // -------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -------------------------------------------------
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Person Name: <<[person.Name]>>");
-        builder.Writeln("Person Age: <<[person.Age]>>"); // Age element will be missing in the XML.
 
-        // Save the template to a local file.
-        const string templatePath = "Template.docx";
+        builder.Writeln("Order Report");
+        builder.Writeln("Order ID: <<[order.OrderId]>>");
+        // The CustomerName element may be missing in the XML data.
+        builder.Writeln("Customer Name: <<[order.CustomerName]>>");
+        builder.Writeln("End of Report");
+
+        string templatePath = Path.Combine(outputDir, "Template.docx");
         template.Save(templatePath);
 
-        // Prepare an XML source where the <Age> element is omitted.
-        const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Root>
-    <person>
-        <Name>John Doe</Name>
-        <!-- Age element is intentionally missing -->
-    </person>
-</Root>";
+        // -------------------------------------------------
+        // 2. Prepare XML data source.
+        //    To treat a missing element as an empty string we add an empty <CustomerName> element.
+        // -------------------------------------------------
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<order>
+    <OrderId>12345</OrderId>
+    <CustomerName></CustomerName> <!-- Empty element to avoid missing-field errors -->
+</order>";
+        using MemoryStream xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlContent));
+        xmlStream.Position = 0;
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
 
-        // Load the XML into a memory stream.
-        using MemoryStream xmlStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(xmlContent));
-
-        // Create an XmlDataSource from the stream.
-        XmlDataSource dataSource = new XmlDataSource(xmlStream);
-
-        // Load the template document again (as required by the lifecycle rules).
-        Document doc = new Document(templatePath);
-
-        // Configure the ReportingEngine to treat missing members as empty strings.
+        // -------------------------------------------------
+        // 3. Configure the ReportingEngine (default options are sufficient).
+        // -------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-        engine.MissingMemberMessage = string.Empty; // Keep output clean for missing members.
 
-        // Build the report. The root object name is "Root" because the XML root element is <Root>.
-        engine.BuildReport(doc, dataSource, "Root");
+        // -------------------------------------------------
+        // 4. Build the report.
+        // -------------------------------------------------
+        Document report = new Document(templatePath);
+        engine.BuildReport(report, xmlDataSource, "order");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
-
-        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
+        // -------------------------------------------------
+        // 5. Save the generated report.
+        // -------------------------------------------------
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        report.Save(reportPath);
     }
 }

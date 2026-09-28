@@ -1,64 +1,92 @@
 using System;
+using System.Data;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class LinqReportingXmlExample
 {
     public static void Main()
     {
-        // File names.
-        string templatePath = "Template.docx";
-        string xmlPath = "People.xml";
-        string reportPath = "Report.docx";
+        // Register code page provider for XML encoding support.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         // -----------------------------------------------------------------
-        // 1. Create a simple XML data source file.
+        // 1. Create sample XML data.
         // -----------------------------------------------------------------
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<people>
-    <person>
-        <Name>John Doe</Name>
-        <Age>30</Age>
-    </person>
-    <person>
-        <Name>Jane Smith</Name>
-        <Age>25</Age>
-    </person>
-</people>";
-        File.WriteAllText(xmlPath, xmlContent);
+        string xmlPath = "data.xml";
+        File.WriteAllText(xmlPath,
+            @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Orders>
+  <Order>
+    <CustomerName>John Doe</CustomerName>
+    <OrderDate>2023-01-01</OrderDate>
+    <Items>
+      <Item>
+        <ProductName>Widget</ProductName>
+        <Quantity>2</Quantity>
+      </Item>
+      <Item>
+        <ProductName>Gadget</ProductName>
+        <Quantity>5</Quantity>
+      </Item>
+    </Items>
+  </Order>
+  <Order>
+    <CustomerName>Jane Smith</CustomerName>
+    <OrderDate>2023-02-15</OrderDate>
+    <Items>
+      <Item>
+        <ProductName>Thingamajig</ProductName>
+        <Quantity>1</Quantity>
+      </Item>
+    </Items>
+  </Order>
+</Orders>");
 
         // -----------------------------------------------------------------
         // 2. Build a template document that contains LINQ Reporting tags.
         // -----------------------------------------------------------------
+        string templatePath = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Iterate over the collection of <person> elements.
-        builder.Writeln("<<foreach [p in people]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Age: <<[p.Age]>>");
+        builder.Writeln("Orders Report");
+        builder.Writeln("<<foreach [order in Order]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Date: <<[order.OrderDate]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items.Item]>>");
+        builder.Writeln("- <<[item.ProductName]>>: <<[item.Quantity]>>");
+        builder.Writeln("<</foreach>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 3. Load the template and generate the report using the XML data.
+        // 3. Load the template document for reporting.
         // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        Document doc = new Document(templatePath);
 
-        // Create an XmlDataSource from the XML file.
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
+        // -----------------------------------------------------------------
+        // 4. Load XML data into a DataSet (the format expected by the engine).
+        // -----------------------------------------------------------------
+        DataSet dataSet = new DataSet();
+        dataSet.ReadXml(xmlPath);
 
-        // Initialise the reporting engine without AllowMissingMembers.
+        // -----------------------------------------------------------------
+        // 5. Build the report. AllowMissingMembers stays disabled (default).
+        // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default behavior; missing members cause an exception.
+        // No special options are set; the default disables AllowMissingMembers.
+        engine.BuildReport(doc, dataSet, "Orders");
 
-        // Build the report. The data source name must match the root element name used in the template.
-        engine.BuildReport(reportDoc, xmlDataSource, "people");
-
-        // Save the generated report.
-        reportDoc.Save(reportPath);
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
 }

@@ -1,47 +1,68 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingFallback
+public class Person
 {
-    // Simple data model with a nullable property.
-    public class Order
+    // Nullable property that may be null in the data.
+    public string? Name { get; set; }
+
+    // Non‑nullable property.
+    public int Age { get; set; }
+
+    // Initialize to avoid nullable warnings for non‑nullable members.
+    public Person()
     {
-        // Initialize to avoid nullable warnings.
-        public string? CustomerName { get; set; } = null;
+        Name = string.Empty;
+        Age = 0;
     }
+}
 
-    public class Program
+public class ReportModel
+{
+    // Collection of persons to iterate over in the template.
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Step 1: Create the LINQ Reporting template programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Persons Report");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        // Use the null‑coalescing operator to provide a fallback when Name is null.
+        builder.Writeln("Name: <<[p.Name ?? \"(no name)\"]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // Step 2: Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // Step 3: Prepare sample data with a null Name value.
+        var model = new ReportModel
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert a LINQ Reporting tag that references the CustomerName property.
-            // If the property is null, we want to display a default text.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-
-            // Prepare the data source with a null value.
-            Order order = new Order
+            Persons = new()
             {
-                CustomerName = null // Simulate missing data.
-            };
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = null, Age = 25 }, // This entry will trigger the fallback text.
+                new Person { Name = "Bob", Age = 40 }
+            }
+        };
 
-            // Configure the reporting engine to treat missing members as null
-            // and replace them with a custom message.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.AllowMissingMembers
-            };
-            engine.MissingMemberMessage = "N/A";
+        // Step 4: Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Build the report. The root object name must match the tag prefix.
-            engine.BuildReport(doc, order, "order");
-
-            // Save the result to the working directory.
-            doc.Save("ReportWithFallback.docx");
-        }
+        // Step 5: Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

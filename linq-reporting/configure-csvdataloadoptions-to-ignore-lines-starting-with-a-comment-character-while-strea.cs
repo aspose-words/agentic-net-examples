@@ -8,72 +8,51 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
+        // Register code page provider for CSV encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Define file paths.
-        string templatePath = "Template.docx";
-        string csvPath = "Data.csv";
-        string reportPath = "Report.docx";
+        // Prepare sample CSV file with comment lines (starting with '#') and data rows.
+        const string csvPath = "sample.csv";
+        File.WriteAllText(csvPath,
+            "# This is a comment line and should be ignored\r\n" +
+            "# Another comment\r\n" +
+            "Name,Age\r\n" +
+            "Alice,30\r\n" +
+            "Bob,25\r\n" +
+            "# End of data comment\r\n");
 
-        // -----------------------------------------------------------------
-        // 1. Create a LINQ Reporting template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a Word template programmatically.
+        const string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Insert a simple foreach loop that will iterate over the CSV rows.
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
+        // Insert LINQ Reporting tags to iterate over CSV rows.
+        builder.Writeln("<<foreach [row in Data]>>");
+        builder.Writeln("Name: <<[row.Name]>>, Age: <<[row.Age]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Create a sample CSV file with comment lines.
-        // -----------------------------------------------------------------
-        // The CSV has a header row, a comment line (starting with '#'), and two data rows.
-        string[] csvLines =
-        {
-            "Name,Age",
-            "# This line is a comment and should be ignored",
-            "Alice,30",
-            "Bob,25"
-        };
-        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Configure CsvDataLoadOptions to ignore comment lines.
-        // -----------------------------------------------------------------
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true) // first line has headers
+        // Configure CSV loading options to ignore comment lines starting with '#'.
+        var csvOptions = new CsvDataLoadOptions
         {
-            Delimiter = ',',      // default delimiter, set explicitly for clarity
-            CommentChar = '#',    // lines starting with '#' will be ignored
-            QuoteChar = '"'       // default quote character
+            CommentChar = '#',
+            HasHeaders = true
         };
 
-        // -----------------------------------------------------------------
-        // 4. Load the CSV data as a stream and create a CsvDataSource.
-        // -----------------------------------------------------------------
-        using (FileStream csvStream = File.OpenRead(csvPath))
-        {
-            CsvDataSource dataSource = new CsvDataSource(csvStream, loadOptions);
+        // Create CSV data source with the configured options.
+        var csvDataSource = new CsvDataSource(csvPath, csvOptions);
 
-            // Load the previously saved template document.
-            Document doc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, csvDataSource, "Data");
 
-            // -----------------------------------------------------------------
-            // 5. Build the report using ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, dataSource, "persons");
-
-            // Save the generated report.
-            doc.Save(reportPath);
-        }
-
-        // The example finishes without waiting for user input.
+        // Save the generated report.
+        const string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
 }

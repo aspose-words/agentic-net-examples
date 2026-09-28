@@ -1,45 +1,48 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace LinqReportingUnicodeExample
 {
-    // Model class with a Unicode character in the property name.
-    public class ReportModel
+    // Data model with Unicode property names.
+    public class Model
     {
-        // Property name contains the character 'é'.
-        public string Café { get; set; } = "Café au lait";
+        public string Имя { get; set; } = "Иван Иванов";
+        public string Приветствие { get; set; } = "Привет, мир!";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document.
+            // Paths for template and output documents.
+            string templatePath = "Template.docx";
+            string outputPath = "Report.docx";
+
+            // Create the template document programmatically.
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Insert a LINQ Reporting tag that references the Unicode property directly.
-            builder.Writeln("Product description: <<[model.Café]>>");
+            // Write LINQ Reporting tags using literal Unicode identifiers.
+            builder.Writeln("<<[model.Приветствие]>>");
+            builder.Writeln("<<[model.Имя]>>");
 
             // Save the template to disk.
-            const string templatePath = "template.docx";
             templateDoc.Save(templatePath);
 
-            // Load the template back (required before building the report).
-            Document loadedTemplate = new Document(templatePath);
+            // Load the template for report generation.
+            Document doc = new Document(templatePath);
 
-            // Build the report using the ReportingEngine.
+            // Prepare the data model.
+            Model model = new Model();
+
+            // Build the report.
             ReportingEngine engine = new ReportingEngine();
-            ReportModel model = new ReportModel();
-            engine.BuildReport(loadedTemplate, model, "model");
+            engine.BuildReport(doc, model, "model");
 
             // Save the generated report.
-            const string reportPath = "report.docx";
-            loadedTemplate.Save(reportPath);
-
-            // Indicate completion (no interactive input).
-            Console.WriteLine($"Report generated: {reportPath}");
+            doc.Save(outputPath);
         }
     }
 }

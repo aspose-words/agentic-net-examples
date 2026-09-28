@@ -1,86 +1,78 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create reusable header fragment.
+        var headerDoc = new Document();
+        var headerBuilder = new DocumentBuilder(headerDoc);
+        headerBuilder.Writeln("<<[model.Title]>>");
+        headerBuilder.Writeln("Report Date: <<[model.ReportDate]>>");
+
+        // Create main template and insert the header fragment.
+        var mainDoc = new Document();
+        var builder = new DocumentBuilder(mainDoc);
+        builder.InsertDocument(headerDoc, ImportFormatMode.KeepSourceFormatting);
+        builder.Writeln(); // Add a blank line after the header.
+
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Table header.
+        Table table = builder.StartTable();
+        builder.InsertCell(); builder.Writeln("Name");
+        builder.InsertCell(); builder.Writeln("Quantity");
+        builder.EndRow();
+
+        // Table row (repeated for each item).
+        builder.InsertCell(); builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
+        builder.EndRow();
+        builder.EndTable();
+
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, just for demonstration).
+        mainDoc.Save("MainTemplate.docx");
+
+        // Sample data model.
+        var model = new ReportModel
         {
-            // Register code page provider (required for some encodings)
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-            // Prepare directories
-            string outputDir = "Output";
-            string templateDir = "Templates";
-            Directory.CreateDirectory(outputDir);
-            Directory.CreateDirectory(templateDir);
-
-            // Create reusable header fragment
-            string headerPath = Path.Combine(templateDir, "header.docx");
-            CreateHeaderTemplate(headerPath);
-
-            // Create main template that includes the header fragment
-            string mainTemplatePath = Path.Combine(templateDir, "main.docx");
-            CreateMainTemplate(mainTemplatePath, headerPath);
-
-            // Load the main template
-            Document mainDoc = new Document(mainTemplatePath);
-
-            // Prepare data model
-            ReportModel model = new()
+            Title = "Sales Report",
+            ReportDate = DateTime.Now.ToString("yyyy-MM-dd"),
+            Items = new List<Item>
             {
-                Title = "Monthly Report",
-                Date = DateTime.Now.ToString("MMMM yyyy"),
-                Body = "This is the body of the report generated using Aspose.Words LINQ Reporting."
-            };
+                new Item { Name = "Apple", Quantity = 10 },
+                new Item { Name = "Banana", Quantity = 20 },
+                new Item { Name = "Cherry", Quantity = 15 }
+            }
+        };
 
-            // Build the report using the LINQ Reporting engine
-            ReportingEngine engine = new();
-            engine.BuildReport(mainDoc, model, "model");
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(mainDoc, model, "model");
 
-            // Save the generated report
-            string resultPath = Path.Combine(outputDir, "Report.docx");
-            mainDoc.Save(resultPath);
-        }
-
-        // Creates a header fragment containing common header tags
-        private static void CreateHeaderTemplate(string path)
-        {
-            Document headerDoc = new();
-            DocumentBuilder builder = new(headerDoc);
-            builder.Writeln("<<[model.Title]>>");
-            builder.Writeln("<<[model.Date]>>");
-            builder.Writeln("------------------------------");
-            headerDoc.Save(path);
-        }
-
-        // Creates the main template and inserts the header fragment using DocumentBuilder.InsertDocument
-        private static void CreateMainTemplate(string path, string headerFilePath)
-        {
-            Document mainDoc = new();
-            DocumentBuilder builder = new(mainDoc);
-
-            // Load the header fragment and insert its content into the main template
-            Document headerDoc = new(headerFilePath);
-            builder.InsertDocument(headerDoc, ImportFormatMode.KeepSourceFormatting);
-
-            // Add a blank paragraph after the header
-            builder.Writeln();
-
-            // Add the body placeholder
-            builder.Writeln("<<[model.Body]>>");
-            mainDoc.Save(path);
-        }
-
-        // Public data model aligned with the template tags
-        public class ReportModel
-        {
-            public string Title { get; set; } = "";
-            public string Date { get; set; } = "";
-            public string Body { get; set; } = "";
-        }
+        // Save the generated report.
+        mainDoc.Save("ReportOutput.docx");
+        Console.WriteLine("Report generated: ReportOutput.docx");
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public string Title { get; set; } = string.Empty;
+    public string ReportDate { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; }
 }

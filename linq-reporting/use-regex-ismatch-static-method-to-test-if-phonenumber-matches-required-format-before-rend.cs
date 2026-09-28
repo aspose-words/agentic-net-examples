@@ -1,60 +1,56 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class PhoneNumberModel
+public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Person
-{
+    // Sample phone number property.
     public string PhoneNumber { get; set; } = string.Empty;
 
-    // Determines whether the phone number matches the required pattern.
-    public bool IsValid => Regex.IsMatch(PhoneNumber, @"^\d{3}-\d{3}-\d{4}$");
+    // Computed property that validates the phone number format.
+    public bool IsPhoneValid => Regex.IsMatch(PhoneNumber, @"^\d{3}-\d{3}-\d{4}$");
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new PhoneNumberModel();
-        model.Persons.Add(new Person { PhoneNumber = "123-456-7890" }); // valid
-        model.Persons.Add(new Person { PhoneNumber = "5551234" });      // invalid
-        model.Persons.Add(new Person { PhoneNumber = "987-654-3210" }); // valid
+        // Paths for the template and the final report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
 
-        // Create a template document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // -------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach loop over the collection.
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Phone: <<[person.PhoneNumber]>> ");
+        // Write a line that conditionally shows "Valid" or "Invalid"
+        // based on whether PhoneNumber matches the required pattern.
+        builder.Writeln(
+            "Phone: <<if [IsPhoneValid]>>Valid<</if>><<if [!IsPhoneValid]>>Invalid<</if>>");
 
-        // Render "Valid" if the phone number matches the pattern.
-        builder.Writeln("<<if [person.IsValid]>>Valid<</if>>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Render "Invalid" if the phone number does not match the pattern.
-        builder.Writeln("<<if [!person.IsValid]>>Invalid<</if>>");
-
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template (optional, shown for completeness).
-        const string templatePath = "PhoneNumberTemplate.docx";
-        doc.Save(templatePath);
-
+        // -------------------------------------------------
         // Load the template and build the report.
-        var loadedDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(loadedDoc, model, "model");
+        // -------------------------------------------------
+        var reportDoc = new Document(templatePath);
 
-        // Save the final report.
-        const string outputPath = "PhoneNumberReport.docx";
-        loadedDoc.Save(outputPath);
+        // Sample data model with a phone number.
+        var model = new ReportModel
+        {
+            PhoneNumber = "123-456-7890" // Change to test different formats.
+        };
+
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        reportDoc.Save(outputPath);
     }
 }

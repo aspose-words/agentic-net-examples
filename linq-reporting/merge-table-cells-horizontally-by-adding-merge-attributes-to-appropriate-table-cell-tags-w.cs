@@ -1,65 +1,81 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the final report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
+        // Register code page provider (required for Aspose.Words on .NET Core)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare output folder
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Build a simple 2‑column table.
-        // The first row will have horizontally merged cells using the <<cellMerge>> tag.
-        builder.StartTable();
+        // Create template document with a table that merges cells horizontally
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // First cell – contains the merge tag and the text that will be shared.
+        // Build a simple table
+        Table table = builder.StartTable();
+
+        // Header row
         builder.InsertCell();
-        builder.Write("<<cellMerge>>Group A");
-
-        // Second cell – same merge tag and identical text.
+        builder.Writeln("Category");
         builder.InsertCell();
-        builder.Write("<<cellMerge>>Group A");
-
-        // End the first row.
+        builder.Writeln("Item");
         builder.EndRow();
 
-        // Add a normal row to demonstrate that only the first row is merged.
+        // Row with horizontally merged cells
         builder.InsertCell();
-        builder.Write("Item 1");
+        builder.Writeln("<<cellMerge -horz>>Group A");
         builder.InsertCell();
-        builder.Write("Item 2");
+        builder.Writeln("<<cellMerge -horz>>Group A");
         builder.EndRow();
 
-        // Finish the table.
         builder.EndTable();
 
-        // Save the template to disk.
-        template.Save(templatePath);
+        // Save the template
+        templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the template and build the report.
-        // -------------------------------------------------
-        Document report = new Document(templatePath);
+        // Load the template for reporting
+        Document reportDoc = new Document(templatePath);
 
-        // The template does not reference any data, so an empty object is sufficient.
+        // Sample data model (not used in this simple merge example)
+        ReportModel model = new()
+        {
+            Items = new()
+            {
+                new Item { Category = "Group A", Name = "Item 1" },
+                new Item { Category = "Group A", Name = "Item 2" }
+            }
+        };
+
+        // Build the report
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, new object());
+        engine.BuildReport(reportDoc, model, "model");
 
-        // -------------------------------------------------
-        // 3. Save the generated report.
-        // -------------------------------------------------
-        report.Save(outputPath);
-
-        // Inform the user (optional, no interactive wait).
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Save the final report
+        string outputPath = Path.Combine(outputDir, "report.docx");
+        reportDoc.Save(outputPath);
     }
+}
+
+// Data model classes
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Category { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 }

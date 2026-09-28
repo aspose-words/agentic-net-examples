@@ -1,19 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+#nullable enable
+
+namespace LinqReportingMissingItems
 {
-    // Simple data model.
+    // Data model classes
     public class Person
     {
-        // Name may be null to simulate missing data.
-        public string Name { get; set; } = string.Empty;
+        // Name may be null to simulate missing data
+        public string? Name { get; set; }
     }
 
-    // Wrapper class that will be passed as the root data source.
-    public class ReportModel
+    public class Model
     {
         public List<Person> Persons { get; set; } = new();
     }
@@ -22,42 +24,51 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Create a template document programmatically.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Register code page provider (required for some encodings)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Direct reference to a possibly missing member.
-            builder.Writeln("First person name: <<[model.Persons[0].Name]>>");
+            // -----------------------------------------------------------------
+            // Create a template document with LINQ Reporting tags
+            // -----------------------------------------------------------------
+            const string templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // Loop over the collection; missing members will be treated as empty strings.
-            builder.Writeln("<<foreach [person in model.Persons]>>");
-            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Persons list:");
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>");
             builder.Writeln("<</foreach>>");
 
-            // Prepare sample data with a null name.
-            var model = new ReportModel
+            // Save the template to disk
+            templateDoc.Save(templatePath);
+
+            // Load the template for report generation
+            var doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // Prepare sample data with some missing (null) collection items
+            // -----------------------------------------------------------------
+            var model = new Model
             {
                 Persons = new List<Person>
                 {
                     new Person { Name = "Alice" },
-                    new Person { Name = null }, // Missing name.
-                    new Person { Name = "Charlie" }
+                    new Person { Name = null }, // Missing name should become empty string
+                    new Person { Name = "Bob" }
                 }
             };
 
-            // Configure the reporting engine to treat missing members as empty strings.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.AllowMissingMembers
-            };
-            // Optional: customize the placeholder text for missing members.
-            engine.MissingMemberMessage = string.Empty;
+            // -----------------------------------------------------------------
+            // Configure the ReportingEngine (default behavior already treats null as empty)
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
 
-            // Build the report. The root object name used in the template is "model".
+            // Build the report
             engine.BuildReport(doc, model, "model");
 
-            // Save the generated report.
-            doc.Save("ReportOutput.docx");
+            // Save the generated report
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
         }
     }
 }

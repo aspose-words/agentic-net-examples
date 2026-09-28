@@ -1,77 +1,82 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Item
+{
+    public string Title { get; set; } = "";
+    public string Description { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for .NET Core environments.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample XML data.
+        const string xmlFileName = "items.xml";
+        var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Items>
+    <Item>
+        <Title>First Item</Title>
+        <Description>This is the first item.</Description>
+    </Item>
+    <Item>
+        <Title>Second Item</Title>
+        <Description>This is the second item.</Description>
+    </Item>
+    <Item>
+        <Title>Third Item</Title>
+        <Description>This is the third item.</Description>
+    </Item>
+</Items>";
+        File.WriteAllText(xmlFileName, xmlContent);
 
-        // Create sample XML data file.
-        string xmlPath = "orders.xml";
-        File.WriteAllText(xmlPath, GetSampleXml());
+        // Load XML into the data model.
+        var model = new ReportModel();
+        var xdoc = XDocument.Load(xmlFileName);
+        foreach (var elem in xdoc.Root?.Elements("Item") ?? [])
+        {
+            var item = new Item
+            {
+                Title = (string?)elem.Element("Title") ?? "",
+                Description = (string?)elem.Element("Description") ?? ""
+            };
+            model.Items.Add(item);
+        }
 
-        // Create the LINQ Reporting template and save it.
-        string templatePath = "template.docx";
-        CreateTemplate(templatePath);
+        // Create the template document programmatically.
+        const string templateFileName = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Load the template document.
-        Document doc = new Document(templatePath);
+        builder.Writeln("Report generated from XML data");
+        builder.Writeln(); // empty line
 
-        // Load the XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
-
-        // Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource, "Orders");
-
-        // Save the generated report.
-        doc.Save("report.docx");
-    }
-
-    // Generates a simple template that repeats a single‑row block for each Order element.
-    private static void CreateTemplate(string path)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Begin the foreach loop over the Orders collection.
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Amount: <<[order.Amount]>>");
-        // Insert a page break so each order starts on a new page (separate section).
-        builder.InsertBreak(BreakType.PageBreak);
-        // End the foreach loop.
+        // Single‑row template applied to each XML node.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Title: <<[item.Title]>>");
+        builder.Writeln("Description: <<[item.Description]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(path);
-    }
+        doc.Save(templateFileName);
 
-    // Returns a small XML document containing a list of orders.
-    private static string GetSampleXml()
-    {
-        return @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Orders>
-    <Order>
-        <Id>1001</Id>
-        <CustomerName>John Doe</CustomerName>
-        <Amount>250.00</Amount>
-    </Order>
-    <Order>
-        <Id>1002</Id>
-        <CustomerName>Jane Smith</CustomerName>
-        <Amount>175.50</Amount>
-    </Order>
-    <Order>
-        <Id>1003</Id>
-        <CustomerName>Bob Johnson</CustomerName>
-        <Amount>320.75</Amount>
-    </Order>
-</Orders>";
+        // Load the template for reporting.
+        var templateDoc = new Document(templateFileName);
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, model, "model");
+
+        // Save the final report.
+        const string outputFileName = "output.docx";
+        templateDoc.Save(outputFileName);
     }
 }

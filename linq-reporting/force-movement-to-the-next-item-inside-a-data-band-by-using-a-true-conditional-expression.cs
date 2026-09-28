@@ -7,39 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document programmatically.
+        // Create a template document with LINQ Reporting tags.
         var templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        // Start a data band that iterates over Items.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Begin a data band that iterates over Items.
         builder.Writeln("<<foreach [item in Items]>>");
         // Output the item name.
         builder.Writeln("Item: <<[item.Name]>>");
-        // Force movement to the next item using a true condition.
-        builder.Writeln("<<if [true]>><<next>>><</if>>");
-        // End the data band.
+        // Force movement to the next item using a true conditional expression.
+        builder.Writeln("<<if [true]>>");
+        builder.Writeln("<<next>>");
+        builder.Writeln("<</if>>");
+        // This line will be skipped because of the <<next>> tag.
+        builder.Writeln("This line will be skipped.");
+        // End of the data band.
         builder.Writeln("<</foreach>>");
-        builder.Document.Save(templatePath);
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
+        // Save the template to disk.
+        doc.Save(templatePath);
+
+        // Load the template for report generation.
+        var templateDoc = new Document(templatePath);
 
         // Prepare sample data.
         var model = new ReportModel
         {
             Items = new List<Item>
             {
-                new Item { Name = "Alpha" },
-                new Item { Name = "Beta" },
-                new Item { Name = "Gamma" }
+                new Item { Name = "Alpha", Value = 1 },
+                new Item { Name = "Beta", Value = 2 },
+                new Item { Name = "Gamma", Value = 3 }
             }
         };
 
         // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(templateDoc, model, "model");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        var outputPath = "Report.docx";
+        templateDoc.Save(outputPath);
     }
 }
 
@@ -49,8 +58,9 @@ public class ReportModel
     public List<Item> Items { get; set; } = new();
 }
 
-// Item class used inside the data band.
+// Item class used in the data band.
 public class Item
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public int Value { get; set; }
 }

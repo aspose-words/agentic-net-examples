@@ -1,71 +1,85 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
+using System.Text;
 
-public class Program
+namespace LinqReportingJsonFilter
 {
-    public static void Main()
+    // Model representing a single JSON record.
+    public class Record
     {
-        // Prepare working directories.
-        string workDir = Directory.GetCurrentDirectory();
-        string dataDir = Path.Combine(workDir, "Data");
-        Directory.CreateDirectory(dataDir);
-
-        // 1. Create sample JSON data.
-        var people = new List<Person>
-        {
-            new Person { Id = 1, Name = "John Doe", Age = 45, Country = "USA", IsActive = true },
-            new Person { Id = 2, Name = "Anna Smith", Age = 28, Country = "UK", IsActive = true },
-            new Person { Id = 3, Name = "Mike Johnson", Age = 52, Country = "USA", IsActive = false },
-            new Person { Id = 4, Name = "Emily Davis", Age = 33, Country = "USA", IsActive = true },
-            new Person { Id = 5, Name = "Li Wei", Age = 40, Country = "CN", IsActive = true }
-        };
-
-        string jsonPath = Path.Combine(dataDir, "People.json");
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(people, Formatting.Indented));
-
-        // 2. Build the template document programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Filtered Persons (Age > 30 && Country == \"USA\" && IsActive):");
-        // Loop over all persons; the actual filtering is done with an IF tag.
-        builder.Writeln("<<foreach [p in persons]>>");
-        // Compare nullable boolean to true to avoid type mismatch.
-        builder.Writeln("<<if [p.Age > 30 && p.Country == \"USA\" && p.IsActive == true]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>, Country: <<[p.Country]>>");
-        builder.Writeln("<</if>>");
-        builder.Writeln("<</foreach>>");
-
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        templateDoc.Save(templatePath);
-
-        // 3. Load the template for reporting.
-        var doc = new Document(templatePath);
-
-        // 4. Create a JSON data source.
-        var jsonDataSource = new JsonDataSource(jsonPath);
-
-        // 5. Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, jsonDataSource, "persons");
-
-        // 6. Save the generated report.
-        string reportPath = Path.Combine(workDir, "Report.docx");
-        doc.Save(reportPath);
+        public int Id { get; set; } = 0;
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; } = 0;
+        public string Country { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = false;
+        public double Score { get; set; } = 0.0;
     }
-}
 
-// Model class for JSON serialization.
-public class Person
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-    public string Country { get; set; } = "";
-    public bool IsActive { get; set; }
+    // Wrapper model passed to the reporting engine.
+    public class ReportModel
+    {
+        public List<Record> Records { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for temporary files.
+            string dataPath = "data.json";
+            string templatePath = "template.docx";
+            string outputPath = "report.docx";
+
+            // 1. Create sample JSON data.
+            var sampleData = new List<Record>
+            {
+                new Record { Id = 1, Name = "Alice", Age = 28, Country = "USA", IsActive = true, Score = 85.5 },
+                new Record { Id = 2, Name = "Bob", Age = 35, Country = "USA", IsActive = false, Score = 78.0 },
+                new Record { Id = 3, Name = "Charlie", Age = 42, Country = "Canada", IsActive = true, Score = 92.3 },
+                new Record { Id = 4, Name = "Diana", Age = 31, Country = "USA", IsActive = true, Score = 88.1 },
+                new Record { Id = 5, Name = "Ethan", Age = 27, Country = "UK", IsActive = true, Score = 73.4 }
+            };
+            File.WriteAllText(dataPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+
+            // 2. Load JSON data into objects.
+            var allRecords = JsonConvert.DeserializeObject<List<Record>>(File.ReadAllText(dataPath)) ?? new List<Record>();
+
+            // 3. Apply a complex predicate using Where.
+            var filteredRecords = allRecords.Where(r =>
+                r.Age > 30 &&
+                r.Country == "USA" &&
+                r.IsActive &&
+                r.Score >= 80.0);
+
+            // 4. Create the LINQ Reporting template programmatically.
+            var builder = new DocumentBuilder();
+            builder.Writeln("Filtered Records:");
+            builder.Writeln("<<foreach [rec in Records]>>");
+            builder.Writeln("- <<[rec.Id]>>: <<[rec.Name]>> (Age: <<[rec.Age]>>, Country: <<[rec.Country]>>, Active: <<[rec.IsActive]>>, Score: <<[rec.Score]>>)");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln("End of report.");
+            builder.Document.Save(templatePath);
+
+            // 5. Load the template document.
+            var doc = new Document(templatePath);
+
+            // 6. Prepare the model with filtered data.
+            var model = new ReportModel { Records = filteredRecords.ToList() };
+
+            // 7. Build the report.
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // 8. Save the generated report.
+            doc.Save(outputPath);
+        }
+    }
 }

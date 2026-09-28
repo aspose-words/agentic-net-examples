@@ -1,49 +1,72 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
-
-public class ReportModel
-{
-    // Title to display in the report.
-    public string Title { get; set; } = "Sample Image Report";
-
-    // Base64-encoded PNG image (1x1 transparent pixel).
-    public string ImageBase64 { get; set; } = 
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=";
-
-    // Converts the Base64 string to a byte array for the image tag.
-    public byte[] ImageBytes => Convert.FromBase64String(ImageBase64);
-}
+using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare the data source.
-        var model = new ReportModel();
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a blank document that will serve as the template.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template document.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a textbox to host the image tag (required by LINQ Reporting).
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        // Insert a textbox that will hold the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 200);
         builder.MoveTo(textBox.FirstParagraph);
-        // Image tag expects a byte[]; the expression returns model.ImageBytes.
+        // Image tag expects a byte array; the model will provide it.
         builder.Write("<<image [model.ImageBytes] -fitSize>>");
 
-        // Add a title below the image.
-        builder.Writeln();
-        builder.Writeln("<<[model.Title]>>");
+        // Save the template to disk.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        templateDoc.Save(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
+        // -----------------------------------------------------------------
+        // 2. Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare sample data with a Base64‑encoded image.
+        // -----------------------------------------------------------------
+        // This is a 1x1 red PNG pixel.
+        const string base64RedPixel = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/lGkAAAAASUVORK5CYII=";
+        ReportModel model = new ReportModel
+        {
+            Base64Image = base64RedPixel
+        };
+
+        // -----------------------------------------------------------------
+        // 4. Build the report.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        // No special options required for this example.
         engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(doc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+        // -----------------------------------------------------------------
+        // 5. Save the generated document.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine(outputDir, "result.docx");
+        doc.Save(outputPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model used by the LINQ Reporting engine.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    // Base64 string representing the image.
+    public string Base64Image { get; set; } = string.Empty;
+
+    // Byte array derived from the Base64 string; used by the <<image>> tag.
+    public byte[] ImageBytes => Convert.FromBase64String(Base64Image);
 }

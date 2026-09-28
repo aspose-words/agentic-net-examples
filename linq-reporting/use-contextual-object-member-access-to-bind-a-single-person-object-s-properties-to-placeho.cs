@@ -1,50 +1,54 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string Name { get; set; } = "John Doe";
+    public int Age { get; set; } = 30;
+    public string Email { get; set; } = "john.doe@example.com";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Insert placeholders that reference the root object named "person".
-        builder.Writeln("First name: <<[person.FirstName]>>");
-        builder.Writeln("Last name : <<[person.LastName]>>");
-        builder.Writeln("Age       : <<[person.Age]>>");
+        // Paths for template and output documents.
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
+
+        // Create a template document with LINQ Reporting tags.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
+        builder.Writeln("Email: <<[person.Email]>>");
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // 2. Load the template back (simulating a real‑world scenario where the template is stored separately).
-        Document loadedTemplate = new Document(templatePath);
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
-        // 3. Prepare the data source – a single Person instance.
+        // Sample data.
         Person person = new Person
         {
-            FirstName = "John",
-            LastName = "Doe",
-            Age = 30
+            Name = "Alice Smith",
+            Age = 28,
+            Email = "alice.smith@example.com"
         };
 
-        // 4. Build the report using the LINQ Reporting engine.
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        // The root object name in the template is "person", therefore we pass it as the third argument.
-        engine.BuildReport(loadedTemplate, person, "person");
+        engine.BuildReport(reportDoc, person, "person");
 
-        // 5. Save the generated report.
-        const string outputPath = "Report.docx";
-        loadedTemplate.Save(outputPath);
+        // Save the generated report.
+        reportDoc.Save(outputPath);
     }
-}
-
-// Simple data model that matches the placeholders used in the template.
-public class Person
-{
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName  { get; set; } = string.Empty;
-    public int    Age       { get; set; }
 }

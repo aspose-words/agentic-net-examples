@@ -3,64 +3,49 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Simple data model used by the template.
-    public class Order
+    public static void Main()
     {
-        // Initialize to avoid nullable warnings.
-        public string CustomerName { get; set; } = string.Empty;
-    }
+        // Prepare paths.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
 
-    public class Program
-    {
-        public static void Main()
+        // Create a simple template with a LINQ Reporting tag.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Hello <<[model.Name]>>!");
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
+
+        // Sample data model.
+        ReportModel model = new ReportModel { Name = "World" };
+
+        // Temporarily disable reflection optimization.
+        bool originalOptimization = ReportingEngine.UseReflectionOptimization;
+        ReportingEngine.UseReflectionOptimization = false;
+        try
         {
-            // Prepare file paths in the current directory.
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-            string reportPath   = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert a LINQ Reporting tag that references the root object named "order".
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            // Load the previously saved template.
-            Document doc = new Document(templatePath);
-
-            // Create sample data.
-            Order order = new Order { CustomerName = "John Doe" };
-
-            // Store the current setting so we can restore it later.
-            bool originalOptimization = ReportingEngine.UseReflectionOptimization;
-
-            try
-            {
-                // Disable reflection optimization for this specific report generation.
-                ReportingEngine.UseReflectionOptimization = false;
-
-                // Build the report using the LINQ Reporting engine.
-                ReportingEngine engine = new ReportingEngine();
-                engine.BuildReport(doc, order, "order");
-            }
-            finally
-            {
-                // Restore the original optimization setting.
-                ReportingEngine.UseReflectionOptimization = originalOptimization;
-            }
-
-            // Save the generated report.
-            doc.Save(reportPath);
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
         }
+        finally
+        {
+            // Restore original setting.
+            ReportingEngine.UseReflectionOptimization = originalOptimization;
+        }
+
+        // Save the generated report.
+        doc.Save(reportPath);
     }
+}
+
+// Public data model class.
+public class ReportModel
+{
+    public string Name { get; set; } = string.Empty;
 }

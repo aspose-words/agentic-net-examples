@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -8,11 +9,6 @@ public class Person
 {
     public string Name { get; set; } = "";
     public int Age { get; set; }
-    public Person(string name, int age)
-    {
-        Name = name;
-        Age = age;
-    }
 }
 
 public class Model
@@ -24,39 +20,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document with a LINQ Reporting tag that accesses the fourth element.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Fourth person: <<[model.Persons.ElementAt(3).Name]>> (Age: <<[model.Persons.ElementAt(3).Age]>>)");
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template back for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // Prepare sample data with at least four persons.
-        Model data = new Model
+        // Prepare sample data.
+        var model = new Model
         {
             Persons = new List<Person>
             {
-                new Person("Alice", 30),
-                new Person("Bob", 25),
-                new Person("Charlie", 28),
-                new Person("Diana", 32),   // Fourth element (index 3)
-                new Person("Ethan", 27)
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 28 },
+                new Person { Name = "Diana", Age = 32 },
+                new Person { Name = "Ethan", Age = 27 }
             }
         };
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, data, "model");
+        // Create a template document with a LINQ Reporting tag that retrieves the fourth element.
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("Fourth person in the list:");
+        // Use the correct root name ("model") and property name ("Persons").
+        builder.Writeln("<<[model.Persons.ElementAt(3).Name]>>");
+        builder.Document.Save(templatePath);
+
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // Build the report using the model as the root object named "model".
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        const string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
-
-        // Indicate completion (no interactive input).
-        Console.WriteLine($"Report generated: {reportPath}");
+        var outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

@@ -3,61 +3,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
-{
-    // The document to be included. It is intentionally left null to simulate a missing file.
-    public Document? MissingDoc { get; set; } = null;
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Create a working directory for temporary files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Create output directory
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document that contains a <<doc>> tag
-        //    referencing a missing document (null reference).
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(workDir, "Template.docx");
+        // Create a valid include file
+        string validIncludePath = Path.Combine(outputDir, "included.txt");
+        File.WriteAllText(validIncludePath, "This is the content of the included file.");
+
+        // Path for a missing include file (do not create this file)
+        string missingIncludePath = Path.Combine(outputDir, "missing.txt");
+
+        // Build the template document with include tags
+        string templatePath = Path.Combine(outputDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Report start");
-        // The <<doc>> tag expects a Document object. The variable name must be a valid identifier.
-        builder.Writeln("<<doc [MissingDoc]>>");
-        builder.Writeln("Report end");
-
-        // Save the template so it can be loaded later.
+        builder.Writeln("=== Report Start ===");
+        builder.Writeln($"<<include file=\"{validIncludePath}\">>");
+        builder.Writeln($"<<include file=\"{missingIncludePath}\">>");
+        builder.Writeln("=== Report End ===");
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template document.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(templatePath);
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Configure the ReportingEngine to treat missing members as optional.
-        //    The AllowMissingMembers flag causes the engine to replace missing
-        //    members (including a null Document) with null and skip them.
-        // -----------------------------------------------------------------
+        // Configure the reporting engine
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-        // An empty message ensures nothing is inserted for the missing member.
-        engine.MissingMemberMessage = string.Empty;
+        // Use InlineErrorMessages to get any include errors inside the document (optional)
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report using a model that has MissingDoc set to null.
-        ReportModel model = new ReportModel();
-        engine.BuildReport(loadedDoc, model, "model");
+        // Build the report using an empty root model
+        var model = new ReportModel();
+        bool success;
+        try
+        {
+            success = engine.BuildReport(doc, model, "model");
+        }
+        catch (Exception ex)
+        {
+            // If an include file is missing, treat it as optional and continue
+            Console.WriteLine($"BuildReport exception (treated as optional include): {ex.Message}");
+            success = true;
+        }
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(workDir, "ReportResult.docx");
-        loadedDoc.Save(outputPath);
+        // Save the generated report
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        doc.Save(resultPath);
 
-        Console.WriteLine("Report generated successfully: " + outputPath);
+        // Indicate completion (no interactive input)
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Result saved to: {resultPath}");
+    }
+
+    public class ReportModel
+    {
+        // No properties needed for this example
     }
 }

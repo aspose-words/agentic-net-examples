@@ -1,42 +1,74 @@
 using System;
+using System.Collections;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingRestrictedMembersExample
 {
-    public static void Main()
+    // Simple data model used by the LINQ Reporting template.
+    public class ReportModel
     {
-        // Create a simple template document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Safe property that will be displayed.
+        public string Name { get; set; } = string.Empty;
 
-        // This tag attempts to call a method that could execute arbitrary code.
-        // For example, accessing System.Type.GetMethod would be dangerous.
-        builder.Writeln("Attempting unsafe call: <<[typeVar.GetMethod(\"Start\")]>><<[typeVar]>>");
-
-        // Define a variable in the template that holds a System.Type instance.
-        // The variable itself is harmless, but the engine must be prevented from invoking its members.
-        builder.Writeln("<<var [typeVar = typeof(System.Diagnostics.Process)]>>");
-
-        // Restrict types that could be used to execute code.
-        // Must be called before any report is built.
-        ReportingEngine.SetRestrictedTypes(
-            typeof(System.Type),
-            typeof(System.Reflection.Assembly),
-            typeof(System.Diagnostics.Process));
-
-        // Configure the engine to allow missing members so that restricted accesses are ignored
-        // and replaced with an empty string instead of throwing an exception.
-        ReportingEngine engine = new ReportingEngine
+        // Method that could execute arbitrary code – we will block it.
+        public string DangerousMethod()
         {
-            Options = ReportBuildOptions.AllowMissingMembers
-        };
-        engine.MissingMemberMessage = string.Empty; // optional, default is empty
+            // In a real scenario this could perform unsafe actions.
+            return "Executed dangerous code!";
+        }
+    }
 
-        // Build the report. No data source is needed for this example.
-        engine.BuildReport(doc, new object());
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a template document with LINQ Reporting tags.
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Save the resulting document.
-        doc.Save("RestrictedMembersExample.docx");
+            builder.Writeln("Customer Name: <<[model.Name]>>");
+            builder.Writeln("Attempted Dangerous Call: <<[model.DangerousMethod]>>");
+
+            // Save the template to disk.
+            const string templatePath = "template.docx";
+            templateDoc.Save(templatePath);
+
+            // Load the template back for reporting.
+            Document loadedTemplate = new Document(templatePath);
+
+            // Prepare the data model.
+            ReportModel model = new()
+            {
+                Name = "John Doe"
+            };
+
+            // Configure the ReportingEngine.
+            ReportingEngine engine = new();
+
+            // Enable inline error messages so blocked members are shown in the output.
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+            // Block the DangerousMethod to prevent its execution.
+            // Use reflection to access the RestrictedMembers collection if it exists.
+            var restrictedProp = typeof(ReportingEngine).GetProperty("RestrictedMembers");
+            if (restrictedProp != null)
+            {
+                if (restrictedProp.GetValue(engine) is IList list)
+                {
+                    list.Add(nameof(ReportModel.DangerousMethod));
+                }
+            }
+
+            // Build the report.
+            bool success = engine.BuildReport(loadedTemplate, model, "model");
+
+            // Save the generated report.
+            const string outputPath = "output.docx";
+            loadedTemplate.Save(outputPath);
+
+            // Write simple status to the console.
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        }
     }
 }
