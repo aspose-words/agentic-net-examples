@@ -5,21 +5,21 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
+
+        // Add a paragraph with initial text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello World");
 
-        // Write some initial content.
-        builder.Writeln("Original text.");
-
-        // Move the cursor to the end of the document and append additional text.
+        // Move the builder to the end of the document's range.
         builder.MoveToDocumentEnd();
-        builder.Write(" Appended text.");
 
-        // Save the resulting document.
-        doc.Save("AppendText.docx");
+        // Append the desired text.
+        builder.Write(" - Appended text.");
 
-        // Output the full text of the document to verify the append operation.
-        Console.WriteLine(doc.Range.Text.Trim());
+        // Save the document.
+        string outputPath = "Result.docx";
+        doc.Save(outputPath);
     }
 }

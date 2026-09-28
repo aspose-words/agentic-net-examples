@@ -1,56 +1,51 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
+using Aspose.Words.Markup;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and add some bookmarks with text.
+        // Create a sample document with bookmarks.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // First bookmark.
-        builder.StartBookmark("FirstBookmark");
-        builder.Write("This is the first bookmark text.");
-        builder.EndBookmark("FirstBookmark");
-        builder.Writeln(); // New line.
+        builder.StartBookmark("First");
+        builder.Writeln("This is the first bookmark.");
+        builder.EndBookmark("First");
 
         // Second bookmark.
-        builder.StartBookmark("SecondBookmark");
-        builder.Write("Second bookmark contains different text.");
-        builder.EndBookmark("SecondBookmark");
-        builder.Writeln();
+        builder.StartBookmark("Second");
+        builder.Writeln("Second bookmark contains different text.");
+        builder.EndBookmark("Second");
 
-        // Third bookmark.
-        builder.StartBookmark("ThirdBookmark");
-        builder.Write("Third bookmark's content.");
-        builder.EndBookmark("ThirdBookmark");
-        builder.Writeln();
+        // Save the source document.
+        string sourcePath = "Sample.docx";
+        doc.Save(sourcePath);
 
-        // Save the sample document (optional, just for verification).
-        string docPath = Path.Combine(Environment.CurrentDirectory, "SampleDocument.docx");
-        doc.Save(docPath);
+        // Load the document (bootstrap loading rule).
+        Document loadedDoc = new Document(sourcePath);
 
-        // Extract bookmark names and their corresponding text.
-        BookmarkCollection bookmarks = doc.Range.Bookmarks;
-        StringBuilder reportBuilder = new StringBuilder();
-        reportBuilder.AppendLine("Bookmark Summary Report");
-        reportBuilder.AppendLine("-----------------------");
-
-        foreach (Bookmark bookmark in bookmarks)
+        // Prepare the summary report.
+        using (StringWriter reportWriter = new StringWriter())
         {
-            // Bookmark.Name gives the name, Bookmark.Text gives the enclosed text.
-            string line = $"Name: {bookmark.Name}, Text: {bookmark.Text}";
-            reportBuilder.AppendLine(line);
+            foreach (Bookmark bookmark in loadedDoc.Range.Bookmarks)
+            {
+                string name = bookmark.Name;
+                string text = bookmark.Text; // Extract text within the bookmark range.
+                reportWriter.WriteLine($"Bookmark: {name}");
+                reportWriter.WriteLine($"Text: {text}");
+                reportWriter.WriteLine(); // Blank line for readability.
+            }
+
+            // Write the report to a text file.
+            string reportPath = "BookmarkReport.txt";
+            File.WriteAllText(reportPath, reportWriter.ToString());
+
+            // Also output the report to the console.
+            Console.WriteLine(reportWriter.ToString());
         }
-
-        // Write the report to a text file.
-        string reportPath = Path.Combine(Environment.CurrentDirectory, "BookmarkReport.txt");
-        File.WriteAllText(reportPath, reportBuilder.ToString());
-
-        // Also output the report to the console.
-        Console.WriteLine(reportBuilder.ToString());
     }
 }

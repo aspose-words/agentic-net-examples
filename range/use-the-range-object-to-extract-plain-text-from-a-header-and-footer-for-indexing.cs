@@ -1,38 +1,45 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document with a default section.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        Section section = doc.FirstSection;
 
-        // Create and add a primary header with sample text.
+        // Add a primary header with sample text.
         HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        doc.FirstSection.HeadersFooters.Add(header);
-        header.AppendParagraph("Sample Header Text");
+        Paragraph headerPara = new Paragraph(doc);
+        headerPara.AppendChild(new Run(doc, "Header Text for Indexing"));
+        header.AppendChild(headerPara);
+        section.HeadersFooters.Add(header);
 
-        // Create and add a primary footer with sample text.
+        // Add a primary footer with sample text.
         HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
-        doc.FirstSection.HeadersFooters.Add(footer);
-        footer.AppendParagraph("Sample Footer Text");
+        Paragraph footerPara = new Paragraph(doc);
+        footerPara.AppendChild(new Run(doc, "Footer Text for Indexing"));
+        footer.AppendChild(footerPara);
+        section.HeadersFooters.Add(footer);
 
-        // Add a body paragraph to ensure the document has content.
-        builder.Writeln("Body paragraph.");
+        // Save the document to a local file.
+        const string docPath = "Sample.docx";
+        doc.Save(docPath);
 
-        // Extract plain text from the header and footer using their Range objects.
-        string headerText = header.Range.Text.Trim();
-        string footerText = footer.Range.Text.Trim();
+        // Load the document back (demonstrates loading workflow).
+        Document loadedDoc = new Document(docPath);
+
+        // Extract plain text from the header using its Range.
+        HeaderFooter loadedHeader = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
+        string headerText = loadedHeader?.Range?.Text?.Trim() ?? string.Empty;
+
+        // Extract plain text from the footer using its Range.
+        HeaderFooter loadedFooter = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary];
+        string footerText = loadedFooter?.Range?.Text?.Trim() ?? string.Empty;
 
         // Output the extracted texts.
-        Console.WriteLine("Header text: " + headerText);
-        Console.WriteLine("Footer text: " + footerText);
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "HeaderFooterSample.docx");
-        doc.Save(outputPath);
+        Console.WriteLine("Extracted Header Text: " + headerText);
+        Console.WriteLine("Extracted Footer Text: " + footerText);
     }
 }

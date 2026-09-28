@@ -1,26 +1,26 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add a paragraph with sample text.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add some sample text.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world!");
+        builder.Writeln("Hello, Aspose.Words! This is sample text.");
 
-        // Save the document to the current directory (ensures the source file exists).
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
-        doc.Save(docPath);
+        // Save the document locally.
+        string filePath = "Sample.docx";
+        doc.Save(filePath);
 
-        // Extract plain, unformatted text from the whole document using Range.Text.
-        string extractedText = doc.Range.Text;
+        // Load the document from the saved file.
+        Document loadedDoc = new Document(filePath);
+
+        // Extract plain unformatted text using the Range.Text property.
+        string extractedText = loadedDoc.Range.Text;
 
         // Output the extracted text to the console.
-        Console.WriteLine(extractedText.Trim());
+        Console.WriteLine(extractedText);
     }
 }

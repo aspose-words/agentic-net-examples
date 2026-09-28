@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -7,20 +8,25 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Add a paragraph with some initial text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello World! This is the original text.");
 
-        // Add initial text.
-        builder.Writeln("Hello World!");
+        // Replace the existing text using the Range.Replace method.
+        // This updates the document content without needing to assign to the read‑only Text property.
+        doc.Range.Replace("Hello World! This is the original text.",
+                          "This is the replaced text for the whole document.");
 
-        // Replace the word "World" with "Aspose" in the whole document range.
-        int replacements = doc.Range.Replace("World", "Aspose");
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
         // Save the modified document.
-        const string outputFile = "Modified.docx";
-        doc.Save(outputFile);
+        doc.Save(outputPath);
 
-        // Output information about the operation.
-        Console.WriteLine($"Replacements performed: {replacements}");
-        Console.WriteLine($"Document saved to: {outputFile}");
+        // Load the saved document to verify the replacement and print the text to console.
+        Document loadedDoc = new Document(outputPath);
+        Console.WriteLine("Document text after replacement:");
+        Console.WriteLine(loadedDoc.Range.Text);
     }
 }

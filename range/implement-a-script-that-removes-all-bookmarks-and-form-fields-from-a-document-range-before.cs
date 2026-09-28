@@ -1,34 +1,44 @@
 using System;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add sample content, a bookmark, and a form field.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text with a bookmark.
-        builder.Write("Hello ");
-        builder.StartBookmark("MyBookmark");
-        builder.Write("World");
-        builder.EndBookmark("MyBookmark");
-        builder.Writeln();
+        builder.Writeln("Document start.");
 
-        // Insert a check box form field.
-        builder.InsertCheckBox("CheckBox1", false, 50);
-        builder.Writeln();
+        // Add a bookmark.
+        builder.StartBookmark("SampleBookmark");
+        builder.Writeln("Text inside the bookmark.");
+        builder.EndBookmark("SampleBookmark");
 
-        // At this point the document contains a bookmark and a form field.
-        // Remove all bookmarks from the whole document range.
-        doc.Range.Bookmarks.Clear();
+        // Add a checkbox form field.
+        builder.InsertCheckBox("CheckBox1", false, 0);
+        builder.Writeln("After the form field.");
 
-        // Remove all form fields from the whole document range.
-        doc.Range.FormFields.Clear();
+        // Save the original document (optional, demonstrates the before state).
+        doc.Save("OriginalDocument.docx");
+
+        // Remove all bookmarks from the document's range.
+        var bookmarkNames = doc.Range.Bookmarks.Select(b => b.Name).ToList();
+        foreach (string name in bookmarkNames)
+        {
+            doc.Range.Bookmarks.Remove(name);
+        }
+
+        // Remove all form fields from the document's range.
+        var formFields = doc.Range.FormFields.ToArray();
+        foreach (var field in formFields)
+        {
+            field.Remove();
+        }
 
         // Save the cleaned document.
-        doc.Save("Output.docx");
+        doc.Save("CleanedDocument.docx");
     }
 }

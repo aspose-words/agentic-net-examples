@@ -1,29 +1,31 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add sample text containing the target phrase.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document. Hello World! This phrase will be replaced.");
 
-        // Add some paragraphs that contain the phrase we want to replace.
-        builder.Writeln("Hello Aspose.Words! This is a sample document.");
-        builder.Writeln("We will replace the phrase 'sample document' with 'demo file'.");
+        // Save the original document.
+        doc.Save("Original.docx");
 
         // Define the phrase to search for and its replacement.
-        string searchPhrase = "sample document";
-        string replacement = "demo file";
+        string searchPhrase = "Hello World";
+        string replaceWith = "Hi Universe";
 
-        // Perform a simple find-and-replace on the whole‑document range.
-        int replacementsMade = doc.Range.Replace(searchPhrase, replacement);
+        // Perform the replacement on the whole-document range.
+        doc.Range.Replace(searchPhrase, replaceWith, new FindReplaceOptions());
 
-        // Output the number of replacements (optional verification).
-        Console.WriteLine($"Replacements made: {replacementsMade}");
+        // Save the modified document.
+        doc.Save("Modified.docx");
 
-        // Save the modified document to the local file system.
-        doc.Save("Output.docx");
+        // Output the resulting text to verify the replacement.
+        Console.WriteLine("Replacement performed. Modified document text:");
+        Console.WriteLine(doc.Range.Text);
     }
 }

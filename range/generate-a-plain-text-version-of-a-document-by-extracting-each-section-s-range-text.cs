@@ -7,55 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths.
-        string docPath = "Sample.docx";
-        string txtPath = "PlainTextOutput.txt";
-
         // Create a sample document with multiple sections.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First section.
-        builder.Writeln("Section 1: Introduction");
+        // Section 1
         builder.Writeln("This is the first section.");
-
-        // Insert a continuous section break.
-        builder.InsertBreak(BreakType.SectionBreakContinuous);
-
-        // Second section.
-        builder.Writeln("Section 2: Details");
-        builder.Writeln("This is the second section.");
-
-        // Insert a new page section break.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Third section.
-        builder.Writeln("Section 3: Conclusion");
+        // Section 2
+        builder.Writeln("This is the second section.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Section 3
         builder.Writeln("This is the third section.");
 
-        // Save the source document.
-        doc.Save(docPath);
+        // Save the source document locally.
+        string sourcePath = "Sample.docx";
+        doc.Save(sourcePath);
 
         // Load the document from the saved file.
-        Document loadedDoc = new Document(docPath);
+        Document loadedDoc = new Document(sourcePath);
 
-        // Extract plain text from each section's range.
+        // Extract plain text from each section's Range.Text.
         StringBuilder plainTextBuilder = new StringBuilder();
 
-        for (int i = 0; i < loadedDoc.Sections.Count; i++)
+        foreach (Section section in loadedDoc.Sections)
         {
-            var section = loadedDoc.Sections[i];
+            // Trim to remove leading/trailing whitespace that may be added by Aspose.Words.
             string sectionText = section.Range.Text.Trim();
-
-            plainTextBuilder.AppendLine($"--- Section {i + 1} ---");
             plainTextBuilder.AppendLine(sectionText);
-            plainTextBuilder.AppendLine();
         }
 
-        // Write the extracted text to a plain‑text file.
-        File.WriteAllText(txtPath, plainTextBuilder.ToString());
+        // Write the combined plain‑text output to a .txt file.
+        string outputPath = "PlainTextOutput.txt";
+        File.WriteAllText(outputPath, plainTextBuilder.ToString());
 
-        // Optionally, display a confirmation.
-        Console.WriteLine($"Plain‑text extraction completed. Output saved to '{txtPath}'.");
+        // Optionally, write to console to show completion.
+        Console.WriteLine("Plain‑text extraction completed. Output saved to: " + Path.GetFullPath(outputPath));
     }
 }
