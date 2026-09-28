@@ -9,54 +9,50 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a new document and insert a sample column chart.
+        // -----------------------------------------------------------------
+        // 1. Create a document with a column chart and save it as the original file.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a column chart.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Save the document that contains the initial chart.
-        const string inputPath = "chart_input.docx";
-        doc.Save(inputPath);
+        // Remove any default series and add a custom one.
+        chart.Series.Clear();
+        chart.Series.Add("Quarterly Sales", new double[] { 12000, 15000, 18000 });
 
-        // Step 2: Load the document that contains the chart.
-        Document loadedDoc = new Document(inputPath);
-        Shape? shapeWithChart = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                         .OfType<Shape>()
-                                         .FirstOrDefault(s => s.HasChart);
-        if (shapeWithChart == null)
+        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "original.docx");
+        doc.Save(originalPath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the document, locate the chart, and modify its series.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
+
+        Shape loadedChartShape = loadedDoc.GetChildNodes(NodeType.Shape, true)
+            .OfType<Shape>()
+            .FirstOrDefault(s => s.HasChart);
+
+        if (loadedChartShape == null)
             throw new InvalidOperationException("No chart shape found in the document.");
 
-        Chart loadedChart = shapeWithChart.Chart;
+        Chart loadedChart = loadedChartShape.Chart;
 
-        // Step 3: Retrieve existing series and modify their data points.
-        // The default chart uses string categories for the X‑axis, so we must use
-        // ChartXValue.FromString when adding new points after clearing values.
+        if (loadedChart.Series.Count == 0)
+            throw new InvalidOperationException("The chart does not contain any series to modify.");
 
-        if (loadedChart.Series.Count > 0)
-        {
-            ChartSeries firstSeries = loadedChart.Series[0];
-            firstSeries.ClearValues();
+        // Remove the existing series.
+        loadedChart.Series.RemoveAt(0);
 
-            // Add new data points with string X values (categories).
-            firstSeries.Add(ChartXValue.FromString("Category 1"), ChartYValue.FromDouble(15));
-            firstSeries.Add(ChartXValue.FromString("Category 2"), ChartYValue.FromDouble(30));
-            firstSeries.Add(ChartXValue.FromString("Category 3"), ChartYValue.FromDouble(45));
-        }
+        // Add a new series with updated data points and a new name.
+        loadedChart.Series.Add("Updated Quarterly Sales", new double[] { 13000, 16000, 19000 });
 
-        if (loadedChart.Series.Count > 1)
-        {
-            ChartSeries secondSeries = loadedChart.Series[1];
-            // Remove the first data point if it exists.
-            if (secondSeries.YValues.Count > 0)
-                secondSeries.Remove(0);
-
-            // Append a new data point using a string category.
-            secondSeries.Add(ChartXValue.FromString("Category 4"), ChartYValue.FromDouble(25));
-        }
-
-        // Step 4: Save the modified document.
-        const string outputPath = "chart_modified.docx";
-        loadedDoc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 3. Save the modified document.
+        // -----------------------------------------------------------------
+        string modifiedPath = Path.Combine(Directory.GetCurrentDirectory(), "modified.docx");
+        loadedDoc.Save(modifiedPath);
     }
 }

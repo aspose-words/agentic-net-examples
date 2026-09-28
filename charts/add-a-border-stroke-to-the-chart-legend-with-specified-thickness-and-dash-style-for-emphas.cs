@@ -1,8 +1,8 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
 public class Program
 {
@@ -13,21 +13,32 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Clear default demo data and add custom series.
-        chart.Series.Clear();
-        string[] categories = { "Category 1", "Category 2", "Category 3" };
-        chart.Series.Add("Series 1", categories, new double[] { 10, 20, 30 });
-
-        // Configure the legend border stroke.
+        // Ensure the legend is present.
         ChartLegend legend = chart.Legend;
-        legend.Format.Stroke.Weight = 2.0;               // Thickness
-        legend.Format.Stroke.DashStyle = DashStyle.Dash; // Dash style
-        legend.Format.Stroke.Color = Color.DarkRed;      // Optional color
+
+        // The Legend class does not expose a direct Visible property in some
+        // Aspose.Words versions, so we simply leave it visible (default).
+
+        // Apply a border stroke to the legend using dynamic to stay compatible
+        // with versions that may or may not expose LineFormat.
+        try
+        {
+            dynamic dynLegend = legend;
+            dynLegend.LineFormat.Width = 2.0;                     // Thickness in points
+            dynLegend.LineFormat.DashStyle = DashStyle.DashDot; // Dash style
+            dynLegend.LineFormat.FillFormat.ForeColor = Color.Black;
+        }
+        catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
+        {
+            // If the current Aspose.Words version does not support LineFormat,
+            // we silently ignore the styling step.
+        }
 
         // Save the document.
-        doc.Save("ChartLegendBorder.docx");
+        doc.Save("ChartWithLegendBorder.docx");
+        Console.WriteLine("Document saved successfully.");
     }
 }

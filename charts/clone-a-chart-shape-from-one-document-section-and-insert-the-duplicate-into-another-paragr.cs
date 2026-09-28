@@ -7,37 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph – will contain the original chart.
-        builder.Writeln("Original chart paragraph:");
-
-        // Insert a column chart and keep a reference to its shape.
-        Shape originalChartShape = builder.InsertChart(ChartType.Column, 432, 252);
-
-        // Verify that the shape indeed contains a chart before proceeding.
-        if (!originalChartShape.HasChart)
+        // Insert a column chart into the first section.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        if (!chartShape.HasChart)
             throw new InvalidOperationException("The inserted shape does not contain a chart.");
 
-        // Paragraph where the cloned chart will be placed.
-        builder.Writeln("Paragraph for the cloned chart:");
+        // Insert a section break to start a new section.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Deep clone the original chart shape (including its chart data).
-        Shape clonedChartShape = (Shape)originalChartShape.Clone(true);
+        // Write a paragraph that will hold the cloned chart.
+        builder.Writeln("Cloned chart inserted below:");
 
-        // Locate the target paragraph (the one we just added).
-        Paragraph targetParagraph = (Paragraph)doc.GetChild(
-            NodeType.Paragraph,
-            doc.GetChildNodes(NodeType.Paragraph, true).Count - 1,
-            true);
+        // Clone the original chart shape.
+        Shape clonedChartShape = (Shape)chartShape.Clone(true);
 
-        // Move the builder to the target paragraph and insert the cloned chart before it.
-        builder.MoveTo(targetParagraph);
-        builder.InsertNode(clonedChartShape);
+        // Insert the cloned chart into the current paragraph.
+        Paragraph currentParagraph = builder.CurrentParagraph 
+            ?? throw new InvalidOperationException("Current paragraph is null.");
+        currentParagraph.AppendChild(clonedChartShape);
 
-        // Save the resulting document.
-        doc.Save("ClonedChartExample.docx");
+        // Save the document.
+        doc.Save("ClonedChart.docx");
     }
 }

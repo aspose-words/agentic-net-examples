@@ -1,6 +1,6 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;          // Needed for the Shape class
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
 public class Program
@@ -11,17 +11,17 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a histogram chart. Histogram charts support the Add(string, double[]) overload.
-        Shape chartShape = builder.InsertChart(ChartType.Histogram, 500, 300);
+        // Insert a column chart with specific dimensions.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series that Aspose.Words adds.
+        // Remove any default series that may exist.
         chart.Series.Clear();
 
-        // Add a labeled series in one step: provide the series name and an array of values.
-        chart.Series.Add("Sample Series", new double[] { 10, 20, 15, 30, 25 });
+        // Add a labeled series using the overload that accepts a name and an array of values.
+        chart.Series.Add("Quarterly Sales", new double[] { 15000, 20000, 25000, 30000 });
 
-        // Save the document containing the chart.
-        doc.Save("ChartSeriesAdd.docx");
+        // Save the document to the working directory.
+        doc.Save("LabeledSeriesChart.docx");
     }
 }
