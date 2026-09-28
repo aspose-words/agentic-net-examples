@@ -1,51 +1,45 @@
 using System;
+using System.Linq;
 using Aspose.Words;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
+        // Determine whether to enable tracking based on command‑line arguments.
+        // Pass "on" as an argument to enable tracking, otherwise tracking stays disabled.
+        bool enableTracking = args.Any(a => a.Equals("on", StringComparison.OrdinalIgnoreCase));
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial text without tracking.
-        builder.Writeln("Paragraph before tracking.");
+        // Add initial content.
+        builder.Writeln("Original paragraph.");
 
-        // Simulated user input: first toggle = true (enable tracking).
-        bool enableTracking = true;
         if (enableTracking)
         {
-            // Start tracking revisions with a specific author.
-            doc.StartTrackRevisions("Alice", DateTime.Now);
-        }
+            // Start tracking revisions.
+            doc.StartTrackRevisions("DemoUser", DateTime.Now);
 
-        // Add text while tracking is enabled – this will create a revision.
-        builder.Writeln("Paragraph added while tracking is ON.");
+            // Perform some modifications that will be recorded as revisions.
+            builder.Writeln("Added paragraph while tracking.");
+            builder.MoveToDocumentStart();
+            builder.Write("Inserted text at start. ");
 
-        // Simulated user input: second toggle = false (disable tracking).
-        bool disableTracking = true;
-        if (disableTracking)
-        {
             // Stop tracking revisions.
             doc.StopTrackRevisions();
         }
 
-        // Add more text after tracking is stopped – this will NOT create a revision.
-        builder.Writeln("Paragraph added after tracking is OFF.");
+        // Save the document to a file.
+        const string outputPath = "TrackedDocument.docx";
+        doc.Save(outputPath);
 
-        // Inspect the revisions collection.
-        int revisionCount = doc.Revisions.Count;
-        Console.WriteLine($"Total revisions in the document: {revisionCount}");
-
-        // Output details of each revision.
-        for (int i = 0; i < revisionCount; i++)
+        // Output revision information.
+        Console.WriteLine($"Revisions count: {doc.Revisions.Count}");
+        foreach (Revision rev in doc.Revisions)
         {
-            Revision rev = doc.Revisions[i];
-            Console.WriteLine($"Revision {i + 1}: Type={rev.RevisionType}, Author={rev.Author}, Text=\"{rev.ParentNode.GetText().Trim()}\"");
+            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
         }
-
-        // Save the document to verify the changes.
-        doc.Save("TrackChangesDemo.docx");
     }
 }

@@ -9,29 +9,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write initial content (this will not be a revision).
-        builder.Writeln("Original paragraph.");
+        // Add initial content.
+        builder.Writeln("This is the original paragraph.");
 
-        // Start tracking revisions with a specific author.
-        doc.StartTrackRevisions("John Doe");
+        // Enable track changes.
+        doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Make some changes that will be recorded as revisions.
-        builder.Writeln("Inserted paragraph while tracking.");
+        // Make some modifications to generate revisions.
+        builder.Writeln("This paragraph is added while tracking.");
+        builder.MoveToDocumentStart();
+        builder.Write("Inserted at the beginning. ");
 
-        // Delete the original paragraph to create a deletion revision.
-        doc.FirstSection.Body.FirstParagraph.Remove();
+        // Delete a portion of text.
+        builder.MoveToDocumentEnd();
+        builder.Write("This text will be deleted.");
+        // Note: DeleteDocument removes the whole document; kept for demonstration.
+        // builder.DeleteDocument(); // Uncomment if you really want to delete the document.
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Accept all revisions so the document contains no pending changes.
+        // Accept all revisions.
         doc.AcceptAllRevisions();
 
-        // Protect the document to make it read‑only. A password is required to unprotect.
-        const string password = "SecretPassword";
-        doc.Protect(ProtectionType.ReadOnly, password);
+        // Protect the document to prevent further editing without tracking.
+        // ProtectionType enum is available directly in Aspose.Words namespace.
+        doc.Protect(ProtectionType.ReadOnly, "password123");
 
-        // Save the resulting document.
+        // Save the locked document.
         doc.Save("LockedDocument.docx");
     }
 }

@@ -9,39 +9,48 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial text that will later be deleted.
-        builder.Write("This text will be deleted. ");
+        // Add an initial paragraph that will later be deleted.
+        builder.Writeln("This paragraph will be deleted.");
 
-        // Start tracking revisions.
+        // Enable track changes.
         doc.StartTrackRevisions("Sample Author", DateTime.Now);
 
-        // Insert new text – this will be recorded as an insertion revision.
-        builder.Write("This is an inserted sentence. ");
+        // Insert a new paragraph – this will be recorded as an insertion revision.
+        builder.Writeln("This paragraph was inserted.");
 
-        // Delete the first run (the text written before tracking started) – this creates a deletion revision.
-        Run firstRun = doc.FirstSection.Body.FirstParagraph.Runs[0];
-        firstRun.Remove();
+        // Delete the original paragraph – this will be recorded as a deletion revision.
+        Node firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        if (firstParagraph != null)
+        {
+            firstParagraph.Remove();
+        }
 
-        // Stop tracking further changes.
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (optional, demonstrates that revisions are persisted).
-        doc.Save("RevisionsSample.docx");
+        // Save the document (demonstrates that revisions are persisted).
+        doc.Save("RevisionsDemo.docx");
 
-        // Iterate over all revisions and count insertions and deletions.
+        // Iterate over revisions and count insertions and deletions.
         int insertionCount = 0;
         int deletionCount = 0;
 
         foreach (Revision rev in doc.Revisions)
         {
-            if (rev.RevisionType == RevisionType.Insertion)
-                insertionCount++;
-            else if (rev.RevisionType == RevisionType.Deletion)
-                deletionCount++;
+            switch (rev.RevisionType)
+            {
+                case RevisionType.Insertion:
+                    insertionCount++;
+                    break;
+                case RevisionType.Deletion:
+                    deletionCount++;
+                    break;
+                // Other revision types are ignored for this summary.
+            }
         }
 
         // Output the summary.
-        Console.WriteLine($"Total insertion revisions: {insertionCount}");
-        Console.WriteLine($"Total deletion revisions: {deletionCount}");
+        Console.WriteLine($"Insertions: {insertionCount}");
+        Console.WriteLine($"Deletions: {deletionCount}");
     }
 }

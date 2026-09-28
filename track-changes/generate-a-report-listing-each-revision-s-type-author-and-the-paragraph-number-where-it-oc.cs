@@ -1,62 +1,54 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 
-namespace RevisionReportExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and add initial paragraphs.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph.");
+
+        // Enable track changes.
+        doc.StartTrackRevisions("AuthorName", DateTime.Now);
+
+        // Insert a new paragraph (this will be an insertion revision).
+        builder.Writeln("Inserted paragraph while tracking.");
+
+        // Modify text of the first paragraph (creates insertion/deletion revisions).
+        Paragraph firstPara = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        if (firstPara.Runs.Count > 0)
+            firstPara.Runs[0].Text = "First paragraph modified.";
+
+        // Change formatting of the second paragraph (format change revision).
+        Paragraph secondPara = (Paragraph)doc.GetChild(NodeType.Paragraph, 1, true);
+        secondPara.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+
+        // Stop tracking changes.
+        doc.StopTrackRevisions();
+
+        // Save the document (required by lifecycle rule).
+        doc.Save("SampleRevisions.docx");
+
+        // Prepare a collection of all paragraphs for paragraph number lookup.
+        NodeCollection allParagraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+
+        // Generate report of revisions.
+        int revIndex = 1;
+        foreach (Revision rev in doc.Revisions)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Determine the paragraph that contains the revision.
+            Paragraph para = rev.ParentNode as Paragraph ?? rev.ParentNode?.GetAncestor(NodeType.Paragraph) as Paragraph;
+            int paragraphNumber = -1;
+            if (para != null)
+                paragraphNumber = allParagraphs.IndexOf(para) + 1; // 1‑based index
 
-            // Add some initial content that will NOT be tracked as revisions.
-            builder.Writeln("Paragraph 1: Original text.");
-            builder.Writeln("Paragraph 2: Original text.");
-            builder.Writeln("Paragraph 3: Original text.");
+            string paraInfo = paragraphNumber > 0 ? paragraphNumber.ToString() : "N/A";
 
-            // Start tracking revisions with a specific author.
-            doc.StartTrackRevisions("Alice", DateTime.Now);
-
-            // Insert a new paragraph – this will be an insertion revision.
-            builder.Writeln("Paragraph 4: Inserted while tracking.");
-
-            // Delete a run from the first paragraph – this will create a deletion revision.
-            // Find the first paragraph and remove its first run.
-            Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
-            if (firstParagraph.Runs.Count > 0)
-                firstParagraph.Runs[0].Remove();
-
-            // Stop tracking further changes.
-            doc.StopTrackRevisions();
-
-            // Save the document so you can inspect it manually if needed.
-            const string outputPath = "RevisionReport.docx";
-            doc.Save(outputPath);
-
-            // Generate a report of each revision: type, author, and paragraph number.
-            Console.WriteLine("Revision Report:");
-            Console.WriteLine("----------------");
-
-            // Iterate through all revisions in the document.
-            foreach (Revision rev in doc.Revisions)
-            {
-                // Determine the paragraph that contains the revision's parent node.
-                Node parent = rev.ParentNode;
-                Paragraph revParagraph = (Paragraph)parent.GetAncestor(NodeType.Paragraph);
-
-                // If the revision is not attached to a paragraph (unlikely for insert/delete), skip it.
-                if (revParagraph == null)
-                    continue;
-
-                // Find the paragraph's index within the body (0‑based) and convert to 1‑based for reporting.
-                int paragraphIndex = doc.FirstSection.Body.Paragraphs.IndexOf(revParagraph) + 1;
-
-                // Output the revision details.
-                Console.WriteLine($"Paragraph {paragraphIndex}: Type = {rev.RevisionType}, Author = {rev.Author}");
-            }
+            Console.WriteLine($"Revision {revIndex}: Type={rev.RevisionType}, Author={rev.Author}, Paragraph={paraInfo}");
+            revIndex++;
         }
     }
 }

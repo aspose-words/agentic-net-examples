@@ -1,40 +1,38 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a blank document and add a simple paragraph.
-        Document initialDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(initialDoc);
-        builder.Writeln("Initial content before tracking.");
+        // Create a sample document in memory.
+        Document sampleDoc = new Document();
+        DocumentBuilder sampleBuilder = new DocumentBuilder(sampleDoc);
+        sampleBuilder.Writeln("Initial content.");
 
-        // 2. Save the document into a memory stream.
+        // Save the sample document to a memory stream.
         using (MemoryStream stream = new MemoryStream())
         {
-            initialDoc.Save(stream, SaveFormat.Docx);
-            stream.Position = 0; // Reset for reading.
+            sampleDoc.Save(stream, SaveFormat.Docx);
+            stream.Position = 0; // Reset stream for reading.
 
-            // 3. Load the document from the stream.
+            // Load the document from the stream.
             Document doc = new Document(stream);
 
-            // 4. Start tracking revisions.
-            doc.StartTrackRevisions("Sample Author", DateTime.Now);
+            // Start tracking revisions.
+            doc.StartTrackRevisions("Demo Author", DateTime.Now);
 
-            // 5. Add a header while tracking is enabled.
-            DocumentBuilder headerBuilder = new DocumentBuilder(doc);
-            headerBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            headerBuilder.Writeln("Tracked Header Text");
+            // Add a header while tracking is enabled.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            builder.Writeln("My Header");
 
-            // 6. Stop tracking revisions.
+            // Stop tracking revisions.
             doc.StopTrackRevisions();
 
-            // 7. Save the resulting document to disk.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TrackedChanges.docx");
-            doc.Save(outputPath, SaveFormat.Docx);
+            // Save the resulting document.
+            doc.Save("TrackedDocument.docx");
         }
     }
 }

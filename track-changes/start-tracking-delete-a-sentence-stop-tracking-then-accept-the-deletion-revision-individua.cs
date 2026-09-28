@@ -9,56 +9,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write three separate sentences – each will be a separate Run.
-        builder.Write("This is the first sentence. ");
-        builder.Write("This is the second sentence. ");
-        builder.Write("This is the third sentence.");
+        // Build three separate paragraphs (sentences).
+        builder.Writeln("This is the first sentence.");
+        builder.Writeln("This is the sentence to delete.");
+        builder.Writeln("This is the last sentence.");
 
-        // Save the original document (optional, just to see the starting state).
-        doc.Save("Original.docx");
-
-        // Start tracking revisions.
+        // Enable track changes.
         doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Delete the second sentence (the second Run in the first paragraph).
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        if (firstParagraph.Runs.Count < 2)
-            throw new InvalidOperationException("Expected at least two runs in the paragraph.");
-
-        // This removal creates a Deletion-type revision.
-        firstParagraph.Runs[1].Remove();
-
-        // Stop tracking further changes.
-        doc.StopTrackRevisions();
-
-        // Verify that a revision was created.
-        if (!doc.HasRevisions || doc.Revisions.Count == 0)
-            throw new InvalidOperationException("No revisions were generated.");
-
-        // Save the document while the deletion revision is still pending.
-        doc.Save("WithDeletionRevision.docx");
-
-        // Accept the deletion revision individually.
-        Revision deletionRevision = null;
-        foreach (Revision rev in doc.Revisions)
+        // Locate the paragraph that contains the sentence to delete.
+        Paragraph paragraphToDelete = null;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            if (rev.RevisionType == RevisionType.Deletion)
+            if (para.GetText().Contains("sentence to delete"))
             {
-                deletionRevision = rev;
+                paragraphToDelete = para;
                 break;
             }
         }
 
-        if (deletionRevision == null)
-            throw new InvalidOperationException("Deletion revision not found.");
+        if (paragraphToDelete == null)
+            throw new InvalidOperationException("Target paragraph not found.");
 
-        deletionRevision.Accept();
+        // Remove the paragraph – this creates a deletion revision.
+        paragraphToDelete.Remove();
 
-        // After acceptance, there should be no remaining revisions.
-        if (doc.HasRevisions)
-            throw new InvalidOperationException("Revisions still exist after acceptance.");
+        // Stop tracking changes.
+        doc.StopTrackRevisions();
 
-        // Save the final document where the sentence has been permanently removed.
-        doc.Save("Final.docx");
+        // Accept only the deletion revision.
+        // Iterate by index to avoid modifying the collection during enumeration.
+        for (int i = doc.Revisions.Count - 1; i >= 0; i--)
+        {
+            Revision rev = doc.Revisions[i];
+            if (rev.RevisionType == RevisionType.Deletion)
+                rev.Accept();
+        }
+
+        // Save the resulting document.
+        doc.Save("Result.docx");
     }
 }

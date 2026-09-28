@@ -1,41 +1,61 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 
-public class AcceptRevisionsInSection
+namespace TrackChangesExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a DocumentBuilder for editing.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add content to the first section.
-        builder.Writeln("Section 1 original text.");
+            // Build Section 1.
+            builder.Writeln("Section 1 - Original text.");
+            // Insert a section break to start Section 2.
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+            // Build Section 2.
+            builder.Writeln("Section 2 - Original text.");
 
-        // Insert a section break to start the second section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+            // Enable tracking of revisions.
+            doc.StartTrackRevisions("Sample Author", DateTime.Now);
 
-        // Add content to the second section.
-        builder.Writeln("Section 2 original text.");
+            // Add a revision (insertion) in Section 1.
+            Paragraph paraSec1 = new Paragraph(doc);
+            paraSec1.AppendChild(new Run(doc, "Inserted revision in Section 1."));
+            doc.Sections[0].Body.AppendChild(paraSec1);
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("Reviewer", DateTime.Now);
+            // Add a revision (insertion) in Section 2.
+            Paragraph paraSec2 = new Paragraph(doc);
+            paraSec2.AppendChild(new Run(doc, "Inserted revision in Section 2."));
+            doc.Sections[1].Body.AppendChild(paraSec2);
 
-        // Add a revision to the first section.
-        builder.MoveToSection(0);
-        builder.Writeln("Revision added to Section 1.");
+            // Stop tracking revisions.
+            doc.StopTrackRevisions();
 
-        // Add a revision to the second section.
-        builder.MoveToSection(1);
-        builder.Writeln("Revision added to Section 2.");
+            // Accept only revisions that belong to Section 1.
+            Section targetSection = doc.Sections[0];
+            // Collect revisions to accept first to avoid modifying the collection during enumeration.
+            List<Revision> revisionsToAccept = new List<Revision>();
+            foreach (Revision rev in doc.Revisions)
+            {
+                Node ancestorSection = rev.ParentNode.GetAncestor(NodeType.Section);
+                if (ancestorSection == targetSection)
+                {
+                    revisionsToAccept.Add(rev);
+                }
+            }
 
-        // Stop tracking revisions.
-        doc.StopTrackRevisions();
+            // Accept the collected revisions.
+            foreach (Revision rev in revisionsToAccept)
+            {
+                rev.Accept();
+            }
 
-        // Accept all revisions only in the first section.
-        doc.Sections[0].Range.Revisions.AcceptAll();
-
-        // Save the resulting document.
-        doc.Save("AcceptRevisionsInSection.docx");
+            // Save the resulting document.
+            doc.Save("Output.docx");
+        }
     }
 }

@@ -1,82 +1,61 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
-public class TrackChangesTableExample
+public class Program
 {
     public static void Main()
     {
-        // Define file paths.
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "original.docx");
-        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "result.docx");
-
         // -----------------------------------------------------------------
-        // 1. Create a simple document and save it (this will be the file we load).
+        // 1. Create a sample document and save it locally.
         // -----------------------------------------------------------------
-        Document initialDoc = new Document();
-        DocumentBuilder initBuilder = new DocumentBuilder(initialDoc);
-        initBuilder.Writeln("Document before tracking changes.");
-        initialDoc.Save(originalPath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the document we just created.
-        // -----------------------------------------------------------------
-        Document doc = new Document(originalPath);
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Initial content.");
+        string filePath = "sample.docx";
+        doc.Save(filePath);
 
         // -----------------------------------------------------------------
-        // 3. Start tracking revisions.
+        // 2. Load the saved document.
         // -----------------------------------------------------------------
-        doc.StartTrackRevisions("Author", DateTime.Now);
-
-        // -----------------------------------------------------------------
-        // 4. Insert a table while tracking is active – this creates an insertion revision.
-        // -----------------------------------------------------------------
-        builder.Writeln(); // Ensure the table starts on a new line.
-        builder.StartTable();
-
-        // First row, first cell.
-        builder.InsertCell();
-        builder.Write("Cell 1");
-
-        // First row, second cell.
-        builder.InsertCell();
-        builder.Write("Cell 2");
-
-        // End the first row.
-        builder.EndRow();
-
-        // Second row, first cell.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-
-        // Second row, second cell.
-        builder.InsertCell();
-        builder.Write("Cell 4");
-
-        // End the second row and the table.
-        builder.EndRow();
-        builder.EndTable();
+        Document loadedDoc = new Document(filePath);
 
         // -----------------------------------------------------------------
-        // 5. Stop tracking revisions.
+        // 3. Enable track changes.
         // -----------------------------------------------------------------
-        doc.StopTrackRevisions();
+        loadedDoc.StartTrackRevisions("DemoAuthor", DateTime.Now);
+
+        // -----------------------------------------------------------------
+        // 4. Insert a table while tracking is active – this creates a revision.
+        // -----------------------------------------------------------------
+        DocumentBuilder tbuilder = new DocumentBuilder(loadedDoc);
+        tbuilder.StartTable();
+        tbuilder.InsertCell();
+        tbuilder.Write("Cell 1");
+        tbuilder.EndRow();
+        tbuilder.EndTable();
+
+        // -----------------------------------------------------------------
+        // 5. Stop tracking.
+        // -----------------------------------------------------------------
+        loadedDoc.StopTrackRevisions();
 
         // -----------------------------------------------------------------
         // 6. Accept only the table insertion revision.
+        //    The revision's ParentNode will be the inserted Table node.
         // -----------------------------------------------------------------
-        foreach (Revision rev in doc.Revisions)
+        foreach (Revision rev in loadedDoc.Revisions)
         {
-            if (rev.RevisionType == RevisionType.Insertion && rev.ParentNode.NodeType == NodeType.Table)
+            if (rev.RevisionType == RevisionType.Insertion &&
+                rev.ParentNode != null &&
+                rev.ParentNode.NodeType == NodeType.Table)
             {
                 rev.Accept();
             }
         }
 
         // -----------------------------------------------------------------
-        // 7. Save the resulting document.
+        // 7. Save the final document.
         // -----------------------------------------------------------------
-        doc.Save(resultPath);
+        loadedDoc.Save("result.docx");
     }
 }

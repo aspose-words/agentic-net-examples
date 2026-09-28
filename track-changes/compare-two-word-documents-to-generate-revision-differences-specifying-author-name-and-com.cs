@@ -6,42 +6,32 @@ public class Program
     public static void Main()
     {
         // Create the original document.
-        Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("Hello world!");
         builder.Writeln("This is the original document.");
-        builder.Writeln("It has two paragraphs.");
-        // Save the original for reference (optional).
-        original.Save("Original.docx");
+        originalDoc.Save("Original.docx");
 
-        // Create the edited document with some changes.
-        Document edited = new Document();
-        builder = new DocumentBuilder(edited);
-        builder.Writeln("This is the edited document."); // changed first line
-        builder.Writeln("It has three paragraphs now."); // changed second line
-        builder.Writeln("Additional paragraph added.");   // new paragraph
-        // Save the edited for reference (optional).
-        edited.Save("Edited.docx");
+        // Create the modified document.
+        Document modifiedDoc = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(modifiedDoc);
+        builder2.Writeln("Hello world!");
+        builder2.Writeln("This is the modified document with extra line.");
+        builder2.Writeln("Additional paragraph added.");
+        modifiedDoc.Save("Modified.docx");
 
-        // Ensure both documents have no revisions before comparison.
-        if (original.HasRevisions || edited.HasRevisions)
-            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
+        // Compare the documents to generate revisions, specifying author and date.
+        string authorName = "ComparisonAuthor";
+        DateTime comparisonDate = new DateTime(2023, 1, 1, 12, 0, 0);
+        originalDoc.Compare(modifiedDoc, authorName, comparisonDate);
 
-        // Compare the documents. The differences will appear as revisions in the original document.
-        string authorName = "John Doe";
-        DateTime comparisonDate = DateTime.Now;
-        original.Compare(edited, authorName, comparisonDate);
+        // Save the document that now contains revision differences.
+        originalDoc.Save("ComparedWithRevisions.docx");
 
-        // Output revision details to the console.
-        foreach (Revision rev in original.Revisions)
+        // Output revision details.
+        foreach (Revision rev in originalDoc.Revisions)
         {
-            Console.WriteLine($"Author: {rev.Author}");
-            Console.WriteLine($"Date: {rev.DateTime}");
-            Console.WriteLine($"Type: {rev.RevisionType}");
-            Console.WriteLine($"Text: \"{rev.ParentNode.GetText().Trim()}\"");
-            Console.WriteLine(new string('-', 40));
+            Console.WriteLine($"Revision Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
         }
-
-        // Save the document that now contains the revision markup.
-        original.Save("Compared.docx");
     }
 }

@@ -1,54 +1,50 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 using Aspose.Words;
 
 public class BatchRevisionProcessor
 {
     public static void Main()
     {
-        // Folder to store sample documents.
-        string docsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
-        Directory.CreateDirectory(docsFolder);
+        // Define sample document file names.
+        string[] docFiles = { "Sample1.docx", "Sample2.docx", "Sample3.docx" };
 
         // Create sample documents with revisions.
-        CreateSampleDocuments(docsFolder, 3);
-
-        // Process each document: accept all revisions and save in place.
-        foreach (string filePath in Directory.GetFiles(docsFolder, "*.docx"))
+        foreach (string file in docFiles)
         {
-            Document doc = new Document(filePath);
-
-            if (doc.HasRevisions)
-            {
-                doc.AcceptAllRevisions();
-                doc.Save(filePath);
-            }
-        }
-    }
-
-    private static void CreateSampleDocuments(string folderPath, int count)
-    {
-        for (int i = 1; i <= count; i++)
-        {
-            string fileName = $"Sample{i}.docx";
-            string filePath = Path.Combine(folderPath, fileName);
-
+            // Create a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start tracking revisions.
-            doc.StartTrackRevisions($"Author{i}", DateTime.Now);
+            // Add initial content.
+            builder.Writeln("Original paragraph.");
 
-            // Add some text that will be recorded as revisions.
-            builder.Writeln($"This is the first paragraph of document {i}.");
-            builder.Writeln($"Adding a second paragraph to document {i}.");
+            // Start tracking revisions.
+            doc.StartTrackRevisions("BatchProcessor", DateTime.Now);
+
+            // Make some changes that will be recorded as revisions.
+            builder.Writeln("Inserted paragraph while tracking.");
+            builder.MoveToDocumentEnd();
+            builder.Writeln("Another inserted paragraph.");
 
             // Stop tracking revisions.
             doc.StopTrackRevisions();
 
-            // Save the document.
-            doc.Save(filePath);
+            // Save the document to disk.
+            doc.Save(file);
+        }
+
+        // Batch process: open each document, accept all revisions, and save in place.
+        foreach (string file in docFiles)
+        {
+            // Load the existing document.
+            Document doc = new Document(file);
+
+            // Accept all revisions in the document.
+            doc.AcceptAllRevisions();
+
+            // Save the document, overwriting the original file.
+            doc.Save(file);
         }
     }
 }

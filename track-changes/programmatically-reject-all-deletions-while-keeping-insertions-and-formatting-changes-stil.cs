@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Aspose.Words;
 
 public class Program
@@ -9,28 +10,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content that will not be a revision.
+        // Add initial content (this will be the text we later delete).
         builder.Writeln("Original paragraph.");
 
-        // Start tracking revisions.
+        // Enable tracking of revisions.
         doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Insert new content – this will be recorded as an insertion revision.
+        // ----- Insertion revision -----
         builder.Writeln("Inserted paragraph.");
 
-        // Delete the first paragraph – this will be recorded as a deletion revision.
-        Paragraph paragraphToDelete = doc.FirstSection.Body.Paragraphs[0];
-        paragraphToDelete.Remove();
+        // ----- Deletion revision -----
+        // Delete the original paragraph while tracking is active.
+        Paragraph originalParagraph = doc.FirstSection.Body.Paragraphs[0];
+        originalParagraph.Remove();
+
+        // ----- Formatting change revision -----
+        builder.Font.Bold = true;
+        builder.Writeln("Bold formatted paragraph.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Reject only the deletion revisions, leaving insertions and format changes untouched.
-        for (int i = doc.Revisions.Count - 1; i >= 0; i--)
+        // Reject only deletions, keep insertions and formatting changes.
+        // Create a snapshot of the revisions to avoid modifying the collection during enumeration.
+        Revision[] revisionsSnapshot = doc.Revisions.Cast<Revision>().ToArray();
+        foreach (Revision rev in revisionsSnapshot)
         {
-            Revision revision = doc.Revisions[i];
-            if (revision.RevisionType == RevisionType.Deletion)
-                revision.Reject();
+            if (rev.RevisionType == RevisionType.Deletion)
+                rev.Reject();
+        }
+
+        // Verify that no deletion revisions remain.
+        foreach (Revision rev in doc.Revisions)
+        {
+            if (rev.RevisionType == RevisionType.Deletion)
+                throw new Exception("A deletion revision was not rejected properly.");
         }
 
         // Save the resulting document.
