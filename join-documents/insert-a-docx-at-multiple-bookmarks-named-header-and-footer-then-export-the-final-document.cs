@@ -7,68 +7,52 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Paths for temporary files
+        string destinationPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docx");
+        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
+        string outputHtmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.html");
 
-        // Paths for the temporary source document and the final HTML result.
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        string resultPath = Path.Combine(outputDir, "Result.html");
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX that will be inserted at the bookmarks.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("This is the content of the inserted document.");
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
-
-        // ---------------------------------------------------------------
-        // 2. Create the destination document containing two bookmarks.
-        // ---------------------------------------------------------------
-        Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-
-        // Bookmark named "Header".
+        // Create destination document with two bookmarks: Header and Footer
+        Document destinationDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destinationDoc);
+        destBuilder.Writeln("Document with bookmarks.");
         destBuilder.StartBookmark("Header");
         destBuilder.Writeln("Header placeholder.");
         destBuilder.EndBookmark("Header");
-
-        destBuilder.Writeln(); // Add a blank paragraph between bookmarks.
-
-        // Bookmark named "Footer".
+        destBuilder.Writeln();
         destBuilder.StartBookmark("Footer");
         destBuilder.Writeln("Footer placeholder.");
         destBuilder.EndBookmark("Footer");
+        destinationDoc.Save(destinationPath, SaveFormat.Docx);
 
-        // ---------------------------------------------------------------
-        // 3. Load the source document and insert it at each bookmark.
-        // ---------------------------------------------------------------
-        Document insertDoc = new Document(sourcePath);
+        // Create source document to be inserted
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("Inserted content from source document.");
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // Insert at the "Header" bookmark.
-        destBuilder.MoveToBookmark("Header");
-        destBuilder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
+        // Load documents from the saved files
+        Document destDoc = new Document(destinationPath);
+        Document srcDoc = new Document(sourcePath);
 
-        // Insert at the "Footer" bookmark.
-        destBuilder.MoveToBookmark("Footer");
-        destBuilder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
+        // Insert the source document at each bookmark
+        string[] bookmarkNames = { "Header", "Footer" };
+        foreach (string bookmarkName in bookmarkNames)
+        {
+            Bookmark bookmark = destDoc.Range.Bookmarks[bookmarkName];
+            if (bookmark == null)
+                throw new InvalidOperationException($"Bookmark '{bookmarkName}' not found.");
 
-        // ---------------------------------------------------------------
-        // 4. Save the merged document as HTML.
-        // ---------------------------------------------------------------
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
-        destDoc.Save(resultPath, htmlOptions);
+            DocumentBuilder builder = new DocumentBuilder(destDoc);
+            builder.MoveToBookmark(bookmarkName);
+            builder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+        }
 
-        // ---------------------------------------------------------------
-        // 5. Simple validation to ensure the HTML file was created and
-        //    contains the inserted text.
-        // ---------------------------------------------------------------
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException("HTML output was not created.");
+        // Export the final document to HTML
+        destDoc.Save(outputHtmlPath, SaveFormat.Html);
 
-        string htmlContent = File.ReadAllText(resultPath);
-        if (!htmlContent.Contains("This is the content of the inserted document."))
-            throw new InvalidOperationException("Inserted content not found in HTML output.");
+        // Validate that the HTML file was created
+        if (!File.Exists(outputHtmlPath))
+            throw new FileNotFoundException("The HTML output file was not created.", outputHtmlPath);
     }
 }

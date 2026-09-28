@@ -1,64 +1,59 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare folder for sample files
+        string folder = Path.Combine(Directory.GetCurrentDirectory(), "JoinDocsSample");
+        Directory.CreateDirectory(folder);
 
-        // Create three sample ODT source documents.
-        string doc1Path = Path.Combine(outputDir, "Doc1.odt");
-        string doc2Path = Path.Combine(outputDir, "Doc2.odt");
-        string doc3Path = Path.Combine(outputDir, "Doc3.odt");
+        // Define source and output file paths
+        string doc1Path = Path.Combine(folder, "Doc1.odt");
+        string doc2Path = Path.Combine(folder, "Doc2.odt");
+        string doc3Path = Path.Combine(folder, "Doc3.odt");
+        string outputPath = Path.Combine(folder, "Combined.docx");
 
-        Document doc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(doc1);
-        builder1.Writeln("This is the first ODT document.");
-        doc1.Save(doc1Path, SaveFormat.Odt);
+        // Create three ODT source documents with distinct content
+        CreateSampleDocument(doc1Path, "First document content.");
+        CreateSampleDocument(doc2Path, "Second document content.");
+        CreateSampleDocument(doc3Path, "Third document content.");
 
-        Document doc2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(doc2);
-        builder2.Writeln("This is the second ODT document.");
-        doc2.Save(doc2Path, SaveFormat.Odt);
+        // Load the first document as the destination
+        Document destination = new Document(doc1Path);
 
-        Document doc3 = new Document();
-        DocumentBuilder builder3 = new DocumentBuilder(doc3);
-        builder3.Writeln("This is the third ODT document.");
-        doc3.Save(doc3Path, SaveFormat.Odt);
+        // Append the remaining documents preserving their original formatting
+        destination.AppendDocument(new Document(doc2Path), ImportFormatMode.KeepSourceFormatting);
+        destination.AppendDocument(new Document(doc3Path), ImportFormatMode.KeepSourceFormatting);
 
-        // Load the ODT documents.
-        Document src1 = new Document(doc1Path);
-        Document src2 = new Document(doc2Path);
-        Document src3 = new Document(doc3Path);
+        // Save the combined document as DOCX
+        destination.Save(outputPath, SaveFormat.Docx);
 
-        // Create the destination document and append the sources preserving their formatting.
-        Document dst = new Document();
-        dst.AppendDocument(src1, ImportFormatMode.KeepSourceFormatting);
-        dst.AppendDocument(src2, ImportFormatMode.KeepSourceFormatting);
-        dst.AppendDocument(src3, ImportFormatMode.KeepSourceFormatting);
+        // Validate that the output file was created
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The combined DOCX file was not saved.");
 
-        // Save the merged result as DOCX.
-        string mergedPath = Path.Combine(outputDir, "Merged.docx");
-        dst.Save(mergedPath, SaveFormat.Docx);
+        // Validate that the combined document contains content from all source documents
+        Document combined = new Document(outputPath);
+        string combinedText = combined.GetText();
 
-        // Validation: ensure the file exists and contains content from all sources.
-        if (!File.Exists(mergedPath))
-            throw new InvalidOperationException("Merged document was not created.");
-
-        Document merged = new Document(mergedPath);
-        string mergedText = merged.GetText();
-
-        if (!mergedText.Contains("first ODT") ||
-            !mergedText.Contains("second ODT") ||
-            !mergedText.Contains("third ODT"))
+        if (!combinedText.Contains("First document content.") ||
+            !combinedText.Contains("Second document content.") ||
+            !combinedText.Contains("Third document content."))
         {
-            throw new InvalidOperationException("Merged document does not contain expected content.");
+            throw new InvalidOperationException("The combined document does not contain expected content from all sources.");
         }
+    }
 
-        Console.WriteLine("Documents merged successfully. Output file: " + mergedPath);
+    // Helper method to create a simple ODT document with specified text
+    private static void CreateSampleDocument(string filePath, string content)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(content);
+        doc.Save(filePath, SaveFormat.Odt);
     }
 }

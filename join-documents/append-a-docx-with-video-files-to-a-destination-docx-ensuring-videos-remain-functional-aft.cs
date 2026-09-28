@@ -11,68 +11,55 @@ public class Program
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a dummy video file (placeholder content).
-        // -----------------------------------------------------------------
-        string videoPath = Path.Combine(outputDir, "sample.mp4");
-        // Write a few bytes to make the file exist; real video content is not required for the demo.
-        File.WriteAllBytes(videoPath, new byte[] { 0x00, 0x01, 0x02, 0x03 });
+        // Define file paths.
+        string destDocPath = Path.Combine(outputDir, "Destination.docx");
+        string sourceDocPath = Path.Combine(outputDir, "SourceWithVideo.docx");
+        string mergedDocPath = Path.Combine(outputDir, "Merged.docx");
+        string mergedPdfPath = Path.Combine(outputDir, "Merged.pdf");
+        string videoFilePath = Path.Combine(outputDir, "sample.mp4");
 
-        // -----------------------------------------------------------------
-        // 2. Create the source DOCX that contains the video.
-        // -----------------------------------------------------------------
-        Document srcDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Writeln("Source document with an embedded video:");
-        // Embed the video as an OLE object. Use the overload that accepts (fileName, isLinked, asIcon, presentation).
-        srcBuilder.InsertOleObject(videoPath, isLinked: false, asIcon: false, presentation: null);
-        string srcPath = Path.Combine(outputDir, "Source.docx");
-        srcDoc.Save(srcPath, SaveFormat.Docx);
+        // Create a dummy video file (binary content).
+        File.WriteAllBytes(videoFilePath, new byte[] { 0x00, 0x01, 0x02, 0x03, 0x04 });
 
-        // -----------------------------------------------------------------
-        // 3. Create the destination DOCX.
-        // -----------------------------------------------------------------
-        Document dstDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
-        dstBuilder.Writeln("Destination document (will receive the source).");
-        string dstPath = Path.Combine(outputDir, "Destination.docx");
-        dstDoc.Save(dstPath, SaveFormat.Docx);
+        // ---------- Create Destination Document ----------
+        Document destDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.Writeln("This is the destination document.");
+        destDoc.Save(destDocPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 4. Append the source document to the destination document.
-        // -----------------------------------------------------------------
-        // Load the documents again to simulate a real‑world scenario.
-        Document destination = new Document(dstPath);
-        Document source = new Document(srcPath);
-        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
-        string mergedPath = Path.Combine(outputDir, "Merged.docx");
-        destination.Save(mergedPath, SaveFormat.Docx);
+        // ---------- Create Source Document with Embedded Video ----------
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the source document containing a video.");
 
-        // -----------------------------------------------------------------
-        // 5. Convert the merged document to PDF, embedding the video attachment.
-        // -----------------------------------------------------------------
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // Insert the video as an OLE object (embedded) using a stream.
+        using (FileStream videoStream = File.OpenRead(videoFilePath))
         {
-            AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations
-        };
-        string pdfPath = Path.Combine(outputDir, "Merged.pdf");
-        destination.Save(pdfPath, pdfOptions);
-
-        // -----------------------------------------------------------------
-        // 6. Validate that all output files were created.
-        // -----------------------------------------------------------------
-        ValidateFileExists(srcPath);
-        ValidateFileExists(dstPath);
-        ValidateFileExists(mergedPath);
-        ValidateFileExists(pdfPath);
-        ValidateFileExists(videoPath);
-    }
-
-    private static void ValidateFileExists(string path)
-    {
-        if (!File.Exists(path))
-        {
-            throw new FileNotFoundException($"Expected file was not created: {path}");
+            // The fourth parameter (icon stream) is optional; pass null for no icon.
+            sourceBuilder.InsertOleObject(videoStream, "Package", false, null);
         }
+
+        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
+
+        // ---------- Load Documents ----------
+        Document destination = new Document(destDocPath);
+        Document source = new Document(sourceDocPath);
+
+        // ---------- Append Source to Destination ----------
+        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
+        destination.Save(mergedDocPath, SaveFormat.Docx);
+
+        // ---------- Convert Merged Document to PDF ----------
+        destination.Save(mergedPdfPath, SaveFormat.Pdf);
+
+        // ---------- Validation ----------
+        if (!File.Exists(mergedDocPath))
+            throw new Exception("Merged DOCX file was not created.");
+
+        if (!File.Exists(mergedPdfPath))
+            throw new Exception("Merged PDF file was not created.");
+
+        if (new FileInfo(mergedPdfPath).Length == 0)
+            throw new Exception("Merged PDF file is empty.");
     }
 }

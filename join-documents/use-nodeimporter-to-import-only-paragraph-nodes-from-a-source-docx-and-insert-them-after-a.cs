@@ -6,10 +6,10 @@ public class Program
 {
     public static void Main()
     {
-        // File names in the application folder.
-        const string destPath = "Destination.docx";
-        const string srcPath = "Source.docx";
-        const string outputPath = "Merged.docx";
+        // Paths for temporary files.
+        string destPath = "Destination.docx";
+        string sourcePath = "Source.docx";
+        string outputPath = "Result.docx";
 
         // ---------- Create destination document with a bookmark ----------
         Document destDoc = new Document();
@@ -19,75 +19,57 @@ public class Program
         destBuilder.Writeln("Bookmark location.");
         destBuilder.EndBookmark("InsertHere");
         destBuilder.Writeln("This is the end of the destination document.");
-        destDoc.Save(destPath);
+        destDoc.Save(destPath, SaveFormat.Docx);
 
-        // ---------- Create source document containing paragraphs and a table ----------
-        Document srcDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Writeln("First paragraph from source.");
-        srcBuilder.Writeln("Second paragraph from source.");
+        // ---------- Create source document with several paragraphs ----------
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("First imported paragraph.");
+        srcBuilder.Writeln("Second imported paragraph.");
+        srcBuilder.Writeln("Third imported paragraph.");
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // Add a table to demonstrate that non‑paragraph nodes are ignored.
-        srcBuilder.StartTable();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell 1");
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell 2");
-        srcBuilder.EndTable();
-
-        srcBuilder.Writeln("Third paragraph after table.");
-        srcDoc.Save(srcPath);
-
-        // ---------- Load documents ----------
+        // ---------- Load documents (simulating a typical import scenario) ----------
         Document destination = new Document(destPath);
-        Document source = new Document(srcPath);
+        Document source = new Document(sourcePath);
 
-        // Locate the bookmark where the paragraphs will be inserted.
-        Bookmark bookmark = destination.Range.Bookmarks["InsertHere"];
-        if (bookmark == null)
-            throw new InvalidOperationException("Bookmark 'InsertHere' not found.");
+        // Locate the bookmark in the destination document.
+        Bookmark bookmark = destination.Range.Bookmarks["InsertHere"]
+            ?? throw new InvalidOperationException("Bookmark 'InsertHere' not found in destination document.");
 
-        // Insert only paragraph nodes after the bookmark's paragraph.
-        InsertParagraphsAfterNode(bookmark.BookmarkStart.ParentNode, source);
+        // The paragraph that contains the bookmark start.
+        Paragraph bookmarkParagraph = bookmark.BookmarkStart.ParentNode as Paragraph
+            ?? throw new InvalidOperationException("Bookmark start is not inside a paragraph.");
 
-        // Save the merged result.
-        destination.Save(outputPath);
+        // Parent node where paragraphs can be inserted (normally the Body of the section).
+        CompositeNode? parentComposite = bookmarkParagraph.ParentNode as CompositeNode
+            ?? throw new InvalidOperationException("Unable to locate a valid composite parent for insertion.");
 
-        // Simple validation.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("Merged document was not saved.", outputPath);
-    }
+        // Prepare the importer.
+        NodeImporter importer = new NodeImporter(source, destination, ImportFormatMode.KeepSourceFormatting);
 
-    // Inserts only paragraph nodes from srcDoc after insertionDestination.
-    private static void InsertParagraphsAfterNode(Node insertionDestination, Document srcDoc)
-    {
-        // Destination must be a paragraph or a table.
-        if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
-            throw new ArgumentException("The destination node must be a paragraph or a table.");
+        // Reference node for insertion – start with the paragraph that holds the bookmark.
+        Node referenceNode = bookmarkParagraph;
 
-        CompositeNode destinationParent = insertionDestination.ParentNode;
-
-        // NodeImporter translates styles, lists, etc.
-        NodeImporter importer = new NodeImporter(srcDoc, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
-
-        foreach (Section srcSection in srcDoc.Sections)
+        // Import each paragraph from the source document and insert after the bookmark.
+        NodeCollection sourceParagraphs = source.GetChildNodes(NodeType.Paragraph, true);
+        foreach (Paragraph para in sourceParagraphs)
         {
-            foreach (Node srcNode in srcSection.Body)
-            {
-                // Process only paragraphs.
-                if (srcNode.NodeType != NodeType.Paragraph)
-                    continue;
+            // Import the paragraph node.
+            Node importedNode = importer.ImportNode(para, true);
 
-                Paragraph para = (Paragraph)srcNode;
+            // Insert the imported paragraph after the current reference node.
+            parentComposite.InsertAfter(importedNode, referenceNode);
 
-                // Skip the final empty paragraph that Aspose.Words adds to each section.
-                if (para.IsEndOfSection && !para.HasChildNodes)
-                    continue;
-
-                Node importedNode = importer.ImportNode(srcNode, true);
-                destinationParent.InsertAfter(importedNode, insertionDestination);
-                insertionDestination = importedNode;
-            }
+            // Update the reference node so the next paragraph is inserted after the newly added one.
+            referenceNode = importedNode;
         }
+
+        // Save the resulting document.
+        destination.Save(outputPath, SaveFormat.Docx);
+
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The merged document was not saved correctly.", outputPath);
     }
 }

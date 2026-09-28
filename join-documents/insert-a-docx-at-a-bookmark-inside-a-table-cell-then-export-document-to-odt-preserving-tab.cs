@@ -2,66 +2,69 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;   // Required for Table class
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string destPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docx");
-        string srcPath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.odt");
-
-        // ---------- Create the destination document with a table and a bookmark inside a cell ----------
+        // Create the destination document with a table that contains a bookmark.
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
-        // Start a table.
-        destBuilder.StartTable();
-
-        // Insert the first cell.
+        // Start a table and add a single cell.
+        Table table = destBuilder.StartTable();
         destBuilder.InsertCell();
 
-        // Place a bookmark inside this cell where the source document will be inserted.
+        // Insert a bookmark named "InsertHere" inside the cell.
         destBuilder.StartBookmark("InsertHere");
-        destBuilder.Write("Placeholder before insertion. ");
+        destBuilder.Writeln("Placeholder text before insertion.");
         destBuilder.EndBookmark("InsertHere");
 
-        // End the row and the table.
+        // Close the cell, row, and table.
         destBuilder.EndRow();
         destBuilder.EndTable();
 
-        // Save the destination document (optional, just to have a physical file).
+        // Save the destination document as DOCX (optional, for inspection).
+        const string destPath = "Destination.docx";
         destDoc.Save(destPath, SaveFormat.Docx);
 
-        // ---------- Create the source document that will be inserted ----------
+        // Create the source document that will be inserted.
         Document srcDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Writeln("This is the content coming from the source DOCX.");
+        srcBuilder.Writeln("This is the content from the source DOCX document.");
+        srcBuilder.Writeln("It will be inserted at the bookmark location.");
+        const string srcPath = "Source.docx";
         srcDoc.Save(srcPath, SaveFormat.Docx);
 
-        // ---------- Load the source document (if not already loaded) ----------
-        Document srcToInsert = new Document(srcPath);
+        // Load the source document (demonstrating loading from file).
+        Document sourceToInsert = new Document(srcPath);
 
-        // ---------- Insert the source document at the bookmark inside the table cell ----------
+        // Move the builder to the bookmark in the destination document.
         destBuilder.MoveToBookmark("InsertHere");
-        destBuilder.InsertDocumentInline(srcToInsert, ImportFormatMode.KeepSourceFormatting, new ImportFormatOptions());
 
-        // ---------- Save the merged document as ODT, preserving the table structure ----------
-        destDoc.Save(outputPath, SaveFormat.Odt);
+        // Insert the source document at the bookmark, preserving its formatting.
+        destBuilder.InsertDocument(sourceToInsert, ImportFormatMode.KeepSourceFormatting);
 
-        // ---------- Validation ----------
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output ODT file was not created.");
+        // Save the merged document as ODT, preserving the table structure.
+        const string resultPath = "Result.odt";
+        destDoc.Save(resultPath, SaveFormat.Odt);
 
-        // Load the saved ODT to verify that the source content is present.
-        Document resultDoc = new Document(outputPath);
-        string resultText = resultDoc.GetText();
+        // Verify that the output file was created.
+        if (!File.Exists(resultPath))
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {resultPath}");
+        }
 
-        if (!resultText.Contains("This is the content coming from the source DOCX."))
-            throw new InvalidOperationException("The source content was not found in the merged document.");
+        // Optional validation: ensure the inserted text is present in the resulting ODT.
+        Document validationDoc = new Document(resultPath);
+        bool containsInsertedText = validationDoc.GetText()
+            .Contains("This is the content from the source DOCX document.");
+        if (!containsInsertedText)
+        {
+            throw new InvalidOperationException("The inserted content was not found in the resulting ODT document.");
+        }
 
-        // Indicate successful completion.
-        Console.WriteLine("Document merged and saved as ODT successfully.");
+        // Program completed successfully.
     }
 }

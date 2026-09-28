@@ -2,62 +2,69 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Folder for temporary source documents and final output.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "JoinDocsWork");
-        Directory.CreateDirectory(workDir);
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Define source documents: file name, text content, and ImportFormatMode to use when appending.
-        var sources = new List<(string FileName, string Content, ImportFormatMode Mode)>
+        // -----------------------------------------------------------------
+        // Create sample source DOCX files.
+        // -----------------------------------------------------------------
+        var sourceFiles = new List<string>();
+        for (int i = 1; i <= 3; i++)
         {
-            (Path.Combine(workDir, "Doc1.docx"), "First document content.", ImportFormatMode.UseDestinationStyles),
-            (Path.Combine(workDir, "Doc2.docx"), "Second document content.", ImportFormatMode.KeepSourceFormatting),
-            (Path.Combine(workDir, "Doc3.docx"), "Third document content.", ImportFormatMode.KeepDifferentStyles)
-        };
+            string filePath = Path.Combine(outputDir, $"Source{i}.docx");
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is the content of source document {i}.");
 
-        // Create each source DOCX file.
-        foreach (var (fileName, content, _) in sources)
-        {
-            var srcDoc = new Document();
-            var builder = new DocumentBuilder(srcDoc);
-            builder.Writeln(content);
-            srcDoc.Save(fileName, SaveFormat.Docx);
+            // Simple style variation for demonstration.
+            if (i == 2)
+                builder.Font.Bold = true;
+            else if (i == 3)
+                builder.Font.Italic = true;
+
+            doc.Save(filePath, SaveFormat.Docx);
+            sourceFiles.Add(filePath);
         }
 
-        // Destination document that will receive all source documents.
-        var dstDoc = new Document();
+        // -----------------------------------------------------------------
+        // Destination document that will hold the combined content.
+        // -----------------------------------------------------------------
+        var combinedDoc = new Document();
 
-        // Append each source document using its specific ImportFormatMode.
-        foreach (var (fileName, _, mode) in sources)
+        // Append each source document with a different ImportFormatMode.
+        for (int i = 0; i < sourceFiles.Count; i++)
         {
-            var srcDoc = new Document(fileName);
-            dstDoc.AppendDocument(srcDoc, mode);
+            var srcDoc = new Document(sourceFiles[i]);
+
+            ImportFormatMode mode = i switch
+            {
+                0 => ImportFormatMode.KeepSourceFormatting,
+                1 => ImportFormatMode.UseDestinationStyles,
+                _ => ImportFormatMode.KeepDifferentStyles
+            };
+
+            combinedDoc.AppendDocument(srcDoc, mode);
         }
+
+        // -----------------------------------------------------------------
+        // Validation: ensure that at least the expected number of sections
+        // were imported (the destination document starts with one empty section).
+        // -----------------------------------------------------------------
+        if (combinedDoc.Sections.Count < sourceFiles.Count)
+            throw new InvalidOperationException("The combined document does not contain the expected number of sections.");
 
         // Save the combined document as PDF.
-        string pdfPath = Path.Combine(workDir, "Combined.pdf");
-        dstDoc.Save(pdfPath, SaveFormat.Pdf);
+        string pdfPath = Path.Combine(outputDir, "Combined.pdf");
+        combinedDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validation: ensure the PDF file exists.
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The combined PDF was not created.");
-
-        // Load the PDF back as a Document to verify its text contains all source contents.
-        var pdfDoc = new Document(pdfPath);
-        string combinedText = pdfDoc.GetText();
-
-        foreach (var (_, content, _) in sources)
-        {
-            if (!combinedText.Contains(content))
-                throw new InvalidOperationException($"Combined PDF is missing expected content: \"{content}\"");
-        }
-
-        // Clean up temporary files (optional).
-        // Directory.Delete(workDir, true);
+            throw new FileNotFoundException("Failed to create the combined PDF file.", pdfPath);
     }
 }

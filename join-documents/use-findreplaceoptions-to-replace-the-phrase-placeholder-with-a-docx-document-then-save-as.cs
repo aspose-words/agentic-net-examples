@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -8,105 +7,89 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare working directory.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        Directory.CreateDirectory(workDir);
+        // Prepare a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "JoinDocsExample");
+        Directory.CreateDirectory(workFolder);
 
-        // Paths for the source documents and the final output.
-        string mainDocPath = Path.Combine(workDir, "Main.docx");
-        string subDocPath = Path.Combine(workDir, "Insert.docx");
-        string outputPath = Path.Combine(workDir, "Result.odt");
+        // Paths for the sample documents.
+        string mainDocPath = Path.Combine(workFolder, "main.docx");
+        string insertDocPath = Path.Combine(workFolder, "insert.docx");
+        string outputPath = Path.Combine(workFolder, "merged.odt");
 
         // Create the main document containing the placeholder.
         Document mainDoc = new Document();
         DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
-        mainBuilder.Writeln("This is the start of the main document.");
-        mainBuilder.Writeln("PLACEHOLDER"); // The text to be replaced.
-        mainBuilder.Writeln("This is the end of the main document.");
+        mainBuilder.Writeln("This is the main document.");
+        mainBuilder.Writeln("PLACEHOLDER");
+        mainBuilder.Writeln("End of the main document.");
         mainDoc.Save(mainDocPath, SaveFormat.Docx);
 
         // Create the document that will replace the placeholder.
-        Document subDoc = new Document();
-        DocumentBuilder subBuilder = new DocumentBuilder(subDoc);
-        subBuilder.Writeln("Inserted line 1.");
-        subBuilder.Writeln("Inserted line 2.");
-        subDoc.Save(subDocPath, SaveFormat.Docx);
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("This is the inserted document.");
+        insertBuilder.Writeln("Additional inserted content.");
+        insertDoc.Save(insertDocPath, SaveFormat.Docx);
 
-        // Load the main document for processing.
-        Document loadedMain = new Document(mainDocPath);
+        // Load the documents for processing.
+        Document source = new Document(mainDocPath);
+        Document toInsert = new Document(insertDocPath);
 
-        // Configure find‑replace to use a custom callback that inserts a document.
-        FindReplaceOptions options = new FindReplaceOptions
+        // Replace the placeholder with the entire insert document using a custom callback.
+        FindReplaceOptions replaceOptions = new FindReplaceOptions
         {
-            ReplacingCallback = new InsertDocumentHandler(subDocPath)
+            ReplacingCallback = new ReplaceWithDocument(toInsert)
         };
+        source.Range.Replace("PLACEHOLDER", string.Empty, replaceOptions);
 
-        // Replace the placeholder (exact word match) with the content of subDoc.
-        loadedMain.Range.Replace(new Regex(@"\bPLACEHOLDER\b"), string.Empty, options);
+        // Save the merged result as ODT.
+        source.Save(outputPath, SaveFormat.Odt);
 
-        // Save the resulting document as ODT.
-        loadedMain.Save(outputPath, SaveFormat.Odt);
-
-        // Simple validation to ensure the file was created.
+        // Validate that the output file exists and contains content from both documents.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output ODT file was not created.");
+            throw new InvalidOperationException("The merged ODT file was not created.");
 
-        // Optional: indicate success.
-        Console.WriteLine("Document processed and saved to: " + outputPath);
+        Document result = new Document(outputPath);
+        string resultText = result.GetText();
+
+        if (!resultText.Contains("This is the main document.") ||
+            !resultText.Contains("This is the inserted document.") ||
+            !resultText.Contains("Additional inserted content.") ||
+            !resultText.Contains("End of the main document."))
+        {
+            throw new InvalidOperationException("The merged document does not contain expected content.");
+        }
+
+        Console.WriteLine("Document merged and saved successfully to: " + outputPath);
     }
 
-    // Callback that inserts a document at the location of each match.
-    private class InsertDocumentHandler : IReplacingCallback
+    // Custom callback that inserts a whole document at the match location.
+    private class ReplaceWithDocument : IReplacingCallback
     {
-        private readonly string _documentPath;
+        private readonly Document _documentToInsert;
 
-        public InsertDocumentHandler(string documentPath)
+        public ReplaceWithDocument(Document documentToInsert)
         {
-            _documentPath = documentPath;
+            _documentToInsert = documentToInsert ?? throw new ArgumentNullException(nameof(documentToInsert));
         }
 
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        public ReplaceAction Replacing(ReplacingArgs e)
         {
-            // Load the document to be inserted.
-            Document insertDoc = new Document(_documentPath);
+            // The node that contains the matched text (a Run node).
+            Node matchNode = e.MatchNode;
 
-            // The match is inside a paragraph; insert after that paragraph.
-            Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
-            InsertDocument(placeholderParagraph, insertDoc);
+            // Build a DocumentBuilder positioned at the match node.
+            DocumentBuilder builder = new DocumentBuilder((Document)matchNode.Document);
+            builder.MoveTo(matchNode);
 
-            // Remove the placeholder paragraph.
-            placeholderParagraph.Remove();
+            // Insert the whole document after the current position.
+            builder.InsertDocument(_documentToInsert, ImportFormatMode.KeepSourceFormatting);
 
-            // Skip the default replacement since we already handled it.
+            // Remove the placeholder text node.
+            matchNode.Remove();
+
+            // Skip further processing for this match.
             return ReplaceAction.Skip;
-        }
-
-        // Inserts all nodes of insertDoc after the specified paragraph.
-        private static void InsertDocument(Node insertionDestination, Document docToInsert)
-        {
-            if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
-                throw new ArgumentException("Insertion destination must be a paragraph or table.");
-
-            CompositeNode dstStory = insertionDestination.ParentNode;
-            NodeImporter importer = new NodeImporter(docToInsert, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
-
-            foreach (Section srcSection in docToInsert.Sections)
-            {
-                foreach (Node srcNode in srcSection.Body)
-                {
-                    // Skip the last empty paragraph of a section.
-                    if (srcNode.NodeType == NodeType.Paragraph)
-                    {
-                        Paragraph para = (Paragraph)srcNode;
-                        if (para.IsEndOfSection && !para.HasChildNodes)
-                            continue;
-                    }
-
-                    Node newNode = importer.ImportNode(srcNode, true);
-                    dstStory.InsertAfter(newNode, insertionDestination);
-                    insertionDestination = newNode;
-                }
-            }
         }
     }
 }

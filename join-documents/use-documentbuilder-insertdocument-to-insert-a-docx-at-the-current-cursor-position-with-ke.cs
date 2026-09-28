@@ -7,43 +7,44 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare file paths
+        string destPath = "Destination.docx";
+        string sourcePath = "Source.docx";
+        string outputPath = "MergedOutput.html";
 
-        // Paths for the source DOCX and the resulting HTML
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        string resultPath = Path.Combine(outputDir, "Result.html");
-
-        // Create a source document with sample content
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("This is the source document.");
-        srcBuilder.Writeln("It will be inserted into another document.");
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
-
-        // Create the destination document
+        // Create destination document with initial content
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("Destination document start.");
+        destBuilder.Writeln("This is the beginning of the destination document.");
 
-        // Insert a page break before the inserted content
-        destBuilder.InsertBreak(BreakType.PageBreak);
+        // Save destination document (optional, just to have a file)
+        destDoc.Save(destPath, SaveFormat.Docx);
 
-        // Load the source document to be inserted
-        Document srcToInsert = new Document(sourcePath);
+        // Create source document that will be inserted
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This paragraph comes from the source document.");
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // Insert the source document at the current cursor position, preserving its formatting
-        destBuilder.InsertDocument(srcToInsert, ImportFormatMode.KeepSourceFormatting);
-        destBuilder.Writeln("Destination document end.");
+        // Load the source document from the saved DOCX file
+        Document sourceToInsert = new Document(sourcePath);
 
-        // Save the combined document as HTML
-        destDoc.Save(resultPath, SaveFormat.Html);
+        // Insert the source document at the current cursor position with KeepSourceFormatting
+        destBuilder.Writeln("Content before insertion.");
+        destBuilder.InsertDocument(sourceToInsert, ImportFormatMode.KeepSourceFormatting);
+        destBuilder.Writeln("Content after insertion.");
 
-        // Verify that the HTML file was created
-        if (!File.Exists(resultPath))
+        // Save the merged document as HTML
+        destDoc.Save(outputPath, SaveFormat.Html);
+
+        // Validate that the output file was created
+        if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create output file: {resultPath}");
+            throw new InvalidOperationException($"The output file '{outputPath}' was not created.");
         }
+
+        // Clean up temporary files (optional)
+        File.Delete(destPath);
+        File.Delete(sourcePath);
     }
 }

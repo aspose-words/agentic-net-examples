@@ -1,58 +1,70 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string docxPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
-        string odtPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.odt");
-        string pdfPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.pdf");
+        // Prepare a temporary working directory.
+        string workDir = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
+        Directory.CreateDirectory(workDir);
+
+        // Define file paths for the source documents and the merged PDF.
+        string docxPath = Path.Combine(workDir, "SourceDocument.docx");
+        string odtPath = Path.Combine(workDir, "SourceDocument.odt");
+        string outputPdfPath = Path.Combine(workDir, "MergedOutput.pdf");
 
         // -----------------------------------------------------------------
         // Create a sample DOCX document.
         // -----------------------------------------------------------------
-        Document docxDocument = new Document();
-        DocumentBuilder docxBuilder = new DocumentBuilder(docxDocument);
-        docxBuilder.Writeln("This is the content of the DOCX document.");
+        var docxDocument = new Document();
+        var docxBuilder = new DocumentBuilder(docxDocument);
+        docxBuilder.Writeln("This is the DOCX document.");
+        docxBuilder.Writeln("It contains some sample text.");
         docxDocument.Save(docxPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
         // Create a sample ODT document.
         // -----------------------------------------------------------------
-        Document odtDocument = new Document();
-        DocumentBuilder odtBuilder = new DocumentBuilder(odtDocument);
-        odtBuilder.Writeln("This is the content of the ODT document.");
+        var odtDocument = new Document();
+        var odtBuilder = new DocumentBuilder(odtDocument);
+        odtBuilder.Writeln("This is the ODT document.");
+        odtBuilder.Writeln("It will be appended with source formatting preserved.");
         odtDocument.Save(odtPath, SaveFormat.Odt);
 
         // -----------------------------------------------------------------
         // Load the created documents.
         // -----------------------------------------------------------------
-        Document srcDocx = new Document(docxPath);
-        Document srcOdt = new Document(odtPath);
+        var mainDoc = new Document(docxPath);
+        var odtToAppend = new Document(odtPath);
 
-        // -----------------------------------------------------------------
-        // Append the ODT document to the DOCX document, preserving its formatting.
-        // -----------------------------------------------------------------
-        srcDocx.AppendDocument(srcOdt, ImportFormatMode.KeepSourceFormatting);
+        // Append the ODT document to the DOCX document, keeping source formatting.
+        mainDoc.AppendDocument(odtToAppend, ImportFormatMode.KeepSourceFormatting);
 
         // -----------------------------------------------------------------
         // Save the combined document as PDF.
         // -----------------------------------------------------------------
-        srcDocx.Save(pdfPath, SaveFormat.Pdf);
+        mainDoc.Save(outputPdfPath, SaveFormat.Pdf);
 
         // -----------------------------------------------------------------
-        // Validate that the PDF file was created.
+        // Validation: ensure the PDF file was created and contains content from both sources.
         // -----------------------------------------------------------------
-        if (!File.Exists(pdfPath))
+        if (!File.Exists(outputPdfPath))
         {
             throw new InvalidOperationException("The merged PDF file was not created.");
         }
 
-        // Optional: output the location of the generated PDF.
-        Console.WriteLine($"Merged PDF created at: {pdfPath}");
+        // Simple validation: the merged document should have at least two sections (one per source).
+        if (mainDoc.Sections.Count < 2)
+        {
+            throw new InvalidOperationException("The merged document does not contain the expected number of sections.");
+        }
+
+        // Cleanup: optional removal of temporary files (comment out if inspection is needed).
+        // File.Delete(docxPath);
+        // File.Delete(odtPath);
+        // File.Delete(outputPdfPath);
+        // Directory.Delete(workDir, true);
     }
 }
