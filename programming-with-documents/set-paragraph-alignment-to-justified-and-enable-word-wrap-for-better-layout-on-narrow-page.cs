@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -8,26 +7,28 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Sample long text to demonstrate justification and word wrap.
+        // Sample long text to illustrate justification and word wrap.
         string sampleText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
                             "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
                             "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
-        // Set paragraph formatting: justified alignment and enable word wrap.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
-        builder.ParagraphFormat.WordWrap = true; // Explicitly enable word wrap (default is true).
+        // Insert a new paragraph with the sample text.
+        Paragraph paragraph = new Paragraph(doc);
+        paragraph.AppendChild(new Run(doc, sampleText));
 
-        // Write the text into the paragraph.
-        builder.Writeln(sampleText);
+        // Set paragraph alignment to justified.
+        paragraph.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
 
-        // Determine output path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "JustifiedParagraph.docx");
+        // Enable word wrap for the paragraph (useful on narrow pages).
+        paragraph.ParagraphFormat.WordWrap = true;
 
-        // Save the document.
+        // Add the paragraph to the document body.
+        doc.FirstSection.Body.AppendChild(paragraph);
+
+        // Save the document to a file.
+        string outputPath = "JustifiedParagraph.docx";
         doc.Save(outputPath);
     }
 }

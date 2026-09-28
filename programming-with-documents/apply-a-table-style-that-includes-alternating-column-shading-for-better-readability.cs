@@ -1,62 +1,61 @@
 using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a few rows/columns.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.InsertCell();
-        builder.Write("Header 3");
-        builder.EndRow();
+        int rows = 3;
+        int columns = 4;
 
-        // Data rows.
-        for (int i = 0; i < 4; i++)
+        // Populate the table with sample data.
+        for (int r = 0; r < rows; r++)
         {
-            builder.InsertCell();
-            builder.Write($"Row {i + 1} Col 1");
-            builder.InsertCell();
-            builder.Write($"Row {i + 1} Col 2");
-            builder.InsertCell();
-            builder.Write($"Row {i + 1} Col 3");
+            for (int c = 0; c < columns; c++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{r + 1}C{c + 1}");
+            }
             builder.EndRow();
         }
 
+        // End the table.
         builder.EndTable();
 
-        // Create a custom table style.
-        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "AlternatingColumnStyle");
+        // Apply a built‑in style.
+        table.Style = doc.Styles["Table Grid"];
 
-        // Define shading for odd and even column banding.
-        tableStyle.ConditionalStyles[ConditionalStyleType.OddColumnBanding].Shading.BackgroundPatternColor = Color.LightBlue;
-        tableStyle.ConditionalStyles[ConditionalStyleType.EvenColumnBanding].Shading.BackgroundPatternColor = Color.LightSalmon;
-
-        // Enable column banding for the table.
-        table.Style = tableStyle;
-        table.StyleOptions = table.StyleOptions | TableStyleOptions.ColumnBands;
-
-        // Ensure the output directory exists.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingColumnTable.docx");
-        string outputDir = Path.GetDirectoryName(outputPath);
-        if (!Directory.Exists(outputDir))
-            Directory.CreateDirectory(outputDir);
+        // Apply alternating column shading manually.
+        for (int r = 0; r < table.Rows.Count; r++)
+        {
+            Row row = table.Rows[r];
+            for (int c = 0; c < row.Cells.Count; c++)
+            {
+                // Shade every other column (e.g., columns 1,3,…).
+                if (c % 2 == 0)
+                {
+                    row.Cells[c].CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+                }
+            }
+        }
 
         // Save the document.
+        string outputPath = "TableWithAlternatingColumnShading.docx";
         doc.Save(outputPath);
+
+        // Indicate success.
+        if (System.IO.File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully: {outputPath}");
+        }
     }
 }

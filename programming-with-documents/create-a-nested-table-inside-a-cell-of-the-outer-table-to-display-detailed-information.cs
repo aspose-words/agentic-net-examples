@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -9,46 +8,46 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create the outer table (e.g., 3 rows x 4 columns) and add it to the document.
-        Table outerTable = CreateTable(doc, 3, 4, "Outer Table");
-        doc.FirstSection.Body.AppendChild(outerTable);
+        // Start the outer table.
+        Table outerTable = builder.StartTable();
 
-        // Create the inner table (e.g., 2 rows x 2 columns) and insert it into the first cell of the outer table.
-        Table innerTable = CreateTable(doc, 2, 2, "Inner Table");
-        outerTable.FirstRow.FirstCell.AppendChild(innerTable);
+        // First cell of the outer table.
+        builder.InsertCell();
+        builder.Writeln("Outer Cell 1");
 
-        // Define the output path and ensure the directory exists.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "NestedTable.docx");
+        // Second cell of the outer table – this will contain the nested table.
+        builder.InsertCell();
+
+        // Start the nested table inside the current cell.
+        Table nestedTable = builder.StartTable();
+
+        // First row of the nested table.
+        builder.InsertCell();
+        builder.Writeln("Nested Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Nested Cell 2");
+        builder.EndRow();
+
+        // Second row of the nested table.
+        builder.InsertCell();
+        builder.Writeln("Nested Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Nested Cell 4");
+        builder.EndRow();
+
+        // End the nested table.
+        builder.EndTable();
+
+        // End the row of the outer table.
+        builder.EndRow();
+
+        // End the outer table.
+        builder.EndTable();
+
+        // Save the document to disk.
+        string outputPath = "NestedTable.docx";
         doc.Save(outputPath);
-    }
-
-    // Helper method to create a table with the specified dimensions and cell text.
-    private static Table CreateTable(Document doc, int rowCount, int cellCount, string cellText)
-    {
-        Table table = new Table(doc);
-
-        for (int rowId = 1; rowId <= rowCount; rowId++)
-        {
-            Row row = new Row(doc);
-            table.AppendChild(row);
-
-            for (int cellId = 1; cellId <= cellCount; cellId++)
-            {
-                Cell cell = new Cell(doc);
-                // Each cell must contain at least one paragraph.
-                cell.AppendChild(new Paragraph(doc));
-                // Add the specified text to the first paragraph of the cell.
-                cell.FirstParagraph.AppendChild(new Run(doc, cellText));
-
-                row.AppendChild(cell);
-            }
-        }
-
-        // Optional: set title and description for better accessibility.
-        table.Title = "Aspose table title";
-        table.Description = "Aspose table description";
-
-        return table;
     }
 }

@@ -1,54 +1,47 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using Aspose.Words.Saving;
 
-public class Program
+namespace RestartListNumberingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Define output directory and file.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "RestartListAtEachSection.docx");
-
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // First heading (Section 1).
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Section 1");
-
-        // Create a numbered list that restarts at each section.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-        list.IsRestartAtEachSection = true;
-
-        // Apply the list to the builder and add items.
-        builder.ListFormat.List = list;
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.ListFormat.RemoveNumbers();
-
-        // Insert a section break (new page) to start a new section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Second heading (Section 2).
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Section 2");
-
-        // Re‑apply the same list; numbering will restart at 1 because of IsRestartAtEachSection.
-        builder.ListFormat.List = list;
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.ListFormat.RemoveNumbers();
-
-        // Save the document with a compliance level that supports the restart property.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
+        public static void Main()
         {
-            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
-        };
-        doc.Save(outputPath, saveOptions);
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // First heading.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Section 1");
+
+            // First numbered list.
+            // Use the default numbered list template.
+            List firstList = doc.Lists.Add(ListTemplate.NumberDefault);
+            builder.ListFormat.List = firstList;
+            builder.ListFormat.ListLevelNumber = 0; // top level
+            builder.Writeln("Item 1");
+            builder.Writeln("Item 2");
+            builder.ListFormat.RemoveNumbers(); // End of the first list.
+
+            // Second heading.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Section 2");
+
+            // Restart numbering at 1 for the new list.
+            // Create a new list and set its start number to 1.
+            List secondList = doc.Lists.Add(ListTemplate.NumberDefault);
+            secondList.ListLevels[0].StartAt = 1; // restart numbering
+            builder.ListFormat.List = secondList;
+            builder.ListFormat.ListLevelNumber = 0; // top level
+            builder.Writeln("Item 1");
+            builder.Writeln("Item 2");
+            builder.ListFormat.RemoveNumbers(); // End of the second list.
+
+            // Save the document.
+            const string outputPath = "Output.docx";
+            doc.Save(outputPath);
+        }
     }
 }

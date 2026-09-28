@@ -1,70 +1,68 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
-namespace AsposeWordsExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Perform the macro‑like operation.
+        InsertTableParagraphAndLinkedTextBox(doc);
+
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MacroOutput.docx");
+        doc.Save(outputPath);
+
+        // Verify that the file was created (non‑interactive).
+        if (File.Exists(outputPath))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-
-            // Attach a DocumentBuilder to the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert the required elements in one operation.
-            InsertElements(builder);
-
-            // Save the document to a file.
-            doc.Save("MacroLikeOutput.docx");
+            // Reopen to ensure it can be loaded without error.
+            Document loaded = new Document(outputPath);
         }
+    }
 
-        /// <summary>
-        /// Inserts a 2x2 table, a paragraph, and a linked text box into the document.
-        /// </summary>
-        private static void InsertElements(DocumentBuilder builder)
-        {
-            // ----- Insert a 2x2 table -----
-            builder.StartTable();
+    private static void InsertTableParagraphAndLinkedTextBox(Document doc)
+    {
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // First row
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        // Insert a simple 2x2 table.
+        builder.StartTable();
 
-            // Second row
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndTable();
+        builder.InsertCell();
+        builder.Writeln("Cell 1,1");
+        builder.InsertCell();
+        builder.Writeln("Cell 1,2");
+        builder.EndRow();
 
-            // Add a paragraph after the table.
-            builder.Writeln("This is a paragraph following the table.");
+        builder.InsertCell();
+        builder.Writeln("Cell 2,1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2,2");
+        builder.EndRow();
 
-            // ----- Insert a linked text box -----
-            // Create a floating text box shape.
-            Shape textBox = new Shape(builder.Document, ShapeType.TextBox);
-            textBox.WrapType = WrapType.None;
-            textBox.Width = 200;
-            textBox.Height = 100;
+        builder.EndTable();
 
-            // Add a paragraph with some text inside the text box.
-            Paragraph tbParagraph = new Paragraph(builder.Document);
-            Run tbRun = new Run(builder.Document, "Content of the linked text box.");
-            tbParagraph.AppendChild(tbRun);
-            textBox.AppendChild(tbParagraph);
+        // Insert a paragraph after the table.
+        builder.Writeln("This paragraph follows the table.");
 
-            // Insert the text box into the document.
-            builder.InsertNode(textBox);
+        // Insert a linked text box.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.Width = 200;
+        textBox.Height = 100;
+        textBox.WrapType = WrapType.Inline;
+        textBox.HRef = "https://www.example.com";
 
-            // Add a paragraph after the linked text box.
-            builder.Writeln("Paragraph after the linked text box.");
-        }
+        // Add text to the text box.
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Click to visit example.com");
+        para.AppendChild(run);
+        textBox.AppendChild(para);
+
+        // Insert the text box into the document.
+        builder.InsertNode(textBox);
     }
 }

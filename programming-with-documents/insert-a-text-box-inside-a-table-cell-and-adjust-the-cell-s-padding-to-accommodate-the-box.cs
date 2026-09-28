@@ -3,7 +3,7 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTextBoxInTableCell
+namespace AsposeWordsTextBoxInTable
 {
     public class Program
     {
@@ -17,24 +17,39 @@ namespace AsposeWordsTextBoxInTableCell
             builder.StartTable();
             builder.InsertCell();
 
-            // Increase the cell padding so the text box does not touch the cell borders.
-            // Padding values are in points.
-            builder.CellFormat.SetPaddings(10, 10, 10, 10);
+            // Get reference to the current cell.
+            Cell cell = (Cell)builder.CurrentParagraph.ParentNode;
 
-            // Insert a text box shape into the current cell.
-            // Width and height are also specified in points.
-            Shape shape = builder.InsertShape(ShapeType.TextBox, 150, 80);
+            // Adjust cell padding to accommodate the text box.
+            cell.CellFormat.TopPadding = 20;
+            cell.CellFormat.BottomPadding = 20;
+            cell.CellFormat.LeftPadding = 20;
+            cell.CellFormat.RightPadding = 20;
 
-            // Move the builder's cursor inside the text box and write the desired text.
-            builder.MoveTo(shape.LastParagraph);
-            builder.Write("This is a text box inside a table cell.");
+            // Create a text box shape.
+            Shape textBox = new Shape(doc, ShapeType.TextBox)
+            {
+                Width = 200,
+                Height = 100,
+                WrapType = WrapType.Inline
+            };
 
-            // Finish the row and the table.
+            // Add some text inside the text box.
+            Paragraph para = new Paragraph(doc);
+            Run run = new Run(doc, "This is a text box inside a table cell.");
+            para.AppendChild(run);
+            textBox.AppendChild(para);
+
+            // Insert the text box into the cell.
+            cell.FirstParagraph.AppendChild(textBox);
+
+            // End the row and the table.
             builder.EndRow();
             builder.EndTable();
 
-            // Save the document to the local file system.
-            doc.Save("TextBoxInTableCell.docx");
+            // Save the document.
+            string outputPath = "Output.docx";
+            doc.Save(outputPath);
         }
     }
 }

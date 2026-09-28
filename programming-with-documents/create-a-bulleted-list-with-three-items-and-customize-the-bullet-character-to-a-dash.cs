@@ -10,27 +10,25 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a bulleted list based on the default bullet template.
-        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+        // Start a bullet list using the default bullet style.
+        builder.ListFormat.ApplyBulletDefault();
 
-        // Customize the first level of the list to use a dash ("-") as the bullet character.
-        ListLevel level = bulletList.ListLevels[0];
-        level.NumberStyle = NumberStyle.Bullet;   // Ensure the level is treated as a bullet.
-        level.NumberFormat = "-";                 // Set the bullet symbol to a dash.
-        level.Font.Name = "Arial";                // Optional: set a common font for the bullet.
-
-        // Apply the customized list to the builder.
-        builder.ListFormat.List = bulletList;
+        // Get the current list level and customize its bullet character to a dash.
+        ListLevel level = builder.ListFormat.ListLevel;
+        // The bullet style is already set by ApplyBulletDefault().
+        // Change the bullet character to a dash.
+        level.NumberFormat = "-";
 
         // Add three list items.
         builder.Writeln("First item");
         builder.Writeln("Second item");
         builder.Writeln("Third item");
 
-        // End the list formatting.
+        // End the list.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to a file in the current directory.
-        doc.Save("BulletedList.docx");
+        // Save the document to a file.
+        string outputPath = "BulletedList.docx";
+        doc.Save(outputPath);
     }
 }

@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -10,32 +12,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable different headers for odd and even pages.
+        // Ensure the document uses different headers for odd and even pages.
         builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // Move the cursor to the odd‑page (primary) header.
+        // Move the builder to the primary (odd‑page) header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Set the paragraph alignment to right and apply a custom font.
+        // Align the paragraph to the right.
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
-        builder.Font.Name = "Courier New";
-        builder.Font.Size = 14;
-        builder.Font.Color = System.Drawing.Color.DarkBlue;
 
-        // Write the chapter title that will appear on odd pages.
-        builder.Write("Chapter 1: Introduction");
+        // Set a custom font for the chapter title.
+        builder.Font.Name = "Times New Roman";
+        builder.Font.Size = 16;
+        builder.Font.Bold = true;
+        builder.Font.Color = Color.DarkRed;
+
+        // Write the chapter title.
+        builder.Writeln("Chapter 1 – Introduction");
 
         // Return to the main document body.
-        builder.MoveToSection(0);
+        builder.MoveToDocumentEnd();
 
-        // Add some sample pages to demonstrate the header.
-        builder.Writeln("Content of page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content of page 2.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content of page 3.");
+        // Add some body content to generate pages.
+        for (int i = 1; i <= 30; i++)
+        {
+            builder.Writeln($"This is paragraph {i} of the document body.");
+        }
 
         // Save the document.
-        doc.Save("Output.docx");
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
     }
 }

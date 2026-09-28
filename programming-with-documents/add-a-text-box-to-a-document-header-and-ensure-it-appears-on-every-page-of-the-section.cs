@@ -1,46 +1,49 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the primary header of the first (and only) section.
+        // Ensure the primary header exists.
+        Section section = doc.FirstSection;
+        HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
+        if (header == null)
+        {
+            header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+            section.HeadersFooters.Add(header);
+        }
+
+        // Move the builder to the header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Create a floating text box shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.WrapType = WrapType.None;
-        textBox.Width = 200;
-        textBox.Height = 50;
-        textBox.HorizontalAlignment = HorizontalAlignment.Center;
-        textBox.VerticalAlignment = VerticalAlignment.Top;
+        // Insert a textbox shape into the header.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
+        textBox.WrapType = WrapType.Inline;
 
-        // Add a paragraph with centered text inside the text box.
-        textBox.AppendChild(new Paragraph(doc));
-        Paragraph para = textBox.FirstParagraph;
-        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        Run run = new Run(doc, "Header TextBox");
+        // Add text to the textbox.
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Header TextBox Content");
         para.AppendChild(run);
+        textBox.AppendChild(para);
 
-        // Insert the text box into the header.
-        builder.InsertNode(textBox);
-
-        // Add some body content spanning multiple pages to demonstrate the header repeats.
-        builder.MoveToSection(0);
-        builder.Writeln("Page 1");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3");
+        // Add body content to generate multiple pages.
+        builder.MoveToDocumentEnd();
+        for (int i = 1; i <= 3; i++)
+        {
+            builder.Writeln($"This is page {i}");
+            if (i < 3)
+                builder.InsertBreak(BreakType.PageBreak);
+        }
 
         // Save the document.
-        doc.Save("HeaderWithTextBox.docx");
+        string outputFile = "HeaderWithTextBox.docx";
+        doc.Save(outputFile);
+        Console.WriteLine($"Document saved as {outputFile}");
     }
 }

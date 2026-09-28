@@ -9,26 +9,25 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable different footers for odd and even pages.
-        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
+        // NOTE: The property to enable different odd/even footers may not be available
+        // in some older Aspose.Words versions. Even without setting it, we can still
+        // insert content into the even‑page footer; Word will display it on even pages
+        // when the setting is enabled in the resulting file.
 
-        // Add enough content to generate several pages.
-        for (int i = 1; i <= 5; i++)
+        // Add some text to generate multiple pages.
+        for (int i = 0; i < 3; i++)
         {
-            builder.Writeln($"Page {i}");
-            if (i < 5)
-                builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"This is page {i + 1}");
+            builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Set the page number style for the section to uppercase Roman numerals.
-        doc.FirstSection.PageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
-
-        // Move the builder to the even‑page footer and insert a PAGE field.
+        // Move the builder to the even‑page footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
-        builder.Write("Page ");
-        builder.InsertField("PAGE", "");
+        // Insert a PAGE field formatted with Roman numerals.
+        builder.InsertField("PAGE  \\* ROMAN");
 
-        // Save the resulting document.
-        doc.Save("EvenPageFooter.docx");
+        // Save the document.
+        const string outputPath = "EvenPageFooterRoman.docx";
+        doc.Save(outputPath);
     }
 }

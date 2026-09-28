@@ -1,6 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Fields;
 
 public class Program
 {
@@ -10,39 +11,47 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table with numeric values in the first column.
+        // Insert a table with a header row and three data rows.
         Table table = builder.StartTable();
 
-        // First row.
+        // Header row.
         builder.InsertCell();
-        builder.Write("10");          // Numeric value.
+        builder.Writeln("Number");
         builder.InsertCell();
-        builder.Write("Item A");
+        builder.Writeln("Description");
         builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("20");          // Numeric value.
-        builder.InsertCell();
-        builder.Write("Item B");
-        builder.EndRow();
+        // Data rows.
+        int[] numbers = { 10, 20, 30 };
+        for (int i = 0; i < numbers.Length; i++)
+        {
+            // First column – start bookmark on the first data cell.
+            builder.InsertCell();
+            if (i == 0)
+                builder.StartBookmark("ColNumbers");
+            builder.Writeln(numbers[i].ToString());
+            if (i == numbers.Length - 1)
+                builder.EndBookmark("ColNumbers");
 
-        // Finish the table.
+            // Second column.
+            builder.InsertCell();
+            builder.Writeln($"Item {i + 1}");
+            builder.EndRow();
+        }
+
         builder.EndTable();
 
-        // Insert a new paragraph after the table.
-        builder.Writeln(); // Paragraph break.
-        builder.Write("Sum of the first column: ");
+        // Insert a paragraph after the table.
+        builder.Writeln();
 
-        // Insert a formula field that calculates the sum of the numbers above it.
-        // The field code is inserted without the surrounding braces.
-        builder.InsertField("= SUM(ABOVE) ");
+        // Insert a formula field that sums the bookmarked column.
+        // Use the overload that takes a FieldType, then write the formula code.
+        builder.InsertField(FieldType.FieldFormula, true);
+        builder.Write("=SUM(ColNumbers)");
+        builder.Writeln(); // Optional line break after the field result.
 
-        // Update all fields so the result is calculated.
-        doc.UpdateFields();
-
-        // Save the document to the local file system.
-        string outputPath = "SumTableField.docx";
+        // Save the document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
     }
 }

@@ -7,54 +7,62 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a header row.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Item");
-        builder.InsertCell();
-        builder.Write("Quantity");
-        builder.EndRow();
+        // Define table dimensions.
+        int rows = 5;
+        int columns = 5;
+        int threshold = 50;
 
-        // Add sample data rows.
-        AddDataRow(builder, "Apples", 20);
-        AddDataRow(builder, "Bananas", 40);
-        AddDataRow(builder, "Carrots", 50);
+        // Insert a table.
+        Table table = builder.StartTable();
+
+        // Populate the table with numeric values.
+        Random rnd = new Random();
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < columns; j++)
+            {
+                // Insert a cell with a random integer between 1 and 100.
+                builder.InsertCell();
+                int value = rnd.Next(1, 101);
+                builder.Writeln(value.ToString());
+            }
+            // End the current row.
+            builder.EndRow();
+        }
+
+        // End the table.
         builder.EndTable();
 
-        // Define the threshold value.
-        const int threshold = 30;
-
         // Apply conditional formatting: highlight cells with values above the threshold.
-        // Skip the header row (row index 0).
-        for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
+        foreach (Row row in table.Rows)
         {
-            Row row = table.Rows[rowIndex];
-            // Quantity is in the second cell (index 1).
-            Cell quantityCell = row.Cells[1];
-            string text = quantityCell.ToString(SaveFormat.Text).Trim();
-
-            if (int.TryParse(text, out int value) && value > threshold)
+            foreach (Cell cell in row.Cells)
             {
-                // Highlight the cell background.
-                quantityCell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+                // Try to parse the cell text to an integer.
+                if (int.TryParse(cell.GetText().Trim('\r', '\a'), out int cellValue))
+                {
+                    if (cellValue > threshold)
+                    {
+                        // Set background shading to yellow.
+                        cell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+                    }
+                }
             }
         }
 
-        // Save the document to the local file system.
-        doc.Save("ConditionalFormattingTable.docx");
-    }
+        // Save the document.
+        string outputPath = "ConditionalFormatting.docx";
+        doc.Save(outputPath);
 
-    // Helper method to add a data row to the table.
-    private static void AddDataRow(DocumentBuilder builder, string item, int quantity)
-    {
-        builder.InsertCell();
-        builder.Write(item);
-        builder.InsertCell();
-        builder.Write(quantity.ToString());
-        builder.EndRow();
+        // Verify that the file was saved successfully.
+        if (System.IO.File.Exists(outputPath))
+        {
+            // Optionally, reopen the document to ensure it loads without error.
+            Document loadedDoc = new Document(outputPath);
+        }
     }
 }

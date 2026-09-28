@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -13,43 +12,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 2x2 table.
-        Table table = builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-        // First row.
+        // First row – header cells.
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
+
+        // Second row – data cells.
         builder.InsertCell();
         builder.Write("Cell 1");
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
-
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Apply borders to the whole table (all sides and inner borders).
-        table.SetBorders(LineStyle.Single, 1.0, Color.Black);
+        // Retrieve the created table to apply borders.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        table.SetBorder(BorderType.Left, LineStyle.Single, 1.0, Color.Black, true);
+        table.SetBorder(BorderType.Right, LineStyle.Single, 1.0, Color.Black, true);
+        table.SetBorder(BorderType.Top, LineStyle.Single, 1.0, Color.Black, true);
+        table.SetBorder(BorderType.Bottom, LineStyle.Single, 1.0, Color.Black, true);
+        table.SetBorder(BorderType.Horizontal, LineStyle.Single, 1.0, Color.Black, true);
+        table.SetBorder(BorderType.Vertical, LineStyle.Single, 1.0, Color.Black, true);
 
-        // Save the document as an HTML fragment (body only, no wrapper).
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+        // Configure HTML save options to produce a fragment (no full HTML document wrapper).
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            ExportHeadersFootersMode = ExportHeadersFootersMode.None
-            // No need to set ExportEmbeddedCss – it does not exist on HtmlSaveOptions.
+            ExportHeadersFootersMode = ExportHeadersFootersMode.None,
+            PrettyFormat = true,
+            ExportImagesAsBase64 = true
         };
 
-        // Determine output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableFragment.html");
-
-        // Save the document.
+        // Save the table as an HTML fragment.
+        const string outputPath = "TableFragment.html";
         doc.Save(outputPath, saveOptions);
-
-        // Inform the user.
-        Console.WriteLine($"HTML fragment saved to: {outputPath}");
     }
 }

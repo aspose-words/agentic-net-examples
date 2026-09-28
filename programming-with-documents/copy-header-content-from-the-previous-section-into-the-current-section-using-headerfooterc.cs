@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -8,40 +7,37 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content and a header to the first section.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move to the primary header of the first section and write some text.
+        // ---------- Section 1 ----------
+        // Add some body text.
+        builder.Writeln("Content of Section 1.");
+
+        // Add a primary header to Section 1.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header for Section 1");
+        builder.Writeln("Header for Section 1");
+        builder.MoveToDocumentEnd(); // Return to the main story.
 
-        // Return to the body of the first section and add some paragraph text.
-        builder.MoveToSection(0);
-        builder.Writeln("Content of Section 1");
-
-        // Insert a section break to start a new section (Section 2).
+        // Insert a section break to start Section 2.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Add body content to the second section.
-        builder.Writeln("Content of Section 2");
+        // ---------- Section 2 ----------
+        // Add body text for Section 2.
+        builder.Writeln("Content of Section 2.");
 
-        // Copy the header from the previous section (Section 0) to the current section (Section 1).
+        // Copy the header from the previous section (Section 1) into Section 2.
+        // Get the previous section (index 0) and its primary header.
         Section previousSection = doc.Sections[0];
         HeaderFooter previousHeader = previousSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
 
-        if (previousHeader != null)
-        {
-            // Clone the header so it can be added to another section.
-            HeaderFooter clonedHeader = (HeaderFooter)previousHeader.Clone(true);
-            // Add the cloned header to the HeadersFooters collection of the second section.
-            doc.Sections[1].HeadersFooters.Add(clonedHeader);
-        }
+        // Get the current section (index 1).
+        Section currentSection = doc.Sections[1];
 
-        // Define an output path relative to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "CopyHeaderExample.docx");
+        // Clone the previous header and add it to the current section's header collection.
+        currentSection.HeadersFooters.Add(previousHeader.Clone(true));
 
-        // Save the document.
+        // Save the document to disk.
+        string outputPath = "HeaderCopyExample.docx";
         doc.Save(outputPath);
     }
 }

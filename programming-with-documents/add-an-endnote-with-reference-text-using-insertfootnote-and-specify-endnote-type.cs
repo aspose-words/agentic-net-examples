@@ -1,28 +1,27 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Notes;
+using Aspose.Words.Notes; // Namespace containing the FootnoteType enum
 
-public class Program
+public class EndnoteExample
 {
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text that will be referenced by the endnote.
-        builder.Write("This sentence will have an endnote attached.");
+        // Write some sample text.
+        builder.Writeln("This is a sample sentence with an endnote reference.");
 
-        // Insert an endnote with the desired reference text.
-        builder.InsertFootnote(FootnoteType.Endnote, "This is the endnote content.");
+        // Insert an endnote with the specified reference text.
+        builder.InsertFootnote(FootnoteType.Endnote, "This is the endnote reference text.");
 
         // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EndnoteExample.docx");
+        string outputPath = "EndnoteExample.docx";
 
-        // Ensure the directory exists (in this case, the current directory always exists).
+        // Save the document to the file system.
         doc.Save(outputPath);
     }
 }

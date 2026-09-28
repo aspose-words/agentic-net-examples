@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,29 +9,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents with default switches.
-        // The switches specify which heading levels to include and enable hyperlinks.
+        // Insert a Table of Contents at the beginning using default switches.
+        // Default switches: include heading levels 1‑3, hyperlink entries, hide page numbers in web view, and use outline levels.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.InsertBreak(BreakType.PageBreak);
 
-        // Add headings that will appear in the TOC.
+        // Add headings that will be captured by the TOC.
+        builder.MoveToDocumentEnd();
+
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1");
+        builder.Writeln("Content of chapter 1.");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.Writeln("Section 1.1");
-        builder.Writeln("Section 1.2");
+        builder.Writeln("Details of section 1.1.");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 2");
+        builder.Writeln("Content of chapter 2.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 2.1");
-
-        // Update fields so the TOC reflects the headings.
+        // Update all fields (including the TOC) before saving.
         doc.UpdateFields();
 
         // Save the document.
-        doc.Save("TableOfContents.docx");
+        const string outputPath = "Output.docx";
+        doc.Save(outputPath);
     }
 }

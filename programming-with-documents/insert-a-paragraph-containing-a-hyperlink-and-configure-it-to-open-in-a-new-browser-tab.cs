@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -11,29 +11,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some introductory text.
-        builder.Write("Please click the following link: ");
+        // Insert a paragraph with a hyperlink.
+        builder.Writeln("Please visit the following link:");
+        builder.InsertHyperlink("Aspose.Words", "https://www.aspose.com", false);
 
-        // Apply hyperlink formatting (blue color, single underline).
-        builder.Font.Color = Color.Blue;
-        builder.Font.Underline = Underline.Single;
+        // Retrieve the last inserted field (the hyperlink) and set it to open in a new tab.
+        FieldHyperlink hyperlink = (FieldHyperlink)doc.Range.Fields[doc.Range.Fields.Count - 1];
+        hyperlink.Target = "_blank"; // Open in new browser tab.
+        hyperlink.Update();
 
-        // Insert the hyperlink. The method returns a Field object.
-        Field field = builder.InsertHyperlink("Aspose.Words", "https://www.aspose.com/words", false);
+        // Save the document.
+        string outputPath = "Hyperlink.docx";
+        doc.Save(outputPath);
 
-        // Cast to FieldHyperlink to enable opening in a new browser tab/window.
-        if (field is FieldHyperlink hyperlink)
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
         {
-            hyperlink.OpenInNewWindow = true;
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
         }
-
-        // Reset font formatting to default for subsequent text.
-        builder.Font.ClearFormatting();
-
-        // End the paragraph.
-        builder.Writeln();
-
-        // Save the document to the local file system.
-        doc.Save("HyperlinkNewTab.docx");
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

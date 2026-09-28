@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -10,45 +11,54 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // ---------- Section 1 ----------
-        // Create header and footer for the first section.
+        // Ensure the first section does not link to any previous (there is none).
+        Section section1 = doc.Sections[0];
+        section1.HeadersFooters.LinkToPrevious(false);
+
+        // Header for Section 1
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header - Section 1");
+        builder.Writeln("Header for Section 1");
+
+        // Footer for Section 1
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Footer - Section 1");
+        builder.Writeln("Footer for Section 1");
 
-        // Add some body content to section 1.
-        builder.MoveToSection(0);
-        builder.Writeln("Content of Section 1");
+        // Content for Section 1
+        builder.MoveToDocumentEnd();
+        builder.Writeln("This is the content of Section 1.");
 
-        // Insert a section break to start Section 2.
+        // Insert a section break (new page) to start Section 2.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
         // ---------- Section 2 ----------
-        // Create header and footer for the second section.
+        // Get the newly created second section and break the link to previous headers/footers.
+        Section section2 = doc.Sections[1];
+        section2.HeadersFooters.LinkToPrevious(false);
+
+        // Header for Section 2
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header - Section 2");
+        builder.Writeln("Header for Section 2");
+
+        // Footer for Section 2
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Footer - Section 2");
+        builder.Writeln("Footer for Section 2");
 
-        // Add body content to section 2.
-        builder.MoveToSection(1);
-        builder.Writeln("Content of Section 2");
+        // Content for Section 2
+        builder.MoveToDocumentEnd();
+        builder.Writeln("This is the content of Section 2.");
 
-        // Insert a section break to start Section 3.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Save the document.
+        string outputPath = "MultiSectionHeadersFooters.docx";
+        doc.Save(outputPath);
 
-        // ---------- Section 3 ----------
-        // Create header and footer for the third section.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header - Section 3");
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Footer - Section 3");
-
-        // Add body content to section 3.
-        builder.MoveToSection(2);
-        builder.Writeln("Content of Section 3");
-
-        // Save the document to the current directory.
-        doc.Save("MultiSectionHeadersFooters.docx");
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

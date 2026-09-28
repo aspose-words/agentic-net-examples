@@ -1,70 +1,54 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace TocExtractor
 {
-    public static void Main()
+    public class Program
     {
-        // Ensure the output directory exists.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a Table of Contents (TOC) field.
-        // The switches configure the TOC to include heading levels 1‑3 and create hyperlinks.
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Add some headings that will be picked up by the TOC.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1");
-        builder.Writeln("Section 1.2");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 2.1");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Subsection 2.1.1");
-
-        // Update all fields so the TOC reflects the headings.
-        doc.UpdateFields();
-
-        // Save the document to the Artifacts folder.
-        string docPath = Path.Combine(artifactsDir, "DocumentWithToc.docx");
-        doc.Save(docPath);
-
-        // Iterate over all fields in the document and extract TOC entries.
-        Console.WriteLine("Extracted TOC entries:");
-        foreach (Field field in doc.Range.Fields)
+        public static void Main()
         {
-            // Check if the field is a TOC field.
-            if (field.Type == FieldType.FieldTOC)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a Table of Contents field with typical switches.
+            builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+            builder.Writeln(); // Add a blank line after the TOC.
+
+            // Add headings that will be captured by the TOC.
+
+            // Heading 1
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 1");
+            builder.Writeln("Some content for chapter 1.");
+
+            // Heading 2
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+            builder.Writeln("Section 1.1");
+            builder.Writeln("Details of section 1.1.");
+
+            // Another Heading 1
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 2");
+            builder.Writeln("Some content for chapter 2.");
+
+            // Update fields so the TOC is generated.
+            doc.UpdateFields();
+
+            // Save the document (optional, just to demonstrate creation).
+            const string outputPath = "Sample.docx";
+            doc.Save(outputPath);
+
+            // Iterate over all fields and extract TOC entries.
+            foreach (Field field in doc.Range.Fields)
             {
-                // Cast to FieldToc to access TOC‑specific properties.
-                FieldToc tocField = (FieldToc)field;
-
-                // The DisplayResult property contains the rendered TOC text (entries).
-                string tocText = tocField.DisplayResult?.Trim();
-
-                if (!string.IsNullOrEmpty(tocText))
+                if (field.Type == FieldType.FieldTOC)
                 {
-                    // Print each line of the TOC.
-                    string[] lines = tocText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (string line in lines)
-                    {
-                        Console.WriteLine(line);
-                    }
+                    // The result of the TOC field contains the generated entries.
+                    string tocResult = field.Result;
+                    Console.WriteLine("TOC Entries:");
+                    Console.WriteLine(tocResult);
                 }
             }
         }

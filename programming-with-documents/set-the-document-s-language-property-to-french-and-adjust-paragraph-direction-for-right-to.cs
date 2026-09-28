@@ -1,33 +1,32 @@
 using System;
-using System.Globalization;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
-
-        // Set the default language of the document to French (fr-FR).
-        // This affects the language used for spell checking and other language‑specific features.
-        doc.Styles.DefaultFont.LocaleId = new CultureInfo("fr-FR").LCID;
-
-        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Left‑to‑right paragraph (default direction).
-        builder.Writeln("Hello world!");
+        // Set the default language to French (Locale ID 1036).
+        builder.Font.LocaleId = 1036; // French
 
-        // Right‑to‑left paragraph. Set the paragraph format's Bidi property to true.
-        builder.ParagraphFormat.Bidi = true;
-        builder.Writeln("שלום עולם!"); // Hebrew text displayed right‑to‑left.
+        // Add a paragraph with French text.
+        builder.Writeln("Ceci est un texte en français.");
 
-        // Reset Bidi for subsequent paragraphs if needed.
-        builder.ParagraphFormat.Bidi = false;
+        // Adjust paragraph direction for right-to-left scripts.
+        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
 
-        // Save the document to a file in the same folder as the executable.
-        doc.Save("Result.docx");
+        // Save the document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was saved and can be reopened.
+        if (File.Exists(outputPath))
+        {
+            Document loadedDoc = new Document(outputPath);
+        }
     }
 }

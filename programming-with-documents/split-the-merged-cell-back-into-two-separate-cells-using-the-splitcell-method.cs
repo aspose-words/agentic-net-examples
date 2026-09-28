@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,51 +6,41 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory and file name.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "SplitCell.docx");
-
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with a horizontally merged cell spanning two columns.
+        // Build a simple 2x2 table.
         builder.StartTable();
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First; // First cell in the merge range.
-        builder.Write("Merged cell");
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Merge with the previous cell.
+        builder.Writeln("Cell 2");
         builder.EndRow();
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
         builder.EndTable();
 
-        // Locate the table.
+        // Get the table.
         Table table = doc.FirstSection.Body.Tables[0];
 
-        // -----------------------------------------------------------------
-        // Split the merged cell back into two separate cells.
-        // Aspose.Words does not provide a SplitCell method on Table.
-        // To "split" the merged cells we simply clear the merge flags on both
-        // cells in the row. The row already contains two Cell objects – the
-        // first marked as CellMerge.First and the second as CellMerge.Previous.
-        // Resetting the flags restores them to independent cells.
-        // -----------------------------------------------------------------
-        Row firstRow = table.Rows[0];
-        Cell firstCell = firstRow.Cells[0];
-        Cell secondCell = firstRow.Cells[1];
+        // Merge the two cells in the first row horizontally.
+        Cell firstCell = table.Rows[0].Cells[0];
+        Cell secondCell = table.Rows[0].Cells[1];
+        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
+        // Split the merged cell back into two separate cells.
         firstCell.CellFormat.HorizontalMerge = CellMerge.None;
         secondCell.CellFormat.HorizontalMerge = CellMerge.None;
 
-        // Update the text in the now‑separate cells.
-        firstCell.FirstParagraph.Runs.Clear();
-        firstCell.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
-
-        secondCell.FirstParagraph.Runs.Clear();
-        secondCell.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
-
-        // Save the resulting document.
+        // Save the document.
+        string outputPath = "SplitCellExample.docx";
         doc.Save(outputPath);
+
+        // Verify that the file can be reloaded.
+        Document loadedDoc = new Document(outputPath);
     }
 }

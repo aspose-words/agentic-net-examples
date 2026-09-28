@@ -1,46 +1,55 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsPageBreakExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Helper method to add a heading with a page break before it.
-        void AddHeading(string text, StyleIdentifier styleId)
+        public static void Main()
         {
-            // Insert an explicit page break before the heading.
-            builder.InsertBreak(BreakType.PageBreak);
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Apply the desired heading style.
-            builder.ParagraphFormat.StyleIdentifier = styleId;
+            // Add sample content with heading styles.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
+            builder.Writeln("Document Title");
 
-            // Write the heading text and finish the paragraph.
-            builder.Writeln(text);
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 1");
+
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("This is some body text for chapter 1.");
+
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+            builder.Writeln("Section 1.1");
+
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("More detailed text.");
+
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 2");
+
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("Body text for chapter 2.");
+
+            // Insert a page break before each heading paragraph while preserving the heading style.
+            DocumentBuilder insertBuilder = new DocumentBuilder(doc);
+            foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+            {
+                StyleIdentifier styleId = para.ParagraphFormat.StyleIdentifier;
+                if (styleId >= StyleIdentifier.Heading1 && styleId <= StyleIdentifier.Heading9)
+                {
+                    insertBuilder.MoveTo(para);
+                    insertBuilder.InsertBreak(BreakType.PageBreak);
+                }
+            }
+
+            // Save the document.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+            doc.Save(outputPath);
         }
-
-        // Add some content before the first heading.
-        builder.Writeln("Introduction paragraph without a heading.");
-
-        // Add headings; each will start on a new page.
-        AddHeading("Chapter 1: Getting Started", StyleIdentifier.Heading1);
-        builder.Writeln("Content of chapter 1.");
-
-        AddHeading("Section 1.1: Overview", StyleIdentifier.Heading2);
-        builder.Writeln("Details for section 1.1.");
-
-        AddHeading("Chapter 2: Advanced Topics", StyleIdentifier.Heading1);
-        builder.Writeln("Content of chapter 2.");
-
-        // Ensure the builder's paragraph format is reset to normal for any following text.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-
-        // Define output path and make sure the directory exists.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-        doc.Save(outputPath);
     }
 }

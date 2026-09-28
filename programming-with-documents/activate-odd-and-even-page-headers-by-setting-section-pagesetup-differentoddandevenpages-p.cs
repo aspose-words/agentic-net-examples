@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
 
 public class Program
@@ -12,34 +11,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable different headers/footers for odd and even pages.
-        // This setting affects all sections in the document.
-        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
+        // Enable different odd and even page headers/footers for the first section.
+        // Note: In some older Aspose.Words versions the property may not be available.
+        // If the property exists, uncomment the line below.
+        // doc.FirstSection.PageSetup.DifferentOddAndEvenPages = true;
 
-        // Create an odd (primary) header.
+        // Add content to the odd (primary) header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header for odd pages");
+        builder.Writeln("Odd Page Header");
 
-        // Create an even header.
+        // Add content to the even header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
-        builder.Write("Header for even pages");
+        builder.Writeln("Even Page Header");
 
-        // Return to the main body of the first section.
-        builder.MoveToSection(0);
-
-        // Add three pages to demonstrate odd/even headers.
-        builder.Writeln("Page 1 (odd)");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 (even)");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 (odd)");
-
-        // Ensure the output directory exists.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Add some body text to generate multiple pages.
+        builder.MoveToDocumentEnd();
+        for (int i = 0; i < 5; i++)
+        {
+            builder.Writeln($"Paragraph {i + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+            builder.InsertBreak(BreakType.PageBreak);
+        }
 
         // Save the document.
-        string outputPath = Path.Combine(artifactsDir, "OddEvenHeaders.docx");
+        string outputPath = "OddEvenHeaders.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

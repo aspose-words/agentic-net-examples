@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -7,46 +6,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
-
-        // Create a DocumentBuilder to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a multilevel list based on the default numbered template.
+        // Add a new list to the document.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Level 0 – Arabic numbers (1., 2., 3., ...). This is the default, but set explicitly.
-        list.ListLevels[0].NumberStyle = NumberStyle.Arabic;
+        // Configure level 0 to use decimal numbering.
+        ListLevel level0 = list.ListLevels[0];
+        level0.NumberFormat = "%1.";
+        level0.NumberStyle = NumberStyle.Arabic;
+        level0.NumberPosition = 0;
+        level0.Alignment = ListLevelAlignment.Left;
+        level0.TextPosition = 72; // 0.5 inch
 
-        // Level 1 – Lowercase Roman numerals (i., ii., iii., ...).
-        list.ListLevels[1].NumberStyle = NumberStyle.LowercaseRoman;
+        // Configure level 1 to use lower‑roman numbering.
+        ListLevel level1 = list.ListLevels[1];
+        level1.NumberFormat = "%2.";
+        level1.NumberStyle = NumberStyle.LowercaseRoman;
+        level1.NumberPosition = 0;
+        level1.Alignment = ListLevelAlignment.Left;
+        level1.TextPosition = 144; // 1 inch
 
         // Apply the list to the builder.
         builder.ListFormat.List = list;
 
-        // First top‑level item.
-        builder.Writeln("First top‑level item");
+        // Level 0 item.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("First item (decimal)");
 
-        // Indent to level 1 (lower‑roman).
-        builder.ListFormat.ListIndent();
-        builder.Writeln("First sub‑item");
-        builder.Writeln("Second sub‑item");
+        // Level 1 sub‑item.
+        builder.ListFormat.ListLevelNumber = 1;
+        builder.Writeln("First sub‑item (lower‑roman)");
 
-        // Outdent back to level 0.
-        builder.ListFormat.ListOutdent();
-        builder.Writeln("Second top‑level item");
+        // Back to level 0.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("Second item (decimal)");
 
-        // Another sub‑level example.
-        builder.ListFormat.ListIndent();
-        builder.Writeln("Another sub‑item");
-        builder.ListFormat.ListOutdent();
+        // End the list.
+        builder.ListFormat.List = null;
 
-        // Finish the list.
-        builder.ListFormat.RemoveNumbers();
-
-        // Ensure the output directory exists.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "NumberedList.docx");
+        // Save the document.
+        string outputPath = "NumberedList.docx";
         doc.Save(outputPath);
+
+        // Verify the file was created.
+        if (System.IO.File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
     }
 }

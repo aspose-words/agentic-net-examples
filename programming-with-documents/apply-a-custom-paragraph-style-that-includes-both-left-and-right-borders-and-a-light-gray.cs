@@ -1,8 +1,7 @@
 using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
@@ -10,35 +9,42 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure left and right borders for the current paragraph.
-        Border leftBorder = builder.ParagraphFormat.Borders.Left;
+        // Define a custom paragraph style.
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+
+        // Set a light gray background.
+        customStyle.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightGray;
+
+        // Configure left border.
+        Border leftBorder = customStyle.ParagraphFormat.Borders[BorderType.Left];
         leftBorder.LineStyle = LineStyle.Single;
-        leftBorder.LineWidth = 1.0; // points
         leftBorder.Color = Color.Black;
+        leftBorder.LineWidth = 1.0;
 
-        Border rightBorder = builder.ParagraphFormat.Borders.Right;
+        // Configure right border.
+        Border rightBorder = customStyle.ParagraphFormat.Borders[BorderType.Right];
         rightBorder.LineStyle = LineStyle.Single;
-        rightBorder.LineWidth = 1.0; // points
         rightBorder.Color = Color.Black;
+        rightBorder.LineWidth = 1.0;
 
-        // Set a light gray background shading for the paragraph.
-        Shading shading = builder.ParagraphFormat.Shading;
-        shading.Texture = TextureIndex.TextureSolid;
-        shading.BackgroundPatternColor = Color.LightGray;
-
-        // Write a sample paragraph that will use the defined style.
-        builder.Writeln("This paragraph has left/right borders and a light gray background.");
-
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
+        // Apply the custom style to a paragraph.
+        builder.ParagraphFormat.Style = customStyle;
+        builder.Writeln("This paragraph uses a custom style with left/right borders and a light gray background.");
 
         // Save the document.
-        string outputPath = Path.Combine(outputDir, "CustomParagraphStyle.docx");
+        string outputPath = "CustomStyle.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (System.IO.File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

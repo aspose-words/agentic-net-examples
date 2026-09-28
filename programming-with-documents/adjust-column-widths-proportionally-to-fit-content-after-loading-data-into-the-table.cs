@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,58 +6,50 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with sample data.
+        // Sample data to populate the table.
+        string[,] data = new string[,]
+        {
+            { "Product", "Description", "Price", "Quantity" },
+            { "Apple", "Fresh red apples", "$1.20", "50" },
+            { "Banana", "Ripe yellow bananas", "$0.80", "120" },
+            { "Cherry", "Sweet cherries from the valley", "$2.50", "30" }
+        };
+
+        // Start the table.
         Table table = builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Write("Product");
-        builder.InsertCell();
-        builder.Write("Description");
-        builder.InsertCell();
-        builder.Write("Price");
-        builder.EndRow();
+        // Populate the table with data.
+        for (int row = 0; row < data.GetLength(0); row++)
+        {
+            for (int col = 0; col < data.GetLength(1); col++)
+            {
+                // Insert cell text.
+                builder.InsertCell();
+                builder.Write(data[row, col]);
 
-        // First data row.
-        builder.InsertCell();
-        builder.Write("Apple");
-        builder.InsertCell();
-        builder.Write("Fresh red apples from the orchard");
-        builder.InsertCell();
-        builder.Write("$1.20");
-        builder.EndRow();
+                // Apply a simple border to each cell.
+                Cell cell = (Cell)builder.CurrentParagraph.ParentNode;
+                cell.CellFormat.Borders.LineWidth = 0.5;
+                cell.CellFormat.Borders.Color = System.Drawing.Color.Black;
+            }
 
-        // Second data row.
-        builder.InsertCell();
-        builder.Write("Banana");
-        builder.InsertCell();
-        builder.Write("Ripe bananas, sweet and soft");
-        builder.InsertCell();
-        builder.Write("$0.80");
-        builder.EndRow();
+            // End the current row.
+            builder.EndRow();
+        }
 
-        // Third data row.
-        builder.InsertCell();
-        builder.Write("Cherry");
-        builder.InsertCell();
-        builder.Write("Organic cherries, packed in a box");
-        builder.InsertCell();
-        builder.Write("$3.50");
-        builder.EndRow();
-
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
         // Adjust column widths proportionally to fit the content.
-        // AutoFitToContents removes any preferred widths and recalculates the layout.
+        // AutoFitToContents makes each column width fit its longest cell content.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Ensure the output directory exists.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AdjustedTable.docx");
+        // Save the document.
+        string outputPath = "AdjustedTable.docx";
         doc.Save(outputPath);
     }
 }

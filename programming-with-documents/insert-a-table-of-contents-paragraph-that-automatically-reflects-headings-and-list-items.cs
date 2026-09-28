@@ -1,64 +1,50 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Lists;
 
-namespace AsposeWordsTocExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Attach a DocumentBuilder to the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert a Table of Contents that includes heading levels 1‑3.
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+        builder.Writeln(); // Add a blank line after TOC.
 
-            // Insert a Table of Contents (TOC) field.
-            // \o "1-3"  – include heading levels 1 to 3.
-            // \h        – make entries clickable hyperlinks.
-            // \z        – hide page numbers in web layout.
-            // \u        – use outline levels.
-            // \t "List Paragraph,1" – include paragraphs with the "List Paragraph" style (list items).
-            string tocSwitches = @"\o ""1-3"" \h \z \u \t ""List Paragraph,1""";
-            builder.InsertTableOfContents(tocSwitches);
+        // Separate TOC from the main content.
+        builder.InsertBreak(BreakType.PageBreak);
 
-            // Insert a page break so that the TOC appears on its own page.
-            builder.InsertBreak(BreakType.PageBreak);
+        // ----- Headings -----
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 1: Introduction");
 
-            // ---------- Add sample headings ----------
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Chapter 1: Introduction");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section 1.1: Overview");
 
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-            builder.Writeln("Section 1.1: Overview");
+        // ----- List items (included in TOC as level 3) -----
+        builder.ListFormat.ApplyBulletDefault();
 
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-            builder.Writeln("Subsection 1.1.1: Details");
+        // List item A with TC field for TOC.
+        builder.InsertField("TC \"Item A\" \\l 3", null);
+        builder.Writeln("Item A");
 
-            // ---------- Add a sample list ----------
-            // Create a bulleted list.
-            List list = doc.Lists.Add(ListTemplate.BulletDefault);
-            builder.ListFormat.List = list;
+        // List item B with TC field for TOC.
+        builder.InsertField("TC \"Item B\" \\l 3", null);
+        builder.Writeln("Item B");
 
-            builder.Writeln("First list item");
-            builder.Writeln("Second list item");
-            builder.Writeln("Third list item");
+        // End the list.
+        builder.ListFormat.RemoveNumbers();
 
-            // End the list formatting.
-            builder.ListFormat.RemoveNumbers();
+        // Reset style to normal for any following text.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
 
-            // Update all fields (including the TOC) to reflect the newly added content.
-            doc.UpdateFields();
+        // Update all fields (including the TOC) to reflect the inserted entries.
+        doc.UpdateFields();
 
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // Save the document.
-            string outputPath = Path.Combine(outputDir, "DocumentWithToc.docx");
-            doc.Save(outputPath);
-        }
+        // Save the document.
+        const string outputPath = "TableOfContents.docx";
+        doc.Save(outputPath);
     }
 }

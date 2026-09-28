@@ -1,8 +1,7 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Fields;
 
 public class Program
 {
@@ -12,48 +11,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define custom paragraph styles that we want to include in the TOC.
-        Style quoteStyle = doc.Styles.Add(StyleType.Paragraph, "Quote");
-        quoteStyle.Font.Size = 14;
-        quoteStyle.Font.Color = Color.Blue;
+        // Add a title using the built‑in Title style.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
+        builder.Writeln("Document Title");
 
-        Style intenseQuoteStyle = doc.Styles.Add(StyleType.Paragraph, "Intense Quote");
-        intenseQuoteStyle.Font.Size = 14;
-        intenseQuoteStyle.Font.Color = Color.Red;
-        intenseQuoteStyle.Font.Bold = true;
-
-        // Insert a TOC that includes only the custom styles using the \t switch.
-        // The list after \t is a comma‑separated list of "StyleName;Level" pairs.
-        builder.InsertTableOfContents("\\t \"Quote;6,Intense Quote;7\" \\o \"1-3\" \\h \\z \\u");
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Add various paragraphs. Only those with the custom styles will appear in the TOC.
-
-        // A built‑in heading style (not included in the \t list).
+        // Add headings with different built‑in heading styles.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1 – Not in TOC");
+        builder.Writeln("Chapter 1 – Heading 1");
 
-        // Paragraph with the "Quote" style (will be listed).
-        builder.ParagraphFormat.Style = quoteStyle;
-        builder.Writeln("Quote entry – Appears in TOC");
-
-        // Normal paragraph (not included).
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Normal paragraph – Not in TOC");
-
-        // Paragraph with the "Intense Quote" style (will be listed).
-        builder.ParagraphFormat.Style = intenseQuoteStyle;
-        builder.Writeln("Intense Quote entry – Appears in TOC");
-
-        // Another built‑in heading style (not included).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 2 – Not in TOC");
+        builder.Writeln("Section 1.1 – Heading 2");
 
-        // Update all fields (including the TOC) to reflect the current document content.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+        builder.Writeln("Subsection 1.1.1 – Heading 3");
+
+        // Add a normal paragraph (not a heading).
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Regular paragraph, not a heading.");
+
+        // Insert a Table of Contents that includes only Heading 1 and Heading 3.
+        // Use the \\t switch with a comma‑separated list of style names.
+        // The InsertField overload that takes a field code string is used to avoid overload ambiguity.
+        builder.InsertField("TOC \\o \"1-3\" \\h \\z \\t \"Heading 1,Heading 3\"");
+
+        // Update fields so the TOC is generated.
         doc.UpdateFields();
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TOC_CustomStyles.docx");
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TOC_Styles.docx");
+
+        // Save the document.
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

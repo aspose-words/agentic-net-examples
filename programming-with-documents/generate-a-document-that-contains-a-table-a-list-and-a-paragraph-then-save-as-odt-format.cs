@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -9,56 +9,52 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize DocumentBuilder for easy content insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Paragraph ----------
+        // Insert a paragraph.
         builder.Writeln("This is a sample paragraph added to the document.");
 
-        // ---------- List ----------
-        // Start a bulleted list.
+        // Insert a bulleted list.
         builder.ListFormat.ApplyBulletDefault();
-        builder.Writeln("First bullet item");
-        builder.Writeln("Second bullet item");
-        builder.Writeln("Third bullet item");
-        // End the list formatting.
+        builder.Writeln("First list item");
+        builder.Writeln("Second list item");
+        builder.Writeln("Third list item");
         builder.ListFormat.RemoveNumbers();
 
-        // Add an empty line between list and table for readability.
-        builder.Writeln();
+        // Insert a table with 3 rows and 3 columns.
+        Table table = builder.StartTable();
 
-        // ---------- Table ----------
-        // Start a 2x2 table.
-        builder.StartTable();
-
-        // First row.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
+        // First row (header)
+        for (int i = 0; i < 3; i++)
+        {
+            builder.InsertCell();
+            builder.Writeln($"Header {i + 1}");
+        }
         builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
+        // Data rows
+        for (int row = 0; row < 2; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"Row {row + 1}, Col {col + 1}");
+            }
+            builder.EndRow();
+        }
 
-        // End the table.
         builder.EndTable();
 
-        // ---------- Save as ODT ----------
-        // Ensure the output directory exists.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "SampleDocument.odt");
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
+        // Define output file path.
+        string outputPath = "output.odt";
 
-        // Use OdtSaveOptions to specify ODT format.
-        OdtSaveOptions saveOptions = new OdtSaveOptions();
-        doc.Save(outputPath, saveOptions);
+        // Save the document in ODT format.
+        doc.Save(outputPath, SaveFormat.Odt);
 
-        // Optional: indicate completion (no interactive input).
-        Console.WriteLine("Document created and saved as ODT at: " + outputPath);
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("Failed to create the ODT file.");
+        }
     }
 }

@@ -1,28 +1,32 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph that contains the page number field.
-        builder.Write("Page ");
-        builder.InsertField("PAGE", ""); // Inserts a PAGE field.
-        builder.Writeln(); // Ends the paragraph.
+        // Insert a paragraph with a page number field formatted as Roman numerals.
+        builder.Writeln("Page number in Roman numerals:");
+        builder.InsertField("PAGE  \\* ROMAN", "i");
+        builder.Writeln();
 
-        // Configure the section to display page numbers as uppercase Roman numerals.
-        PageSetup pageSetup = doc.FirstSection.PageSetup;
-        pageSetup.RestartPageNumbering = true; // Start numbering from the first page.
-        pageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
+        // Save the document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
 
-        // Save the document to a file.
-        doc.Save("Output.docx");
+        // Verify the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to {Path.GetFullPath(outputPath)}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

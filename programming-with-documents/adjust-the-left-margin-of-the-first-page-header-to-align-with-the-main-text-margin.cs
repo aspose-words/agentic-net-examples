@@ -1,47 +1,34 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the page margins (example: 1 inch left margin).
-        builder.PageSetup.LeftMargin = ConvertUtil.InchToPoint(1.0);
-        builder.PageSetup.RightMargin = ConvertUtil.InchToPoint(1.0);
-        builder.PageSetup.TopMargin = ConvertUtil.InchToPoint(1.0);
-        builder.PageSetup.BottomMargin = ConvertUtil.InchToPoint(1.0);
+        // Set page margins (1 inch = 72 points).
+        builder.PageSetup.LeftMargin = 72;
+        builder.PageSetup.RightMargin = 72;
+        builder.PageSetup.TopMargin = 72;
+        builder.PageSetup.BottomMargin = 72;
 
-        // Enable a different header/footer for the first page.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+        // Insert body text.
+        builder.Writeln("This is the main body text. It should respect the page margins.");
 
-        // Move to the first‑page header and add some text.
+        // Move to the first-page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Writeln("First page header");
+        // Insert header text.
+        builder.Writeln("First Page Header");
 
-        // Align the left margin of the first‑page header with the main text margin.
-        HeaderFooter firstHeader = doc.FirstSection.HeadersFooters[HeaderFooterType.HeaderFirst];
-        if (firstHeader != null && firstHeader.FirstParagraph != null)
-        {
-            // Set the left indent of the header paragraph to the section's left margin.
-            firstHeader.FirstParagraph.ParagraphFormat.LeftIndent = doc.FirstSection.PageSetup.LeftMargin;
-        }
-
-        // Return to the main document body and add some content.
-        builder.MoveToSection(0);
-        builder.Writeln("Body text aligned with the same left margin.");
-
-        // Define an output path for the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "FirstPageHeaderAligned.docx");
-        // Ensure the directory exists.
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
+        // Align the header's left margin with the main text left margin.
+        double leftMargin = doc.FirstSection.PageSetup.LeftMargin;
+        builder.ParagraphFormat.LeftIndent = leftMargin;
 
         // Save the document.
-        doc.Save(outputPath, SaveFormat.Docx);
+        string outputPath = "AdjustedHeader.docx";
+        doc.Save(outputPath);
     }
 }
