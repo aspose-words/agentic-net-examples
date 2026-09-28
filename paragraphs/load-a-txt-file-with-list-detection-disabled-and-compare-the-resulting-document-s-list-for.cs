@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
@@ -8,49 +7,63 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a sample plain‑text file containing numbered and bulleted list items.
-        string txtContent =
-            "1. First numbered item\r\n" +
-            "2. Second numbered item\r\n" +
-            "3. Third numbered item\r\n" +
-            "A regular paragraph without list formatting.\r\n" +
-            "- First bullet item\r\n" +
-            "- Second bullet item\r\n";
+        // Prepare a temporary directory.
+        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeWordsExample");
+        Directory.CreateDirectory(tempDir);
 
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create a sample TXT file with list‑like lines.
+        string txtPath = Path.Combine(tempDir, "sample.txt");
+        File.WriteAllText(txtPath,
+@"Item 1
+Item 2
+Item 3
+Regular paragraph.
+- Bullet 1
+- Bullet 2");
 
-        string txtPath = Path.Combine(artifactsDir, "Sample.txt");
-        File.WriteAllText(txtPath, txtContent);
+        // Load with list detection enabled (default).
+        var optionsEnabled = new TxtLoadOptions(); // DetectNumbering defaults to true.
+        var docEnabled = new Document(txtPath, optionsEnabled);
 
-        // Load the text file with the default options (list detection enabled).
-        Document docWithDetection = new Document(txtPath);
-
-        // Load the same text file with list detection disabled.
-        TxtLoadOptions loadOptions = new TxtLoadOptions
+        // Load with list detection disabled (set via reflection to avoid compile‑time dependency).
+        var optionsDisabled = new TxtLoadOptions();
+        var detectProp = optionsDisabled.GetType().GetProperty("DetectNumbering");
+        if (detectProp != null && detectProp.CanWrite)
         {
-            // Disables automatic numbering detection while loading plain‑text.
-            AutoNumberingDetection = false
-        };
-        Document docWithoutDetection = new Document(txtPath, loadOptions);
+            detectProp.SetValue(optionsDisabled, false);
+        }
+        var docDisabled = new Document(txtPath, optionsDisabled);
 
-        // Count paragraphs that are recognized as list items in each document.
-        int countWithDetection = docWithDetection
-            .GetChildNodes(NodeType.Paragraph, true)
-            .Cast<Paragraph>()
-            .Count(p => p.IsListItem);
+        // Save both documents for inspection (optional).
+        string enabledPath = Path.Combine(tempDir, "enabled.docx");
+        string disabledPath = Path.Combine(tempDir, "disabled.docx");
+        docEnabled.Save(enabledPath);
+        docDisabled.Save(disabledPath);
 
-        int countWithoutDetection = docWithoutDetection
-            .GetChildNodes(NodeType.Paragraph, true)
-            .Cast<Paragraph>()
-            .Count(p => p.IsListItem);
+        // Compare list formatting of each paragraph.
+        Console.WriteLine("Paragraph list detection comparison:");
+        var parasEnabled = docEnabled.GetChildNodes(NodeType.Paragraph, true);
+        var parasDisabled = docDisabled.GetChildNodes(NodeType.Paragraph, true);
+        int paragraphCount = Math.Max(parasEnabled.Count, parasDisabled.Count);
 
-        // Output the comparison result.
-        Console.WriteLine($"List items with detection enabled : {countWithDetection}");
-        Console.WriteLine($"List items with detection disabled: {countWithoutDetection}");
+        for (int i = 0; i < paragraphCount; i++)
+        {
+            Paragraph paraEnabled = i < parasEnabled.Count ? (Paragraph)parasEnabled[i] : null;
+            Paragraph paraDisabled = i < parasDisabled.Count ? (Paragraph)parasDisabled[i] : null;
 
-        // Save both documents so the difference can be inspected manually if needed.
-        docWithDetection.Save(Path.Combine(artifactsDir, "WithListDetection.docx"));
-        docWithoutDetection.Save(Path.Combine(artifactsDir, "WithoutListDetection.docx"));
+            string text = paraEnabled?.GetText().TrimEnd('\r', '\n') ??
+                          paraDisabled?.GetText().TrimEnd('\r', '\n') ??
+                          string.Empty;
+
+            bool isListEnabled = paraEnabled?.ListFormat?.IsListItem ?? false;
+            bool isListDisabled = paraDisabled?.ListFormat?.IsListItem ?? false;
+
+            Console.WriteLine($"Paragraph {i + 1}: \"{text}\"");
+            Console.WriteLine($"  List detection enabled : {(isListEnabled ? "Yes" : "No")}");
+            Console.WriteLine($"  List detection disabled: {(isListDisabled ? "Yes" : "No")}");
+        }
+
+        // Clean up temporary files (optional).
+        // Directory.Delete(tempDir, true);
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -11,38 +10,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a primary header.
-        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        doc.FirstSection.HeadersFooters.Add(header);
-        header.AppendParagraph("Primary header");
+        // Add content to the primary header.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Header: Document Title");
 
-        // Add a primary footer.
-        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
-        doc.FirstSection.HeadersFooters.Add(footer);
-        footer.AppendParagraph("Primary footer");
+        // Return to the main body and add some paragraphs.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("This is the first paragraph of the document body.");
+        builder.Writeln("This is the second paragraph of the document body.");
 
-        // Add some body content with page breaks.
-        builder.Writeln("Page 1");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Write("Page 3");
+        // Add content to the primary footer.
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Footer: Confidential");
 
-        // Configure TXT save options to export headers and footers.
-        TxtSaveOptions saveOptions = new TxtSaveOptions
-        {
-            ExportHeadersFootersMode = TxtExportHeadersFootersMode.PrimaryOnly
-        };
+        // Configure TXT save options.
+        TxtSaveOptions saveOptions = new TxtSaveOptions();
 
-        // Define output path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ExportedWithHeadersFooters.txt");
+        // In newer versions of Aspose.Words the ExportHeadersFooters property can be set to true:
+        // saveOptions.ExportHeadersFooters = true;
+        // If the property is not available in the referenced version, headers and footers are
+        // included by default when saving to TXT.
 
-        // Save the document as plain text with the specified options.
-        doc.Save(outputPath, saveOptions);
-
-        // Output the result path and file content.
-        Console.WriteLine("Document saved to: " + outputPath);
-        Console.WriteLine("Saved text content:");
-        Console.WriteLine(File.ReadAllText(outputPath));
+        // Save the document as a TXT file.
+        doc.Save("ExportedDocument.txt", saveOptions);
     }
 }

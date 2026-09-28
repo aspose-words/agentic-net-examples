@@ -5,29 +5,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add two paragraphs with sample text.
-        builder.Writeln("Paragraph 1");
-        builder.Writeln("Paragraph 2");
+        // Add some initial paragraphs.
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph.");
 
-        // Move the builder cursor to the first paragraph (index 0).
-        builder.MoveTo(doc.FirstSection.Body.Paragraphs[0]);
+        // Locate the first paragraph in the document.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Insert an empty paragraph at the current cursor position.
+        // Move the builder to the first paragraph.
+        builder.MoveTo(firstParagraph);
+
+        // Insert an empty paragraph immediately after the first paragraph.
         Paragraph emptyParagraph = builder.InsertParagraph();
 
-        // Verify that the inserted paragraph is empty (its text is just a paragraph break).
-        if (emptyParagraph.GetText() == "\r")
+        // Verify that the inserted paragraph is indeed empty.
+        // (Trim is used to ignore any hidden end-of-paragraph marker.)
+        if (emptyParagraph.GetText().Trim().Length == 0)
         {
-            // The paragraph is correctly empty.
+            // The paragraph is empty as expected.
         }
 
         // Save the resulting document.
-        doc.Save("InsertedEmptyParagraph.docx");
+        doc.Save("Output.docx");
     }
 }

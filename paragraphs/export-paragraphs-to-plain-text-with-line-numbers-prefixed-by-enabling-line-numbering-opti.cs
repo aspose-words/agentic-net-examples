@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
 
 public class ExportParagraphsWithLineNumbers
 {
@@ -12,30 +10,29 @@ public class ExportParagraphsWithLineNumbers
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable line numbering for the first section.
-        // Numbers will start at 1, appear on every line, and restart on each new page.
-        PageSetup pageSetup = builder.PageSetup;
-        pageSetup.LineStartingNumber = 1;               // First line number.
-        pageSetup.LineNumberCountBy = 1;                // Number every line.
-        pageSetup.LineNumberRestartMode = LineNumberRestartMode.RestartPage; // Restart each page.
-        pageSetup.LineNumberDistanceFromText = 30.0;    // Distance from the text (points).
-
-        // Add several paragraphs to demonstrate line numbering.
+        // Add several paragraphs.
         builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph with a bit more text to wrap onto the next line.");
+        builder.Writeln("Second paragraph.");
         builder.Writeln("Third paragraph.");
-        builder.Writeln("Fourth paragraph.");
 
-        // Configure TxtSaveOptions – no special settings required for line numbers.
-        TxtSaveOptions saveOptions = new TxtSaveOptions();
+        // Export the document to plain text with line numbers prefixed.
+        string outputPath = "output.txt";
+        using (StreamWriter writer = new StreamWriter(outputPath))
+        {
+            // Retrieve all paragraph nodes in the document.
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            int lineNumber = 1;
 
-        // Define output path (relative to the executable's working directory).
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ParagraphsWithLineNumbers.txt");
+            foreach (Paragraph para in paragraphs)
+            {
+                // Get the paragraph text without the trailing paragraph mark.
+                string text = para.GetText().TrimEnd('\r', '\n');
+                writer.WriteLine($"{lineNumber}: {text}");
+                lineNumber++;
+            }
+        }
 
-        // Save the document as plain text; line numbers will be prefixed automatically.
-        doc.Save(outputPath, saveOptions);
-
-        // Inform the user where the file was saved.
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Indicate completion.
+        Console.WriteLine($"Document saved to {outputPath} with line numbers.");
     }
 }

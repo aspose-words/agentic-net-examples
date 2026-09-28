@@ -1,36 +1,39 @@
 using System;
 using Aspose.Words;
 
-public class ParagraphKeywordCounter
+public class Program
 {
     public static void Main()
     {
+        // Define the keyword to search for.
+        string keyword = "keyword";
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample paragraphs.
-        builder.Writeln("The quick brown fox jumps over the lazy dog.");
-        builder.Writeln("Aspose.Words is a powerful library for document processing.");
-        builder.Writeln("This paragraph contains the keyword: Aspose.");
-        builder.Writeln("Another line without the key term.");
-        builder.Writeln("Keyword appears again: Aspose.");
+        // Add sample paragraphs to the document.
+        builder.Writeln("This is a test paragraph.");
+        builder.Writeln("Keyword appears here.");
+        builder.Writeln("Another line with the KEYWORD inside.");
+        builder.Writeln("No matching word in this one.");
 
-        // Define the keyword to search for.
-        string keyword = "Aspose";
+        // Save the sample document (optional, demonstrates lifecycle compliance).
+        doc.Save("SampleDocument.docx");
 
         // Count paragraphs that contain the keyword (case‑insensitive).
         int count = 0;
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph para in paragraphs)
+        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            // GetText includes the paragraph break; Trim removes it.
-            string text = para.GetText().Trim();
+            // Paragraph.GetText() returns the paragraph text including the end‑of‑paragraph marker.
+            string text = paragraph.GetText();
             if (text.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
                 count++;
+            }
         }
 
-        // Output the total count.
-        Console.WriteLine($"Paragraphs containing \"{keyword}\": {count}");
+        // Output the total count to the console.
+        Console.WriteLine($"Number of paragraphs containing \"{keyword}\": {count}");
     }
 }

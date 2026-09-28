@@ -1,41 +1,34 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Loading;
+using Aspose.Words.Loading;   // Contains TxtLoadOptions for plain‑text loading
 
 public class Program
 {
     public static void Main()
     {
-        // Sample plain‑text containing list items where numbers are followed by a whitespace.
-        const string text = "Shopping list:\n" +
-                            "1 Milk\n" +
-                            "2 Bread\n" +
-                            "3 Eggs\n\n" +
-                            "Tasks:\n" +
-                            "1 Finish report\n" +
-                            "2 Call client\n" +
-                            "3 Schedule meeting";
+        // Create a sample plain‑text file containing list items with leading whitespaces.
+        string txtPath = "sample.txt";
+        string[] lines =
+        {
+            " 1. First item",
+            " 2. Second item",
+            "   3. Third item with extra spaces",
+            "Not a list line",
+            " 4. Fourth item"
+        };
+        File.WriteAllLines(txtPath, lines);
 
-        // Enable detection of list items that use whitespace as a delimiter.
+        // Load the text file with DetectNumberingWithWhitespaces enabled so that Aspose.Words
+        // automatically recognizes the list items despite the leading spaces.
         TxtLoadOptions loadOptions = new TxtLoadOptions
         {
             DetectNumberingWithWhitespaces = true
         };
+        Document doc = new Document(txtPath, loadOptions);
 
-        // Load the plain‑text into a Document via a memory stream.
-        using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(text)))
-        {
-            Document doc = new Document(stream, loadOptions);
-
-            // Output the number of lists detected (for demonstration purposes).
-            Console.WriteLine($"Detected lists: {doc.Lists.Count}");
-
-            // Save the resulting Word document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
-            doc.Save(outputPath);
-            Console.WriteLine($"Document saved to: {outputPath}");
-        }
+        // Save the resulting document.
+        string outPath = "output.docx";
+        doc.Save(outPath);
     }
 }

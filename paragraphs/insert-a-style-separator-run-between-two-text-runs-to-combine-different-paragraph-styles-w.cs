@@ -5,29 +5,23 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply a built‑in style to the first part of the line.
+        // First part of the paragraph with Heading1 paragraph style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Write("This text is in a Heading style. ");
+        builder.Write("This text uses Heading 1 style. ");
 
-        // Insert a style separator so that the next text can have a different paragraph style
-        // while staying on the same line.
+        // Insert a style separator run.
         builder.InsertStyleSeparator();
 
-        // Create a custom paragraph style.
-        Style customStyle = builder.Document.Styles.Add(StyleType.Paragraph, "MyParaStyle");
-        customStyle.Font.Bold = false;
-        customStyle.Font.Size = 8;
-        customStyle.Font.Name = "Arial";
-
-        // Apply the custom style to the second part of the line.
-        builder.ParagraphFormat.StyleName = customStyle.Name;
-        builder.Write("This text is in a custom style. ");
+        // Second part of the same paragraph with a character style.
+        // Use DefaultParagraphFont (a built‑in character style) to revert to normal formatting.
+        builder.Font.StyleIdentifier = StyleIdentifier.DefaultParagraphFont;
+        builder.Write("This text uses Normal style.");
 
         // Save the document.
-        doc.Save("StyleSeparator.docx");
+        doc.Save("StyleSeparatorExample.docx");
     }
 }

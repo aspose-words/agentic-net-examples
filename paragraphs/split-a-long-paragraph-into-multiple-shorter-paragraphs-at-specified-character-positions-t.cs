@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-public class SplitParagraphExample
+public class Program
 {
     public static void Main()
     {
@@ -10,52 +11,52 @@ public class SplitParagraphExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a single long paragraph.
-        string longParagraph = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                               "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
-                               "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris " +
-                               "nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in " +
-                               "reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla " +
-                               "pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
-                               "culpa qui officia deserunt mollit anim id est laborum.";
-        builder.Writeln(longParagraph); // This creates the initial paragraph.
+        // Sample long paragraph text.
+        string longText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                          "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
+                          "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris " +
+                          "nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in " +
+                          "reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla " +
+                          "pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
+                          "culpa qui officia deserunt mollit anim id est laborum.";
 
-        // Retrieve the first (and only) paragraph.
-        Paragraph originalParagraph = doc.FirstSection.Body.FirstParagraph;
+        // Insert the long paragraph into the document.
+        builder.Writeln(longText);
 
-        // Get the paragraph text without the trailing paragraph break character.
-        string paragraphText = originalParagraph.GetText().TrimEnd('\r');
+        // Retrieve the inserted paragraph.
+        Paragraph originalParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        string paragraphText = originalParagraph.GetText().TrimEnd('\r', '\n');
 
-        // Define character positions where the paragraph should be split.
-        // Positions are zero‑based indexes in the original string.
-        int[] splitPositions = { 100, 200, 300 };
+        // Define the maximum length of each split segment.
+        int maxSegmentLength = 80; // characters
 
-        // Split the text into parts according to the specified positions.
-        List<string> parts = new List<string>();
-        int start = 0;
-        foreach (int pos in splitPositions)
+        // Split the paragraph text into segments.
+        List<string> segments = new List<string>();
+        for (int i = 0; i < paragraphText.Length; i += maxSegmentLength)
         {
-            if (pos > start && pos < paragraphText.Length)
-            {
-                parts.Add(paragraphText.Substring(start, pos - start).Trim());
-                start = pos;
-            }
+            int length = Math.Min(maxSegmentLength, paragraphText.Length - i);
+            segments.Add(paragraphText.Substring(i, length));
         }
-        // Add the remaining text after the last split position.
-        if (start < paragraphText.Length)
-            parts.Add(paragraphText.Substring(start).Trim());
 
-        // Remove the original paragraph from the document.
-        originalParagraph.Remove();
+        // Replace the original paragraph with the first segment.
+        originalParagraph.Runs.Clear();
+        originalParagraph.AppendChild(new Run(doc, segments[0]));
 
-        // Insert the new shorter paragraphs at the beginning of the document.
-        builder.MoveToDocumentStart();
-        foreach (string part in parts)
+        // Insert remaining segments as new paragraphs after the original.
+        Paragraph previousParagraph = originalParagraph;
+        for (int i = 1; i < segments.Count; i++)
         {
-            builder.Writeln(part);
+            Paragraph newParagraph = new Paragraph(doc);
+            newParagraph.AppendChild(new Run(doc, segments[i]));
+            previousParagraph.ParentNode.InsertAfter(newParagraph, previousParagraph);
+            previousParagraph = newParagraph;
         }
 
         // Save the resulting document.
-        doc.Save("SplitParagraph.docx");
+        string outputPath = "SplitParagraph.docx";
+        doc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

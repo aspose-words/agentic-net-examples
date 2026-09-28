@@ -1,49 +1,49 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to add content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First part of the line with Heading1 style.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Write("This is heading text. ");
+        // Build a paragraph that contains a style separator.
+        builder.Writeln("Paragraph with style separator:");
 
-        // Insert a style separator so the next text can have a different style on the same line.
+        // Apply the first paragraph style.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Write("Heading1 text");
+
+        // Insert the style separator run.
         builder.InsertStyleSeparator();
 
-        // Second part of the line with Quote style.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
-        builder.Write("This is a quote.");
-
-        // Ensure the output directory exists.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
+        // Apply the second paragraph style.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Write("Heading2 text");
+        builder.Writeln();
 
         // Save the document (optional, just to visualize the result).
-        string docPath = Path.Combine(outputDir, "StyleSeparatorExample.docx");
-        doc.Save(docPath);
+        doc.Save("Output.docx");
 
-        // Search for paragraphs that contain a style separator.
-        Console.WriteLine("Paragraphs that contain a style separator:");
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        int index = 0;
-        foreach (Paragraph para in paragraphs)
+        // Search all runs for the style separator character (Unicode 0x0014).
+        NodeCollection runs = doc.GetChildNodes(NodeType.Run, true);
+        int separatorCount = 0;
+
+        foreach (Run run in runs)
         {
-            if (para.BreakIsStyleSeparator)
+            // A style separator is represented by the special character '\u0014'.
+            if (run.Text == "\u0014")
             {
-                Console.WriteLine($"- Paragraph index {index} (text starts with: \"{para.GetText().Trim()}\" )");
-                // Example processing: change the style of the following paragraph part.
-                // Here we simply output that a style separator was found.
+                separatorCount++;
+
+                // Get the containing paragraph and output its text.
+                Paragraph paragraph = (Paragraph)run.GetAncestor(NodeType.Paragraph);
+                Console.WriteLine($"Style separator found in paragraph: \"{paragraph.GetText().Trim()}\"");
             }
-            index++;
         }
 
-        // The program finishes without waiting for user input.
+        Console.WriteLine($"Total style separators found: {separatorCount}");
     }
 }

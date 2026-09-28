@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 
 public class Program
@@ -9,24 +8,24 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Define a custom paragraph style named "MyStyle".
+        // Add a custom paragraph style named "MyStyle".
         Style myStyle = doc.Styles.Add(StyleType.Paragraph, "MyStyle");
+        // Example formatting for the custom style.
         myStyle.Font.Name = "Arial";
         myStyle.Font.Size = 14;
-        myStyle.Font.Color = Color.Blue;
+        myStyle.Font.Bold = true;
 
-        // Create a new paragraph and apply the custom style by name.
-        Paragraph paragraph = new Paragraph(doc);
+        // Insert a paragraph using DocumentBuilder.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph will use the custom style.");
+
+        // Retrieve the paragraph that was just added.
+        Paragraph paragraph = doc.LastSection.Body.Paragraphs[doc.LastSection.Body.Paragraphs.Count - 1];
+
+        // Apply the custom style by setting the StyleName.
         paragraph.ParagraphFormat.StyleName = "MyStyle";
 
-        // Add some text to the paragraph.
-        Run run = new Run(doc, "This paragraph uses the custom style \"MyStyle\".");
-        paragraph.AppendChild(run);
-
-        // Append the paragraph to the document body.
-        doc.FirstSection.Body.AppendChild(paragraph);
-
         // Save the document to a file.
-        doc.Save("MyStyleParagraph.docx");
+        doc.Save("Output.docx");
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -9,36 +8,31 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Add a primary header.
-        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        doc.FirstSection.HeadersFooters.Add(header);
-        header.AppendParagraph("Primary header");
-
-        // Add a primary footer.
-        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
-        doc.FirstSection.HeadersFooters.Add(footer);
-        footer.AppendParagraph("Primary footer");
-
-        // Build the body of the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Page 1");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3");
 
-        // Configure TXT save options to exclude headers and footers.
-        TxtSaveOptions saveOptions = new TxtSaveOptions
+        // Add a header.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Header text");
+
+        // Add body content.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Body paragraph.");
+
+        // Add a footer.
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Footer text");
+
+        // Remove all headers and footers before saving to TXT.
+        foreach (Section section in doc.Sections)
         {
-            ExportHeadersFootersMode = TxtExportHeadersFootersMode.None
-        };
+            // Clear the collection of headers and footers for this section.
+            section.HeadersFooters.Clear();
+        }
 
-        // Ensure the output directory exists.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Exported.txt");
-        doc.Save(outputPath, saveOptions);
+        // Configure TXT save options (no special options needed now).
+        TxtSaveOptions saveOptions = new TxtSaveOptions();
 
-        // Optional: display the exported text.
-        Console.WriteLine(File.ReadAllText(outputPath));
+        // Export the document to a TXT file without headers and footers.
+        doc.Save("Output.txt", saveOptions);
     }
 }

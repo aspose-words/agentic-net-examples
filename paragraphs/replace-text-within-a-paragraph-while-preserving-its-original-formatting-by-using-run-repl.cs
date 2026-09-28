@@ -1,30 +1,47 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder for easy content insertion.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a paragraph that contains two runs with different formatting.
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 12;
-        builder.Font.Bold = true;          // First run: bold.
-        builder.Write("Hello ");
-        builder.Font.Bold = false;
-        builder.Font.Italic = true;        // Second run: italic.
-        builder.Write("World");
-        builder.Writeln();                 // End the paragraph.
+        // Insert a paragraph with mixed formatting.
+        builder.Writeln("This is a sample paragraph.");
+        builder.Writeln(); // Add an empty line.
 
-        // Replace the text "Hello" with "Hi" while preserving the original formatting.
-        // The Range.Replace method updates the text inside the existing run(s) without altering their formatting.
-        doc.Range.Replace("Hello", "Hi");
+        // Start a new paragraph.
+        Paragraph para = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(para);
 
-        // Save the resulting document.
+        // Add runs with different formatting.
+        Run run1 = new Run(doc, "Hello ");
+        para.AppendChild(run1);
+
+        Run runBold = new Run(doc, "World");
+        runBold.Font.Bold = true; // Preserve bold formatting.
+        para.AppendChild(runBold);
+
+        Run run2 = new Run(doc, "! This is a test.");
+        para.AppendChild(run2);
+
+        // Replace the word "World" with "Universe" while preserving formatting.
+        string target = "World";
+        string replacement = "Universe";
+
+        foreach (Run run in para.Runs)
+        {
+            if (run.Text.Contains(target))
+            {
+                // Preserve the original formatting by only changing the text.
+                run.Text = run.Text.Replace(target, replacement);
+            }
+        }
+
+        // Save the document.
         doc.Save("Output.docx");
     }
 }

@@ -1,9 +1,7 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Fonts;
 
-public class HyperlinkParagraphExample
+public class Program
 {
     public static void Main()
     {
@@ -11,22 +9,23 @@ public class HyperlinkParagraphExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new paragraph.
-        builder.Writeln("Paragraph containing a hyperlink:");
+        // Insert a new empty paragraph and move the cursor into it.
+        builder.InsertParagraph();
 
-        // Apply the built‑in Hyperlink character style to the upcoming text.
-        builder.Font.StyleIdentifier = StyleIdentifier.Hyperlink;
-
-        // Insert the hyperlink field. The display text is "Visit Aspose".
+        // Insert a hyperlink run inside the current paragraph.
         builder.InsertHyperlink("Visit Aspose", "https://www.aspose.com", false);
 
-        // Clear the formatting so subsequent text is not affected.
-        builder.Font.ClearFormatting();
+        // Retrieve the paragraph that now contains the hyperlink.
+        Paragraph paragraph = (Paragraph)builder.CurrentParagraph;
 
-        // End the paragraph.
-        builder.Writeln();
+        // Apply the built‑in Hyperlink character style to the hyperlink run.
+        if (paragraph.Runs.Count > 0)
+        {
+            Run hyperlinkRun = (Run)paragraph.Runs[0];
+            hyperlinkRun.Font.StyleIdentifier = StyleIdentifier.Hyperlink;
+        }
 
-        // Save the document to the same folder as the executable.
-        doc.Save("HyperlinkParagraph.docx");
+        // Save the document to disk.
+        doc.Save("Output.docx");
     }
 }

@@ -1,28 +1,21 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create a new blank document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with some sample text.
-        builder.Writeln("This paragraph will have 1.5 line spacing.");
+        // Insert a paragraph with some text.
+        builder.Writeln("This is a sample paragraph whose line spacing will be set to 1.5 lines.");
 
-        // Set the line spacing rule to Multiple and specify 1.5 lines.
-        builder.CurrentParagraph.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
+        // Adjust the line spacing of the current paragraph to 1.5 lines.
         builder.CurrentParagraph.ParagraphFormat.LineSpacing = 1.5;
 
-        // Save the document.
-        doc.Save(Path.Combine(artifactsDir, "ParagraphLineSpacing.docx"));
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }
