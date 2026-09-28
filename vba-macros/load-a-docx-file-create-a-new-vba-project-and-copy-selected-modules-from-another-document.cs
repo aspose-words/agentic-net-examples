@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -6,101 +7,71 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        const string inputDocxPath = "Input.docx";
-        const string sourceMacroDocPath = "Source.docm";
-        const string outputDocmPath = "Result.docm";
+        // Prepare temporary directory and file paths
+        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeVbaDemo");
+        Directory.CreateDirectory(tempDir);
+        string sourcePath = Path.Combine(tempDir, "source.docm");
+        string targetPath = Path.Combine(tempDir, "target.docm");
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a plain DOCX file (no macros) and save it.
-        // -----------------------------------------------------------------
-        Document plainDoc = new Document();
-        plainDoc.Save(inputDocxPath); // Saved as DOCX by default.
-
-        // -----------------------------------------------------------------
-        // Step 2: Create a macro-enabled document that will serve as the
-        // source of VBA modules. Add a VBA project with two sample modules.
-        // -----------------------------------------------------------------
+        // ---------- Create source document with a VBA project ----------
         Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is the source document containing VBA modules.");
 
-        // Create a new VBA project.
-        VbaProject sourceProject = new VbaProject
+        // Ensure the source document has a VBA project
+        sourceDoc.VbaProject = new VbaProject();
+
+        // Create and add a VBA module to the source document
+        string moduleName = "TestModule";
+        string moduleCode = @"Sub Hello()
+    MsgBox ""Hello from VBA!""
+End Sub";
+
+        VbaModule sourceModule = new VbaModule
         {
-            Name = "SourceProject"
+            Name = moduleName,
+            SourceCode = moduleCode
         };
-        sourceDoc.VbaProject = sourceProject;
+        sourceDoc.VbaProject.Modules.Add(sourceModule);
 
-        // First module.
-        VbaModule module1 = new VbaModule
+        // Save the source document as a macro‑enabled file
+        sourceDoc.Save(sourcePath, SaveFormat.Docm);
+
+        // ---------- Create target document ----------
+        Document targetDoc = new Document(); // blank document
+        targetDoc.VbaProject = new VbaProject(); // ensure a VBA project exists
+
+        // Load the source document to access its VBA modules
+        Document loadedSource = new Document(sourcePath);
+
+        // Copy the selected module(s) to the target document
+        foreach (VbaModule srcModule in loadedSource.VbaProject.Modules)
         {
-            Name = "Module1",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"
-Sub HelloWorld()
-    MsgBox ""Hello from Module1!""
-End Sub"
-        };
-        sourceProject.Modules.Add(module1);
-
-        // Second module.
-        VbaModule module2 = new VbaModule
-        {
-            Name = "Module2",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"
-Sub GoodbyeWorld()
-    MsgBox ""Goodbye from Module2!""
-End Sub"
-        };
-        sourceProject.Modules.Add(module2);
-
-        // Save the source document as a macro-enabled file.
-        sourceDoc.Save(sourceMacroDocPath); // .docm inferred from extension.
-
-        // -----------------------------------------------------------------
-        // Step 3: Load the plain DOCX file.
-        // -----------------------------------------------------------------
-        Document targetDoc = new Document(inputDocxPath);
-
-        // Ensure the document has a VBA project; create one if missing.
-        if (targetDoc.VbaProject == null)
-        {
-            VbaProject newProject = new VbaProject
+            if (srcModule.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase))
             {
-                Name = "TargetProject"
-            };
-            targetDoc.VbaProject = newProject;
-        }
+                // Guard against null source code
+                string sourceCode = srcModule.SourceCode ?? string.Empty;
 
-        // -----------------------------------------------------------------
-        // Step 4: Load the source macro document and copy selected modules.
-        // -----------------------------------------------------------------
-        Document sourceMacroDoc = new Document(sourceMacroDocPath);
-        VbaProject sourceVbaProject = sourceMacroDoc.VbaProject;
-
-        // Example: copy modules whose names start with "Module".
-        foreach (VbaModule srcModule in sourceVbaProject.Modules)
-        {
-            if (srcModule.Name != null && srcModule.Name.StartsWith("Module"))
-            {
-                // Clone the module to avoid reference issues.
-                VbaModule clonedModule = srcModule.Clone();
-
-                // Ensure source code is not null.
-                if (clonedModule.SourceCode == null)
-                    clonedModule.SourceCode = string.Empty;
-
-                // Add the cloned module to the target document's VBA project.
-                targetDoc.VbaProject.Modules.Add(clonedModule);
+                VbaModule newModule = new VbaModule
+                {
+                    Name = srcModule.Name,
+                    SourceCode = sourceCode
+                };
+                targetDoc.VbaProject.Modules.Add(newModule);
             }
         }
 
-        // -----------------------------------------------------------------
-        // Step 5: Save the modified document as a macro-enabled file.
-        // -----------------------------------------------------------------
-        targetDoc.Save(outputDocmPath); // Saved as .docm because of extension.
+        // Save the target document as a macro‑enabled file
+        targetDoc.Save(targetPath, SaveFormat.Docm);
 
-        // Optional: indicate completion.
-        Console.WriteLine("Macro modules copied and document saved as " + outputDocmPath);
+        // ---------- Validation ----------
+        bool moduleCopied = false;
+        VbaModule copied = targetDoc.VbaProject?.Modules[moduleName];
+        if (copied != null && !string.IsNullOrEmpty(copied.SourceCode))
+        {
+            moduleCopied = true;
+        }
+
+        Console.WriteLine($"VBA module '{moduleName}' copied to target document: {moduleCopied}");
     }
 }

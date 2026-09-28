@@ -1,55 +1,59 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+namespace VbaModuleHeaderAppender
 {
-    public static void Main()
+    public class Program
     {
-        // Define author information.
-        const string author = "John Doe";
-
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Create a new VBA project and assign it to the document.
-        VbaProject vbaProject = new VbaProject();
-        vbaProject.Name = "SampleProject";
-        doc.VbaProject = vbaProject;
-
-        // Add a couple of VBA modules with sample code.
-        VbaModule module1 = new VbaModule();
-        module1.Name = "Module1";
-        module1.Type = VbaModuleType.ProceduralModule;
-        module1.SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub";
-        doc.VbaProject.Modules.Add(module1);
-
-        VbaModule module2 = new VbaModule();
-        module2.Name = "Module2";
-        module2.Type = VbaModuleType.ProceduralModule;
-        module2.SourceCode = "Function AddNumbers(a As Integer, b As Integer) As Integer\n    AddNumbers = a + b\nEnd Function";
-        doc.VbaProject.Modules.Add(module2);
-
-        // Save the initial document (optional, shows the original state).
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docm");
-        doc.Save(originalPath, SaveFormat.Docm);
-
-        // Iterate through all VBA modules and prepend a comment header.
-        foreach (VbaModule vbaModule in doc.VbaProject.Modules)
+        public static void Main()
         {
-            // Guard against null source code.
-            string existingCode = vbaModule.SourceCode ?? string.Empty;
+            // Author information to prepend.
+            const string author = "John Doe";
 
-            // Build the header comment.
-            string header = $"' Author: {author}, Date: {DateTime.Now:yyyy-MM-dd}\r\n";
+            // Create a new blank document.
+            Document doc = new Document();
 
-            // Prepend the header to the existing source code.
-            vbaModule.SourceCode = header + existingCode;
+            // Ensure the document has a VBA project.
+            if (doc.VbaProject == null)
+            {
+                doc.VbaProject = new VbaProject();
+            }
+
+            // Access the VBA module collection.
+            VbaModuleCollection modules = doc.VbaProject.Modules;
+
+            // If there are no modules, add a sample module for demonstration.
+            if (modules.Count == 0)
+            {
+                string sampleCode =
+@"Sub SampleMacro()
+    MsgBox ""Hello from VBA!""
+End Sub";
+
+                // Create a module using the parameter‑less constructor and set its properties.
+                VbaModule sampleModule = new VbaModule();
+                sampleModule.Name = "SampleModule";
+                sampleModule.SourceCode = sampleCode;
+
+                modules.Add(sampleModule);
+            }
+
+            // Iterate through all modules and prepend the comment header.
+            foreach (VbaModule module in modules)
+            {
+                // Guard against null source code.
+                string existingSource = module.SourceCode ?? string.Empty;
+
+                // Build the header comment.
+                string header = $"' Author: {author}, Date: {DateTime.Now:yyyy-MM-dd}" + Environment.NewLine;
+
+                // Prepend the header to the existing source.
+                module.SourceCode = header + existingSource;
+            }
+
+            // Save the document in macro‑enabled format.
+            doc.Save("Output.docm");
         }
-
-        // Save the modified document.
-        string modifiedPath = Path.Combine(Directory.GetCurrentDirectory(), "Modified.docm");
-        doc.Save(modifiedPath, SaveFormat.Docm);
     }
 }
