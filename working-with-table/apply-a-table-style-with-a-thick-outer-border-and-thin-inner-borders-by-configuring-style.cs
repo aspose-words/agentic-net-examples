@@ -1,70 +1,94 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableStyleBordersExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 2x2 table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = doc.FirstSection.Body.Tables[0];
+
+        // Apply thin inner borders to all cells.
+        foreach (Row row in table.Rows)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a 3x3 table.
-            Table table = builder.StartTable();
-
-            // Fill the table with sample text.
-            for (int row = 0; row < 3; row++)
+            foreach (Cell cell in row.Cells)
             {
-                for (int col = 0; col < 3; col++)
-                {
-                    builder.InsertCell();
-                    builder.Write($"R{row + 1}C{col + 1}");
-                }
-                builder.EndRow();
+                cell.CellFormat.Borders[BorderType.Left].LineWidth = 0.5;
+                cell.CellFormat.Borders[BorderType.Right].LineWidth = 0.5;
+                cell.CellFormat.Borders[BorderType.Top].LineWidth = 0.5;
+                cell.CellFormat.Borders[BorderType.Bottom].LineWidth = 0.5;
+
+                cell.CellFormat.Borders[BorderType.Left].Color = Color.Black;
+                cell.CellFormat.Borders[BorderType.Right].Color = Color.Black;
+                cell.CellFormat.Borders[BorderType.Top].Color = Color.Black;
+                cell.CellFormat.Borders[BorderType.Bottom].Color = Color.Black;
             }
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Remove any existing borders.
-            table.ClearBorders();
-
-            // Apply thick outer borders (2 points).
-            table.SetBorder(BorderType.Left,   LineStyle.Single, 2.0, Color.Black, true);
-            table.SetBorder(BorderType.Right,  LineStyle.Single, 2.0, Color.Black, true);
-            table.SetBorder(BorderType.Top,    LineStyle.Single, 2.0, Color.Black, true);
-            table.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, Color.Black, true);
-
-            // Apply thin inner borders (0.5 points) to each cell.
-            for (int i = 0; i < table.Rows.Count; i++)
-            {
-                Row row = table.Rows[i];
-                for (int j = 0; j < row.Cells.Count; j++)
-                {
-                    Cell cell = row.Cells[j];
-                    // Right border for all but the last column.
-                    if (j < row.Cells.Count - 1)
-                    {
-                        cell.CellFormat.Borders[BorderType.Right].LineStyle = LineStyle.Single;
-                        cell.CellFormat.Borders[BorderType.Right].LineWidth = 0.5;
-                        cell.CellFormat.Borders[BorderType.Right].Color = Color.Black;
-                    }
-                    // Bottom border for all but the last row.
-                    if (i < table.Rows.Count - 1)
-                    {
-                        cell.CellFormat.Borders[BorderType.Bottom].LineStyle = LineStyle.Single;
-                        cell.CellFormat.Borders[BorderType.Bottom].LineWidth = 0.5;
-                        cell.CellFormat.Borders[BorderType.Bottom].Color = Color.Black;
-                    }
-                }
-            }
-
-            // Save the document to the local file system.
-            doc.Save("TableStyleBorders.docx");
         }
+
+        // Apply thick outer borders.
+        int lastRowIndex = table.Rows.Count - 1;
+        int lastCellIndex = table.Rows[0].Cells.Count - 1;
+
+        for (int rowIndex = 0; rowIndex < table.Rows.Count; rowIndex++)
+        {
+            Row row = table.Rows[rowIndex];
+            for (int cellIndex = 0; cellIndex < row.Cells.Count; cellIndex++)
+            {
+                Cell cell = row.Cells[cellIndex];
+
+                // Top border for first row.
+                if (rowIndex == 0)
+                {
+                    cell.CellFormat.Borders[BorderType.Top].LineWidth = 2.0;
+                }
+
+                // Bottom border for last row.
+                if (rowIndex == lastRowIndex)
+                {
+                    cell.CellFormat.Borders[BorderType.Bottom].LineWidth = 2.0;
+                }
+
+                // Left border for first column.
+                if (cellIndex == 0)
+                {
+                    cell.CellFormat.Borders[BorderType.Left].LineWidth = 2.0;
+                }
+
+                // Right border for last column.
+                if (cellIndex == lastCellIndex)
+                {
+                    cell.CellFormat.Borders[BorderType.Right].LineWidth = 2.0;
+                }
+            }
+        }
+
+        // Save the document.
+        string outputPath = "TableStyle.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not saved correctly.");
     }
 }

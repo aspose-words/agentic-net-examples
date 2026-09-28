@@ -8,55 +8,56 @@ public class Program
 {
     public static void Main()
     {
-        // Sample data source: each string array represents a row.
-        var data = new List<string[]>
+        // Sample data source: a list of objects.
+        var people = new List<Person>
         {
-            new[] { "Alice", "Engineering", "1000" },
-            new[] { "Bob", "Marketing", "1500" },
-            new[] { "Charlie", "HR", "1200" }
+            new Person { Name = "Alice", Age = 30 },
+            new Person { Name = "Bob", Age = 25 },
+            new Person { Name = "Charlie", Age = 35 }
         };
 
         // Create a new blank document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Fixed number of columns for the table.
-        const int columnCount = 3;
+        // Start a table with a fixed number of columns (2 columns: Name and Age).
+        builder.StartTable();
 
-        // Start the table.
-        Table table = builder.StartTable();
-
-        // Add a header row.
-        string[] headers = { "Name", "Department", "Salary" };
-        for (int i = 0; i < columnCount; i++)
-        {
-            builder.InsertCell();
-            builder.Write(headers[i]);
-        }
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Age");
         builder.EndRow();
 
-        // Add rows from the data source.
-        foreach (var row in data)
+        // Add a row for each item in the data source.
+        foreach (var person in people)
         {
-            for (int i = 0; i < columnCount; i++)
-            {
-                builder.InsertCell();
-                builder.Write(row[i]);
-            }
+            builder.InsertCell();
+            builder.Writeln(person.Name);
+            builder.InsertCell();
+            builder.Writeln(person.Age.ToString());
             builder.EndRow();
         }
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DynamicTable.docx");
+        // Save the document to a file.
+        string outputPath = "TableOutput.docx";
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"The output file was not created: {outputPath}");
+            throw new Exception($"Failed to create the output file: {outputPath}");
         }
+    }
+
+    // Simple data class representing a row in the table.
+    private class Person
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
     }
 }

@@ -2,9 +2,8 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
-public class Program
+public class TableStyleExample
 {
     public static void Main()
     {
@@ -12,63 +11,49 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a 3x3 table.
-        Table table = builder.StartTable();
-
-        // First row
-        builder.InsertCell();
-        builder.Write("R1C1");
-        builder.InsertCell();
-        builder.Write("R1C2");
-        builder.InsertCell();
-        builder.Write("R1C3");
-        builder.EndRow();
-
-        // Second row
-        builder.InsertCell();
-        builder.Write("R2C1");
-        builder.InsertCell();
-        builder.Write("R2C2");
-        builder.InsertCell();
-        builder.Write("R2C3");
-        builder.EndRow();
-
-        // Third row
-        builder.InsertCell();
-        builder.Write("R3C1");
-        builder.InsertCell();
-        builder.Write("R3C2");
-        builder.InsertCell();
-        builder.Write("R3C3");
-        builder.EndRow();
-
-        // Finish the table.
+        // Build a 3x3 table.
+        builder.StartTable();
+        for (int row = 0; row < 3; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row}C{col}");
+            }
+            builder.EndRow();
+        }
         builder.EndTable();
 
-        // Apply a double line border around the whole table.
-        table.ClearBorders(); // Remove any existing borders.
-        table.SetBorder(BorderType.Left,   LineStyle.Double, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Right,  LineStyle.Double, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Top,    LineStyle.Double, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Bottom, LineStyle.Double, 1.5, Color.Black, true);
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Apply single line borders to the inside of the table (each cell).
-        foreach (Row row in table.Rows)
+        // Apply custom borders:
+        // - Double line border around the outer edges of the table.
+        // - Single line borders for internal cell dividers.
+        for (int i = 0; i < table.Rows.Count; i++)
         {
-            foreach (Cell cell in row.Cells)
+            Row row = table.Rows[i];
+            for (int j = 0; j < row.Cells.Count; j++)
             {
-                cell.CellFormat.Borders.LineStyle = LineStyle.Single;
-                cell.CellFormat.Borders.Color = Color.Black;
-                cell.CellFormat.Borders.LineWidth = 1.0;
+                Cell cell = row.Cells[j];
+                BorderCollection borders = cell.CellFormat.Borders;
+
+                bool isOuter = i == 0 || i == table.Rows.Count - 1 || j == 0 || j == row.Cells.Count - 1;
+
+                LineStyle style = isOuter ? LineStyle.Double : LineStyle.Single;
+                borders[BorderType.Left].LineStyle = style;
+                borders[BorderType.Right].LineStyle = style;
+                borders[BorderType.Top].LineStyle = style;
+                borders[BorderType.Bottom].LineStyle = style;
             }
         }
 
         // Save the document.
-        string outputPath = "CustomTableStyle.docx";
+        string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
+            throw new Exception("The output document was not saved correctly.");
     }
 }

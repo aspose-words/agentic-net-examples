@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,51 +8,60 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder for it.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
+        // Start a new table.
+        builder.StartTable();
 
         // ----- Header row -----
+        // First header cell.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
+        // Second header cell.
         builder.InsertCell();
-        builder.Write("Header 2");
-        builder.InsertCell();
-        builder.Write("Header 3");
+        builder.Writeln("Header 2");
+        // End the header row.
         builder.EndRow();
 
         // ----- Data rows -----
-        for (int i = 1; i <= 3; i++)
-        {
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 1");
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 2");
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 3");
-            builder.EndRow();
-        }
+        // First data row.
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 2");
+        builder.EndRow();
 
-        // Finish the table.
+        // Second data row.
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 2");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
         // Apply light gray shading to each cell in the header row.
-        foreach (Cell cell in table.FirstRow.Cells)
+        Row headerRow = table.FirstRow;
+        foreach (Cell cell in headerRow.Cells)
         {
+            cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
             cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
         }
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderRowShading.docx");
+        string outputPath = "TableWithHeaderShading.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new Exception("The document was not saved correctly.");
-        }
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

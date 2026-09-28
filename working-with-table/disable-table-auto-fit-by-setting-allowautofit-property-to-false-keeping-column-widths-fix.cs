@@ -11,32 +11,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
+        // Start a new table.
+        builder.StartTable();
 
-        // First cell with a fixed width.
+        // First column – set a fixed width of 100 points.
+        builder.CellFormat.Width = 100;
         builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-        builder.Write("First column fixed width.");
+        builder.Writeln("First column");
 
-        // Second cell with a fixed width.
+        // Second column – set a fixed width of 200 points.
+        builder.CellFormat.Width = 200;
         builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-        builder.Write("Second column fixed width.");
+        builder.Writeln("Second column");
 
         // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Disable automatic autofit so the column widths remain fixed.
+        // Retrieve the created table and disable auto‑fit.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         table.AllowAutoFit = false;
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "TableAllowAutoFit.docx");
-
         // Save the document.
+        string outputPath = "TableAutoFit.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output file was not created.");
+
+        // Optionally, you could open the document to confirm settings,
+        // but the task requires only creation and saving.
     }
 }

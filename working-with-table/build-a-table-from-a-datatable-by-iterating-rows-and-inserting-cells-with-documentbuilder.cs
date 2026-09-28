@@ -1,54 +1,58 @@
 using System;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeTableFromDataTable
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a sample DataTable with some data.
+        DataTable dataTable = new DataTable("Sample");
+        dataTable.Columns.Add("ID", typeof(int));
+        dataTable.Columns.Add("Name", typeof(string));
+        dataTable.Columns.Add("Score", typeof(double));
+
+        dataTable.Rows.Add(1, "Alice", 85.5);
+        dataTable.Rows.Add(2, "Bob", 92.0);
+        dataTable.Rows.Add(3, "Charlie", 78.0);
+
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Begin building the table.
+        builder.StartTable();
+
+        // Insert header row.
+        foreach (DataColumn column in dataTable.Columns)
         {
-            // Create a sample DataTable with some data.
-            DataTable dataTable = new DataTable("Sample");
-            dataTable.Columns.Add("Product");
-            dataTable.Columns.Add("Quantity");
-            dataTable.Columns.Add("Price");
-            dataTable.Rows.Add("Apples", 10, 1.5);
-            dataTable.Rows.Add("Bananas", 20, 0.8);
-            dataTable.Rows.Add("Carrots", 15, 0.6);
+            builder.InsertCell();
+            builder.Writeln(column.ColumnName);
+        }
+        builder.EndRow();
 
-            // Initialize a new blank document and a builder.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a new table.
-            Table table = builder.StartTable();
-
-            // Add a header row using the column names.
-            foreach (DataColumn column in dataTable.Columns)
+        // Insert data rows.
+        foreach (DataRow row in dataTable.Rows)
+        {
+            foreach (object value in row.ItemArray)
             {
                 builder.InsertCell();
-                builder.Write(column.ColumnName);
+                builder.Writeln(value?.ToString() ?? string.Empty);
             }
             builder.EndRow();
-
-            // Populate the table with the rows from the DataTable.
-            foreach (DataRow dataRow in dataTable.Rows)
-            {
-                foreach (object value in dataRow.ItemArray)
-                {
-                    builder.InsertCell();
-                    builder.Write(value?.ToString() ?? string.Empty);
-                }
-                builder.EndRow();
-            }
-
-            // End the table.
-            builder.EndTable();
-
-            // Save the document to a file.
-            doc.Save("TableFromDataTable.docx");
         }
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the document to disk.
+        string outputPath = "TableFromDataTable.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

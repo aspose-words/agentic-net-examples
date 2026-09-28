@@ -4,77 +4,97 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableFooterExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and a DocumentBuilder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a sample table with a header row and some numeric data.
+        builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Item");
+        builder.InsertCell();
+        builder.Write("Quantity");
+        builder.InsertCell();
+        builder.Write("Price");
+        builder.EndRow();
+
+        // Data rows.
+        string[,] data = {
+            { "Apple", "10", "0.5" },
+            { "Banana", "5", "0.3" },
+            { "Orange", "8", "0.4" }
+        };
+
+        for (int i = 0; i < data.GetLength(0); i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table and keep a reference to it.
-            Table table = builder.StartTable();
-
-            // ---------- Header row ----------
-            builder.InsertCell();
-            builder.Write("Item");
-            builder.InsertCell();
-            builder.Write("Quantity");
-            builder.EndRow();
-
-            // ---------- Data rows ----------
-            string[] items = { "Apples", "Bananas", "Carrots" };
-            int[] quantities = { 20, 40, 50 };
-
-            for (int i = 0; i < items.Length; i++)
+            for (int j = 0; j < data.GetLength(1); j++)
             {
                 builder.InsertCell();
-                builder.Write(items[i]);
-                builder.InsertCell();
-                builder.Write(quantities[i].ToString());
-                builder.EndRow();
+                builder.Write(data[i, j]);
             }
+            builder.EndRow();
+        }
 
-            // ---------- Calculate column sum ----------
-            int totalQuantity = 0;
-            // Skip the header row (index 0) when summing.
-            for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
+        // End the table construction.
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = doc.GetChildNodes(NodeType.Table, true)[0] as Table;
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        int columnCount = table.Rows[0].Cells.Count;
+        double[] columnSums = new double[columnCount];
+
+        // Calculate sums for numeric columns (skip the first column which is text).
+        for (int rowIdx = 1; rowIdx < table.Rows.Count; rowIdx++)
+        {
+            Row row = table.Rows[rowIdx];
+            for (int colIdx = 0; colIdx < columnCount; colIdx++)
             {
-                Row row = table.Rows[rowIndex];
-                // The quantity is in the second cell (index 1).
-                string cellText = row.Cells[1].ToString(SaveFormat.Text).Trim();
-                if (int.TryParse(cellText, out int value))
+                string text = row.Cells[colIdx].GetText().TrimEnd('\a'); // Remove cell end marker.
+                if (double.TryParse(text, out double value))
                 {
-                    totalQuantity += value;
+                    columnSums[colIdx] += value;
                 }
             }
-
-            // ---------- Footer row ----------
-            // Apply formatting for the footer row.
-            builder.RowFormat.Height = 20;
-            builder.RowFormat.HeightRule = HeightRule.Exactly;
-            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-            builder.Font.Bold = true;
-
-            builder.InsertCell();
-            builder.Write("Total");
-            builder.InsertCell();
-            builder.Write(totalQuantity.ToString());
-            builder.EndRow();
-
-            // Reset formatting to defaults for any further content.
-            builder.RowFormat.ClearFormatting();
-            builder.CellFormat.ClearFormatting();
-            builder.Font.Bold = false;
-
-            // End the table.
-            builder.EndTable();
-
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithFooter.docx");
-            doc.Save(outputPath);
         }
+
+        // Insert a new footer row with totals.
+        Row footerRow = new Row(doc);
+        table.Rows.Add(footerRow);
+
+        for (int colIdx = 0; colIdx < columnCount; colIdx++)
+        {
+            Cell cell = new Cell(doc);
+            footerRow.Cells.Add(cell);
+
+            // First column gets the label "Total".
+            string cellText = colIdx == 0 ? "Total" : columnSums[colIdx].ToString();
+
+            // Add the text to the cell.
+            Paragraph para = new Paragraph(doc);
+            Run run = new Run(doc, cellText);
+            run.Font.Bold = true; // Make the totals bold.
+            para.AppendChild(run);
+            cell.AppendChild(para);
+
+            // Apply shading to the footer cells.
+            cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+        }
+
+        // Save the document.
+        string outputPath = "TableWithFooter.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

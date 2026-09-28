@@ -1,73 +1,77 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableCloneExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build the original table (2 rows x 2 columns) using the builder.
-            Table originalTable = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1,1");
-            builder.InsertCell();
-            builder.Write("Cell 1,2");
-            builder.EndRow();
+        // Add some introductory text.
+        builder.Writeln("Document start");
 
-            builder.InsertCell();
-            builder.Write("Cell 2,1");
-            builder.InsertCell();
-            builder.Write("Cell 2,2");
-            builder.EndRow();
-            builder.EndTable(); // The table is now part of the document.
+        // Build the original table.
+        builder.StartTable();
 
-            // Clone the existing table (deep clone).
-            Table clonedTable = (Table)originalTable.Clone(true);
+        // First row.
+        builder.InsertCell();
+        builder.Write("Original Cell 1");
+        builder.InsertCell();
+        builder.Write("Original Cell 2");
+        builder.EndRow();
 
-            // Modify the cloned table's content.
-            foreach (Row row in clonedTable.Rows)
-            {
-                foreach (Cell cell in row.Cells)
-                {
-                    // Each cell already contains a paragraph with a run.
-                    // Replace the text of the first run with new content.
-                    if (cell.FirstParagraph != null && cell.FirstParagraph.Runs.Count > 0)
-                    {
-                        cell.FirstParagraph.Runs[0].Text = "Cloned";
-                    }
-                    else
-                    {
-                        // Ensure the cell has a paragraph and add a run if needed.
-                        cell.EnsureMinimum();
-                        cell.FirstParagraph.AppendChild(new Run(doc, "Cloned"));
-                    }
-                }
-            }
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Original Cell 3");
+        builder.InsertCell();
+        builder.Write("Original Cell 4");
+        builder.EndRow();
 
-            // Insert a marker paragraph where the cloned table will be placed.
-            builder.MoveToDocumentEnd();
-            builder.Writeln("=== Cloned Table Inserted Below ===");
-            // Capture the marker paragraph node.
-            Paragraph markerParagraph = (Paragraph)doc.LastSection.Body.LastParagraph;
+        builder.EndTable();
 
-            // Insert the cloned table after the marker paragraph.
-            // Use InsertAfter on the parent node (the body) to place the table correctly.
-            markerParagraph.ParentNode.InsertAfter(clonedTable, markerParagraph);
+        // Add a placeholder paragraph where the cloned table will be inserted.
+        builder.Writeln("Insert location");
 
-            // Save the resulting document.
-            string outputPath = "ClonedTable.docx";
-            doc.Save(outputPath);
+        // Locate the original table in the document.
+        Table originalTable = doc.GetChildNodes(NodeType.Table, true)
+                                 .Cast<Table>()
+                                 .FirstOrDefault();
 
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new Exception("The output document was not created.");
-        }
+        if (originalTable == null)
+            throw new InvalidOperationException("Original table not found.");
+
+        // Clone the original table (deep clone).
+        Table clonedTable = (Table)originalTable.Clone(true);
+
+        // Modify the cloned table's content: change text of the first cell.
+        Cell firstCell = clonedTable.Rows[0].Cells[0];
+        firstCell.Paragraphs.Clear(); // Remove existing paragraphs.
+        Paragraph newParagraph = new Paragraph(doc);
+        newParagraph.AppendChild(new Run(doc, "Cloned Table - Modified"));
+        firstCell.AppendChild(newParagraph);
+
+        // Find the placeholder paragraph.
+        Paragraph placeholderParagraph = doc.GetChildNodes(NodeType.Paragraph, true)
+                                            .Cast<Paragraph>()
+                                            .FirstOrDefault(p => p.GetText().Contains("Insert location"));
+
+        if (placeholderParagraph == null)
+            throw new InvalidOperationException("Placeholder paragraph not found.");
+
+        // Insert the cloned table after the placeholder paragraph.
+        placeholderParagraph.ParentNode.InsertAfter(clonedTable, placeholderParagraph);
+
+        // Save the final document.
+        string outputPath = "ClonedTableOutput.docx";
+        doc.Save(outputPath);
+
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

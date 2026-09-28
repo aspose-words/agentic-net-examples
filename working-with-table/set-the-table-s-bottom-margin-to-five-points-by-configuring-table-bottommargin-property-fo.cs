@@ -11,29 +11,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+        // Build a simple 1x1 table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1,1");
-        builder.InsertCell();
-        builder.Write("Cell 1,2");
+        builder.Write("Sample cell");
         builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Cell 2,1");
-        builder.InsertCell();
-        builder.Write("Cell 2,2");
         builder.EndTable();
 
-        // Set the distance between the table bottom and surrounding text (bottom margin) to 5 points.
-        table.DistanceBottom = 5.0;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableBottomMargin.docx");
+        // Set the bottom margin (padding) of the table to five points.
+        table.BottomPadding = 5.0f; // points
+
+        // Save the document to disk.
+        string outputPath = "TableBottomMargin.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

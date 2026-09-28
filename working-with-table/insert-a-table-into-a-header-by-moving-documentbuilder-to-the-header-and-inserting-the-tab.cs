@@ -3,62 +3,50 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace HeaderTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Ensure that the primary header exists.
+        // If it does not, create and add it to the first section.
+        HeaderFooter primaryHeader = doc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
+        if (primaryHeader == null)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-
-            // Create a DocumentBuilder which will be used to insert content.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Move the builder's cursor to the primary header of the first section.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-
-            // Start a new table in the header.
-            Table table = builder.StartTable();
-
-            // First row, first cell.
-            builder.InsertCell();
-            builder.Write("Header Cell 1");
-
-            // First row, second cell.
-            builder.InsertCell();
-            builder.Write("Header Cell 2");
-            builder.EndRow();
-
-            // Second row, first cell.
-            builder.InsertCell();
-            builder.Write("Header Cell 3");
-
-            // Second row, second cell.
-            builder.InsertCell();
-            builder.Write("Header Cell 4");
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Define the output path.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-            string outputPath = Path.Combine(outputDir, "HeaderTable.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Simple verification that the file was created.
-            if (File.Exists(outputPath))
-            {
-                Console.WriteLine("Document saved successfully to: " + outputPath);
-            }
-            else
-            {
-                throw new InvalidOperationException("Failed to save the document.");
-            }
+            primaryHeader = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+            doc.FirstSection.HeadersFooters.Add(primaryHeader);
         }
+
+        // Move the builder's cursor into the primary header.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+
+        // Build a simple 1‑row, 2‑cell table inside the header.
+        builder.StartTable();
+
+        // First cell.
+        builder.InsertCell();
+        builder.Write("Header Cell 1");
+
+        // Second cell.
+        builder.InsertCell();
+        builder.Write("Header Cell 2");
+
+        // End the row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // Save the document.
+        string outputPath = "HeaderTable.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The document was not saved correctly.");
+
+        // Indicate successful completion.
+        Console.WriteLine("Document saved to " + Path.GetFullPath(outputPath));
     }
 }

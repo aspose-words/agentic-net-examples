@@ -3,52 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableAlignment
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a table.
+        builder.StartTable();
+
+        // Add 3 rows and 3 columns with sample text.
+        for (int row = 0; row < 3; row++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table.
-            Table table = builder.StartTable();
-
-            // First row.
-            builder.InsertCell();
-            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-            builder.Write("Row 1, Cell 1");
-
-            builder.InsertCell();
-            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-            builder.Write("Row 1, Cell 2");
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
             builder.EndRow();
-
-            // Second row.
-            builder.InsertCell();
-            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-            builder.Write("Row 2, Cell 1");
-
-            builder.InsertCell();
-            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-            builder.Write("Row 2, Cell 2");
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlignedTable.docx");
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output file was not created.");
-
-            // Optionally, inform that the process completed.
-            Console.WriteLine($"Document saved to: {outputPath}");
         }
+
+        // End the table.
+        builder.EndTable();
+
+        // Center-align the text inside each cell.
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
+        {
+            foreach (Row r in table.Rows)
+            {
+                foreach (Cell cell in r.Cells)
+                {
+                    foreach (Paragraph para in cell.Paragraphs)
+                    {
+                        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+                    }
+                }
+            }
+        }
+
+        // Save the document.
+        string fileName = "AlignedTable.docx";
+        doc.Save(fileName);
+
+        // Verify that the file was created.
+        if (!File.Exists(fileName))
+            throw new Exception("The output document was not created.");
     }
 }

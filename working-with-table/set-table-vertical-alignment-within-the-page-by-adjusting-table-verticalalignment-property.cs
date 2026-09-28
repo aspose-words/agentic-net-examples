@@ -2,47 +2,52 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
+        // Insert first row with two cells.
         builder.InsertCell();
-        builder.Write("Cell 1,1");
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 1,2");
+        builder.Writeln("Cell 2");
         builder.EndRow();
 
+        // Insert second row with two cells.
         builder.InsertCell();
-        builder.Write("Cell 2,1");
+        builder.Writeln("Cell 3");
         builder.InsertCell();
-        builder.Write("Cell 2,2");
+        builder.Writeln("Cell 4");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Align the table vertically to the center of the page.
-        // The RelativeVerticalAlignment property positions a floating table relative to the page.
-        table.RelativeVerticalAlignment = VerticalAlignment.Center;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Optionally center the table horizontally as well.
-        table.RelativeHorizontalAlignment = HorizontalAlignment.Center;
+        // Set the table alignment to center (horizontal alignment). 
+        // The VerticalAlignment property is not available in this version of Aspose.Words.
+        table.Alignment = TableAlignment.Center;
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableVerticalAlignment.docx");
+        // Save the document.
+        string outputPath = "VerticalAlignmentTable.docx";
         doc.Save(outputPath);
 
-        // Simple verification that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
+
+        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

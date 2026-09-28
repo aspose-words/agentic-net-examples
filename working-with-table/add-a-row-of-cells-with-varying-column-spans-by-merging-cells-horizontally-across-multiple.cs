@@ -7,73 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
-        Table table = builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-        // -----------------------------------------------------------------
-        // First row – simple header cells (no merging).
-        // -----------------------------------------------------------------
+        // First row – simple three cells.
         builder.InsertCell();
-        builder.Write("Header 1");
-
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
-
+        builder.Writeln("Header 2");
         builder.InsertCell();
-        builder.Write("Header 3");
-
+        builder.Writeln("Header 3");
         builder.EndRow();
 
-        // -----------------------------------------------------------------
-        // Second row – cells with varying horizontal spans.
-        // -----------------------------------------------------------------
-
-        // Cell that spans two columns.
+        // Second row – first cell spans two columns (horizontal merge).
+        // Insert first cell and mark it as the start of a merge.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First; // start of merge range
-        builder.Write("Span 2 columns");
+        Cell firstCell = (Cell)builder.CurrentParagraph.ParentNode;
+        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Writeln("Spans 2 columns");
 
+        // Insert second cell and mark it as a continuation of the previous merge.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // merged with previous cell
-        // No text needed for merged cell.
+        Cell secondCell = (Cell)builder.CurrentParagraph.ParentNode;
+        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // No text needed for the merged part.
 
-        // Normal (unmerged) cell.
+        // Insert third cell – normal cell.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.Write("Normal cell");
-
-        // Cell that spans three columns.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Span 3 columns");
-
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text for the merged cells.
+        builder.Writeln("Normal cell");
 
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Save the document to a local file.
-        string outputPath = "MergedCells.docx";
+        // Save the document.
+        string outputPath = "MergedCellsTable.docx";
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new Exception($"Failed to create the output file: {outputPath}");
-        }
+            throw new Exception("The output document was not created.");
 
-        // Inform the user (optional, no interaction required).
-        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        // Optionally, inform that the process completed.
+        Console.WriteLine("Document created successfully: " + Path.GetFullPath(outputPath));
     }
 }

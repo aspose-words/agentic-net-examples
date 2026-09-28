@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,43 +11,47 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 3‑row, 2‑column table.
-        Table table = builder.StartTable();
+        // Build a simple 3‑row, 2‑column table.
+        builder.StartTable();
 
-        // Row 1
+        // First row.
         builder.InsertCell();
         builder.Write("Row 1, Cell 1");
         builder.InsertCell();
         builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
-        // Row 2
+        // Second row.
         builder.InsertCell();
         builder.Write("Row 2, Cell 1");
         builder.InsertCell();
         builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
-        // Row 3
+        // Third row.
         builder.InsertCell();
         builder.Write("Row 3, Cell 1");
         builder.InsertCell();
         builder.Write("Row 3, Cell 2");
         builder.EndRow();
 
-        // Finish the table.
         builder.EndTable();
 
-        // Delete the second row (index 1) using the Rows collection.
+        // Retrieve the first table in the document.
+        Table table = doc.GetChildNodes(NodeType.Table, true)[0] as Table;
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Delete the second row (index 1) using Table.Rows[index].Remove().
         if (table.Rows.Count > 1)
-        {
             table.Rows[1].Remove();
-        }
 
-        // Optional: display the remaining row count.
-        Console.WriteLine($"Rows after deletion: {table.Rows.Count}");
+        // Save the modified document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
 
-        // Save the document to the local file system.
-        doc.Save("DeletedRowTable.docx");
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

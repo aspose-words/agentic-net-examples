@@ -1,59 +1,53 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-namespace AsposeWordsTableFromJson
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // JSON representing a 2‑dimensional array (rows and columns).
+        string json = @"[
+            [""Header1"", ""Header2"", ""Header3""],
+            [""Row1Col1"", ""Row1Col2"", ""Row1Col3""],
+            [""Row2Col1"", ""Row2Col2"", ""Row2Col3""]
+        ]";
+
+        // Deserialize the JSON into a list of rows, each row being a list of cell strings.
+        List<List<string>> tableData = JsonConvert.DeserializeObject<List<List<string>>>(json);
+        if (tableData == null || tableData.Count == 0)
+            throw new Exception("The JSON does not contain any table data.");
+
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Begin building the table.
+        builder.StartTable();
+
+        // Populate the table cells from the deserialized JSON data.
+        foreach (List<string> row in tableData)
         {
-            // JSON array representing rows and columns of the table.
-            // Each inner array is a row, and each string is a cell value.
-            string json = @"
-            [
-                [""R1C1"", ""R1C2"", ""R1C3""],
-                [""R2C1"", ""R2C2"", ""R2C3""],
-                [""R3C1"", ""R3C2"", ""R3C3""]
-            ]";
-
-            // Deserialize the JSON into a list of rows, each row being a list of cell strings.
-            List<List<string>> tableData = JsonConvert.DeserializeObject<List<List<string>>>(json);
-
-            // Validate that we have at least one row and one column.
-            if (tableData == null || tableData.Count == 0 || tableData[0].Count == 0)
-                throw new InvalidOperationException("JSON does not contain a valid table structure.");
-
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start building the table.
-            Table table = builder.StartTable();
-
-            // Iterate over each row.
-            foreach (List<string> row in tableData)
+            foreach (string cellText in row)
             {
-                // Iterate over each cell in the current row.
-                foreach (string cellText in row)
-                {
-                    // Insert a new cell and write its content.
-                    builder.InsertCell();
-                    builder.Write(cellText);
-                }
-
-                // End the current row.
-                builder.EndRow();
+                builder.InsertCell();
+                builder.Writeln(cellText);
             }
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Save the document to the current directory.
-            const string outputFileName = "TableFromJson.docx";
-            doc.Save(outputFileName);
+            // End the current row.
+            builder.EndRow();
         }
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the document to disk.
+        string outputPath = "OutputTable.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception($"Failed to create the output file: {outputPath}");
     }
 }

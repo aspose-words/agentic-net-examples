@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class TableStyleExample
 {
     public static void Main()
     {
@@ -11,40 +11,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
         // First row (header).
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Second row.
+        // Second row (data).
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
-
-        // Third row.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
+        builder.Writeln("Cell 2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Apply the built‑in "Grid Table 5 Dark" style after rows have been added.
-        table.StyleIdentifier = StyleIdentifier.GridTable5Dark;
-        // Optionally enable first‑row formatting and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GridTable5Dark.docx");
+        // Apply the built‑in "Grid Table 5 Dark" style.
+        table.StyleIdentifier = StyleIdentifier.GridTable5Dark;
+
+        // Save the document.
+        string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

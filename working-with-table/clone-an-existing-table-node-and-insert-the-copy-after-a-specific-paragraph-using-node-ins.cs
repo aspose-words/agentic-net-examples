@@ -1,49 +1,54 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableCloneExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add a paragraph that will serve as the insertion point.
-            builder.Writeln("Paragraph before the original table.");
+        // Add a paragraph before the table.
+        builder.Writeln("Paragraph before table.");
 
-            // Build the original table.
-            Table originalTable = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
-            builder.EndTable();
+        // Build a simple 2x1 table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.EndTable();
 
-            // Add another paragraph after the original table (optional, just to have more content).
-            builder.Writeln("Paragraph after the original table.");
+        // Add another paragraph after the table.
+        builder.Writeln("Paragraph after table.");
 
-            // Retrieve the paragraph after which we want to insert the cloned table.
-            // In this example we use the first paragraph ("Paragraph before the original table.").
-            Paragraph referenceParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        // Locate the first paragraph (the one before the table).
+        Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        if (firstParagraph == null)
+            throw new InvalidOperationException("First paragraph not found.");
 
-            // Clone the original table (deep clone).
-            Table clonedTable = (Table)originalTable.Clone(true);
+        // Locate the first table in the document.
+        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (originalTable == null)
+            throw new InvalidOperationException("Original table not found.");
 
-            // Insert the cloned table immediately after the reference paragraph.
-            referenceParagraph.ParentNode.InsertAfter(clonedTable, referenceParagraph);
+        // Clone the table (deep clone).
+        Node clonedTable = originalTable.Clone(true);
 
-            // Simple validation: the document should now contain two tables.
-            int tableCount = doc.GetChildNodes(NodeType.Table, true).Count;
-            if (tableCount != 2)
-                throw new InvalidOperationException($"Expected 2 tables, but found {tableCount}.");
+        // Insert the cloned table after the first paragraph.
+        firstParagraph.ParentNode.InsertAfter(clonedTable, firstParagraph);
 
-            // Save the resulting document.
-            doc.Save("ClonedTable.docx");
-        }
+        // Save the document.
+        string outputPath = "ClonedTable.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output file was not created.", outputPath);
     }
 }

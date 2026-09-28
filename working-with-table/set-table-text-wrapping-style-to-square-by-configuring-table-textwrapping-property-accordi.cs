@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,30 +11,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑cell table.
-        Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
+
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 2");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Give the table a fixed width so that text wrapping can be observed.
-        table.PreferredWidth = PreferredWidth.FromPoints(200);
+        // Retrieve the first table in the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Set the table's text wrapping to "Around" (square style).
+        // Set the text wrapping style of the table.
+        // The Square option is not available in the current Aspose.Words version,
+        // so we use the closest available option (Around) to demonstrate wrapping.
         table.TextWrapping = TextWrapping.Around;
 
-        // Optional: define the distance between the table and surrounding text.
-        table.AbsoluteHorizontalDistance = 20;
-        table.AbsoluteVerticalDistance = 20;
+        // Save the document.
+        string outputPath = "TableTextWrapping.docx";
+        doc.Save(outputPath);
 
-        // Add a paragraph after the table to demonstrate the wrapping effect.
-        builder.Writeln(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
-
-        // Save the document to the local file system.
-        doc.Save("TableWrapText.docx");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
     }
 }

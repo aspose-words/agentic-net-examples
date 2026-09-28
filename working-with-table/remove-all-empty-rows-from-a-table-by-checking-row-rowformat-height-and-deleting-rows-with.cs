@@ -11,49 +11,65 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Build a table with four rows: two with content, two empty.
+        builder.StartTable();
 
-        // Add five rows. Even-indexed rows will have zero height (considered empty).
-        for (int i = 0; i < 5; i++)
-        {
-            // Set the height for the current row.
-            // HeightRule.Exactly forces the row to use the specified height.
-            builder.RowFormat.HeightRule = HeightRule.Exactly;
-            builder.RowFormat.Height = (i % 2 == 0) ? 0 : 50; // Zero height for even rows.
+        // Row 1 – contains text.
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 1");
+        builder.EndRow();
 
-            // Insert two cells with some text.
-            builder.InsertCell();
-            builder.Write($"Row {i} Cell 1");
-            builder.InsertCell();
-            builder.Write($"Row {i} Cell 2");
+        // Row 2 – empty row (will be marked with zero height).
+        builder.InsertCell();
+        // No text written – cell remains empty.
+        builder.EndRow();
 
-            // End the current row.
-            builder.EndRow();
-        }
+        // Row 3 – contains text.
+        builder.InsertCell();
+        builder.Writeln("Row 3, Cell 1");
+        builder.EndRow();
+
+        // Row 4 – empty row (will be marked with zero height).
+        builder.InsertCell();
+        // No text written.
+        builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Mark empty rows with zero height.
+        foreach (Row row in table.Rows)
+        {
+            // A row is considered empty if its first cell contains only the end-of-cell marker.
+            string cellText = row.Cells[0].GetText().Replace("\a", string.Empty).Trim();
+            if (string.IsNullOrEmpty(cellText))
+            {
+                row.RowFormat.Height = 0;
+                row.RowFormat.HeightRule = HeightRule.Exactly;
+            }
+        }
+
         // Remove rows that have zero height.
-        // Iterate backwards to avoid index shifting when removing rows.
         for (int i = table.Rows.Count - 1; i >= 0; i--)
         {
             Row row = table.Rows[i];
             if (row.RowFormat.Height == 0)
             {
-                row.Remove();
+                table.Rows.RemoveAt(i);
             }
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
+        // Save the document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Simple verification that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("The output document was not saved correctly.");
-        }
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

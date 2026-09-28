@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Tables;
+using Aspose.Words.Fields;
 
 public class Program
 {
@@ -12,48 +12,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a bookmark that will surround the table.
-        builder.StartBookmark("TableBookmark");
+        // Insert a TOC field at the beginning of the document.
+        // The \b switch tells the TOC to include entries from the specified bookmark.
+        builder.InsertField(@"TOC \b Table1");
+        builder.Writeln(); // Add a paragraph break after the TOC.
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+        // Insert a bookmark that will be referenced by the TOC.
+        builder.StartBookmark("Table1");
+        builder.Writeln("Table 1: Sample Table");
+        builder.EndBookmark("Table1");
 
-        // First row.
+        // Build a simple 2x2 table after the bookmark.
+        builder.StartTable();
+
+        // First row – header cells.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 1");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Write("Cell 2, Row 1");
+        builder.Write("Header 2");
         builder.EndRow();
 
-        // Second row.
+        // Second row – data cells.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 2");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2, Row 2");
+        builder.Write("Cell 2");
         builder.EndRow();
 
-        // Finish the table.
         builder.EndTable();
 
-        // End the bookmark after the table.
-        builder.EndBookmark("TableBookmark");
-
-        // Insert a paragraph break before the TOC.
-        builder.Writeln();
-
-        // Insert a TOC field that references the bookmark containing the table.
-        FieldToc tocField = (FieldToc)builder.InsertField(FieldType.FieldTOC, true);
-        tocField.BookmarkName = "TableBookmark";
-
-        // Update fields so the TOC reflects the current document structure.
+        // Update fields so the TOC reflects the bookmark entry.
         doc.UpdateFields();
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "TableWithToc.docx");
+        // Save the document to the output file.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not created.");
     }
 }

@@ -3,62 +3,53 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 2‑column table.
+        builder.StartTable();
+
+        // First cell.
+        builder.InsertCell();
+        builder.Writeln("Short");
+
+        // Second cell with long initial text.
+        builder.InsertCell();
+        builder.Writeln("This is a long piece of text that would normally cause the column to expand.");
+
+        // End the row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Disable automatic resizing (AutoFit) and fix column widths.
+        // Set a fixed width for each column (e.g., 100 points).
+        foreach (Cell cell in table.FirstRow.Cells)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a new table.
-            Table table = builder.StartTable();
-
-            // First row, first cell – set a fixed width.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-            builder.Writeln("Fixed width 100pt");
-
-            // First row, second cell – set a different fixed width.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-            builder.Writeln("Fixed width 200pt");
-
-            // End the first row.
-            builder.EndRow();
-
-            // Second row, first cell – reuse the same width as the first column.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-            builder.Writeln("Another 100pt cell");
-
-            // Second row, second cell – reuse the same width as the second column.
-            builder.InsertCell();
-            builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-            builder.Writeln("Another 200pt cell");
-
-            // End the second row and the table.
-            builder.EndRow();
-            builder.EndTable();
-
-            // Disable automatic resizing (AutoFit) and keep the column widths fixed.
-            table.AutoFit(AutoFitBehavior.FixedColumnWidths);
-            // Alternatively, you could set: table.AllowAutoFit = false;
-
-            // Define the output file path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputTable.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-
-            // Optionally, inform that the process completed.
-            Console.WriteLine($"Document saved to: {outputPath}");
+            cell.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
         }
+        // Apply the fixed‑column‑width behavior.
+        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+
+        // Add more text to the second cell after AutoFit has been disabled.
+        Cell secondCell = table.Rows[0].Cells[1];
+        secondCell.FirstParagraph.AppendChild(new Run(doc, " Additional long text that would normally expand the column if AutoFit were enabled."));
+
+        // Save the document.
+        string outputPath = "TableAutoFitDisabled.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

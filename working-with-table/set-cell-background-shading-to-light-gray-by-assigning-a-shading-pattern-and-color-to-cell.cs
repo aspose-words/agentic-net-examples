@@ -4,52 +4,38 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableShadingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table.
-            Table table = builder.StartTable();
+        // Build a simple table with one cell.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Cell with light gray shading");
 
-            // Insert first cell and apply light gray solid shading.
-            builder.InsertCell();
-            builder.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-            builder.Write("Cell 1");
+        // Retrieve the cell that was just created.
+        Cell cell = builder.CurrentParagraph.ParentNode as Cell;
+        if (cell == null)
+            throw new InvalidOperationException("Current node is not a table cell.");
 
-            // Insert second cell without special shading.
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        // Apply solid shading with a light gray color.
+        cell.CellFormat.Shading.Texture = TextureIndex.TextureNone; // solid fill
+        cell.CellFormat.Shading.ForegroundPatternColor = Color.LightGray;
 
-            // Insert a second row (no shading needed).
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndRow();
+        // Finish the row and the table.
+        builder.EndRow();
+        builder.EndTable();
 
-            // End the table.
-            builder.EndTable();
+        // Save the document to disk.
+        string outputPath = "TableShading.docx";
+        doc.Save(outputPath);
 
-            // Define output path.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableShading.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output file was not created.");
-
-            // Optionally, you could load the document again to verify shading,
-            // but this example focuses on creation and saving only.
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output file was not created.", outputPath);
     }
 }

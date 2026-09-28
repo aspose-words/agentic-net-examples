@@ -11,42 +11,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
-
-        // First cell – mark it as the first cell in a horizontally merged range.
+        // Build a table with three cells in a single row.
+        builder.StartTable();
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged across three cells");
-
-        // Second cell – merge it with the previous cell.
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-
-        // Third cell – also merge it with the previous cell.
+        builder.Write("Cell 2");
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-
-        // Fourth cell – normal, not merged.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.Write("Normal cell");
-
-        // End the row and the table.
+        builder.Write("Cell 3");
         builder.EndRow();
         builder.EndTable();
 
-        // Define output path (relative to the executable directory).
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedCells.docx");
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Row row = table.Rows[0];
+
+        // Merge the three cells horizontally using CellFormat.HorizontalMerge.
+        Cell firstCell = row.Cells[0];
+        Cell secondCell = row.Cells[1];
+        Cell thirdCell = row.Cells[2];
+
+        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+        thirdCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
         // Save the document.
+        string outputPath = "MergedCells.docx";
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
+            throw new InvalidOperationException("The output file was not created.");
 
-        // Inform the user (optional, no interactive wait).
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Indicate success.
+        Console.WriteLine("Document saved successfully.");
     }
 }

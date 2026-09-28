@@ -11,43 +11,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the number of columns and rows.
-        int columnCount = 3;
-        int rowCount = 2;
+        // Ensure the builder is positioned at the end of the document.
+        builder.MoveToDocumentEnd();
 
-        // Start the table.
+        // Start a table with 3 columns.
         builder.StartTable();
 
-        // Build the table rows and cells.
-        for (int row = 1; row <= rowCount; row++)
-        {
-            for (int col = 1; col <= columnCount; col++)
-            {
-                // Insert a new cell and write some text into it.
-                builder.InsertCell();
-                builder.Write($"Row {row}, Col {col}");
-            }
+        // First row.
+        builder.InsertCell();
+        builder.Writeln("Cell 1,1");
+        builder.InsertCell();
+        builder.Writeln("Cell 1,2");
+        builder.InsertCell();
+        builder.Writeln("Cell 1,3");
+        builder.EndRow();
 
-            // End the current row.
-            builder.EndRow();
-        }
+        // Second row.
+        builder.InsertCell();
+        builder.Writeln("Cell 2,1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2,2");
+        builder.InsertCell();
+        builder.Writeln("Cell 2,3");
+        builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableExample.docx");
-
-        // Save the document.
+        // Save the document to a file.
+        string outputPath = "TableExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
+            throw new Exception($"Failed to create the output file: {outputPath}");
         }
-
-        // Optionally, inform that the process completed successfully.
-        Console.WriteLine($"Document saved successfully to: {outputPath}");
     }
 }

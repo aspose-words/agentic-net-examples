@@ -12,29 +12,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and insert a single cell.
+        // Start a table and add a single cell with some text.
         builder.StartTable();
         builder.InsertCell();
+        builder.Writeln("Diagonal Cell");
 
-        // Apply a diagonal line from top‑left to bottom‑right.
-        builder.CellFormat.Borders[BorderType.DiagonalDown].LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders[BorderType.DiagonalDown].Color = Color.Black;
-        builder.CellFormat.Borders[BorderType.DiagonalDown].LineWidth = 1.0;
+        // Retrieve the cell that was just created.
+        Cell cell = builder.CurrentParagraph.ParentNode as Cell;
+        if (cell == null)
+            throw new InvalidOperationException("Unable to obtain the created cell.");
 
-        // Apply a diagonal line from bottom‑left to top‑right.
-        builder.CellFormat.Borders[BorderType.DiagonalUp].LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders[BorderType.DiagonalUp].Color = Color.Black;
-        builder.CellFormat.Borders[BorderType.DiagonalUp].LineWidth = 1.0;
-
-        // Add some text to the cell.
-        builder.Write("Diagonal lines");
+        // Apply diagonal lines across the cell using border types.
+        cell.CellFormat.Borders[BorderType.DiagonalDown].LineStyle = LineStyle.Single;
+        cell.CellFormat.Borders[BorderType.DiagonalDown].Color = Color.Black;
+        cell.CellFormat.Borders[BorderType.DiagonalUp].LineStyle = LineStyle.Single;
+        cell.CellFormat.Borders[BorderType.DiagonalUp].Color = Color.Black;
 
         // Finish the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DiagonalCell.docx");
+        // Save the document.
+        string outputPath = "DiagonalCell.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

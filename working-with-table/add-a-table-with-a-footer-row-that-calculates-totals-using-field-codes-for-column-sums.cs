@@ -11,53 +11,58 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the table.
-        Table table = builder.StartTable();
+        // Begin the table.
+        builder.StartTable();
 
-        // ----- Header row -----
+        // Header row.
         builder.InsertCell();
-        builder.Font.Bold = true;
         builder.Write("Item");
         builder.InsertCell();
         builder.Write("Quantity");
+        builder.InsertCell();
+        builder.Write("Price");
         builder.EndRow();
 
-        // ----- Data rows -----
-        AddDataRow(builder, "Apples", "20");
-        AddDataRow(builder, "Bananas", "40");
-        AddDataRow(builder, "Carrots", "50");
+        // Sample data rows.
+        string[,] data = {
+            { "Apple",  "10", "0.5" },
+            { "Banana", "5",  "0.3" },
+            { "Orange", "8",  "0.4" }
+        };
 
-        // ----- Footer row with totals -----
+        for (int i = 0; i < data.GetLength(0); i++)
+        {
+            for (int j = 0; j < data.GetLength(1); j++)
+            {
+                builder.InsertCell();
+                builder.Write(data[i, j]);
+            }
+            builder.EndRow();
+        }
+
+        // Footer row with totals calculated by field codes.
         builder.InsertCell();
-        builder.Font.Bold = true;
         builder.Write("Total");
+        // Quantity total.
         builder.InsertCell();
-
-        // Insert a field that sums the values above in the same column.
-        // The field code "=SUM(ABOVE)" calculates the sum of numeric values in the column.
-        builder.InsertField("=SUM(ABOVE)", null);
+        builder.InsertField("=SUM(ABOVE)", "0");
+        // Price total.
+        builder.InsertCell();
+        builder.InsertField("=SUM(ABOVE)", "0");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithFooter.docx");
+        // Update fields so that totals are calculated before saving.
+        doc.UpdateFields();
+
+        // Save the document.
+        string outputPath = "TableWithFooter.docx";
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
-    }
-
-    // Helper method to add a data row with two cells.
-    private static void AddDataRow(DocumentBuilder builder, string item, string quantity)
-    {
-        builder.InsertCell();
-        builder.Font.Bold = false;
-        builder.Write(item);
-        builder.InsertCell();
-        builder.Write(quantity);
-        builder.EndRow();
+            throw new Exception("The output document was not created.");
     }
 }

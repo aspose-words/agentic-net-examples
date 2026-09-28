@@ -1,36 +1,43 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableAutoFitExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use DocumentBuilder to construct a simple 2‑column table.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        Table table = builder.StartTable();
+            // Build a simple 2x2 table.
+            builder.StartTable();
 
-        // First row, first cell.
-        builder.InsertCell();
-        builder.Write("First column");
+            builder.InsertCell();
+            builder.Writeln("Cell 1");
+            builder.InsertCell();
+            builder.Writeln("Cell 2");
+            builder.EndRow();
 
-        // First row, second cell.
-        builder.InsertCell();
-        builder.Write("Second column");
-        builder.EndRow();
+            builder.InsertCell();
+            builder.Writeln("Cell 3");
+            builder.InsertCell();
+            builder.Writeln("Cell 4");
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            builder.EndTable();
 
-        // Apply AutoFit to make the table width adjust to the page margins.
-        table.AutoFit(AutoFitBehavior.AutoFitToWindow);
+            // Retrieve the created table (first table in the document).
+            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AutoFitTable.docx");
-        doc.Save(outputPath);
+            // Apply AutoFit behavior so the table fits the window margins.
+            table.AutoFit(AutoFitBehavior.AutoFitToWindow);
+
+            // Save the document to a file.
+            string outputPath = "TableAutoFit.docx";
+            doc.Save(outputPath);
+        }
     }
 }

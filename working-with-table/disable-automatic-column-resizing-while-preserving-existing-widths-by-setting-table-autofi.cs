@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,29 +11,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Start a table and set explicit column widths.
+        builder.StartTable();
 
-        // Insert first cell and set a fixed preferred width.
+        // First column width.
+        builder.CellFormat.Width = 100; // points
         builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-        builder.Write("Fixed width cell 1");
+        builder.Writeln("First column");
 
-        // Insert second cell and set a fixed preferred width.
+        // Second column width.
+        builder.CellFormat.Width = 150; // points
         builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-        builder.Write("Fixed width cell 2");
+        builder.Writeln("Second column");
 
-        // Finish the row and the table.
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Disable automatic column resizing while preserving the existing column widths.
-        // This can be done by turning off the AllowAutoFit flag.
-        table.AllowAutoFit = false;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Save the document to a file.
-        const string outputFile = "TableAutoFitDisabled.docx";
-        doc.Save(outputFile);
+        // Disable automatic column resizing while preserving the set widths.
+        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+
+        // Save the document.
+        string outputPath = "TableAutoFit.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output file was not created.");
     }
 }

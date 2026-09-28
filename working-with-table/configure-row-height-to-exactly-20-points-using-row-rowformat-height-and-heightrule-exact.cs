@@ -1,44 +1,43 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableRowHeight
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table.
-            Table table = builder.StartTable();
+        // Build a simple table with two rows.
+        builder.StartTable();
 
-            // First row – default height.
-            builder.InsertCell();
-            builder.Write("First row, cell 1.");
-            builder.InsertCell();
-            builder.Write("First row, cell 2.");
-            builder.EndRow();
+        // First row.
+        builder.InsertCell();
+        builder.Writeln("First row, first cell");
+        builder.EndRow();
 
-            // Configure the next row to have an exact height of 20 points.
-            builder.RowFormat.Height = 20.0;
-            builder.RowFormat.HeightRule = HeightRule.Exactly;
+        // Second row – this row will have its height set to exactly 20 points.
+        builder.InsertCell();
+        builder.Writeln("Second row, first cell");
+        builder.EndRow();
 
-            // Second row – will use the exact height set above.
-            builder.InsertCell();
-            builder.Write("Second row, cell 1.");
-            builder.InsertCell();
-            builder.Write("Second row, cell 2.");
-            builder.EndRow();
+        // End the table.
+        builder.EndTable();
 
-            // Finish the table.
-            builder.EndTable();
+        // Access the second row (index 1) and set its height.
+        Row secondRow = doc.FirstSection.Body.Tables[0].Rows[1];
+        secondRow.RowFormat.Height = 20; // Height in points.
+        secondRow.RowFormat.HeightRule = HeightRule.Exactly; // Exact height rule.
 
-            // Save the document to the local file system.
-            string outputPath = "RowHeightExact.docx";
-            doc.Save(outputPath);
-        }
+        // Save the document.
+        string outputPath = "RowHeightExact.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Failed to create the output document.");
     }
 }

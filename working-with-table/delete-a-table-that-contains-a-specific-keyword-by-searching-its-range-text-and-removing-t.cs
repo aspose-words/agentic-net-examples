@@ -11,43 +11,53 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build the first table that contains the keyword "DeleteMe".
-        Table tableWithKeyword = builder.StartTable();
+        // Build the first table (does NOT contain the keyword).
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("This cell will be deleted because it contains the keyword DeleteMe.");
+        builder.Write("First table, cell 1");
+        builder.EndRow();
         builder.InsertCell();
-        builder.Write("Another cell.");
+        builder.Write("First table, cell 2");
         builder.EndRow();
         builder.EndTable();
 
-        // Build a second table that does NOT contain the keyword.
-        Table tableWithoutKeyword = builder.StartTable();
+        // Add a paragraph between tables for clarity.
+        builder.Writeln();
+
+        // Build the second table (contains the keyword "DeleteMe").
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("This table stays.");
-        builder.InsertCell();
-        builder.Write("More content.");
+        builder.Write("This table will be deleted because it contains DeleteMe");
         builder.EndRow();
         builder.EndTable();
 
-        // Search for tables whose full text contains the specific keyword and remove them.
-        NodeCollection allTables = doc.GetChildNodes(NodeType.Table, true);
-        for (int i = allTables.Count - 1; i >= 0; i--)
+        // Save the original document (optional, just for reference).
+        string originalPath = "Original.docx";
+        doc.Save(originalPath);
+
+        // Keyword to search for.
+        const string keyword = "DeleteMe";
+
+        // Find tables whose full text contains the keyword and remove the first match.
+        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+        foreach (Table table in tables)
         {
-            Table tbl = (Table)allTables[i];
-            if (tbl.Range.Text.Contains("DeleteMe"))
+            if (table.Range.Text.Contains(keyword))
             {
-                tbl.Remove();
+                // Remove the table node from the document.
+                table.Remove();
+                break; // Assuming only one table needs to be removed.
             }
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedTable.docx");
+        // Save the modified document.
+        string outputPath = "Result.docx";
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the output file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new Exception($"Failed to create the output file: {outputPath}");
         }
     }
 }

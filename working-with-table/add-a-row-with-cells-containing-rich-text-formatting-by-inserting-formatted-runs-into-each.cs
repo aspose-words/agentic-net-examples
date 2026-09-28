@@ -12,66 +12,69 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
-        Table table = builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-        // ---------- First cell ----------
-        // Insert a cell and add a paragraph with formatted runs.
-        Cell cell1 = builder.InsertCell();
-        Paragraph para1 = cell1.FirstParagraph;
-
-        Run runBold = new Run(doc, "Bold");
-        runBold.Font.Bold = true;
-        para1.AppendChild(runBold);
-
-        Run runSpace1 = new Run(doc, " ");
-        para1.AppendChild(runSpace1);
-
-        Run runItalic = new Run(doc, "Italic");
-        runItalic.Font.Italic = true;
-        para1.AppendChild(runItalic);
-
-        Run runSpace2 = new Run(doc, " ");
-        para1.AppendChild(runSpace2);
-
-        Run runRed = new Run(doc, "Red");
-        runRed.Font.Color = Color.Red;
-        para1.AppendChild(runRed);
-
-        // ---------- Second cell ----------
-        Cell cell2 = builder.InsertCell();
-        Paragraph para2 = cell2.FirstParagraph;
-
-        Run runUnderline = new Run(doc, "Underline");
-        runUnderline.Font.Underline = Underline.Single;
-        para2.AppendChild(runUnderline);
-
-        Run runSpace3 = new Run(doc, " ");
-        para2.AppendChild(runSpace3);
-
-        Run runBlue = new Run(doc, "Blue");
-        runBlue.Font.Color = Color.Blue;
-        para2.AppendChild(runBlue);
-
-        Run runSpace4 = new Run(doc, " ");
-        para2.AppendChild(runSpace4);
-
-        Run runLarge = new Run(doc, "Large");
-        runLarge.Font.Size = 16;
-        para2.AppendChild(runLarge);
-
-        // End the current row.
+        // Add a simple header row.
+        builder.InsertCell();
+        builder.Writeln("Header 1");
+        builder.InsertCell();
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Finish the table.
+        // Add a new row where each cell contains rich‑text formatting.
+
+        // First cell.
+        builder.InsertCell();
+
+        // Bold text.
+        builder.Font.Bold = true;
+        builder.Write("Bold ");
+        builder.Font.Bold = false;
+
+        // Italic text.
+        builder.Font.Italic = true;
+        builder.Write("Italic ");
+        builder.Font.Italic = false;
+
+        // Red colored text.
+        builder.Font.Color = Color.Red;
+        builder.Write("Red");
+        builder.Font.Color = Color.Empty; // Reset to default.
+
+        // Move to the next cell.
+        builder.InsertCell();
+
+        // Underlined text.
+        builder.Font.Underline = Underline.Single;
+        builder.Write("Underline ");
+        builder.Font.Underline = Underline.None;
+
+        // Blue colored text.
+        builder.Font.Color = Color.Blue;
+        builder.Write("Blue");
+        builder.Font.Color = Color.Empty;
+
+        // Large text (16 points).
+        builder.Font.Size = 16;
+        builder.Write(" Large");
+        builder.Font.Size = 12; // Reset to default size (12 points).
+
+        // End the row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RichTextTable.docx");
+        // Save the document to a file.
+        string outputPath = "FormattedTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved successfully.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
+
+        // Inform that the process completed.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

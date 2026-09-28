@@ -1,76 +1,79 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableInsertExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a heading paragraph that we will later locate.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Sample Heading");
+
+        // Add another paragraph so the document has more content.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Some content before the table.");
+
+        // Locate the heading paragraph (first paragraph with Heading1 style).
+        Paragraph headingParagraph = null;
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        foreach (Paragraph para in paragraphs)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Add some content before the heading.
-            builder.Writeln("Introduction paragraph.");
-
-            // Insert a heading paragraph (style Heading1).
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Sample Heading");
-            // Reset style for following paragraphs.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("Paragraph after heading.");
-
-            // Locate the heading paragraph we just added.
-            Paragraph headingParagraph = doc.GetChildNodes(NodeType.Paragraph, true)
-                .Cast<Paragraph>()
-                .First(p => p.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1);
-
-            // Create a new table node.
-            Table table = new Table(doc);
-            // Ensure the table has at least one row and one cell.
-            table.EnsureMinimum();
-
-            // Populate the first row with two cells.
-            Cell cell1 = table.FirstRow.FirstCell;
-            cell1.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
-
-            Cell cell2 = new Cell(doc);
-            cell2.AppendChild(new Paragraph(doc));
-            cell2.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
-            table.FirstRow.AppendChild(cell2);
-
-            // Add a second row with two cells.
-            Row secondRow = new Row(doc);
-            table.AppendChild(secondRow);
-
-            Cell cell3 = new Cell(doc);
-            cell3.AppendChild(new Paragraph(doc));
-            cell3.FirstParagraph.AppendChild(new Run(doc, "Cell 3"));
-            secondRow.AppendChild(cell3);
-
-            Cell cell4 = new Cell(doc);
-            cell4.AppendChild(new Paragraph(doc));
-            cell4.FirstParagraph.AppendChild(new Run(doc, "Cell 4"));
-            secondRow.AppendChild(cell4);
-
-            // Insert the table after the heading paragraph.
-            // The heading's parent is a Body node, which can accept block-level nodes.
-            headingParagraph.ParentNode.InsertAfter(table, headingParagraph);
-
-            // Define output path.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableAfterHeading.docx");
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-
-            // No interactive prompts; program ends here.
+            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
+            {
+                headingParagraph = para;
+                break;
+            }
         }
+
+        if (headingParagraph == null)
+            throw new InvalidOperationException("Heading paragraph not found.");
+
+        // Build a simple 2x2 table manually.
+        Table table = new Table(doc);
+
+        // First row.
+        Row row1 = new Row(doc);
+        Cell cell11 = new Cell(doc);
+        cell11.AppendChild(new Paragraph(doc));
+        cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
+        row1.Cells.Add(cell11);
+
+        Cell cell12 = new Cell(doc);
+        cell12.AppendChild(new Paragraph(doc));
+        cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
+        row1.Cells.Add(cell12);
+        table.Rows.Add(row1);
+
+        // Second row.
+        Row row2 = new Row(doc);
+        Cell cell21 = new Cell(doc);
+        cell21.AppendChild(new Paragraph(doc));
+        cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 3"));
+        row2.Cells.Add(cell21);
+
+        Cell cell22 = new Cell(doc);
+        cell22.AppendChild(new Paragraph(doc));
+        cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 4"));
+        row2.Cells.Add(cell22);
+        table.Rows.Add(row2);
+
+        // Insert the table after the heading paragraph.
+        headingParagraph.ParentNode.InsertAfter(table, headingParagraph);
+
+        // Save the document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output file was not created.");
+
+        // Optionally, you could add further validation here.
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using System.Net;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -14,115 +13,116 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a table with complex merged cells.
-        // Row 1: first cell spans two columns (colspan), third cell normal.
-        // Row 2: first cell normal, second cell starts a vertical merge (rowspan), third cell normal.
-        // Row 3: first cell normal, second cell continues the vertical merge, third cell normal.
-        Table table = builder.StartTable();
+        builder.StartTable();
 
-        // ----- Row 1 -----
+        // First row.
+        // Cell A (rowspan 2)
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Header (colspan 2)");
+        Cell cellA = (Cell)builder.CurrentParagraph.ParentNode;
+        builder.Writeln("Cell A (rowspan 2)");
+        cellA.CellFormat.VerticalMerge = CellMerge.First;
 
-        builder.InsertCell(); // continuation of horizontal merge
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text for merged part.
+        // Cell B (colspan 2)
+        builder.InsertCell();
+        Cell cellB = (Cell)builder.CurrentParagraph.ParentNode;
+        builder.Writeln("Cell B (colspan 2)");
+        cellB.CellFormat.HorizontalMerge = CellMerge.First;
 
-        builder.InsertCell(); // normal cell
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.Write("Header 3");
+        // This cell will be merged horizontally with the previous one.
+        builder.InsertCell();
+        Cell cellC = (Cell)builder.CurrentParagraph.ParentNode;
+        cellC.CellFormat.HorizontalMerge = CellMerge.Previous;
         builder.EndRow();
 
-        // ----- Row 2 -----
-        builder.InsertCell(); // normal cell
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row2 Col1");
+        // Second row.
+        // Continuation of vertical merge for Cell A.
+        builder.InsertCell();
+        Cell cellA2 = (Cell)builder.CurrentParagraph.ParentNode;
+        cellA2.CellFormat.VerticalMerge = CellMerge.Previous;
 
-        builder.InsertCell(); // start of vertical merge
-        builder.CellFormat.VerticalMerge = CellMerge.First;
-        builder.Write("Vertically merged (rowspan 2)");
+        // Cell C
+        builder.InsertCell();
+        Cell cellB2 = (Cell)builder.CurrentParagraph.ParentNode;
+        builder.Writeln("Cell C");
 
-        builder.InsertCell(); // normal cell
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row2 Col3");
-        builder.EndRow();
-
-        // ----- Row 3 -----
-        builder.InsertCell(); // normal cell
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row3 Col1");
-
-        builder.InsertCell(); // continuation of vertical merge
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;
-        // No text for merged part.
-
-        builder.InsertCell(); // normal cell
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Row3 Col3");
+        // Cell D
+        builder.InsertCell();
+        Cell cellC2 = (Cell)builder.CurrentParagraph.ParentNode;
+        builder.Writeln("Cell D");
         builder.EndRow();
 
         builder.EndTable();
 
-        // Ensure horizontal merges are represented by merge flags.
-        table.ConvertToHorizontallyMergedCells();
-
         // Convert the table to plain HTML with proper colspan and rowspan.
-        string html = ConvertTableToHtml(table);
+        string html = ConvertTablesToHtml(doc);
 
         // Save the HTML to a file.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableExport.html");
-        File.WriteAllText(outputPath, html, Encoding.UTF8);
+        string outputPath = "TableOutput.html";
+        File.WriteAllText(outputPath, html);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the HTML output file.");
+
+        // Confirmation.
+        Console.WriteLine($"HTML table saved to '{Path.GetFullPath(outputPath)}'.");
     }
 
-    private static string ConvertTableToHtml(Table table)
+    private static string ConvertTablesToHtml(Document doc)
     {
-        StringBuilder sb = new StringBuilder();
-        sb.AppendLine("<table border=\"1\" cellspacing=\"0\" cellpadding=\"5\">");
+        var tables = doc.GetChildNodes(NodeType.Table, true);
+        if (tables.Count == 0)
+            return string.Empty;
 
-        int rowCount = table.Rows.Count;
+        // Convert only the first table.
+        Table table = (Table)tables[0];
+        StringWriter writer = new StringWriter();
 
-        for (int r = 0; r < rowCount; r++)
+        writer.WriteLine("<table border=\"1\" cellspacing=\"0\" cellpadding=\"5\">");
+
+        for (int rowIdx = 0; rowIdx < table.Rows.Count; rowIdx++)
         {
-            sb.AppendLine("  <tr>");
-            Row row = table.Rows[r];
-            for (int i = 0; i < row.Cells.Count; i++)
-            {
-                Cell cell = row.Cells[i];
+            Row row = table.Rows[rowIdx];
+            writer.WriteLine("<tr>");
 
-                // Skip cells that are continuations of a merged region.
+            for (int cellIdx = 0; cellIdx < row.Cells.Count; cellIdx++)
+            {
+                Cell cell = row.Cells[cellIdx];
+
+                // Skip cells that are continuations of a merge.
                 if (cell.CellFormat.HorizontalMerge == CellMerge.Previous ||
                     cell.CellFormat.VerticalMerge == CellMerge.Previous)
                     continue;
 
-                // Determine colspan.
                 int colspan = 1;
+                int rowspan = 1;
+
+                // Calculate colspan.
                 if (cell.CellFormat.HorizontalMerge == CellMerge.First)
                 {
-                    int j = i + 1;
-                    while (j < row.Cells.Count && row.Cells[j].CellFormat.HorizontalMerge == CellMerge.Previous)
+                    for (int k = cellIdx + 1; k < row.Cells.Count; k++)
                     {
-                        colspan++;
-                        j++;
+                        Cell nextCell = row.Cells[k];
+                        if (nextCell.CellFormat.HorizontalMerge == CellMerge.Previous)
+                            colspan++;
+                        else
+                            break;
                     }
-                    // Advance the loop index to the last merged cell.
-                    i = j - 1;
                 }
 
-                // Determine rowspan.
-                int rowspan = 1;
+                // Calculate rowspan.
                 if (cell.CellFormat.VerticalMerge == CellMerge.First)
                 {
-                    int nextRow = r + 1;
-                    while (nextRow < rowCount)
+                    for (int r = rowIdx + 1; r < table.Rows.Count; r++)
                     {
-                        // The column index in the next row that aligns with the current cell.
-                        // For this simple example we assume column positions are consistent across rows.
-                        Cell nextCell = table.Rows[nextRow].Cells[i];
-                        if (nextCell.CellFormat.VerticalMerge == CellMerge.Previous)
+                        Row nextRow = table.Rows[r];
+                        if (cellIdx < nextRow.Cells.Count)
                         {
-                            rowspan++;
-                            nextRow++;
+                            Cell belowCell = nextRow.Cells[cellIdx];
+                            if (belowCell.CellFormat.VerticalMerge == CellMerge.Previous)
+                                rowspan++;
+                            else
+                                break;
                         }
                         else
                         {
@@ -131,20 +131,22 @@ public class Program
                     }
                 }
 
-                // Get cell text and HTML‑encode it.
-                string cellText = WebUtility.HtmlEncode(cell.GetText().Trim());
+                // Get the plain text of the cell.
+                string cellText = cell.GetText().TrimEnd('\a', '\r', '\n');
 
                 // Build the <td> element.
-                sb.Append("    <td");
-                if (colspan > 1) sb.Append($" colspan=\"{colspan}\"");
-                if (rowspan > 1) sb.Append($" rowspan=\"{rowspan}\"");
-                sb.Append($">{cellText}</td>");
-                sb.AppendLine();
+                writer.Write("<td");
+                if (colspan > 1)
+                    writer.Write($" colspan=\"{colspan}\"");
+                if (rowspan > 1)
+                    writer.Write($" rowspan=\"{rowspan}\"");
+                writer.Write($">{WebUtility.HtmlEncode(cellText)}</td>");
             }
-            sb.AppendLine("  </tr>");
+
+            writer.WriteLine("</tr>");
         }
 
-        sb.AppendLine("</table>");
-        return sb.ToString();
+        writer.WriteLine("</table>");
+        return writer.ToString();
     }
 }

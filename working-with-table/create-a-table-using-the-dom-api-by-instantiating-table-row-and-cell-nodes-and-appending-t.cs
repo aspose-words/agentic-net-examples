@@ -7,43 +7,59 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Create a new table and add it to the document's first section body.
+        // Create a new table node.
         Table table = new Table(doc);
+
+        // ----- First row -----
+        Row row1 = new Row(doc);
+
+        // First cell of first row.
+        Cell cell11 = new Cell(doc);
+        cell11.AppendChild(new Paragraph(doc));
+        cell11.FirstParagraph.AppendChild(new Run(doc, "R1C1"));
+        row1.AppendChild(cell11);
+
+        // Second cell of first row.
+        Cell cell12 = new Cell(doc);
+        cell12.AppendChild(new Paragraph(doc));
+        cell12.FirstParagraph.AppendChild(new Run(doc, "R1C2"));
+        row1.AppendChild(cell12);
+
+        // Add the first row to the table.
+        table.AppendChild(row1);
+
+        // ----- Second row -----
+        Row row2 = new Row(doc);
+
+        // First cell of second row.
+        Cell cell21 = new Cell(doc);
+        cell21.AppendChild(new Paragraph(doc));
+        cell21.FirstParagraph.AppendChild(new Run(doc, "R2C1"));
+        row2.AppendChild(cell21);
+
+        // Second cell of second row.
+        Cell cell22 = new Cell(doc);
+        cell22.AppendChild(new Paragraph(doc));
+        cell22.FirstParagraph.AppendChild(new Run(doc, "R2C2"));
+        row2.AppendChild(cell22);
+
+        // Add the second row to the table.
+        table.AppendChild(row2);
+
+        // Append the table to the document body.
         doc.FirstSection.Body.AppendChild(table);
 
-        // Build a 2x2 table using the DOM API.
-        for (int rowIdx = 0; rowIdx < 2; rowIdx++)
-        {
-            // Create a new row and append it to the table.
-            Row row = new Row(doc);
-            table.AppendChild(row);
-
-            for (int colIdx = 0; colIdx < 2; colIdx++)
-            {
-                // Create a new cell.
-                Cell cell = new Cell(doc);
-
-                // Each cell must contain at least one paragraph.
-                Paragraph paragraph = new Paragraph(doc);
-                cell.AppendChild(paragraph);
-
-                // Add text to the paragraph.
-                Run run = new Run(doc, $"Row {rowIdx + 1}, Cell {colIdx + 1}");
-                paragraph.AppendChild(run);
-
-                // Append the cell to the current row.
-                row.AppendChild(cell);
-            }
-        }
-
-        // Save the document to a file in the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CreatedTable.docx");
+        // Save the document.
+        string outputPath = "CreatedTable.docx";
         doc.Save(outputPath);
 
-        // Indicate that the document has been saved.
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception("Failed to create the output document.");
+        }
     }
 }

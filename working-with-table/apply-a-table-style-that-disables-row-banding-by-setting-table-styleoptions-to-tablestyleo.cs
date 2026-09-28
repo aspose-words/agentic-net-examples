@@ -11,8 +11,8 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
         // First row (header).
         builder.InsertCell();
@@ -23,18 +23,30 @@ public class Program
 
         // Second row (data).
         builder.InsertCell();
-        builder.Write("Data 1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Data 2");
+        builder.Write("Cell 2");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Apply a built‑in style (optional) and disable row banding.
-        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
-        // Setting StyleOptions to None removes all conditional formatting, including row banding.
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Apply a built‑in table style.
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
+
+        // Disable row banding by clearing style options (no row banding flag).
         table.StyleOptions = TableStyleOptions.None;
 
         // Save the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Table_NoRowBanding.docx");
+        string outputPath = "TableNoRowBanding.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

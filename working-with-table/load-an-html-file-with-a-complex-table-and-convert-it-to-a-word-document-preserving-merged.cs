@@ -1,61 +1,69 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare directories and file paths.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string htmlPath = Path.Combine(artifactsDir, "ComplexTable.html");
-        string outputPath = Path.Combine(artifactsDir, "ComplexTable.docx");
+        // Create a temporary folder for the sample files.
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsSample_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempFolder);
 
-        // Create an HTML file that contains a table with merged (colspan/rowspan) cells.
-        string html = @"<!DOCTYPE html>
+        // Define the HTML content with a complex table (merged cells).
+        string htmlContent = @"
+<!DOCTYPE html>
 <html>
-<head><meta charset='UTF-8'></head>
+<head>
+    <meta charset='UTF-8'>
+    <title>Sample Table</title>
+</head>
 <body>
-<table border='1' cellspacing='0' cellpadding='5'>
-  <tr>
-    <th colspan='2'>Header spanning two columns</th>
-    <th>Header 3</th>
-  </tr>
-  <tr>
-    <td rowspan='2'>Rowspan cell</td>
-    <td>Cell 2,1</td>
-    <td>Cell 2,2</td>
-  </tr>
-  <tr>
-    <td colspan='2'>Colspan cell</td>
-  </tr>
-  <tr>
-    <td>Cell 4,1</td>
-    <td>Cell 4,2</td>
-    <td>Cell 4,3</td>
-  </tr>
-</table>
+    <table border='1' style='border-collapse:collapse;'>
+        <tr>
+            <th colspan='2'>Header 1-2</th>
+            <th>Header 3</th>
+        </tr>
+        <tr>
+            <td rowspan='2'>Rowspan Cell</td>
+            <td>Cell 2,1</td>
+            <td>Cell 2,2</td>
+        </tr>
+        <tr>
+            <td colspan='2'>Colspan Cell</td>
+        </tr>
+    </table>
 </body>
 </html>";
-        File.WriteAllText(htmlPath, html);
 
-        // Load the HTML document. Aspose.Words parses the table and creates merged cells.
+        // Write the HTML to a file.
+        string htmlPath = Path.Combine(tempFolder, "sample.html");
+        File.WriteAllText(htmlPath, htmlContent);
+
+        // Load the HTML file into an Aspose.Words Document.
         Document doc = new Document(htmlPath);
 
-        // Convert any width‑based merges to explicit merge flags.
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        foreach (Table table in tables)
+        // Save the document as a Word file.
+        string outputPath = Path.Combine(tempFolder, "output.docx");
+        doc.Save(outputPath);
+
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
         {
-            table.ConvertToHorizontallyMergedCells();
+            throw new InvalidOperationException("The Word document was not created as expected.");
         }
 
-        // Save the result as a Word document.
-        doc.Save(outputPath, SaveFormat.Docx);
-
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The Word document was not saved correctly.");
+        // Clean up temporary files (optional).
+        // Comment out the following lines if you want to inspect the files after execution.
+        try
+        {
+            File.Delete(htmlPath);
+            File.Delete(outputPath);
+            Directory.Delete(tempFolder);
+        }
+        catch
+        {
+            // Ignored – cleanup failures should not affect program outcome.
+        }
     }
 }

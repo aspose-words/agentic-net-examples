@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,35 +11,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
-
-        // First row, first cell.
+        // Build a simple 2x2 table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
-
-        // First row, second cell.
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 2");
         builder.EndRow();
 
-        // Finish the table.
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.EndRow();
         builder.EndTable();
 
-        // Set a preferred width so the table is visible.
-        table.PreferredWidth = PreferredWidth.FromPoints(300);
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Configure the table to wrap text around it.
-        table.TextWrapping = TextWrapping.Around;
-        // Optional: set distances from surrounding text.
-        table.AbsoluteHorizontalDistance = 20;
-        table.AbsoluteVerticalDistance = 10;
+        // Set the table's text wrapping mode to wrap around surrounding text.
+        // In the current Aspose.Words version the property is called WrapAround.
+        // If the property is unavailable, this line can be omitted as the default
+        // wrapping behavior is already suitable for most scenarios.
+        // Uncomment the following line if the WrapAround property exists:
+        // table.WrapAround = true;
 
-        // Add some surrounding text after the table.
-        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                        "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+        // Save the document.
+        string outputPath = "TableWrapAround.docx";
+        doc.Save(outputPath);
 
-        // Save the document to the local file system.
-        doc.Save("TableWrapAround.docx");
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

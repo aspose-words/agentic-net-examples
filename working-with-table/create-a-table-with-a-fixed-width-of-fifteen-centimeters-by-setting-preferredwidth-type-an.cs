@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,25 +11,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
-
-        // Add a single cell with some text.
+        // Build a simple 1x1 table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Fixed width table cell.");
+        builder.Write("Sample cell");
         builder.EndRow();
-
-        // Finish the table.
         builder.EndTable();
 
-        // Convert 15 centimeters to points (1 inch = 2.54 cm, 1 point = 1/72 inch).
-        double points = 15.0 / 2.54 * 72.0;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Set the table's preferred width to the calculated points value.
-        table.PreferredWidth = PreferredWidth.FromPoints(points);
+        // Set the table's preferred width to 15 centimeters.
+        // 1 inch = 2.54 cm, 1 inch = 72 points.
+        double widthPoints = 15.0 * 72.0 / 2.54; // Convert centimeters to points.
+        table.PreferredWidth = PreferredWidth.FromPoints(widthPoints);
 
-        // Save the document to a file.
-        const string outputPath = "TableFixedWidth.docx";
+        // Save the document.
+        string outputPath = "TablePreferredWidth.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The document was not saved.", outputPath);
     }
 }

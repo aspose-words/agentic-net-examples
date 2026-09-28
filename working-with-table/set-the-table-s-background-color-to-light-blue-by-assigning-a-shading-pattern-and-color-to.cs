@@ -3,6 +3,7 @@ using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Drawing; // For TextureIndex
 
 public class Program
 {
@@ -12,37 +13,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and keep a reference to it.
-        Table table = builder.StartTable();
-
-        // First row with two cells.
+        // Build a simple one‑cell table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Sample cell");
         builder.EndRow();
-
-        // Second row with two cells.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
-
-        // Finish building the table.
         builder.EndTable();
 
-        // Apply a solid light‑blue shading to the entire table.
-        table.SetShading(TextureIndex.TextureSolid, Color.Empty, Color.LightBlue);
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Save the document to the local file system.
+        // Apply light blue solid shading to every cell.
+        foreach (Row row in table.Rows)
+        {
+            foreach (Cell cell in row.Cells)
+            {
+                cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+                cell.CellFormat.Shading.ForegroundPatternColor = Color.LightBlue;
+            }
+        }
+
+        // Save the document.
         string outputPath = "TableShading.docx";
         doc.Save(outputPath);
 
-        // Simple validation that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception("The output document was not created.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
     }
 }

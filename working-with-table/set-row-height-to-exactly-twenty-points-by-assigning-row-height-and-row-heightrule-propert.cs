@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,27 +11,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
+        // Build a simple 2‑cell table.
+        builder.StartTable();
 
-        // First row – uses default height settings.
+        // First cell.
         builder.InsertCell();
-        builder.Write("First row (default height).");
+        builder.Write("Cell 1");
+        // End the first row.
         builder.EndRow();
 
-        // Configure the next row to have an exact height of 20 points.
-        builder.RowFormat.Height = 20;               // Height in points.
-        builder.RowFormat.HeightRule = HeightRule.Exactly;
-
-        // Second row – will be exactly 20 points tall.
+        // Second cell (same row).
         builder.InsertCell();
-        builder.Write("Second row (height = 20 points).");
+        builder.Write("Cell 2");
+        // End the second row.
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        doc.Save("RowHeightExample.docx");
+        // Retrieve the first table in the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Set the height of the first row to exactly 20 points.
+        Row firstRow = table.Rows[0];
+        firstRow.RowFormat.Height = 20.0;                     // Height in points.
+        firstRow.RowFormat.HeightRule = HeightRule.Exactly;   // Exact height rule.
+
+        // Save the document.
+        string outputPath = "RowHeight.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

@@ -1,58 +1,56 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace PreventRowBreakAcrossPagesExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple table with three rows.
-            Table table = builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-            // Row 1
-            builder.InsertCell();
-            builder.Write("This is a long piece of text in the first cell. " +
-                          "It is intended to be long enough to potentially span multiple lines.");
-            builder.InsertCell();
-            builder.Write("Second cell, first row.");
-            builder.EndRow();
+        // Insert first row with two cells.
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 2");
+        builder.EndRow();
 
-            // Row 2
-            builder.InsertCell();
-            builder.Write("Second row, first cell with more text to illustrate the setting.");
-            builder.InsertCell();
-            builder.Write("Second row, second cell.");
-            builder.EndRow();
+        // Insert second row with two cells.
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 2");
+        builder.EndRow();
 
-            // Row 3
-            builder.InsertCell();
-            builder.Write("Third row, first cell.");
-            builder.InsertCell();
-            builder.Write("Third row, second cell with additional content.");
-            builder.EndRow();
+        // End the table.
+        builder.EndTable();
 
-            // Finish the table.
-            builder.EndTable();
+        // Retrieve the first row and prevent it from breaking across pages.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Row firstRow = table.Rows[0];
+        firstRow.RowFormat.AllowBreakAcrossPages = false;
 
-            // Iterate through each row in the table and disable breaking across pages.
-            foreach (Row row in table.Rows)
-            {
-                // Setting AllowBreakAcrossPages to false keeps the entire row together on a single page.
-                row.RowFormat.AllowBreakAcrossPages = false;
-            }
+        // Save the document.
+        string outputPath = "PreventRowBreak.docx";
+        doc.Save(outputPath);
 
-            // Save the document to the local file system.
-            string outputPath = "PreventRowBreakAcrossPages.docx";
-            doc.Save(outputPath);
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
 
-            // Inform the user that the file has been created.
-            Console.WriteLine($"Document saved to: {outputPath}");
-        }
+        // Reload the document and confirm the setting persisted.
+        Document loadedDoc = new Document(outputPath);
+        Table loadedTable = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+        Row loadedFirstRow = loadedTable.Rows[0];
+        if (loadedFirstRow.RowFormat.AllowBreakAcrossPages)
+            throw new InvalidOperationException("AllowBreakAcrossPages was not set to false as expected.");
+
+        // Program completed successfully.
     }
 }

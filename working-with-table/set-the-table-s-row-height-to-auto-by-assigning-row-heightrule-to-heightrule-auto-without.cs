@@ -11,35 +11,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x1 table.
-        Table table = builder.StartTable();
-
-        // First row.
+        // Build a simple table with one row and one cell.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("First row, first cell.");
+        builder.Writeln("Sample cell");
         builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Second row, first cell.");
-        builder.EndRow();
-
-        // Finish the table.
         builder.EndTable();
 
-        // Set the height rule of the first row to Auto (no explicit height).
-        // This demonstrates the required operation.
-        Row firstRow = table.Rows[0];
-        firstRow.RowFormat.HeightRule = HeightRule.Auto;
+        // Retrieve the first table and its first row.
+        Table table = doc.FirstSection.Body.Tables[0];
+        Row row = table.Rows[0];
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableRowHeightAuto.docx");
+        // Set the row height rule to Auto (do not specify an explicit height).
+        row.RowFormat.HeightRule = HeightRule.Auto;
+
+        // Save the document to a file.
+        string outputPath = "TableRowHeightAuto.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
+
+        // Optionally, inform that the process completed successfully.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }
