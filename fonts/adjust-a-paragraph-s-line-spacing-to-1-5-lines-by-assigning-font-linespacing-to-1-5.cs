@@ -1,40 +1,43 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
-public class Program
+public class LineSpacingExample
 {
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content.
+        // Use DocumentBuilder to add a paragraph with some text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph will have 1.5 line spacing.");
 
-        // Set the paragraph line spacing to 1.5 lines.
-        // In Aspose.Words, 1 line = 12 points. 1.5 lines = 18 points.
-        builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 18; // points
+        // Retrieve the paragraph that was just added.
+        Paragraph paragraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
 
-        // Add a sample paragraph.
-        builder.Writeln("This paragraph uses 1.5 line spacing.");
+        // Set the line spacing rule to Multiple and the spacing to 1.5 lines.
+        paragraph.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
+        paragraph.ParagraphFormat.LineSpacing = 1.5;
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ParagraphLineSpacing.docx");
+        // Validate that the line spacing was set correctly.
+        if (paragraph.ParagraphFormat.LineSpacingRule != LineSpacingRule.Multiple ||
+            Math.Abs(paragraph.ParagraphFormat.LineSpacing - 1.5) > 0.001)
+        {
+            throw new InvalidOperationException("Line spacing was not set correctly.");
+        }
 
-        // Save the document.
+        // Save the document to disk.
+        string outputPath = "LineSpacingExample.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
-        if (File.Exists(outputPath))
+        // Ensure the output file exists.
+        if (!File.Exists(outputPath))
         {
-            Console.WriteLine("Document saved successfully: " + outputPath);
+            throw new FileNotFoundException("The output file was not created.", outputPath);
         }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+
+        // Optionally, write a confirmation to the console (no user interaction required).
+        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

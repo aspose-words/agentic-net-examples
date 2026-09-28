@@ -7,11 +7,12 @@
     "preferred_workflow": "Use Aspose.Words font APIs with correct type usage and explicit namespace disambiguation.",
     "required_packages": [
       "Aspose.Words",
-      "Aspose.Drawing.Common"
+      "Aspose.Drawing.Common",
+      "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.8.0",
-      "Aspose.Drawing.Common": "25.11.0"
+      "Aspose.Words": "26.9.0",
+      "Aspose.Drawing.Common": "26.8.0"
     },
     "required_namespaces": [
       "System",
@@ -252,8 +253,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 15,
@@ -296,8 +297,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 19,
@@ -307,8 +308,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 20,
@@ -318,8 +319,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 21,
@@ -351,8 +352,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 24,
@@ -362,8 +363,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 25,
@@ -373,8 +374,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 26,

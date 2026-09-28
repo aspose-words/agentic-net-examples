@@ -1,40 +1,73 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Replacing;
+using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a sample document with a few headings.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Paths for temporary and final documents
+        string samplePath = "sample.docx";
+        string outputPath = "output.docx";
 
+        // Create a sample document with headings
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+
+        // Add Heading 1
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Sample Heading 1");
 
+        // Add normal paragraph
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is a normal paragraph.");
+
+        // Add Heading 2
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.Writeln("Sample Heading 2");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Sample Heading 3");
+        // Save the sample document
+        sampleDoc.Save(samplePath, SaveFormat.Docx);
 
-        // Change all heading paragraphs to bold 16‑point font.
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Load the document
+        Document doc = new Document(samplePath);
+
+        // Change all headings to bold 16-point font
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        foreach (Paragraph para in paragraphs)
         {
-            if (paragraph.ParagraphFormat.IsHeading)
+            StyleIdentifier styleId = para.ParagraphFormat.StyleIdentifier;
+            if (styleId >= StyleIdentifier.Heading1 && styleId <= StyleIdentifier.Heading9)
             {
-                foreach (Run run in paragraph.Runs)
+                foreach (Run run in para.Runs)
                 {
-                    run.Font.Size = 16;
-                    run.Font.Bold = true;
+                    // Use Aspose.Words.Font for text formatting
+                    Aspose.Words.Font font = run.Font;
+                    font.Bold = true;
+                    font.Size = 16;
+
+                    // Validation: ensure properties are set
+                    if (!font.Bold || Math.Abs(font.Size - 16) > 0.01)
+                    {
+                        throw new InvalidOperationException("Font properties were not applied correctly.");
+                    }
                 }
             }
         }
 
-        // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        doc.Save(outputPath);
+        // Save the modified document
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // Verify that the output file exists
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document processed and saved successfully.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

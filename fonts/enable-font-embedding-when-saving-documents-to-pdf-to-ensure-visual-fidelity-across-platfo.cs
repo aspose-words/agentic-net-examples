@@ -7,34 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for output files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Build a simple document with a couple of different fonts.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Add a paragraph with sample text.
+        builder.Writeln("This is a sample text to demonstrate font embedding in PDF.");
+
+        // Set the font for the paragraph.
         builder.Font.Name = "Arial";
-        builder.Writeln("This paragraph uses Arial.");
 
-        builder.Font.Name = "Courier New";
-        builder.Writeln("This paragraph uses Courier New.");
-
-        // Configure PDF save options to embed all fonts in the output PDF.
+        // Define PDF save options with font embedding enabled.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            EmbedFullFonts = true,
-            FontEmbeddingMode = Aspose.Words.Saving.PdfFontEmbeddingMode.EmbedAll
+            // Embed all fonts used in the document.
+            EmbedFullFonts = true
         };
 
-        // Save the document as PDF.
-        string pdfPath = Path.Combine(artifactsDir, "EmbeddedFonts.pdf");
-        doc.Save(pdfPath, saveOptions);
+        // Define output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EmbeddedFontOutput.pdf");
 
-        // Verify that the PDF file was created.
-        Console.WriteLine(File.Exists(pdfPath)
-            ? $"PDF saved successfully to: {pdfPath}"
-            : "Failed to save PDF.");
+        // Save the document as PDF with the specified options.
+        doc.Save(outputPath, saveOptions);
+
+        // Verify that the file was created.
+        bool fileExists = File.Exists(outputPath);
+        Console.WriteLine($"PDF saved to '{outputPath}'. File exists: {fileExists}");
     }
 }

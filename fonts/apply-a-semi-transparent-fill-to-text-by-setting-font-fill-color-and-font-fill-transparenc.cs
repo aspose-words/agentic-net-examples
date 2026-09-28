@@ -1,50 +1,48 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Drawing; // For Aspose.Drawing.Color
+using Aspose.Drawing;
 
-public class Program
+namespace FontFillExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a line of text.
-        builder.Writeln("Hello, semi‑transparent fill!");
-
-        // Access the font of the last inserted run.
-        Aspose.Words.Font font = builder.Font;
-
-        // Define a solid fill color (red) using Aspose.Drawing.Color.
-        Aspose.Drawing.Color fillColor = Aspose.Drawing.Color.Red;
-
-        // Apply the fill color to the font. The Solid method expects System.Drawing.Color,
-        // so convert the Aspose.Drawing.Color to System.Drawing.Color.
-        font.Fill.Solid(System.Drawing.Color.FromArgb(fillColor.ToArgb()));
-
-        // Set the fill transparency to 50% (0.5).
-        font.Fill.Transparency = 0.5;
-
-        // Validate that the properties were set correctly.
-        if (font.Fill.Color.ToArgb() != fillColor.ToArgb() ||
-            Math.Abs(font.Fill.Transparency - 0.5) > 0.0001)
+        public static void Main()
         {
-            throw new InvalidOperationException("Fill properties were not applied as expected.");
+            // Create a new blank document.
+            Document doc = new Document();
+
+            // Use DocumentBuilder to add a paragraph with text.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello, semi‑transparent text!");
+
+            // Create an Aspose.Drawing.Color (red) and convert it to System.Drawing.Color.
+            Aspose.Drawing.Color asposeColor = Aspose.Drawing.Color.Red;
+            System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(asposeColor.ToArgb());
+
+            // Apply the fill color and set transparency (0.0 = opaque, 1.0 = fully transparent).
+            builder.Font.Fill.Color = sysColor;
+            builder.Font.Fill.Transparency = 0.5; // 50 % transparent
+
+            // Validate that the properties were set correctly.
+            double transparency = builder.Font.Fill.Transparency;
+            System.Drawing.Color appliedColor = builder.Font.Fill.Color;
+
+            if (Math.Abs(transparency - 0.5) > 0.0001 ||
+                appliedColor.ToArgb() != sysColor.ToArgb())
+            {
+                throw new InvalidOperationException("Font fill properties were not applied correctly.");
+            }
+
+            // Save the document to disk.
+            string outputPath = "Output.docx";
+            doc.Save(outputPath);
+
+            // Ensure the file was created.
+            if (!File.Exists(outputPath))
+            {
+                throw new FileNotFoundException("The output file was not created.", outputPath);
+            }
         }
-
-        // Ensure the output directory exists.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "SemiTransparentFill.docx");
-
-        // Save the document.
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The document was not saved.", outputPath);
     }
 }
