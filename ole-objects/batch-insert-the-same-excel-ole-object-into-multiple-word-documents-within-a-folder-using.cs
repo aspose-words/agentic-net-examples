@@ -1,53 +1,118 @@
 using System;
 using System.IO;
-using Aspose.Words;
+using System.Runtime.InteropServices;
 
-public class BatchOleInserter
+public class Program
 {
     public static void Main()
     {
-        // Folder containing the Word documents to process.
-        // Adjust these paths as needed; they can be absolute or relative.
-        string inputFolder = @"C:\Docs\Input";
-        string outputFolder = @"C:\Docs\Output";
-        string excelFilePath = @"C:\Data\Sample.xlsx";
+        // Folder containing Word documents
+        string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "WordDocs");
+        // Path to the Excel file to embed
+        string excelPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.xlsx");
 
-        // Verify that the input folder exists; if not, inform the user and exit gracefully.
-        if (!Directory.Exists(inputFolder))
+        // Ensure the folder exists
+        if (!Directory.Exists(folderPath))
         {
-            Console.WriteLine($"Input folder does not exist: {inputFolder}");
+            Console.WriteLine($"Folder not found: {folderPath}");
             return;
         }
 
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
-
-        // Get all .docx files in the input folder.
-        string[] docFiles = Directory.GetFiles(inputFolder, "*.docx");
-
-        foreach (string docPath in docFiles)
+        // Ensure the Excel file exists
+        if (!File.Exists(excelPath))
         {
-            // Load the existing Word document.
-            Document doc = new Document(docPath);
+            Console.WriteLine($"Excel file not found: {excelPath}");
+            return;
+        }
 
-            // Create a DocumentBuilder for the loaded document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create Word Application via late binding (no compile‑time reference to Interop)
+        Type wordAppType = Type.GetTypeFromProgID("Word.Application");
+        if (wordAppType == null)
+        {
+            Console.WriteLine("Microsoft Word is not installed on this machine.");
+            return;
+        }
 
-            // Move to the end of the document to insert the OLE object.
-            builder.MoveToDocumentEnd();
+        dynamic wordApp = null;
+        try
+        {
+            wordApp = Activator.CreateInstance(wordAppType);
+            wordApp.Visible = false;
 
-            // Optional: add a paragraph before the OLE object.
-            builder.Writeln("Embedded Excel workbook:");
+            foreach (string docPath in Directory.GetFiles(folderPath, "*.docx"))
+            {
+                dynamic doc = null;
+                try
+                {
+                    // Open the document (ReadOnly = false, Visible = false)
+                    object readOnly = false;
+                    object isVisible = false;
+                    object missing = Type.Missing;
 
-            // Insert the Excel file as an embedded OLE object (not as an icon).
-            // Using the overload: InsertOleObject(string fileName, bool isLinked, bool asIcon, Stream presentation)
-            builder.InsertOleObject(excelFilePath, false, false, null);
+                    doc = wordApp.Documents.Open(
+                        docPath,
+                        ref missing,          // ConfirmConversions
+                        ref readOnly,         // ReadOnly
+                        ref missing,          // AddToRecentFiles
+                        ref missing,          // PasswordDocument
+                        ref missing,          // PasswordTemplate
+                        ref missing,          // Revert
+                        ref missing,          // WritePasswordDocument
+                        ref missing,          // WritePasswordTemplate
+                        ref missing,          // Format
+                        ref missing,          // Encoding
+                        ref isVisible,        // Visible
+                        ref missing,          // OpenAndRepair
+                        ref missing,          // DocumentDirection
+                        ref missing,          // NoEncodingDialog
+                        ref missing);         // XMLTransform
 
-            // Determine the output file path (same file name, different folder).
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(docPath));
+                    // Get a range at the end of the document
+                    dynamic range = doc.Content;
+                    // wdCollapseEnd = 0
+                    range.Collapse(0);
 
-            // Save the modified document.
-            doc.Save(outputPath);
+                    // Prepare parameters for AddOLEObject
+                    object classType = "Excel.Sheet";
+                    object fileName = excelPath;
+                    object linkToFile = false;
+                    object displayAsIcon = false;
+                    object iconFileName = missing;
+                    object iconIndex = missing;
+                    object iconLabel = missing;
+                    object oleRange = range;
+
+                    // Insert the Excel OLE object
+                    dynamic ole = doc.InlineShapes.AddOLEObject(
+                        classType,
+                        fileName,
+                        linkToFile,
+                        displayAsIcon,
+                        iconFileName,
+                        iconIndex,
+                        iconLabel,
+                        oleRange);
+
+                    // Save and close the document
+                    doc.Save();
+                }
+                finally
+                {
+                    if (doc != null)
+                    {
+                        doc.Close();
+                        Marshal.FinalReleaseComObject(doc);
+                    }
+                }
+            }
+        }
+        finally
+        {
+            if (wordApp != null)
+            {
+                wordApp.Quit();
+                Marshal.FinalReleaseComObject(wordApp);
+            }
         }
 
         Console.WriteLine("Processing completed.");

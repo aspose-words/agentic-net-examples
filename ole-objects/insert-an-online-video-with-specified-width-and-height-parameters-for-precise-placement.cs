@@ -1,42 +1,43 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Diagnostics;
 
-public class InsertOnlineVideoExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
+        // Video parameters
+        string videoUrl = "https://www.youtube.com/embed/dQw4w9WgXcQ";
+        int width = 560;
+        int height = 315;
 
-        // Initialize DocumentBuilder for the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Build HTML content with the embedded video
+        string htmlContent = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""UTF-8"">
+    <title>Embedded Video</title>
+</head>
+<body>
+    <h2>Embedded Online Video</h2>
+    <iframe width=""{width}"" height=""{height}"" src=""{videoUrl}"" 
+            frameborder=""0"" allow=""accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"" 
+            allowfullscreen>
+    </iframe>
+</body>
+</html>";
 
-        // URL of the online video to embed.
-        string videoUrl = "https://vimeo.com/52477838";
+        // Write HTML to a temporary file
+        string filePath = Path.Combine(Path.GetTempPath(), "EmbeddedVideo.html");
+        File.WriteAllText(filePath, htmlContent);
 
-        // Insert the online video with explicit positioning and size.
-        // Parameters:
-        // - videoUrl: URL of the video.
-        // - RelativeHorizontalPosition.LeftMargin: distance measured from the left margin.
-        // - left: 0 points from the left margin.
-        // - RelativeVerticalPosition.TopMargin: distance measured from the top margin.
-        // - top: 0 points from the top margin.
-        // - width: 320 points (approx. 4.44 inches).
-        // - height: 180 points (approx. 2.5 inches).
-        // - WrapType.Square: text wraps around the video shape.
-        builder.InsertOnlineVideo(
-            videoUrl,
-            RelativeHorizontalPosition.LeftMargin, 0,
-            RelativeVerticalPosition.TopMargin, 0,
-            320, 180,
-            WrapType.Square);
-
-        // Define the output path (in the current working directory).
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "OnlineVideo.docx");
-
-        // Save the document.
-        doc.Save(outputPath);
+        // Open the HTML file in the default browser
+        var psi = new ProcessStartInfo
+        {
+            FileName = filePath,
+            UseShellExecute = true
+        };
+        Process.Start(psi);
     }
 }

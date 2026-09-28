@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -8,28 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Path to the input DOCX file.
-        string inputPath = "Sample.docx";
+        // Path to the DOCX file to process.
+        const string inputPath = "input.docx";
 
-        // Ensure the file exists. If it does not, create an empty document and save it.
+        // Verify that the file exists before attempting to load it.
         if (!File.Exists(inputPath))
         {
-            Document emptyDoc = new Document(); // Create a blank document.
-            emptyDoc.Save(inputPath);           // Save it so that the file exists for loading.
+            Console.WriteLine($"File not found: {Path.GetFullPath(inputPath)}");
+            return;
         }
 
         // Load the document.
         Document doc = new Document(inputPath);
 
-        // Iterate through all shapes in the document.
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
+        // Retrieve all Shape nodes in the document (OLE objects are stored as Shape nodes).
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+        // Iterate through each Shape node and process those that are OLE objects.
+        foreach (Shape shape in shapes)
         {
-            // Check if the shape contains an OLE object.
-            OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat != null)
+            if (shape.ShapeType == ShapeType.OleObject && shape.OleFormat != null)
             {
-                // Log the ProgId and display size (width and height in points).
-                Console.WriteLine($"OLE Object ProgId: {oleFormat.ProgId}, Size: {shape.Width}x{shape.Height} points");
+                // ProgId identifies the type of OLE object (e.g., Excel.Sheet.12).
+                string progId = shape.OleFormat.ProgId;
+
+                // Width and Height are measured in points.
+                double width = shape.Width;
+                double height = shape.Height;
+
+                Console.WriteLine($"OLE Object ProgId: {progId}, Size: {width:F2}pt x {height:F2}pt");
             }
         }
     }

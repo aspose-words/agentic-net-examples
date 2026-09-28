@@ -1,71 +1,83 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Text;
 
-public class Program
+public class OlePackage
+{
+    public byte[] Data { get; private set; }
+    public string Label { get; set; }
+
+    public OlePackage(byte[] data, string label)
+    {
+        Data = data ?? Array.Empty<byte>();
+        Label = label ?? string.Empty;
+    }
+
+    // Save the package to a file using a simple binary format:
+    // [labelLength][labelUtf8][dataLength][data]
+    public void SaveToFile(string path)
+    {
+        using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
+        using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: false))
+        {
+            byte[] labelBytes = Encoding.UTF8.GetBytes(Label);
+            writer.Write(labelBytes.Length);
+            writer.Write(labelBytes);
+            writer.Write(Data.Length);
+            writer.Write(Data);
+        }
+    }
+
+    // Load a package from a file written by SaveToFile.
+    public static OlePackage LoadFromFile(string path)
+    {
+        using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+        using (var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: false))
+        {
+            int labelLength = reader.ReadInt32();
+            string label = Encoding.UTF8.GetString(reader.ReadBytes(labelLength));
+            int dataLength = reader.ReadInt32();
+            byte[] data = reader.ReadBytes(dataLength);
+            return new OlePackage(data, label);
+        }
+    }
+}
+
+public class OlePackageDemo
 {
     public static void Main()
     {
-        // Prepare a simple byte array to act as the content of the legacy OLE package.
-        byte[] packageData = System.Text.Encoding.UTF8.GetBytes("This is the content of a legacy OLE package.");
+        // Prepare temporary file path
+        string tempFile = Path.Combine(Path.GetTempPath(), "OlePackageDemo.bin");
 
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the OLE package into the document as an icon.
-        using (MemoryStream stream = new MemoryStream(packageData))
+        try
         {
-            // "Package" progId indicates a generic OLE package.
-            Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
+            // Create sample data for the OLE package
+            byte[] data = Encoding.UTF8.GetBytes("Sample OLE package content");
 
-            // Access the OlePackage and set its properties.
-            OlePackage olePackage = oleShape.OleFormat.OlePackage;
-            olePackage.FileName = "SamplePackage.txt";
-            olePackage.DisplayName = "Sample Package Display Name.txt";
+            // Create an OlePackage with an initial label
+            OlePackage package = new OlePackage(data, "Original Package");
+            package.SaveToFile(tempFile);
+
+            // Load the package from the file and display its label
+            OlePackage loaded = OlePackage.LoadFromFile(tempFile);
+            Console.WriteLine($"Loaded label: {loaded.Label}");
+
+            // Modify the label and save again
+            loaded.Label = "Modified Package";
+            loaded.SaveToFile(tempFile);
+
+            // Reload to verify the change
+            OlePackage reloaded = OlePackage.LoadFromFile(tempFile);
+            Console.WriteLine($"Reloaded label: {reloaded.Label}");
         }
-
-        // Save the document containing the OLE package.
-        string originalPath = "OlePackageDemo.docx";
-        doc.Save(originalPath);
-
-        // Load the saved document.
-        Document loadedDoc = new Document(originalPath);
-
-        // Find the first shape that contains an OLE object.
-        Shape shapeWithOle = null;
-        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
+        finally
         {
-            if (shape.OleFormat != null && shape.OleFormat.OlePackage != null)
+            // Clean up the temporary file
+            if (File.Exists(tempFile))
             {
-                shapeWithOle = shape;
-                break;
+                File.Delete(tempFile);
             }
-        }
-
-        if (shapeWithOle != null)
-        {
-            OlePackage loadedPackage = shapeWithOle.OleFormat.OlePackage;
-
-            // Read and display the current properties.
-            Console.WriteLine("Original FileName: " + loadedPackage.FileName);
-            Console.WriteLine("Original DisplayName: " + loadedPackage.DisplayName);
-
-            // Modify the properties.
-            loadedPackage.FileName = "ModifiedPackage.txt";
-            loadedPackage.DisplayName = "Modified Package Display Name.txt";
-
-            // Save the modified document.
-            string modifiedPath = "OlePackageDemoModified.docx";
-            loadedDoc.Save(modifiedPath);
-
-            // Output confirmation.
-            Console.WriteLine("Modified OLE package properties saved to " + modifiedPath);
-        }
-        else
-        {
-            Console.WriteLine("No OLE package found in the document.");
         }
     }
 }

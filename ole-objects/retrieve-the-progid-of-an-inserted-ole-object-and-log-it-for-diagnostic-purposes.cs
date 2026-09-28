@@ -1,49 +1,55 @@
 using System;
-using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
-public class OleProgIdExample
+public class Program
 {
     public static void Main()
     {
-        // Create a temporary text file to embed as an OLE object.
-        string tempFilePath = Path.Combine(Path.GetTempPath(), "SampleText.txt");
-        File.WriteAllText(tempFilePath, "This is a sample text file for OLE embedding.");
+        const string progId = "Shell.Application";
 
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the temporary file as an embedded OLE object (not as an icon).
-        // Parameters: file name, isLinked = false, asIcon = false, presentation = null.
-        builder.InsertOleObject(tempFilePath, false, false, null);
-
-        // Retrieve the first shape in the document, which should be the OLE object we just inserted.
-        Shape oleShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
-        if (oleShape != null && oleShape.OleFormat != null)
+        try
         {
-            // Access the OleFormat of the shape and get its ProgId.
-            OleFormat oleFormat = oleShape.OleFormat;
-            string progId = oleFormat.ProgId;
+            // Get the COM type from the known ProgID
+            Type comType = Type.GetTypeFromProgID(progId);
+            if (comType == null)
+            {
+                Console.WriteLine($"ProgID '{progId}' not found.");
+                return;
+            }
 
-            // Log the ProgId to the console.
-            Console.WriteLine($"Inserted OLE object's ProgId: {progId}");
+            // Create an instance of the COM object
+            object comObject = Activator.CreateInstance(comType);
+
+            // Retrieve the ProgID by looking it up in the registry using the CLSID (GUID)
+            string retrievedProgId = GetProgIdFromGuid(comType.GUID);
+
+            Console.WriteLine($"Inserted OLE object ProgID: {retrievedProgId}");
+
+            // Release the COM object
+            Marshal.ReleaseComObject(comObject);
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine("No OLE object found in the document.");
+            Console.WriteLine($"Error: {ex.Message}");
         }
+    }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleProgIdExample.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
-
-        // Clean up the temporary file.
-        if (File.Exists(tempFilePath))
+    private static string GetProgIdFromGuid(Guid guid)
+    {
+        // Registry path: HKEY_CLASSES_ROOT\CLSID\{guid}\ProgID
+        string keyPath = $@"CLSID\{{{guid}}}\ProgID";
+        using RegistryKey key = Registry.ClassesRoot.OpenSubKey(keyPath);
+        if (key != null)
         {
-            File.Delete(tempFilePath);
+            // The default value of the ProgID subkey holds the ProgID string
+            object value = key.GetValue(null);
+            if (value is string progId)
+            {
+                return progId;
+            }
         }
+
+        return "Unknown ProgID";
     }
 }

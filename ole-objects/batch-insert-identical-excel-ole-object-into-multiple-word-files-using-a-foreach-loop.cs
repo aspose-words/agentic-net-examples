@@ -1,70 +1,60 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 
-namespace OleBatchInsertExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        // Path to the Excel file that will be embedded as an OLE object.
-        private static readonly string ExcelFilePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Data\Sample.xlsx"));
+        // Path to the Excel file that will be inserted as an OLE object.
+        string excelPath = "sample.xlsx";
 
-        // Folder containing the Word documents to be processed.
-        private static readonly string InputFolder = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Input"));
-
-        // Folder where the modified documents will be saved.
-        private static readonly string OutputFolder = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Output"));
-
-        public static void Main()
+        // Ensure the Excel file exists; if not, create an empty placeholder file.
+        if (!File.Exists(excelPath))
         {
-            // Verify that the Excel file exists.
-            if (!File.Exists(ExcelFilePath))
+            File.WriteAllBytes(excelPath, new byte[0]);
+        }
+
+        // List of Word documents to process.
+        string[] wordFiles = new string[]
+        {
+            "Doc1.docx",
+            "Doc2.docx",
+            "Doc3.docx"
+        };
+
+        // Output directory for the modified documents.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+
+        foreach (string wordFile in wordFiles)
+        {
+            // Skip if the source Word file does not exist.
+            if (!File.Exists(wordFile))
+                continue;
+
+            // Load the Word document.
+            Document doc = new Document(wordFile);
+
+            // Create a DocumentBuilder for inserting content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Move to the end of the document (or any desired location).
+            builder.MoveToDocumentEnd();
+
+            // Insert the Excel OLE object using streams (required by the API version).
+            using (FileStream oleStream = File.OpenRead(excelPath))
+            using (MemoryStream displayNameStream = new MemoryStream(Encoding.UTF8.GetBytes("Sample Excel")))
             {
-                Console.WriteLine($"Excel file not found: {ExcelFilePath}");
-                return;
+                // Overload: InsertOleObject(Stream oleStream, string progId, bool isObjectIcon, Stream displayName)
+                builder.InsertOleObject(oleStream, "Excel.Sheet", false, displayNameStream);
             }
 
-            // Ensure the input and output directories exist.
-            Directory.CreateDirectory(InputFolder);
-            Directory.CreateDirectory(OutputFolder);
-
-            // Collect all .docx files from the input folder.
-            List<string> wordFiles = new List<string>(Directory.GetFiles(InputFolder, "*.docx"));
-
-            // If there are no files, inform the user and exit gracefully.
-            if (wordFiles.Count == 0)
-            {
-                Console.WriteLine($"No .docx files found in: {InputFolder}");
-                return;
-            }
-
-            foreach (string wordFilePath in wordFiles)
-            {
-                // Load the existing Word document.
-                Document doc = new Document(wordFilePath);
-
-                // Create a DocumentBuilder for the loaded document.
-                DocumentBuilder builder = new DocumentBuilder(doc);
-
-                // Move the cursor to the end of the document.
-                builder.MoveToDocumentEnd();
-
-                // Insert a paragraph break before the OLE object for readability.
-                builder.Writeln();
-
-                // Insert the Excel OLE object (embedded, not as an icon, no custom presentation image).
-                // Overload used: InsertOleObject(string fileName, bool isLinked, bool asIcon, Stream presentation)
-                builder.InsertOleObject(ExcelFilePath, false, false, null);
-
-                // Determine the output file name (preserve original name, place in output folder).
-                string outputFilePath = Path.Combine(OutputFolder, Path.GetFileName(wordFilePath));
-
-                // Save the modified document.
-                doc.Save(outputFilePath);
-            }
-
-            Console.WriteLine("OLE objects inserted successfully.");
+            // Save the modified document.
+            string outputPath = Path.Combine(outputDir,
+                Path.GetFileNameWithoutExtension(wordFile) + "_WithExcel.docx");
+            doc.Save(outputPath);
         }
     }
 }

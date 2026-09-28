@@ -1,67 +1,57 @@
 using System;
 using System.IO;
-using System.Linq;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Text;
 
-public class Program
+public class OlePackageDemo
 {
     public static void Main()
     {
-        // Prepare a temporary folder for test files.
-        string baseDir = Path.Combine(Environment.CurrentDirectory, "OleExample");
-        Directory.CreateDirectory(baseDir);
+        string tempFile = Path.Combine(Path.GetTempPath(), "OlePackageDemo.tmp");
+        string originalFileName = "sample.txt";
 
-        // Create a source file that will be embedded as an OLE package.
-        string sourceFilePath = Path.Combine(baseDir, "sample.txt");
-        File.WriteAllText(sourceFilePath, "This is a sample text file for OLE package testing.");
+        // 1. Create a minimal Ole10Native binary file containing the file name.
+        CreateOlePackage(tempFile, originalFileName);
 
-        // Load the source file into a byte array.
-        byte[] sourceBytes = File.ReadAllBytes(sourceFilePath);
+        // 2. Read the file name back from the binary file.
+        string extractedFileName = ReadFileNameFromOlePackage(tempFile);
 
-        // Create a new blank document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // 3. Compare and output result.
+        bool match = string.Equals(originalFileName, extractedFileName, StringComparison.Ordinal);
+        Console.WriteLine($"Original:  {originalFileName}");
+        Console.WriteLine($"Extracted: {extractedFileName}");
+        Console.WriteLine($"Match: {match}");
 
-        // Insert the OLE package into the document from the byte array.
-        using (MemoryStream stream = new MemoryStream(sourceBytes))
+        // Clean up
+        try { File.Delete(tempFile); } catch { }
+    }
+
+    private static void CreateOlePackage(string filePath, string fileName)
+    {
+        // Build Ole10Native data (simplified: only file name, no source/temp paths, no file data)
+        byte[] fileNameBytes = Encoding.Default.GetBytes(fileName);
+        int nameLen = fileNameBytes.Length + 1; // include terminating null
+
+        using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+        using (var bw = new BinaryWriter(fs, Encoding.Default, true))
         {
-            // Insert as an OLE object of type "Package".
-            Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
-
-            // Set the OLE package's FileName property to the original file name.
-            oleShape.OleFormat.OlePackage.FileName = Path.GetFileName(sourceFilePath);
+            bw.Write(nameLen);                     // DWORD: length of file name (including null)
+            bw.Write(fileNameBytes);               // file name bytes
+            bw.Write((byte)0);                     // null terminator
+            bw.Write(0);                           // DWORD: length of source path (0)
+            bw.Write(0);                           // DWORD: length of temporary path (0)
+            // No file data follows in this minimal example
         }
+    }
 
-        // Save the document to disk.
-        string docPath = Path.Combine(baseDir, "OleDocument.docx");
-        doc.Save(docPath);
-
-        // Load the document back from the file.
-        Document loadedDoc = new Document(docPath);
-
-        // Retrieve the first shape that contains an OLE object.
-        Shape loadedOleShape = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                        .OfType<Shape>()
-                                        .FirstOrDefault(s => s.OleFormat != null);
-
-        if (loadedOleShape == null)
+    private static string ReadFileNameFromOlePackage(string filePath)
+    {
+        using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+        using (var br = new BinaryReader(fs, Encoding.Default, true))
         {
-            Console.WriteLine("No OLE object found in the loaded document.");
-            return;
+            int nameLen = br.ReadInt32();               // includes null terminator
+            byte[] nameBytes = br.ReadBytes(nameLen);   // read the name + null
+            string extractedName = Encoding.Default.GetString(nameBytes).TrimEnd('\0');
+            return extractedName;
         }
-
-        // Access the OLE package and read its FileName property.
-        OlePackage olePackage = loadedOleShape.OleFormat.OlePackage;
-        string oleFileName = olePackage?.FileName ?? string.Empty;
-
-        // Compare the OLE package file name with the original source file name.
-        string originalFileName = Path.GetFileName(sourceFilePath);
-        bool namesMatch = string.Equals(oleFileName, originalFileName, StringComparison.Ordinal);
-
-        // Output the comparison result.
-        Console.WriteLine($"Original file name: {originalFileName}");
-        Console.WriteLine($"OLE package file name: {oleFileName}");
-        Console.WriteLine($"Names match: {namesMatch}");
     }
 }

@@ -1,59 +1,44 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Prepare some sample data to embed as an OLE package (a simple text file).
-        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("Sample OLE package content.");
-        using (MemoryStream dataStream = new MemoryStream(sampleData))
+        // Simulated raw binary data of an OLE object (OLE Compound File header)
+        byte[] oleData = new byte[]
         {
-            // Insert the OLE object into the document as an icon.
-            // The progId "Package" indicates a generic OLE package.
-            builder.InsertOleObject(dataStream, "Package", true, null);
-        }
+            0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            // Additional dummy bytes for illustration
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
+        };
 
-        // Save the document to a temporary location (optional, just to have a file on disk).
-        string docPath = Path.Combine(Path.GetTempPath(), "OleDocument.docx");
-        doc.Save(docPath);
+        // Create a temporary file path
+        string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".bin");
 
-        // Reload the document to simulate a typical load scenario.
-        Document loadedDoc = new Document(docPath);
-
-        // Iterate through all shapes in the document.
-        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
+        try
         {
-            // Check if the shape contains an OLE object.
-            OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat == null)
-                continue;
+            // Write the raw OLE data to the temporary file
+            File.WriteAllBytes(tempFilePath, oleData);
 
-            // Retrieve the raw binary data of the OLE object.
-            byte[] rawData = oleFormat.GetRawData();
-
-            // Determine a suitable file extension using the SuggestedExtension property.
-            string extension = oleFormat.SuggestedExtension ?? ".bin";
-
-            // Create a temporary file name for the extracted OLE data.
-            string tempFilePath = Path.Combine(Path.GetTempPath(),
-                $"ExtractedOle_{Guid.NewGuid()}{extension}");
-
-            // Write the raw data to the temporary file.
-            File.WriteAllBytes(tempFilePath, rawData);
-
-            // The temporary file now contains the OLE object's binary data and can be
-            // used for external analysis. No further action is required.
+            // Output the location of the temporary file (for external analysis)
+            Console.WriteLine($"OLE data saved to temporary file: {tempFilePath}");
         }
-
-        // Clean up the temporary document file.
-        if (File.Exists(docPath))
-            File.Delete(docPath);
+        finally
+        {
+            // Clean up: delete the temporary file if it exists
+            if (File.Exists(tempFilePath))
+            {
+                try
+                {
+                    File.Delete(tempFilePath);
+                }
+                catch
+                {
+                    // If deletion fails, ignore to avoid crashing the program
+                }
+            }
+        }
     }
 }

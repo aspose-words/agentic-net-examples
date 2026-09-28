@@ -1,26 +1,56 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Runtime.InteropServices;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple text file that will be embedded as an OLE object.
-        string tempFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.txt");
-        File.WriteAllText(tempFilePath, "This is a sample text file for OLE embedding.");
+        // Create a temporary text file to embed.
+        string tempDir = Path.GetTempPath();
+        string sampleFile = Path.Combine(tempDir, "Sample.txt");
+        File.WriteAllText(sampleFile, "This is sample content for OLE object.");
 
-        // Create a new document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Start Word via COM.
+        Type wordType = Type.GetTypeFromProgID("Word.Application");
+        if (wordType == null)
+        {
+            Console.WriteLine("Microsoft Word is not installed.");
+            return;
+        }
 
-        // Insert the text file as an OLE object displayed as an icon.
-        // Pass null for iconFile and iconCaption to use the default system icon and file name as caption.
-        builder.InsertOleObjectAsIcon(tempFilePath, false, null, null);
+        dynamic wordApp = Activator.CreateInstance(wordType);
+        try
+        {
+            wordApp.Visible = false;
+            dynamic documents = wordApp.Documents;
+            dynamic doc = documents.Add();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectIcon.docx");
-        doc.Save(outputPath);
+            // Insert the OLE object as an icon using the default system icon.
+            dynamic range = doc.Range(0, 0);
+            range.InlineShapes.AddOLEObject(
+                null,                 // ClassType
+                sampleFile,           // FileName
+                false,                // LinkToFile
+                true,                 // DisplayAsIcon
+                Type.Missing,         // IconFileName (default)
+                Type.Missing,         // IconIndex (default)
+                "Sample Text File",   // IconLabel
+                Type.Missing          // Range (not used here)
+            );
+
+            // Save the document.
+            string docPath = Path.Combine(tempDir, "OleIconDemo.docx");
+            doc.SaveAs2(docPath);
+            doc.Close();
+
+            Console.WriteLine($"Document saved to: {docPath}");
+        }
+        finally
+        {
+            // Quit Word and release COM object.
+            wordApp.Quit();
+            Marshal.ReleaseComObject(wordApp);
+        }
     }
 }

@@ -7,33 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Path to the input Word document.
+        string inputPath = "input.docx";
 
-        // Prepare some sample data to embed as an OLE object.
-        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("Sample OLE object data");
-        using (MemoryStream dataStream = new MemoryStream(sampleData))
+        // Ensure the input file exists to avoid a FileNotFoundException.
+        if (!File.Exists(inputPath))
         {
-            // Insert the OLE object into the document.
-            // progId "Package" indicates a generic OLE package.
-            // asIcon = false (display content), presentation = null (default icon if needed).
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            Shape oleShape = builder.InsertOleObject(dataStream, "Package", false, null);
-            
-            // Access the OleFormat of the inserted shape.
-            OleFormat oleFormat = oleShape.OleFormat;
+            Console.WriteLine($"Input file not found: {Path.GetFullPath(inputPath)}");
+            return;
+        }
 
-            // Define the output file path for the extracted OLE stream.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ExtractedOle.bin");
+        // Load the document.
+        Document doc = new Document(inputPath);
 
-            // Save the OLE object data to a binary file using a stream.
-            using (FileStream outputStream = new FileStream(outputPath, FileMode.Create))
+        // Counter for naming extracted OLE files.
+        int oleIndex = 0;
+
+        // Iterate through all shapes in the document.
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        {
+            // Check if the shape contains an OLE object.
+            if (shape.OleFormat != null)
             {
-                oleFormat.Save(outputStream);
-            }
+                // Define the output file name.
+                string outputFile = $"OleObject_{oleIndex}.bin";
 
-            // Optional: indicate completion.
-            Console.WriteLine($"OLE object extracted to: {outputPath}");
+                // Save the OLE object to a binary file.
+                shape.OleFormat.Save(outputFile);
+                Console.WriteLine($"Saved OLE object to {outputFile}");
+
+                oleIndex++;
+            }
+        }
+
+        if (oleIndex == 0)
+        {
+            Console.WriteLine("No OLE objects were found in the document.");
         }
     }
 }
