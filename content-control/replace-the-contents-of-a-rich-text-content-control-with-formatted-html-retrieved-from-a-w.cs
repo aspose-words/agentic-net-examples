@@ -2,77 +2,92 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Aspose.Words.Loading;
+using Newtonsoft.Json;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static void Main()
     {
-        // Create a new blank document.
+        // -----------------------------------------------------------------
+        // 1. Create a sample document that contains a block‑level rich‑text
+        //    content control. This document will act as the input file.
+        // -----------------------------------------------------------------
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        StructuredDocumentTag richSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
+        richSdt.Title = "HtmlContent";
+        richSdt.Tag = "html-content";
 
-        // Add some introductory text.
-        builder.Writeln("Document before the content control.");
+        // The content control must contain at least one paragraph.
+        Paragraph placeholder = new Paragraph(doc);
+        placeholder.AppendChild(new Run(doc, "Placeholder"));
+        richSdt.AppendChild(placeholder);
 
-        // Create a block‑level rich‑text content control.
-        StructuredDocumentTag richSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-        {
-            Title = "HtmlPlaceholder",
-            Tag = "html-placeholder"
-        };
-        // The SDT must contain at least one paragraph to host content.
-        Paragraph placeholderParagraph = new Paragraph(doc);
-        richSdt.AppendChild(placeholderParagraph);
+        // Insert the content control into the document body and save.
         doc.FirstSection.Body.AppendChild(richSdt);
+        doc.Save("input.docx");
 
-        // Add some text after the control.
-        builder.Writeln("Document after the content control.");
+        // -----------------------------------------------------------------
+        // 2. Load the document that contains the content control.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document("input.docx");
 
-        // Optional: save the seed document (useful for debugging).
-        doc.Save("seed.docx");
-
-        // Retrieve formatted HTML from a web service.
-        string htmlContent;
-        using (HttpClient httpClient = new HttpClient())
-        {
-            // Example URL that returns a simple HTML page.
-            HttpResponseMessage response = await httpClient.GetAsync("https://httpbin.org/html");
-            response.EnsureSuccessStatusCode();
-            htmlContent = await response.Content.ReadAsStringAsync();
-        }
-
-        // Locate the rich‑text content control by its title.
-        StructuredDocumentTag targetSdt = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+        // Locate the rich‑text content control by its Title.
+        StructuredDocumentTag? targetSdt = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
-            .FirstOrDefault(s => s.Title == "HtmlPlaceholder");
+            .FirstOrDefault(s => s.Title == "HtmlContent");
 
-        if (targetSdt == null)
+        if (targetSdt != null)
         {
-            throw new InvalidOperationException("The target content control was not found.");
+            // -----------------------------------------------------------------
+            // 3. Retrieve formatted HTML from a web service.
+            // -----------------------------------------------------------------
+            string html = GetHtmlFromWebAsync().GetAwaiter().GetResult();
+
+            // -----------------------------------------------------------------
+            // 4. Remove any existing children of the content control.
+            // -----------------------------------------------------------------
+            targetSdt.RemoveAllChildren();
+
+            // -----------------------------------------------------------------
+            // 5. Load the HTML into a temporary Aspose.Words document.
+            // -----------------------------------------------------------------
+            using (MemoryStream htmlStream = new MemoryStream(Encoding.UTF8.GetBytes(html)))
+            {
+                LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Html };
+                Document htmlDoc = new Document(htmlStream, loadOptions);
+
+                // -----------------------------------------------------------------
+                // 6. Import only block‑level nodes (Paragraphs, Tables, etc.) into the
+                //    content control. Inline nodes such as Run cannot be appended
+                //    directly to a StructuredDocumentTag.
+                // -----------------------------------------------------------------
+                foreach (Paragraph para in htmlDoc.FirstSection.Body.Paragraphs)
+                {
+                    Node imported = loadedDoc.ImportNode(para, true, ImportFormatMode.KeepSourceFormatting);
+                    targetSdt.AppendChild(imported);
+                }
+            }
         }
 
-        // Ensure we are working with a rich‑text control.
-        if (targetSdt.SdtType != SdtType.RichText)
+        // -----------------------------------------------------------------
+        // 7. Save the updated document.
+        // -----------------------------------------------------------------
+        loadedDoc.Save("output.docx");
+    }
+
+    private static async Task<string> GetHtmlFromWebAsync()
+    {
+        using (HttpClient client = new HttpClient())
         {
-            throw new InvalidOperationException("The target content control is not a rich‑text control.");
+            // Example URL that returns HTML content.
+            HttpResponseMessage response = await client.GetAsync("https://www.example.com");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
         }
-
-        // Remove any existing children (placeholder text, etc.).
-        targetSdt.RemoveAllChildren();
-
-        // Insert a new paragraph that will receive the HTML.
-        Paragraph htmlParagraph = new Paragraph(doc);
-        targetSdt.AppendChild(htmlParagraph);
-
-        // Move the builder to the new paragraph inside the SDT and insert the HTML.
-        DocumentBuilder htmlBuilder = new DocumentBuilder(doc);
-        htmlBuilder.MoveTo(htmlParagraph);
-        htmlBuilder.InsertHtml(htmlContent);
-
-        // Save the resulting document.
-        doc.Save("output.docx");
     }
 }

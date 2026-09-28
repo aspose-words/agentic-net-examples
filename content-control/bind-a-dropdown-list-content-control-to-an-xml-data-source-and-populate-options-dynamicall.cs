@@ -1,5 +1,6 @@
 using System;
-using System.Xml.Linq;
+using System.IO;
+using System.Xml;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
@@ -10,43 +11,54 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // XML that defines the dropdown options.
-        string xml = @"<options>
-                         <option value='A'>Option A</option>
-                         <option value='B'>Option B</option>
-                         <option value='C'>Option C</option>
-                       </options>";
+        // Sample XML data source containing options and a selected value.
+        string xmlData = @"
+<root>
+    <options>
+        <option value='A'>Option A</option>
+        <option value='B'>Option B</option>
+        <option value='C'>Option C</option>
+    </options>
+    <selected>B</selected>
+</root>";
 
-        // Add the XML as a custom XML part (optional, shows how to embed XML in the document).
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(Guid.NewGuid().ToString("B"), xml);
+        // Add the XML as a custom XML part to the document.
+        // The first argument is a unique ID for the part.
+        CustomXmlPart customXmlPart = doc.CustomXmlParts.Add(Guid.NewGuid().ToString(), xmlData);
 
-        // Parse the XML to retrieve the option elements.
-        XDocument xDoc = XDocument.Parse(xml);
-        var optionElements = xDoc.Root?.Elements("option");
+        // Load the XML into an XmlDocument for easy traversal.
+        XmlDocument xmlDoc = new XmlDocument();
+        xmlDoc.LoadXml(xmlData);
 
-        // Create a drop‑down list content control (inline level).
+        // Create an inline dropdown list content control.
         StructuredDocumentTag dropdown = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
         {
-            Title = "SampleDropdown",
-            Tag = "sample-dropdown"
+            Title = "DynamicDropdown",
+            Tag = "dynamic-dropdown"
         };
 
-        // Populate the dropdown list items from the XML data.
-        if (optionElements != null)
+        // Populate the dropdown list items from the XML <option> elements.
+        XmlNodeList? optionNodes = xmlDoc.SelectNodes("//option");
+        if (optionNodes != null)
         {
-            foreach (var opt in optionElements)
+            foreach (XmlNode optionNode in optionNodes)
             {
-                string displayText = opt.Value;
-                string value = (string)opt.Attribute("value") ?? displayText;
+                string displayText = optionNode.InnerText ?? string.Empty;
+                string value = optionNode.Attributes?["value"]?.Value ?? string.Empty;
                 dropdown.ListItems.Add(new SdtListItem(displayText, value));
             }
         }
 
-        // Insert the content control into the first paragraph of the document.
+        // Map the content control's value to the <selected> element in the XML part.
+        dropdown.XmlMapping.SetMapping(customXmlPart, "/root[1]/selected[1]", string.Empty);
+
+        // Insert the dropdown into the first paragraph of the document.
         Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
         firstParagraph.AppendChild(dropdown);
 
         // Save the resulting document.
-        doc.Save("DropdownBound.docx");
+        const string outputPath = "DropdownMapped.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {Path.GetFullPath(outputPath)}");
     }
 }

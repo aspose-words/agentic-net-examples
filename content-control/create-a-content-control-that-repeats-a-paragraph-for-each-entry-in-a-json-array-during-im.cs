@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
@@ -8,48 +9,33 @@ public class Program
 {
     public static void Main()
     {
-        // Sample JSON array.
-        string json = @"[
-            { ""Name"": ""Alice"" },
-            { ""Name"": ""Bob"" },
-            { ""Name"": ""Charlie"" }
-        ]";
+        // Sample JSON array to import.
+        string json = "[\"First item\",\"Second item\",\"Third item\"]";
 
-        // Deserialize JSON into a list of simple objects.
-        List<Dictionary<string, string>> items = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(json);
+        // Deserialize JSON into a list of strings.
+        List<string> items = JsonConvert.DeserializeObject<List<string>>(json) ?? new List<string>();
 
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a block‑level repeating section content control.
+        // Create a repeating section content control (block level).
         StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block);
-        doc.FirstSection.Body.AppendChild(repeatingSection);
+        repeatingSection.Title = "ItemsRepeatingSection";
+        repeatingSection.Tag = "items-section";
 
-        // Template paragraph that will be cloned for each JSON entry.
-        Paragraph templateParagraph = new Paragraph(doc);
-        templateParagraph.AppendChild(new Run(doc, "Placeholder"));
-
-        // For each item in the JSON array, create a repeating section item and insert a populated paragraph.
-        foreach (Dictionary<string, string> entry in items)
+        // Add a paragraph for each entry in the JSON array.
+        foreach (string item in items)
         {
-            // Clone the template paragraph.
-            Paragraph paraClone = (Paragraph)templateParagraph.Clone(true);
-
-            // Replace placeholder text with the actual value from JSON.
-            if (paraClone.Runs.Count > 0 && entry.TryGetValue("Name", out string name))
-            {
-                paraClone.Runs[0].Text = name;
-            }
-
-            // Create a repeating section item and add the populated paragraph to it.
-            StructuredDocumentTag itemSdt = new StructuredDocumentTag(doc, SdtType.RepeatingSectionItem, MarkupLevel.Block);
-            itemSdt.AppendChild(paraClone);
-
-            // Append the item to the repeating section.
-            repeatingSection.AppendChild(itemSdt);
+            Paragraph paragraph = new Paragraph(doc);
+            paragraph.AppendChild(new Run(doc, item));
+            repeatingSection.AppendChild(paragraph);
         }
 
+        // Insert the repeating section into the document body.
+        doc.FirstSection.Body.AppendChild(repeatingSection);
+
         // Save the resulting document.
-        doc.Save("RepeatingSectionFromJson.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RepeatingSection.docx");
+        doc.Save(outputPath);
     }
 }

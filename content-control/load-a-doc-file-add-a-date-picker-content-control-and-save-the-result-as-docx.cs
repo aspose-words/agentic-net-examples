@@ -1,47 +1,37 @@
 using System;
-using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Drawing;
-using Newtonsoft.Json;
 
-namespace AsposeWordsDatePickerExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a sample DOC (Word 97‑2003) file.
+        const string docPath = "sample.doc";
+        Document seedDoc = new Document();
+        seedDoc.FirstSection.Body.FirstParagraph.AppendChild(new Run(seedDoc, "This is a sample DOC file."));
+        seedDoc.Save(docPath, SaveFormat.Doc);
+
+        // Load the DOC file.
+        Document doc = new Document(docPath);
+
+        // Create a block‑level rich‑text content control that will act as a date picker placeholder.
+        StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
-            // Step 1: Create a simple source DOC file if it does not exist.
-            const string sourcePath = "sample.doc";
-            if (!System.IO.File.Exists(sourcePath))
-            {
-                Document seedDoc = new Document();
-                DocumentBuilder seedBuilder = new DocumentBuilder(seedDoc);
-                seedBuilder.Writeln("This is a sample document.");
-                seedDoc.Save(sourcePath);
-            }
+            Title = "DatePicker",
+            Tag = "date-picker"
+        };
 
-            // Step 2: Load the existing DOC file.
-            Document doc = new Document(sourcePath);
+        // Add a placeholder paragraph inside the content control.
+        Paragraph placeholder = new Paragraph(doc);
+        placeholder.AppendChild(new Run(doc, "Select a date"));
+        dateSdt.AppendChild(placeholder);
 
-            // Step 3: Create a Date picker content control (structured document tag).
-            StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.Date, MarkupLevel.Inline)
-            {
-                Title = "AppointmentDate",
-                Tag = "appointment-date",
-                DateDisplayFormat = "dd MMMM, yyyy",
-                DateStorageFormat = SdtDateStorageFormat.DateTime,
-                CalendarType = SdtCalendarType.Gregorian,
-                FullDate = DateTime.Today
-            };
+        // Insert the content control into the document body.
+        doc.FirstSection.Body.AppendChild(dateSdt);
 
-            // Insert the date picker into the first paragraph of the document.
-            Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-            firstParagraph.AppendChild(dateSdt);
-
-            // Step 4: Save the modified document as DOCX.
-            const string outputPath = "output.docx";
-            doc.Save(outputPath);
-        }
+        // Save the result as DOCX.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
     }
 }

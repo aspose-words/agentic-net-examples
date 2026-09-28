@@ -1,9 +1,6 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Drawing;
-using Newtonsoft.Json;
 
 public class Program
 {
@@ -12,28 +9,27 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to work with the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Ensure the document has a paragraph to host the inline content control.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        if (paragraph == null)
+        {
+            paragraph = new Paragraph(doc);
+            doc.FirstSection.Body.AppendChild(paragraph);
+        }
 
-        // Create an inline plain‑text content control (StructuredDocumentTag).
-        StructuredDocumentTag contentControl = new StructuredDocumentTag(
-            doc,
-            SdtType.PlainText,
-            MarkupLevel.Inline);
-
-        // Set the friendly title and the tag for later identification.
-        contentControl.Title = "CustomerName";
-        contentControl.Tag = "customer-name";
+        // Create an inline plain‑text content control.
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        sdt.Title = "CustomerName";   // Set the title for identification.
+        sdt.Tag = "customer-name";    // Set the tag for identification.
 
         // Add placeholder text inside the content control.
-        contentControl.RemoveAllChildren();
-        contentControl.AppendChild(new Run(doc, "Enter name here"));
+        sdt.RemoveAllChildren();
+        sdt.AppendChild(new Run(doc, "Contoso"));
 
-        // Insert the content control into the document.
-        builder.InsertNode(contentControl);
+        // Insert the content control into the paragraph.
+        paragraph.AppendChild(sdt);
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ContentControlTitleTag.docx");
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save("ContentControlTitleTag.docx");
     }
 }

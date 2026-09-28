@@ -1,53 +1,59 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Markup;
 using Aspose.Words.Drawing;
+using Aspose.Words.Markup;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a simple text file that will be embedded as an OLE object.
+        string oleSourcePath = Path.Combine(outputDir, "sample.txt");
+        File.WriteAllText(oleSourcePath, "This is a sample OLE embedded file.");
+
+        // Create a new Word document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading.
-        builder.Writeln("Document with an OLE object inside a content control:");
-        builder.Writeln();
-
-        // Create a block‑level rich‑text content control.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        // Create a block‑level rich‑text content control to host the OLE object.
+        StructuredDocumentTag oleSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
-            Title = "OleContentControl",
-            Tag = "OleCC"
+            Title = "OleObjectControl",
+            Tag = "ole-object"
         };
 
-        // The content control must contain at least one paragraph.
-        Paragraph sdtParagraph = new Paragraph(doc);
-        sdt.AppendChild(sdtParagraph);
+        // Append the content control to the document body.
+        doc.FirstSection.Body.AppendChild(oleSdt);
 
-        // Insert the content control into the document body.
-        doc.FirstSection.Body.AppendChild(sdt);
+        // Add a paragraph inside the content control where the OLE object will be placed.
+        Paragraph para = new Paragraph(doc);
+        oleSdt.AppendChild(para);
 
-        // Move the builder cursor inside the newly created paragraph.
-        builder.MoveTo(sdtParagraph);
+        // Use DocumentBuilder to insert the OLE object as an icon.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveTo(para);
 
-        // Prepare a simple text file in memory to embed as an OLE package.
-        byte[] oleData = Encoding.UTF8.GetBytes("This is the embedded OLE package content.");
-        using (MemoryStream oleStream = new MemoryStream(oleData))
+        // InsertOleObject expects streams for the OLE data and optional icon.
+        using (FileStream oleStream = File.OpenRead(oleSourcePath))
         {
-            // Insert the OLE object. ProgId "Package" denotes a generic OLE package.
-            // asIcon = false means the object will be displayed as its content.
-            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
+            // No custom icon is provided (null), Aspose.Words will use the default icon.
+            Shape oleShape = builder.InsertOleObject(oleStream, "Sample OLE", true, null);
 
-            // Optionally set a display name for the OLE package.
-            oleShape.OleFormat.OlePackage.FileName = "Sample.txt";
-            oleShape.OleFormat.OlePackage.DisplayName = "Sample.txt";
+            // Adjust the size of the OLE icon.
+            oleShape.Width = 100;
+            oleShape.Height = 100;
         }
 
-        // Save the document as PDF. The OLE object should be rendered correctly.
-        doc.Save("OleInContentControl.pdf", SaveFormat.Pdf);
+        // Save the document as DOCX.
+        string docxPath = Path.Combine(outputDir, "OleObject.docx");
+        doc.Save(docxPath);
+
+        // Convert and save the document as PDF. The OLE object will render as an icon.
+        string pdfPath = Path.Combine(outputDir, "OleObject.pdf");
+        doc.Save(pdfPath, SaveFormat.Pdf);
     }
 }

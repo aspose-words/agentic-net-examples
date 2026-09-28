@@ -1,8 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Markup;
+using Aspose.Words.Saving;
 
 public class Program
 {
@@ -10,59 +11,42 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Create a block‑level rich‑text content control.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-        {
-            Title = "LinkControl",
-            Tag = "link-control"
-        };
+        StructuredDocumentTag linkControl = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
+        linkControl.Title = "LinkControl";
+        linkControl.Tag = "link-control";
 
-        // Add a paragraph that will hold the hyperlink.
-        Paragraph para = new Paragraph(doc);
-        sdt.AppendChild(para);
+        // Insert the content control into the document body.
+        doc.FirstSection.Body.AppendChild(linkControl);
 
-        // Move the builder to the newly created paragraph.
-        builder.MoveTo(para);
+        // Inside the content control, create a paragraph that will hold the hyperlink.
+        Paragraph innerParagraph = new Paragraph(doc);
+        linkControl.AppendChild(innerParagraph);
 
-        // Insert a hyperlink field inside the content control.
-        builder.Font.Color = System.Drawing.Color.Blue;
-        builder.Font.Underline = Underline.Single;
-        FieldHyperlink hyperlink = (FieldHyperlink)builder.InsertHyperlink("Aspose", "https://www.aspose.com", false);
-        builder.Font.ClearFormatting();
-
-        // Append the content control to the document body.
-        doc.FirstSection.Body.AppendChild(sdt);
+        // Insert a hyperlink into the inner paragraph.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveTo(innerParagraph);
+        builder.InsertHyperlink("Click Here", "https://example.com", false);
 
         // Save the document as DOCX.
-        const string docxPath = "LinkControl.docx";
+        const string docxPath = "output.docx";
         doc.Save(docxPath);
 
-        // Convert the document to PDF.
-        const string pdfPath = "LinkControl.pdf";
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // Convert the document to HTML.
+        const string htmlPath = "output.html";
+        doc.Save(htmlPath, SaveFormat.Html);
 
-        // Load the PDF back and verify the hyperlink target URL.
-        Document pdfDoc = new Document(pdfPath);
-        FieldHyperlink loadedHyperlink = null;
+        // Load the generated HTML and verify that the hyperlink target URL is present.
+        string htmlContent = File.ReadAllText(htmlPath);
+        const string expectedUrl = "https://example.com";
 
-        foreach (Field field in pdfDoc.Range.Fields)
+        if (!htmlContent.Contains($"href=\"{expectedUrl}\""))
         {
-            if (field.Type == FieldType.FieldHyperlink)
-            {
-                loadedHyperlink = (FieldHyperlink)field;
-                break;
-            }
+            throw new InvalidOperationException($"The expected hyperlink URL '{expectedUrl}' was not found in the HTML output.");
         }
 
-        if (loadedHyperlink != null)
-        {
-            Console.WriteLine("Hyperlink target URL: " + loadedHyperlink.Address);
-        }
-        else
-        {
-            Console.WriteLine("No hyperlink found in the converted document.");
-        }
+        // Indicate success.
+        Console.WriteLine("Hyperlink embedded in content control and verified after conversion.");
     }
 }

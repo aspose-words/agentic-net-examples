@@ -1,47 +1,70 @@
 using System;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Fields;
 
-namespace ContentControlNumericExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Insert a plain‑text content control that is intended for numeric input.
+        StructuredDocumentTag numericSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Title = "NumericInput",
+            Tag = "numeric-input"
+            // PlaceholderName is omitted because a placeholder building block is not defined.
+        };
 
-            // Write a prompt before the content control.
-            builder.Writeln("Please enter a numeric value:");
+        // Set an initial valid numeric value.
+        numericSdt.RemoveAllChildren();
+        numericSdt.AppendChild(new Run(doc, "123"));
 
-            // Create a block‑level plain‑text content control.
-            StructuredDocumentTag numericSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Block)
-            {
-                Title = "NumericOnly",
-                Tag = "numeric"
-            };
+        // Add the content control to the first paragraph of the document.
+        Paragraph para = doc.FirstSection.Body.FirstParagraph;
+        para.AppendChild(numericSdt);
 
-            // Add a paragraph inside the content control – this will host the numeric field.
-            Paragraph sdtParagraph = new Paragraph(doc);
-            numericSdt.AppendChild(sdtParagraph);
+        // Save the intermediate document.
+        string intermediatePath = "numeric_input_initial.docx";
+        doc.Save(intermediatePath);
 
-            // Insert the content control into the document body.
-            doc.FirstSection.Body.AppendChild(numericSdt);
+        // -----------------------------------------------------------------
+        // Simulate user editing: load the document and change the content
+        // control's text to an invalid (non‑numeric) value.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(intermediatePath);
 
-            // Move the builder cursor to the paragraph inside the content control.
-            builder.MoveTo(sdtParagraph);
+        // Find the content control by its title.
+        StructuredDocumentTag? foundSdt = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .FirstOrDefault(s => s.Title == "NumericInput");
 
-            // Insert a text input form field that only accepts numbers.
-            // The field type TextFormFieldType.Number enforces numeric input during editing.
-            builder.InsertTextInput("NumberField", TextFormFieldType.Number, "", "0", 10);
-
-            // Prevent the user from deleting the content control itself.
-            numericSdt.LockContentControl = true;
-
-            // Save the resulting document.
-            doc.Save("NumericContentControl.docx");
+        if (foundSdt == null)
+        {
+            throw new InvalidOperationException("Numeric input content control not found.");
         }
+
+        // Replace the existing text with an invalid value to simulate editing.
+        foundSdt.RemoveAllChildren();
+        foundSdt.AppendChild(new Run(loadedDoc, "ABC")); // Non‑numeric input.
+
+        // Validate that the content control contains only digits.
+        string sdtText = foundSdt.GetText().Trim();
+
+        if (!Regex.IsMatch(sdtText, @"^\d+$"))
+        {
+            // If validation fails, replace with a default numeric value and lock the control.
+            foundSdt.RemoveAllChildren();
+            foundSdt.AppendChild(new Run(loadedDoc, "0"));
+            foundSdt.LockContents = true;
+        }
+
+        // Save the final document after validation.
+        string finalPath = "numeric_input_validated.docx";
+        loadedDoc.Save(finalPath);
     }
 }

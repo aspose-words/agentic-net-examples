@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Xml;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
@@ -8,65 +11,97 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add a custom XML part with sample data.
-        string xmlPartId = Guid.NewGuid().ToString("B");
-        string xmlContent = "<root><name>Contoso</name></root>";
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
-
-        // Create a plain text content control and map it to an existing XML node.
-        StructuredDocumentTag existingNodeSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Ensure there is at least one paragraph to host inline content controls.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        if (paragraph == null)
         {
-            Title = "ExistingNode",
-            Tag = "existing-node"
-        };
-        // Attempt to map to a valid XPath.
-        bool mappingResult = existingNodeSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/name[1]", string.Empty);
-        if (!mappingResult || !existingNodeSdt.XmlMapping.IsMapped)
-        {
-            Console.WriteLine("Failed to map existingNodeSdt to the XML node.");
+            paragraph = new Paragraph(doc);
+            doc.FirstSection.Body.AppendChild(paragraph);
         }
 
-        // Insert the content control into the first paragraph.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
-        para.AppendChild(existingNodeSdt);
+        // Define sample custom XML with only an existing node.
+        string xmlContent = "<root><existing>Existing Value</existing></root>";
 
-        // Create another plain text content control and attempt to map it to a missing XML node.
-        StructuredDocumentTag missingNodeSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "MissingNode",
-            Tag = "missing-node"
-        };
-        // This XPath does not exist in the XML part.
-        bool missingMappingResult = missingNodeSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/missing[1]", string.Empty);
+        // Add a custom XML part to the document (requires a unique ID).
+        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(Guid.NewGuid().ToString(), xmlContent);
 
-        // Prepare an error report object.
-        var errorReport = new
+        // Load the XML into an XmlDocument for XPath queries.
+        XmlDocument xmlDoc = new XmlDocument();
+        xmlDoc.LoadXml(xmlContent);
+
+        // Prepare a list of content control mappings to attempt.
+        var mappings = new List<(string Title, string XPath)>
         {
-            ControlTitle = missingNodeSdt.Title,
-            ControlTag = missingNodeSdt.Tag,
-            XPath = "/root[1]/missing[1]",
-            MappingSuccessful = missingMappingResult && missingNodeSdt.XmlMapping.IsMapped,
-            Message = missingMappingResult && missingNodeSdt.XmlMapping.IsMapped
-                ? "Mapping succeeded."
-                : "Mapping failed: XML node not found."
+            ("ExistingNodeControl", "/root[1]/existing[1]"),
+            ("MissingNodeControl", "/root[1]/missing[1]")
         };
 
-        // Serialize the error report to JSON and save it.
-        string jsonReport = JsonConvert.SerializeObject(errorReport, Formatting.Indented);
-        File.WriteAllText(Path.Combine(outputDir, "errorReport.json"), jsonReport);
+        // Collect binding results for JSON reporting.
+        var bindingResults = new List<object>();
 
-        // Insert the second content control into the document (even if mapping failed).
-        para.AppendChild(missingNodeSdt);
+        foreach (var (title, xpath) in mappings)
+        {
+            try
+            {
+                // Attempt to locate the XML node using the provided XPath.
+                XmlNode? xmlNode = xmlDoc.SelectSingleNode(xpath);
+                if (xmlNode == null)
+                {
+                    // Node not found – record the error and continue.
+                    bindingResults.Add(new
+                    {
+                        Title = title,
+                        XPath = xpath,
+                        Success = false,
+                        Message = "XML node not found."
+                    });
+                    continue;
+                }
+
+                // Node exists – create an inline plain‑text content control.
+                StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+                {
+                    Title = title,
+                    Tag = title
+                };
+
+                // Map the content control to the found XML node.
+                sdt.XmlMapping.SetMapping(xmlPart, xpath, string.Empty);
+
+                // Insert the content control into the paragraph.
+                paragraph.AppendChild(sdt);
+
+                // Record successful binding.
+                bindingResults.Add(new
+                {
+                    Title = title,
+                    XPath = xpath,
+                    Success = true,
+                    Message = "Binding succeeded."
+                });
+            }
+            catch (Exception ex)
+            {
+                // Record any unexpected exceptions.
+                bindingResults.Add(new
+                {
+                    Title = title,
+                    XPath = xpath,
+                    Success = false,
+                    Message = $"Exception: {ex.Message}"
+                });
+            }
+        }
 
         // Save the resulting document.
-        string docPath = Path.Combine(outputDir, "MappedContentControls.docx");
-        doc.Save(docPath);
+        const string outputDocPath = "BoundContentControls.docx";
+        doc.Save(outputDocPath);
+
+        // Serialize the binding results to a JSON file.
+        string jsonOutput = JsonConvert.SerializeObject(bindingResults, Newtonsoft.Json.Formatting.Indented);
+        File.WriteAllText("BindingResults.json", jsonOutput);
     }
 }

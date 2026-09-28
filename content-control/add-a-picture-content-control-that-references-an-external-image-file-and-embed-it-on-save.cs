@@ -2,45 +2,52 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Drawing;
+using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a sample PNG image using Aspose.Drawing.
+        string imagePath = Path.Combine(outputDir, "sample.png");
+        using (Bitmap bitmap = new Bitmap(100, 100))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.LightBlue);
+                g.DrawEllipse(new Pen(Color.DarkBlue, 3), 10, 10, 80, 80);
+            }
+            bitmap.Save(imagePath);
+        }
+
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a picture content control (SDT) at the inline level.
+        // Create a paragraph that will host the picture content control.
+        Paragraph hostParagraph = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(hostParagraph);
+
+        // Create an inline picture content control.
         StructuredDocumentTag pictureSdt = new StructuredDocumentTag(doc, SdtType.Picture, MarkupLevel.Inline)
         {
-            Title = "SamplePicture",
-            Tag = "sample-picture"
+            Title = "SampleImage",
+            Tag = "sample-image"
         };
 
-        // Insert the content control into the document.
-        builder.InsertNode(pictureSdt);
+        // Insert the picture content control into the paragraph.
+        hostParagraph.AppendChild(pictureSdt);
 
-        // Prepare a simple 1x1 pixel PNG image (embedded as a base64 string).
-        const string base64Png =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
-            "Z9VYAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        // Insert the external image into the picture content control.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveTo(pictureSdt);
+        builder.InsertImage(imagePath);
 
-        // Create a shape of type Image and embed the PNG data using a MemoryStream.
-        Shape pictureShape = new Shape(doc, ShapeType.Image);
-        using (MemoryStream ms = new MemoryStream(imageBytes))
-        {
-            pictureShape.ImageData.SetImage(ms);
-        }
-        pictureShape.Width = 50;   // Desired width (points).
-        pictureShape.Height = 50;  // Desired height (points).
-
-        // Add the picture shape as a child of the picture content control.
-        pictureSdt.AppendChild(pictureShape);
-
-        // Save the document; the image is embedded within the DOCX.
-        doc.Save("PictureContentControl.docx");
+        // Save the document; the image will be embedded inside the content control.
+        string outputPath = Path.Combine(outputDir, "picture-content-control.docx");
+        doc.Save(outputPath);
     }
 }
