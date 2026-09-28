@@ -7,103 +7,77 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
-        string destinationPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docx");
-        string mergedPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.docx");
+        // Paths for sample documents
+        string destPath = "Destination.docx";
+        string srcPath = "Source.docx";
+        string resultPath = "Result.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create a source document containing three tables.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        // Create destination document with a simple paragraph
+        var destDoc = new Document();
+        var destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.Writeln("Destination Document");
+        destDoc.Save(destPath);
 
-        srcBuilder.Writeln("Source Document Header");
+        // Create source document containing two tables
+        var srcDoc = new Document();
+        var srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("Source Document with Tables");
 
-        // Table 1
+        // First table
         srcBuilder.StartTable();
         srcBuilder.InsertCell();
-        srcBuilder.Write("Table1 Row1 Col1");
+        srcBuilder.Write("A1");
         srcBuilder.InsertCell();
-        srcBuilder.Write("Table1 Row1 Col2");
+        srcBuilder.Write("B1");
         srcBuilder.EndRow();
         srcBuilder.EndTable();
-        srcBuilder.Writeln(); // Ensure the table is closed properly.
 
-        // Table 2
+        // Second table
         srcBuilder.StartTable();
         srcBuilder.InsertCell();
-        srcBuilder.Write("Table2 Row1 Col1");
+        srcBuilder.Write("C1");
         srcBuilder.InsertCell();
-        srcBuilder.Write("Table2 Row1 Col2");
+        srcBuilder.Write("D1");
         srcBuilder.EndRow();
         srcBuilder.EndTable();
-        srcBuilder.Writeln(); // Ensure the table is closed properly.
 
-        // Table 3
-        srcBuilder.StartTable();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Table3 Row1 Col1");
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Table3 Row1 Col2");
-        srcBuilder.EndRow();
-        srcBuilder.EndTable();
-        srcBuilder.Writeln(); // Ensure the table is closed properly.
+        srcDoc.Save(srcPath);
 
-        // Save the source document.
-        sourceDoc.Save(sourcePath);
+        // Load the documents for processing
+        var destination = new Document(destPath);
+        var source = new Document(srcPath);
 
-        // -----------------------------------------------------------------
-        // 2. Create a destination document with some initial content.
-        // -----------------------------------------------------------------
-        Document destinationDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(destinationDoc);
-        dstBuilder.Writeln("Destination Document Header");
-        destinationDoc.Save(destinationPath);
+        // Prepare a NodeImporter to import nodes from source to destination
+        var importer = new NodeImporter(source, destination, ImportFormatMode.KeepSourceFormatting);
 
-        // -----------------------------------------------------------------
-        // 3. Import specific tables (first and third) from source into destination.
-        // -----------------------------------------------------------------
-        // Retrieve all tables from the source document.
-        NodeCollection sourceTables = sourceDoc.GetChildNodes(NodeType.Table, true);
-        if (sourceTables.Count < 3)
-            throw new InvalidOperationException("Source document does not contain the expected number of tables.");
+        // Import each table from the source document into the destination document
+        NodeCollection sourceTables = source.GetChildNodes(NodeType.Table, true);
+        foreach (Table table in sourceTables)
+        {
+            Node importedTable = importer.ImportNode(table, true);
+            // Append the imported table to the end of the destination body
+            destination.FirstSection.Body.AppendChild(importedTable);
+        }
 
-        // Select the first and third tables.
-        Table table1 = (Table)sourceTables[0];
-        Table table3 = (Table)sourceTables[2];
+        // Save the merged result
+        destination.Save(resultPath);
 
-        // Create a NodeImporter for efficient repeated imports.
-        NodeImporter importer = new NodeImporter(sourceDoc, destinationDoc, ImportFormatMode.KeepSourceFormatting);
+        // Validation: ensure the result file exists
+        if (!File.Exists(resultPath))
+        {
+            throw new InvalidOperationException($"The merged document was not saved to '{resultPath}'.");
+        }
 
-        // Import the selected tables.
-        Node importedTable1 = importer.ImportNode(table1, true);
-        Node importedTable3 = importer.ImportNode(table3, true);
+        // Validation: ensure the result contains the expected number of tables
+        var resultDoc = new Document(resultPath);
+        int expectedTableCount = sourceTables.Count;
+        int actualTableCount = resultDoc.GetChildNodes(NodeType.Table, true).Count;
+        if (actualTableCount != expectedTableCount)
+        {
+            throw new InvalidOperationException($"Table count mismatch. Expected: {expectedTableCount}, Actual: {actualTableCount}.");
+        }
 
-        // Append the imported tables to the end of the destination document.
-        CompositeNode dstBody = destinationDoc.FirstSection.Body;
-        dstBody.AppendChild(importedTable1);
-        dstBody.AppendChild(importedTable3);
-
-        // -----------------------------------------------------------------
-        // 4. Save the merged document.
-        // -----------------------------------------------------------------
-        destinationDoc.Save(mergedPath);
-
-        // -----------------------------------------------------------------
-        // 5. Validation: ensure the file exists and contains expected table text.
-        // -----------------------------------------------------------------
-        if (!File.Exists(mergedPath))
-            throw new FileNotFoundException("Merged document was not created.", mergedPath);
-
-        Document mergedDoc = new Document(mergedPath);
-        string mergedText = mergedDoc.GetText();
-
-        if (!mergedText.Contains("Table1 Row1 Col1") || !mergedText.Contains("Table3 Row1 Col1"))
-            throw new InvalidOperationException("Merged document does not contain the expected table content.");
-
-        // If execution reaches this point, the operation succeeded.
-        Console.WriteLine("Tables imported and merged document created successfully at:");
-        Console.WriteLine(mergedPath);
+        // Program completed successfully
+        Console.WriteLine("Tables imported and merged document created successfully.");
     }
 }

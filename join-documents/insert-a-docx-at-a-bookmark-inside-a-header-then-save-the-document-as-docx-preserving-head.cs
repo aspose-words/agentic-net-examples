@@ -6,59 +6,82 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for all generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Paths for the documents that will be created and the final result.
+        string destPath = "Destination.docx";
+        string sourcePath = "Source.docx";
+        string resultPath = "Result.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create a source DOCX that will be inserted into the header.
-        // -----------------------------------------------------------------
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        // -------------------------------------------------
+        // 1. Create the destination document with a header that contains a bookmark.
+        // -------------------------------------------------
+        Document destDoc = new Document();
+        Section destSection = destDoc.Sections[0];
+
+        HeaderFooter header = new HeaderFooter(destDoc, HeaderFooterType.HeaderPrimary);
+        destSection.HeadersFooters.Add(header);
+
+        Paragraph headerParagraph = new Paragraph(destDoc);
+        headerParagraph.AppendChild(new Run(destDoc, "Header before bookmark "));
+        // Bookmark where the source document will be inserted.
+        BookmarkStart bookmarkStart = new BookmarkStart(destDoc, "InsertHere");
+        BookmarkEnd bookmarkEnd = new BookmarkEnd(destDoc, "InsertHere");
+        headerParagraph.AppendChild(bookmarkStart);
+        headerParagraph.AppendChild(bookmarkEnd);
+        headerParagraph.AppendChild(new Run(destDoc, " Header after bookmark"));
+        header.AppendChild(headerParagraph);
+
+        // Save the destination document (optional, just to have a file on disk).
+        destDoc.Save(destPath, SaveFormat.Docx);
+
+        // -------------------------------------------------
+        // 2. Create the source document that will be inserted.
+        // -------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("This is the inserted document content.");
+        srcBuilder.Writeln("This is inserted content from the source document.");
+        srcBuilder.Writeln("Second paragraph of inserted content.");
         sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Create the destination document with a header that contains a bookmark.
-        // -----------------------------------------------------------------
-        string resultPath = Path.Combine(outputDir, "Result.docx");
-        Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        // -------------------------------------------------
+        // 3. Locate the bookmark inside the header.
+        // -------------------------------------------------
+        BookmarkStart? bmStart = null;
+        foreach (BookmarkStart bm in header.GetChildNodes(NodeType.BookmarkStart, true))
+        {
+            if (bm.Name == "InsertHere")
+            {
+                bmStart = bm;
+                break;
+            }
+        }
 
-        // Ensure the first section has a primary header.
-        destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        if (bmStart == null)
+            throw new InvalidOperationException("Bookmark 'InsertHere' was not found in the header.");
 
-        // Insert a bookmark named "HeaderBookmark" where the source will be placed.
-        destBuilder.StartBookmark("HeaderBookmark");
-        destBuilder.EndBookmark("HeaderBookmark");
+        // The bookmark resides inside a paragraph.
+        Paragraph bmParagraph = (Paragraph)bmStart.ParentNode;
+        // The parent of that paragraph is the HeaderFooter node.
+        HeaderFooter headerParent = (HeaderFooter)bmParagraph.ParentNode;
 
-        // Add some surrounding text to visualize the header.
-        destBuilder.Write("Header before bookmark. ");
-        destBuilder.MoveToBookmark("HeaderBookmark");
-        destBuilder.Write(" [Inserted content will appear here] ");
-        destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        destBuilder.Writeln(" Header after bookmark.");
+        // -------------------------------------------------
+        // 4. Insert the source document's body nodes after the bookmark paragraph.
+        // -------------------------------------------------
+        Node? lastInserted = bmParagraph;
+        foreach (Node srcNode in sourceDoc.FirstSection.Body)
+        {
+            // Import each node while keeping its original formatting.
+            Node importedNode = destDoc.ImportNode(srcNode, true, ImportFormatMode.KeepSourceFormatting);
+            headerParent.InsertAfter(importedNode, lastInserted);
+            lastInserted = importedNode;
+        }
 
-        // -----------------------------------------------------------------
-        // 3. Load the source document and insert it at the bookmark inside the header.
-        // -----------------------------------------------------------------
-        Document docToInsert = new Document(sourcePath);
-        destBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        destBuilder.MoveToBookmark("HeaderBookmark");
-        destBuilder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
-
-        // -----------------------------------------------------------------
-        // 4. Save the final document preserving header formatting.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 5. Save the final document preserving header formatting.
+        // -------------------------------------------------
         destDoc.Save(resultPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 5. Simple validation that the output file was created.
-        // -----------------------------------------------------------------
+        // Verify that the result file was created.
         if (!File.Exists(resultPath))
-        {
-            throw new InvalidOperationException($"The result document was not saved to '{resultPath}'.");
-        }
+            throw new FileNotFoundException("The resulting document was not saved.", resultPath);
     }
 }

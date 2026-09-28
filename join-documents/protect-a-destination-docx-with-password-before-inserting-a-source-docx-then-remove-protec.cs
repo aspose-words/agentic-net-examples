@@ -7,69 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary and final documents.
-        const string destinationPath = "Destination.docx";
-        const string sourcePath = "Source.docx";
-        const string mergedPath = "Merged.docx";
+        // Paths for temporary files
+        const string destPath = "Destination.docx";
+        const string srcPath = "Source.docx";
+        const string outputPath = "MergedOutput.docx";
+        const string password = "Secret123";
 
-        // -----------------------------------------------------------------
-        // 1. Create the destination document, add some content and protect it.
-        // -----------------------------------------------------------------
-        Document destinationDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destinationDoc);
+        // Create destination document with sample content
+        var destinationDoc = new Document();
+        var destBuilder = new DocumentBuilder(destinationDoc);
         destBuilder.Writeln("This is the destination document.");
-        // Protect the document with a password (read‑only protection).
-        const string password = "pwd123";
+        destinationDoc.Save(destPath, SaveFormat.Docx);
+
+        // Protect the destination document with a password
         destinationDoc.Protect(ProtectionType.ReadOnly, password);
-        // Save the protected document to disk.
-        destinationDoc.Save(destinationPath);
+        // Save the protected version (overwrites the previous file)
+        destinationDoc.Save(destPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Create the source document and add some content.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        // Create source document with sample content
+        var sourceDoc = new Document();
+        var srcBuilder = new DocumentBuilder(sourceDoc);
         srcBuilder.Writeln("This is the source document.");
-        sourceDoc.Save(sourcePath);
+        sourceDoc.Save(srcPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 3. Load the protected destination document and the source document.
-        // -----------------------------------------------------------------
-        // Protection does not encrypt the file, so it can be loaded without a password.
-        Document dest = new Document(destinationPath);
-        Document src = new Document(sourcePath);
+        // Load the protected destination document
+        var protectedDest = new Document(destPath);
+        // Load the source document
+        var source = new Document(srcPath);
 
-        // -----------------------------------------------------------------
-        // 4. Append the source document to the destination document.
-        // -----------------------------------------------------------------
-        dest.AppendDocument(src, ImportFormatMode.KeepSourceFormatting);
+        // Append the source document to the protected destination
+        protectedDest.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
 
-        // -----------------------------------------------------------------
-        // 5. Remove protection from the merged document.
-        // -----------------------------------------------------------------
-        // Unprotect works without providing the password, but the password can be supplied as well.
-        dest.Unprotect();
+        // Remove protection before saving the final merged document
+        protectedDest.Unprotect();
 
-        // -----------------------------------------------------------------
-        // 6. Save the final merged document.
-        // -----------------------------------------------------------------
-        dest.Save(mergedPath);
+        // Save the merged, unprotected document
+        protectedDest.Save(outputPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 7. Simple validation: ensure the merged file exists and contains both texts.
-        // -----------------------------------------------------------------
-        if (!File.Exists(mergedPath))
-            throw new InvalidOperationException("Merged document was not created.");
+        // Validate that the output file exists
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Merged output file was not created.");
 
-        string mergedText = dest.GetText();
-        if (!mergedText.Contains("This is the destination document.") ||
-            !mergedText.Contains("This is the source document."))
-        {
+        // Optional validation: ensure content from both documents is present
+        var merged = new Document(outputPath);
+        string mergedText = merged.GetText();
+        if (!mergedText.Contains("destination document") || !mergedText.Contains("source document"))
             throw new InvalidOperationException("Merged document does not contain expected content.");
-        }
-
-        // Cleanup temporary files (optional).
-        File.Delete(destinationPath);
-        File.Delete(sourcePath);
     }
 }

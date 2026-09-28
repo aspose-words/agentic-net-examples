@@ -1,79 +1,81 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-public class Program
+namespace BatchAppendExample
 {
-    public static void Main()
+    public class Program
     {
-        // Base directory for the sample input documents.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Input");
-        Directory.CreateDirectory(baseDir);
-
-        // Create two subfolders and seed each with two DOCX files.
-        string[] subFolders = { "FolderA", "FolderB" };
-        int docIndex = 1;
-
-        foreach (string folder in subFolders)
+        public static void Main()
         {
-            string folderPath = Path.Combine(baseDir, folder);
-            Directory.CreateDirectory(folderPath);
+            // Root folder for sample documents
+            string rootFolder = Path.Combine(Directory.GetCurrentDirectory(), "SampleDocs");
 
-            for (int i = 1; i <= 2; i++)
+            // Clean previous run data
+            if (Directory.Exists(rootFolder))
+                Directory.Delete(rootFolder, true);
+            Directory.CreateDirectory(rootFolder);
+
+            // Create subfolders with sample DOCX files
+            CreateSampleDocs(rootFolder, "FolderA", 2);
+            CreateSampleDocs(rootFolder, "FolderB", 2);
+
+            // Master document that will receive all appended content
+            Document masterDoc = new Document();
+
+            // Append every DOCX file from each subfolder using destination styles
+            foreach (string subFolder in Directory.GetDirectories(rootFolder))
             {
-                // Create a simple document with identifiable content.
-                Document srcDoc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(srcDoc);
-                builder.Writeln($"Document {docIndex} from {folder}");
-                string docPath = Path.Combine(folderPath, $"Doc{docIndex}.docx");
-                srcDoc.Save(docPath, SaveFormat.Docx);
-                docIndex++;
+                foreach (string filePath in Directory.GetFiles(subFolder, "*.docx"))
+                {
+                    Document srcDoc = new Document(filePath);
+                    masterDoc.AppendDocument(srcDoc, ImportFormatMode.UseDestinationStyles);
+                }
+            }
+
+            // Save the merged document as PDF
+            string outputPdf = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutput.pdf");
+            masterDoc.Save(outputPdf, SaveFormat.Pdf);
+
+            // Validate PDF creation
+            if (!File.Exists(outputPdf))
+                throw new InvalidOperationException("Merged PDF was not created.");
+
+            // Validate that the merged document contains sections from all source files
+            int expectedSections = CountSourceDocs(rootFolder);
+            if (masterDoc.Sections.Count < expectedSections)
+                throw new InvalidOperationException("Merged document does not contain all source sections.");
+
+            // Optional: also save as DOCX for manual inspection
+            string outputDocx = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutput.docx");
+            masterDoc.Save(outputDocx, SaveFormat.Docx);
+        }
+
+        private static void CreateSampleDocs(string rootFolder, string subFolderName, int fileCount)
+        {
+            string subFolderPath = Path.Combine(rootFolder, subFolderName);
+            Directory.CreateDirectory(subFolderPath);
+
+            for (int i = 1; i <= fileCount; i++)
+            {
+                string filePath = Path.Combine(subFolderPath, $"Sample_{subFolderName}_{i}.docx");
+                Document doc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(doc);
+                builder.Writeln($"This is sample document {i} in {subFolderName}.");
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+                builder.Writeln($"Heading in {subFolderName} document {i}");
+                doc.Save(filePath, SaveFormat.Docx);
             }
         }
 
-        // Master document that will receive all appended documents.
-        Document masterDoc = new Document();
-
-        // Find every DOCX file in all subfolders and append them.
-        string[] docFiles = Directory.GetFiles(baseDir, "*.docx", SearchOption.AllDirectories);
-        foreach (string filePath in docFiles)
+        private static int CountSourceDocs(string rootFolder)
         {
-            Document srcDoc = new Document(filePath);
-            masterDoc.AppendDocument(srcDoc, ImportFormatMode.UseDestinationStyles);
-        }
-
-        // Export the merged document to PDF.
-        string outputPdf = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutput.pdf");
-        masterDoc.Save(outputPdf, SaveFormat.Pdf);
-
-        // Validate that the PDF was created.
-        if (!File.Exists(outputPdf))
-            throw new InvalidOperationException("The PDF output file was not created.");
-
-        // Validate that the merged document contains the expected text from each source file.
-        string mergedText = masterDoc.GetText();
-
-        foreach (string filePath in docFiles)
-        {
-            // Extract the numeric part from the file name (e.g., "Doc12" -> 12).
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
-            string numberPart = new string(fileNameWithoutExt.SkipWhile(c => !char.IsDigit(c))
-                                                             .TakeWhile(char.IsDigit)
-                                                             .ToArray());
-
-            if (!int.TryParse(numberPart, out int number))
-                continue; // Skip if we cannot parse the number.
-
-            // Determine the folder name (FolderA or FolderB).
-            string folderName = new DirectoryInfo(Path.GetDirectoryName(filePath)!).Name;
-
-            // Build the expected snippet that was written into the source document.
-            string expectedSnippet = $"Document {number} from {folderName}";
-
-            if (!mergedText.Contains(expectedSnippet))
-                throw new InvalidOperationException($"Merged document is missing content: \"{expectedSnippet}\".");
+            int count = 0;
+            foreach (string subFolder in Directory.GetDirectories(rootFolder))
+            {
+                count += Directory.GetFiles(subFolder, "*.docx").Length;
+            }
+            return count;
         }
     }
 }

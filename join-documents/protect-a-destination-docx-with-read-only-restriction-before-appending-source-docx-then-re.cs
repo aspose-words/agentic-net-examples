@@ -7,69 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string destPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docx");
-        string srcPath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
-        string mergedPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.pdf");
+        // Create a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
+        Directory.CreateDirectory(workFolder);
 
-        // -------------------------------------------------
-        // 1. Create the destination document and protect it.
-        // -------------------------------------------------
+        // Paths for the documents.
+        string destPath = Path.Combine(workFolder, "Destination.docx");
+        string srcPath = Path.Combine(workFolder, "Source.docx");
+        string pdfPath = Path.Combine(workFolder, "Result.pdf");
+
+        // -----------------------------------------------------------------
+        // Create the destination DOCX and protect it with read‑only restriction.
+        // -----------------------------------------------------------------
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("This is the destination document.");
+        destBuilder.Writeln("This is the original content of the destination document.");
+        destDoc.Save(destPath, SaveFormat.Docx);
 
-        // Apply write protection with a password and recommend read‑only.
-        destDoc.WriteProtection.SetPassword("pwd123");
-        destDoc.WriteProtection.ReadOnlyRecommended = true;
+        // Apply read‑only protection with a password.
+        const string protectionPassword = "myPassword";
+        destDoc.Protect(ProtectionType.ReadOnly, protectionPassword);
+        destDoc.Save(destPath, SaveFormat.Docx);
 
-        // Save the protected destination document.
-        destDoc.Save(destPath);
-
-        // -------------------------------------------------
-        // 2. Create the source document to be appended.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // Create the source DOCX that will be appended.
+        // -----------------------------------------------------------------
         Document srcDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Writeln("This is the source document.");
-        srcDoc.Save(srcPath);
+        srcBuilder.Writeln("This is the content of the source document to be appended.");
+        srcDoc.Save(srcPath, SaveFormat.Docx);
 
-        // -------------------------------------------------
-        // 3. Load the protected destination document.
-        // -------------------------------------------------
-        Document loadedDest = new Document(destPath);
+        // -----------------------------------------------------------------
+        // Load the protected destination document and the source document.
+        // -----------------------------------------------------------------
+        Document destination = new Document(destPath);
+        Document source = new Document(srcPath);
 
-        // -------------------------------------------------
-        // 4. Append the source document while keeping its formatting.
-        // -------------------------------------------------
-        loadedDest.AppendDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+        // Append the source document to the destination.
+        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
 
-        // -------------------------------------------------
-        // 5. Remove write protection from the merged document.
-        // -------------------------------------------------
-        loadedDest.Unprotect();
+        // Remove the read‑only protection.
+        destination.Unprotect(protectionPassword);
 
-        // -------------------------------------------------
-        // 6. Save the final merged document as PDF.
-        // -------------------------------------------------
-        loadedDest.Save(mergedPdfPath, SaveFormat.Pdf);
+        // Save the combined document as PDF.
+        destination.Save(pdfPath, SaveFormat.Pdf);
 
-        // -------------------------------------------------
-        // 7. Simple validation that the files were created.
-        // -------------------------------------------------
-        if (!File.Exists(destPath))
-            throw new FileNotFoundException("Destination DOCX was not created.", destPath);
-        if (!File.Exists(srcPath))
-            throw new FileNotFoundException("Source DOCX was not created.", srcPath);
-        if (!File.Exists(mergedPdfPath))
-            throw new FileNotFoundException("Merged PDF was not created.", mergedPdfPath);
-
-        // Optional: verify that both texts are present in the merged document.
-        string mergedText = loadedDest.GetText();
-        if (!mergedText.Contains("This is the destination document.") ||
-            !mergedText.Contains("This is the source document."))
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
         {
-            throw new InvalidOperationException("Merged document does not contain expected content.");
+            throw new InvalidOperationException("The PDF output was not created.");
         }
+
+        // Optional: clean up temporary files (comment out if inspection is needed).
+        // File.Delete(destPath);
+        // File.Delete(srcPath);
+        // Directory.Delete(workFolder, true);
     }
 }

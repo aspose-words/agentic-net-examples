@@ -1,112 +1,103 @@
 using System;
 using System.Data;
-using System.Globalization;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
-using Aspose.Words.Saving;
+using Aspose.Words.Fields;
 
-namespace AsposeWordsMailMergeInsertDoc
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // -----------------------------------------------------------------
+        // 1. Create a template DOCX that contains two merge fields:
+        //    - Name : will be replaced with a person's name.
+        //    - InsertDoc : placeholder where another document will be inserted.
+        // -----------------------------------------------------------------
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        var templateDoc = new Document();
+        var tmplBuilder = new DocumentBuilder(templateDoc);
+        tmplBuilder.Writeln("Record:");
+        tmplBuilder.InsertField("MERGEFIELD Name \\* MERGEFORMAT");
+        tmplBuilder.Writeln();
+        tmplBuilder.InsertField("MERGEFIELD InsertDoc \\* MERGEFORMAT");
+        tmplBuilder.Writeln();
+        templateDoc.Save(templatePath, SaveFormat.Docx);
+
+        // -----------------------------------------------------------------
+        // 2. Create a DOCX that will be inserted during mail merge.
+        //    Set its language (LocaleId) to English (United States) = 1033.
+        // -----------------------------------------------------------------
+        string insertPath = Path.Combine(outputDir, "Insert.docx");
+        var insertDoc = new Document();
+        var insBuilder = new DocumentBuilder(insertDoc);
+        insBuilder.Font.LocaleId = 1033; // English (United States)
+        insBuilder.Writeln("This is the inserted document with language settings preserved.");
+        insertDoc.Save(insertPath, SaveFormat.Docx);
+
+        // -----------------------------------------------------------------
+        // 3. Load the created documents.
+        // -----------------------------------------------------------------
+        var template = new Document(templatePath);
+        var insert = new Document(insertPath);
+
+        // -----------------------------------------------------------------
+        // 4. Prepare a simple data source for mail merge (two records).
+        // -----------------------------------------------------------------
+        var table = new DataTable("Records");
+        table.Columns.Add("Name", typeof(string));
+        table.Rows.Add("Alice");
+        table.Rows.Add("Bob");
+
+        // Master document that will hold all merged records.
+        var masterDoc = new Document();
+
+        foreach (DataRow row in table.Rows)
         {
-            // Prepare a working folder.
-            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "WorkFolder");
-            Directory.CreateDirectory(workDir);
+            // Clone the template for the current record.
+            var recordDoc = (Document)template.Clone(true);
 
-            // 1. Create a template document that contains a MERGEFIELD where the DOCX will be inserted.
-            string templatePath = Path.Combine(workDir, "Template.docx");
-            Document templateDoc = CreateTemplateDocument(templatePath);
+            // Execute mail merge for the Name field.
+            recordDoc.MailMerge.Execute(new[] { "Name" }, new object[] { row["Name"] });
 
-            // 2. Create a sample document that will be inserted during mail merge.
-            string insertDocPath = Path.Combine(workDir, "InsertDoc.docx");
-            Document insertDoc = CreateInsertDocument(insertDocPath);
+            // Locate the InsertDoc merge field.
+            var insertField = recordDoc.Range.Fields
+                .FirstOrDefault(f => f.Type == FieldType.FieldMergeField &&
+                                     (f as FieldMergeField)?.FieldName == "InsertDoc");
 
-            // 3. Build a DataTable that supplies the path of the document to insert for each record.
-            DataTable mailData = new DataTable("MailData");
-            mailData.Columns.Add("DocPath", typeof(string));
-            // Add three records – all pointing to the same sample document.
-            mailData.Rows.Add(insertDocPath);
-            mailData.Rows.Add(insertDocPath);
-            mailData.Rows.Add(insertDocPath);
-
-            // 4. Load the template and assign a custom callback that will replace the merge field
-            //    with the content of the document referenced in the data row.
-            Document mergedDoc = new Document(templatePath);
-            mergedDoc.MailMerge.FieldMergingCallback = new InsertDocCallback();
-
-            // 5. Execute the mail merge. The callback performs the insertion.
-            mergedDoc.MailMerge.Execute(mailData);
-
-            // 6. Save the result as PDF.
-            string outputPdf = Path.Combine(workDir, "Result.pdf");
-            mergedDoc.Save(outputPdf, SaveFormat.Pdf);
-
-            // Simple validation – ensure the PDF was created.
-            if (!File.Exists(outputPdf))
-                throw new InvalidOperationException("The PDF output was not created.");
-        }
-
-        // Creates a minimal template with a single MERGEFIELD named "DocContent".
-        private static Document CreateTemplateDocument(string filePath)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            builder.Writeln("Report Header");
-            builder.InsertField(" MERGEFIELD DocContent ");
-            builder.Writeln();
-            builder.Writeln("Report Footer");
-
-            doc.Save(filePath, SaveFormat.Docx);
-            return doc;
-        }
-
-        // Creates a sample DOCX whose language information we want to keep.
-        private static Document CreateInsertDocument(string filePath)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            builder.Writeln("Inserted Document Content");
-
-            // Set the language/locale of the run (LCID for en‑US is 1033).
-            builder.Font.LocaleId = new CultureInfo("en-US").LCID;
-
-            doc.Save(filePath, SaveFormat.Docx);
-            return doc;
-        }
-
-        // Callback that inserts a whole document at the position of the merge field.
-        private class InsertDocCallback : IFieldMergingCallback
-        {
-            public void FieldMerging(FieldMergingArgs args)
+            if (insertField != null)
             {
-                if (args.DocumentFieldName == "DocContent" &&
-                    args.FieldValue is string docPath &&
-                    File.Exists(docPath))
-                {
-                    // Load the source document.
-                    Document srcDoc = new Document(docPath);
+                // Move the builder to the start of the merge field.
+                var builder = new DocumentBuilder(recordDoc);
+                builder.MoveTo(insertField.Start);
 
-                    // Move the builder to the merge field location.
-                    DocumentBuilder builder = new DocumentBuilder(args.Document);
-                    builder.MoveToMergeField(args.DocumentFieldName);
+                // Insert the document at the field location, keeping source formatting.
+                builder.InsertDocument(insert, ImportFormatMode.KeepSourceFormatting);
 
-                    // Insert the source document while preserving its formatting (including language).
-                    builder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
-
-                    // Suppress the default field text.
-                    args.Text = string.Empty;
-                }
+                // Remove the placeholder merge field.
+                insertField.Remove();
             }
 
-            public void ImageFieldMerging(ImageFieldMergingArgs args)
-            {
-                // No image handling required for this example.
-            }
+            // Append the processed record document to the master document.
+            masterDoc.AppendDocument(recordDoc, ImportFormatMode.KeepSourceFormatting);
         }
+
+        // -----------------------------------------------------------------
+        // 5. Save the final merged document as PDF.
+        // -----------------------------------------------------------------
+        string outputPdf = Path.Combine(outputDir, "MergedOutput.pdf");
+        masterDoc.Save(outputPdf, SaveFormat.Pdf);
+
+        // Verify that the PDF was created.
+        if (!File.Exists(outputPdf))
+        {
+            throw new InvalidOperationException("The merged PDF was not created.");
+        }
+
+        Console.WriteLine($"Merged PDF created successfully at: {outputPdf}");
     }
 }
