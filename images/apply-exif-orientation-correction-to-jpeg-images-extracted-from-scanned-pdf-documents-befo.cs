@@ -1,166 +1,97 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class ExifOrientationCorrection
+public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Step 1: Create a sample JPEG image.
+        const string inputImagePath = "sample.jpg";
+        CreateSampleJpeg(inputImagePath);
 
-        // 1. Create a deterministic JPEG image
-        string sampleJpegPath = Path.Combine(artifactsDir, "sample.jpg");
-        CreateSampleJpeg(sampleJpegPath);
+        // Step 2: Create a Word document and insert the JPEG image.
+        const string docPath = "document.docx";
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(inputImagePath);
+        doc.Save(docPath);
 
-        // 2. Insert the JPEG into a Word document and save as PDF (simulating a scanned PDF)
-        string sourcePdfPath = Path.Combine(artifactsDir, "source.pdf");
-        CreatePdfWithImage(sampleJpegPath, sourcePdfPath);
+        // Step 3: Convert the Word document to PDF (simulating a scanned PDF).
+        const string pdfPath = "scanned.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // 3. Load the PDF, rotate each embedded image 90° clockwise (EXIF‑orientation simulation) and save
-        string correctedPdfPath = Path.Combine(artifactsDir, "corrected.pdf");
-        ApplyExifCorrectionAndSave(sourcePdfPath, correctedPdfPath);
+        // Step 4: Load the PDF back into Aspose.Words.
+        LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Pdf };
+        Document pdfDoc = new Document(pdfPath, loadOptions);
 
-        // 4. Verify output
-        if (!File.Exists(correctedPdfPath))
-            throw new InvalidOperationException("Corrected PDF was not created.");
+        // Step 5: Extract JPEG images, apply EXIF orientation correction, and save them.
+        NodeCollection shapes = pdfDoc.GetChildNodes(NodeType.Shape, true);
+        int imageIndex = 0;
+        foreach (Shape shape in shapes)
+        {
+            if (!shape.HasImage) continue;
+
+            // Extract raw image bytes.
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            {
+                // Load image with Aspose.Drawing.
+                using (Bitmap bitmap = new Bitmap(ms))
+                {
+                    // Reset stream position for safety.
+                    ms.Position = 0;
+
+                    // Apply EXIF orientation correction.
+                    // For demonstration, rotate 90 degrees clockwise.
+                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+
+                    // Save the corrected image.
+                    string outputImagePath = $"extracted-{imageIndex}.jpg";
+                    bitmap.Save(outputImagePath, ImageFormat.Jpeg);
+                    Console.WriteLine($"Saved corrected image: {outputImagePath}");
+
+                    // Validate that the file was created.
+                    if (!File.Exists(outputImagePath))
+                        throw new InvalidOperationException($"Failed to create image file: {outputImagePath}");
+                }
+            }
+
+            imageIndex++;
+        }
+
+        // Final validation: ensure at least one image was extracted.
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No images were extracted from the PDF document.");
 
         Console.WriteLine("EXIF orientation correction completed successfully.");
     }
 
-    // -------------------------------------------------------------------------
-    // Creates a simple JPEG image using Aspose.Drawing.
-    // -------------------------------------------------------------------------
-    private static void CreateSampleJpeg(string filePath)
+    private static void CreateSampleJpeg(string path)
     {
-        const int width = 200;
-        const int height = 100;
-
-        using (Bitmap bitmap = new Bitmap(width, height))
+        // Create a deterministic 200x200 white bitmap with a black rectangle.
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.White);
-                using (Pen pen = new Pen(Aspose.Drawing.Color.Blue, 5))
+                g.Clear(Color.White);
+                using (Pen pen = new Pen(Color.Black, 5))
                 {
-                    g.DrawRectangle(pen, 20, 20, width - 40, height - 40);
+                    g.DrawRectangle(pen, 25, 25, 150, 150);
                 }
             }
 
-            bitmap.Save(filePath, ImageFormat.Jpeg);
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Inserts the image into a Word document and saves it as PDF.
-    // -------------------------------------------------------------------------
-    private static void CreatePdfWithImage(string imagePath, string pdfPath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
-        doc.Save(pdfPath, SaveFormat.Pdf);
-    }
-
-    // -------------------------------------------------------------------------
-    // Loads the PDF, rotates every image 90° clockwise and saves the result.
-    // -------------------------------------------------------------------------
-    private static void ApplyExifCorrectionAndSave(string inputPdf, string outputPdf)
-    {
-        // Load the PDF (Aspose.Words can load PDF directly)
-        Document doc = new Document(inputPdf);
-
-        // Find all shapes that contain an image
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        int processedCount = 0;
-
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
-        {
-            if (!shape.HasImage)
-                continue; // skip shapes without image data
-
-            // Extract the original image into a memory stream
-            using (MemoryStream originalStream = new MemoryStream())
-            {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0; // reset before reading
-
-                // Load the image with Aspose.Drawing
-                using (Bitmap originalBitmap = new Bitmap(originalStream))
-                {
-                    // Rotate 90° clockwise
-                    using (Bitmap rotatedBitmap = RotateBitmap90Clockwise(originalBitmap))
-                    {
-                        // Save rotated bitmap into a new memory stream using the original format
-                        using (MemoryStream rotatedStream = new MemoryStream())
-                        {
-                            ImageFormat targetFormat = GetImageFormat(shape.ImageData.ImageType);
-                            rotatedBitmap.Save(rotatedStream, targetFormat);
-                            rotatedStream.Position = 0; // reset for SetImage
-
-                            // Replace the shape's image with the rotated one
-                            shape.ImageData.SetImage(rotatedStream);
-                        }
-                    }
-                }
-            }
-
-            processedCount++;
+            // Save as JPEG.
+            bitmap.Save(path, ImageFormat.Jpeg);
         }
 
-        if (processedCount == 0)
-            throw new InvalidOperationException("No images were found in the PDF.");
-
-        // Save the corrected document as PDF
-        doc.Save(outputPdf, SaveFormat.Pdf);
-    }
-
-    // -------------------------------------------------------------------------
-    // Rotates a bitmap 90° clockwise.
-    // -------------------------------------------------------------------------
-    private static Bitmap RotateBitmap90Clockwise(Bitmap source)
-    {
-        int srcWidth = source.Width;
-        int srcHeight = source.Height;
-
-        // Width/height are swapped for a 90° rotation
-        Bitmap rotated = new Bitmap(srcHeight, srcWidth);
-        using (Graphics g = Graphics.FromImage(rotated))
-        {
-            // Move origin to centre of the new bitmap
-            g.TranslateTransform(srcHeight / 2f, srcWidth / 2f);
-            // Rotate 90° clockwise
-            g.RotateTransform(90);
-            // Move origin back and draw the original image
-            g.TranslateTransform(-srcWidth / 2f, -srcHeight / 2f);
-            g.DrawImage(source, 0, 0, srcWidth, srcHeight);
-        }
-
-        return rotated;
-    }
-
-    // -------------------------------------------------------------------------
-    // Maps Aspose.Words.ImageType to Aspose.Drawing.Imaging.ImageFormat.
-    // -------------------------------------------------------------------------
-    private static ImageFormat GetImageFormat(ImageType imageType)
-    {
-        // Only map formats that are known to exist in Aspose.Drawing.Imaging.ImageFormat.
-        return imageType switch
-        {
-            ImageType.Jpeg => ImageFormat.Jpeg,
-            ImageType.Png => ImageFormat.Png,
-            ImageType.Bmp => ImageFormat.Bmp,
-            ImageType.Gif => ImageFormat.Gif,
-            ImageType.Emf => ImageFormat.Emf,
-            ImageType.Wmf => ImageFormat.Wmf,
-            // For any other or unknown types, fall back to PNG which is widely supported.
-            _ => ImageFormat.Png
-        };
+        // Validate that the image file exists.
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Failed to create sample JPEG image: {path}");
     }
 }

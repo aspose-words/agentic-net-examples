@@ -2,90 +2,86 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;               // Aspose.Drawing.Common namespace
-using Aspose.Drawing.Imaging;       // For ImageFormat
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-public class Program
+namespace ImageExtractionExample
 {
-    public static void Main()
+    public class Program
     {
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic BMP image file to be used as input.
-        // -----------------------------------------------------------------
-        const string bmpPath = "sample.bmp";
-        const int width = 100;
-        const int height = 100;
-
-        // Create a white bitmap.
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        public static void Main()
         {
-            graphics.Clear(Color.White);
-            // Save as BMP.
-            bitmap.Save(bmpPath, ImageFormat.Bmp);
-        }
-
-        // Verify that the BMP file was created.
-        if (!File.Exists(bmpPath))
-            throw new FileNotFoundException("Failed to create the sample BMP image.", bmpPath);
-
-        // -----------------------------------------------------------------
-        // 2. Create a DOCX document and insert the BMP image.
-        // -----------------------------------------------------------------
-        const string docPath = "sample.docx";
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the BMP image into the document.
-        builder.InsertImage(bmpPath);
-
-        // Save the document.
-        doc.Save(docPath);
-
-        // Verify that the DOCX file was created.
-        if (!File.Exists(docPath))
-            throw new FileNotFoundException("Failed to create the sample DOCX document.", docPath);
-
-        // -----------------------------------------------------------------
-        // 3. Load the document and extract the first image (BMP) into a MemoryStream.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-
-        // Find the first shape that actually contains an image.
-        Shape imageShape = null;
-        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
-        {
-            if (shape.HasImage)
+            // Create a deterministic sample PNG image.
+            const string sampleImagePath = "sample.png";
+            Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(100, 100);
+            Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+            graphics.Clear(Aspose.Drawing.Color.White);
+            using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red))
             {
-                imageShape = shape;
-                break;
+                graphics.FillRectangle(brush, 10, 10, 80, 80);
             }
+            bitmap.Save(sampleImagePath);
+            graphics.Dispose();
+            bitmap.Dispose();
+
+            // Create a DOCX document and insert the sample image.
+            const string docPath = "sample.docx";
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertImage(sampleImagePath);
+            doc.Save(docPath);
+
+            // Load the document for image extraction.
+            Document loadedDoc = new Document(docPath);
+
+            // Find the first shape that contains an image.
+            Shape imageShape = null;
+            NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+            foreach (Shape shape in shapes)
+            {
+                if (shape.HasImage)
+                {
+                    imageShape = shape;
+                    break;
+                }
+            }
+
+            if (imageShape == null)
+                throw new InvalidOperationException("No image found in the document.");
+
+            // Extract the image, convert to BMP, and place into a memory stream.
+            using (MemoryStream originalStream = new MemoryStream())
+            {
+                // Save the original image data to a stream.
+                imageShape.ImageData.Save(originalStream);
+                originalStream.Position = 0;
+
+                // Load the image with Aspose.Drawing and re‑save as BMP.
+                using (Aspose.Drawing.Image drawingImage = Aspose.Drawing.Image.FromStream(originalStream))
+                using (MemoryStream bmpStream = new MemoryStream())
+                {
+                    drawingImage.Save(bmpStream, Aspose.Drawing.Imaging.ImageFormat.Bmp);
+                    bmpStream.Position = 0; // Reset for downstream consumption.
+
+                    if (bmpStream.Length == 0)
+                        throw new InvalidOperationException("Extracted BMP image stream is empty.");
+
+                    // Pass the BMP stream to the dummy API.
+                    ProcessImageStream(bmpStream);
+                }
+            }
+
+            // Clean up generated files (optional).
+            File.Delete(sampleImagePath);
+            File.Delete(docPath);
         }
 
-        if (imageShape == null)
-            throw new InvalidOperationException("No image found in the document.");
-
-        // Save the image data to a memory stream.
-        using (MemoryStream imageStream = new MemoryStream())
+        // Dummy API method that consumes the image stream.
+        private static void ProcessImageStream(Stream imageStream)
         {
-            // The image was originally a BMP, so this will preserve the BMP format.
-            imageShape.ImageData.Save(imageStream);
-
-            // Reset the stream position before any further use.
-            imageStream.Position = 0;
-
-            // -----------------------------------------------------------------
-            // 4. Example: pass the memory stream to an API (placeholder).
-            // -----------------------------------------------------------------
-            // For demonstration, we simply output the size of the stream.
-            Console.WriteLine($"Extracted image stream length: {imageStream.Length} bytes");
-
-            // If you had an API method like: void UploadImage(Stream stream);
-            // you would call: UploadImage(imageStream);
+            // For demonstration, read the stream length.
+            Console.WriteLine($"Image stream received with length: {imageStream.Length} bytes.");
+            // Real API logic would go here.
         }
-
-        // Cleanup: optional removal of temporary files.
-        // File.Delete(bmpPath);
-        // File.Delete(docPath);
     }
 }

@@ -2,137 +2,144 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class BatchImageExtractor
+public class Program
 {
     public static void Main()
     {
-        // Base working directory.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchImageExtract");
-        string inputDir = Path.Combine(baseDir, "Input");
-        string imagesDir = Path.Combine(baseDir, "Images");
-        string thumbsDir = Path.Combine(baseDir, "Thumbnails");
+        // Define folders
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string imageDir = Path.Combine(baseDir, "ExtractedImages");
+        string thumbDir = Path.Combine(baseDir, "Thumbnails");
         string outputDir = Path.Combine(baseDir, "Output");
 
-        // Ensure clean folders.
-        foreach (string dir in new[] { inputDir, imagesDir, thumbsDir, outputDir })
-        {
-            if (Directory.Exists(dir))
-                Directory.Delete(dir, true);
-            Directory.CreateDirectory(dir);
-        }
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(imageDir);
+        Directory.CreateDirectory(thumbDir);
+        Directory.CreateDirectory(outputDir);
 
-        // -------------------------------------------------
-        // 1. Create sample images (deterministic local files).
-        // -------------------------------------------------
-        string sampleImg1 = Path.Combine(baseDir, "sample1.png");
-        string sampleImg2 = Path.Combine(baseDir, "sample2.png");
-        CreateSampleImage(sampleImg1, 200, 150, Aspose.Drawing.Color.LightBlue);
-        CreateSampleImage(sampleImg2, 150, 200, Aspose.Drawing.Color.LightCoral);
+        // Create sample images to be inserted into ODT files
+        string sampleImage1 = Path.Combine(baseDir, "sample1.png");
+        string sampleImage2 = Path.Combine(baseDir, "sample2.png");
+        CreateSampleImage(sampleImage1, 200, 200, Aspose.Drawing.Color.LightBlue, "Img1");
+        CreateSampleImage(sampleImage2, 200, 200, Aspose.Drawing.Color.LightGreen, "Img2");
 
-        // -------------------------------------------------
-        // 2. Create sample ODT documents that contain the images.
-        // -------------------------------------------------
-        for (int docIndex = 1; docIndex <= 2; docIndex++)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create sample ODT documents containing the images
+        CreateSampleOdt(Path.Combine(inputDir, "doc1.odt"), new[] { sampleImage1, sampleImage2 });
+        CreateSampleOdt(Path.Combine(inputDir, "doc2.odt"), new[] { sampleImage2 });
 
-            builder.Writeln($"Document {docIndex} - contains two images.");
-            builder.InsertImage(sampleImg1);
-            builder.InsertParagraph();
-            builder.InsertImage(sampleImg2);
-
-            string odtPath = Path.Combine(inputDir, $"Sample{docIndex}.odt");
-            doc.Save(odtPath, SaveFormat.Odt);
-        }
-
-        // -------------------------------------------------
-        // 3. Process each ODT file: extract images, create thumbnails, build markdown.
-        // -------------------------------------------------
+        // Prepare markdown content
         List<string> markdownLines = new List<string>();
         markdownLines.Add("# Image Gallery");
-        markdownLines.Add("");
+        markdownLines.Add(string.Empty);
 
-        string[] odtFiles = Directory.GetFiles(inputDir, "*.odt");
-        int totalExtracted = 0;
-
-        foreach (string odtFile in odtFiles)
+        // Process each ODT file
+        foreach (string odtPath in Directory.GetFiles(inputDir, "*.odt"))
         {
-            Document doc = new Document(odtFile);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
+            Document doc = new Document(odtPath);
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
+
+            foreach (Shape shape in shapes)
             {
-                if (!shape.HasImage)
-                    continue;
+                if (!shape.HasImage) continue;
 
-                // Determine file extension based on image type.
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string baseName = $"{Path.GetFileNameWithoutExtension(odtFile)}_img{imageIndex}{extension}";
-                string imagePath = Path.Combine(imagesDir, baseName);
+                // Determine image file name
+                string imageFileName = $"image_{Path.GetFileNameWithoutExtension(odtPath)}_{imageIndex}.png";
+                string imagePath = Path.Combine(imageDir, imageFileName);
 
-                // Save the extracted image.
+                // Save the extracted image
                 shape.ImageData.Save(imagePath);
-                totalExtracted++;
+                if (!File.Exists(imagePath))
+                    throw new InvalidOperationException($"Failed to save extracted image: {imagePath}");
 
-                // Create thumbnail.
-                string thumbName = $"{Path.GetFileNameWithoutExtension(baseName)}_thumb{extension}";
-                string thumbPath = Path.Combine(thumbsDir, thumbName);
-                CreateThumbnail(imagePath, thumbPath, 150);
+                // Create thumbnail
+                string thumbFileName = $"thumb_{Path.GetFileNameWithoutExtension(imageFileName)}.png";
+                string thumbPath = Path.Combine(thumbDir, thumbFileName);
+                CreateThumbnail(imagePath, thumbPath, 100, 100);
+                if (!File.Exists(thumbPath))
+                    throw new InvalidOperationException($"Failed to save thumbnail: {thumbPath}");
 
-                // Add markdown entry.
-                string relThumb = Path.Combine("Thumbnails", thumbName).Replace("\\", "/");
-                string relImage = Path.Combine("Images", baseName).Replace("\\", "/");
-                markdownLines.Add($"![{baseName}]({relThumb})({relImage})");
-                markdownLines.Add("");
+                // Add entry to markdown
+                string relativeThumb = Path.GetRelativePath(outputDir, thumbPath).Replace("\\", "/");
+                string relativeImage = Path.GetRelativePath(outputDir, imagePath).Replace("\\", "/");
+                markdownLines.Add($"[![]({relativeThumb})]({relativeImage})");
+                markdownLines.Add(string.Empty);
 
                 imageIndex++;
             }
         }
 
-        // Validation: at least one image must have been extracted.
-        if (totalExtracted == 0)
+        // Validate that at least one image was extracted
+        if (markdownLines.Count <= 2)
             throw new InvalidOperationException("No images were extracted from the ODT files.");
 
-        // -------------------------------------------------
-        // 4. Write markdown gallery file.
-        // -------------------------------------------------
+        // Save markdown gallery
         string markdownPath = Path.Combine(outputDir, "gallery.md");
         File.WriteAllLines(markdownPath, markdownLines);
+        if (!File.Exists(markdownPath))
+            throw new InvalidOperationException($"Failed to write markdown file: {markdownPath}");
     }
 
-    // Creates a deterministic PNG image using Aspose.Drawing.
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor)
+    // Creates a deterministic sample PNG image
+    private static void CreateSampleImage(string path, int width, int height, Aspose.Drawing.Color backColor, string text)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
         {
-            graphics.Clear(backColor);
-            bitmap.Save(filePath, ImageFormat.Png);
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                g.Clear(backColor);
+                // Simple rectangle for visual distinction
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 3))
+                {
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+                // Draw text
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                {
+                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
+                    {
+                        g.DrawString(text, font, brush, new Aspose.Drawing.PointF(20, height / 2 - 12));
+                    }
+                }
+            }
+            bitmap.Save(path, ImageFormat.Png);
         }
     }
 
-    // Generates a thumbnail for a given image file, preserving aspect ratio.
-    private static void CreateThumbnail(string sourcePath, string thumbPath, int maxWidth)
+    // Creates a simple ODT document and inserts provided images
+    private static void CreateSampleOdt(string docPath, string[] imagePaths)
     {
-        using (Bitmap original = new Bitmap(sourcePath))
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        foreach (string imgPath in imagePaths)
         {
-            int thumbWidth = maxWidth;
-            int thumbHeight = (int)(original.Height * (thumbWidth / (double)original.Width));
-            if (thumbHeight <= 0) thumbHeight = maxWidth;
+            if (!File.Exists(imgPath))
+                throw new FileNotFoundException($"Image file not found: {imgPath}");
+            builder.InsertParagraph();
+            builder.InsertImage(imgPath);
+        }
+        doc.Save(docPath, SaveFormat.Odt);
+    }
 
-            using (Bitmap thumbnail = new Bitmap(thumbWidth, thumbHeight))
-            using (Graphics g = Graphics.FromImage(thumbnail))
+    // Generates a thumbnail from a source image
+    private static void CreateThumbnail(string sourcePath, string thumbPath, int thumbWidth, int thumbHeight)
+    {
+        using (Aspose.Drawing.Bitmap sourceBitmap = new Aspose.Drawing.Bitmap(sourcePath))
+        {
+            using (Aspose.Drawing.Bitmap thumbBitmap = new Aspose.Drawing.Bitmap(thumbWidth, thumbHeight))
             {
-                g.Clear(Aspose.Drawing.Color.White);
-                g.DrawImage(original, 0, 0, thumbWidth, thumbHeight);
-                thumbnail.Save(thumbPath, ImageFormat.Png);
+                using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(thumbBitmap))
+                {
+                    g.Clear(Aspose.Drawing.Color.White);
+                    g.DrawImage(sourceBitmap, 0, 0, thumbWidth, thumbHeight);
+                }
+                thumbBitmap.Save(thumbPath, ImageFormat.Png);
             }
         }
     }

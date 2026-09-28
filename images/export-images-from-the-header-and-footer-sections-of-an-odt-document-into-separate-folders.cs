@@ -1,132 +1,112 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
-public class ExportHeaderFooterImages
+public class Program
 {
     public static void Main()
     {
-        // Define file and folder names
-        const string docPath = "Sample.odt";
+        // Prepare sample images for header and footer.
         const string headerImagePath = "header.png";
         const string footerImagePath = "footer.png";
-        const string headerFolder = "HeaderImages";
-        const string footerFolder = "FooterImages";
 
-        // Ensure clean environment
-        foreach (var path in new[] { docPath, headerImagePath, footerImagePath })
-            if (File.Exists(path)) File.Delete(path);
-        foreach (var folder in new[] { headerFolder, footerFolder })
-            if (Directory.Exists(folder)) Directory.Delete(folder, true);
+        CreateSampleImage(headerImagePath, 200, 100, Aspose.Drawing.Color.LightBlue);
+        CreateSampleImage(footerImagePath, 200, 100, Aspose.Drawing.Color.LightGreen);
 
-        // -------------------------------------------------
-        // 1. Create sample images using Aspose.Drawing
-        // -------------------------------------------------
-        CreateSampleImage(headerImagePath, 200, 50, Aspose.Drawing.Color.LightBlue, "Header");
-        CreateSampleImage(footerImagePath, 200, 50, Aspose.Drawing.Color.LightGreen, "Footer");
+        // Create a sample ODT document with header and footer containing the images.
+        const string sourceDocPath = "sample.odt";
+        CreateDocumentWithHeaderFooterImages(sourceDocPath, headerImagePath, footerImagePath);
 
-        // -------------------------------------------------
-        // 2. Create an ODT document and insert images into header and footer
-        // -------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Load the document for extraction.
+        Document doc = new Document(sourceDocPath);
 
-        // Insert image into primary header
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.InsertImage(headerImagePath);
-        builder.Writeln(); // ensure the header has some text after the image
+        // Output folders.
+        const string headerOutputFolder = "HeaderImages";
+        const string footerOutputFolder = "FooterImages";
+        Directory.CreateDirectory(headerOutputFolder);
+        Directory.CreateDirectory(footerOutputFolder);
 
-        // Insert image into primary footer
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.InsertImage(footerImagePath);
-        builder.Writeln(); // ensure the footer has some text after the image
+        int headerImageCount = 0;
+        int footerImageCount = 0;
 
-        // Save the document as ODT
-        doc.Save(docPath, SaveFormat.Odt);
-
-        // -------------------------------------------------
-        // 3. Load the document (demonstrating load lifecycle)
-        // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-
-        // -------------------------------------------------
-        // 4. Extract images from headers and footers into separate folders
-        // -------------------------------------------------
-        Directory.CreateDirectory(headerFolder);
-        Directory.CreateDirectory(footerFolder);
-
-        int headerImageIndex = 0;
-        int footerImageIndex = 0;
-
-        foreach (Section section in loadedDoc.Sections)
+        // Iterate through sections and their header/footer collections.
+        foreach (Section section in doc.Sections)
         {
-            // Process header
-            HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
-            if (header != null)
+            foreach (HeaderFooter hf in section.HeadersFooters)
             {
-                foreach (Shape shape in header.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
+                // Determine target folder based on header/footer type.
+                string targetFolder;
+                bool isHeader = hf.HeaderFooterType == HeaderFooterType.HeaderPrimary ||
+                                hf.HeaderFooterType == HeaderFooterType.HeaderFirst ||
+                                hf.HeaderFooterType == HeaderFooterType.HeaderEven;
+                if (isHeader)
                 {
-                    if (shape.HasImage)
-                    {
-                        string ext = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                        string fileName = Path.Combine(headerFolder,
-                            $"header_image_{headerImageIndex}{ext}");
-                        shape.ImageData.Save(fileName);
-                        headerImageIndex++;
-                    }
+                    targetFolder = headerOutputFolder;
                 }
-            }
+                else
+                {
+                    targetFolder = footerOutputFolder;
+                }
 
-            // Process footer
-            HeaderFooter footer = section.HeadersFooters[HeaderFooterType.FooterPrimary];
-            if (footer != null)
-            {
-                foreach (Shape shape in footer.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
+                // Find all Shape nodes that contain images.
+                NodeCollection shapes = hf.GetChildNodes(NodeType.Shape, true);
+                foreach (Shape shape in shapes)
                 {
                     if (shape.HasImage)
                     {
-                        string ext = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                        string fileName = Path.Combine(footerFolder,
-                            $"footer_image_{footerImageIndex}{ext}");
-                        shape.ImageData.Save(fileName);
-                        footerImageIndex++;
+                        string fileName = $"image-{Guid.NewGuid()}.png";
+                        string fullPath = Path.Combine(targetFolder, fileName);
+                        shape.ImageData.Save(fullPath);
+                        if (isHeader)
+                            headerImageCount++;
+                        else
+                            footerImageCount++;
                     }
                 }
             }
         }
 
-        // -------------------------------------------------
-        // 5. Validation – ensure at least one image was saved per folder
-        // -------------------------------------------------
-        if (!Directory.EnumerateFiles(headerFolder).Any())
+        // Validation.
+        if (headerImageCount == 0)
             throw new InvalidOperationException("No header images were extracted.");
-        if (!Directory.EnumerateFiles(footerFolder).Any())
+        if (footerImageCount == 0)
             throw new InvalidOperationException("No footer images were extracted.");
 
-        Console.WriteLine("Header and footer images have been exported successfully.");
+        Console.WriteLine($"Extraction complete. Header images: {headerImageCount}, Footer images: {footerImageCount}");
     }
 
-    // Helper method to create a deterministic sample PNG image
-    private static void CreateSampleImage(string filePath, int width, int height,
-        Aspose.Drawing.Color backgroundColor, string text)
+    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor)
     {
         using (Bitmap bitmap = new Bitmap(width, height))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(backgroundColor);
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
-                {
-                    graphics.DrawString(text, font, Aspose.Drawing.Brushes.Black, new PointF(10, 10));
-                }
+                g.Clear(backColor);
             }
-
-            bitmap.Save(filePath, ImageFormat.Png);
+            bitmap.Save(filePath);
         }
+    }
+
+    private static void CreateDocumentWithHeaderFooterImages(string docPath, string headerImgPath, string footerImgPath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert header image.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.InsertImage(headerImgPath);
+
+        // Insert footer image.
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.InsertImage(footerImgPath);
+
+        // Add a simple body paragraph.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Sample document body text.");
+
+        doc.Save(docPath, SaveFormat.Odt);
     }
 }

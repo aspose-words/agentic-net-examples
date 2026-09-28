@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,163 +9,131 @@ public class Program
 {
     public static void Main()
     {
-        // Directories for artifacts
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Step 1: Create a sample JPEG image.
+        const string sampleImagePath = "sample.jpg";
+        CreateSampleJpeg(sampleImagePath);
 
-        // 1. Create sample JPEG images.
-        string[] sampleImagePaths = CreateSampleJpegImages(artifactsDir);
+        // Step 2: Create a source document and insert the sample image.
+        const string sourceDocPath = "source.docx";
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.InsertImage(sampleImagePath);
+        sourceDoc.Save(sourceDocPath);
 
-        // 2. Build a source document that contains the sample images.
-        string sourceDocPath = Path.Combine(artifactsDir, "Source.docx");
-        BuildSourceDocument(sampleImagePaths, sourceDocPath);
+        // Step 3: Extract JPEG images from the source document.
+        string[] extractedImages = ExtractJpegImages(sourceDoc, "extracted");
 
-        // 3. Load the source document and apply Gaussian blur to each JPEG image.
-        string outputDocPath = Path.Combine(artifactsDir, "Output.docx");
-        ApplyGaussianBlurToJpegImages(sourceDocPath, outputDocPath);
+        if (extractedImages.Length == 0)
+            throw new Exception("No JPEG images were extracted from the source document.");
 
-        // 4. Validate that the output document was created.
-        if (!File.Exists(outputDocPath))
-            throw new InvalidOperationException("The output document was not created.");
+        // Step 4: Apply Gaussian blur to each extracted image and collect blurred paths.
+        string[] blurredImages = new string[extractedImages.Length];
+        for (int i = 0; i < extractedImages.Length; i++)
+        {
+            string blurredPath = $"blurred_{i}.jpg";
+            ApplyGaussianBlur(extractedImages[i], blurredPath);
+            blurredImages[i] = blurredPath;
+        }
 
-        // (Optional) Clean up temporary blurred images.
-        CleanupTemporaryFiles(artifactsDir);
+        // Step 5: Create a new document and embed the blurred images.
+        const string resultDocPath = "result.docx";
+        Document resultDoc = new Document();
+        DocumentBuilder resultBuilder = new DocumentBuilder(resultDoc);
+        foreach (string blurredPath in blurredImages)
+        {
+            resultBuilder.InsertParagraph();
+            resultBuilder.InsertImage(blurredPath);
+        }
+        resultDoc.Save(resultDocPath);
+
+        // Validation
+        if (!File.Exists(resultDocPath))
+            throw new Exception("Result document was not created.");
+
+        Console.WriteLine("Processing completed successfully.");
     }
 
-    // Creates a few deterministic JPEG images and returns their file paths.
-    private static string[] CreateSampleJpegImages(string folder)
+    private static void CreateSampleJpeg(string path)
     {
-        string[] paths = new string[2];
-
-        for (int i = 0; i < paths.Length; i++)
+        const int width = 200;
+        const int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            int width = 200;
-            int height = 200;
-            using (Bitmap bitmap = new Bitmap(width, height))
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                // Fill background.
                 g.Clear(Color.White);
-
-                // Draw a colored rectangle.
-                Color rectColor = i == 0 ? Color.Red : Color.Blue;
-                using (Brush brush = new SolidBrush(rectColor))
+                // Draw a simple red rectangle.
+                using (SolidBrush brush = new SolidBrush(Color.Red))
                 {
-                    g.FillRectangle(brush, 20, 20, width - 40, height - 40);
-                }
-
-                // Save as JPEG.
-                string filePath = Path.Combine(folder, $"Sample{i + 1}.jpg");
-                bitmap.Save(filePath, ImageFormat.Jpeg);
-                paths[i] = filePath;
-            }
-        }
-
-        return paths;
-    }
-
-    // Inserts the provided images into a new document.
-    private static void BuildSourceDocument(string[] imagePaths, string outputPath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        foreach (string imgPath in imagePaths)
-        {
-            builder.InsertParagraph();
-            builder.InsertImage(imgPath);
-        }
-
-        doc.Save(outputPath);
-    }
-
-    // Loads a document, blurs each JPEG image, and saves the result.
-    private static void ApplyGaussianBlurToJpegImages(string inputPath, string outputPath)
-    {
-        Document doc = new Document(inputPath);
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-
-        int imageIndex = 0;
-        foreach (Shape shape in shapes.OfType<Shape>())
-        {
-            if (!shape.HasImage)
-                continue;
-
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
-
-            // Extract image bytes.
-            byte[] imageBytes = shape.ImageData.ImageBytes;
-            using (MemoryStream ms = new MemoryStream(imageBytes))
-            using (Bitmap bitmap = new Bitmap(ms))
-            {
-                // Apply a simple blur (average of 3x3 neighbourhood).
-                ApplySimpleBlur(bitmap);
-
-                // Save blurred image to a temporary stream.
-                using (MemoryStream blurredStream = new MemoryStream())
-                {
-                    bitmap.Save(blurredStream, ImageFormat.Jpeg);
-                    blurredStream.Position = 0;
-
-                    // Replace the shape's image with the blurred version.
-                    shape.ImageData.SetImage(blurredStream);
+                    g.FillRectangle(brush, 50, 50, 100, 100);
                 }
             }
-
-            imageIndex++;
+            bitmap.Save(path, ImageFormat.Jpeg);
         }
-
-        doc.Save(outputPath);
     }
 
-    // Simple 3x3 average blur (approximates Gaussian blur for demonstration).
-    private static void ApplySimpleBlur(Bitmap source)
+    private static string[] ExtractJpegImages(Document doc, string baseFileName)
     {
-        int width = source.Width;
-        int height = source.Height;
-        Bitmap temp = new Bitmap(width, height);
-
-        for (int y = 1; y < height - 1; y++)
+        var shapes = doc.GetChildNodes(NodeType.Shape, true);
+        var extractedPaths = new System.Collections.Generic.List<string>();
+        int index = 0;
+        foreach (Shape shape in shapes)
         {
-            for (int x = 1; x < width - 1; x++)
+            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Jpeg)
             {
-                int r = 0, g = 0, b = 0;
-                for (int ky = -1; ky <= 1; ky++)
+                string imagePath = $"{baseFileName}_{index}.jpg";
+                shape.ImageData.Save(imagePath);
+                extractedPaths.Add(imagePath);
+                index++;
+            }
+        }
+        return extractedPaths.ToArray();
+    }
+
+    private static void ApplyGaussianBlur(string inputPath, string outputPath)
+    {
+        using (Bitmap source = new Bitmap(inputPath))
+        {
+            int width = source.Width;
+            int height = source.Height;
+            using (Bitmap blurred = new Bitmap(width, height))
+            {
+                // Simple 5x5 Gaussian kernel (approximation).
+                double[,] kernel = {
+                    { 1,  4,  7,  4, 1 },
+                    { 4, 16, 26, 16, 4 },
+                    { 7, 26, 41, 26, 7 },
+                    { 4, 16, 26, 16, 4 },
+                    { 1,  4,  7,  4, 1 }
+                };
+                double kernelSum = 273; // Sum of all kernel values.
+
+                for (int y = 0; y < height; y++)
                 {
-                    for (int kx = -1; kx <= 1; kx++)
+                    for (int x = 0; x < width; x++)
                     {
-                        Color c = source.GetPixel(x + kx, y + ky);
-                        r += c.R;
-                        g += c.G;
-                        b += c.B;
+                        double r = 0, g = 0, b = 0;
+                        for (int ky = -2; ky <= 2; ky++)
+                        {
+                            int py = Math.Min(height - 1, Math.Max(0, y + ky));
+                            for (int kx = -2; kx <= 2; kx++)
+                            {
+                                int px = Math.Min(width - 1, Math.Max(0, x + kx));
+                                Color pixelColor = source.GetPixel(px, py);
+                                double weight = kernel[ky + 2, kx + 2];
+                                r += pixelColor.R * weight;
+                                g += pixelColor.G * weight;
+                                b += pixelColor.B * weight;
+                            }
+                        }
+                        int nr = Math.Min(255, Math.Max(0, (int)(r / kernelSum)));
+                        int ng = Math.Min(255, Math.Max(0, (int)(g / kernelSum)));
+                        int nb = Math.Min(255, Math.Max(0, (int)(b / kernelSum)));
+                        blurred.SetPixel(x, y, Color.FromArgb(nr, ng, nb));
                     }
                 }
-                r /= 9;
-                g /= 9;
-                b /= 9;
-                temp.SetPixel(x, y, Color.FromArgb(r, g, b));
+                blurred.Save(outputPath, ImageFormat.Jpeg);
             }
-        }
-
-        // Copy blurred pixels back to the original bitmap.
-        for (int y = 1; y < height - 1; y++)
-        {
-            for (int x = 1; x < width - 1; x++)
-            {
-                source.SetPixel(x, y, temp.GetPixel(x, y));
-            }
-        }
-
-        temp.Dispose();
-    }
-
-    // Removes any temporary blurred image files that might have been created.
-    private static void CleanupTemporaryFiles(string folder)
-    {
-        foreach (string file in Directory.GetFiles(folder, "blurred_*.jpg"))
-        {
-            try { File.Delete(file); } catch { /* ignore */ }
         }
     }
 }

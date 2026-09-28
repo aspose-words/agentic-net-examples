@@ -1,9 +1,8 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -11,83 +10,83 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string artifactsDir = "Artifacts";
-        Directory.CreateDirectory(artifactsDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample JPEG image using Aspose.Drawing.
-        // -----------------------------------------------------------------
-        string jpegPath = Path.Combine(artifactsDir, "sample.jpg");
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics g = Graphics.FromImage(bitmap))
+        // Create a deterministic sample JPEG image using Aspose.Drawing.
+        string jpegPath = "sample.jpg";
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200))
         {
-            g.Clear(Aspose.Drawing.Color.LightBlue);
-            g.DrawEllipse(new Pen(Aspose.Drawing.Color.DarkRed, 5), 20, 20, 160, 160);
-            bitmap.Save(jpegPath, ImageFormat.Jpeg);
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                g.Clear(Aspose.Drawing.Color.LightBlue);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 5))
+                {
+                    g.DrawRectangle(pen, 20, 20, 160, 160);
+                }
+            }
+            bitmap.Save(jpegPath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Create a Word document and insert the JPEG image.
-        // -----------------------------------------------------------------
+        // Insert the JPEG image into a Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
-        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
+        string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document and extract JPEG images.
-        // -----------------------------------------------------------------
+        // Load the document and extract images.
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+
+        int tiffCount = 0;
+        foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only JPEG images.
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
-
-            // Save the original JPEG to a memory stream.
-            using (MemoryStream jpegStream = new MemoryStream())
+            // Save the shape's image to a memory stream.
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                shape.ImageData.Save(jpegStream);
-                jpegStream.Position = 0; // Reset before reuse.
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0;
 
-                // -----------------------------------------------------------------
-                // 4. Create a temporary document containing the extracted image.
-                // -----------------------------------------------------------------
-                Document tempDoc = new Document();
-                DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-                tempBuilder.InsertImage(jpegStream.ToArray());
-
-                // -----------------------------------------------------------------
-                // 5. Save the temporary document as a high‑resolution TIFF with LZW compression.
-                // -----------------------------------------------------------------
-                ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+                // Process only JPEG images.
+                if (shape.ImageData.ImageType == ImageType.Jpeg)
                 {
-                    TiffCompression = TiffCompression.Lzw,
-                    Resolution = 300 // High resolution (300 DPI).
-                };
+                    // Load the JPEG image using Aspose.Drawing.
+                    using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(imageStream))
+                    {
+                        // Create a high‑resolution bitmap (300 DPI) and draw the original image onto it.
+                        using (Aspose.Drawing.Bitmap highResBmp = new Aspose.Drawing.Bitmap(img.Width, img.Height))
+                        {
+                            highResBmp.SetResolution(300, 300);
+                            using (Aspose.Drawing.Graphics g2 = Aspose.Drawing.Graphics.FromImage(highResBmp))
+                            {
+                                g2.DrawImage(img, 0, 0, img.Width, img.Height);
+                            }
 
-                string tiffPath = Path.Combine(artifactsDir, $"ExtractedImage_{imageIndex}.tiff");
-                tempDoc.Save(tiffPath, tiffOptions);
+                            // Prepare TIFF encoder with LZW compression.
+                            ImageCodecInfo tiffCodec = ImageCodecInfo.GetImageEncoders()
+                                .First(c => c.FormatID == Aspose.Drawing.Imaging.ImageFormat.Tiff.Guid);
+                            EncoderParameters encoderParams = new EncoderParameters(1);
+                            encoderParams.Param[0] = new EncoderParameter(
+                                Encoder.Compression,
+                                (long)EncoderValue.CompressionLZW);
 
-                // Validate that the TIFF file was created.
-                if (!File.Exists(tiffPath))
-                    throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
-
-                imageIndex++;
+                            // Save the high‑resolution image as TIFF.
+                            string tiffPath = $"image-{tiffCount}.tiff";
+                            highResBmp.Save(tiffPath, tiffCodec, encoderParams);
+                            tiffCount++;
+                        }
+                    }
+                }
             }
         }
 
-        // Ensure at least one image was processed.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No JPEG images were found to convert.");
+        // Validate that at least one TIFF file was created.
+        if (tiffCount == 0)
+            throw new InvalidOperationException("No JPEG images were found to convert to TIFF.");
 
-        // The program finishes automatically.
+        // Cleanup temporary files.
+        File.Delete(jpegPath);
+        File.Delete(docPath);
     }
 }

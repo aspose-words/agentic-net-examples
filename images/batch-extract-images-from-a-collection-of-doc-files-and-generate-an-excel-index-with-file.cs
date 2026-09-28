@@ -1,168 +1,127 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Words.Tables;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-public class BatchImageExtractor
+public class Program
 {
-    // Paths used by the example
-    private const string InputFolder = "InputDocs";
-    private const string ImageOutputFolder = "ExtractedImages";
-    private const string IndexFilePath = "ImageIndex.xlsx";
-
     public static void Main()
     {
-        // Ensure clean environment
-        PrepareFolders();
+        // Define folders
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDocsDir = Path.Combine(baseDir, "InputDocs");
+        string imagesDir = Path.Combine(baseDir, "ExtractedImages");
+        string outputDir = Path.Combine(baseDir, "Output");
 
-        // Step 1: Create sample DOCX files with images
-        CreateSampleDocuments();
+        Directory.CreateDirectory(inputDocsDir);
+        Directory.CreateDirectory(imagesDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Step 2: Extract images from each document and collect index data
-        var indexEntries = new List<(string DocumentPath, string ImagePath)>();
-        foreach (string docPath in Directory.GetFiles(InputFolder, "*.docx"))
+        // Create a deterministic sample image (input.png)
+        string sampleImagePath = Path.Combine(baseDir, "input.png");
+        CreateSampleImage(sampleImagePath, 200, 200);
+
+        // Create sample DOCX files each containing the sample image
+        int docCount = 3;
+        for (int i = 1; i <= docCount; i++)
         {
-            var extractedImages = ExtractImagesFromDocument(docPath);
-            foreach (string imgPath in extractedImages)
+            string docPath = Path.Combine(inputDocsDir, $"Doc{i}.docx");
+            CreateDocumentWithImage(docPath, sampleImagePath);
+        }
+
+        // Prepare data for index
+        var indexRows = new List<(string DocPath, string ImagePath)>();
+
+        // Process each DOCX file
+        foreach (string docFile in Directory.GetFiles(inputDocsDir, "*.docx"))
+        {
+            Document doc = new Document(docFile);
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+            int imageIndex = 0;
+
+            foreach (Shape shape in shapes)
             {
-                indexEntries.Add((docPath, imgPath));
+                if (shape.HasImage)
+                {
+                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_Image{imageIndex}.png";
+                    string imagePath = Path.Combine(imagesDir, imageFileName);
+                    shape.ImageData.Save(imagePath);
+                    indexRows.Add((docFile, imagePath));
+                    imageIndex++;
+                }
             }
         }
 
-        // Validate that we extracted at least one image
-        if (indexEntries.Count == 0)
+        // Validate that at least one image was extracted
+        if (indexRows.Count == 0)
             throw new InvalidOperationException("No images were extracted from the documents.");
 
-        // Step 3: Create an Excel (XLSX) index using Aspose.Words
-        CreateExcelIndex(indexEntries);
+        // Create a simple CSV file with .xlsx extension as the index
+        string excelPath = Path.Combine(outputDir, "ImageIndex.xlsx");
+        CreateCsvIndex(excelPath, indexRows);
 
-        // Validate that the index file was created
-        if (!File.Exists(IndexFilePath))
-            throw new InvalidOperationException($"Failed to create the index file at '{IndexFilePath}'.");
-
-        Console.WriteLine("Image extraction and index generation completed successfully.");
+        // Validate Excel (CSV) file creation
+        if (!File.Exists(excelPath))
+            throw new InvalidOperationException("Failed to create the Excel index file.");
     }
 
-    private static void PrepareFolders()
+    // Creates a simple white image with a black rectangle using Aspose.Drawing
+    private static void CreateSampleImage(string path, int width, int height)
     {
-        // Delete previous runs (if any) and recreate folders
-        if (Directory.Exists(InputFolder))
-            Directory.Delete(InputFolder, true);
-        if (Directory.Exists(ImageOutputFolder))
-            Directory.Delete(ImageOutputFolder, true);
-
-        Directory.CreateDirectory(InputFolder);
-        Directory.CreateDirectory(ImageOutputFolder);
-    }
-
-    private static void CreateSampleDocuments()
-    {
-        // Create three sample images
-        string[] sampleImageFiles = new string[3];
-        for (int i = 0; i < 3; i++)
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
+        try
         {
-            string imgPath = Path.Combine(InputFolder, $"sample{i + 1}.png");
-            CreateSampleImage(imgPath, 100 + i * 50, 100 + i * 50, GetColor(i));
-            sampleImageFiles[i] = imgPath;
+            Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap);
+            try
+            {
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 5))
+                {
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+            finally
+            {
+                g.Dispose();
+            }
+
+            bitmap.Save(path, ImageFormat.Png);
         }
-
-        // Create three DOCX files, each containing one of the sample images
-        for (int i = 0; i < 3; i++)
+        finally
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Document {i + 1} with an image:");
-            builder.InsertImage(sampleImageFiles[i]);
-            string docPath = Path.Combine(InputFolder, $"Document{i + 1}.docx");
-            doc.Save(docPath);
+            bitmap.Dispose();
         }
     }
 
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color color)
+    // Creates a DOCX file and inserts the specified image
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
     {
-        // Create a bitmap, fill it with a solid color, and save as PNG
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(color);
-            bitmap.Save(filePath);
-        }
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln($"Document generated for image extraction: {Path.GetFileName(docPath)}");
+        builder.InsertImage(imagePath);
+        doc.Save(docPath);
     }
 
-    private static Aspose.Drawing.Color GetColor(int index)
+    // Generates a CSV file (named with .xlsx extension) listing document and image paths
+    private static void CreateCsvIndex(string filePath, List<(string DocPath, string ImagePath)> rows)
     {
-        // Return deterministic colors for the sample images
-        return index switch
+        using (StreamWriter writer = new StreamWriter(filePath, false))
         {
-            0 => Aspose.Drawing.Color.Red,
-            1 => Aspose.Drawing.Color.Green,
-            2 => Aspose.Drawing.Color.Blue,
-            _ => Aspose.Drawing.Color.Black,
-        };
-    }
+            // Header
+            writer.WriteLine("Document Path,Extracted Image Path");
 
-    private static List<string> ExtractImagesFromDocument(string docPath)
-    {
-        var extractedPaths = new List<string>();
-        Document doc = new Document(docPath);
-
-        // Get all shape nodes (including images)
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
-        {
-            if (!shape.HasImage)
-                continue;
-
-            // Determine file extension based on image type
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_Image{imageIndex}{extension}";
-            string imageFullPath = Path.Combine(ImageOutputFolder, imageFileName);
-
-            // Save the image to disk
-            shape.ImageData.Save(imageFullPath);
-            extractedPaths.Add(imageFullPath);
-            imageIndex++;
+            // Data rows
+            foreach (var row in rows)
+            {
+                // Escape commas if needed
+                string docPath = $"\"{row.DocPath}\"";
+                string imgPath = $"\"{row.ImagePath}\"";
+                writer.WriteLine($"{docPath},{imgPath}");
+            }
         }
-
-        return extractedPaths;
-    }
-
-    private static void CreateExcelIndex(List<(string DocumentPath, string ImagePath)> entries)
-    {
-        // Create a new Word document that will be saved as XLSX
-        Document indexDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(indexDoc);
-
-        // Insert a table with two columns: Document and Image File
-        Table table = builder.StartTable();
-
-        // Header row
-        builder.InsertCell();
-        builder.Write("Document");
-        builder.InsertCell();
-        builder.Write("Image File");
-        builder.EndRow();
-
-        // Data rows
-        foreach (var entry in entries)
-        {
-            builder.InsertCell();
-            builder.Write(Path.GetFileName(entry.DocumentPath));
-            builder.InsertCell();
-            builder.Write(Path.GetFileName(entry.ImagePath));
-            builder.EndRow();
-        }
-
-        builder.EndTable();
-
-        // Save the table as an Excel workbook
-        indexDoc.Save(IndexFilePath, SaveFormat.Xlsx);
     }
 }

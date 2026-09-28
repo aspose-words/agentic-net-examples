@@ -1,9 +1,7 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 
 public class Program
@@ -11,74 +9,81 @@ public class Program
     public static void Main()
     {
         // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string outputFolder = Path.Combine(baseDir, "ExtractedImages");
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "ExtractedImages");
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create sample DOCX files with images
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc1.docx"));
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc2.docx"));
+        // Create a sample image (PNG) to be inserted into documents
+        string sampleImagePath = Path.Combine(baseDir, "sample.png");
+        CreateSampleImage(sampleImagePath);
 
-        int totalExtracted = 0;
+        // Create sample DOCX files containing the image
+        CreateSampleDocuments(inputDir, sampleImagePath, 2);
 
-        // Process each DOC/DOCX file in the input folder
-        foreach (string docPath in Directory.GetFiles(inputFolder, "*.*", SearchOption.TopDirectoryOnly)
-                                            .Where(f => f.EndsWith(".doc", StringComparison.OrdinalIgnoreCase) ||
-                                                        f.EndsWith(".docx", StringComparison.OrdinalIgnoreCase)))
+        // Batch process: extract images from each DOCX and save as BMP
+        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
         {
             Document doc = new Document(docPath);
-            var shapes = doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>()
-                            .Where(s => s.HasImage)
-                            .ToList();
-
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
+
             foreach (Shape shape in shapes)
             {
-                using (MemoryStream imgStream = new MemoryStream())
+                if (shape.HasImage)
                 {
-                    // Save the image data to a memory stream
-                    shape.ImageData.Save(imgStream);
-                    imgStream.Position = 0; // Reset before reading
-
-                    // Load the image into Aspose.Drawing.Bitmap
-                    using (Bitmap bitmap = new Bitmap(imgStream))
-                    {
-                        // Ensure the bitmap is in a format that can be saved as BMP
-                        string outFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_image{imageIndex}.bmp";
-                        string outPath = Path.Combine(outputFolder, outFileName);
-                        bitmap.Save(outPath);
-                        totalExtracted++;
-                        imageIndex++;
-                    }
+                    string bmpFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_image{imageIndex}.bmp";
+                    string bmpPath = Path.Combine(outputDir, bmpFileName);
+                    shape.ImageData.Save(bmpPath); // Save directly as BMP
+                    imageIndex++;
                 }
             }
+
+            if (imageIndex == 0)
+                throw new InvalidOperationException($"No images were extracted from document '{docPath}'.");
         }
 
-        // Validation: at least one BMP image must have been extracted
-        if (totalExtracted == 0)
-            throw new InvalidOperationException("No images were extracted from the documents.");
+        // Validate that at least one BMP file was created
+        int bmpCount = Directory.GetFiles(outputDir, "*.bmp").Length;
+        if (bmpCount == 0)
+            throw new InvalidOperationException("No BMP images were saved during batch processing.");
 
-        // Example completed – the program exits automatically.
+        Console.WriteLine($"Batch processing completed. Extracted {bmpCount} BMP image(s) to '{outputDir}'.");
     }
 
-    private static void CreateSampleDocument(string docPath)
+    private static void CreateSampleImage(string filePath)
     {
-        // Create a deterministic sample image
-        string imagePath = Path.ChangeExtension(docPath, ".png");
-        using (Bitmap bitmap = new Bitmap(100, 100))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(Color.LightBlue);
-            bitmap.Save(imagePath);
-        }
+        const int width = 100;
+        const int height = 100;
 
-        // Build a document and insert the image
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document with an image:");
-        builder.InsertImage(imagePath);
-        doc.Save(docPath);
+        // Create bitmap using Aspose.Drawing
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+                // Draw a simple rectangle
+                using (Pen pen = new Pen(Color.Black))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+            bitmap.Save(filePath);
+        }
+    }
+
+    private static void CreateSampleDocuments(string folderPath, string imagePath, int count)
+    {
+        for (int i = 1; i <= count; i++)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Sample Document {i}");
+            builder.InsertImage(imagePath);
+            string docFileName = $"Doc{i}.docx";
+            string docFullPath = Path.Combine(folderPath, docFileName);
+            doc.Save(docFullPath);
+        }
     }
 }

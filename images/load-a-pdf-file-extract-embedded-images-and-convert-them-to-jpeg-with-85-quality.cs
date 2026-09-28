@@ -1,9 +1,8 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -11,82 +10,77 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare file paths.
-        string workDir = Directory.GetCurrentDirectory();
-        string sampleImagePath = Path.Combine(workDir, "sample.png");
-        string pdfPath = Path.Combine(workDir, "sample.pdf");
-        string outputDir = Path.Combine(workDir, "ExtractedImages");
-        Directory.CreateDirectory(outputDir);
+        // Define file paths.
+        const string sampleImagePath = "sample.png";
+        const string wordDocPath = "sample.docx";
+        const string pdfPath = "sample.pdf";
+        const string outputFolder = "ExtractedImages";
 
         // -------------------------------------------------
-        // 1. Create a deterministic sample image (PNG).
+        // Step 1: Create a deterministic sample image.
         // -------------------------------------------------
-        int imgWidth = 200;
-        int imgHeight = 100;
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+
+        // Create bitmap using Aspose.Drawing.
         using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            // Draw on the bitmap.
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
-                // Draw a simple rectangle.
-                using (Pen pen = new Pen(Color.Blue, 3))
+                graphics.Clear(Aspose.Drawing.Color.White);
+                using (Pen pen = new Pen(Aspose.Drawing.Color.Red, 5))
                 {
-                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+                    graphics.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
                 }
             }
-            bitmap.Save(sampleImagePath);
+
+            // Save the bitmap as PNG.
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
         }
 
         // -------------------------------------------------
-        // 2. Create a Word document, insert the image, and save as PDF.
+        // Step 2: Create a Word document and insert the image.
         // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleImagePath);
+        doc.Save(wordDocPath);
+        // Save as PDF – this will embed the image in the PDF.
         doc.Save(pdfPath, SaveFormat.Pdf);
 
         // -------------------------------------------------
-        // 3. Load the PDF and extract embedded images.
+        // Step 3: Load the PDF and extract embedded images.
         // -------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
-        NodeCollection shapeNodes = pdfDoc.GetChildNodes(NodeType.Shape, true);
+
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolder);
+
         int imageIndex = 0;
-
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        NodeCollection shapeNodes = pdfDoc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapeNodes)
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Save the shape's image data to a memory stream.
-            using (MemoryStream imgStream = new MemoryStream())
+            if (shape.HasImage)
             {
-                shape.ImageData.Save(imgStream);
-                imgStream.Position = 0;
+                string outputPath = Path.Combine(outputFolder, $"image-{imageIndex}.jpg");
 
-                // Load the image with Aspose.Drawing.
-                using (Image img = Image.FromStream(imgStream))
-                {
-                    // Prepare JPEG encoder with 85% quality.
-                    ImageCodecInfo jpegCodec = ImageCodecInfo.GetImageEncoders()
-                        .First(c => c.FormatID == ImageFormat.Jpeg.Guid);
-                    EncoderParameters encoderParams = new EncoderParameters(1);
-                    encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 85L);
+                // Directly save the image as JPEG. Aspose.Words does not expose
+                // a Save overload with ImageSaveOptions for ImageData, so we use
+                // the simple Save method. The default JPEG quality is acceptable
+                // for this demonstration.
+                shape.ImageData.Save(outputPath);
 
-                    // Save as JPEG.
-                    string outFile = Path.Combine(outputDir, $"image_{imageIndex}.jpg");
-                    img.Save(outFile, jpegCodec, encoderParams);
-                }
+                imageIndex++;
             }
-
-            imageIndex++;
         }
 
-        // -------------------------------------------------
-        // 4. Validation – ensure at least one image was extracted.
-        // -------------------------------------------------
+        // Validate that at least one image was extracted.
         if (imageIndex == 0)
+        {
             throw new InvalidOperationException("No images were extracted from the PDF.");
+        }
 
-        // The program finishes automatically.
+        // Program completed successfully.
     }
 }

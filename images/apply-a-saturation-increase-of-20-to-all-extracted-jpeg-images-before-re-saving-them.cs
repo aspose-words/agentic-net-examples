@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -10,136 +9,118 @@ public class ImageSaturationExample
 {
     public static void Main()
     {
-        // Directories for artifacts
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Step 1: Create a sample JPEG image.
+        const string inputImagePath = "sample.jpg";
+        const int imgWidth = 200;
+        const int imgHeight = 200;
 
-        // 1. Create a sample JPEG image using Aspose.Drawing
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.jpg");
-        CreateSampleJpeg(sampleImagePath);
-
-        // 2. Create a Word document and insert the JPEG image several times
-        string docPath = Path.Combine(artifactsDir, "Original.docx");
-        CreateDocumentWithImages(docPath, sampleImagePath);
-
-        // 3. Load the document, increase saturation of each JPEG image by 20%
-        string modifiedDocPath = Path.Combine(artifactsDir, "Modified.docx");
-        IncreaseJpegSaturation(docPath, modifiedDocPath);
-
-        // 4. Validate that the modified document was saved
-        if (!File.Exists(modifiedDocPath))
-            throw new InvalidOperationException("The modified document was not saved.");
-
-        Console.WriteLine("Saturation increase completed successfully.");
-    }
-
-    // Creates a simple 200x200 JPEG image with a solid rectangle.
-    private static void CreateSampleJpeg(string filePath)
-    {
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200))
+        using (Bitmap bmp = new Bitmap(imgWidth, imgHeight))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bmp))
             {
-                g.Clear(Aspose.Drawing.Color.White);
-                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Blue))
+                g.Clear(Color.White);
+                using (SolidBrush brush = new SolidBrush(Color.Red))
                 {
-                    g.FillRectangle(brush, 25, 25, 150, 150);
+                    g.FillRectangle(brush, 20, 20, imgWidth - 40, imgHeight - 40);
                 }
             }
 
-            // Save as JPEG
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+            bmp.Save(inputImagePath, ImageFormat.Jpeg);
         }
-    }
 
-    // Creates a new document and inserts the same JPEG image three times.
-    private static void CreateDocumentWithImages(string docPath, string imagePath)
-    {
+        // Step 2: Insert the JPEG image into a new Word document.
+        const string docPath = "DocumentWithImage.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert three images, each on its own paragraph
-        for (int i = 0; i < 3; i++)
-        {
-            builder.Writeln($"Image #{i + 1}:");
-            builder.InsertImage(imagePath);
-            builder.Writeln(); // Add spacing
-        }
-
+        builder.InsertImage(inputImagePath);
         doc.Save(docPath);
-    }
 
-    // Loads the document, processes each JPEG image, increases its saturation by 20%, and saves the result.
-    private static void IncreaseJpegSaturation(string inputDocPath, string outputDocPath)
-    {
-        Document doc = new Document(inputDocPath);
+        // Step 3: Load the document and process each JPEG image.
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int processedCount = 0;
 
-        // Iterate over all Shape nodes that contain images
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        foreach (Shape shape in shapes)
         {
-            if (!shape.HasImage)
-                continue;
+            if (!shape.HasImage) continue;
 
-            // Process only JPEG images
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
+            ImageData imgData = shape.ImageData;
+            string imageFormat = imgData.ImageType.ToString(); // e.g., Jpeg, Png, etc.
 
-            // Extract the image bytes
-            byte[] imageBytes = shape.ImageData.ToByteArray();
+            if (!imageFormat.Equals("Jpeg", StringComparison.OrdinalIgnoreCase))
+                continue; // Process only JPEG images.
 
-            // Load the image into a Bitmap
-            using (MemoryStream srcStream = new MemoryStream(imageBytes))
-            using (Aspose.Drawing.Bitmap srcBitmap = new Aspose.Drawing.Bitmap(srcStream))
+            byte[] originalBytes = imgData.ImageBytes;
+            using (MemoryStream originalStream = new MemoryStream(originalBytes))
             {
-                // Create a new bitmap to hold the adjusted image
-                using (Aspose.Drawing.Bitmap destBitmap = new Aspose.Drawing.Bitmap(srcBitmap.Width, srcBitmap.Height))
-                using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(destBitmap))
+                originalStream.Position = 0;
+                using (Bitmap originalBitmap = new Bitmap(originalStream))
                 {
-                    // Build a color matrix that increases saturation by 20%
-                    float saturation = 1.2f; // 20% increase
-                    float lumR = 0.3086f;
-                    float lumG = 0.6094f;
-                    float lumB = 0.0820f;
-
-                    float oneMinusSat = 1.0f - saturation;
-
-                    // ColorMatrix expects a jagged array (float[][])
-                    float[][] matrixElements = new float[][]
+                    using (Bitmap saturatedBitmap = new Bitmap(originalBitmap.Width, originalBitmap.Height))
                     {
-                        new float[] { oneMinusSat * lumR + saturation, oneMinusSat * lumR,               oneMinusSat * lumR,               0, 0 },
-                        new float[] { oneMinusSat * lumG,               oneMinusSat * lumG + saturation, oneMinusSat * lumG,               0, 0 },
-                        new float[] { oneMinusSat * lumB,               oneMinusSat * lumB,               oneMinusSat * lumB + saturation, 0, 0 },
-                        new float[] { 0,                                 0,                                 0,                                 1, 0 },
-                        new float[] { 0,                                 0,                                 0,                                 0, 1 }
-                    };
+                        using (Graphics graphics = Graphics.FromImage(saturatedBitmap))
+                        {
+                            // Build a color matrix that increases saturation by 20%.
+                            float saturation = 1.2f; // 20% increase
+                            float lumR = 0.3086f;
+                            float lumG = 0.6094f;
+                            float lumB = 0.0820f;
 
-                    Aspose.Drawing.Imaging.ColorMatrix colorMatrix = new Aspose.Drawing.Imaging.ColorMatrix(matrixElements);
-                    Aspose.Drawing.Imaging.ImageAttributes imgAttr = new Aspose.Drawing.Imaging.ImageAttributes();
-                    imgAttr.SetColorMatrix(colorMatrix, Aspose.Drawing.Imaging.ColorMatrixFlag.Default, Aspose.Drawing.Imaging.ColorAdjustType.Bitmap);
+                            float sr = lumR * (1 - saturation) + saturation;
+                            float sg = lumG * (1 - saturation) + saturation;
+                            float sb = lumB * (1 - saturation) + saturation;
 
-                    // Draw the original bitmap onto the destination using the color matrix
-                    graphics.DrawImage(
-                        srcBitmap,
-                        new Rectangle(0, 0, srcBitmap.Width, srcBitmap.Height),
-                        0, 0, srcBitmap.Width, srcBitmap.Height,
-                        Aspose.Drawing.GraphicsUnit.Pixel,
-                        imgAttr);
+                            float[][] matrixElements = new float[][]
+                            {
+                                new float[] { sr, lumR * (1 - saturation), lumR * (1 - saturation), 0, 0 },
+                                new float[] { lumG * (1 - saturation), sg, lumG * (1 - saturation), 0, 0 },
+                                new float[] { lumB * (1 - saturation), lumB * (1 - saturation), sb, 0, 0 },
+                                new float[] { 0, 0, 0, 1, 0 },
+                                new float[] { 0, 0, 0, 0, 1 }
+                            };
 
-                    // Save the adjusted bitmap to a memory stream
-                    using (MemoryStream destStream = new MemoryStream())
-                    {
-                        destBitmap.Save(destStream, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
-                        destStream.Position = 0; // Reset before reuse
+                            ColorMatrix colorMatrix = new ColorMatrix(matrixElements);
+                            ImageAttributes imgAttributes = new ImageAttributes();
+                            imgAttributes.SetColorMatrix(colorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
 
-                        // Replace the image in the shape with the adjusted image
-                        shape.ImageData.SetImage(destStream);
+                            graphics.DrawImage(
+                                originalBitmap,
+                                new Rectangle(0, 0, originalBitmap.Width, originalBitmap.Height),
+                                0,
+                                0,
+                                originalBitmap.Width,
+                                originalBitmap.Height,
+                                GraphicsUnit.Pixel,
+                                imgAttributes);
+                        }
+
+                        // Save the saturated bitmap to a memory stream as JPEG.
+                        using (MemoryStream saturatedStream = new MemoryStream())
+                        {
+                            saturatedBitmap.Save(saturatedStream, ImageFormat.Jpeg);
+                            saturatedStream.Position = 0;
+
+                            // Replace the image in the shape with the saturated version.
+                            imgData.SetImage(saturatedStream);
+                            processedCount++;
+                        }
                     }
                 }
             }
         }
 
-        // Save the modified document
-        doc.Save(outputDocPath);
+        // Validate that at least one image was processed.
+        if (processedCount == 0)
+            throw new InvalidOperationException("No JPEG images were found to process.");
+
+        // Step 4: Save the modified document.
+        const string outputDocPath = "DocumentWithSaturatedImage.docx";
+        loadedDoc.Save(outputDocPath);
+
+        // Verify that the output file exists.
+        if (!File.Exists(outputDocPath))
+            throw new FileNotFoundException("The output document was not created.", outputDocPath);
+
+        Console.WriteLine($"Processed {processedCount} JPEG image(s). Output saved to '{outputDocPath}'.");
     }
 }

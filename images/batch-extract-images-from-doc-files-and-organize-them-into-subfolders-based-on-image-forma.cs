@@ -1,134 +1,121 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Base folder for the example.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "ImageBatchExample");
-        string inputDocsDir = Path.Combine(baseDir, "InputDocs");
-        string outputImagesDir = Path.Combine(baseDir, "ExtractedImages");
+        // Base directories
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "ExtractedImages");
 
-        // Ensure clean environment.
-        if (Directory.Exists(baseDir))
-            Directory.Delete(baseDir, true);
-        Directory.CreateDirectory(inputDocsDir);
-        Directory.CreateDirectory(outputImagesDir);
+        // Ensure clean environment
+        if (Directory.Exists(inputDir)) Directory.Delete(inputDir, true);
+        if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true);
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create sample images of different formats.
-        string[] imageFiles = CreateSampleImages(baseDir);
+        // Create sample images of different formats
+        CreateSampleImage("sample1.png", 200, 100, Color.LightBlue, ImageFormat.Png);
+        CreateSampleImage("sample2.jpg", 150, 150, Color.LightCoral, ImageFormat.Jpeg);
+        CreateSampleImage("sample3.gif", 120, 180, Color.LightGreen, ImageFormat.Gif);
 
-        // Create one or more sample DOCX files that contain the images.
-        CreateSampleDocument(Path.Combine(inputDocsDir, "Sample1.docx"), imageFiles);
-        CreateSampleDocument(Path.Combine(inputDocsDir, "Sample2.docx"), imageFiles);
+        // Create sample DOCX files containing the images
+        CreateSampleDocument(Path.Combine(inputDir, "DocumentA.docx"));
+        CreateSampleDocument(Path.Combine(inputDir, "DocumentB.docx"));
 
-        // Batch extract images from all DOC/DOCX files in the input folder.
+        // Process each DOCX file: extract images and organize by format
         int totalExtracted = 0;
-        foreach (string docPath in Directory.GetFiles(inputDocsDir, "*.*", SearchOption.TopDirectoryOnly)
-                                            .Where(f => f.EndsWith(".doc", StringComparison.OrdinalIgnoreCase) ||
-                                                        f.EndsWith(".docx", StringComparison.OrdinalIgnoreCase)))
+        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
         {
             Document doc = new Document(docPath);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
 
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            foreach (Shape shape in shapes)
             {
-                if (!shape.HasImage)
-                    continue;
+                if (!shape.HasImage) continue;
 
-                // Determine file extension based on the image type stored in the shape.
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string formatFolder = Path.Combine(outputImagesDir, extension.TrimStart('.'));
-                Directory.CreateDirectory(formatFolder);
+                ImageData imgData = shape.ImageData;
+                string formatFolder = GetFormatFolderName(imgData.ImageType);
+                string formatDir = Path.Combine(outputDir, formatFolder);
+                Directory.CreateDirectory(formatDir);
 
-                string outputFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_{imageIndex}{extension}";
-                string outputPath = Path.Combine(formatFolder, outputFileName);
-
-                shape.ImageData.Save(outputPath);
+                string outputFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_img{imageIndex}.{formatFolder}";
+                string outputPath = Path.Combine(formatDir, outputFileName);
+                imgData.Save(outputPath);
                 imageIndex++;
                 totalExtracted++;
             }
-
-            // Validation: ensure at least one image was extracted from this document.
-            if (imageIndex == 0)
-                throw new InvalidOperationException($"No images were extracted from document '{docPath}'.");
         }
 
-        // Final validation: ensure the batch produced at least one image.
+        // Validation: ensure at least one image was extracted
         if (totalExtracted == 0)
-            throw new InvalidOperationException("Batch extraction completed but no images were found.");
+        {
+            throw new InvalidOperationException("No images were extracted from the documents.");
+        }
 
-        // Example completed successfully.
-        Console.WriteLine($"Extraction finished. Total images extracted: {totalExtracted}");
+        Console.WriteLine($"Extraction complete. Total images extracted: {totalExtracted}");
     }
 
-    // Creates deterministic sample images (PNG, JPEG, BMP, GIF) and returns their file paths.
-    private static string[] CreateSampleImages(string baseDir)
+    // Helper to create a deterministic sample image file
+    private static void CreateSampleImage(string fileName, int width, int height, Color backColor, ImageFormat format)
     {
-        string[] paths = new string[4];
-        // PNG
-        string pngPath = Path.Combine(baseDir, "sample.png");
-        using (Bitmap bmp = new Bitmap(100, 100))
-        using (Graphics g = Graphics.FromImage(bmp))
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            g.Clear(Aspose.Drawing.Color.LightBlue);
-            bmp.Save(pngPath);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(backColor);
+            }
+            bitmap.Save(fileName, format);
         }
-        paths[0] = pngPath;
-
-        // JPEG
-        string jpgPath = Path.Combine(baseDir, "sample.jpg");
-        using (Bitmap bmp = new Bitmap(120, 80))
-        using (Graphics g = Graphics.FromImage(bmp))
-        {
-            g.Clear(Aspose.Drawing.Color.LightCoral);
-            bmp.Save(jpgPath);
-        }
-        paths[1] = jpgPath;
-
-        // BMP
-        string bmpPath = Path.Combine(baseDir, "sample.bmp");
-        using (Bitmap bmp = new Bitmap(80, 120))
-        using (Graphics g = Graphics.FromImage(bmp))
-        {
-            g.Clear(Aspose.Drawing.Color.LightGreen);
-            bmp.Save(bmpPath);
-        }
-        paths[2] = bmpPath;
-
-        // GIF
-        string gifPath = Path.Combine(baseDir, "sample.gif");
-        using (Bitmap bmp = new Bitmap(90, 90))
-        using (Graphics g = Graphics.FromImage(bmp))
-        {
-            g.Clear(Aspose.Drawing.Color.LightYellow);
-            bmp.Save(gifPath);
-        }
-        paths[3] = gifPath;
-
-        return paths;
     }
 
-    // Creates a DOCX document and inserts each image from the provided list.
-    private static void CreateSampleDocument(string docPath, string[] imageFiles)
+    // Helper to create a sample document with the three images inserted
+    private static void CreateSampleDocument(string docPath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        foreach (string imgPath in imageFiles)
-        {
-            // Insert image inline.
-            builder.InsertImage(imgPath);
-            builder.Writeln(); // Add a line break between images.
-        }
+        // Insert PNG
+        builder.InsertImage("sample1.png");
+        builder.Writeln();
+
+        // Insert JPEG
+        builder.InsertImage("sample2.jpg");
+        builder.Writeln();
+
+        // Insert GIF
+        builder.InsertImage("sample3.gif");
+        builder.Writeln();
 
         doc.Save(docPath);
+    }
+
+    // Map Aspose.Words.ImageType to a folder name / file extension
+    private static string GetFormatFolderName(ImageType imageType)
+    {
+        switch (imageType)
+        {
+            case ImageType.Jpeg:
+                return "jpeg";
+            case ImageType.Png:
+                return "png";
+            case ImageType.Gif:
+                return "gif";
+            case ImageType.Bmp:
+                return "bmp";
+            case ImageType.Emf:
+                return "emf";
+            case ImageType.Wmf:
+                return "wmf";
+            default:
+                return "other";
+        }
     }
 }

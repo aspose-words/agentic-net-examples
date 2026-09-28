@@ -9,50 +9,37 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare deterministic file names.
-        const string inputImagePath = "sample.png";
-        const string docPath = "sample.docx";
-        const string outputDocPath = "sample_sharpened.docx";
-
-        // -------------------------------------------------
-        // 1. Create a sample PNG image using Aspose.Drawing.
-        // -------------------------------------------------
-        const int imgWidth = 200;
-        const int imgHeight = 200;
+        // Create a deterministic sample PNG image.
+        const string sampleImagePath = "sample.png";
+        const int imgWidth = 100;
+        const int imgHeight = 100;
         using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                // Fill background with light gray.
-                g.Clear(Color.LightGray);
-                // Draw a simple red rectangle.
-                g.FillRectangle(new SolidBrush(Color.Red), 50, 50, 100, 100);
+                g.Clear(Color.White);
+                // Draw a simple black rectangle.
+                g.FillRectangle(Brushes.Black, 20, 20, 60, 60);
             }
-            // Save the image to a file so it can be inserted into the document.
-            bitmap.Save(inputImagePath);
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
         }
 
-        // -------------------------------------------------
-        // 2. Create a Word document and insert the PNG image several times.
-        // -------------------------------------------------
+        // Create a Word document and insert the sample PNG image twice.
+        const string inputDocPath = "input.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert the image three times to have multiple shapes.
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertImage(inputImagePath);
-            builder.Writeln(); // Add a line break between images.
-        }
-        doc.Save(docPath);
+        builder.InsertImage(sampleImagePath);
+        builder.Writeln(); // separate images
+        builder.InsertImage(sampleImagePath);
+        doc.Save(inputDocPath);
 
-        // -------------------------------------------------
-        // 3. Load the document, find all PNG images, sharpen them, and replace.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
+        // Load the document for processing.
+        Document loadedDoc = new Document(inputDocPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-
         int processedCount = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        int imageIndex = 0;
+
+        foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
@@ -61,91 +48,96 @@ public class Program
             if (shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Extract the image bytes.
+            // Extract the image to a memory stream.
             using (MemoryStream originalStream = new MemoryStream())
             {
                 shape.ImageData.Save(originalStream);
                 originalStream.Position = 0;
 
-                // Load the image into a Bitmap (Aspose.Drawing).
+                // Load the image into a bitmap.
                 using (Bitmap originalBitmap = new Bitmap(originalStream))
                 {
-                    // Apply a simple sharpening kernel.
-                    using (Bitmap sharpenedBitmap = ApplySharpenFilter(originalBitmap))
+                    // Apply a sharpening filter.
+                    Bitmap sharpenedBitmap = ApplySharpenFilter(originalBitmap);
+                    // Save the sharpened bitmap to a new memory stream.
+                    using (MemoryStream sharpenedStream = new MemoryStream())
                     {
-                        // Save the sharpened bitmap to a new stream.
-                        using (MemoryStream sharpenedStream = new MemoryStream())
-                        {
-                            sharpenedBitmap.Save(sharpenedStream, ImageFormat.Png);
-                            sharpenedStream.Position = 0;
+                        sharpenedBitmap.Save(sharpenedStream, ImageFormat.Png);
+                        sharpenedBitmap.Dispose();
 
-                            // Replace the shape's image with the sharpened version.
-                            shape.ImageData.SetImage(sharpenedStream);
-                            processedCount++;
-                        }
+                        sharpenedStream.Position = 0;
+                        // Replace the shape's image with the sharpened version.
+                        shape.ImageData.SetImage(sharpenedStream);
+                    }
+
+                    // Optionally, save the processed image to a file for verification.
+                    string processedImagePath = $"processed-{imageIndex}.png";
+                    using (FileStream fileOut = new FileStream(processedImagePath, FileMode.Create, FileAccess.Write))
+                    {
+                        sharpenedBitmap = new Bitmap(originalBitmap); // reload to save original size
+                        sharpenedBitmap.Save(fileOut, ImageFormat.Png);
+                        sharpenedBitmap.Dispose();
                     }
                 }
             }
+
+            processedCount++;
+            imageIndex++;
         }
 
         // Validate that at least one PNG image was processed.
         if (processedCount == 0)
-            throw new InvalidOperationException("No PNG images were found to process.");
+            throw new InvalidOperationException("No PNG images were found and processed in the document.");
 
-        // -------------------------------------------------
-        // 4. Save the modified document.
-        // -------------------------------------------------
+        // Save the modified document.
+        const string outputDocPath = "output.docx";
         loadedDoc.Save(outputDocPath);
     }
 
-    // -------------------------------------------------
-    // Helper: Apply a 3x3 sharpening convolution kernel.
-    // -------------------------------------------------
+    // Applies a simple 3x3 sharpening kernel to the provided bitmap.
     private static Bitmap ApplySharpenFilter(Bitmap source)
     {
         int width = source.Width;
         int height = source.Height;
         Bitmap result = new Bitmap(width, height);
 
-        // Sharpen kernel.
+        // Copy original pixels to result (handles borders).
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                result.SetPixel(x, y, source.GetPixel(x, y));
+            }
+        }
+
+        // Sharpening kernel.
         int[,] kernel = {
             {  0, -1,  0 },
             { -1,  5, -1 },
             {  0, -1,  0 }
         };
-        int kernelSize = 3;
-        int offset = kernelSize / 2;
 
-        for (int y = 0; y < height; y++)
+        // Apply kernel to interior pixels.
+        for (int y = 1; y < height - 1; y++)
         {
-            for (int x = 0; x < width; x++)
+            for (int x = 1; x < width - 1; x++)
             {
                 int r = 0, g = 0, b = 0;
-
-                for (int ky = -offset; ky <= offset; ky++)
+                for (int ky = -1; ky <= 1; ky++)
                 {
-                    int py = y + ky;
-                    if (py < 0 || py >= height) continue;
-
-                    for (int kx = -offset; kx <= offset; kx++)
+                    for (int kx = -1; kx <= 1; kx++)
                     {
-                        int px = x + kx;
-                        if (px < 0 || px >= width) continue;
-
-                        Color pixelColor = source.GetPixel(px, py);
-                        int kernelValue = kernel[ky + offset, kx + offset];
-
-                        r += pixelColor.R * kernelValue;
-                        g += pixelColor.G * kernelValue;
-                        b += pixelColor.B * kernelValue;
+                        Color pixel = source.GetPixel(x + kx, y + ky);
+                        int factor = kernel[ky + 1, kx + 1];
+                        r += pixel.R * factor;
+                        g += pixel.G * factor;
+                        b += pixel.B * factor;
                     }
                 }
-
-                // Clamp color components to byte range.
-                r = Math.Min(Math.Max(r, 0), 255);
-                g = Math.Min(Math.Max(g, 0), 255);
-                b = Math.Min(Math.Max(b, 0), 255);
-
+                // Clamp values to byte range.
+                r = Math.Max(0, Math.Min(255, r));
+                g = Math.Max(0, Math.Min(255, g));
+                b = Math.Max(0, Math.Min(255, b));
                 result.SetPixel(x, y, Color.FromArgb(r, g, b));
             }
         }

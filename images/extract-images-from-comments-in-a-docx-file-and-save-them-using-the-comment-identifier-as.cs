@@ -1,94 +1,86 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 
-public class Program
+namespace CommentImageExtraction
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic sample image (sample.png).
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        using (Bitmap bitmap = new Bitmap(100, 100))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        public static void Main()
         {
-            graphics.Clear(Color.White);
-            // Simple visual cue – a black rectangle.
-            graphics.DrawRectangle(Pens.Black, 10, 10, 80, 80);
-            bitmap.Save(sampleImagePath);
-        }
+            // Create a deterministic sample image file.
+            const string sampleImagePath = "sample.png";
+            CreateSampleImage(sampleImagePath);
 
-        // -----------------------------------------------------------------
-        // 2. Build a DOCX that contains a comment with the image inside.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Create a new document and add a paragraph.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This paragraph contains a comment with an image.");
 
-        builder.Writeln("Document with a comment that holds an image.");
+            // Create a comment.
+            Comment comment = new Comment(doc, "Author", "A", DateTime.Now);
+            Paragraph commentParagraph = new Paragraph(doc);
+            comment.AppendChild(commentParagraph);
 
-        // Create a comment node.
-        Comment comment = new Comment(doc, "Author", "A", DateTime.Now);
+            // Create an image shape inside the comment.
+            Shape imageShape = new Shape(doc, ShapeType.Image);
+            imageShape.ImageData.SetImage(sampleImagePath);
+            imageShape.Width = 100;
+            imageShape.Height = 100;
+            commentParagraph.AppendChild(imageShape);
 
-        // The comment must contain a paragraph.
-        Paragraph commentParagraph = new Paragraph(doc);
-        comment.AppendChild(commentParagraph);
+            // Append the comment to the document (attach to the last paragraph).
+            Paragraph lastParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, doc.GetChildNodes(NodeType.Paragraph, true).Count - 1, true);
+            lastParagraph.AppendChild(comment);
 
-        // Create an image shape and set its image.
-        Shape imageShape = new Shape(doc, ShapeType.Image);
-        imageShape.ImageData.SetImage(sampleImagePath);
-        imageShape.Width = 100;
-        imageShape.Height = 100;
+            // Save the document.
+            const string docPath = "CommentImageDoc.docx";
+            doc.Save(docPath);
 
-        // Append the shape to the comment's paragraph.
-        commentParagraph.AppendChild(imageShape);
-
-        // Append the comment to the current paragraph in the main document.
-        builder.CurrentParagraph.AppendChild(comment);
-
-        // Save the document.
-        string docPath = Path.Combine(artifactsDir, "CommentImage.docx");
-        doc.Save(docPath);
-
-        // -----------------------------------------------------------------
-        // 3. Extract images from all comments and save them using comment id.
-        // -----------------------------------------------------------------
-        int extractedImages = 0;
-        NodeCollection commentNodes = doc.GetChildNodes(NodeType.Comment, true);
-
-        int commentIndex = 0;
-        foreach (Comment c in commentNodes.OfType<Comment>())
-        {
-            commentIndex++;
-
-            // Search for Shape nodes inside the comment subtree.
-            NodeCollection shapeNodes = c.GetChildNodes(NodeType.Shape, true);
-            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            // Extract images from comments.
+            List<string> extractedFiles = new List<string>();
+            NodeCollection commentNodes = doc.GetChildNodes(NodeType.Comment, true);
+            foreach (Comment cmnt in commentNodes)
             {
-                if (shape.HasImage)
+                NodeCollection shapeNodes = cmnt.GetChildNodes(NodeType.Shape, true);
+                foreach (Shape shp in shapeNodes)
                 {
-                    // Determine file extension based on image type.
-                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    // Use comment Id if available; otherwise fallback to the sequential index.
-                    string fileName = $"comment-{c.Id}{extension}";
-                    string outPath = Path.Combine(artifactsDir, fileName);
-                    shape.ImageData.Save(outPath);
-                    extractedImages++;
+                    if (shp.HasImage)
+                    {
+                        string outputFileName = $"comment-{cmnt.Id}.png";
+                        shp.ImageData.Save(outputFileName);
+                        extractedFiles.Add(outputFileName);
+                    }
                 }
             }
+
+            // Validate that at least one image was extracted.
+            if (extractedFiles.Count == 0)
+                throw new InvalidOperationException("No images were extracted from comments.");
+
+            // Optional: indicate success.
+            Console.WriteLine($"Extracted {extractedFiles.Count} image(s) from comments.");
         }
 
-        if (extractedImages == 0)
-            throw new Exception("No images were extracted from comments.");
-
-        // Optional: indicate success.
-        Console.WriteLine($"Extracted {extractedImages} image(s) from comments to folder: {artifactsDir}");
+        private static void CreateSampleImage(string path)
+        {
+            const int width = 100;
+            const int height = 100;
+            using (Bitmap bitmap = new Bitmap(width, height))
+            {
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.Clear(Aspose.Drawing.Color.White);
+                    using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Red, 3))
+                    {
+                        graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                    }
+                }
+                bitmap.Save(path);
+            }
+        }
     }
 }

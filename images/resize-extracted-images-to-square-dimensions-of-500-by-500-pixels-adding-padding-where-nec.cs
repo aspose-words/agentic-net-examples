@@ -1,107 +1,87 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        const string inputImagePath = "input.png";
-        const string documentPath = "sample.docx";
+        // Create a deterministic sample image (input.png)
+        const int sampleWidth = 200;
+        const int sampleHeight = 300;
+        string inputImagePath = "input.png";
 
-        // -------------------------------------------------
-        // 1. Create a sample image (300x200) using Aspose.Drawing
-        // -------------------------------------------------
-        using (Bitmap sampleBitmap = new Bitmap(300, 200))
+        using (Bitmap bitmap = new Bitmap(sampleWidth, sampleHeight))
+        using (Graphics g = Graphics.FromImage(bitmap))
         {
-            using (Graphics g = Graphics.FromImage(sampleBitmap))
-            {
-                g.Clear(Color.LightBlue);
-                // Draw a simple ellipse to make the image recognizable
-                g.FillEllipse(Brushes.Orange, 50, 30, 200, 140);
-            }
-            sampleBitmap.Save(inputImagePath);
+            g.Clear(Color.White);
+            // Draw a simple rectangle to make the image recognizable
+            g.FillRectangle(new SolidBrush(Color.LightBlue), 20, 20, sampleWidth - 40, sampleHeight - 40);
+            bitmap.Save(inputImagePath);
         }
 
-        // -------------------------------------------------
-        // 2. Create a Word document and insert the sample image
-        // -------------------------------------------------
+        // Create a Word document and insert the sample image
+        string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(inputImagePath);
-        doc.Save(documentPath);
+        doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the document and extract each image,
-        //    resize it to 500x500 with padding, and save.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(documentPath);
-        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                              .Cast<Shape>()
-                              .Where(s => s.HasImage)
-                              .ToList();
+        // Load the document for image extraction
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
-        if (!shapes.Any())
-            throw new InvalidOperationException("No images were found in the document.");
+        int extractedCount = 0;
+        int index = 0;
 
-        int imageIndex = 0;
-        foreach (Shape shape in shapes)
+        foreach (Shape shape in shapeNodes)
         {
-            // Get original image bytes
-            byte[] originalBytes = shape.ImageData.ToByteArray();
+            if (!shape.HasImage)
+                continue;
 
-            // Load original image into a Bitmap
-            using (MemoryStream originalStream = new MemoryStream(originalBytes))
-            using (Bitmap originalBitmap = new Bitmap(originalStream))
+            // Extract the image to a memory stream
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                // Desired square size
-                const int targetSize = 500;
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0;
 
-                // Compute scaling factor to fit within the square while preserving aspect ratio
-                double scale = Math.Min((double)targetSize / originalBitmap.Width,
-                                        (double)targetSize / originalBitmap.Height);
-
-                int scaledWidth = (int)(originalBitmap.Width * scale);
-                int scaledHeight = (int)(originalBitmap.Height * scale);
-
-                // Offsets to center the image
-                int offsetX = (targetSize - scaledWidth) / 2;
-                int offsetY = (targetSize - scaledHeight) / 2;
-
-                // Create a new square bitmap with white background
-                using (Bitmap squareBitmap = new Bitmap(targetSize, targetSize))
+                // Load the extracted image into a bitmap
+                using (Bitmap originalBitmap = new Bitmap(imageStream))
                 {
-                    using (Graphics g = Graphics.FromImage(squareBitmap))
+                    // Determine scaling to fit within 500x500 while preserving aspect ratio
+                    const int targetSize = 500;
+                    double scale = Math.Min((double)targetSize / originalBitmap.Width, (double)targetSize / originalBitmap.Height);
+                    int newWidth = (int)(originalBitmap.Width * scale);
+                    int newHeight = (int)(originalBitmap.Height * scale);
+
+                    // Create a new bitmap with padding (white background)
+                    using (Bitmap paddedBitmap = new Bitmap(targetSize, targetSize))
+                    using (Graphics graphics = Graphics.FromImage(paddedBitmap))
                     {
-                        g.Clear(Color.White);
-                        // Draw the scaled original image onto the square canvas
-                        g.DrawImage(originalBitmap, offsetX, offsetY, scaledWidth, scaledHeight);
+                        graphics.Clear(Color.White);
+                        int offsetX = (targetSize - newWidth) / 2;
+                        int offsetY = (targetSize - newHeight) / 2;
+                        graphics.DrawImage(originalBitmap, new Rectangle(offsetX, offsetY, newWidth, newHeight));
+
+                        // Save the resized image
+                        string outputImagePath = $"extracted_resized_{index}.png";
+                        paddedBitmap.Save(outputImagePath);
+                        extractedCount++;
                     }
-
-                    // Save the resized image
-                    string resizedImagePath = $"resized_{imageIndex}.png";
-                    squareBitmap.Save(resizedImagePath, ImageFormat.Png);
-
-                    // Validate that the file was created
-                    if (!File.Exists(resizedImagePath))
-                        throw new InvalidOperationException($"Failed to create {resizedImagePath}.");
-
-                    // Optional: replace the image in the document with the resized version
-                    // shape.ImageData.SetImage(squareBitmap);
                 }
             }
 
-            imageIndex++;
+            index++;
         }
 
-        // -------------------------------------------------
-        // 4. (Optional) Save the document after replacement
-        // -------------------------------------------------
-        // loadedDoc.Save("sample_resized.docx");
+        // Validate that at least one image was processed
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No images were extracted and resized.");
+
+        // Clean up temporary files (optional)
+        // File.Delete(inputImagePath);
+        // File.Delete(docPath);
     }
 }

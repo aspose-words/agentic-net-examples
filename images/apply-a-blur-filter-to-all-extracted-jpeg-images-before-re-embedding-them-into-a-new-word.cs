@@ -1,169 +1,128 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Directories for artifacts
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // File names
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.jpg");
-        string sourceDocPath = Path.Combine(artifactsDir, "source.docx");
-        string outputDocPath = Path.Combine(artifactsDir, "output.docx");
-
-        // 1. Create a deterministic sample JPEG image.
+        // Create a sample JPEG image.
+        string sampleImagePath = "sample.jpg";
         CreateSampleJpeg(sampleImagePath);
 
-        // 2. Build a source document that contains the sample JPEG image multiple times.
-        CreateSourceDocument(sampleImagePath, sourceDocPath);
+        // Create a Word document that contains the sample image.
+        string originalDocPath = "original.docx";
+        CreateDocumentWithImage(originalDocPath, sampleImagePath);
 
-        // 3. Load the source document.
-        Document srcDoc = new Document(sourceDocPath);
+        // Process the document: extract each JPEG, apply blur, and re‑embed.
+        string blurredDocPath = "blurred.docx";
+        ProcessDocumentImages(originalDocPath, blurredDocPath);
 
-        // 4. Prepare a new document where blurred images will be re‑embedded.
-        Document outDoc = new Document();
-        DocumentBuilder outBuilder = new DocumentBuilder(outDoc);
+        // Validate that the output document was created.
+        if (!File.Exists(blurredDocPath))
+            throw new Exception("Blurred document was not created.");
+    }
 
-        // 5. Iterate over all shapes that contain images.
-        NodeCollection shapeNodes = srcDoc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+    // Generates a deterministic JPEG image using Aspose.Drawing.
+    private static void CreateSampleJpeg(string path)
+    {
+        int width = 200;
+        int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Red, 5))
+                {
+                    g.DrawRectangle(pen, 20, 20, width - 40, height - 40);
+                }
+            }
+            bitmap.Save(path, ImageFormat.Jpeg);
+        }
+    }
+
+    // Inserts the given image into a new Word document.
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(imagePath);
+        doc.Save(docPath);
+    }
+
+    // Extracts JPEG images, applies a blur filter, and replaces them in a new document.
+    private static void ProcessDocumentImages(string inputDocPath, string outputDocPath)
+    {
+        Document doc = new Document(inputDocPath);
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only JPEG images as required.
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
-
-            // 5a. Extract the image bytes into a memory stream.
-            using (MemoryStream originalStream = new MemoryStream())
+            // Extract the image to a memory stream.
+            using (MemoryStream extractStream = new MemoryStream())
             {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
+                shape.ImageData.Save(extractStream);
+                extractStream.Position = 0;
 
-                // 5b. Load the image into an Aspose.Drawing.Bitmap.
-                using (Bitmap bitmap = new Bitmap(originalStream))
+                // Load the image into a bitmap.
+                using (Bitmap originalBitmap = new Bitmap(extractStream))
                 {
-                    // 5c. Apply a simple box blur.
-                    using (Bitmap blurred = ApplyBoxBlur(bitmap))
+                    // Apply a simple box blur.
+                    using (Bitmap blurredBitmap = ApplyBoxBlur(originalBitmap, 1))
                     {
-                        // 5d. Save the blurred bitmap to a new memory stream (JPEG format).
+                        // Save the blurred bitmap to a new stream.
                         using (MemoryStream blurredStream = new MemoryStream())
                         {
-                            blurred.Save(blurredStream, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+                            blurredBitmap.Save(blurredStream, ImageFormat.Jpeg);
                             blurredStream.Position = 0;
 
-                            // 5e. Insert the blurred image into the output document.
-                            byte[] blurredBytes = blurredStream.ToArray();
-                            outBuilder.InsertImage(blurredBytes);
-                            outBuilder.Writeln(); // separate images with a line break
+                            // Replace the shape's image data with the blurred image.
+                            shape.ImageData.SetImage(blurredStream);
                         }
                     }
                 }
             }
         }
-
-        // 6. Save the output document.
-        outDoc.Save(outputDocPath, SaveFormat.Docx);
-
-        // 7. Validate that the output file was created.
-        if (!File.Exists(outputDocPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        // Cleanup (optional): delete temporary files if desired.
+        doc.Save(outputDocPath);
     }
 
-    // Creates a simple JPEG image with deterministic content.
-    private static void CreateSampleJpeg(string filePath)
-    {
-        int width = 200;
-        int height = 200;
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics g = Graphics.FromImage(bitmap))
-        {
-            // Fill background with white.
-            g.Clear(Aspose.Drawing.Color.White);
-
-            // Draw a blue rectangle.
-            using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
-            {
-                g.DrawRectangle(pen, 20, 20, width - 40, height - 40);
-            }
-
-            // Save as JPEG.
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
-        }
-    }
-
-    // Builds a source document that inserts the sample image three times.
-    private static void CreateSourceDocument(string imagePath, string docPath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertImage(imagePath);
-            builder.Writeln(); // separate images with a line break
-        }
-
-        doc.Save(docPath, SaveFormat.Docx);
-    }
-
-    // Applies a simple 3x3 box blur to the provided bitmap and returns a new blurred bitmap.
-    private static Bitmap ApplyBoxBlur(Bitmap source)
+    // Simple box blur implementation.
+    private static Bitmap ApplyBoxBlur(Bitmap source, int radius)
     {
         int width = source.Width;
         int height = source.Height;
-        Bitmap blurred = new Bitmap(width, height);
-
-        // Iterate over each pixel.
+        Bitmap result = new Bitmap(width, height);
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                int sumA = 0, sumR = 0, sumG = 0, sumB = 0;
+                int a = 0, r = 0, g = 0, b = 0;
                 int count = 0;
-
-                // Accumulate colors from the 3x3 neighborhood.
-                for (int ky = -1; ky <= 1; ky++)
+                for (int ky = -radius; ky <= radius; ky++)
                 {
                     int ny = y + ky;
                     if (ny < 0 || ny >= height) continue;
-
-                    for (int kx = -1; kx <= 1; kx++)
+                    for (int kx = -radius; kx <= radius; kx++)
                     {
                         int nx = x + kx;
                         if (nx < 0 || nx >= width) continue;
-
                         Aspose.Drawing.Color pixel = source.GetPixel(nx, ny);
-                        sumA += pixel.A;
-                        sumR += pixel.R;
-                        sumG += pixel.G;
-                        sumB += pixel.B;
+                        a += pixel.A;
+                        r += pixel.R;
+                        g += pixel.G;
+                        b += pixel.B;
                         count++;
                     }
                 }
-
-                // Compute average.
-                Aspose.Drawing.Color avg = Aspose.Drawing.Color.FromArgb(
-                    sumA / count,
-                    sumR / count,
-                    sumG / count,
-                    sumB / count);
-
-                blurred.SetPixel(x, y, avg);
+                result.SetPixel(x, y, Aspose.Drawing.Color.FromArgb(a / count, r / count, g / count, b / count));
             }
         }
-
-        return blurred;
+        return result;
     }
 }

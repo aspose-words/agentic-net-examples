@@ -1,95 +1,129 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Drawing; // For Bitmap, Graphics, Color
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Define deterministic file names.
+        // Step 1: Create a deterministic sample image.
         const string sampleImagePath = "sample.png";
+        CreateSampleImage(sampleImagePath);
+
+        // Step 2: Create a Word document and insert the sample image twice.
         const string docPath = "sample.docx";
+        CreateWordDocumentWithImages(docPath, sampleImagePath);
+
+        // Step 3: Load the document and extract all images.
+        Document doc = new Document(docPath);
+        List<string> extractedImagePaths = ExtractImages(doc);
+
+        // Validate that at least one image was extracted.
+        if (extractedImagePaths.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
+
+        // Step 4: Generate a LaTeX file referencing each extracted image.
         const string latexPath = "output.tex";
+        GenerateLatexFile(latexPath, extractedImagePaths);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample image (100x100 white bitmap) using Aspose.Drawing.
-        // -----------------------------------------------------------------
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(100, 100);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.White);
-        // (Optional) draw something deterministic here if desired.
-        bitmap.Save(sampleImagePath);
-        graphics.Dispose();
-        bitmap.Dispose();
+        // Validate LaTeX file creation.
+        if (!File.Exists(latexPath))
+            throw new InvalidOperationException("LaTeX file was not created.");
 
-        // -----------------------------------------------------------------
-        // 2. Create a Word document and insert the sample image twice.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        builder.InsertParagraph(); // separate the images
-        builder.InsertImage(sampleImagePath);
-        doc.Save(docPath);
+        // Example completed.
+    }
 
-        // -----------------------------------------------------------------
-        // 3. Load the document and extract all images.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        List<Shape> shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                          .Cast<Shape>()
-                                          .Where(s => s.HasImage)
-                                          .ToList();
-
-        if (!shapeNodes.Any())
-            throw new InvalidOperationException("No images were found in the document.");
-
-        List<string> extractedImageFiles = new List<string>();
-        int imageIndex = 0;
-        foreach (Shape shape in shapeNodes)
+    private static void CreateSampleImage(string path)
+    {
+        // Create a 200x200 white bitmap.
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string imageFileName = $"image_{imageIndex}{extension}";
-            shape.ImageData.Save(imageFileName);
-            extractedImageFiles.Add(imageFileName);
-            imageIndex++;
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+                // Draw a simple black rectangle.
+                using (Pen pen = new Pen(Color.Black, 3))
+                {
+                    graphics.DrawRectangle(pen, 20, 20, 160, 160);
+                }
+            }
+            // Save the bitmap as PNG.
+            bitmap.Save(path, ImageFormat.Png);
         }
 
-        // -----------------------------------------------------------------
-        // 4. Generate a simple LaTeX file that includes each extracted image.
-        // -----------------------------------------------------------------
+        // Ensure the image file exists.
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Failed to create sample image at '{path}'.");
+    }
+
+    private static void CreateWordDocumentWithImages(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert the image twice, each on its own paragraph.
+        builder.Writeln("First image:");
+        builder.InsertImage(imagePath);
+        builder.Writeln();
+        builder.Writeln("Second image:");
+        builder.InsertImage(imagePath);
+
+        // Save the document.
+        doc.Save(docPath);
+
+        // Validate document creation.
+        if (!File.Exists(docPath))
+            throw new InvalidOperationException($"Failed to create Word document at '{docPath}'.");
+    }
+
+    private static List<string> ExtractImages(Document doc)
+    {
+        List<string> imagePaths = new List<string>();
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        int index = 1;
+
+        foreach (Shape shape in shapes)
+        {
+            if (shape.HasImage)
+            {
+                string imageFileName = $"extracted-{index}.png";
+                shape.ImageData.Save(imageFileName);
+                if (!File.Exists(imageFileName))
+                    throw new InvalidOperationException($"Failed to save extracted image '{imageFileName}'.");
+                imagePaths.Add(imageFileName);
+                index++;
+            }
+        }
+
+        return imagePaths;
+    }
+
+    private static void GenerateLatexFile(string latexPath, List<string> imagePaths)
+    {
         using (StreamWriter writer = new StreamWriter(latexPath, false))
         {
             writer.WriteLine(@"\documentclass{article}");
             writer.WriteLine(@"\usepackage{graphicx}");
             writer.WriteLine(@"\begin{document}");
-            writer.WriteLine();
+            writer.WriteLine(@"\section*{Extracted Images}");
 
-            for (int i = 0; i < extractedImageFiles.Count; i++)
+            int imgIndex = 1;
+            foreach (string imgPath in imagePaths)
             {
-                string imgFile = extractedImageFiles[i];
                 writer.WriteLine(@"\begin{figure}[h]");
                 writer.WriteLine(@"\centering");
-                writer.WriteLine($@"\includegraphics[width=0.8\textwidth]{{{imgFile}}}");
-                writer.WriteLine($@"\caption{{Image {i}}}");
+                writer.WriteLine($@"\includegraphics[width=0.8\textwidth]{{{imgPath}}}");
+                writer.WriteLine($@"\caption{{Image {imgIndex}}}");
                 writer.WriteLine(@"\end{figure}");
                 writer.WriteLine();
+                imgIndex++;
             }
 
             writer.WriteLine(@"\end{document}");
         }
-
-        // -----------------------------------------------------------------
-        // 5. Validation: ensure LaTeX file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(latexPath))
-            throw new InvalidOperationException("LaTeX file was not created.");
-
-        // Program completed successfully.
     }
 }

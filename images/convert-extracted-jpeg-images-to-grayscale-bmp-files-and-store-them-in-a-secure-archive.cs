@@ -1,10 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -12,105 +11,96 @@ public class Program
 {
     public static void Main()
     {
-        // Directories for artifacts
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // 1. Create a sample JPEG image using Aspose.Drawing
-        string jpegPath = Path.Combine(artifactsDir, "sample.jpg");
+        // Create a sample JPEG image.
+        const string jpegPath = "sample.jpg";
         using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics g = Graphics.FromImage(bitmap))
         {
-            g.Clear(Color.Blue);
-            // Draw a simple rectangle for visual content
-            using (Pen pen = new Pen(Color.Yellow, 5))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.DrawRectangle(pen, 20, 20, 160, 160);
+                g.Clear(Color.LightBlue);
+                // Draw a simple rectangle.
+                g.FillRectangle(new SolidBrush(Color.DarkRed), 50, 50, 100, 100);
             }
             bitmap.Save(jpegPath, ImageFormat.Jpeg);
         }
 
-        // 2. Create a Word document and insert the JPEG image
+        // Create a Word document and insert the JPEG image.
+        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
-        string docPath = Path.Combine(artifactsDir, "Document.docx");
         doc.Save(docPath);
 
-        // 3. Extract JPEG images, convert each to grayscale BMP, and collect output file names
-        var extractedBmpFiles = ExtractAndConvertImages(doc, artifactsDir);
-
-        // 4. Store the resulting BMP files in a zip archive
-        string archivePath = Path.Combine(artifactsDir, "ImagesArchive.zip");
-        CreateZipArchive(extractedBmpFiles, archivePath);
-
-        // 5. Validation
-        if (!File.Exists(archivePath) || extractedBmpFiles.Count == 0)
-            throw new InvalidOperationException("Archive creation failed or no BMP files were generated.");
-
-        // Cleanup temporary BMP files (optional)
-        foreach (var file in extractedBmpFiles)
-            File.Delete(file);
-    }
-
-    private static System.Collections.Generic.List<string> ExtractAndConvertImages(Document doc, string outputDir)
-    {
-        var bmpFiles = new System.Collections.Generic.List<string>();
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        // Load the document and extract JPEG images.
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        List<string> bmpFiles = new List<string>();
         int imageIndex = 0;
 
-        foreach (Shape shape in shapes.OfType<Shape>())
+        foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only JPEG images
+            // Process only JPEG images.
             if (shape.ImageData.ImageType != ImageType.Jpeg)
                 continue;
 
-            // Obtain raw image bytes
-            byte[] imageBytes = shape.ImageData.ToByteArray();
-
-            // Load the image into Aspose.Drawing.Bitmap
-            using (MemoryStream ms = new MemoryStream(imageBytes))
-            using (Bitmap bitmap = new Bitmap(ms))
+            // Load image bytes into a bitmap.
+            using (MemoryStream ms = new MemoryStream(shape.ImageData.ImageBytes))
             {
-                // Convert to grayscale pixel by pixel
-                for (int y = 0; y < bitmap.Height; y++)
+                ms.Position = 0;
+                using (Bitmap original = new Bitmap(ms))
                 {
-                    for (int x = 0; x < bitmap.Width; x++)
+                    // Create a grayscale bitmap.
+                    using (Bitmap grayBitmap = new Bitmap(original.Width, original.Height))
                     {
-                        Color original = bitmap.GetPixel(x, y);
-                        int gray = (original.R + original.G + original.B) / 3;
-                        Color grayColor = Color.FromArgb(gray, gray, gray);
-                        bitmap.SetPixel(x, y, grayColor);
+                        for (int y = 0; y < original.Height; y++)
+                        {
+                            for (int x = 0; x < original.Width; x++)
+                            {
+                                Color pixel = original.GetPixel(x, y);
+                                int gray = (int)(pixel.R * 0.3 + pixel.G * 0.59 + pixel.B * 0.11);
+                                Color grayColor = Color.FromArgb(gray, gray, gray);
+                                grayBitmap.SetPixel(x, y, grayColor);
+                            }
+                        }
+
+                        // Save as BMP.
+                        string bmpPath = $"image_{imageIndex}.bmp";
+                        grayBitmap.Save(bmpPath, ImageFormat.Bmp);
+                        bmpFiles.Add(bmpPath);
+                        imageIndex++;
                     }
                 }
-
-                // Save as BMP
-                string bmpPath = Path.Combine(outputDir, $"extracted_{imageIndex}.bmp");
-                bitmap.Save(bmpPath, ImageFormat.Bmp);
-                bmpFiles.Add(bmpPath);
-                imageIndex++;
             }
         }
 
+        // Validate that at least one BMP file was created.
         if (bmpFiles.Count == 0)
-            throw new InvalidOperationException("No JPEG images were found to extract.");
+            throw new InvalidOperationException("No JPEG images were extracted and converted.");
 
-        return bmpFiles;
-    }
-
-    private static void CreateZipArchive(System.Collections.Generic.List<string> files, string zipPath)
-    {
-        using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
-        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+        // Store BMP files in a secure archive (ZIP).
+        const string archivePath = "secure_archive.zip";
+        using (FileStream zipToOpen = new FileStream(archivePath, FileMode.Create))
         {
-            foreach (string filePath in files)
+            using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
             {
-                string entryName = Path.GetFileName(filePath);
-                archive.CreateEntryFromFile(filePath, entryName);
+                foreach (string filePath in bmpFiles)
+                {
+                    archive.CreateEntryFromFile(filePath, Path.GetFileName(filePath));
+                }
             }
         }
+
+        // Validate that the archive was created.
+        if (!File.Exists(archivePath))
+            throw new InvalidOperationException("Failed to create the secure archive.");
+
+        // Cleanup temporary files (optional).
+        File.Delete(jpegPath);
+        File.Delete(docPath);
+        foreach (string filePath in bmpFiles)
+            File.Delete(filePath);
     }
 }

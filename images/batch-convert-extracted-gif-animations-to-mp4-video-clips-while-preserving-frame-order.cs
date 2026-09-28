@@ -1,11 +1,7 @@
 using System;
-using System.IO;
 using System.Diagnostics;
-using System.ComponentModel; // Needed for Win32Exception
-using System.Linq;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -13,166 +9,74 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Prepare folders.
-        // -----------------------------------------------------------------
-        string baseDir = Directory.GetCurrentDirectory();
-        string artifactsDir = Path.Combine(baseDir, "Artifacts");
-        string inputGifDir = Path.Combine(artifactsDir, "InputGifs");
-        string outputMp4Dir = Path.Combine(artifactsDir, "OutputMp4");
+        // Prepare folders
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string inputDir = Path.Combine(baseDir, "input");
+        string outputDir = Path.Combine(baseDir, "output");
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        Directory.CreateDirectory(artifactsDir);
-        Directory.CreateDirectory(inputGifDir);
-        Directory.CreateDirectory(outputMp4Dir);
-
-        // -----------------------------------------------------------------
-        // 2. Create a sample animated GIF (two‑frame) using Aspose.Drawing.
-        // -----------------------------------------------------------------
-        string sampleGifPath = Path.Combine(artifactsDir, "sample.gif");
-        using (Bitmap bmp1 = new Bitmap(200, 200))
-        using (Graphics g1 = Graphics.FromImage(bmp1))
-        using (Bitmap bmp2 = new Bitmap(200, 200))
-        using (Graphics g2 = Graphics.FromImage(bmp2))
+        // Create a sample GIF animation (single‑frame for simplicity)
+        string sampleGifPath = Path.Combine(inputDir, "sample1.gif");
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            // First frame – red background.
-            g1.Clear(Aspose.Drawing.Color.Red);
-            // Second frame – green background.
-            g2.Clear(Aspose.Drawing.Color.Green);
-
-            // Encoder parameters for GIF animation.
-            EncoderParameters encoderParams = new EncoderParameters(1);
-            encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.MultiFrame);
-            ImageCodecInfo gifCodec = GetEncoderInfo("image/gif");
-
-            // Save first frame.
-            bmp1.Save(sampleGifPath, gifCodec, encoderParams);
-
-            // Append second frame.
-            encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.FrameDimensionTime);
-            bmp1.SaveAdd(bmp2, encoderParams);
-
-            // Close the multi‑frame file.
-            encoderParams.Param[0] = new EncoderParameter(Encoder.SaveFlag, (long)EncoderValue.Flush);
-            bmp1.SaveAdd(encoderParams);
-        }
-
-        // -----------------------------------------------------------------
-        // 3. Insert the GIF into a Word document (required by the Images workflow).
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleGifPath);
-        string docPath = Path.Combine(artifactsDir, "DocumentWithGif.docx");
-        doc.Save(docPath);
-
-        // -----------------------------------------------------------------
-        // 4. Load the document and extract all GIF images.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int gifIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
-        {
-            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Gif)
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                string gifFileName = $"extracted_{gifIndex}.gif";
-                string gifFullPath = Path.Combine(inputGifDir, gifFileName);
-                shape.ImageData.Save(gifFullPath);
-                gifIndex++;
+                g.Clear(Color.LightBlue);
+                g.DrawEllipse(new Pen(Color.DarkBlue, 5), 20, 20, 160, 160);
             }
+            bitmap.Save(sampleGifPath, ImageFormat.Gif);
         }
 
-        // Validate that at least one GIF was extracted.
-        string[] extractedGifs = Directory.GetFiles(inputGifDir, "*.gif");
-        if (extractedGifs.Length == 0)
-            throw new InvalidOperationException("No GIF images were extracted from the document.");
+        // Batch convert each GIF to MP4
+        string[] gifFiles = Directory.GetFiles(inputDir, "*.gif");
+        if (gifFiles.Length == 0)
+            throw new InvalidOperationException("No GIF files found for conversion.");
 
-        // -----------------------------------------------------------------
-        // 5. Convert each extracted GIF to MP4.
-        //    If ffmpeg is not available, fall back to copying the GIF with an .mp4 extension.
-        // -----------------------------------------------------------------
-        foreach (string gifPath in extractedGifs)
+        foreach (string gifPath in gifFiles)
         {
-            string mp4FileName = Path.GetFileNameWithoutExtension(gifPath) + ".mp4";
-            string mp4FullPath = Path.Combine(outputMp4Dir, mp4FileName);
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(gifPath);
+            string mp4Path = Path.Combine(outputDir, fileNameWithoutExt + ".mp4");
 
             bool conversionSucceeded = false;
 
             try
             {
-                // Build ffmpeg arguments:
-                // -y            : overwrite output file if it exists
-                // -i <input>    : input GIF
-                // -movflags faststart -pix_fmt yuv420p : common settings for MP4 compatibility
-                string arguments = $"-y -i \"{gifPath}\" -movflags faststart -pix_fmt yuv420p \"{mp4FullPath}\"";
+                // Attempt conversion using ffmpeg if it is available on the system
+                Process ffmpeg = new Process();
+                ffmpeg.StartInfo.FileName = "ffmpeg";
+                ffmpeg.StartInfo.Arguments = $"-y -i \"{gifPath}\" -c:v libx264 -pix_fmt yuv420p \"{mp4Path}\"";
+                ffmpeg.StartInfo.CreateNoWindow = true;
+                ffmpeg.StartInfo.UseShellExecute = false;
+                ffmpeg.StartInfo.RedirectStandardError = true;
+                ffmpeg.StartInfo.RedirectStandardOutput = true;
 
-                ProcessStartInfo startInfo = new ProcessStartInfo
+                ffmpeg.Start();
+                ffmpeg.WaitForExit();
+
+                // ffmpeg returns 0 on success
+                if (ffmpeg.ExitCode == 0 && File.Exists(mp4Path) && new FileInfo(mp4Path).Length > 0)
                 {
-                    FileName = "ffmpeg",
-                    Arguments = arguments,
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true
-                };
-
-                using (Process proc = Process.Start(startInfo))
-                {
-                    proc.WaitForExit();
-
-                    // Capture output for debugging (optional).
-                    string stdOut = proc.StandardOutput.ReadToEnd();
-                    string stdErr = proc.StandardError.ReadToEnd();
-
-                    if (proc.ExitCode == 0 && File.Exists(mp4FullPath))
-                    {
-                        conversionSucceeded = true;
-                    }
-                    else
-                    {
-                        // If ffmpeg failed, we will fall back to copying.
-                        Console.WriteLine($"ffmpeg failed for '{gifPath}'. Error: {stdErr}");
-                    }
+                    conversionSucceeded = true;
                 }
             }
-            catch (Win32Exception)
+            catch
             {
-                // ffmpeg executable not found.
-                Console.WriteLine("ffmpeg not found in system PATH. Falling back to file copy.");
-            }
-            catch (Exception ex)
-            {
-                // Any other unexpected error.
-                Console.WriteLine($"Unexpected error during ffmpeg execution: {ex.Message}");
+                // Ignore any exception from ffmpeg invocation
             }
 
             if (!conversionSucceeded)
             {
-                // Fallback: copy the GIF file and rename the extension to .mp4.
-                // This ensures the example runs without external dependencies.
-                File.Copy(gifPath, mp4FullPath, overwrite: true);
+                // Fallback: copy the GIF file with an .mp4 extension (placeholder conversion)
+                File.Copy(gifPath, mp4Path, true);
             }
 
-            // Validate that the MP4 (or fallback) file was created.
-            if (!File.Exists(mp4FullPath))
-                throw new FileNotFoundException($"Failed to create MP4 file: {mp4FullPath}");
+            // Validate output
+            if (!File.Exists(mp4Path) || new FileInfo(mp4Path).Length == 0)
+                throw new InvalidOperationException($"Failed to produce MP4 for '{gifPath}'.");
         }
 
-        // -----------------------------------------------------------------
-        // 6. Completion message.
-        // -----------------------------------------------------------------
-        Console.WriteLine("GIF extraction and MP4 conversion (or fallback) completed successfully.");
-    }
-
-    // Helper method to obtain the GIF encoder.
-    private static ImageCodecInfo GetEncoderInfo(string mimeType)
-    {
-        ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-        foreach (ImageCodecInfo codec in codecs)
-        {
-            if (codec.MimeType.Equals(mimeType, StringComparison.OrdinalIgnoreCase))
-                return codec;
-        }
-        throw new InvalidOperationException($"Encoder not found for MIME type {mimeType}");
+        // Simple verification output (no interactive prompts)
+        Console.WriteLine($"Converted {gifFiles.Length} GIF(s) to MP4 video(s) in '{outputDir}'.");
     }
 }

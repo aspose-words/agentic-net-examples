@@ -1,104 +1,66 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Folder for generated artifacts
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create sample TIFF images (deterministic local files)
-        // -----------------------------------------------------------------
-        string[] tiffFiles = new string[2];
-        for (int i = 0; i < tiffFiles.Length; i++)
-        {
-            string filePath = Path.Combine(artifactsDir, $"sample{i + 1}.tiff");
-            CreateSampleTiff(filePath, $"Page {i + 1}");
-            tiffFiles[i] = filePath;
-        }
-
-        // -----------------------------------------------------------------
-        // 2. Build a new document where each TIFF occupies a full page
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(pdfDoc);
-
-        // Retrieve page dimensions (in points) from the document's first section
-        double pageWidth = pdfDoc.FirstSection.PageSetup.PageWidth;
-        double pageHeight = pdfDoc.FirstSection.PageSetup.PageHeight;
-
-        for (int i = 0; i < tiffFiles.Length; i++)
-        {
-            if (i > 0)
-                builder.InsertBreak(BreakType.PageBreak); // start a new page for subsequent images
-
-            // Insert the TIFF image
-            Shape imageShape = builder.InsertImage(tiffFiles[i]);
-
-            // Ensure the image fills the whole page
-            imageShape.WrapType = WrapType.None;
-            imageShape.BehindText = false;
-            imageShape.Width = pageWidth;
-            imageShape.Height = pageHeight;
-        }
-
-        // -----------------------------------------------------------------
-        // 3. Save the document as PDF
-        // -----------------------------------------------------------------
-        string pdfPath = Path.Combine(artifactsDir, "ImagesToPdf.pdf");
-        pdfDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Validate that the PDF was created
-        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
-            throw new InvalidOperationException("PDF output was not created successfully.");
-
-        // Cleanup: optional removal of temporary TIFF files
-        foreach (string tiff in tiffFiles)
-        {
-            if (File.Exists(tiff))
-                File.Delete(tiff);
-        }
-    }
-
-    // Helper method to create a simple single‑frame TIFF image with text
-    private static void CreateSampleTiff(string filePath, string caption)
-    {
+        // Step 1: Create sample TIFF images.
+        const int imageCount = 3;
         const int width = 600;
         const int height = 800;
+        string[] tiffFiles = new string[imageCount];
 
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        for (int i = 0; i < imageCount; i++)
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            string fileName = $"sample{i + 1}.tif";
+            using (Bitmap bitmap = new Bitmap(width, height))
             {
-                // Fill background
-                g.Clear(Aspose.Drawing.Color.White);
-
-                // Draw a rectangle border
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
+                using (Graphics g = Graphics.FromImage(bitmap))
                 {
-                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                    // Fill background with a distinct color.
+                    Aspose.Drawing.Color bgColor = i % 2 == 0 ? Aspose.Drawing.Color.LightBlue : Aspose.Drawing.Color.LightGreen;
+                    g.Clear(bgColor);
                 }
-
-                // Draw caption text
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 48, Aspose.Drawing.FontStyle.Bold))
-                {
-                    SizeF textSize = g.MeasureString(caption, font);
-                    float x = (width - textSize.Width) / 2;
-                    float y = (height - textSize.Height) / 2;
-                    g.DrawString(caption, font, Aspose.Drawing.Brushes.Black, x, y);
-                }
+                bitmap.Save(fileName);
             }
+            tiffFiles[i] = Path.GetFullPath(fileName);
+        }
 
-            // Save as TIFF (single frame)
-            bitmap.Save(filePath, ImageFormat.Tiff);
+        // Step 2: Create a new Word document that will be saved as PDF.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Ensure each image occupies a full page.
+        double pageWidth = builder.PageSetup.PageWidth;
+        double pageHeight = builder.PageSetup.PageHeight;
+
+        for (int i = 0; i < tiffFiles.Length; i++)
+        {
+            // Insert the TIFF image scaled to page size.
+            builder.InsertImage(tiffFiles[i], pageWidth, pageHeight);
+
+            // Add a page break after each image except the last one.
+            if (i < tiffFiles.Length - 1)
+                builder.InsertBreak(BreakType.PageBreak);
+        }
+
+        // Step 3: Save the document as PDF.
+        string outputPdf = "output.pdf";
+        doc.Save(outputPdf, SaveFormat.Pdf);
+
+        // Validation: ensure the PDF was created.
+        if (!File.Exists(outputPdf) || new FileInfo(outputPdf).Length == 0)
+            throw new Exception("Failed to create the PDF output.");
+
+        // Cleanup: optional removal of temporary TIFF files.
+        foreach (var file in tiffFiles)
+        {
+            if (File.Exists(file))
+                File.Delete(file);
         }
     }
 }

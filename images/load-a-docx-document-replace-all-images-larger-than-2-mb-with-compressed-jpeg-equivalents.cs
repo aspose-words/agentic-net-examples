@@ -1,106 +1,94 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class ReplaceLargeImages
+public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // Prepare a folder for all generated files.
-        // -----------------------------------------------------------------
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Paths for temporary files
+        const string largeImagePath = "large.png";
+        const string inputDocPath = "input.docx";
+        const string outputDocPath = "output.docx";
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a large sample image (> 2 MB) using Aspose.Drawing.
-        // -----------------------------------------------------------------
-        string largeImagePath = Path.Combine(artifactsDir, "large.bmp");
-        int width = 4000;   // large enough to guarantee a big file size
-        int height = 4000;
-
+        // -------------------------------------------------
+        // Step 1: Create a large sample image (>2 MB)
+        // -------------------------------------------------
+        int width = 3000;
+        int height = 3000;
         using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            // Fill with a solid colour – the exact colour is irrelevant.
-            graphics.Clear(Aspose.Drawing.Color.LightGray);
-            // Save as BMP (uncompressed) to ensure the file exceeds 2 MB.
-            bitmap.Save(largeImagePath, ImageFormat.Bmp);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Aspose.Drawing.Color.White);
+            }
+            // Save as PNG to ensure large file size
+            bitmap.Save(largeImagePath, ImageFormat.Png);
         }
 
-        // Verify that the generated image is indeed larger than 2 MB.
-        FileInfo largeInfo = new FileInfo(largeImagePath);
-        if (largeInfo.Length <= 2 * 1024 * 1024)
-            throw new Exception("Generated sample image is not larger than 2 MB.");
+        // Verify that the image file was created
+        if (!File.Exists(largeImagePath))
+            throw new FileNotFoundException("Failed to create the sample image.", largeImagePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Create a DOCX document and insert the large image.
-        // -----------------------------------------------------------------
-        string inputDocPath = Path.Combine(artifactsDir, "input.docx");
+        // -------------------------------------------------
+        // Step 2: Create a DOCX document and insert the image
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(largeImagePath);
         doc.Save(inputDocPath);
 
-        // -----------------------------------------------------------------
-        // Step 3: Load the document and replace images larger than 2 MB.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputDocPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        // Verify that the input document was created
+        if (!File.Exists(inputDocPath))
+            throw new FileNotFoundException("Failed to create the input document.", inputDocPath);
 
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // -------------------------------------------------
+        // Step 3: Load the document and replace large images
+        // -------------------------------------------------
+        Document loadedDoc = new Document(inputDocPath);
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
+        foreach (Shape shape in shapes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Obtain the current image bytes.
-            byte[] originalBytes;
-            using (MemoryStream tempStream = new MemoryStream())
-            {
-                shape.ImageData.Save(tempStream);
-                originalBytes = tempStream.ToArray();
-            }
+            // Get the original image bytes
+            byte[] originalBytes = shape.ImageData.ImageBytes;
 
-            // Skip images that are already small enough.
-            if (originalBytes.Length <= 2 * 1024 * 1024)
+            // Check if image size exceeds 2 MB
+            const long twoMegabytes = 2L * 1024L * 1024L;
+            if (originalBytes.Length <= twoMegabytes)
                 continue;
 
-            // Re‑encode the image as a JPEG with a moderate compression level.
-            using (MemoryStream sourceStream = new MemoryStream(originalBytes))
-            using (Bitmap bitmap = new Bitmap(sourceStream))
-            using (MemoryStream jpegStream = new MemoryStream())
+            // Load the image into a bitmap
+            using (MemoryStream originalStream = new MemoryStream(originalBytes))
             {
-                // Obtain the JPEG encoder.
-                ImageCodecInfo jpegEncoder = ImageCodecInfo.GetImageEncoders()
-                    .First(enc => enc.FormatID == ImageFormat.Jpeg.Guid);
+                using (Bitmap bitmap = new Bitmap(originalStream))
+                {
+                    // Re-encode the bitmap as JPEG (compressed)
+                    using (MemoryStream jpegStream = new MemoryStream())
+                    {
+                        bitmap.Save(jpegStream, ImageFormat.Jpeg);
+                        jpegStream.Position = 0; // Reset for reading
 
-                // Set compression quality (e.g., 50 %).
-                EncoderParameters encoderParams = new EncoderParameters(1);
-                encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 50L);
-
-                // Save the compressed JPEG to the memory stream.
-                bitmap.Save(jpegStream, jpegEncoder, encoderParams);
-                jpegStream.Position = 0; // Reset before feeding to Aspose.Words.
-
-                // Replace the shape's image with the new JPEG data.
-                shape.ImageData.SetImage(jpegStream);
+                        // Replace the shape's image with the compressed JPEG
+                        shape.ImageData.SetImage(jpegStream);
+                    }
+                }
             }
         }
 
-        // -----------------------------------------------------------------
-        // Step 4: Save the modified document.
-        // -----------------------------------------------------------------
-        string outputDocPath = Path.Combine(artifactsDir, "output.docx");
+        // -------------------------------------------------
+        // Step 4: Save the modified document
+        // -------------------------------------------------
         loadedDoc.Save(outputDocPath);
 
-        // Simple validation.
+        // Validate that the output document exists
         if (!File.Exists(outputDocPath))
-            throw new Exception("Failed to create the output document.");
-
-        Console.WriteLine($"Processing complete. Output saved to: {outputDocPath}");
+            throw new FileNotFoundException("Failed to save the output document.", outputDocPath);
     }
 }

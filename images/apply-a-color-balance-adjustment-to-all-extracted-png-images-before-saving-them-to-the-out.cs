@@ -1,99 +1,91 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        string outputDir = Path.Combine(artifactsDir, "Output");
-        Directory.CreateDirectory(artifactsDir);
-        Directory.CreateDirectory(outputDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample PNG image (a simple gradient) using Aspose.Drawing
-        // -----------------------------------------------------------------
-        string inputImagePath = Path.Combine(artifactsDir, "input.png");
+        // Create a deterministic sample PNG image.
+        const string sampleImagePath = "sample.png";
         const int imgWidth = 200;
         const int imgHeight = 200;
-        using (var bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
-        using (var graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            // Fill with a light gray background
-            graphics.Clear(Aspose.Drawing.Color.LightGray);
-            // Draw a red rectangle
-            var redBrush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red);
-            graphics.FillRectangle(redBrush, 50, 50, 100, 100);
-            // Save the bitmap as PNG
-            bitmap.Save(inputImagePath);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+                // Draw a simple red rectangle.
+                using (SolidBrush brush = new SolidBrush(Color.Red))
+                {
+                    graphics.FillRectangle(brush, 50, 50, 100, 100);
+                }
+            }
+            bitmap.Save(sampleImagePath);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Insert the sample image into a Word document
-        // -----------------------------------------------------------------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
-        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
-        doc.Save(docPath);
+        // Create a Word document and insert the sample PNG image.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(sampleImagePath);
+        const string docPath = "sample.docx";
+        doc.Save(docPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document and process each PNG image
-        // -----------------------------------------------------------------
-        var loadedDoc = new Document(docPath);
-        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                              .OfType<Shape>()
-                              .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Png)
-                              .ToList();
-
-        if (!shapes.Any())
-            throw new InvalidOperationException("No PNG images were found in the document.");
-
+        // Load the document (optional, already in memory) and extract PNG images.
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-        foreach (var shape in shapes)
+        string outputFolder = "output";
+        Directory.CreateDirectory(outputFolder);
+
+        foreach (Shape shape in shapeNodes)
         {
-            // Extract image bytes from the shape
-            byte[] imageBytes = shape.ImageData.ToByteArray();
+            if (!shape.HasImage)
+                continue;
 
-            // Load the bytes into an Aspose.Drawing.Bitmap
-            using (var ms = new MemoryStream(imageBytes))
-            using (var bitmap = new Aspose.Drawing.Bitmap(ms))
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
+
+            // Save the image to a memory stream.
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                // ---------------------------------------------------------
-                // Apply a simple color‑balance adjustment:
-                //   - Increase the red channel
-                //   - Decrease the blue channel
-                // ---------------------------------------------------------
-                for (int y = 0; y < bitmap.Height; y++)
-                {
-                    for (int x = 0; x < bitmap.Width; x++)
-                    {
-                        var pixel = bitmap.GetPixel(x, y);
-                        int r = Math.Min(255, pixel.R + 30); // boost red
-                        int g = pixel.G;                     // keep green unchanged
-                        int b = Math.Max(0, pixel.B - 30);   // reduce blue
-                        var newColor = Aspose.Drawing.Color.FromArgb(pixel.A, r, g, b);
-                        bitmap.SetPixel(x, y, newColor);
-                    }
-                }
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0; // Reset before reading.
 
-                // Save the adjusted image to the output folder
-                string adjustedPath = Path.Combine(outputDir, $"adjusted_{imageIndex}.png");
-                bitmap.Save(adjustedPath);
-                imageIndex++;
+                // Load the image into Aspose.Drawing.Bitmap.
+                using (Bitmap bmp = new Bitmap(imageStream))
+                {
+                    // Apply a simple color balance adjustment.
+                    for (int y = 0; y < bmp.Height; y++)
+                    {
+                        for (int x = 0; x < bmp.Width; x++)
+                        {
+                            Color pixel = bmp.GetPixel(x, y);
+                            int r = Math.Min(255, (int)(pixel.R * 1.2)); // Increase red.
+                            int g = pixel.G; // Keep green unchanged.
+                            int b = Math.Max(0, (int)(pixel.B * 0.8)); // Decrease blue.
+                            Color adjusted = Color.FromArgb(pixel.A, r, g, b);
+                            bmp.SetPixel(x, y, adjusted);
+                        }
+                    }
+
+                    // Save the adjusted image to the output folder.
+                    string outputPath = Path.Combine(outputFolder, $"image-{imageIndex}.png");
+                    bmp.Save(outputPath);
+                    imageIndex++;
+                }
             }
         }
 
-        // Verify that at least one adjusted image was written
+        // Validate that at least one image was saved.
         if (imageIndex == 0)
-            throw new InvalidOperationException("No adjusted images were saved.");
+            throw new InvalidOperationException("No PNG images were extracted and processed.");
 
-        // Optional: clean up the temporary document (not required for the example)
+        // Optional: clean up sample files (comment out if inspection is needed).
+        // File.Delete(sampleImagePath);
         // File.Delete(docPath);
     }
 }
