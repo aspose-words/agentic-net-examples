@@ -4,68 +4,74 @@ using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
-public class Program
+public class PdfToMarkdownConverter
 {
     public static void Main()
     {
-        // Define paths for the sample files and folders.
-        string workingDir = Directory.GetCurrentDirectory();
-        string pdfPath = Path.Combine(workingDir, "sample.pdf");
-        string markdownPath = Path.Combine(workingDir, "sample.md");
-        string assetsFolder = Path.Combine(workingDir, "assets");
-        string imagePath = Path.Combine(workingDir, "sample.png");
+        // File and folder names
+        string pdfPath = "input.pdf";
+        string imagePath = "sample.png";
+        string markdownPath = "output.md";
+        string assetsFolder = "assets";
 
-        // Ensure the assets folder exists.
-        Directory.CreateDirectory(assetsFolder);
+        // Clean previous run artifacts
+        if (File.Exists(pdfPath)) File.Delete(pdfPath);
+        if (File.Exists(imagePath)) File.Delete(imagePath);
+        if (File.Exists(markdownPath)) File.Delete(markdownPath);
+        if (Directory.Exists(assetsFolder)) Directory.Delete(assetsFolder, true);
 
-        // Create a simple PNG image using Aspose.Drawing.
+        // Create a simple PNG image using Aspose.Drawing
         using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.Blue);
+                using (SolidBrush brush = new SolidBrush(Color.Blue))
+                {
+                    graphics.FillRectangle(brush, new Rectangle(0, 0, 100, 100));
+                }
             }
             bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // Create a Word document, add text and the image, then save it as PDF.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample PDF containing an image.");
+        // Build a sample PDF containing text and the image
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample PDF content with an image:");
         builder.InsertImage(imagePath);
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF document.
+        // Load the PDF for conversion
         Document pdfDoc = new Document(pdfPath);
 
-        // Configure Markdown save options to store images in the "assets" subfolder.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+        // Configure Markdown save options to place images in the "assets" subfolder
+        MarkdownSaveOptions mdOptions = new MarkdownSaveOptions
         {
             ImagesFolder = assetsFolder,
-            SaveFormat = SaveFormat.Markdown
+            ImagesFolderAlias = assetsFolder
+            // ExportImages defaults to true, so no explicit property is needed
         };
 
-        // Convert the PDF to Markdown.
-        pdfDoc.Save(markdownPath, saveOptions);
+        // Perform the conversion
+        pdfDoc.Save(markdownPath, mdOptions);
 
-        // Validation: ensure the Markdown file was created.
+        // Validate that the Markdown file was created
         if (!File.Exists(markdownPath))
-            throw new InvalidOperationException("The Markdown output file was not created.");
+            throw new InvalidOperationException("The Markdown file was not created.");
 
-        // Validation: ensure at least one image was saved to the assets folder.
+        // Validate that the assets folder exists and contains at least one image
         if (!Directory.Exists(assetsFolder))
-            throw new InvalidOperationException("The assets folder does not exist.");
+            throw new InvalidOperationException("The assets folder was not created.");
 
         string[] extractedImages = Directory.GetFiles(assetsFolder);
         if (extractedImages.Length == 0)
             throw new InvalidOperationException("No images were extracted to the assets folder.");
 
-        // Optional: clean up temporary files (comment out if you want to inspect the results).
-        // File.Delete(imagePath);
+        // Optional cleanup (commented out to allow inspection)
         // File.Delete(pdfPath);
+        // File.Delete(imagePath);
+        // Directory.Delete(assetsFolder, true);
         // File.Delete(markdownPath);
-        // foreach (string file in extractedImages) File.Delete(file);
-        // Directory.Delete(assetsFolder);
     }
 }

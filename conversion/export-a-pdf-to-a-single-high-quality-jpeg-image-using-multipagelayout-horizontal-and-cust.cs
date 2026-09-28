@@ -7,59 +7,45 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files.
-        const string pdfPath = "sample.pdf";
-        const string jpegPath = "output.jpg";
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample multi‑page document.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Page 1: Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        // Create a sample Word document with two pages.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is the first page of the sample PDF.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3: Ut enim ad minim veniam, quis nostrud exercitation ullamco.");
+        builder.Writeln("This is the second page of the sample PDF.");
 
-        // Save the document as PDF (bootstrap input file).
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // Save the document as PDF.
+        string pdfPath = "sample.pdf";
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // 2. Load the PDF that we just created.
-        // -----------------------------------------------------------------
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The PDF file was not created.");
+
+        // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // -----------------------------------------------------------------
-        // 3. Configure image save options for a high‑quality JPEG.
-        // -----------------------------------------------------------------
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Jpeg)
+        // Configure image save options for a high‑quality JPEG.
+        ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
         {
-            // Highest JPEG quality (0‑100).
-            JpegQuality = 100,
-
-            // Render all pages side by side in a single image.
-            PageLayout = MultiPageLayout.Horizontal(10f),
-
-            // Optional: improve rendering quality.
-            UseAntiAliasing = true,
-            UseHighQualityRendering = true
+            JpegQuality = 100, // Maximum quality.
+            Resolution = 300   // Increase resolution for higher quality.
         };
 
-        // Save the PDF as a single JPEG image.
-        pdfDoc.Save(jpegPath, options);
+        // Save the PDF as JPEG image(s). For formats that do not support multiple pages
+        // (like JPEG), Aspose.Words creates separate files for each page, appending a
+        // numeric suffix to the file name (e.g., output.jpg, output_1.jpg).
+        string jpegBasePath = "output.jpg";
+        pdfDoc.Save(jpegBasePath, jpegOptions);
 
-        // -----------------------------------------------------------------
-        // 4. Validate that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(jpegPath) || new FileInfo(jpegPath).Length == 0)
-        {
-            throw new InvalidOperationException("The JPEG image was not created successfully.");
-        }
+        // Validate that at least one JPEG was created.
+        if (!File.Exists(jpegBasePath))
+            throw new InvalidOperationException("The JPEG image was not created.");
 
-        // Cleanup temporary files (optional).
-        // File.Delete(pdfPath);
-        // File.Delete(jpegPath);
+        FileInfo jpegInfo = new FileInfo(jpegBasePath);
+        if (jpegInfo.Length == 0)
+            throw new InvalidOperationException("The JPEG image file is empty.");
+
+        // Indicate success.
+        Console.WriteLine("PDF successfully exported to high‑quality JPEG: " + jpegBasePath);
     }
 }

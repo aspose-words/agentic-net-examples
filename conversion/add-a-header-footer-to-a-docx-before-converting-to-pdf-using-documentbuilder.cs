@@ -1,45 +1,44 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
         // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
 
-        // Add a primary header.
+        // Add some body content.
+        builder.Writeln("This is the main document body.");
+
+        // Move to the primary header (creates it if it does not exist) and write text.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Sample Header");
+        builder.Writeln("Sample Header Text");
 
-        // Add a primary footer.
+        // Move to the primary footer (creates it if it does not exist) and write page numbers.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Sample Footer");
+        builder.Writeln("Page ");
+        builder.InsertField("PAGE", "?");
+        builder.Write(" of ");
+        builder.InsertField("NUMPAGES", "?");
 
-        // Return to the main body and add some content.
-        builder.MoveToSection(0);
-        builder.Writeln("Hello World!");
-
-        // Save the document as DOCX (input for conversion).
+        // Save the document as DOCX.
         string docxPath = "sample.docx";
-        doc.Save(docxPath, SaveFormat.Docx);
+        source.Save(docxPath, SaveFormat.Docx);
 
-        // Load the saved DOCX.
-        Document loadedDoc = new Document(docxPath);
+        // Load the DOCX file.
+        Document doc = new Document(docxPath);
 
-        // Convert to PDF.
+        // Convert the loaded document to PDF.
         string pdfPath = "output.pdf";
-        loadedDoc.Save(pdfPath, SaveFormat.Pdf);
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
-        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
-            throw new InvalidOperationException("PDF conversion failed: output file not created or empty.");
-
-        // Optional cleanup (comment out if you want to keep the files).
-        // File.Delete(docxPath);
-        // File.Delete(pdfPath);
+        if (!File.Exists(pdfPath))
+        {
+            throw new InvalidOperationException("Expected output PDF was not created.");
+        }
     }
 }

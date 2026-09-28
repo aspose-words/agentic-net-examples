@@ -6,40 +6,40 @@ public class HtmlToPdfConverter
 {
     public static void Main()
     {
-        // Paths for the temporary HTML input and PDF output files.
-        string inputPath = "input.html";
-        string outputPath = "output.pdf";
-
-        // Create a simple HTML document that contains embedded CSS styles.
-        string htmlContent = @"<!DOCTYPE html>
+        // Create a sample HTML file with CSS styles.
+        const string htmlPath = "input.html";
+        const string htmlContent = @"
+<!DOCTYPE html>
 <html>
 <head>
-    <meta charset='UTF-8'>
-    <title>Sample</title>
     <style>
-        .title { color: blue; font-size: 24px; }
-        .paragraph { color: green; font-family: Arial; }
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #2E86C1; }
+        p { font-size: 14pt; line-height: 1.5; }
+        .highlight { background-color: #FFF9C4; padding: 5px; }
     </style>
 </head>
 <body>
-    <h1 class='title'>Hello World</h1>
-    <p class='paragraph'>This is a paragraph with CSS styling.</p>
+    <h1>Sample Document</h1>
+    <p>This paragraph demonstrates <span class=""highlight"">styled text</span> conversion from HTML to PDF using Aspose.Words.</p>
 </body>
 </html>";
-
-        // Write the HTML string to a local file.
-        File.WriteAllText(inputPath, htmlContent);
+        File.WriteAllText(htmlPath, htmlContent);
 
         // Load the HTML file into an Aspose.Words Document.
-        Document doc = new Document(inputPath);
+        Document document = new Document(htmlPath);
 
-        // Convert the document to PDF while preserving the CSS formatting.
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Save the document as PDF, preserving the CSS styles.
+        const string pdfPath = "output.pdf";
+        document.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF file was created successfully.
-        if (!File.Exists(outputPath))
+        // Validate that the PDF file was created.
+        if (!File.Exists(pdfPath))
         {
-            throw new InvalidOperationException("The PDF conversion failed; output file not found.");
+            throw new InvalidOperationException("The PDF file was not created as expected.");
         }
+
+        // Optionally, clean up the temporary HTML file.
+        // File.Delete(htmlPath);
     }
 }

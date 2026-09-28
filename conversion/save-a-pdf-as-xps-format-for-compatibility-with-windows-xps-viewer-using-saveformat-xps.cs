@@ -6,28 +6,27 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple Word document.
+        // Create a simple Word document and save it as PDF (input for conversion).
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Sample content for PDF to XPS conversion.");
-
-        // Save the document as PDF.
-        const string pdfPath = "sample.pdf";
+        string pdfPath = "sample.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF we just created.
-        Document pdfDoc = new Document(pdfPath);
+        // Load the PDF document.
+        Document pdfDocument = new Document(pdfPath);
 
-        // Convert the PDF to XPS.
-        const string xpsPath = "sample.xps";
-        pdfDoc.Save(xpsPath, SaveFormat.Xps);
+        // Convert and save the PDF as XPS.
+        string xpsPath = "output.xps";
+        pdfDocument.Save(xpsPath, SaveFormat.Xps);
 
         // Verify that the XPS file was created.
         if (!File.Exists(xpsPath))
-            throw new InvalidOperationException("The XPS file was not created.");
+        {
+            throw new InvalidOperationException("Expected XPS output was not created.");
+        }
 
-        // Optional cleanup (comment out if you want to keep the files).
+        // Clean up intermediate PDF if desired (optional).
         // File.Delete(pdfPath);
-        // File.Delete(xpsPath);
     }
 }

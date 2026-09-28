@@ -1,69 +1,56 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-public class BatchDocxToPdf
+public class BatchDocxToPdfWithHeader
 {
     public static void Main()
     {
-        // Define input and output folders relative to the current directory.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdfs");
+        // Define folders for input DOCX files and output PDFs.
+        string inputFolder = "InputDocs";
+        string outputFolder = "OutputPdfs";
 
         // Ensure the folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample DOCX files if the input folder is empty.
-        string[] sampleNames = { "Sample1.docx", "Sample2.docx", "Sample3.docx" };
-        foreach (string fileName in sampleNames)
+        // Create sample DOCX files in the input folder.
+        for (int i = 1; i <= 3; i++)
         {
-            string filePath = Path.Combine(inputFolder, fileName);
-            if (!File.Exists(filePath))
-            {
-                Document sampleDoc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-                builder.Writeln($"This is the content of {Path.GetFileNameWithoutExtension(fileName)}.");
-                sampleDoc.Save(filePath, SaveFormat.Docx);
-            }
+            string docxPath = Path.Combine(inputFolder, $"SampleDocument{i}.docx");
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln($"This is the content of sample document {i}.");
+            sampleDoc.Save(docxPath, SaveFormat.Docx);
         }
 
-        // Process each DOCX file: add a company‑wide header and convert to PDF.
-        string[] docxFiles = Directory.GetFiles(inputFolder, "*.docx");
-        foreach (string docxPath in docxFiles)
+        // Define the company-wide header text.
+        const string headerText = "Company Confidential";
+
+        // Process each DOCX file: add header and convert to PDF.
+        foreach (string docxFilePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
             // Load the DOCX document.
-            Document doc = new Document(docxPath);
+            Document doc = new Document(docxFilePath);
 
-            // Add a company‑wide header to every section.
-            foreach (Section section in doc.Sections)
-            {
-                // Retrieve the primary header; create it if it does not exist.
-                HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
-                if (header == null)
-                {
-                    header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-                    section.HeadersFooters.Add(header);
-                }
-
-                // Append the header text.
-                header.AppendParagraph("Company Confidential – Header");
-            }
+            // Add a primary header with the company text.
+            DocumentBuilder headerBuilder = new DocumentBuilder(doc);
+            headerBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            headerBuilder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            headerBuilder.Writeln(headerText);
 
             // Determine the output PDF path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
-            string pdfPath = Path.Combine(outputFolder, pdfFileName);
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(docxFilePath);
+            string pdfPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.pdf");
 
             // Save the document as PDF.
             doc.Save(pdfPath, SaveFormat.Pdf);
 
-            // Verify that the PDF was created.
+            // Validate that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
+            {
+                throw new InvalidOperationException($"PDF file was not created: {pdfPath}");
+            }
         }
-
-        // Indicate completion.
-        Console.WriteLine("Batch processing completed successfully.");
     }
 }

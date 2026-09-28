@@ -3,58 +3,57 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class BatchHtmlToPdf
 {
     public static void Main()
     {
-        // Define folders for input HTML files and output PDF files.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdf");
+        // Define input and output folders.
+        string inputFolder = "InputHtml";
+        string outputFolder = "OutputPdf";
 
-        // Ensure clean state.
-        if (Directory.Exists(inputFolder))
-            Directory.Delete(inputFolder, true);
-        if (Directory.Exists(outputFolder))
-            Directory.Delete(outputFolder, true);
-
+        // Ensure folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
         // Create sample HTML files.
-        for (int i = 1; i <= 3; i++)
-        {
-            string htmlContent = $"<html><body><h1>Sample Document {i}</h1><p>This is a test HTML file.</p></body></html>";
-            File.WriteAllText(Path.Combine(inputFolder, $"sample{i}.html"), htmlContent);
-        }
+        string html1Path = Path.Combine(inputFolder, "sample1.html");
+        string html2Path = Path.Combine(inputFolder, "sample2.html");
+
+        File.WriteAllText(html1Path,
+            "<html><body><h1>Sample 1</h1><p>This is the first HTML file.</p></body></html>");
+        File.WriteAllText(html2Path,
+            "<html><body><h1>Sample 2</h1><p>This is the second HTML file.</p></body></html>");
 
         // Process each HTML file in the input folder.
-        foreach (string htmlPath in Directory.GetFiles(inputFolder, "*.html"))
+        string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
+        foreach (string htmlFile in htmlFiles)
         {
             // Load the HTML document.
-            Document doc = new Document(htmlPath);
+            Document doc = new Document(htmlFile);
 
-            // Define a custom page size (e.g., 6 inches x 9 inches).
-            // Aspose.Words uses points (1 inch = 72 points).
-            const double inchesToPoints = 72.0;
-            doc.FirstSection.PageSetup.PageWidth = 6 * inchesToPoints;   // 432 points
-            doc.FirstSection.PageSetup.PageHeight = 9 * inchesToPoints;  // 648 points
-
-            // Prepare PDF save options.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions();
+            // Set a custom page size (A5: 420x595 points) for the first section.
+            // Aspose.Words uses points for page dimensions.
+            Section firstSection = doc.FirstSection;
+            if (firstSection != null)
+            {
+                PageSetup pageSetup = firstSection.PageSetup;
+                pageSetup.PageWidth = 420;   // Width in points.
+                pageSetup.PageHeight = 595;  // Height in points.
+            }
 
             // Determine output PDF path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(htmlPath) + ".pdf";
+            string pdfFileName = Path.GetFileNameWithoutExtension(htmlFile) + ".pdf";
             string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Save the document as PDF with the custom page size.
-            doc.Save(pdfPath, pdfOptions);
+            // Save the document as PDF.
+            doc.Save(pdfPath, SaveFormat.Pdf);
 
-            // Verify that the PDF was created.
+            // Validate that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
+                throw new InvalidOperationException($"Expected PDF file was not created: {pdfPath}");
         }
 
-        // Optional: indicate successful completion (no interactive prompts).
+        // Indicate completion.
         Console.WriteLine("Batch conversion completed successfully.");
     }
 }

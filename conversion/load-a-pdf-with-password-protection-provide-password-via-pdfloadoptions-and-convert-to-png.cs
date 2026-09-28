@@ -8,50 +8,41 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary PDF and the resulting PNG.
         const string pdfPath = "protected.pdf";
         const string pngPath = "output.png";
+        const string userPassword = "user123";
+        const string ownerPassword = "owner123";
 
-        // Passwords for the PDF.
-        const string userPassword = "UserPass";
-        const string ownerPassword = "OwnerPass";
-
-        // -----------------------------------------------------------------
-        // 1. Create a simple document and save it as a password‑protected PDF.
-        // -----------------------------------------------------------------
+        // Create a sample document and save it as a password‑protected PDF.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("This PDF is protected with a password.");
 
-        // Set encryption details (user password required to open the file).
-        PdfSaveOptions saveOptions = new PdfSaveOptions
+        PdfSaveOptions pdfSaveOptions = new PdfSaveOptions
         {
-            EncryptionDetails = new PdfEncryptionDetails(userPassword, ownerPassword)
+            EncryptionDetails = new PdfEncryptionDetails(ownerPassword, userPassword)
         };
-
-        sourceDoc.Save(pdfPath, saveOptions);
+        sourceDoc.Save(pdfPath, pdfSaveOptions);
 
         if (!File.Exists(pdfPath))
             throw new InvalidOperationException("Failed to create the protected PDF.");
 
-        // -----------------------------------------------------------------
-        // 2. Load the protected PDF using PdfLoadOptions with the password.
-        // -----------------------------------------------------------------
+        // Load the protected PDF using the password.
         PdfLoadOptions loadOptions = new PdfLoadOptions
         {
             Password = userPassword
         };
-
         Document loadedDoc = new Document(pdfPath, loadOptions);
 
-        // -----------------------------------------------------------------
-        // 3. Convert the first page of the PDF to PNG.
-        // -----------------------------------------------------------------
-        loadedDoc.Save(pngPath, SaveFormat.Png);
+        // Convert the loaded PDF to PNG.
+        ImageSaveOptions pngSaveOptions = new ImageSaveOptions(SaveFormat.Png);
+        loadedDoc.Save(pngPath, pngSaveOptions);
 
         if (!File.Exists(pngPath))
-            throw new InvalidOperationException("The PNG conversion did not produce an output file.");
+            throw new InvalidOperationException("The PNG conversion failed; output file was not created.");
 
-        // The example finishes without waiting for user input.
+        // Optional cleanup.
+        // File.Delete(pdfPath);
+        // File.Delete(pngPath);
     }
 }

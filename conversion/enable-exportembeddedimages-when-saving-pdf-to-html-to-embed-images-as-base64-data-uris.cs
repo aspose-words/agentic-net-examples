@@ -9,69 +9,48 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for generated files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create a sample document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document with an embedded image.");
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple image using Aspose.Drawing and save it to disk.
-        // -----------------------------------------------------------------
-        string imagePath = Path.Combine(artifactsDir, "sample.png");
-        CreateSamplePng(imagePath);
-
-        // -----------------------------------------------------------------
-        // 2. Build a Word document and insert the created image.
-        // -----------------------------------------------------------------
-        Document wordDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(wordDoc);
-        builder.Writeln("Document with an embedded image:");
-        builder.InsertImage(imagePath);
-        string pdfPath = Path.Combine(artifactsDir, "sample.pdf");
-        wordDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        // -----------------------------------------------------------------
-        // 3. Load the PDF document.
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document(pdfPath);
-
-        // -----------------------------------------------------------------
-        // 4. Save the PDF as fixed HTML with images embedded as Base64.
-        // -----------------------------------------------------------------
-        string htmlPath = Path.Combine(artifactsDir, "sample.html");
-        HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
-        {
-            ExportEmbeddedImages = true,   // Embed images as Base64 data URIs.
-            PrettyFormat = true
-        };
-        pdfDoc.Save(htmlPath, htmlOptions);
-
-        // -----------------------------------------------------------------
-        // 5. Validate that the HTML file was created and contains Base64 image data.
-        // -----------------------------------------------------------------
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML output file was not created.");
-
-        string htmlContent = File.ReadAllText(htmlPath);
-        if (!htmlContent.Contains("data:image"))
-            throw new InvalidOperationException("ExportEmbeddedImages did not embed images as Base64.");
-
-        // Example completed successfully.
-    }
-
-    // Creates a 100x100 PNG with a simple drawing using Aspose.Drawing.
-    private static void CreateSamplePng(string filePath)
-    {
+        // Create a simple bitmap image using Aspose.Drawing.
         using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.LightGray);
-                using (SolidBrush brush = new SolidBrush(Color.Blue))
-                {
-                    graphics.FillEllipse(brush, new Rectangle(10, 10, 80, 80));
-                }
+                graphics.Clear(Color.Blue);
             }
-            bitmap.Save(filePath, ImageFormat.Png);
+
+            using (MemoryStream imageStream = new MemoryStream())
+            {
+                // Save bitmap to stream as PNG.
+                bitmap.Save(imageStream, ImageFormat.Png);
+                imageStream.Position = 0;
+
+                // Insert the image into the document.
+                builder.InsertImage(imageStream);
+            }
+        }
+
+        // Configure HTML save options to embed images as Base64 data URIs.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
+        saveOptions.ExportImagesAsBase64 = true;
+
+        string outputPath = "output.html";
+        doc.Save(outputPath, saveOptions);
+
+        // Validate that the HTML file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("Expected output HTML file was not created.");
+        }
+
+        // Verify that the HTML contains a data URI for the embedded image.
+        string htmlContent = File.ReadAllText(outputPath);
+        if (!htmlContent.Contains("data:image"))
+        {
+            throw new InvalidOperationException("Embedded images were not exported as Base64 data URIs.");
         }
     }
 }

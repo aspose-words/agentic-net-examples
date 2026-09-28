@@ -2,65 +2,48 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing; // For BreakType
 
-public class PdfToPngConverter
+public class Program
 {
     public static void Main()
     {
-        // Define file names
+        // Create a sample document with multiple pages.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Page 1 content.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 2 content.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 3 content.");
+
+        // Save the sample document as PDF.
         const string pdfPath = "sample.pdf";
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a sample PDF document with multiple pages.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        // Add content for three pages
-        builder.Writeln("This is page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 2.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 3.");
-
-        // Save the document as PDF
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Verify PDF creation
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the source PDF file.");
+            throw new InvalidOperationException("The sample PDF was not created.");
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the PDF and export each page as a separate PNG.
-        // -----------------------------------------------------------------
+        // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Iterate through all pages in the PDF
-        for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
+        // Export each page as a separate PNG image.
+        int pageCount = pdfDoc.PageCount;
+        for (int i = 0; i < pageCount; i++)
         {
-            // Configure image save options for PNG format
-            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
             {
-                // Render only the current page
-                PageSet = new PageSet(pageIndex),
-
-                // Set resolution (dpi). ImageSize is optional and omitted to avoid type conflicts.
-                Resolution = 300
+                PageSet = new PageSet(i) // Zero‑based page index.
             };
 
-            // Define output PNG file name
-            string pngPath = $"page_{pageIndex + 1}.png";
+            string pngPath = $"page_{i + 1}.png";
+            pdfDoc.Save(pngPath, options);
 
-            // Save the current page as PNG
-            pdfDoc.Save(pngPath, pngOptions);
-
-            // Validate that the PNG file was created
-            if (!File.Exists(pngPath) || new FileInfo(pngPath).Length == 0)
-                throw new InvalidOperationException($"Failed to create PNG for page {pageIndex + 1}.");
+            if (!File.Exists(pngPath))
+                throw new InvalidOperationException($"Expected PNG page {i + 1} was not created.");
         }
 
-        // All pages have been exported successfully.
-        Console.WriteLine("PDF pages have been exported to PNG images.");
+        // Optional: clean up created files (comment out if you want to inspect the outputs).
+        // File.Delete(pdfPath);
+        // for (int i = 1; i <= pageCount; i++) File.Delete($"page_{i}.png");
     }
 }

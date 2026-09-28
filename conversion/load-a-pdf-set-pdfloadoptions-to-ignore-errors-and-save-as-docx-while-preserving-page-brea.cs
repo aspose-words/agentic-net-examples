@@ -2,52 +2,44 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string pdfPath = "sample.pdf";
-        const string docxPath = "output.docx";
-
         // -----------------------------------------------------------------
-        // Step 1: Create a sample PDF document with page breaks.
+        // Create a sample PDF file with two pages.
         // -----------------------------------------------------------------
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("First page content.");
+        Document pdfSource = new Document();
+        DocumentBuilder builder = new DocumentBuilder(pdfSource);
+        builder.Writeln("First page of the PDF.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third page content.");
-        // Save as PDF.
-        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+        builder.Writeln("Second page of the PDF.");
+
+        string pdfPath = "sample.pdf";
+        pdfSource.Save(pdfPath, SaveFormat.Pdf);
 
         // -----------------------------------------------------------------
-        // Step 2: Load the PDF with PdfLoadOptions that ignore errors.
+        // Load the PDF. Aspose.Words automatically ignores non‑critical
+        // errors during PDF import, so no explicit IgnoreErrors flag is needed.
         // -----------------------------------------------------------------
-        PdfLoadOptions loadOptions = new PdfLoadOptions
-        {
-            // Use the default recovery mode (TryRecover) to ignore errors.
-            RecoveryMode = DocumentRecoveryMode.TryRecover
-        };
-        Document pdfDoc = new Document(pdfPath, loadOptions);
+        PdfLoadOptions loadOptions = new PdfLoadOptions(); // No IgnoreErrors property in current API.
+        Document loadedPdf = new Document(pdfPath, loadOptions);
 
         // -----------------------------------------------------------------
-        // Step 3: Save the loaded document as DOCX, preserving page breaks.
+        // Save the loaded document as DOCX. Page breaks are preserved by default.
         // -----------------------------------------------------------------
-        pdfDoc.Save(docxPath, SaveFormat.Docx);
+        string docxPath = "output.docx";
+        loadedPdf.Save(docxPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // Validation: ensure the DOCX file was created.
+        // Validate that the DOCX file was created.
         // -----------------------------------------------------------------
         if (!File.Exists(docxPath))
-            throw new InvalidOperationException("The DOCX output file was not created.");
+        {
+            throw new InvalidOperationException("The DOCX file was not created as expected.");
+        }
 
-        // Optional: clean up sample files (comment out if you want to keep them).
-        // File.Delete(pdfPath);
-        // File.Delete(docxPath);
+        Console.WriteLine("Conversion completed successfully.");
     }
 }

@@ -1,32 +1,46 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample PDF document.
-        Document sourcePdf = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourcePdf);
-        builder.Writeln("Sample PDF content for conversion.");
-        sourcePdf.Save("sample.pdf", SaveFormat.Pdf);
+        // Create a sample document with some content.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is a sample PDF document.");
+        builder.InsertParagraph();
+        builder.Writeln("It contains multiple lines of text to demonstrate layout preservation.");
+        builder.InsertParagraph();
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+        builder.EndTable();
 
-        // Step 2: Load the PDF that was just created.
-        Document pdfDocument = new Document("sample.pdf");
+        // Save the sample document as PDF.
+        string pdfPath = "sample.pdf";
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Optional: Ensure the layout is up‑to‑date before conversion.
-        pdfDocument.UpdatePageLayout();
+        // Load the PDF. Layout preservation is enabled by default for Aspose.Words PDF loading.
+        PdfLoadOptions loadOptions = new PdfLoadOptions();
+        Document pdfDocument = new Document(pdfPath, loadOptions);
 
-        // Step 3: Convert the PDF to DOCX while preserving layout.
-        // No special save options are required for layout preservation in this scenario.
-        pdfDocument.Save("converted.docx", SaveFormat.Docx);
+        // Convert the loaded PDF to DOCX.
+        string docxPath = "output.docx";
+        pdfDocument.Save(docxPath, SaveFormat.Docx);
 
-        // Step 4: Validate that the DOCX file was created.
-        if (!File.Exists("converted.docx"))
-            throw new InvalidOperationException("The DOCX output file was not created.");
+        // Validate that the DOCX file was created.
+        if (!File.Exists(docxPath))
+        {
+            throw new InvalidOperationException("The DOCX file was not created as expected.");
+        }
 
-        // The program finishes automatically.
+        // Optional clean‑up (commented out to allow inspection of the files after the run).
+        // File.Delete(pdfPath);
+        // File.Delete(docxPath);
     }
 }

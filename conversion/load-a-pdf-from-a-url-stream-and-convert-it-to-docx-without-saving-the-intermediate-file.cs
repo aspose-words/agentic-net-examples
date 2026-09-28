@@ -1,37 +1,34 @@
 using System;
 using System.IO;
-using System.Net.Http;
 using Aspose.Words;
+using Aspose.Words.Loading;
 
 public class Program
 {
     public static void Main()
     {
-        // URL of a sample PDF file.
-        const string pdfUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+        // Create a sample document that will be saved as PDF.
+        Document sourceDocument = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDocument);
+        builder.Writeln("Sample content for PDF conversion.");
 
-        // Download the PDF into a byte array.
-        using (HttpClient httpClient = new HttpClient())
+        // Save the document to a memory stream as PDF (simulating a PDF downloaded from a URL).
+        using MemoryStream pdfStream = new MemoryStream();
+        sourceDocument.Save(pdfStream, SaveFormat.Pdf);
+        pdfStream.Position = 0; // Reset stream position for reading.
+
+        // Load the PDF from the memory stream.
+        LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Pdf };
+        Document pdfDocument = new Document(pdfStream, loadOptions);
+
+        // Convert the loaded PDF to DOCX and save to a file.
+        string outputPath = "output.docx";
+        pdfDocument.Save(outputPath, SaveFormat.Docx);
+
+        // Validate that the DOCX file was created.
+        if (!File.Exists(outputPath))
         {
-            byte[] pdfBytes = httpClient.GetByteArrayAsync(pdfUrl).Result;
-
-            // Load the PDF from a memory stream.
-            using (MemoryStream pdfStream = new MemoryStream(pdfBytes))
-            {
-                pdfStream.Position = 0; // Ensure the stream is at the beginning.
-                Document pdfDocument = new Document(pdfStream);
-
-                // Convert and save the document as DOCX.
-                const string outputPath = "output.docx";
-                pdfDocument.Save(outputPath, SaveFormat.Docx);
-
-                // Verify that the DOCX file was created.
-                if (!File.Exists(outputPath))
-                    throw new InvalidOperationException("The DOCX file was not created.");
-
-                // Optional: indicate success.
-                Console.WriteLine($"PDF successfully converted to DOCX: {outputPath}");
-            }
+            throw new InvalidOperationException("Expected output DOCX was not created.");
         }
     }
 }

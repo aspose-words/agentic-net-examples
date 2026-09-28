@@ -5,71 +5,71 @@ using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class Program
+public class ImageToPdfConverter
 {
     public static void Main()
     {
-        // Set up working directories.
-        string workingDir = Directory.GetCurrentDirectory();
-        string imagesDir = Path.Combine(workingDir, "Images");
-        Directory.CreateDirectory(imagesDir);
+        // Prepare sample images folder
+        string imagesFolder = "Images";
+        Directory.CreateDirectory(imagesFolder);
 
-        string pngPath = Path.Combine(imagesDir, "sample.png");
-        string jpegPath = Path.Combine(imagesDir, "sample.jpg");
-        string pdfPath = Path.Combine(workingDir, "CombinedImages.pdf");
+        // Define image file paths
+        string pngPath = Path.Combine(imagesFolder, "image1.png");
+        string jpgPath = Path.Combine(imagesFolder, "image2.jpg");
 
-        // Create a simple PNG image using Aspose.Drawing.
-        using (Bitmap pngBitmap = new Bitmap(200, 200))
-        {
-            using (Graphics graphics = Graphics.FromImage(pngBitmap))
-            {
-                graphics.Clear(Color.LightBlue);
-                // Use fully qualified Aspose.Drawing.Font to avoid ambiguity.
-                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20);
-                graphics.DrawString("PNG Image", font, new SolidBrush(Color.DarkBlue), new PointF(20, 80));
-                font.Dispose();
-            }
-            pngBitmap.Save(pngPath, ImageFormat.Png);
-        }
+        // Create a PNG image (200x200, light blue)
+        CreateSampleImage(pngPath, 200, 200, Color.LightBlue, ImageFormat.Png);
 
-        // Create a simple JPEG image using Aspose.Drawing.
-        using (Bitmap jpegBitmap = new Bitmap(200, 200))
-        {
-            using (Graphics graphics = Graphics.FromImage(jpegBitmap))
-            {
-                graphics.Clear(Color.LightCoral);
-                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20);
-                graphics.DrawString("JPEG Image", font, new SolidBrush(Color.White), new PointF(20, 80));
-                font.Dispose();
-            }
-            jpegBitmap.Save(jpegPath, ImageFormat.Jpeg);
-        }
+        // Create a JPEG image (300x150, light coral)
+        CreateSampleImage(jpgPath, 300, 150, Color.LightCoral, ImageFormat.Jpeg);
 
-        // Build a Word document and insert the images.
+        // List of image files to insert
+        string[] imageFiles = new[] { pngPath, jpgPath };
+
+        // Create a new Word document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.InsertImage(pngPath);
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.InsertImage(jpegPath);
-
-        // Save the document as a single PDF file.
-        doc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
-
-        // Optional cleanup of temporary images.
-        try
+        // Insert each image into the document, adding a page break after each except the last
+        for (int i = 0; i < imageFiles.Length; i++)
         {
-            File.Delete(pngPath);
-            File.Delete(jpegPath);
-            Directory.Delete(imagesDir);
+            string imgPath = imageFiles[i];
+            builder.InsertImage(imgPath);
+            if (i < imageFiles.Length - 1)
+            {
+                builder.InsertBreak(BreakType.PageBreak);
+            }
         }
-        catch
+
+        // Save the document as PDF
+        string outputPdf = "output.pdf";
+        doc.Save(outputPdf, SaveFormat.Pdf);
+
+        // Validate that the PDF was created
+        if (!File.Exists(outputPdf))
         {
-            // Ignored – cleanup is best‑effort.
+            throw new InvalidOperationException("Expected output PDF was not created.");
+        }
+
+        // Clean up sample images (optional)
+        // File.Delete(pngPath);
+        // File.Delete(jpgPath);
+        // Directory.Delete(imagesFolder);
+    }
+
+    private static void CreateSampleImage(string filePath, int width, int height, Color fillColor, ImageFormat format)
+    {
+        // Create a bitmap with the specified dimensions
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            // Fill the bitmap with the specified color
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(fillColor);
+            }
+
+            // Save the bitmap to the given file path using the desired image format
+            bitmap.Save(filePath, format);
         }
     }
 }

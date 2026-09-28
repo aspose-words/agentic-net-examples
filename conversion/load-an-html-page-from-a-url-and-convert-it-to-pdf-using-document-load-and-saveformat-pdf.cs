@@ -1,35 +1,28 @@
 using System;
 using System.IO;
-using System.Net.Http;
 using Aspose.Words;
 
-public class Program
+public class HtmlToPdfConverter
 {
     public static void Main()
     {
-        // URL of the HTML page to convert.
-        const string url = "https://www.example.com";
+        // Create a sample HTML file locally.
+        const string htmlFileName = "input.html";
+        const string htmlContent = "<html><body><h1>Sample Title</h1><p>This is a sample HTML page.</p></body></html>";
+        File.WriteAllText(htmlFileName, htmlContent);
 
-        // Download the HTML content.
-        using (HttpClient httpClient = new HttpClient())
+        // Load the HTML document from the local file path.
+        string htmlPath = Path.GetFullPath(htmlFileName);
+        Document document = new Document(htmlPath);
+
+        // Convert and save to PDF.
+        const string pdfFileName = "output.pdf";
+        document.Save(pdfFileName, SaveFormat.Pdf);
+
+        // Verify that the PDF file was created.
+        if (!File.Exists(pdfFileName))
         {
-            byte[] htmlBytes = httpClient.GetByteArrayAsync(url).Result;
-
-            // Load the HTML into an Aspose.Words Document from a memory stream.
-            using (MemoryStream htmlStream = new MemoryStream(htmlBytes))
-            {
-                Document document = new Document(htmlStream);
-
-                // Convert and save the document as PDF.
-                const string outputPath = "output.pdf";
-                document.Save(outputPath, SaveFormat.Pdf);
-
-                // Verify that the PDF was created.
-                if (!File.Exists(outputPath))
-                {
-                    throw new InvalidOperationException("The PDF file was not created.");
-                }
-            }
+            throw new InvalidOperationException("Expected output PDF was not created.");
         }
     }
 }

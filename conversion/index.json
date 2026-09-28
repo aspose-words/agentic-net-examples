@@ -10,8 +10,8 @@
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.8.0",
-      "Aspose.Drawing.Common": "25.11.0"
+      "Aspose.Words": "26.9.0",
+      "Aspose.Drawing.Common": "26.8.0"
     },
     "required_namespaces": [
       "System",
@@ -230,8 +230,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 11,
@@ -291,8 +291,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 16,
@@ -314,8 +314,8 @@
       "outputs": [
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 18,
@@ -537,8 +537,8 @@
         "pdf",
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 37,
@@ -561,8 +561,8 @@
         "pdf",
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 39,
@@ -659,8 +659,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 47,
@@ -755,8 +755,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 55,
@@ -861,8 +861,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 64,
@@ -884,8 +884,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 66,
@@ -979,8 +979,8 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 74,
@@ -991,8 +991,8 @@
         "pdf",
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 75,
@@ -1015,8 +1015,8 @@
         "pdf",
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 77,
@@ -1085,8 +1085,8 @@
         "pdf",
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 83,
@@ -1097,8 +1097,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 84,
@@ -1109,8 +1109,8 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 85,
@@ -1144,8 +1144,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 88,
@@ -1155,8 +1155,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 89,
@@ -1167,8 +1167,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 90,
@@ -1179,8 +1179,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 91,
@@ -1191,8 +1191,8 @@
         "pdf",
         "xps"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 92,
@@ -1216,8 +1216,8 @@
         "pdf",
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 94,
@@ -1301,8 +1301,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 101,
@@ -1339,8 +1339,8 @@
         "pdf",
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 104,
@@ -1399,8 +1399,8 @@
         "pdf",
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     }
   ]
 }

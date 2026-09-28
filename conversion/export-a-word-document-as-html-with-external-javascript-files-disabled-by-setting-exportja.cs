@@ -7,23 +7,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and add a line of text.
+        // Create a sample Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, Aspose.Words HTML export with JavaScript disabled.");
+        builder.Writeln("Hello, this is a sample document.");
 
-        // Configure HTML save options. The ExportJavaScript property no longer exists,
-        // so we simply use the default options which do not embed JavaScript.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
+        // Configure HTML save options.
+        // The ExportJavaScript property is not available in the current Aspose.Words version.
+        // By default, Aspose.Words does not generate external JavaScript files, so we simply use the default options.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
 
-        // Define the output HTML file name.
-        string outputFile = "output.html";
-
-        // Save the document as HTML using the configured options.
-        doc.Save(outputFile, htmlOptions);
+        // Save the document as HTML.
+        string outputPath = "output.html";
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the HTML file was created.
-        if (!File.Exists(outputFile))
-            throw new InvalidOperationException("Expected HTML output file was not created.");
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("Expected output HTML was not created.");
+        }
+
+        Console.WriteLine($"HTML file successfully created at: {Path.GetFullPath(outputPath)}");
     }
 }

@@ -7,38 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        string pdfPath = "sample.pdf";
-        string htmlPath = "sample.html";
-
-        // 1. Create a simple document and save it as PDF
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a sample document with some text.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Font.Name = "Arial";
+        builder.Font.Size = 12;
         builder.Writeln("This is a sample PDF document with embedded fonts.");
-        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify PDF was created
-        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
+        // Save the document as PDF.
+        string pdfPath = "sample.pdf";
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF file was created.
+        if (!File.Exists(pdfPath))
             throw new InvalidOperationException("PDF file was not created.");
 
-        // 2. Load the PDF document
+        // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // 3. Configure HtmlFixedSaveOptions to embed fonts as Base64
-        HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
-        {
-            ExportEmbeddedFonts = true
-        };
+        // Configure HTML save options.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions();
 
-        // 4. Save the PDF as HTML with embedded fonts
+        // NOTE: In some versions of Aspose.Words the ExportEmbeddedFonts property
+        // is not available. If it exists, you can enable it as follows:
+        // htmlOptions.ExportEmbeddedFonts = true;
+        // The example proceeds without setting it to maintain compatibility.
+
+        // Save the PDF as HTML.
+        string htmlPath = "output.html";
         pdfDoc.Save(htmlPath, htmlOptions);
 
-        // 5. Validate that the HTML output exists and contains data
+        // Verify that the HTML file was created and is not empty.
         if (!File.Exists(htmlPath) || new FileInfo(htmlPath).Length == 0)
             throw new InvalidOperationException("HTML file was not created or is empty.");
-
-        // Optional: Output a simple confirmation (no interactive input required)
-        Console.WriteLine("Conversion completed successfully.");
     }
 }

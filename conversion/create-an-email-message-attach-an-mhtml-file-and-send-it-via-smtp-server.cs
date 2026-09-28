@@ -1,9 +1,7 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Mail;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
@@ -12,47 +10,55 @@ public class Program
         // Create a sample Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, this is a sample document that will be attached as MHTML.");
+        builder.Writeln("This is a sample document that will be saved as MHTML.");
+
+        // Define paths.
+        string mhtmlPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.mhtml");
+        string emailFolder = Path.Combine(Directory.GetCurrentDirectory(), "emails");
 
         // Save the document as MHTML.
-        string mhtmlPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.mht");
         doc.Save(mhtmlPath, SaveFormat.Mhtml);
 
         // Verify that the MHTML file was created.
         if (!File.Exists(mhtmlPath))
             throw new InvalidOperationException("MHTML file was not created.");
 
-        // Prepare the email message.
-        MailMessage message = new MailMessage();
-        message.From = new MailAddress("sender@example.com");
-        message.To.Add(new MailAddress("recipient@example.com"));
-        message.Subject = "Sample Email with MHTML Attachment";
-        message.Body = "Please find the attached MHTML document.";
+        // Ensure the email pickup directory exists.
+        Directory.CreateDirectory(emailFolder);
 
-        // Attach the MHTML file.
-        Attachment attachment = new Attachment(mhtmlPath);
-        message.Attachments.Add(attachment);
-
-        // Configure the SMTP client to use a local pickup directory (no external server required).
-        string pickupDirectory = Path.Combine(Directory.GetCurrentDirectory(), "emails");
-        Directory.CreateDirectory(pickupDirectory);
-
-        using (SmtpClient smtpClient = new SmtpClient())
+        // Create the email message.
+        using (MailMessage message = new MailMessage())
         {
-            smtpClient.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
-            smtpClient.PickupDirectoryLocation = pickupDirectory;
+            message.From = new MailAddress("sender@example.com");
+            message.To.Add(new MailAddress("recipient@example.com"));
+            message.Subject = "Test Email with MHTML Attachment";
+            message.Body = "Please find the attached MHTML file.";
 
-            // Send the email (it will be saved as an .eml file in the pickup directory).
-            smtpClient.Send(message);
+            // Attach the MHTML file.
+            using (Attachment attachment = new Attachment(mhtmlPath))
+            {
+                message.Attachments.Add(attachment);
+
+                // Configure the SMTP client to use a pickup directory (no real server needed).
+                using (SmtpClient client = new SmtpClient())
+                {
+                    client.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+                    client.PickupDirectoryLocation = emailFolder; // Must be an absolute path.
+
+                    // Send the email (writes .eml file to the pickup directory).
+                    client.Send(message);
+                }
+            }
         }
 
-        // Verify that an .eml file was created.
-        string[] emlFiles = Directory.GetFiles(pickupDirectory, "*.eml");
+        // Verify that an email file was created in the pickup directory.
+        string[] emlFiles = Directory.GetFiles(emailFolder, "*.eml");
         if (emlFiles.Length == 0)
-            throw new InvalidOperationException("Email was not saved to the pickup directory.");
+            throw new InvalidOperationException("Email was not written to the pickup directory.");
 
-        // Clean up resources.
-        attachment.Dispose();
-        message.Dispose();
+        // Optionally delete generated files (comment out if you want to inspect them).
+        // File.Delete(mhtmlPath);
+        // foreach (string file in emlFiles) File.Delete(file);
+        // Directory.Delete(emailFolder);
     }
 }
