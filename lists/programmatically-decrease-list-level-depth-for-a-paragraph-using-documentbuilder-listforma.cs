@@ -8,36 +8,30 @@ namespace ListIndentExample
     {
         public static void Main()
         {
-            // Create a new blank document.
+            // Create a new document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a default numbered list.
+            // Start a numbered list.
             builder.ListFormat.ApplyNumberDefault();
-
-            // First list item at level 0.
             builder.Writeln("Item 1");
-
-            // Increase the list level to create a sub‑list.
-            builder.ListFormat.ListIndent();
-            builder.Writeln("Sub‑item 1");
-            builder.Writeln("Sub‑item 2");
-
-            // Decrease the list level only if we are deeper than the top level.
-            if (builder.ListFormat.ListLevelNumber > 0)
-            {
-                // Decrease list level by one.
-                builder.ListFormat.ListOutdent();
-            }
-
-            // Continue with items at the original level.
             builder.Writeln("Item 2");
 
-            // End the list formatting.
-            builder.ListFormat.RemoveNumbers();
+            // Increase indent to create a sub‑list.
+            builder.ListFormat.ListLevelNumber++; // equivalent to IncreaseIndent
+            builder.Writeln("Subitem 2.1");
 
-            // Save the document to disk.
-            doc.Save("ListOutdentExample.docx");
+            // Conditionally decrease indent if we are deeper than the top level.
+            if (builder.ListFormat.ListLevelNumber > 0)
+            {
+                builder.ListFormat.ListLevelNumber--; // equivalent to DecreaseIndent
+            }
+
+            // Continue at the original list level.
+            builder.Writeln("Item 3");
+
+            // Save the document.
+            doc.Save("ListIndentExample.docx");
         }
     }
 }

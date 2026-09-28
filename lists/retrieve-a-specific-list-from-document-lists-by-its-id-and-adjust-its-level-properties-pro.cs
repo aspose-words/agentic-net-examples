@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -7,33 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
-
-        // Add a numbered list to the document.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Use DocumentBuilder to add a few list items.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ListFormat.List = list;
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.ListFormat.RemoveNumbers();
 
-        // Store the unique identifier of the created list.
-        int listId = list.ListId;
+        // Start a numbered list and add two items.
+        builder.ListFormat.ApplyNumberDefault();
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
 
-        // Retrieve the same list from the collection by its identifier.
-        List retrievedList = doc.Lists.GetListByListId(listId);
-        if (retrievedList != null)
-        {
-            // Modify properties of the first level of the list.
-            // Change the font color to blue and set the starting number to 10.
-            retrievedList.ListLevels[0].Font.Color = Color.Blue;
-            retrievedList.ListLevels[0].StartAt = 10;
-        }
+        // Retrieve the ListId of the list we just created.
+        int listId = builder.CurrentParagraph.ListFormat.List.ListId;
 
-        // Save the document to a file.
-        doc.Save("Output.docx");
+        // Get the List object from the document by its ID.
+        Aspose.Words.Lists.List listObj = doc.Lists.GetListByListId(listId);
+
+        // Adjust level properties: change the first level to a bullet style,
+        // set a custom font and size for the level's numbering.
+        ListLevel level = listObj.ListLevels[0];
+
+        // Instead of using ListNumberStyle (which may not be available in some versions),
+        // set the NumberFormat directly to a bullet character.
+        level.NumberFormat = "•";
+
+        level.Font.Name = "Arial";
+        level.Font.Size = 12;
+
+        // Save the document to verify changes.
+        string outputPath = "AdjustedList.docx";
+        doc.Save(outputPath);
+
+        // Indicate completion (no user interaction required).
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

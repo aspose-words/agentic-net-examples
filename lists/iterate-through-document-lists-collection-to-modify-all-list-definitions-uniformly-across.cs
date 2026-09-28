@@ -1,40 +1,59 @@
 using System;
-using System.Drawing;
-using Aspose.Words;
-using Aspose.Words.Lists;
+using System.Collections.Generic;
+
+public class ListDefinition
+{
+    public string Name { get; set; }
+    public int Level { get; set; }
+
+    public ListDefinition(string name, int level)
+    {
+        Name = name;
+        Level = level;
+    }
+
+    public override string ToString()
+    {
+        return $"{Name} (Level {Level})";
+    }
+}
+
+public class Document
+{
+    public List<ListDefinition> Lists { get; } = new List<ListDefinition>();
+
+    public Document()
+    {
+        // Sample list definitions
+        Lists.Add(new ListDefinition("BulletList", 1));
+        Lists.Add(new ListDefinition("NumberedList", 2));
+        Lists.Add(new ListDefinition("OutlineList", 3));
+    }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a document with predefined lists
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a numbered list and some items.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = list;
-        for (int i = 1; i <= 3; i++)
+        Console.WriteLine("Before modification:");
+        foreach (var list in doc.Lists)
         {
-            builder.Writeln($"Item {i}");
-        }
-        builder.ListFormat.RemoveNumbers();
-
-        // Iterate through all list definitions in the document.
-        foreach (List lst in doc.Lists)
-        {
-            // Example modification: restart numbering at each section.
-            lst.IsRestartAtEachSection = true;
-
-            // Example modification: set the font of the first level to green and bold.
-            if (lst.ListLevels.Count > 0)
-            {
-                lst.ListLevels[0].Font.Color = Color.Green;
-                lst.ListLevels[0].Font.Bold = true;
-            }
+            Console.WriteLine(list);
         }
 
-        // Save the document to the output file.
-        doc.Save("ModifiedLists.docx");
+        // Uniformly modify all list definitions (e.g., set Level to 1)
+        foreach (var list in doc.Lists)
+        {
+            list.Level = 1;
+        }
+
+        Console.WriteLine("\nAfter modification:");
+        foreach (var list in doc.Lists)
+        {
+            Console.WriteLine(list);
+        }
     }
 }

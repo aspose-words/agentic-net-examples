@@ -6,30 +6,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
-
-        // Add a list based on the default numbered template.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Configure the first list level.
-        ListLevel level = list.ListLevels[0];
-        // Use a tab as the trailing character so that TabPosition takes effect.
-        level.TrailingCharacter = ListTrailingCharacter.Tab;
-        // Set the tab position to 72 points (1 inch) to align the text after the number.
-        level.TabPosition = 72;
-        // Optional: set number and text positions for clearer layout.
-        level.NumberPosition = 0;
-        level.TextPosition = 72;
-
-        // Add some paragraphs that use the configured list.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ListFormat.List = list;
-        builder.Writeln("First list item");
-        builder.Writeln("Second list item");
-        builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the current directory.
-        doc.Save("Lists.TabPosition.docx");
+        // Create a new list based on a built‑in template (NumberDefault) and configure its first level.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        ListLevel level = list.ListLevels[0];
+        level.NumberStyle = NumberStyle.Arabic;          // Use Arabic numerals.
+        level.NumberFormat = "%1.";                      // Format like "1."
+        level.Alignment = ListLevelAlignment.Left;       // Align numbers to the left.
+        level.TabPosition = 72;                          // Set tab position to 72 points (1 inch).
+        level.NumberPosition = 0;                        // Position of the number.
+        level.TextPosition = 72;                         // Position of the text after the tab.
+
+        // Apply the list to several paragraphs.
+        builder.ListFormat.List = list;
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        builder.Writeln("Third item");
+        builder.ListFormat.RemoveNumbers(); // Stop list formatting.
+
+        // Save the document to a file.
+        doc.Save("ListWithTabPosition.docx");
     }
 }

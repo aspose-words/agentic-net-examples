@@ -1,43 +1,50 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-namespace ListStyleExample
+public class ApplyUniformListStyle
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new empty document.
+        Document doc = new Document();
+
+        // Get the document builder to add content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add a bulleted list.
+        builder.ListFormat.ApplyBulletDefault(); // use bullet list format
+        builder.Writeln("Bullet item 1");
+        builder.Writeln("Bullet item 2");
+        builder.ListFormat.RemoveNumbers();
+
+        // Add a numbered list.
+        builder.ListFormat.ApplyNumberDefault(); // use numbered list format
+        builder.Writeln("Numbered item 1");
+        builder.Writeln("Numbered item 2");
+        builder.ListFormat.RemoveNumbers();
+
+        // Iterate over all lists in the document.
+        foreach (List list in doc.Lists)
         {
-            // Create a new document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Add a numbered list.
-            builder.ListFormat.ApplyNumberDefault();
-            builder.Writeln("Numbered item 1");
-            builder.Writeln("Numbered item 2");
-            builder.ListFormat.RemoveNumbers();
-
-            // Add a bulleted list.
-            builder.ListFormat.ApplyBulletDefault();
-            builder.Writeln("Bulleted item 1");
-            builder.Writeln("Bulleted item 2");
-            builder.ListFormat.RemoveNumbers();
-
-            // Apply a uniform style to all lists in the document.
-            foreach (List list in doc.Lists)
+            // Iterate over each level of the list (typically 0-8).
+            for (int i = 0; i < list.ListLevels.Count; i++)
             {
-                foreach (ListLevel level in list.ListLevels)
-                {
-                    level.Font.Name = "Arial";
-                    level.Font.Color = Color.DarkGreen;
-                    level.Font.Bold = true;
-                }
-            }
+                ListLevel level = list.ListLevels[i];
 
-            // Save the document.
-            doc.Save("UniformListStyle.docx");
+                // Apply a uniform font to the list level.
+                level.Font.Name = "Arial";
+                level.Font.Size = 12;
+
+                // Ensure the list level aligns left.
+                level.Alignment = ListLevelAlignment.Left;
+
+                // Optional: set a uniform tab position.
+                level.TabPosition = 36;
+            }
         }
+
+        // Save the modified document.
+        doc.Save("Result.docx");
     }
 }

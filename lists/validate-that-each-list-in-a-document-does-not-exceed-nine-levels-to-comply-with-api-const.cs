@@ -6,37 +6,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document.
         Document doc = new Document();
-
-        // Add a sample list (all Aspose.Words lists have up to 9 levels).
-        List sampleList = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Populate the list with items on each level to illustrate the structure.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ListFormat.List = sampleList;
-        for (int i = 0; i < 9; i++)
+
+        // Build a list with 10 levels (exceeds the nine‑level limit).
+        builder.ListFormat.ApplyNumberDefault();
+        builder.Writeln("Level 1");
+        for (int i = 2; i <= 10; i++)
         {
-            builder.ListFormat.ListLevelNumber = i; // Levels are 0‑8.
+            builder.ListFormat.ListIndent();
             builder.Writeln($"Level {i}");
         }
-        builder.ListFormat.RemoveNumbers();
 
-        // Validate that every list in the document contains no more than nine levels.
+        // Validate that each list does not exceed nine levels.
+        bool allValid = true;
         foreach (List list in doc.Lists)
         {
-            int levelCount = list.ListLevels.Count; // Gets the number of levels in this list.
-            if (levelCount > 9)
+            // ListLevelCollection contains the defined levels for the list.
+            int definedLevels = list.ListLevels.Count;
+            if (definedLevels > 9)
             {
-                Console.WriteLine($"List ID {list.ListId} exceeds nine levels: {levelCount}");
-            }
-            else
-            {
-                Console.WriteLine($"List ID {list.ListId} is valid with {levelCount} levels.");
+                allValid = false;
+                Console.WriteLine($"List ID {list.ListId} exceeds nine levels: {definedLevels} levels.");
             }
         }
 
-        // Save the document to disk.
-        doc.Save("ValidatedLists.docx");
+        if (allValid)
+            Console.WriteLine("All lists are within nine levels.");
+        else
+            Console.WriteLine("One or more lists exceed nine levels.");
+
+        // Save the document (optional, demonstrates saving).
+        doc.Save("Output.docx");
     }
 }
