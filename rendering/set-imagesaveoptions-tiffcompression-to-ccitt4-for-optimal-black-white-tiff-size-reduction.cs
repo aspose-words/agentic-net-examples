@@ -7,30 +7,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some text.
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for TIFF conversion.");
+        builder.Writeln("Sample text for TIFF rendering.");
 
-        // Configure TIFF save options: use CCITT4 compression and black‑and‑white color mode.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.TiffCompression = TiffCompression.Ccitt4;
-        options.ImageColorMode = ImageColorMode.BlackAndWhite;
+        // Configure TIFF save options to use CCITT4 compression.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        tiffOptions.TiffCompression = TiffCompression.Ccitt4;
 
-        // Ensure the output folder exists.
-        string outputDir = "Artifacts";
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "SampleCcitt4.tiff");
+        string outputFile = "output.tiff";
 
-        // Save the document as a TIFF file with the specified options.
-        doc.Save(outputPath, options);
+        // Save the document as a TIFF image with the specified compression.
+        doc.Save(outputFile, tiffOptions);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("TIFF file was not created.");
+        // Verify that the TIFF file was created.
+        if (!File.Exists(outputFile))
+            throw new InvalidOperationException("Failed to create the TIFF file.");
 
-        // Output the file size for confirmation.
-        long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"TIFF saved to '{outputPath}' ({fileSize} bytes) using CCITT4 compression.");
+        // Report the result.
+        long fileSize = new FileInfo(outputFile).Length;
+        Console.WriteLine($"TIFF saved to '{outputFile}' ({fileSize} bytes).");
     }
 }

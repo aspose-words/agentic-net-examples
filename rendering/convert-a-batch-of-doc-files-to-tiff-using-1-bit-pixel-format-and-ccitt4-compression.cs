@@ -7,55 +7,50 @@ public class Program
 {
     public static void Main()
     {
-        // Directories for input DOCX files and output TIFF files.
-        string inputDir = "InputDocs";
-        string outputDir = "OutputTiffs";
+        // Create a temporary folder for the sample documents and output TIFF files.
+        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsTiffBatch");
+        Directory.CreateDirectory(workFolder);
 
-        // Ensure the directories exist.
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Create a few sample DOCX files.
+        CreateSampleDocument(Path.Combine(workFolder, "Sample1.docx"), "This is the first sample document.");
+        CreateSampleDocument(Path.Combine(workFolder, "Sample2.docx"), "This is the second sample document.");
 
-        // Create a few sample DOCX documents.
-        for (int i = 1; i <= 3; i++)
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"Sample document {i}");
-            builder.Writeln("This document will be rendered to a 1‑bit TIFF image using CCITT4 compression.");
-            string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
-            sampleDoc.Save(samplePath);
-        }
+        // Find all DOC and DOCX files in the folder.
+        string[] docFiles = Directory.GetFiles(workFolder, "*.doc*");
 
-        // Process each DOCX file in the input directory.
-        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
+        foreach (string docPath in docFiles)
         {
             // Load the source document.
             Document doc = new Document(docPath);
 
-            // Configure image save options for TIFF output.
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+            // Configure TIFF save options: 1‑bit (black‑and‑white) and CCITT4 compression.
+            ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // Use CCITT4 compression (suitable for 1‑bit images).
-                TiffCompression = TiffCompression.Ccitt4,
-                // Render the image as 1‑bit indexed (black and white).
-                PixelFormat = ImagePixelFormat.Format1bppIndexed,
-                // Render all pages into a single multi‑frame TIFF.
-                PageLayout = MultiPageLayout.TiffFrames()
+                ImageColorMode = ImageColorMode.BlackAndWhite,
+                TiffCompression = TiffCompression.Ccitt4
             };
 
-            // Determine the output file name.
-            string outputFileName = Path.GetFileNameWithoutExtension(docPath) + ".tiff";
-            string outputPath = Path.Combine(outputDir, outputFileName);
+            // Determine the output TIFF file path.
+            string tiffPath = Path.ChangeExtension(docPath, ".tiff");
 
-            // Save the document as a TIFF image.
-            doc.Save(outputPath, options);
+            // Save the document as a multipage TIFF.
+            doc.Save(tiffPath, tiffOptions);
 
             // Verify that the TIFF file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create TIFF file: {outputPath}");
+            if (!File.Exists(tiffPath))
+                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
         }
 
-        // Indicate successful completion.
-        Console.WriteLine("Batch conversion to TIFF completed successfully.");
+        // Optional: indicate successful completion (no interactive prompts).
+        Console.WriteLine("Batch conversion completed successfully.");
+    }
+
+    // Helper method to create a simple DOCX document with supplied text.
+    private static void CreateSampleDocument(string filePath, string text)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(text);
+        doc.Save(filePath);
     }
 }

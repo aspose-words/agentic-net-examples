@@ -7,30 +7,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for output files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Build a simple document.
+        // Create a new document and add a simple paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Sample text for TIFF rendering with CCITT4 compression.");
 
-        // Configure image save options to use TIFF format and CCITT4 compression.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            TiffCompression = TiffCompression.Ccitt4
-        };
+        // Configure image save options for TIFF with CCITT4 (lossless binary) compression.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        saveOptions.TiffCompression = TiffCompression.Ccitt4;
 
-        // Save the document as a TIFF image.
-        string outputPath = Path.Combine(artifactsDir, "SampleCcitt4.tiff");
-        doc.Save(outputPath, options);
+        // Define output file path.
+        string outputPath = "output.tiff";
 
-        // Verify that the file was created.
+        // Save the document as a TIFF image using the specified options.
+        doc.Save(outputPath, saveOptions);
+
+        // Verify that the TIFF file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+        {
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+        }
 
-        // Optionally, you could output the file size for quick verification.
-        Console.WriteLine($"TIFF file saved successfully. Size: {new FileInfo(outputPath).Length} bytes");
+        // Optionally, indicate success (no interactive input required).
+        Console.WriteLine("TIFF file saved successfully with CCITT4 compression.");
     }
 }

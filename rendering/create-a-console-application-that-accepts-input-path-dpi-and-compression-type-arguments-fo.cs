@@ -7,53 +7,57 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        // Default values – used when the required arguments are not supplied.
-        const string defaultInput = "sample.docx";
-        const int defaultDpi = 300;
-        const TiffCompression defaultCompression = TiffCompression.Lzw;
+        // Determine input path (use a default sample file if not provided)
+        string inputPath = args.Length > 0 ? args[0] : "sample.docx";
 
-        // Resolve input path.
-        string inputPath = args.Length > 0 ? args[0] : defaultInput;
-
-        // Resolve DPI.
-        int dpi = defaultDpi;
+        // Determine DPI (default to 300 if not provided or invalid)
+        int dpi = 300;
         if (args.Length > 1 && int.TryParse(args[1], out int parsedDpi) && parsedDpi > 0)
             dpi = parsedDpi;
 
-        // Resolve compression type.
-        TiffCompression compression = defaultCompression;
-        if (args.Length > 2 && Enum.TryParse<TiffCompression>(args[2], true, out TiffCompression parsedComp))
-            compression = parsedComp;
+        // Determine compression type (default to Ccitt4 if not provided or invalid)
+        string compressionStr = args.Length > 2 ? args[2] : "Ccitt4";
 
-        // Ensure the source document exists; create a simple one if it does not.
+        // Ensure the input document exists; if not, create a simple one.
         if (!File.Exists(inputPath))
         {
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln("Sample document generated because the input file was missing.");
+            builder.Writeln("Sample document for TIFF conversion.");
             sampleDoc.Save(inputPath);
         }
 
         // Load the document.
         Document doc = new Document(inputPath);
 
-        // Configure TIFF save options.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Prepare TIFF save options.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            Resolution = dpi,          // Sets both horizontal and vertical DPI.
-            TiffCompression = compression
+            Resolution = dpi
         };
 
-        // Determine output file name (same folder, same base name, .tiff extension).
+        // Parse compression type.
+        if (Enum.TryParse<TiffCompression>(compressionStr, true, out TiffCompression compression))
+        {
+            options.TiffCompression = compression;
+        }
+        else
+        {
+            // Default to CCITT4 if parsing fails.
+            options.TiffCompression = TiffCompression.Ccitt4;
+        }
+
+        // Determine output file path.
         string outputPath = Path.ChangeExtension(inputPath, ".tiff");
 
-        // Save as a (potentially multi‑page) TIFF image.
-        doc.Save(outputPath, saveOptions);
+        // Save the document as TIFF.
+        doc.Save(outputPath, options);
 
-        // Verify that the file was created.
+        // Validate that the output file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
 
-        Console.WriteLine($"TIFF conversion completed: {outputPath}");
+        // Confirmation.
+        Console.WriteLine($"TIFF conversion completed: '{outputPath}' (DPI={dpi}, Compression={options.TiffCompression})");
     }
 }

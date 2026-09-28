@@ -7,57 +7,62 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for sample DOCX files.
-        string sourceFolder = Path.Combine(Directory.GetCurrentDirectory(), "SourceDocs");
-        Directory.CreateDirectory(sourceFolder);
+        // Define base, input, and output folders.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchConversionDemo");
+        string inputFolder = Path.Combine(baseDir, "InputDocs");
+        string outputFolder = Path.Combine(baseDir, "OutputTiffs");
 
-        // Generate a few sample DOCX documents.
-        for (int i = 1; i <= 3; i++)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            builder.Writeln($"Document {i} - Page 1");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Document {i} - Page 2");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Document {i} - Page 3");
-
-            string docPath = Path.Combine(sourceFolder, $"Sample{i}.docx");
-            doc.Save(docPath);
-        }
-
-        // Create a folder for the TIFF output files.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "TiffOutput");
+        // Ensure a clean environment.
+        if (Directory.Exists(baseDir))
+            Directory.Delete(baseDir, true);
+        Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Shared ImageSaveOptions for all conversions.
+        // Create sample DOCX files.
+        CreateSampleDocx(Path.Combine(inputFolder, "Sample1.docx"), "First sample document.");
+        CreateSampleDocx(
+            Path.Combine(inputFolder, "Sample2.docx"),
+            "Second sample document with multiple lines.\nLine 2.\nLine 3."
+        );
+
+        // Shared ImageSaveOptions for TIFF conversion.
         ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Render all pages of each document into a single multi‑page TIFF.
-            PageLayout = MultiPageLayout.TiffFrames(),
-            // Example settings – 300 DPI and LZW compression.
+            // Render all pages of each document into a multipage TIFF.
+            PageSet = PageSet.All,
+            // Set resolution (dpi) and compression.
             Resolution = 300,
             TiffCompression = TiffCompression.Lzw
         };
 
-        // Batch convert each DOCX in the source folder to a TIFF file.
-        foreach (string docxPath in Directory.GetFiles(sourceFolder, "*.docx"))
+        // Batch conversion.
+        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
         {
+            // Load the DOCX document.
             Document doc = new Document(docxPath);
 
-            string tiffPath = Path.Combine(
-                outputFolder,
-                Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
+            // Determine output TIFF path.
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(docxPath);
+            string tiffPath = Path.Combine(outputFolder, fileNameWithoutExt + ".tiff");
 
+            // Save as TIFF using the shared options.
             doc.Save(tiffPath, tiffOptions);
 
-            // Verify that the TIFF file was created.
+            // Validate that the TIFF file was created.
             if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF: {tiffPath}");
+                throw new Exception($"Failed to create TIFF file: {tiffPath}");
         }
 
-        // Optional: indicate successful completion (no interactive output required).
+        // Indicate successful completion.
         Console.WriteLine("Batch conversion completed successfully.");
+    }
+
+    // Helper method to create a simple DOCX file with given text.
+    private static void CreateSampleDocx(string filePath, string content)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(content);
+        doc.Save(filePath);
     }
 }

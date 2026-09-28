@@ -10,53 +10,49 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory and ensure it exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define temporary file paths.
+        string tempDir = Path.GetTempPath();
+        string docxPath = Path.Combine(tempDir, "Sample.docx");
+        string pdfPath = Path.Combine(tempDir, "Sample.pdf");
 
-        // Path for the generated PDF.
-        string pdfPath = Path.Combine(outputDir, "SampleSubset.pdf");
-
-        // Create a new blank document.
+        // 1. Create a sample DOCX that uses a TrueType font (e.g., Arial).
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "Arial";
+        builder.Writeln("Hello World! This is a test document using the Arial TrueType font.");
+        doc.Save(docxPath, SaveFormat.Docx);
 
-        // Use a TrueType font that is not a core PDF font (e.g., Calibri).
-        // The font will be located in the system fonts folder.
-        string systemFontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
-        FontSettings.DefaultInstance.SetFontsFolder(systemFontsFolder, true);
+        // 2. Configure FontSettings to locate system fonts.
+        FontSettings fontSettings = new FontSettings();
+        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        fontSettings.SetFontsFolder(fontsFolder, false);
+        doc.FontSettings = fontSettings;
 
-        builder.Font.Name = "Calibri";
-        builder.Writeln("This document uses the Calibri font.");
-        builder.Writeln("Only the glyphs required for this text should be embedded.");
-
-        // Configure PDF save options to embed only used glyphs (subsetting).
+        // 3. Render the document to PDF with font subsetting (embed only used glyphs).
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // When false (default), fonts are subsetted before embedding.
+            // When false, only the glyphs used in the document are embedded.
             EmbedFullFonts = false
         };
-
-        // Save the document as PDF.
         doc.Save(pdfPath, pdfOptions);
 
-        // Verify that the PDF file was created.
+        // 4. Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
             throw new FileNotFoundException("PDF file was not created.", pdfPath);
 
-        // Load the PDF bytes and search for markers that indicate a subsetted TrueType font.
-        byte[] pdfBytes = File.ReadAllBytes(pdfPath);
-        string pdfContent = Encoding.ASCII.GetString(pdfBytes);
+        // 5. Inspect the PDF content for subset font markers.
+        // Look for patterns like "/FontFile2" or a subset prefix (e.g., "ABCDEF+ArialMT").
+        string pdfText = Encoding.ASCII.GetString(File.ReadAllBytes(pdfPath));
 
-        // Look for the typical TrueType font embedding marker "/FontFile2".
-        bool hasFontFile2 = Regex.IsMatch(pdfContent, @"/FontFile2", RegexOptions.IgnoreCase);
-        // Look for a subset font name pattern: six uppercase letters followed by '+'.
-        bool hasSubsetName = Regex.IsMatch(pdfContent, @"[A-Z]{6}\+");
+        bool hasFontFile = pdfText.Contains("/FontFile2") || pdfText.Contains("/FontFile3");
+        bool hasSubsetPrefix = Regex.IsMatch(pdfText, @"\b[A-Z]{6}\+");
 
-        if (!hasFontFile2 || !hasSubsetName)
-            throw new InvalidOperationException("The PDF does not contain expected subsetted TrueType font markers.");
+        if (!hasFontFile || !hasSubsetPrefix)
+            throw new InvalidOperationException("The PDF does not contain expected subset font markers.");
 
-        Console.WriteLine("PDF generated successfully with subsetted TrueType fonts:");
-        Console.WriteLine(pdfPath);
+        // 6. Indicate successful rendering and subsetting.
+        Console.WriteLine("PDF rendered successfully with font subsetting.");
+        Console.WriteLine($"DOCX path: {docxPath}");
+        Console.WriteLine($"PDF path: {pdfPath}");
     }
 }

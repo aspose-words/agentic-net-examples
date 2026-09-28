@@ -1,50 +1,55 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fonts;          // Needed for FontSettings
+using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for temporary files.
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        Directory.CreateDirectory(dataDir);
+        // Paths for the sample DOCX and the rendered TIFF.
+        string sourcePath = "sample.docx";
+        string outputPath = "output.tiff";
 
-        // Create a sample DOCX document.
-        string docPath = Path.Combine(dataDir, "sample.docx");
+        // -----------------------------------------------------------------
+        // 1. Create a simple DOCX document locally.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World! This is a sample document for TIFF rendering.");
-        doc.Save(docPath);
+        builder.Writeln("This is a sample document for TIFF rendering.");
+        doc.Save(sourcePath);
 
-        // Load the document.
-        Document loadedDoc = new Document(docPath);
-
-        // Apply font settings (without using the banned EnableOpenTypeFeatures property).
+        // -----------------------------------------------------------------
+        // 2. Load the document and configure FontSettings.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
         FontSettings fontSettings = new FontSettings();
+        // No OpenType feature toggle is required; we simply assign the settings.
         loadedDoc.FontSettings = fontSettings;
 
-        // Configure image save options for 1bpp TIFF (minimal size).
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // -----------------------------------------------------------------
+        // 3. Render the document to a 1bpp (black‑and‑white) TIFF.
+        // -----------------------------------------------------------------
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // 1 bit per pixel.
-            PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // Use CCITT Group 3 compression suitable for 1bpp images.
-            TiffCompression = TiffCompression.Ccitt3,
-            // Set resolution (dots per inch) for the rendered image.
-            Resolution = 300
+            // Render as black‑and‑white (1 bit per pixel).
+            ImageColorMode = ImageColorMode.BlackAndWhite,
+            // Use CCITT Group 4 compression, suitable for 1bpp TIFF.
+            TiffCompression = TiffCompression.Ccitt4
+            // By default all pages are rendered; no explicit PageSet needed.
         };
 
-        // Render the document to a TIFF file.
-        string tiffPath = Path.Combine(dataDir, "output.tiff");
-        loadedDoc.Save(tiffPath, tiffOptions);
+        loadedDoc.Save(outputPath, saveOptions);
 
-        // Verify that the TIFF file was created.
-        if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("Failed to create the TIFF output file.");
+        // -----------------------------------------------------------------
+        // 4. Verify that the TIFF file was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(outputPath))
+        {
+            throw new FileNotFoundException("The TIFF output file was not created.", outputPath);
+        }
 
-        Console.WriteLine($"TIFF rendered successfully: {tiffPath}");
+        Console.WriteLine($"Document rendered to 1bpp TIFF successfully: {Path.GetFullPath(outputPath)}");
     }
 }

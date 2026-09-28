@@ -7,27 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a simple document with one paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for TIFF conversion.");
+        builder.Writeln("Hello, Aspose.Words TIFF rendering with 300 DPI.");
 
-        // Configure image save options for TIFF with 300 DPI.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.HorizontalResolution = 300; // Equivalent to DpiX.
-        options.VerticalResolution = 300;   // Equivalent to DpiY.
+        // Path for the output TIFF file.
+        string outputPath = "output.tiff";
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.tiff");
+        // Configure ImageSaveOptions for TIFF format with 300 DPI.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            // The Resolution property sets both DpiX and DpiY.
+            Resolution = 300
+        };
 
-        // Save the document as a TIFF image using the specified options.
-        doc.Save(outputPath, options);
+        // Save the document as a TIFF image.
+        doc.Save(outputPath, saveOptions);
 
-        // Verify that the file was created.
+        // Verify that the TIFF file was created.
         if (!File.Exists(outputPath))
+        {
             throw new InvalidOperationException("Failed to create the TIFF file.");
+        }
 
-        // Indicate successful completion.
-        Console.WriteLine($"TIFF file saved successfully to: {outputPath}");
+        // Output the location and size of the generated file.
+        Console.WriteLine($"TIFF saved to: {Path.GetFullPath(outputPath)} (Size: {new FileInfo(outputPath).Length} bytes)");
     }
 }

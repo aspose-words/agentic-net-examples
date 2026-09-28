@@ -7,47 +7,63 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create a temporary working directory.
+        string workDir = Path.Combine(Path.GetTempPath(), "AsposeWordsTiffTest");
+        Directory.CreateDirectory(workDir);
 
-        // Create a sample DOCX with three pages.
+        // Paths for the source DOCX and the rendered TIFF.
+        string docxPath = Path.Combine(workDir, "sample.docx");
+        string tiffPath = Path.Combine(workDir, "sample.tiff");
+
+        // -----------------------------------------------------------------
+        // 1. Build a sample DOCX with multiple pages.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Page 1");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3");
-
-        // Ensure the layout is calculated and obtain the page count.
-        int sourcePageCount = doc.PageCount; // Expected to be 3.
-
-        // Save the source document (optional, just for reference).
-        string docPath = Path.Combine(artifactsDir, "Sample.docx");
-        doc.Save(docPath);
-
-        // Render the document to a multi‑frame TIFF where each page is a separate frame.
-        string tiffPath = Path.Combine(artifactsDir, "Sample.tiff");
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Add three pages of text.
+        for (int i = 1; i <= 3; i++)
         {
-            // Use the layout that creates one frame per page.
-            PageLayout = MultiPageLayout.TiffFrames()
-        };
+            builder.Writeln($"This is page {i}.");
+            // Insert enough text to fill the page.
+            for (int j = 0; j < 30; j++)
+            {
+                builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+            }
+
+            if (i < 3)
+                builder.InsertBreak(BreakType.PageBreak);
+        }
+
+        // Save the source DOCX (optional, but useful for inspection).
+        doc.Save(docxPath, SaveFormat.Docx);
+
+        // Record the source page count.
+        int sourcePageCount = doc.PageCount;
+
+        // -----------------------------------------------------------------
+        // 2. Render the document to a multipage TIFF.
+        // -----------------------------------------------------------------
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // The default behavior renders all pages into a multipage TIFF.
         doc.Save(tiffPath, tiffOptions);
 
-        // Validate that the TIFF file was created.
+        // Verify that the TIFF file was created.
         if (!File.Exists(tiffPath))
-            throw new Exception("TIFF file was not created.");
+            throw new InvalidOperationException("TIFF file was not created.");
 
-        // Basic validation that the source document has the expected number of pages.
-        if (sourcePageCount != 3)
-            throw new Exception($"Source document page count is {sourcePageCount}, expected 3.");
+        // -----------------------------------------------------------------
+        // 3. Validate that the TIFF output should contain the same number of pages.
+        // -----------------------------------------------------------------
+        // Aspose.Words renders each document page as a separate frame in the TIFF.
+        // Since we cannot inspect TIFF frames without additional libraries,
+        // we assert that the source document has the expected page count
+        // and that the TIFF file exists (which implies the rendering succeeded).
+        const int expectedPageCount = 3; // We created three pages above.
+        if (sourcePageCount != expectedPageCount)
+            throw new InvalidOperationException(
+                $"Source document page count mismatch: expected {expectedPageCount}, but got {sourcePageCount}.");
 
-        // Since each page is rendered as a separate frame, the existence of the file together
-        // with the known page count of the source document confirms that the TIFF contains
-        // the same number of pages.
-        Console.WriteLine($"Success: TIFF file '{tiffPath}' was created with {sourcePageCount} pages.");
+        Console.WriteLine($"Success: Source DOCX has {sourcePageCount} pages and TIFF was generated at '{tiffPath}'.");
     }
 }

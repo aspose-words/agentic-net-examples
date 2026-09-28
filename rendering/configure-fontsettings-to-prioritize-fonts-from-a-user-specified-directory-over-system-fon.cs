@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
@@ -8,52 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Define paths for the sample output and the custom font folder.
+        // Define paths for the sample document and output PDF.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        string customFontDir = Path.Combine(outputDir, "UserFonts");
         Directory.CreateDirectory(outputDir);
-        Directory.CreateDirectory(customFontDir);
+        string pdfPath = Path.Combine(outputDir, "RenderedDocument.pdf");
 
-        // Locate a system font file to copy into the custom folder.
-        // This ensures we have a valid TrueType font for the demonstration.
-        string systemFontFile = null;
-        foreach (string folder in SystemFontSource.GetSystemFontFolders())
-        {
-            systemFontFile = Directory.GetFiles(folder, "*.ttf").FirstOrDefault();
-            if (systemFontFile != null)
-                break;
-        }
+        // Create a folder that will hold user‑specified fonts.
+        string customFontsFolder = Path.Combine(Directory.GetCurrentDirectory(), "CustomFonts");
+        Directory.CreateDirectory(customFontsFolder);
+        // (In a real scenario you would copy font files into this folder.)
 
-        if (systemFontFile == null)
-            throw new FileNotFoundException("No TrueType font file found in system font folders.");
-
-        // Copy the font file to the custom font directory.
-        string copiedFontPath = Path.Combine(customFontDir, Path.GetFileName(systemFontFile));
-        File.Copy(systemFontFile, copiedFontPath, true);
-
-        // Determine the font name (without extension) to use in the document.
-        string fontName = Path.GetFileNameWithoutExtension(copiedFontPath);
-
-        // Create a simple document that uses the selected font.
+        // Create a simple document that uses a specific font name.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = fontName;
-        builder.Writeln($"This text is rendered using the font \"{fontName}\" from the custom folder.");
+        builder.Font.Name = "CustomFont"; // Font name that we expect to resolve from the custom folder.
+        builder.Writeln("This text should be rendered using a font from the custom fonts folder if available.");
 
-        // Configure FontSettings to prioritize the custom font folder.
+        // Configure FontSettings to prioritize the custom fonts folder.
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(customFontDir, recursive: true);
+        // The second argument (false) indicates that subfolders are not searched.
+        // Adding the custom folder first gives it higher priority over system fonts.
+        fontSettings.SetFontsFolder(customFontsFolder, false);
         doc.FontSettings = fontSettings;
 
         // Render the document to PDF.
-        string pdfPath = Path.Combine(outputDir, "RenderedDocument.pdf");
-        doc.Save(pdfPath);
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+            throw new InvalidOperationException("PDF rendering failed; output file not found.");
 
         // Optionally, output the path of the generated file.
-        Console.WriteLine($"Document rendered successfully: {pdfPath}");
+        Console.WriteLine($"PDF rendered successfully to: {pdfPath}");
     }
 }

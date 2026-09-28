@@ -7,36 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document and add three pages.
+        // Create a new document and add content that spans multiple pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3.");
-
-        // Configure image save options for a multipage TIFF.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        for (int i = 1; i <= 3; i++)
         {
-            // Each page will be saved as a separate frame in the TIFF file.
-            PageLayout = MultiPageLayout.TiffFrames(),
-            // Optional: set resolution (dpi) for the rendered images.
-            Resolution = 300
+            builder.Writeln($"This is page {i}.");
+            if (i < 3)
+                builder.InsertBreak(BreakType.PageBreak);
+        }
+
+        // Ensure the document layout is up‑to‑date so that PageCount is accurate.
+        doc.UpdatePageLayout();
+
+        // Configure TIFF save options for a multipage output.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            // Use a PageSet that covers all pages of the document.
+            PageSet = new PageSet(0, doc.PageCount - 1),
+
+            // Use LZW compression as a safe default.
+            TiffCompression = TiffCompression.Lzw
         };
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.tiff");
+        string outputPath = "output.tiff";
 
         // Save the document as a multipage TIFF.
-        doc.Save(outputPath, options);
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+            throw new Exception("TIFF file was not created.");
 
-        // Indicate successful completion.
-        Console.WriteLine("Multipage TIFF saved to: " + outputPath);
+        Console.WriteLine($"Document saved as multipage TIFF to '{Path.GetFullPath(outputPath)}'.");
     }
 }

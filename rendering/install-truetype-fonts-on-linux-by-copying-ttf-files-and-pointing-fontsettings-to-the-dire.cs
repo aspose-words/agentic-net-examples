@@ -1,58 +1,61 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Saving;
 
-public class InstallTrueTypeFontsOnLinux
+public class Program
 {
     public static void Main()
     {
-        // Define folders for the example.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        string sourceFontsDir = Path.Combine(baseDir, "SourceFonts");
-        string linuxFontsDir = Path.Combine(baseDir, "LinuxFonts");
-        Directory.CreateDirectory(baseDir);
-        Directory.CreateDirectory(sourceFontsDir);
-        Directory.CreateDirectory(linuxFontsDir);
+        // Define source and target font directories.
+        string sourceFontDir = Path.Combine(Directory.GetCurrentDirectory(), "sourceFonts");
+        string targetFontDir = Path.Combine(Directory.GetCurrentDirectory(), "fonts");
 
-        // Create a dummy TrueType font file in the source folder.
-        // In a real scenario this would be an actual .ttf file.
-        string dummyFontPath = Path.Combine(sourceFontsDir, "DummyFont.ttf");
-        if (!File.Exists(dummyFontPath))
+        // Ensure directories exist.
+        Directory.CreateDirectory(sourceFontDir);
+        Directory.CreateDirectory(targetFontDir);
+
+        // Create a dummy TrueType font file in the source directory.
+        string dummyFontFileName = "DummyFont.ttf";
+        string sourceFontPath = Path.Combine(sourceFontDir, dummyFontFileName);
+        if (!File.Exists(sourceFontPath))
         {
-            // Write a minimal TTF header (just to have a non‑empty file).
-            byte[] dummyTtfHeader = new byte[] { 0x00, 0x01, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x80 };
-            File.WriteAllBytes(dummyFontPath, dummyTtfHeader);
+            // Write minimal placeholder bytes (not a real font, but sufficient for copy demonstration).
+            byte[] placeholder = new byte[] { 0x00, 0x01, 0x00, 0x00 };
+            File.WriteAllBytes(sourceFontPath, placeholder);
         }
 
-        // Copy the font file to the Linux fonts directory (simulating installation).
-        string installedFontPath = Path.Combine(linuxFontsDir, "DummyFont.ttf");
-        File.Copy(dummyFontPath, installedFontPath, true);
-
-        // Point Aspose.Words to the directory that contains the installed fonts.
-        // The second argument 'true' enables recursive scanning of subfolders.
-        FontSettings.DefaultInstance.SetFontsFolder(linuxFontsDir, true);
-
-        // Build a simple document that uses the dummy font.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "DummyFont";
-        builder.Writeln("This text is rendered with the installed TrueType font.");
-
-        // Save the document to PDF.
-        string pdfPath = Path.Combine(baseDir, "RenderedDocument.pdf");
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // Copy all .ttf files from source to target directory.
+        foreach (string ttfPath in Directory.GetFiles(sourceFontDir, "*.ttf"))
         {
-            // Embed full fonts to ensure the font is included in the PDF.
-            EmbedFullFonts = true
-        };
-        doc.Save(pdfPath, pdfOptions);
+            string destPath = Path.Combine(targetFontDir, Path.GetFileName(ttfPath));
+            File.Copy(ttfPath, destPath, true);
+        }
 
-        // Verify that the PDF file was created.
+        // Verify that the font was copied.
+        string installedFontPath = Path.Combine(targetFontDir, dummyFontFileName);
+        if (!File.Exists(installedFontPath))
+            throw new Exception("Failed to install the TrueType font.");
+
+        // Configure FontSettings to use the installed fonts folder.
+        FontSettings fontSettings = new FontSettings();
+        fontSettings.SetFontsFolder(targetFontDir, false);
+
+        // Create a simple document and assign the FontSettings.
+        Document doc = new Document();
+        doc.FontSettings = fontSettings;
+        doc.FirstSection.Body.FirstParagraph.AppendChild(new Run(doc, "Hello, world! This document uses installed fonts."));
+
+        // Render the document to PDF.
+        string pdfPath = Path.Combine(Directory.GetCurrentDirectory(), "output.pdf");
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Validate that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new FileNotFoundException("The PDF output was not generated.", pdfPath);
+            throw new Exception("PDF rendering failed.");
 
-        Console.WriteLine($"PDF successfully saved to: {pdfPath}");
+        // Optionally, output confirmation (no interactive wait).
+        Console.WriteLine("Font installation and PDF rendering completed successfully.");
     }
 }
