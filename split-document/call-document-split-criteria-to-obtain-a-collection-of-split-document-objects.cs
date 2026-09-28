@@ -1,62 +1,52 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Create an output folder for the split parts.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
-        Directory.CreateDirectory(outputDir);
-
-        // Build a sample document that contains three sections.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Section 1
+        // Create a sample document with two sections.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Section 1 - First paragraph.");
-        builder.Writeln("Section 1 - Second paragraph.");
-        builder.InsertBreak(BreakType.SectionBreakNewPage); // start Section 2
-
-        // Section 2
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
         builder.Writeln("Section 2 - First paragraph.");
-        builder.Writeln("Section 2 - Second paragraph.");
-        builder.InsertBreak(BreakType.SectionBreakNewPage); // start Section 3
 
-        // Section 3
-        builder.Writeln("Section 3 - First paragraph.");
-        builder.Writeln("Section 3 - Second paragraph.");
+        // Save the source document locally.
+        const string sourcePath = "Source.docx";
+        sourceDoc.Save(sourcePath);
 
-        // Split the document by its sections.
-        for (int i = 0; i < doc.Sections.Count; i++)
+        // Load the document that will be split.
+        Document doc = new Document(sourcePath);
+
+        // Split the document by sections.
+        int index = 1;
+        foreach (Section section in doc.Sections)
         {
-            Section sourceSection = doc.Sections[i];
-
-            // Create a new empty document that will hold the imported section.
+            // Create a new empty document and remove its default empty section.
             Document splitDoc = new Document();
-
-            // Remove the default empty section that Aspose.Words creates for a new document.
             splitDoc.RemoveAllChildren();
 
-            // Import the source section into the new document.
-            // NodeImporter works with Document objects, not with Section objects directly.
+            // Import the current section (including headers/footers) into the new document.
             NodeImporter importer = new NodeImporter(doc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(sourceSection, true);
-
-            // Append the imported section to the split document.
+            Section importedSection = (Section)importer.ImportNode(section, true);
             splitDoc.AppendChild(importedSection);
 
-            // Save the split part to a file.
-            string partPath = Path.Combine(outputDir, $"SplitPart_{i + 1}.docx");
-            splitDoc.Save(partPath, SaveFormat.Docx);
+            // Save the split document.
+            string splitPath = $"Split_{index}.docx";
+            splitDoc.Save(splitPath);
 
-            // Verify that the file was created.
-            if (!File.Exists(partPath))
-                throw new InvalidOperationException($"Failed to create split file: {partPath}");
+            // Verify that the file was saved.
+            if (!File.Exists(splitPath))
+                throw new InvalidOperationException($"Split document was not saved: {splitPath}");
+
+            index++;
         }
 
-        Console.WriteLine($"Document split into {doc.Sections.Count} parts. Files saved to: {outputDir}");
+        // Verify the expected number of split documents.
+        int expectedCount = doc.Sections.Count;
+        if (index - 1 != expectedCount)
+            throw new InvalidOperationException("The number of split documents does not match the expected count.");
     }
 }

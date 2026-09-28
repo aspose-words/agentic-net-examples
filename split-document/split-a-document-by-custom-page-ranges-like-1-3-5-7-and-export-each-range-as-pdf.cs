@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-public class SplitDocumentByCustomPageRanges
+public class Program
 {
     public static void Main()
     {
@@ -12,46 +10,55 @@ public class SplitDocumentByCustomPageRanges
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with 7 pages.
+        // Create a sample source document with ten pages.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        for (int i = 1; i <= 7; i++)
+        for (int i = 1; i <= 10; i++)
         {
-            builder.Writeln($"This is page {i}.");
-            if (i < 7)
+            builder.Writeln($"This is the content of page {i}.");
+            if (i < 10)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Define custom page ranges (1‑based inclusive).
-        var pageRanges = new List<(int Start, int End)>
+        // Save the source document for reference (optional).
+        string sourcePath = Path.Combine(outputDir, "source.docx");
+        sourceDoc.Save(sourcePath);
+
+        // Define custom page ranges to split.
+        string[] pageRanges = { "1-3", "5-7" };
+
+        // Get total page count of the source document.
+        int totalPages = sourceDoc.PageCount;
+
+        // Process each range.
+        foreach (string range in pageRanges)
         {
-            (1, 3),
-            (5, 7)
-        };
+            // Parse start and end page numbers.
+            string[] parts = range.Split('-');
+            if (parts.Length != 2 ||
+                !int.TryParse(parts[0], out int startPage) ||
+                !int.TryParse(parts[1], out int endPage))
+            {
+                throw new ArgumentException($"Invalid page range format: {range}");
+            }
 
-        // Process each range: extract pages and save as a separate PDF.
-        foreach (var range in pageRanges)
-        {
-            int startIndex = range.Start - 1;                     // zero‑based start page
-            int pageCount = range.End - range.Start + 1;          // number of pages to extract
+            // Validate page numbers.
+            if (startPage < 1 || endPage > totalPages || startPage > endPage)
+                throw new ArgumentOutOfRangeException($"Page range {range} is out of bounds. Document has {totalPages} pages.");
 
-            // Ensure the requested range is within the document bounds.
-            if (startIndex < 0 || startIndex + pageCount > sourceDoc.PageCount)
-                throw new ArgumentOutOfRangeException($"Range {range.Start}-{range.End} is outside the document page count.");
+            // Extract the specified pages (ExtractPages uses 1‑based page numbers).
+            int pageCount = endPage - startPage + 1;
+            Document extracted = sourceDoc.ExtractPages(startPage, pageCount);
 
-            // Extract the specified pages into a new document.
-            Document extracted = sourceDoc.ExtractPages(startIndex, pageCount);
+            // Save the extracted range as PDF.
+            string outputPath = Path.Combine(outputDir, $"output_{range}.pdf");
+            extracted.Save(outputPath, SaveFormat.Pdf);
 
-            // Save the extracted document as PDF.
-            string outFile = Path.Combine(outputDir, $"Pages_{range.Start}_to_{range.End}.pdf");
-            extracted.Save(outFile, SaveFormat.Pdf);
-
-            // Validate that the file was created.
-            if (!File.Exists(outFile))
-                throw new InvalidOperationException($"Failed to create output file: {outFile}");
+            // Verify the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create output file: {outputPath}");
         }
 
-        // Optional: indicate successful completion.
-        Console.WriteLine("Document split completed. PDFs are located in: " + outputDir);
+        // Program completed successfully.
     }
 }

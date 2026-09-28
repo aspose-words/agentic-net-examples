@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,61 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Define an output folder relative to the current directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Base file name for the HTML output.
-        string baseFileName = Path.Combine(outputDir, "SplitDocument.html");
-
-        // Create a sample document with headings and explicit page breaks.
+        // Create a sample document with headings and page breaks.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First heading (level 1) and some content.
+        // First heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1");
+        builder.Writeln("Chapter 1");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content under heading 1.");
+        builder.Writeln("This is some text in chapter 1. It will span multiple lines to ensure content.");
 
-        // Insert a page break.
+        // Force a page break.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Second heading (level 2) and some content.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 2");
+        // Second heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 2");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content under heading 2.");
+        builder.Writeln("Content of chapter 2 follows. More text to fill the page.");
 
-        // Insert another page break.
+        // Force another page break.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Third heading (level 3) and some content.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Heading 3");
+        // Third heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 3");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content under heading 3.");
+        builder.Writeln("Final chapter content.");
 
-        // Configure HTML save options to split on both page breaks and heading paragraphs.
-        HtmlSaveOptions options = new HtmlSaveOptions
+        // Prepare output folder.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
+
+        // Configure HTML save options to split on headings and page breaks.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
+        // Combine HeadingParagraph and PageBreak criteria so each part starts on a new page.
+        saveOptions.DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph | DocumentSplitCriteria.PageBreak;
+        // Export headers/footers per section (optional, kept from original example).
+        saveOptions.ExportHeadersFootersMode = ExportHeadersFootersMode.PerSection;
+
+        // Save the document; Aspose.Words will generate multiple HTML files.
+        string mainFilePath = Path.Combine(outputDir, "Document.html");
+        doc.Save(mainFilePath, saveOptions);
+
+        // Validate that split files were created (main file + at least one split part).
+        string[] generatedFiles = Directory.GetFiles(outputDir, "Document*.html");
+        if (generatedFiles.Length < 2)
         {
-            DocumentSplitCriteria = DocumentSplitCriteria.PageBreak | DocumentSplitCriteria.HeadingParagraph,
-            DocumentSplitHeadingLevel = 2 // Split at heading levels 1 and 2.
-        };
+            throw new InvalidOperationException("Expected split HTML files were not generated.");
+        }
 
-        // Save the document; Aspose.Words will create multiple HTML files.
-        doc.Save(baseFileName, options);
-
-        // Verify that multiple split files were created.
-        string[] splitFiles = Directory.GetFiles(outputDir, "SplitDocument*.html")
-                                       .OrderBy(f => f)
-                                       .ToArray();
-
-        if (splitFiles.Length < 2)
-            throw new Exception("Expected multiple split HTML files, but only one was found.");
-
-        // Output the list of generated files.
-        foreach (string file in splitFiles)
-            Console.WriteLine("Created: " + file);
+        // List generated files.
+        foreach (var file in generatedFiles)
+        {
+            Console.WriteLine($"Generated: {file}");
+        }
     }
 }

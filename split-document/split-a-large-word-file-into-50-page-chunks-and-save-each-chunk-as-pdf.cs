@@ -7,53 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for output PDF parts.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare output folder.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputFolder);
 
-        // Create a sample large document (e.g., 200 pages).
+        // Create a sample source document with enough content to span many pages.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        const int totalPages = 200;
-        for (int i = 1; i <= totalPages; i++)
+        // Generate 200 pages of simple text.
+        for (int i = 1; i <= 200; i++)
         {
             builder.Writeln($"This is page {i}.");
-            if (i < totalPages)
+            // Insert a page break after each page except the last.
+            if (i < 200)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Ensure layout is up‑to‑date so PageCount is accurate.
-        sourceDoc.UpdatePageLayout();
-        int pageCount = sourceDoc.PageCount;
+        // Determine total page count of the source document.
+        int totalPages = sourceDoc.PageCount;
 
-        // Split the document into 50‑page chunks.
-        const int chunkSize = 50;
-        int chunkCount = (pageCount + chunkSize - 1) / chunkSize;
-
-        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++)
+        // Split the document into 50‑page chunks and save each chunk as PDF.
+        int chunkIndex = 1;
+        for (int startPage = 1; startPage <= totalPages; startPage += 50)
         {
-            // 1‑based page numbers for readability.
-            int startPage = chunkIndex * chunkSize + 1;
-            int endPage = Math.Min(startPage + chunkSize - 1, pageCount);
+            // Number of pages to extract for this chunk.
+            int pagesToExtract = Math.Min(50, totalPages - startPage + 1);
 
-            // Convert to zero‑based index and count required by ExtractPages.
-            int zeroBasedIndex = startPage - 1;
-            int pagesToExtract = endPage - startPage + 1;
+            // ExtractPages uses zero‑based page index, so subtract 1 from startPage.
+            Document chunk = sourceDoc.ExtractPages(startPage - 1, pagesToExtract);
 
-            // Extract the page range into a new document.
-            Document part = sourceDoc.ExtractPages(zeroBasedIndex, pagesToExtract);
-
-            // Save the part as PDF.
-            string partFileName = Path.Combine(outputDir, $"Part_{chunkIndex + 1}.pdf");
-            part.Save(partFileName, SaveFormat.Pdf);
-
-            // Validate that the file was created.
-            if (!File.Exists(partFileName))
-                throw new InvalidOperationException($"Failed to create PDF part: {partFileName}");
+            string pdfPath = Path.Combine(outputFolder, $"Chunk_{chunkIndex}.pdf");
+            chunk.Save(pdfPath, SaveFormat.Pdf);
+            chunkIndex++;
         }
 
-        // Indicate successful completion.
-        Console.WriteLine($"Document split into {chunkCount} PDF file(s) in folder: {outputDir}");
+        // Validate that the expected PDF files were created.
+        int expectedChunkCount = (totalPages + 49) / 50; // Ceiling division.
+        string[] pdfFiles = Directory.GetFiles(outputFolder, "Chunk_*.pdf");
+        if (pdfFiles.Length != expectedChunkCount)
+            throw new InvalidOperationException($"Expected {expectedChunkCount} PDF files, but found {pdfFiles.Length}.");
+
+        foreach (string file in pdfFiles)
+        {
+            if (!File.Exists(file))
+                throw new FileNotFoundException($"Expected output file not found: {file}");
+        }
+
+        // Program completes without waiting for user input.
     }
 }

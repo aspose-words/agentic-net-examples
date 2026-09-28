@@ -1,20 +1,14 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Define folders for input and output.
-        string baseDir = Directory.GetCurrentDirectory();
-        string outputDir = Path.Combine(baseDir, "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         // 1. Create a sample source document with three sections.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
@@ -24,47 +18,45 @@ public class SplitDocumentExample
         builder.InsertBreak(BreakType.SectionBreakNewPage);
         builder.Writeln("Content of Section 3");
 
-        // Save the source document to a temporary file.
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        // Save the source document locally.
+        string sourcePath = "Source.docx";
         sourceDoc.Save(sourcePath);
 
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         // 2. Load the source document.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         Document loadedDoc = new Document(sourcePath);
 
-        // -----------------------------------------------------------------
-        // 3. Define split criteria (split at each section break) and save.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        // -------------------------------------------------
+        // 3. Split the document by its sections.
+        // -------------------------------------------------
+        for (int i = 0; i < loadedDoc.Sections.Count; i++)
         {
-            DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
-        };
+            Section sourceSection = loadedDoc.Sections[i];
 
-        // Base file name for the split operation.
-        string splitBaseName = Path.Combine(outputDir, "SplitDocument.html");
-        loadedDoc.Save(splitBaseName, saveOptions);
+            // Create a new empty document for the current section.
+            Document splitDoc = new Document();
+            splitDoc.Sections.Clear(); // Remove the default empty section.
 
-        // -----------------------------------------------------------------
-        // 4. Validate that the split parts were created.
-        // -----------------------------------------------------------------
-        // Expected files: SplitDocument.html, SplitDocument-01.html, SplitDocument-02.html
-        string[] expectedFiles =
-        {
-            splitBaseName,
-            Path.Combine(outputDir, "SplitDocument-01.html"),
-            Path.Combine(outputDir, "SplitDocument-02.html")
-        };
+            // Import the section from the source document into the new document.
+            NodeImporter importer = new NodeImporter(loadedDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(sourceSection, true);
 
-        foreach (string filePath in expectedFiles)
-        {
-            if (!File.Exists(filePath))
-                throw new Exception($"Expected split file not found: {filePath}");
+            // Add the imported section to the split document.
+            splitDoc.Sections.Add(importedSection);
+
+            // Save the split document.
+            string splitPath = $"Section_{i + 1}.docx";
+            splitDoc.Save(splitPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(splitPath))
+                throw new Exception($"Failed to create split file: {splitPath}");
         }
 
-        // All split files exist – the workflow completed successfully.
-        Console.WriteLine("Document split completed. Generated files:");
-        foreach (string filePath in expectedFiles)
-            Console.WriteLine($"  {Path.GetFileName(filePath)}");
+        // -------------------------------------------------
+        // 4. Indicate successful completion.
+        // -------------------------------------------------
+        Console.WriteLine("Document split completed successfully.");
     }
 }

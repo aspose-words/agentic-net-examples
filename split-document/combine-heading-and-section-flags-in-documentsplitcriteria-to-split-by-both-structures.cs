@@ -1,73 +1,96 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class SplitDocumentExample
+public class Program
 {
     public static void Main()
     {
-        // Define output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample document with headings and sections.
+        // Create a sample document with sections and headings.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First heading (level 1).
+        // First section with a heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1 - Section A");
-
-        // Some body text.
+        builder.Writeln("Chapter 1");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Paragraph under Heading 1.");
+        builder.Writeln("Content of the first chapter.");
 
-        // Insert a section break (new page) to start a new section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Second heading (level 2) in the new section.
+        // Add a second heading within the same section.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 2 - Section B");
-
-        // More body text.
+        builder.Writeln("Section 1.1");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Paragraph under Heading 2.");
+        builder.Writeln("Details of section 1.1.");
 
-        // Insert another heading (level 3) without a new section.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Heading 3 - Same Section");
-
+        // Insert a new section.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 2");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Paragraph under Heading 3.");
+        builder.Writeln("Content of the second chapter.");
 
-        // Prepare HtmlSaveOptions to split by both headings and sections.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
+        Directory.CreateDirectory(outputDir);
+
+        // ---------- Split by Sections ----------
+        int sectionIndex = 1;
+        foreach (Section section in doc.Sections)
         {
-            // Combine the flags using bitwise OR.
-            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph | DocumentSplitCriteria.SectionBreak,
-            // Split at heading levels 1 and 2 (adjust as needed).
-            DocumentSplitHeadingLevel = 2
-        };
+            Document sectionDoc = new Document();
+            // Import the whole section (including headers/footers) into the new document.
+            Section importedSection = (Section)sectionDoc.ImportNode(section, true);
+            // Remove the default empty section that Document() creates.
+            sectionDoc.RemoveAllChildren();
+            sectionDoc.AppendChild(importedSection);
 
-        // Save the document; Aspose.Words will generate multiple HTML files.
-        string baseFileName = Path.Combine(outputDir, "CombinedSplit.html");
-        doc.Save(baseFileName, saveOptions);
-
-        // Validate that split parts were created.
-        // The main file plus at least one part file should exist.
-        string[] htmlFiles = Directory.GetFiles(outputDir, "CombinedSplit*.html");
-        if (htmlFiles.Length < 2)
-        {
-            throw new InvalidOperationException("Expected multiple split HTML files, but fewer were found.");
+            string sectionPath = Path.Combine(outputDir, $"Section_{sectionIndex}.docx");
+            sectionDoc.Save(sectionPath);
+            sectionIndex++;
         }
 
-        // Output the list of generated files (optional, for verification).
-        Console.WriteLine("Generated split HTML files:");
-        foreach (string file in htmlFiles.OrderBy(f => f))
+        // ---------- Split by Headings ----------
+        // Collect all heading paragraphs.
+        List<Paragraph> headingParagraphs = new List<Paragraph>();
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        foreach (Paragraph para in paragraphs)
         {
-            Console.WriteLine(" - " + Path.GetFileName(file));
+            StyleIdentifier styleId = para.ParagraphFormat.StyleIdentifier;
+            if (styleId >= StyleIdentifier.Heading1 && styleId <= StyleIdentifier.Heading9)
+                headingParagraphs.Add(para);
         }
+
+        for (int i = 0; i < headingParagraphs.Count; i++)
+        {
+            Paragraph startHeading = headingParagraphs[i];
+            Paragraph nextHeading = (i + 1 < headingParagraphs.Count) ? headingParagraphs[i + 1] : null;
+
+            Document headingDoc = new Document();
+            NodeImporter importer = new NodeImporter(doc, headingDoc, ImportFormatMode.KeepSourceFormatting);
+
+            // Ensure the document has a section to receive nodes.
+            Section bodySection = headingDoc.FirstSection;
+
+            // Import nodes from the start heading up to (but not including) the next heading.
+            Node currentNode = startHeading;
+            while (currentNode != null && currentNode != nextHeading)
+            {
+                Node importedNode = importer.ImportNode(currentNode, true);
+                bodySection.Body.AppendChild(importedNode);
+                currentNode = currentNode.NextSibling;
+            }
+
+            string headingPath = Path.Combine(outputDir, $"Heading_{i + 1}.docx");
+            headingDoc.Save(headingPath);
+        }
+
+        // Validate that split files were created.
+        string[] splitFiles = Directory.GetFiles(outputDir, "*.docx");
+        if (splitFiles.Length < 2)
+            throw new InvalidOperationException($"Expected multiple split files, but found {splitFiles.Length}.");
+
+        Console.WriteLine($"Document split into {splitFiles.Length} files in '{outputDir}'.");
     }
 }

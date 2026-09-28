@@ -1,77 +1,69 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define folders for the sample document and the split results.
-        string baseDir = Directory.GetCurrentDirectory();
-        string artifactsDir = Path.Combine(baseDir, "Artifacts");
-        string outputDir = Path.Combine(artifactsDir, "SplitPages");
-
-        Directory.CreateDirectory(artifactsDir);
+        // Folder for output files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample document that contains both portrait and
-        //    landscape pages. The first section uses the default portrait
-        //    orientation, the second section is set to landscape.
-        // -----------------------------------------------------------------
+        // Create a sample document with a portrait section and a landscape section.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // First (portrait) page.
-        builder.Writeln("This is a portrait page. It uses the default orientation.");
-
-        // Insert a new section that starts on a new page.
+        // First (portrait) section.
+        builder.Writeln("This is the portrait section.");
+        // Insert a section break to start a new section on a new page.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Change the orientation of the current section to landscape.
-        builder.PageSetup.Orientation = Orientation.Landscape;
-        builder.Writeln("This is a landscape page. Its orientation is set to Landscape.");
+        // Second (landscape) section.
+        builder.CurrentSection.PageSetup.Orientation = Orientation.Landscape;
+        builder.Writeln("This is the landscape section.");
 
-        // Save the source document for reference.
-        string sourcePath = Path.Combine(artifactsDir, "SampleDocument.docx");
+        // Save the source document.
+        string sourcePath = Path.Combine(outputDir, "Source.docx");
         sourceDoc.Save(sourcePath);
 
-        // -----------------------------------------------------------------
-        // 2. Split the document page by page, preserving the original
-        //    orientation of each page. The ExtractPages method keeps the
-        //    page setup (including orientation) intact.
-        // -----------------------------------------------------------------
-        int pageCount = sourceDoc.PageCount;
-
-        for (int i = 0; i < pageCount; i++)
+        // Split the document by sections, preserving each section's orientation.
+        for (int i = 0; i < sourceDoc.Sections.Count; i++)
         {
-            // Extract a single page (zero‑based index) into a new document.
-            Document pageDoc = sourceDoc.ExtractPages(i, 1);
+            Section section = sourceDoc.Sections[i];
 
-            // Build the output file name.
-            string outFile = Path.Combine(outputDir, $"Split_Page_{i + 1}.docx");
+            // Create a new empty document to hold the imported section.
+            Document partDoc = new Document();
 
-            // Save the extracted page.
-            pageDoc.Save(outFile);
+            // Import the section from the source document into the new document.
+            NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(section, true);
+
+            // Append the imported section to the new document.
+            partDoc.AppendChild(importedSection);
+
+            // Save the split part.
+            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
+            partDoc.Save(partPath);
+
+            // Validate that the file was created.
+            if (!File.Exists(partPath))
+                throw new InvalidOperationException($"Failed to create split document: {partPath}");
         }
 
-        // -----------------------------------------------------------------
-        // 3. Validate that each split file was created successfully.
-        // -----------------------------------------------------------------
-        for (int i = 0; i < pageCount; i++)
+        // Validate that the expected number of split files exist.
+        int expectedParts = sourceDoc.Sections.Count;
+        for (int i = 1; i <= expectedParts; i++)
         {
-            string outFile = Path.Combine(outputDir, $"Split_Page_{i + 1}.docx");
-            if (!File.Exists(outFile))
-                throw new Exception($"Expected split file not found: {outFile}");
-
-            // Optional: verify that the orientation matches the original page.
-            Document splitDoc = new Document(outFile);
-            Orientation orientation = splitDoc.FirstSection.PageSetup.Orientation;
-            Console.WriteLine($"Page {i + 1} saved. Orientation: {orientation}");
+            string partPath = Path.Combine(outputDir, $"Part_{i}.docx");
+            if (!File.Exists(partPath))
+                throw new FileNotFoundException($"Expected split file not found: {partPath}");
         }
 
         // All done.
-        Console.WriteLine("Document splitting completed successfully.");
+        Console.WriteLine("Document split completed successfully.");
     }
 }

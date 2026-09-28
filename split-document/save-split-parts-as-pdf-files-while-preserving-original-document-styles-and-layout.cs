@@ -1,64 +1,66 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class SplitDocumentToPdf
 {
     public static void Main()
     {
-        // Prepare directories.
-        string baseDir = Directory.GetCurrentDirectory();
-        string outputDir = Path.Combine(baseDir, "SplitOutput");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample document with three sections, each having its own header/footer.
+        // Create a sample document with multiple sections, each having its own header/footer.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
         for (int i = 1; i <= 3; i++)
         {
-            // Set a distinct header for the current section.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            builder.Write($"Header of Section {i}");
-
-            // Move back to the main body and add content.
-            builder.MoveToDocumentEnd();
-            builder.Writeln($"This is the content of section {i}.");
-            builder.Writeln($"More text in section {i} to demonstrate layout preservation.");
-
-            // Insert a section break after each section except the last one.
-            if (i < 3)
+            // Start a new section for each iteration (except the first, which is already created).
+            if (i > 1)
                 builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+            // Header
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            builder.Write($"Header for Section {i}");
+
+            // Footer
+            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            builder.Write($"Footer for Section {i}");
+
+            // Body content
+            builder.MoveToDocumentEnd();
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
+            builder.Font.Size = 12;
+            builder.Writeln($"This is the body of section {i}.");
+            builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
         }
 
-        // Optional: save the original document for reference.
-        string sourcePath = Path.Combine(outputDir, "SourceDocument.docx");
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
+        // Ensure the source document has up‑to‑date layout information.
+        sourceDoc.UpdatePageLayout();
 
         // Split the document by sections and save each part as a PDF.
-        for (int index = 0; index < sourceDoc.Sections.Count; index++)
+        int sectionCount = sourceDoc.Sections.Count;
+        for (int idx = 0; idx < sectionCount; idx++)
         {
-            // Create a new empty document.
-            Document partDoc = new Document();
-            partDoc.RemoveAllChildren(); // Remove the default empty section.
+            Section section = sourceDoc.Sections[idx];
 
-            // Import the current section from the source document.
-            Section importedSection = (Section)partDoc.ImportNode(sourceDoc.Sections[index], true, ImportFormatMode.KeepSourceFormatting);
-            partDoc.AppendChild(importedSection);
+            // Create a new empty document to hold the single section.
+            Document splitDoc = new Document();
+            splitDoc.RemoveAllChildren(); // Remove the default empty section.
 
-            // Define the output PDF file name.
-            string pdfPath = Path.Combine(outputDir, $"Section_{index + 1}.pdf");
+            // Import the section (including its headers/footers) into the new document.
+            NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(section, true);
+            splitDoc.AppendChild(importedSection);
 
-            // Save the split part as PDF, preserving styles and layout.
-            partDoc.Save(pdfPath, SaveFormat.Pdf);
+            // Save the split part as PDF.
+            string pdfFileName = $"Section_{idx + 1}.pdf";
+            splitDoc.Save(pdfFileName, SaveFormat.Pdf);
 
-            // Validate that the file was created.
-            if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF for section {index + 1}.");
+            // Validate that the PDF file was created.
+            if (!File.Exists(pdfFileName))
+                throw new InvalidOperationException($"Failed to create split PDF: {pdfFileName}");
         }
 
-        // Indicate successful completion.
-        Console.WriteLine("Document split into PDF parts successfully.");
+        Console.WriteLine("Document split into PDF sections completed.");
     }
 }
