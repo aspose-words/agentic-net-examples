@@ -1,88 +1,87 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class Program
+public class OfficeMathEnumerationExample
 {
     public static void Main()
     {
-        // Define paths for the sample document and the report.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string docPath = Path.Combine(outputDir, "SampleEquations.docx");
-        string reportPath = Path.Combine(outputDir, "EquationsReport.txt");
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX file that contains a few OfficeMath equations.
-        // -----------------------------------------------------------------
+        // Create a sample DOCX with a few OfficeMath equations using the EQ-field bootstrap workflow.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample equations:");
 
-        // Helper to insert an EQ field, convert it to OfficeMath, and clean up.
-        void InsertEquation(string eqArgs)
+        string[] equations = new string[]
         {
+            @"\f(1,2)",               // Simple fraction
+            @"\r(2,x)",               // Square root of x
+            @"\f(\r(2,x),\r(3,y))"    // Fraction with nested roots
+        };
+
+        foreach (string eq in equations)
+        {
+            // Insert a new paragraph for the equation.
+            builder.Writeln();
+
             // Insert an EQ field.
-            FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-            // Write the EQ arguments (e.g., "\f(1,2)").
-            builder.MoveTo(field.Separator);
-            builder.Write(eqArgs);
-            // Return the cursor to the paragraph that contains the field.
-            builder.MoveTo(field.Start.ParentNode);
-            // Convert the field to a real OfficeMath object.
-            OfficeMath officeMath = field.AsOfficeMath();
-            if (officeMath != null)
+            Field field = builder.InsertField(FieldType.FieldEquation, true);
+            if (field is FieldEQ fieldEq)
             {
-                // Insert the OfficeMath node before the field start.
-                field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-                // Remove the original field.
-                field.Remove();
+                // Write the EQ argument string into the field separator.
+                builder.MoveTo(fieldEq.Separator);
+                builder.Write(eq);
+
+                // Convert the field to a real OfficeMath node.
+                OfficeMath officeMath = fieldEq.AsOfficeMath();
+                if (officeMath != null)
+                {
+                    // Insert the OfficeMath node before the field start.
+                    Node fieldStart = fieldEq.Start;
+                    if (fieldStart?.ParentNode is CompositeNode parent)
+                    {
+                        parent.InsertBefore(officeMath, fieldStart);
+                    }
+
+                    // Remove the original field.
+                    fieldEq.Remove();
+                }
             }
-            // Start a new paragraph for the next equation.
-            builder.InsertParagraph();
         }
 
-        // Insert several simple equations.
-        InsertEquation(@"\f(1,2)");          // Fraction 1/2
-        InsertEquation(@"\r(3,x)");          // Cube root of x
-        InsertEquation(@"\i \su(n=1,5,n)"); // Integral with summation
+        // Save the sample document.
+        const string samplePath = "SampleEquations.docx";
+        doc.Save(samplePath, SaveFormat.Docx);
 
-        // Save the document to disk.
-        doc.Save(docPath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // 2. Load the document back from disk.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-
-        // -----------------------------------------------------------------
-        // 3. Enumerate all OfficeMath nodes in the document.
-        // -----------------------------------------------------------------
+        // Load the document and enumerate OfficeMath nodes.
+        Document loadedDoc = new Document(samplePath);
         NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
 
-        using (StreamWriter writer = new StreamWriter(reportPath))
+        StringBuilder reportBuilder = new StringBuilder();
+        reportBuilder.AppendLine($"Total OfficeMath nodes: {mathNodes.Count}");
+        int index = 0;
+        foreach (OfficeMath om in mathNodes)
         {
-            writer.WriteLine($"Total OfficeMath nodes found: {mathNodes.Count}");
-            for (int i = 0; i < mathNodes.Count; i++)
-            {
-                OfficeMath math = (OfficeMath)mathNodes[i];
-                // Output basic information about each equation.
-                writer.WriteLine($"Equation {i + 1}:");
-                writer.WriteLine($"  MathObjectType: {math.MathObjectType}");
-                writer.WriteLine($"  DisplayType: {math.DisplayType}");
-                writer.WriteLine($"  Text: {math.GetText().Trim()}");
-            }
+            index++;
+            reportBuilder.AppendLine($"Equation {index}:");
+            reportBuilder.AppendLine($"  MathObjectType: {om.MathObjectType}");
+            reportBuilder.AppendLine($"  DisplayType: {om.DisplayType}");
+            reportBuilder.AppendLine($"  Justification: {om.Justification}");
+            reportBuilder.AppendLine($"  Text: {om.GetText()}");
         }
 
-        // -----------------------------------------------------------------
-        // 4. Validate that the output files were created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(docPath))
-            throw new FileNotFoundException("The sample document was not created.", docPath);
-        if (!File.Exists(reportPath))
-            throw new FileNotFoundException("The report file was not created.", reportPath);
+        const string reportPath = "EquationReport.txt";
+        File.WriteAllText(reportPath, reportBuilder.ToString());
 
-        // The program finishes without waiting for user input.
+        // Validate that the report file was created.
+        if (!File.Exists(reportPath))
+        {
+            throw new Exception("Failed to create the equation report file.");
+        }
+
+        // Non‑interactive confirmation.
+        Console.WriteLine("Enumeration completed. Report saved to " + reportPath);
     }
 }

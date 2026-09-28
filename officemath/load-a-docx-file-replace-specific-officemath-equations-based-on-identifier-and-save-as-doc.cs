@@ -1,143 +1,122 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
-using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 public class OfficeMathReplaceExample
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        const string inputPath = "SampleInput.docx";
-        const string outputPath = "SampleOutput.docx";
+        const string inputPath = "sample.docx";
+        const string outputPath = "modified.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX containing two identifiable equations.
-        // -----------------------------------------------------------------
+        // 1. Create a sample DOCX with two identifiable equations.
         CreateSampleDocument(inputPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document, replace the equation with identifier 1 (eq1).
-        // -----------------------------------------------------------------
+        // 2. Load the document.
         Document doc = new Document(inputPath);
 
-        // Find all OfficeMath nodes.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        // 3. Replace the equation identified by bookmark "Eq1".
+        ReplaceEquationByBookmark(doc, "Eq1", @"\r(5,x)");
 
-        foreach (OfficeMath math in mathNodes)
-        {
-            // Work only with top‑level equations.
-            if (math.MathObjectType != MathObjectType.OMathPara)
-                continue;
-
-            // Identify the target equation by its CustomNodeId (integer identifier).
-            if (math.CustomNodeId == 1)
-            {
-                // Create a new equation (e.g., a fraction 2/3) in a temporary document.
-                OfficeMath newMath = CreateOfficeMath(@"\f(2,3)", 1);
-
-                // Import the new OfficeMath into the target document.
-                NodeImporter importer = new NodeImporter(newMath.Document, doc, ImportFormatMode.KeepSourceFormatting);
-                OfficeMath importedMath = (OfficeMath)importer.ImportNode(newMath, true);
-
-                // Replace the old equation with the new one.
-                math.ParentNode.InsertBefore(importedMath, math);
-                math.Remove();
-
-                // No need to continue searching after replacement.
-                break;
-            }
-        }
-
-        // Save the modified document.
+        // 4. Save the modified document.
         doc.Save(outputPath, SaveFormat.Docx);
 
-        // Simple validation that the output file was created.
+        // 5. Validate that the output file exists.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
+
+        // 6. Simple validation that the new equation exists.
+        Document verifyDoc = new Document(outputPath);
+        Bookmark bm = verifyDoc.Range.Bookmarks["Eq1"];
+        Paragraph para = bm?.BookmarkStart?.ParentNode as Paragraph;
+        OfficeMath math = para?.GetChildNodes(NodeType.OfficeMath, false)
+                               .Cast<OfficeMath>()
+                               .FirstOrDefault();
+        if (math == null)
+            throw new InvalidOperationException("Replacement equation was not found.");
+
+        Console.WriteLine("Equation replacement succeeded.");
     }
 
-    // -----------------------------------------------------------------
-    // Creates a sample document with two equations identified by
-    // integer CustomNodeId values 1 (eq1) and 2 (eq2).
-    // -----------------------------------------------------------------
-    private static void CreateSampleDocument(string filePath)
+    private static void CreateSampleDocument(string path)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph with an equation identified as 1 (eq1).
-        builder.Writeln("First equation:");
-        InsertEquation(builder, @"\f(1,4)", 1); // Fraction 1/4
-
-        // Second paragraph with an equation identified as 2 (eq2).
+        // First equation with bookmark "Eq1"
+        builder.Writeln("Paragraph before first equation.");
+        builder.StartBookmark("Eq1");
+        InsertEquationViaEQ(builder, @"\f(1,2)"); // Simple fraction 1/2
+        builder.EndBookmark("Eq1");
         builder.Writeln();
-        builder.Writeln("Second equation:");
-        InsertEquation(builder, @"\r(3,x)", 2); // Cube root of x
 
-        // Save the sample document.
-        doc.Save(filePath, SaveFormat.Docx);
+        // Second equation with bookmark "Eq2"
+        builder.Writeln("Paragraph before second equation.");
+        builder.StartBookmark("Eq2");
+        InsertEquationViaEQ(builder, @"\r(3,x)"); // Simple root
+        builder.EndBookmark("Eq2");
+        builder.Writeln();
+
+        doc.Save(path, SaveFormat.Docx);
     }
 
-    // -----------------------------------------------------------------
-    // Inserts an EQ field, converts it to a real OfficeMath node,
-    // and assigns an integer CustomNodeId for later identification.
-    // -----------------------------------------------------------------
-    private static void InsertEquation(DocumentBuilder builder, string eqSwitch, int identifier)
+    private static void InsertEquationViaEQ(DocumentBuilder builder, string eqSwitch)
     {
         // Insert an EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the EQ switch arguments.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
+        // Write the EQ argument.
         builder.MoveTo(field.Separator);
         builder.Write(eqSwitch);
-
-        // Return to the field start position.
-        builder.MoveTo(field.Start);
-
-        // Convert the field to OfficeMath.
-        OfficeMath officeMath = field.AsOfficeMath();
-
-        if (officeMath != null)
-        {
-            // Replace the field with the real OfficeMath node.
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            field.Remove();
-
-            // Tag the equation for later lookup.
-            officeMath.CustomNodeId = identifier;
-        }
-    }
-
-    // -----------------------------------------------------------------
-    // Creates an OfficeMath node in a temporary document using the
-    // deterministic EQ‑field bootstrap workflow.
-    // -----------------------------------------------------------------
-    private static OfficeMath CreateOfficeMath(string eqSwitch, int identifier)
-    {
-        Document tempDoc = new Document();
-        DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-
-        // Insert an EQ field.
-        FieldEQ field = (FieldEQ)tempBuilder.InsertField(FieldType.FieldEquation, true);
-        tempBuilder.MoveTo(field.Separator);
-        tempBuilder.Write(eqSwitch);
-        tempBuilder.MoveTo(field.Start);
+        // Update the field so that it can be converted to OfficeMath.
+        field.Update();
 
         // Convert to OfficeMath.
-        OfficeMath officeMath = field.AsOfficeMath();
+        FieldEQ fieldEq = field as FieldEQ;
+        if (fieldEq == null)
+            throw new InvalidOperationException("Inserted field is not a FieldEQ.");
 
-        if (officeMath != null)
-        {
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            field.Remove();
+        OfficeMath officeMath = fieldEq.AsOfficeMath();
+        if (officeMath == null)
+            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
 
-            // Assign the identifier.
-            officeMath.CustomNodeId = identifier;
-        }
+        // Insert the OfficeMath node before the field start.
+        Node startNode = field.Start;
+        startNode.ParentNode.InsertBefore(officeMath, startNode);
+        // Remove the original field.
+        field.Remove();
+    }
 
-        return officeMath;
+    private static void ReplaceEquationByBookmark(Document doc, string bookmarkName, string newEqSwitch)
+    {
+        // Locate the bookmark.
+        Bookmark bookmark = doc.Range.Bookmarks[bookmarkName];
+        if (bookmark == null)
+            throw new InvalidOperationException($"Bookmark '{bookmarkName}' not found.");
+
+        // The bookmark should enclose a paragraph that contains the OfficeMath node.
+        Paragraph para = bookmark.BookmarkStart?.ParentNode as Paragraph;
+        if (para == null)
+            throw new InvalidOperationException($"Bookmark '{bookmarkName}' is not inside a paragraph.");
+
+        // Find the existing OfficeMath node within the paragraph.
+        OfficeMath existingMath = para.GetChildNodes(NodeType.OfficeMath, false)
+                                    .Cast<OfficeMath>()
+                                    .FirstOrDefault();
+        if (existingMath == null)
+            throw new InvalidOperationException($"No OfficeMath found within bookmark '{bookmarkName}'.");
+
+        // Move the builder to the existing OfficeMath node.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveTo(existingMath);
+
+        // Insert the new equation using the deterministic EQ-field bootstrap.
+        InsertEquationViaEQ(builder, newEqSwitch);
+
+        // Remove the old equation.
+        existingMath.Remove();
     }
 }
