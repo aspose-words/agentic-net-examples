@@ -1,62 +1,53 @@
 using System;
-using System.IO;
 using System.Threading;
-using Aspose.Words;
-using Aspose.Words.Loading;
+using System.Threading.Tasks;
 
 public class Program
 {
-    public static void Main()
+    // Simulated long‑running operation that respects a cancellation token.
+    private static async Task PerformWorkAsync(CancellationToken token)
     {
-        // Create a simple document and save it locally.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document used to demonstrate a timeout.");
-        string filePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
-        doc.Save(filePath);
-
-        // Set up a cancellation token that will be triggered after 1 second.
-        using var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromSeconds(1));
-
-        // LoadOptions with a progress callback that checks the cancellation token.
-        LoadOptions loadOptions = new LoadOptions
+        Console.WriteLine("Work started.");
+        // Simulate work in 500 ms increments.
+        for (int i = 0; i < 20; i++)
         {
-            ProgressCallback = new LoadingProgressCallback(cts.Token)
-        };
+            // Throw if cancellation was requested.
+            token.ThrowIfCancellationRequested();
+
+            await Task.Delay(500, token); // Respect the token during the delay.
+            Console.WriteLine($"Progress: {(i + 1) * 5}%");
+        }
+
+        Console.WriteLine("Work completed successfully.");
+    }
+
+    public static async Task Main()
+    {
+        // Define a timeout after which the operation should be cancelled.
+        TimeSpan timeout = TimeSpan.FromSeconds(3);
+
+        using var cts = new CancellationTokenSource();
+
+        // Automatically cancel after the specified timeout.
+        cts.CancelAfter(timeout);
+        Console.WriteLine($"Cancellation will be triggered after {timeout.TotalSeconds} seconds.");
 
         try
         {
-            // Attempt to load the document. The callback will abort the load when the token is cancelled.
-            Document loadedDoc = new Document(filePath, loadOptions);
-            Console.WriteLine("Document loaded successfully (no timeout).");
+            // Run the work task and await its completion.
+            await PerformWorkAsync(cts.Token);
         }
-        catch (OperationCanceledException ex)
+        catch (OperationCanceledException)
         {
-            // Expected when the timeout occurs.
-            Console.WriteLine($"Loading cancelled due to timeout: {ex.Message}");
+            Console.WriteLine("Operation was cancelled due to timeout.");
         }
-        catch (Exception ex)
+        finally
         {
-            // Any other unexpected errors.
-            Console.WriteLine($"Unexpected error: {ex.Message}");
-        }
-    }
-
-    // Implements the Aspose.Words loading callback and aborts loading when cancellation is requested.
-    private class LoadingProgressCallback : IDocumentLoadingCallback
-    {
-        private readonly CancellationToken _token;
-
-        public LoadingProgressCallback(CancellationToken token)
-        {
-            _token = token;
+            // Ensure the token source is disposed.
+            cts.Dispose();
         }
 
-        public void Notify(DocumentLoadingArgs args)
-        {
-            if (_token.IsCancellationRequested)
-                throw new OperationCanceledException($"EstimatedProgress = {args.EstimatedProgress}");
-        }
+        // Give a brief moment for console output to flush before exiting.
+        await Task.Delay(500);
     }
 }

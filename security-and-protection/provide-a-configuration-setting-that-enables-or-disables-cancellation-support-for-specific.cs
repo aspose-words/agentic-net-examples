@@ -2,69 +2,47 @@ using System;
 using System.IO;
 using System.Threading;
 using Aspose.Words;
+using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsCancellationDemo
+public class Program
 {
-    // Callback that aborts saving after a short time interval.
-    class CancelSavingCallback : IDocumentSavingCallback
+    // Configuration setting: enable or disable cancellation support for processing stages.
+    private static readonly bool EnableCancellation = true;
+
+    public static void Main()
     {
-        private readonly DateTime _startTime = DateTime.Now;
-        private const double MaxDurationSeconds = 0.01; // Adjust as needed.
+        // Create a simple source document.
+        const string sourcePath = "source.docx";
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello Aspose.Words!");
+        doc.Save(sourcePath);
 
-        public void Notify(DocumentSavingArgs args)
-        {
-            if ((DateTime.Now - _startTime).TotalSeconds > MaxDurationSeconds)
-                throw new OperationCanceledException(
-                    $"Saving canceled. EstimatedProgress = {args.EstimatedProgress}");
-        }
-    }
+        // Prepare a cancellation token based on the configuration.
+        CancellationToken token = EnableCancellation ? new CancellationTokenSource().Token : CancellationToken.None;
 
-    public class Program
-    {
-        // Configuration setting: turn cancellation support on or off.
-        private static readonly bool EnableCancellation = true;
+        // Load the document. If cancellation is enabled and a cancellation is requested,
+        // the operation will be aborted before the load.
+        token.ThrowIfCancellationRequested();
+        LoadOptions loadOptions = new LoadOptions(); // No CancellationToken property in this version.
+        Document loadedDoc = new Document(sourcePath, loadOptions);
 
-        public static void Main()
-        {
-            // Prepare a simple document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Hello world! This document demonstrates cancellation support.");
+        // Apply a simple protection to demonstrate a processing stage.
+        loadedDoc.Protect(ProtectionType.ReadOnly, "pwd");
 
-            // Define output path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        // Save the protected document. Again, respect the cancellation token.
+        token.ThrowIfCancellationRequested();
+        const string outputPath = "protected.docx";
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
+        loadedDoc.Save(outputPath, saveOptions);
 
-            if (EnableCancellation)
-            {
-                // Attach a progress callback that may cancel the operation.
-                OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-                {
-                    ProgressCallback = new CancelSavingCallback()
-                };
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
 
-                try
-                {
-                    doc.Save(outputPath, saveOptions);
-                    Console.WriteLine("Document saved successfully (cancellation not triggered).");
-                }
-                catch (OperationCanceledException ex)
-                {
-                    Console.WriteLine($"Saving was canceled: {ex.Message}");
-                }
-            }
-            else
-            {
-                // Save without cancellation support.
-                doc.Save(outputPath);
-                Console.WriteLine("Document saved successfully.");
-
-                // Verify that the file exists.
-                if (File.Exists(outputPath))
-                    Console.WriteLine($"Output file verified at: {outputPath}");
-                else
-                    throw new FileNotFoundException("The expected output file was not created.", outputPath);
-            }
-        }
+        // Clean up temporary files (optional).
+        File.Delete(sourcePath);
+        File.Delete(outputPath);
     }
 }

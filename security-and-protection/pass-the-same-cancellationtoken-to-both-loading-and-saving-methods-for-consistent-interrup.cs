@@ -7,54 +7,66 @@ using Aspose.Words.Saving;
 
 public class Program
 {
+    // Helper that saves a document while respecting a CancellationToken.
+    private static void SaveDocument(Document doc, string path, SaveOptions options, CancellationToken token)
+    {
+        // Throw if cancellation was requested before the operation.
+        token.ThrowIfCancellationRequested();
+
+        // Perform the synchronous save.
+        doc.Save(path, options);
+
+        // Throw if cancellation was requested after the operation.
+        token.ThrowIfCancellationRequested();
+    }
+
+    // Helper that loads a document while respecting a CancellationToken.
+    private static Document LoadDocument(string path, LoadOptions options, CancellationToken token)
+    {
+        // Throw if cancellation was requested before the operation.
+        token.ThrowIfCancellationRequested();
+
+        // Perform the synchronous load.
+        var doc = new Document(path, options);
+
+        // Throw if cancellation was requested after the operation.
+        token.ThrowIfCancellationRequested();
+
+        return doc;
+    }
+
     public static void Main()
     {
         // Create a cancellation token source and obtain the token.
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         CancellationToken token = cts.Token;
 
-        // Prepare output directory and file paths.
-        string outputDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
-        Directory.CreateDirectory(outputDir);
-        string filePath = Path.Combine(outputDir, "Sample.docx");
-        string copyPath = Path.Combine(outputDir, "SampleCopy.docx");
+        // Create a simple document with one paragraph.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
 
-        // Create a simple document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words with a shared CancellationToken.");
+        // Path for the temporary file.
+        string filePath = "sample.docx";
 
-        // Configure save options with a progress callback that respects the token.
-        var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        saveOptions.ProgressCallback = new TokenProgressCallback(token);
+        // Save the document using the helper that respects the same token.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions();
+        SaveDocument(doc, filePath, saveOptions, token);
 
-        // Save the document using the same token.
-        doc.Save(filePath, saveOptions);
+        // Load the document using the helper that respects the same token.
+        LoadOptions loadOptions = new LoadOptions();
+        Document loadedDoc = LoadDocument(filePath, loadOptions, token);
 
-        // Before loading, check the token for cancellation.
-        if (token.IsCancellationRequested)
-            throw new OperationCanceledException(token);
-
-        // Load the document (no direct token support, but we can abort beforehand).
-        var loadOptions = new LoadOptions(); // No password needed for this example.
-        var loadedDoc = new Document(filePath, loadOptions);
-
-        // Optional verification of content.
-        string loadedText = loadedDoc.GetText().Trim();
-
-        // Save the loaded document again using the same token and save options.
-        loadedDoc.Save(copyPath, saveOptions);
-    }
-
-    // Progress callback that throws if the shared CancellationToken is cancelled.
-    private class TokenProgressCallback : IDocumentSavingCallback
-    {
-        private readonly CancellationToken _token;
-        public TokenProgressCallback(CancellationToken token) => _token = token;
-        public void Notify(DocumentSavingArgs args)
+        // Validate that the loaded document contains at least one paragraph.
+        if (loadedDoc.GetChildNodes(NodeType.Paragraph, true).Count == 0)
         {
-            if (_token.IsCancellationRequested)
-                throw new OperationCanceledException(_token);
+            throw new InvalidOperationException("The loaded document does not contain any paragraphs.");
+        }
+
+        // Clean up the temporary file.
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
         }
     }
 }

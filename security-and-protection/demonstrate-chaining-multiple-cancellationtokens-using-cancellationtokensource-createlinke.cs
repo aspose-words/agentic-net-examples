@@ -4,59 +4,60 @@ using System.Threading.Tasks;
 
 public class Program
 {
-    public static async Task Main()
+    // Simulated workload that respects cancellation.
+    private static async Task SimulateWorkAsync(string name, CancellationToken token)
     {
-        // Create a CancellationTokenSource that we can cancel manually.
-        using var manualCts = new CancellationTokenSource();
-
-        // Create a second CancellationTokenSource that will cancel automatically after 3 seconds.
-        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-
-        // Link the two tokens so that cancellation of either source will cancel the linked token.
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(manualCts.Token, timeoutCts.Token);
-        CancellationToken token = linkedCts.Token;
-
-        // Start a background operation that respects the linked cancellation token.
-        Task operation = DoWorkAsync(token);
-
-        // Simulate some work in the main thread, then cancel manually after 1 second.
-        await Task.Delay(1000);
-        Console.WriteLine("Main thread: requesting manual cancellation.");
-        manualCts.Cancel();
-
-        // Wait for the operation to finish, handling cancellation gracefully.
         try
         {
-            await operation;
+            int iteration = 0;
+            while (true)
+            {
+                token.ThrowIfCancellationRequested();
+                Console.WriteLine($"{name}: iteration {++iteration}");
+                await Task.Delay(500, token); // Simulate work.
+            }
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Main thread: operation was cancelled.");
+            Console.WriteLine($"{name}: cancelled.");
         }
-
-        Console.WriteLine("Main thread: operation completed. Exiting.");
-        // Brief pause to ensure output is visible before the program ends.
-        await Task.Delay(500);
     }
 
-    private static async Task DoWorkAsync(CancellationToken token)
+    public static async Task Main(string[] args)
     {
-        Console.WriteLine("Operation started.");
+        // Create two independent cancellation sources.
+        using var cts1 = new CancellationTokenSource();
+        using var cts2 = new CancellationTokenSource();
 
-        for (int i = 0; i < 10; i++)
-        {
-            // Check for cancellation before each iteration.
-            if (token.IsCancellationRequested)
-            {
-                Console.WriteLine($"Operation cancelled after {i} iteration(s).");
-                token.ThrowIfCancellationRequested();
-            }
+        // Link them so that cancellation of either source cancels the linked token.
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, cts2.Token);
+        CancellationToken linkedToken = linkedCts.Token;
 
-            Console.WriteLine($"Operation working... iteration {i + 1}");
-            // Simulate work.
-            await Task.Delay(500, token);
-        }
+        // Start a task that observes the linked token.
+        Task workTask = SimulateWorkAsync("LinkedWork", linkedToken);
 
-        Console.WriteLine("Operation completed successfully.");
+        // Cancel the first source after 2 seconds.
+        await Task.Delay(2000);
+        Console.WriteLine("Cancelling first token source (cts1).");
+        cts1.Cancel();
+
+        // Give the task a moment to observe cancellation.
+        await Task.Delay(1000);
+
+        // Restart the work with a fresh linked token to demonstrate second cancellation.
+        using var cts3 = new CancellationTokenSource();
+        using var cts4 = new CancellationTokenSource();
+        using var linkedCts2 = CancellationTokenSource.CreateLinkedTokenSource(cts3.Token, cts4.Token);
+        Task workTask2 = SimulateWorkAsync("LinkedWork2", linkedCts2.Token);
+
+        // Cancel the second source after 1.5 seconds.
+        await Task.Delay(1500);
+        Console.WriteLine("Cancelling second token source (cts4).");
+        cts4.Cancel();
+
+        // Wait for both tasks to finish.
+        await Task.WhenAll(workTask, workTask2);
+
+        Console.WriteLine("All work completed. Program exiting.");
     }
 }

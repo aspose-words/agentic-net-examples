@@ -7,54 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputPath);
-        string docPath = Path.Combine(outputPath, "InterruptedDocument.docx");
+        // Prepare a cancellation token that will be triggered after a short delay.
+        using var cts = new CancellationTokenSource();
+        // Cancel after 100 milliseconds to simulate an interruption.
+        cts.CancelAfter(100);
+        CancellationToken token = cts.Token;
 
-        // Create a blank document.
-        Document doc = new Document();
+        // Build the document with the ability to be interrupted.
+        Document doc = BuildComplexDocument(token);
 
-        // Set up a cancellation token source that will be used to interrupt the building process.
-        CancellationTokenSource cts = new CancellationTokenSource();
-
-        // Create a DocumentBuilder (no interruption options are needed because we will check the token manually).
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build the document in a loop.
-        for (int i = 1; i <= 10; i++)
-        {
-            // Simulate a condition that triggers cancellation after a few paragraphs.
-            if (i == 5)
-                cts.Cancel(); // Request interruption.
-
-            // Check for cancellation before performing the builder operation.
-            if (cts.Token.IsCancellationRequested)
-            {
-                Console.WriteLine($"Document building was interrupted at paragraph {i}.");
-                break;
-            }
-
-            try
-            {
-                // Write a paragraph.
-                builder.Writeln($"Paragraph {i}");
-            }
-            catch (OperationCanceledException)
-            {
-                // This catch is retained for completeness, although the manual check prevents the exception.
-                Console.WriteLine($"Document building was interrupted at paragraph {i}.");
-                break;
-            }
-        }
-
-        // Save the (potentially partially) built document.
-        doc.Save(docPath);
+        // Save the resulting document (partial if cancelled).
+        string outputPath = "ComplexDocument.docx";
+        doc.Save(outputPath);
 
         // Validate that the file was created.
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+    }
 
-        Console.WriteLine($"Document saved to: {docPath}");
+    private static Document BuildComplexDocument(CancellationToken token)
+    {
+        // Start with an empty document.
+        Document document = new Document();
+        DocumentBuilder builder = new DocumentBuilder(document);
+
+        // Simulate building a complex document with many paragraphs.
+        for (int i = 1; i <= 1000; i++)
+        {
+            // Check for cancellation before each operation.
+            if (token.IsCancellationRequested)
+                break; // Stop building and return the partially built document.
+
+            builder.Writeln($"Paragraph {i}: This is a sample line of text.");
+        }
+
+        return document;
     }
 }

@@ -1,48 +1,50 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Saving;
+using System.Threading;
+using System.Threading.Tasks;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple blank document and add some text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
+        var cts = new CancellationTokenSource();
+        var token = cts.Token;
 
-        // Prepare save options with a progress callback that will cancel the operation.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+        // Cancel the token shortly after start.
+        Task.Run(async () =>
         {
-            ProgressCallback = new SavingProgressCallback()
-        };
-
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Sample.docx");
+            await Task.Delay(100);
+            cts.Cancel();
+        });
 
         try
         {
-            // Attempt to save the document. The callback will throw an OperationCanceledException.
-            doc.Save(outputPath, saveOptions);
+            PerformOperation(token);
         }
         catch (OperationCanceledException ex)
         {
-            // Capture and log the stack trace for debugging purposes.
-            Console.WriteLine("OperationCanceledException was caught.");
-            Console.WriteLine("Message: " + ex.Message);
-            Console.WriteLine("Stack Trace:");
-            Console.WriteLine(ex.StackTrace);
+            // Capture the stack trace.
+            string stackTrace = ex.StackTrace ?? "No stack trace available.";
+
+            // Log details to a file.
+            string logPath = "error.log";
+            string logContent = $"[{DateTime.Now:O}] OperationCanceledException caught.{Environment.NewLine}" +
+                                $"Message: {ex.Message}{Environment.NewLine}" +
+                                $"StackTrace:{Environment.NewLine}{stackTrace}{Environment.NewLine}";
+            File.WriteAllText(logPath, logContent);
+
+            // Also write a brief notice to the console.
+            Console.WriteLine($"Exception logged to {logPath}");
         }
     }
 
-    // Callback that aborts the saving process by throwing an OperationCanceledException.
-    private class SavingProgressCallback : IDocumentSavingCallback
+    private static void PerformOperation(CancellationToken token)
     {
-        public void Notify(DocumentSavingArgs args)
+        // Simulate work that periodically checks for cancellation.
+        for (int i = 0; i < 10; i++)
         {
-            // Immediately cancel the save operation.
-            throw new OperationCanceledException(
-                $"EstimatedProgress = {args.EstimatedProgress}; Save operation was cancelled for debugging.");
+            token.ThrowIfCancellationRequested();
+            Thread.Sleep(50); // Simulated work.
         }
     }
 }

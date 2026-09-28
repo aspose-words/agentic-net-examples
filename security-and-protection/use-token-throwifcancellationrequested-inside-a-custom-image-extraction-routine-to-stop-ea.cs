@@ -1,98 +1,60 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Prepare folders
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        string outputDir = Path.Combine(artifactsDir, "ExtractedImages");
-        Directory.CreateDirectory(artifactsDir);
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample document with two images (red and green 1x1 PNGs)
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // First image (red square)
-        using (MemoryStream redStream = CreateSamplePng(RedPngBase64))
+        // Create a sample document with a tiny PNG image.
+        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X6ZcAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        using (var imageStream = new MemoryStream(pngBytes))
         {
-            builder.InsertImage(redStream);
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.InsertImage(imageStream);
+            doc.Save("Sample.docx");
         }
 
-        // Second image (green square)
-        using (MemoryStream greenStream = CreateSamplePng(GreenPngBase64))
-        {
-            builder.InsertImage(greenStream);
-        }
+        // Load the document we just created.
+        var loadedDoc = new Document("Sample.docx");
 
-        // Save the sample document
-        string docPath = Path.Combine(artifactsDir, "Sample.docx");
-        doc.Save(docPath);
-
-        // Load the document back
-        Document loadedDoc = new Document(docPath);
-
-        // Set up a cancellation token that will be triggered after the first image is saved
-        CancellationTokenSource cts = new CancellationTokenSource();
+        // Create a cancellation token that is already cancelled.
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
 
         try
         {
-            ExtractImages(loadedDoc, outputDir, cts.Token, cts);
+            // Attempt to extract images; should stop early due to cancellation.
+            ExtractImages(loadedDoc, cts.Token);
+            Console.WriteLine("Image extraction completed without cancellation (unexpected).");
         }
         catch (OperationCanceledException)
         {
-            // Expected when cancellation is requested
             Console.WriteLine("Image extraction was cancelled as requested.");
         }
-
-        // Verify that at least one image was extracted
-        if (Directory.GetFiles(outputDir).Length == 0)
-            throw new InvalidOperationException("No images were extracted.");
     }
 
-    // Extracts all images from the document, respecting the cancellation token.
-    private static void ExtractImages(Document doc, string folder, CancellationToken token, CancellationTokenSource cts)
+    // Custom image extraction routine that respects cancellation.
+    private static void ExtractImages(Document doc, CancellationToken token)
     {
+        var shapes = doc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
 
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
+        foreach (Shape shape in shapes)
         {
-            // Throw if cancellation was requested before processing the next shape
+            // Throw if cancellation has been requested.
             token.ThrowIfCancellationRequested();
 
-            if (!shape.HasImage)
-                continue;
-
-            // Save the image to a file
-            string imagePath = Path.Combine(folder,
-                $"Image_{imageIndex}{FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType)}");
-            shape.ImageData.Save(imagePath);
-            imageIndex++;
-
-            // Cancel after the first image to demonstrate early termination
-            if (imageIndex == 1)
-                cts.Cancel();
+            if (shape.HasImage)
+            {
+                string fileName = $"ExtractedImage_{imageIndex}.png";
+                shape.ImageData.Save(fileName);
+                imageIndex++;
+            }
         }
-    }
-
-    // Base64-encoded 1x1 PNG images (red and green)
-    private const string RedPngBase64 =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mP8z/C/HwAFgwJ/lKXK5wAAAABJRU5ErkJggg==";
-
-    private const string GreenPngBase64 =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mP8z8DwHwAFgwJ/6cKX5wAAAABJRU5ErkJggg==";
-
-    // Creates a MemoryStream from a base64-encoded PNG image.
-    private static MemoryStream CreateSamplePng(string base64)
-    {
-        byte[] bytes = Convert.FromBase64String(base64);
-        return new MemoryStream(bytes);
     }
 }

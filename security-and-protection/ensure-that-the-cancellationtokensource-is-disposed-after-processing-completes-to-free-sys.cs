@@ -1,48 +1,42 @@
 using System;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Path for the output document.
-        const string outputPath = "ProtectedDocument.docx";
-
-        // Create a blank document, add some text and protect it with a password.
+        // Create a simple document in memory.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sensitive information that should be read‑only.");
-        doc.Protect(ProtectionType.ReadOnly, "SecretPassword");
-        doc.Save(outputPath);
+        builder.Writeln("Hello, Aspose.Words!");
 
-        // Validate that the document was saved.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
-
-        // Perform a sample processing operation that uses a CancellationTokenSource.
-        ProcessDocument(outputPath);
-    }
-
-    private static void ProcessDocument(string path)
-    {
-        // The CancellationTokenSource is wrapped in a using statement to guarantee disposal.
+        // Use CancellationTokenSource within a using block to guarantee disposal.
         using (CancellationTokenSource cts = new CancellationTokenSource())
         {
-            // Simulate an asynchronous operation that respects cancellation.
-            Task processingTask = Task.Run(() =>
-            {
-                // Load the protected document (no password needed for programmatic access).
-                Document loadedDoc = new Document(path);
-                // Perform a trivial operation – retrieve the document text length.
-                string text = loadedDoc.GetText();
-                Console.WriteLine($"Loaded document text length: {text.Length}");
-            }, cts.Token);
-
-            // Wait for the task to complete.
-            processingTask.Wait();
+            // Perform processing that could be cancelled.
+            ProcessDocument(doc, cts.Token);
         } // cts is disposed here, freeing system resources.
+
+        // Save the processed document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The document was not saved as expected.");
+    }
+
+    private static void ProcessDocument(Document doc, CancellationToken token)
+    {
+        // Apply read‑only protection with a password.
+        doc.Protect(ProtectionType.ReadOnly, "password");
+
+        // Check for cancellation request.
+        if (token.IsCancellationRequested)
+            token.ThrowIfCancellationRequested();
+
+        // Placeholder for additional processing logic.
     }
 }

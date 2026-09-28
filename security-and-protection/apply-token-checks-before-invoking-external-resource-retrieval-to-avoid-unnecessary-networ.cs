@@ -7,76 +7,63 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    // Entry point of the console application.
-    public static async Task Main()
-    {
-        // Sample token that would normally be obtained from a secure source.
-        const string apiToken = "valid-token-123";
-
-        // Validate the token before any network operation.
-        if (!IsTokenValid(apiToken))
-        {
-            Console.WriteLine("Invalid API token. Skipping external resource retrieval.");
-            return;
-        }
-
-        // URL of a sample Word document. In a real scenario this would be a protected endpoint.
-        const string documentUrl = "https://github.com/aspose-words/Aspose.Words-for-.NET/raw/master/Examples/Data/Document.docx";
-
-        // Download the document only after the token has been validated.
-        byte[] documentBytes = await DownloadDocumentAsync(documentUrl, apiToken);
-        if (documentBytes == null || documentBytes.Length == 0)
-        {
-            Console.WriteLine("Failed to download the document.");
-            return;
-        }
-
-        // Load the document from the downloaded byte array using a MemoryStream.
-        using (var stream = new MemoryStream(documentBytes))
-        {
-            Document doc = new Document(stream);
-
-            // Apply read‑only protection with a password.
-            const string docPassword = "DocPassword";
-            doc.Protect(ProtectionType.ReadOnly, docPassword);
-
-            // Prepare output folder.
-            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
-
-            // Save the protected document.
-            string outputPath = Path.Combine(artifactsDir, "ProtectedDocument.docx");
-            doc.Save(outputPath, SaveFormat.Docx);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The protected document was not saved correctly.");
-
-            Console.WriteLine($"Document saved successfully to: {outputPath}");
-        }
-    }
-
-    // Simple token validation logic. Replace with real validation as needed.
+    // Simple token validation: non‑empty and starts with "valid"
     private static bool IsTokenValid(string token)
     {
-        // Example rule: token must start with "valid-" and be at least 10 characters long.
-        return !string.IsNullOrEmpty(token) && token.StartsWith("valid-") && token.Length >= 10;
+        return !string.IsNullOrWhiteSpace(token) && token.StartsWith("valid", StringComparison.OrdinalIgnoreCase);
     }
 
-    // Downloads a document using HttpClient, passing the token as a bearer token.
-    private static async Task<byte[]> DownloadDocumentAsync(string url, string token)
+    // Entry point
+    public static async Task Main(string[] args)
     {
-        using (var httpClient = new HttpClient())
+        // Retrieve token from environment (or use a placeholder)
+        string token = Environment.GetEnvironmentVariable("API_TOKEN") ?? "invalid-token";
+
+        // Decide which workflow to execute based on token validity
+        if (IsTokenValid(token))
         {
-            // Add the token to the Authorization header.
-            httpClient.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            // Token is valid – proceed to retrieve external content
+            string externalUrl = "https://www.w3.org/TR/PNG/iso_8859-1.txt";
 
-            HttpResponseMessage response = await httpClient.GetAsync(url);
-            if (!response.IsSuccessStatusCode)
-                return null;
+            string content;
+            using (HttpClient client = new HttpClient())
+            {
+                HttpResponseMessage response = await client.GetAsync(externalUrl);
+                response.EnsureSuccessStatusCode();
+                content = await response.Content.ReadAsStringAsync();
+            }
 
-            return await response.Content.ReadAsByteArrayAsync();
+            // Create a new document and insert the retrieved content
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Content retrieved from external resource:");
+            builder.Writeln(content);
+
+            // Apply read‑only protection with a password
+            doc.Protect(ProtectionType.ReadOnly, "securePassword");
+
+            // Save the protected document
+            string outputPath = "ProtectedDocument.docx";
+            doc.Save(outputPath, SaveFormat.Docx);
+
+            // Verify that the file was created
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create '{outputPath}'.");
+        }
+        else
+        {
+            // Token is invalid – skip external call and create a minimal document
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Token validation failed. No external content was retrieved.");
+
+            // Save the unprotected document
+            string outputPath = "NoContentDocument.docx";
+            doc.Save(outputPath, SaveFormat.Docx);
+
+            // Verify that the file was created
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create '{outputPath}'.");
         }
     }
 }

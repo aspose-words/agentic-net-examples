@@ -1,69 +1,78 @@
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Tables; // For NodeType enum
 
-namespace AsposeCancellationDemo
+public class Program
 {
-    public class Program
+    // Entry point of the console application.
+    public static async Task Main(string[] args)
     {
-        public static void Main()
+        // Paths for temporary source and output documents.
+        string sourcePath = Path.Combine(Path.GetTempPath(), "sample.docx");
+        string outputPath = Path.Combine(Path.GetTempPath(), "processed.pdf");
+
+        // Ensure any previous files are removed.
+        if (File.Exists(sourcePath)) File.Delete(sourcePath);
+        if (File.Exists(outputPath)) File.Delete(outputPath);
+
+        // 1. Create a sample document with many paragraphs to simulate a long‑running operation.
+        Document sourceDoc = new Document();
+        for (int i = 0; i < 500; i++)
         {
-            // Prepare a temporary folder for the output file.
-            string outputDir = Path.Combine(Path.GetTempPath(), "AsposeCancellationDemo");
-            Directory.CreateDirectory(outputDir);
-            string outputPath = Path.Combine(outputDir, "CanceledDocument.docx");
+            sourceDoc.FirstSection.Body.AppendChild(new Paragraph(sourceDoc));
+            sourceDoc.FirstSection.Body.LastParagraph.AppendChild(new Run(sourceDoc, $"Paragraph {i + 1}"));
+        }
+        sourceDoc.Save(sourcePath); // Save the source document.
 
-            // Create a simple document with some content.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("This document is used to test cancellation of the saving pipeline.");
+        // 2. Load the document (bootstrap step as required by the rules).
+        Document doc = new Document(sourcePath);
 
-            // Configure save options with a progress callback that aborts quickly.
-            var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-            {
-                ProgressCallback = new SavingProgressCallback()
-            };
+        // 3. Set up cancellation.
+        using CancellationTokenSource cts = new CancellationTokenSource();
 
-            bool canceled = false;
-            try
-            {
-                // Attempt to save; the callback should throw OperationCanceledException.
-                doc.Save(outputPath, saveOptions);
-            }
-            catch (OperationCanceledException)
-            {
-                canceled = true;
-                Console.WriteLine("Saving was canceled as expected.");
-            }
+        // Start the processing pipeline.
+        Task processingTask = ProcessDocumentAsync(doc, outputPath, cts.Token);
 
-            // Verify that cancellation was observed.
-            if (!canceled)
-                throw new InvalidOperationException("The saving operation was not canceled.");
+        // Cancel after a short delay to simulate user‑initiated cancellation.
+        _ = Task.Delay(100).ContinueWith(_ => cts.Cancel());
 
-            // Clean up any partially written file.
-            if (File.Exists(outputPath))
-                File.Delete(outputPath);
+        try
+        {
+            await processingTask;
+            // If we reach here, processing completed without cancellation – this is unexpected for the test.
+            throw new Exception("Processing completed despite cancellation request.");
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected path: processing was cancelled.
         }
 
-        // Implements the progress callback used by Aspose.Words during saving.
-        private class SavingProgressCallback : IDocumentSavingCallback
+        // 4. Verify that the output file was not created due to cancellation.
+        if (File.Exists(outputPath))
         {
-            private readonly DateTime _startTime;
-            // Cancel after a very short duration (e.g., 0.001 seconds).
-            private const double MaxDurationSeconds = 0.001;
-
-            public SavingProgressCallback()
-            {
-                _startTime = DateTime.Now;
-            }
-
-            public void Notify(DocumentSavingArgs args)
-            {
-                double elapsed = (DateTime.Now - _startTime).TotalSeconds;
-                if (elapsed > MaxDurationSeconds)
-                    throw new OperationCanceledException($"EstimatedProgress = {args.EstimatedProgress}");
-            }
+            throw new Exception("Output file was created even though processing was cancelled.");
         }
+
+        // Clean up source file.
+        if (File.Exists(sourcePath)) File.Delete(sourcePath);
+    }
+
+    // Simulated document processing pipeline that respects cancellation.
+    private static async Task ProcessDocumentAsync(Document doc, string outputPath, CancellationToken token)
+    {
+        // Simulate work per paragraph; check cancellation token regularly.
+        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            // Simulate a small amount of work.
+            await Task.Delay(5, token);
+            // Throw if cancellation was requested.
+            token.ThrowIfCancellationRequested();
+        }
+
+        // If not cancelled, save the document to PDF.
+        doc.Save(outputPath);
     }
 }
