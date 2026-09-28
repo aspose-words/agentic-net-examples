@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -9,43 +8,27 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Ensure the first page has a different header/footer.
+        doc.FirstSection.PageSetup.DifferentFirstPageHeaderFooter = true;
+
+        // Use DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable a different header for the first page.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
-
-        // Move the cursor to the first page header.
+        // Move to the first page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
-        // Create a floating text box shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.WrapType = WrapType.None;
-        textBox.Height = 50;
-        textBox.Width = 200;
-        textBox.HorizontalAlignment = HorizontalAlignment.Center;
-        textBox.VerticalAlignment = VerticalAlignment.Top;
+        // Insert a text box shape into the header.
+        // Width = 200 points, Height = 50 points.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
 
-        // Add a paragraph and a run of text inside the text box.
-        textBox.AppendChild(new Paragraph(doc));
-        Paragraph para = textBox.FirstParagraph;
-        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        Run run = new Run(doc, "First page header text box");
-        para.AppendChild(run);
-
-        // Insert the text box into the header.
-        builder.InsertNode(textBox);
-
-        // Add content to generate multiple pages.
-        builder.MoveToSection(0);
-        for (int i = 1; i <= 3; i++)
-        {
-            builder.Writeln($"Page {i}");
-            if (i < 3)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
+        // Add text inside the text box.
+        // Move the cursor inside the shape.
+        builder.MoveTo(textBox.FirstParagraph);
+        builder.Writeln("First page header text");
 
         // Save the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "FirstPageHeaderTextBox.docx");
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
     }
 }

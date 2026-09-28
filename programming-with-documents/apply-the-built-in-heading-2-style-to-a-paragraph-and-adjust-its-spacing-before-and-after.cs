@@ -9,29 +9,33 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the built‑in Heading 2 style to the upcoming paragraph.
+        // Apply the built‑in "Heading 2" style to the paragraph.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
 
-        // Disable automatic spacing so custom values take effect.
-        builder.ParagraphFormat.SpaceBeforeAuto = false;
-        builder.ParagraphFormat.SpaceAfterAuto = false;
+        // Adjust spacing before and after the paragraph (in points).
+        builder.ParagraphFormat.SpaceBefore = 12f; // 12 points before
+        builder.ParagraphFormat.SpaceAfter = 12f;  // 12 points after
 
-        // Set custom spacing (points) before and after the paragraph.
-        builder.ParagraphFormat.SpaceBefore = 12; // 12 points before
-        builder.ParagraphFormat.SpaceAfter = 6;   // 6 points after
+        // Write a sample paragraph that will use the above formatting.
+        builder.Writeln("This paragraph uses the built‑in Heading 2 style with custom spacing.");
 
-        // Insert the paragraph text.
-        builder.Writeln("This is a Heading 2 paragraph with custom spacing.");
+        // Define output file path.
+        string outputPath = "Result.docx";
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "Heading2Spacing.docx");
+        // Save the document to disk.
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

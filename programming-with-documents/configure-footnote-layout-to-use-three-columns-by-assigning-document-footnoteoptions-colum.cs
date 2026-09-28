@@ -1,6 +1,6 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Notes;
+using Aspose.Words.Notes; // Needed for the FootnoteType enum
 
 public class Program
 {
@@ -8,17 +8,19 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add some content and a footnote.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This paragraph contains a footnote.");
-        builder.InsertFootnote(FootnoteType.Footnote, "Sample footnote text.");
 
-        // Configure the footnote area to be displayed in three columns.
+        // Add a paragraph with a footnote reference.
+        builder.Writeln("This paragraph contains a footnote reference.");
+
+        // Insert a footnote using the correct enum reference.
+        builder.InsertFootnote(FootnoteType.Footnote, "This is the footnote text.");
+
+        // Configure footnote layout to use three columns.
         doc.FootnoteOptions.Columns = 3;
 
-        // Save the document to the local file system.
-        const string outputFile = "FootnoteColumns.docx";
-        doc.Save(outputFile);
+        // Save the document to disk.
+        string outputPath = "FootnoteColumns.docx";
+        doc.Save(outputPath);
     }
 }

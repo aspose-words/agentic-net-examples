@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -8,32 +7,23 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add some initial content.
-        builder.Writeln("Introduction paragraph.");
-        builder.Writeln("Main content goes here.");
+        builder.Writeln("This is the introduction of the document.");
+        builder.Writeln();
 
-        // Create a bookmark named "Conclusion".
+        // Insert a bookmark named "Conclusion".
         builder.StartBookmark("Conclusion");
-        builder.Writeln("Conclusion placeholder text.");
+        builder.Writeln("Placeholder for the conclusion.");
         builder.EndBookmark("Conclusion");
 
-        // Move the cursor to the position just after the end of the "Conclusion" bookmark.
-        // Parameters: bookmarkName, isStart = false (end), isAfter = true (after the end).
-        builder.MoveToBookmark("Conclusion", false, true);
+        // Navigate to the "Conclusion" bookmark and insert a summary paragraph.
+        builder.MoveToBookmark("Conclusion");
+        builder.Writeln("Summary: This document demonstrates how to navigate to a bookmark and insert text using DocumentBuilder.");
 
-        // Insert the summary paragraph.
-        builder.Writeln("Summary: This document demonstrates navigating to a bookmark and inserting a paragraph.");
-
-        // Define output path.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "DocumentWithSummary.docx");
-
-        // Save the document.
+        // Save the document to disk.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
     }
 }

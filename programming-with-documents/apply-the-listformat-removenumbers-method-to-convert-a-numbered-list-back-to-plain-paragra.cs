@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -11,21 +10,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a default numbered list and add three items.
+        // Insert a simple numbered list with three items.
         builder.ListFormat.ApplyNumberDefault();
-        builder.Writeln("Numbered list item 1");
-        builder.Writeln("Numbered list item 2");
-        builder.Writeln("Numbered list item 3");
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        builder.Writeln("Third item");
+        builder.ListFormat.RemoveNumbers(); // Reset builder state.
 
-        // Convert each list item back to a plain paragraph by removing its list formatting.
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph paragraph in paragraphs)
+        // Convert each numbered list item back to a regular paragraph.
+        foreach (Paragraph para in doc.FirstSection.Body.Paragraphs)
         {
-            paragraph.ListFormat.RemoveNumbers();
+            if (para.IsListItem)
+            {
+                para.ListFormat.RemoveNumbers();
+            }
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ListRemoved.docx");
+        // Save the modified document.
+        const string outputPath = "Result.docx";
         doc.Save(outputPath);
+
+        // Optional verification: reload the document and ensure no list items remain.
+        Document loaded = new Document(outputPath);
+        bool anyListItems = false;
+        foreach (Paragraph para in loaded.FirstSection.Body.Paragraphs)
+        {
+            if (para.IsListItem)
+            {
+                anyListItems = true;
+                break;
+            }
+        }
+
+        // Output result status (no user interaction required).
+        Console.WriteLine(anyListItems
+            ? "Some paragraphs are still list items."
+            : "All list numbers removed; document contains plain paragraphs.");
     }
 }

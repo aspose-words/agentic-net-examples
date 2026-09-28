@@ -1,42 +1,40 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Layout;
 
 public class Program
 {
     public static void Main()
     {
-        // Define the output file path in the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ParagraphLineHeight.docx");
-
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content and formatting.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set line spacing to 150 % of the default (default is 12 pt, so 1.5 × 12 pt = 18 pt).
+        // Set line spacing to 150% (multiple line spacing rule).
         builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 18; // 18 points = 150 % line height.
+        builder.ParagraphFormat.LineSpacing = 1.5;
 
-        // Insert a paragraph with some sample text.
-        builder.Writeln("This paragraph has a custom line height of 150 %.");
+        // Insert a paragraph with the custom line height.
+        builder.Writeln("This paragraph has a line spacing of 150 percent.");
 
         // Save the document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Reload the document to verify that the formatting was saved correctly.
+        // Reload the document to verify the line spacing.
         Document loadedDoc = new Document(outputPath);
         Paragraph firstParagraph = loadedDoc.FirstSection.Body.FirstParagraph;
 
-        // Verify the line spacing rule and value.
         bool isCorrectRule = firstParagraph.ParagraphFormat.LineSpacingRule == LineSpacingRule.Multiple;
-        bool isCorrectSpacing = Math.Abs(firstParagraph.ParagraphFormat.LineSpacing - 18) < 0.01;
+        bool isCorrectValue = Math.Abs(firstParagraph.ParagraphFormat.LineSpacing - 1.5) < 0.0001;
 
-        // Output verification result.
-        Console.WriteLine(isCorrectRule && isCorrectSpacing
-            ? "Line height set correctly to 150 %."
-            : "Line height verification failed.");
+        if (isCorrectRule && isCorrectValue)
+        {
+            Console.WriteLine("Verification passed: line spacing is 150% as expected.");
+        }
+        else
+        {
+            Console.WriteLine("Verification failed: line spacing does not match expected value.");
+        }
     }
 }

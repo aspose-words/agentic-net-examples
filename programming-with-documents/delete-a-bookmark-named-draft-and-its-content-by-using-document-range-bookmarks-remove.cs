@@ -1,39 +1,40 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert some text before the bookmark.
+        // Add some text before the bookmark.
         builder.Writeln("Paragraph before the bookmark.");
 
-        // Create a bookmark named "Draft" and add content inside it.
+        // Insert a bookmark named "Draft" with some content.
         builder.StartBookmark("Draft");
         builder.Writeln("This is the draft content that will be removed.");
         builder.EndBookmark("Draft");
 
-        // Insert some text after the bookmark.
+        // Add some text after the bookmark.
         builder.Writeln("Paragraph after the bookmark.");
 
-        // Retrieve the bookmark.
+        // Save the original document (optional, for reference).
+        doc.Save("Original.docx");
+
+        // Remove the bookmark and its content.
         Bookmark draftBookmark = doc.Range.Bookmarks["Draft"];
         if (draftBookmark != null)
         {
-            // Delete the text inside the bookmark.
+            // Clear the bookmark's text (removes its content).
             draftBookmark.Text = string.Empty;
 
-            // Remove the bookmark from the collection using Document.Range.Bookmarks.Remove.
-            doc.Range.Bookmarks.Remove(draftBookmark);
+            // Remove the bookmark from the collection.
+            doc.Range.Bookmarks.Remove("Draft");
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
-        doc.Save(outputPath);
+        // Save the modified document.
+        doc.Save("Result.docx");
     }
 }

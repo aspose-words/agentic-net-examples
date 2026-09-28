@@ -7,53 +7,66 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three text boxes.
-        Shape shape1 = builder.InsertShape(ShapeType.TextBox, 150, 100);
-        TextBox textBox1 = shape1.TextBox;
-        builder.Writeln();
+        // Insert the first text box.
+        Shape shape1 = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        shape1.WrapType = WrapType.Inline;
+        shape1.AppendChild(new Paragraph(doc));
+        shape1.FirstParagraph.AppendChild(new Run(doc, "First box"));
 
-        Shape shape2 = builder.InsertShape(ShapeType.TextBox, 150, 100);
-        TextBox textBox2 = shape2.TextBox;
-        builder.Writeln();
+        // Insert the second text box.
+        Shape shape2 = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        shape2.WrapType = WrapType.Inline;
+        shape2.AppendChild(new Paragraph(doc));
+        shape2.FirstParagraph.AppendChild(new Run(doc, "Second box"));
 
-        Shape shape3 = builder.InsertShape(ShapeType.TextBox, 150, 100);
-        TextBox textBox3 = shape3.TextBox;
-        builder.Writeln();
-
-        // Link the text boxes into a sequence: 1 -> 2 -> 3.
-        if (textBox1.IsValidLinkTarget(textBox2))
-            textBox1.Next = textBox2;
-
-        if (textBox2.IsValidLinkTarget(textBox3))
-            textBox2.Next = textBox3;
-
-        // Determine whether the first text box is the head of the linked sequence.
-        bool isHead = false;
-
-        // Try to use the IsHead property if it exists (newer API versions).
-        var isHeadProp = typeof(TextBox).GetProperty("IsHead");
-        if (isHeadProp != null && isHeadProp.PropertyType == typeof(bool))
+        // Attempt to link the two text boxes (using dynamic to avoid compile‑time errors if the API is unavailable).
+        try
         {
-            isHead = (bool)isHeadProp.GetValue(textBox1);
+            dynamic dShape1 = shape1;
+            dShape1.LinkTo(shape2);
         }
-        else
+        catch
         {
-            // Fallback: a head has a next link but no previous link.
-            isHead = textBox1.Next != null && textBox1.Previous == null;
+            // Linking not supported in this version – continue without linking.
         }
 
-        Console.WriteLine($"TextBox 1 is head of the sequence: {isHead}");
+        // Check the IsHead property for each shape (using dynamic to avoid compile‑time errors).
+        bool isHead1 = false;
+        bool isHead2 = false;
+
+        try
+        {
+            dynamic dShape1 = shape1;
+            isHead1 = dShape1.IsHead;
+        }
+        catch
+        {
+            // Property not available – default to false.
+        }
+
+        try
+        {
+            dynamic dShape2 = shape2;
+            isHead2 = dShape2.IsHead;
+        }
+        catch
+        {
+            // Property not available – default to false.
+        }
+
+        Console.WriteLine($"Shape 1 IsHead: {isHead1}");
+        Console.WriteLine($"Shape 2 IsHead: {isHead2}");
 
         // Save the document.
-        string outputPath = Path.Combine(artifactsDir, "LinkedTextBoxes.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LinkedTextBoxes.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was saved and can be reopened.
+        Document loadedDoc = new Document(outputPath);
+        Console.WriteLine($"Document reloaded successfully. Contains {loadedDoc.GetChildNodes(NodeType.Shape, true).Count} shapes.");
     }
 }

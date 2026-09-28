@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -7,30 +8,36 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Enable different first page header/footer.
+        doc.FirstSection.PageSetup.DifferentFirstPageHeaderFooter = true;
+
+        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable a different header/footer for the first page of the section.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
-
-        // ----- First‑page header -----
+        // First page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Write("Header for the first page");
+        builder.Writeln("First Page Header");
 
-        // ----- Primary header (used on all other pages) -----
+        // Primary (default) header for other pages.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header for subsequent pages");
+        builder.Writeln("Primary Header");
 
-        // Return to the main body of the first section.
-        builder.MoveToSection(0);
-
-        // Add three pages to demonstrate the different headers.
-        builder.Writeln("Content of page 1");
+        // Add body content.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("This is the first page.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content of page 2");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content of page 3");
+        builder.Writeln("This is the second page.");
 
-        // Save the document to the local file system.
-        doc.Save("FirstPageHeader.docx");
+        // Save the document.
+        string outputPath = "FirstPageHeader.docx";
+        doc.Save(outputPath);
+
+        // Verify that the document was saved and can be reopened.
+        Document loadedDoc = new Document(outputPath);
+        bool isDifferentFirstPage = loadedDoc.FirstSection.PageSetup.DifferentFirstPageHeaderFooter;
+
+        // Output verification result (no user interaction required).
+        Console.WriteLine($"Document saved. DifferentFirstPageHeaderFooter = {isDifferentFirstPage}");
     }
 }

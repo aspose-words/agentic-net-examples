@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
 
 public class Program
 {
@@ -10,20 +9,16 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new paragraph.
-        builder.InsertParagraph();
+        // Insert a new paragraph with a DATE field formatted as "MMMM dd, yyyy".
+        // Field code syntax: DATE  \@ "MMMM dd, yyyy"
+        builder.Writeln(); // start a new paragraph
+        builder.InsertField(@"DATE  \@ ""MMMM dd, yyyy""");
 
-        // Insert a DATE field with the desired format: "MMMM dd, yyyy".
-        // The field code is inserted without the surrounding braces.
-        builder.InsertField("DATE \\@ \"MMMM dd, yyyy\"");
-
-        // End the paragraph (adds a paragraph break after the field).
-        builder.Writeln();
-
-        // Ensure the field result is up‑to‑date.
+        // Update fields so the DATE field shows the current date.
         doc.UpdateFields();
 
-        // Save the document to the local file system.
-        doc.Save("DateField.docx");
+        // Save the document to a file.
+        const string outputPath = "Output.docx";
+        doc.Save(outputPath);
     }
 }

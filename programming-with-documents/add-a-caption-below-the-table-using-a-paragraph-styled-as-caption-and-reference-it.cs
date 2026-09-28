@@ -2,44 +2,55 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsCaptionExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
+            // Insert a simple 2x2 table.
+            builder.StartTable();
 
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
-        builder.EndTable();
+            // Header row.
+            builder.InsertCell();
+            builder.Write("Header 1");
+            builder.InsertCell();
+            builder.Write("Header 2");
+            builder.EndRow();
 
-        // Insert a caption paragraph styled as "Caption" and bookmark it for referencing.
-        builder.StartBookmark("TableCaption");
-        builder.ParagraphFormat.StyleName = "Caption";
-        builder.Writeln("Table 1: Sample table.");
-        builder.EndBookmark("TableCaption");
+            // Data row.
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
 
-        // Move cursor to the end of the document to add a reference to the caption.
-        builder.MoveToDocumentEnd();
+            builder.EndTable();
 
-        // Insert a reference field that points to the bookmarked caption.
-        builder.Write("See Table ");
-        builder.InsertField(" REF TableCaption \\h ");
-        builder.Writeln(" for details.");
+            // Insert a caption below the table using the built‑in "Caption" style.
+            // The caption is also wrapped in a bookmark so that we can reference it later.
+            const string captionBookmark = "TableCaption";
+            builder.StartBookmark(captionBookmark);
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Caption;
+            builder.Writeln("Table 1. Sample Table");
+            builder.EndBookmark(captionBookmark);
+            // Reset style to default for following paragraphs.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
 
-        // Save the document to the local file system.
-        doc.Save("TableCaptionReference.docx");
+            // Insert a paragraph that will contain a cross‑reference to the table caption.
+            builder.Writeln();
+            builder.Write("Reference to the table: ");
+            // REF field with \\h creates a hyperlink and \\p inserts the page number.
+            builder.InsertField($"REF {captionBookmark} \\h \\p");
+            builder.Writeln();
+
+            // Save the document to disk.
+            const string outputPath = "Output.docx";
+            doc.Save(outputPath);
+        }
     }
 }

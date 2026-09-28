@@ -8,99 +8,77 @@ public class Program
 {
     public static void Main()
     {
-        // Base directories for input and output documents.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        // Create a temporary folder for sample documents.
+        string folderPath = Path.Combine(Path.GetTempPath(), "AsposeBatchTables");
+        Directory.CreateDirectory(folderPath);
 
-        // Ensure the directories exist.
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
-
-        // -----------------------------------------------------------------
-        // 1. Create sample source documents (each contains a simple table).
-        // -----------------------------------------------------------------
+        // Generate sample documents containing tables.
         for (int i = 1; i <= 3; i++)
         {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-
-            // Add a heading.
-            builder.Writeln($"Sample Document {i}");
-
-            // Build a 2x2 table with placeholder text.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndRow();
-            builder.EndTable();
-
-            // Save the sample document.
-            string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
-            sampleDoc.Save(samplePath);
+            string samplePath = Path.Combine(folderPath, $"Doc{i}.docx");
+            CreateSampleDocument(samplePath);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Define a predefined table style that will be applied to all tables.
-        // -----------------------------------------------------------------
-        // Create a temporary document solely to hold the style definition.
-        Document styleHolder = new Document();
-        TableStyle predefinedStyle = (TableStyle)styleHolder.Styles.Add(StyleType.Table, "MyPredefinedStyle");
-        predefinedStyle.Borders.Color = Color.Blue;
-        predefinedStyle.Borders.LineStyle = LineStyle.Single;
-        predefinedStyle.Borders.LineWidth = 1.5;
-        predefinedStyle.CellSpacing = 5;
-        predefinedStyle.BottomPadding = 10;
-        predefinedStyle.TopPadding = 10;
-        predefinedStyle.LeftPadding = 10;
-        predefinedStyle.RightPadding = 10;
-        predefinedStyle.Shading.BackgroundPatternColor = Color.LightYellow;
-
-        // -----------------------------------------------------------------
-        // 3. Process each document: apply page margins and the predefined table style.
-        // -----------------------------------------------------------------
-        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
+        // Process each document: replace all tables with a predefined style and margin settings.
+        foreach (string filePath in Directory.GetFiles(folderPath, "*.docx"))
         {
-            // Load the document.
             Document doc = new Document(filePath);
 
-            // Apply a predefined page margin setting (e.g., Narrow).
-            if (doc.Sections.Count > 0)
-                doc.Sections[0].PageSetup.Margins = Margins.Narrow;
+            // Ensure the predefined table style exists.
+            const string styleName = "MyTableStyle";
+            EnsureTableStyle(doc, styleName);
 
-            // Import the custom style from the holder document.
-            doc.CopyStylesFromTemplate(styleHolder);
-
-            // Retrieve the imported style from the current document.
-            Style importedStyle = doc.Styles["MyPredefinedStyle"];
-
-            // Iterate over all tables and assign the predefined style.
-            NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-            foreach (Table tbl in tables)
+            // Apply the style and left margin to every table in the document.
+            // Right margin is not directly supported; left indent is applied uniformly.
+            const double marginPoints = 5.0 * 2.83464566929134; // 5 mm → points
+            foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
             {
-                tbl.Style = importedStyle; // Now the style belongs to this document.
-                tbl.LeftIndent = 0;        // Reset left indent to align with page margins.
+                table.Style = doc.Styles[styleName];
+                table.LeftIndent = marginPoints;
             }
 
-            // Save the processed document to the output folder.
-            string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
-            doc.Save(outputPath);
+            // Save the processed document with a new name.
+            string processedPath = Path.Combine(folderPath, $"Processed_{Path.GetFileName(filePath)}");
+            doc.Save(processedPath);
         }
 
-        // -----------------------------------------------------------------
-        // 4. Simple verification (optional): list processed files.
-        // -----------------------------------------------------------------
-        Console.WriteLine("Batch processing completed. Processed files:");
-        foreach (string outFile in Directory.GetFiles(outputDir, "*.docx"))
+        // No interactive output required.
+    }
+
+    // Creates a simple document with a single 3x3 table.
+    private static void CreateSampleDocument(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        Table table = builder.StartTable();
+        for (int row = 0; row < 3; row++)
         {
-            Console.WriteLine(Path.GetFileName(outFile));
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
+            builder.EndRow();
         }
+        builder.EndTable();
+
+        doc.Save(filePath);
+    }
+
+    // Ensures that a table style with the given name exists in the document.
+    private static void EnsureTableStyle(Document doc, string styleName)
+    {
+        // Return if the style already exists.
+        if (doc.Styles[styleName] != null && doc.Styles[styleName].Type == StyleType.Table)
+            return;
+
+        // Create a new table style.
+        TableStyle style = (TableStyle)doc.Styles.Add(StyleType.Table, styleName);
+        style.Font.Name = "Arial";
+        style.Font.Size = 10;
+        style.Shading.BackgroundPatternColor = Color.LightGray;
+        style.Borders.Color = Color.Black;
+        style.Borders.LineWidth = 0.5;
     }
 }

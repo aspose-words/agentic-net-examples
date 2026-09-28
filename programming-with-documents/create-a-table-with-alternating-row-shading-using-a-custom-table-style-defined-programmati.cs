@@ -1,54 +1,73 @@
 using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 5‑row, 2‑column table.
-        Table table = builder.StartTable();
+        // Define a custom table style programmatically.
+        Style customTableStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+        customTableStyle.Font.Name = "Arial";
+        customTableStyle.Font.Size = 10;
+
+        // Start building the table.
+        builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
+
+        // Add several data rows.
         for (int i = 1; i <= 5; i++)
         {
-            // First column.
             builder.InsertCell();
-            builder.Write($"Row {i}, Col 1");
-
-            // Second column.
+            builder.Write($"Row {i} Col 1");
             builder.InsertCell();
-            builder.Write($"Row {i}, Col 2");
-
+            builder.Write($"Row {i} Col 2");
             builder.EndRow();
         }
+
+        // End the table.
         builder.EndTable();
 
-        // Create a custom table style.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "AlternatingRowStyle");
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Define how many rows participate in the banding (1 = every row).
-        customStyle.RowStripe = 1;
+        // Apply the custom style to the table.
+        table.Style = customTableStyle;
 
-        // Set shading for odd rows.
-        customStyle.ConditionalStyles[ConditionalStyleType.OddRowBanding].Shading.BackgroundPatternColor = Color.LightBlue;
+        // Apply a simple border to the whole table.
+        table.SetBorders(LineStyle.Single, 0.5, Color.Black);
 
-        // Set shading for even rows.
-        customStyle.ConditionalStyles[ConditionalStyleType.EvenRowBanding].Shading.BackgroundPatternColor = Color.LightCyan;
+        // Apply alternating row shading (skip header row).
+        for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
+        {
+            Row row = table.Rows[rowIndex];
+            Color shadeColor = (rowIndex % 2 == 0) ? Color.LightGray : Color.White;
 
-        // Apply the style to the table.
-        table.Style = customStyle;
+            foreach (Cell cell in row.Cells)
+            {
+                cell.CellFormat.Shading.BackgroundPatternColor = shadeColor;
+            }
+        }
 
-        // Enable row banding for the table.
-        table.StyleOptions |= TableStyleOptions.RowBands;
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingRowsTable.docx");
+        // Save the document.
+        string outputPath = "AlternatingRows.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created (non‑interactive).
+        if (System.IO.File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
     }
 }

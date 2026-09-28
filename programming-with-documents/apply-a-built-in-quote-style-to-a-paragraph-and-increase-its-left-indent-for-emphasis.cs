@@ -8,19 +8,21 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Use DocumentBuilder to add a paragraph.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a quoted paragraph.");
 
-        // Apply the built‑in "Quote" style to the upcoming paragraph.
-        builder.ParagraphFormat.StyleName = "Quote";
+        // Get the paragraph that was just added.
+        Paragraph paragraph = builder.CurrentParagraph;
 
-        // Increase the left indent (in points) for emphasis.
-        builder.ParagraphFormat.LeftIndent = 20.0;
+        // Apply the built‑in "Quote" style.
+        paragraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
 
-        // Write the paragraph text.
-        builder.Writeln("This paragraph uses the built‑in Quote style and has an increased left indent.");
+        // Increase left indent for emphasis (value is in points).
+        paragraph.ParagraphFormat.LeftIndent = 20;
 
-        // Save the document to the local file system.
-        doc.Save("QuoteStyle.docx");
+        // Save the document.
+        string outputPath = "QuoteParagraph.docx";
+        doc.Save(outputPath);
     }
 }

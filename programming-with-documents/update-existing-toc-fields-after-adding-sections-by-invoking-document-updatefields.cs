@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,47 +6,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents field that will include headings level 1‑3.
+        // Insert a Table of Contents at the beginning of the document.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        // Insert a page break after the TOC so that headings start on a new page.
+
+        // Add a page break after the TOC.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Add some headings to populate the TOC.
+        // First chapter with Heading 1.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
+        builder.Writeln("Chapter 1: Introduction");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the introduction content.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1");
-        builder.Writeln("Section 1.2");
-
+        // Second chapter with Heading 1 and a subheading with Heading 2.
+        builder.InsertBreak(BreakType.PageBreak);
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
-
+        builder.Writeln("Chapter 2: Details");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 2.1");
+        builder.Writeln("Section 2.1: Overview");
+        builder.Writeln("Details about the overview.");
 
-        // Insert a new section (starts on a new page) and add more headings.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Third chapter with Heading 1.
+        builder.InsertBreak(BreakType.PageBreak);
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 3");
+        builder.Writeln("Chapter 3: Conclusion");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Final remarks.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 3.1");
-        builder.Writeln("Section 3.2");
-
-        // After all modifications, update all fields (including the TOC) to reflect the new content.
+        // Update all fields in the document, including the TOC.
         doc.UpdateFields();
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "UpdatedToc.docx");
+        // Save the document to disk.
+        string outputPath = "UpdatedTOC.docx";
         doc.Save(outputPath);
+
+        // Simple verification that the file was saved.
+        if (System.IO.File.Exists(outputPath))
+        {
+            Console.WriteLine("Document saved and fields updated successfully.");
+        }
     }
 }

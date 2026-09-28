@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,53 +10,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents (TOC) field.
-        // The switches configure the TOC to include heading levels 1‑3, add hyperlinks, hide page numbers for hidden entries, and use outline levels.
+        // Insert a Table of Contents field at the start of the document.
+        builder.InsertParagraph();
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln(); // Add a blank line after the TOC.
 
-        // Populate the document with headings that the TOC will reference.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1");
+        // Add sample headings and content to generate TOC entries.
+        for (int i = 1; i <= 3; i++)
+        {
+            // Heading (will appear in the TOC).
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln($"Chapter {i}");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 1.1");
-        builder.Writeln("Heading 1.2");
+            // Normal paragraph content.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln($"Content of chapter {i}.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 2");
-        builder.Writeln("Heading 3");
+            // Add extra lines to force pagination.
+            for (int j = 0; j < 30; j++)
+            {
+                builder.Writeln($"Line {j + 1} of chapter {i}.");
+            }
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 3.1");
+            // Insert a page break after each chapter except the last.
+            if (i < 3)
+                builder.InsertBreak(BreakType.PageBreak);
+        }
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Heading 3.1.1");
-        builder.Writeln("Heading 3.1.2");
-        builder.Writeln("Heading 3.1.3");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading4;
-        builder.Writeln("Heading 3.1.3.1");
-        builder.Writeln("Heading 3.1.3.2");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 3.2");
-        builder.Writeln("Heading 3.3");
-
-        // Update all fields in the document (including the TOC field) to reflect the current content.
+        // Update all fields in the document (including the TOC).
         doc.UpdateFields();
 
-        // Rebuild the page layout so that page‑related fields (PAGE, NUMPAGES, etc.) are refreshed.
-        // This also updates the page numbers shown in the TOC.
+        // Rebuild page layout so the TOC page numbers are refreshed.
         doc.UpdatePageLayout();
 
-        // Define an output path relative to the executable's directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TOC_Rebuilt.docx");
-
-        // Save the document.
+        // Save the resulting document.
+        const string outputPath = "RebuiltTOC.docx";
         doc.Save(outputPath);
-
-        // Optional: indicate completion.
-        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

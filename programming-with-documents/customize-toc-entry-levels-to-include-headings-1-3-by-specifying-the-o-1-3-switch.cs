@@ -1,42 +1,54 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
-public class Program
+namespace AsposeWordsTocExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents that includes heading levels 1 through 3.
-        // \\o "1-3" specifies the range of heading levels.
-        // \\h makes entries hyperlinks, \\z hides page numbers in web layout, \\u builds the TOC from outline levels.
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.InsertBreak(BreakType.PageBreak);
+            // Insert a Table of Contents with the switch to include heading levels 1 through 3.
+            // \\o "1-3" specifies the entry levels, \\h enables hyperlinks, \\z hides page numbers in web layout,
+            // and \\u builds the TOC from outline levels.
+            builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
 
-        // Add sample headings with styles Heading 1, Heading 2, and Heading 3.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1");
+            // Add a page break after the TOC so headings start on a new page.
+            builder.InsertBreak(BreakType.PageBreak);
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 1.1");
-        builder.Writeln("Heading 1.2");
+            // Insert Heading 1.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 1: Introduction");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Heading 1.2.1");
-        builder.Writeln("Heading 1.2.2");
+            // Insert some body text.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("This is the introductory chapter.");
 
-        // Update all fields in the document so the TOC reflects the added headings.
-        doc.UpdateFields();
+            // Insert Heading 2.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+            builder.Writeln("Section 1.1: Background");
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(outputDir);
+            // Insert more body text.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("Background information goes here.");
 
-        // Save the document to the output folder.
-        string outputPath = Path.Combine(outputDir, "CustomToc.docx");
-        doc.Save(outputPath);
+            // Insert Heading 3.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+            builder.Writeln("Subsection 1.1.1: Details");
+
+            // Insert final body text.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("Detailed discussion.");
+
+            // Update fields to populate the TOC.
+            doc.UpdateFields();
+
+            // Save the document to disk.
+            string outputPath = "TOC_CustomLevels.docx";
+            doc.Save(outputPath);
+        }
     }
 }

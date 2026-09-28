@@ -1,40 +1,49 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add three types of footers to the first section.
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("Primary footer");
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterFirst);
-        builder.Writeln("First page footer");
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
-        builder.Writeln("Even page footer");
+        // Add some body content.
+        builder.Writeln("Main content of the document.");
 
-        // Remove all footers from the first section.
-        Section section = doc.FirstSection;
-        // Footer types to remove.
-        HeaderFooterType[] footerTypes = new HeaderFooterType[]
+        // Add a primary footer with sample text.
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("This footer will be removed.");
+
+        // Return to the main body.
+        builder.MoveToDocumentEnd();
+
+        // Remove all footers from each section.
+        foreach (Section section in doc.Sections)
         {
-            HeaderFooterType.FooterPrimary,
-            HeaderFooterType.FooterFirst,
-            HeaderFooterType.FooterEven
-        };
-        foreach (HeaderFooterType ft in footerTypes)
-        {
-            HeaderFooter footer = section.HeadersFooters[ft];
-            footer?.Remove();
+            // Collect footers in the current section.
+            List<HeaderFooter> footersToRemove = new List<HeaderFooter>();
+            foreach (HeaderFooter hf in section.HeadersFooters)
+            {
+                if (hf.HeaderFooterType == HeaderFooterType.FooterPrimary ||
+                    hf.HeaderFooterType == HeaderFooterType.FooterFirst ||
+                    hf.HeaderFooterType == HeaderFooterType.FooterEven)
+                {
+                    footersToRemove.Add(hf);
+                }
+            }
+
+            // Remove the collected footers.
+            foreach (HeaderFooter hf in footersToRemove)
+            {
+                section.HeadersFooters.Remove(hf);
+            }
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        // Save the modified document.
+        const string outputPath = "Output.docx";
         doc.Save(outputPath);
     }
 }

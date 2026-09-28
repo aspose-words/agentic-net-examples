@@ -1,6 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -14,28 +15,26 @@ public class Program
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
         builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // First page header.
+        // ----- First page header -----
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Write("Header for the first page");
+        builder.Writeln("First Page Header");
 
-        // Even page header.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
-        builder.Write("Header for even pages");
-
-        // Odd (primary) page header.
+        // ----- Odd pages header (primary) -----
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header for odd pages");
+        builder.Writeln("Odd Page Header");
 
-        // Add three pages of body text to see each header type.
-        builder.MoveToSection(0);
-        builder.Writeln("Page 1");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3");
+        // ----- Even pages header -----
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
+        builder.Writeln("Even Page Header");
 
-        // Save the document to the current directory.
-        string outputPath = "HeadersAndFooters.docx";
+        // Save the document to a file.
+        string outputPath = "HeaderTypes.docx";
         doc.Save(outputPath);
+
+        // Simple verification that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to {Path.GetFullPath(outputPath)}");
+        }
     }
 }

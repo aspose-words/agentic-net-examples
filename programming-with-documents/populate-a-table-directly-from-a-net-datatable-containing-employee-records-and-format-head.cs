@@ -11,67 +11,77 @@ namespace AsposeWordsTableFromDataTable
         public static void Main()
         {
             // Create a DataTable with employee data.
-            DataTable employees = new DataTable("Employees");
-            employees.Columns.Add("ID", typeof(int));
-            employees.Columns.Add("Name", typeof(string));
-            employees.Columns.Add("Department", typeof(string));
-            employees.Columns.Add("Salary", typeof(decimal));
+            DataTable employeeTable = new DataTable("Employees");
+            employeeTable.Columns.Add("ID", typeof(int));
+            employeeTable.Columns.Add("Name", typeof(string));
+            employeeTable.Columns.Add("Department", typeof(string));
+            employeeTable.Columns.Add("Salary", typeof(decimal));
 
-            employees.Rows.Add(1, "John Smith", "Finance", 75000);
-            employees.Rows.Add(2, "Emily Davis", "HR", 68000);
-            employees.Rows.Add(3, "Michael Brown", "IT", 82000);
-            employees.Rows.Add(4, "Sarah Wilson", "Marketing", 71000);
+            // Add sample rows.
+            employeeTable.Rows.Add(1, "Alice Johnson", "Finance", 75000m);
+            employeeTable.Rows.Add(2, "Bob Smith", "IT", 68000m);
+            employeeTable.Rows.Add(3, "Carol White", "HR", 62000m);
+            employeeTable.Rows.Add(4, "David Brown", "Marketing", 71000m);
 
-            // Create a new blank document.
+            // Create a new Word document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table.
-            Table table = builder.StartTable();
+            // Start the table.
+            builder.StartTable();
 
-            // ---------- Header Row ----------
-            // Apply header formatting: bold text and light gray background.
-            builder.Font.Bold = true;
-            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-
-            // Insert header cells.
-            builder.InsertCell();
-            builder.Write("ID");
-            builder.InsertCell();
-            builder.Write("Name");
-            builder.InsertCell();
-            builder.Write("Department");
-            builder.InsertCell();
-            builder.Write("Salary");
-            builder.EndRow();
-
-            // Reset formatting for data rows.
-            builder.Font.Bold = false;
-            builder.CellFormat.Shading.ClearFormatting();
-
-            // ---------- Data Rows ----------
-            foreach (DataRow row in employees.Rows)
+            // Build header row.
+            foreach (DataColumn column in employeeTable.Columns)
             {
                 builder.InsertCell();
-                builder.Write(row["ID"].ToString());
+                builder.Write(column.ColumnName);
+            }
+            builder.EndRow();
 
-                builder.InsertCell();
-                builder.Write(row["Name"].ToString());
-
-                builder.InsertCell();
-                builder.Write(row["Department"].ToString());
-
-                builder.InsertCell();
-                builder.Write(string.Format("{0:C}", row["Salary"]));
-
+            // Populate table rows from the DataTable.
+            foreach (DataRow row in employeeTable.Rows)
+            {
+                foreach (object cellValue in row.ItemArray)
+                {
+                    builder.InsertCell();
+                    builder.Write(cellValue?.ToString() ?? string.Empty);
+                }
                 builder.EndRow();
             }
 
             // End the table.
             builder.EndTable();
 
-            // Save the document to a file.
-            doc.Save("EmployeeTable.docx");
+            // Retrieve the created table from the document.
+            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+            // Apply formatting to the header row.
+            Row headerRow = table.FirstRow;
+            foreach (Cell cell in headerRow.Cells)
+            {
+                // Make header text bold.
+                if (cell.FirstParagraph?.Runs.Count > 0)
+                {
+                    cell.FirstParagraph.Runs[0].Font.Bold = true;
+                }
+
+                // Set background shading for header cells.
+                cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+                // Optional: set vertical alignment.
+                cell.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
+            }
+
+            // Apply a simple border to the whole table.
+            table.SetBorder(BorderType.Left, LineStyle.Single, 1.0, Color.Black, true);
+            table.SetBorder(BorderType.Right, LineStyle.Single, 1.0, Color.Black, true);
+            table.SetBorder(BorderType.Top, LineStyle.Single, 1.0, Color.Black, true);
+            table.SetBorder(BorderType.Bottom, LineStyle.Single, 1.0, Color.Black, true);
+            table.SetBorder(BorderType.Horizontal, LineStyle.Single, 0.5, Color.Gray, true);
+            table.SetBorder(BorderType.Vertical, LineStyle.Single, 0.5, Color.Gray, true);
+
+            // Save the document.
+            string outputPath = "EmployeeReport.docx";
+            doc.Save(outputPath);
         }
     }
 }
